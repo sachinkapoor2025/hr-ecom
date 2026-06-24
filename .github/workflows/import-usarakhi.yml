@@ -19,6 +19,7 @@ jobs:
           cache: npm
 
       - run: npm ci
+      - run: npm run build -w @hr-ecom/shared
 
       - uses: aws-actions/configure-aws-credentials@v4
         with:
