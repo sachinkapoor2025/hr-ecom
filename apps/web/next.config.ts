@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  transpilePackages: ["@hr-ecom/shared"],
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "**" },
