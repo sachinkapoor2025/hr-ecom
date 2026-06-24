@@ -57,7 +57,7 @@ export function ProductDetailClient({ product }: { product: Product }) {
         <button
           onClick={handleAddToCart}
           disabled={adding || product.inventory <= 0}
-          className="bg-accent text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 transition"
+          className="btn-cart px-8 py-3 disabled:opacity-50"
         >
           {product.inventory <= 0 ? "Out of Stock" : adding ? "Adding..." : "Add to Cart"}
         </button>

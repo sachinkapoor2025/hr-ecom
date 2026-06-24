@@ -5,12 +5,72 @@ export const site = {
   description:
     "Send Rakhi to USA with fast delivery, free shipping on selected orders, and premium Rakhi combos. Trusted by sisters worldwide for Raksha Bandhan.",
   supportEmail: "support@usarakhi.com",
-  whatsapp: "+14155552671",
-  whatsappUrl: "https://wa.me/14155552671",
+  phone: "+1 (555) 123-4567",
   logoSrc: "/logo.png",
   primaryColor: "#183a68",
+  navBlue: "#4876e8",
   accentColor: "#e11d48",
 } as const;
+
+export const navItems = [
+  { label: "Home", href: "/" },
+  { label: "Single Rakhi", href: "/products?category=single-rakhi", category: "single-rakhi" },
+  { label: "Rakhi Combo", href: "/products?category=rakhi-combo", category: "rakhi-combo" },
+  { label: "Kids Rakhi", href: "/products?category=kids-rakhi", category: "kids-rakhi" },
+  { label: "Bhaiya Bhabhi Rakhi", href: "/products?category=bhaiya-bhabhi-rakhi", category: "bhaiya-bhabhi-rakhi" },
+  { label: "Lumba Rakhi", href: "/products?category=lumba-rakhi", category: "lumba-rakhi" },
+  { label: "Blogs", href: "/blog" },
+  { label: "Contact Us", href: "/contact" },
+] as const;
+
+export const cityLinks = [
+  { label: "California", slug: "california" },
+  { label: "New York", slug: "new-york" },
+  { label: "Texas", slug: "texas" },
+  { label: "Florida", slug: "florida" },
+  { label: "New Jersey", slug: "new-jersey" },
+  { label: "Los Angeles", slug: "los-angeles" },
+  { label: "Chicago", slug: "chicago" },
+  { label: "Houston", slug: "houston" },
+  { label: "San Francisco", slug: "san-francisco" },
+] as const;
+
+export const homeBanners = [
+  {
+    src: "https://usarakhi.com/wp-content/uploads/2026/03/border-banner-2-1.webp",
+    alt: "Send Rakhi to USA — Raksha Bandhan",
+    href: "/products?category=rakhi-combo",
+  },
+  {
+    src: "https://usarakhi.com/wp-content/uploads/2026/06/Untitled-design-31-1.png",
+    alt: "Premium Rakhi collection",
+    href: "/products",
+  },
+  {
+    src: "https://usarakhi.com/wp-content/uploads/2026/06/puja3.png",
+    alt: "Rakhi with Roli Chawal",
+    href: "/products?category=single-rakhi",
+  },
+] as const;
+
+export const promoBanners = [
+  {
+    src: "https://usarakhi.com/wp-content/uploads/2026/06/review-picture-2.png",
+    alt: "Customer reviews",
+  },
+  {
+    src: "https://usarakhi.com/wp-content/uploads/2026/03/coustomer-3-768x1152-1.webp",
+    alt: "Happy customers",
+  },
+] as const;
+
+export const categoryOrder = [
+  "rakhi-combo",
+  "single-rakhi",
+  "bhaiya-bhabhi-rakhi",
+  "kids-rakhi",
+  "lumba-rakhi",
+] as const;
 
 export const testimonials = [
   {
@@ -52,12 +112,4 @@ export const faqs = [
     q: "Do you offer Bhaiya Bhabhi Rakhi sets?",
     a: "Yes. Our Bhaiya Bhabhi collection features elegant matching sets for brothers and sisters-in-law.",
   },
-] as const;
-
-export const collectionHighlights = [
-  { title: "Rakhi Combo", desc: "Premium Rakhis paired with chocolates & gifts", slug: "rakhi-combo" },
-  { title: "Single Rakhi", desc: "Beautiful traditional & designer Rakhis", slug: "single-rakhi" },
-  { title: "Bhaiya Bhabhi Rakhi", desc: "Elegant sets for brother & sister-in-law", slug: "bhaiya-bhabhi-rakhi" },
-  { title: "Kids Rakhi", desc: "Fun cartoon & colorful designs for little brothers", slug: "kids-rakhi" },
-  { title: "Lumba Rakhi", desc: "Designer Lumba Rakhis for Bhabhi", slug: "lumba-rakhi" },
 ] as const;

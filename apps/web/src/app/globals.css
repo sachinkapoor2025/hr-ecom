@@ -6,12 +6,24 @@
   --foreground: #111827;
   --background: #ffffff;
   --primary: #183a68;
+  --nav: #4876e8;
   --accent: #e11d48;
   --muted: #6b7280;
-  --gold: #d97706;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
+}
+
+@layer components {
+  .btn-nav {
+    @apply inline-flex items-center justify-center rounded-full bg-nav text-white font-semibold text-sm px-4 py-2 hover:bg-blue-600 transition whitespace-nowrap;
+  }
+  .btn-nav-active {
+    @apply bg-primary;
+  }
+  .btn-cart {
+    @apply inline-flex items-center justify-center rounded-full bg-nav text-white font-semibold text-sm px-5 py-2.5 hover:bg-blue-600 transition disabled:opacity-50;
+  }
 }

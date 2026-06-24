@@ -19,7 +19,7 @@ export default function CartPage() {
       {items.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-slate-600 mb-4">Your cart is empty.</p>
-          <Link href="/products" className="text-accent underline">
+          <Link href="/products" className="text-nav underline">
             Continue shopping
           </Link>
         </div>
@@ -51,14 +51,11 @@ export default function CartPage() {
           </ul>
           <div className="flex justify-between items-center border-t pt-4">
             <span className="text-lg font-bold">Total</span>
-            <span className="text-xl font-bold text-accent">
+            <span className="text-xl font-bold text-nav">
               {new Intl.NumberFormat(undefined, { style: "currency", currency }).format(total)}
             </span>
           </div>
-          <Link
-            href="/checkout"
-            className="mt-6 block text-center bg-accent text-white py-3 rounded-lg font-semibold hover:bg-blue-700"
-          >
+          <Link href="/checkout" className="mt-6 block text-center btn-cart py-3 text-base">
             Proceed to Checkout
           </Link>
         </>

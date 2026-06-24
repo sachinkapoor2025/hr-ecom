@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { api } from "@/lib/api";
-import { ProductCard } from "@/components/ProductCard";
+import { HomeProductCard } from "@/components/HomeProductCard";
 import { SearchBar } from "@/components/SearchBar";
 import type { Product, Category } from "@hr-ecom/shared";
 
@@ -50,7 +50,7 @@ export default async function ProductsPage({ searchParams }: Props) {
         <div className="flex flex-wrap gap-2 mb-8">
           <Link
             href="/products"
-            className={`px-3 py-1 rounded-full text-sm border ${!category ? "bg-primary text-white border-primary" : "border-slate-300 hover:border-primary"}`}
+            className={`px-3 py-1 rounded-full text-sm border ${!category ? "bg-nav text-white border-nav" : "border-slate-300 hover:border-nav"}`}
           >
             All
           </Link>
@@ -58,7 +58,7 @@ export default async function ProductsPage({ searchParams }: Props) {
             <Link
               key={c.slug}
               href={`/products?category=${c.slug}`}
-              className={`px-3 py-1 rounded-full text-sm border ${category === c.slug ? "bg-primary text-white border-primary" : "border-slate-300 hover:border-primary"}`}
+              className={`px-3 py-1 rounded-full text-sm border ${category === c.slug ? "bg-nav text-white border-nav" : "border-slate-300 hover:border-nav"}`}
             >
               {c.name}
             </Link>
@@ -71,9 +71,9 @@ export default async function ProductsPage({ searchParams }: Props) {
           No products found. Run <code className="bg-slate-100 px-1 rounded">npm run seed</code> or add products in admin.
         </p>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {products.map((p) => (
-            <ProductCard key={p.slug} product={p} />
+            <HomeProductCard key={p.slug} product={p} />
           ))}
         </div>
       )}
