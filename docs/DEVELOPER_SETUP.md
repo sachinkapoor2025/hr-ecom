@@ -38,3 +38,6 @@ Create an IAM user (or access key for a deploy user) with `sam deploy` permissio
 
 - `AWS_ACCESS_KEY_ID`
 - `AWS_SECRET_ACCESS_KEY`
+- `AWS_SESSION_TOKEN` — required only for temporary credentials (keys starting with `ASIA`). Omit for long-lived IAM access keys.
+
+SAM build runs from the monorepo root so the local `@hr-ecom/shared` workspace package resolves during `sam build`.

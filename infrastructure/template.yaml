@@ -191,7 +191,7 @@ Resources:
     Properties:
       FunctionName: !Sub hr-ecom-api-${Environment}
       Handler: index.handler
-      CodeUri: ../apps/api
+      CodeUri: ..
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref CommerceTable
@@ -217,17 +217,7 @@ Resources:
             Path: /health
             Method: GET
     Metadata:
-      BuildMethod: esbuild
-      BuildProperties:
-        Minify: true
-        Target: es2022
-        EntryPoints:
-          - src/index.ts
-        External:
-          - "@aws-sdk/client-dynamodb"
-          - "@aws-sdk/lib-dynamodb"
-          - "@aws-sdk/client-s3"
-          - "@aws-sdk/s3-request-presigner"
+      BuildMethod: makefile
 
   HttpApi:
     Type: AWS::Serverless::HttpApi
