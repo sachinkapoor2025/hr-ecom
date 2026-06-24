@@ -13,15 +13,17 @@ export async function api<T>(
   if (sessionId) headers["X-Session-Id"] = sessionId;
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
-  const res = await fetch(`${getApiUrl()}${path}`, {
+  const url = `${getApiUrl()}${path}`;
+
+  const res = await fetch(url, {
     ...fetchOptions,
     headers,
-    cache: "no-store",
+    cache: typeof window === "undefined" ? "no-store" : "default",
   });
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }));
-    throw new Error(err.error ?? "API error");
+    throw new Error(err.error ?? `API error (${res.status})`);
   }
 
   return res.json();

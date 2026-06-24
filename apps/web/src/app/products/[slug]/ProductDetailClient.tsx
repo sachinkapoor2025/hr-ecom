@@ -22,6 +22,8 @@ export function ProductDetailClient({ product }: { product: Product }) {
     setAdding(true);
     try {
       await addItem(product.slug);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Could not add to cart");
     } finally {
       setAdding(false);
     }

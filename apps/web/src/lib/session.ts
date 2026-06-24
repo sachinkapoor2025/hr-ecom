@@ -6,16 +6,22 @@ import { api } from "./api";
 
 const SESSION_KEY = "hr_ecom_session";
 
+/** Get or create session id from localStorage (client only). */
+export function getOrCreateSessionId(): string {
+  if (typeof window === "undefined") return "";
+  let id = localStorage.getItem(SESSION_KEY);
+  if (!id) {
+    id = uuidv4();
+    localStorage.setItem(SESSION_KEY, id);
+  }
+  return id;
+}
+
 export function useSessionId(): string {
   const [sessionId, setSessionId] = useState("");
 
   useEffect(() => {
-    let id = localStorage.getItem(SESSION_KEY);
-    if (!id) {
-      id = uuidv4();
-      localStorage.setItem(SESSION_KEY, id);
-    }
-    setSessionId(id);
+    setSessionId(getOrCreateSessionId());
   }, []);
 
   return sessionId;
@@ -31,12 +37,13 @@ export function useLeadCapture(sessionId: string) {
       productSlug?: string;
       source?: "checkout" | "newsletter" | "product" | "browse" | "admin";
     }) => {
-      if (!sessionId) return;
+      const sid = sessionId || getOrCreateSessionId();
+      if (!sid) return;
       try {
         await api("/leads", {
           method: "POST",
-          sessionId,
-          body: JSON.stringify({ sessionId, ...fields }),
+          sessionId: sid,
+          body: JSON.stringify({ sessionId: sid, ...fields }),
         });
       } catch {
         /* silent — lead capture should not block UX */

@@ -34,8 +34,8 @@ export async function getCartHandler(event: APIGatewayProxyEventV2) {
   const userKey = getUserOrSessionKey(event);
   if (!userKey) return unauthorized("Session or auth required");
 
-  const cart = await getCart(userKey);
-  return ok({ cart });
+  const raw = await getCart(userKey);
+  return ok({ cart: { items: raw.items ?? [], updatedAt: raw.updatedAt ?? now() } });
 }
 
 export async function addToCart(event: APIGatewayProxyEventV2) {
