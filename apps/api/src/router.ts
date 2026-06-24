@@ -1,0 +1,73 @@
+import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
+import { ok, notFound } from "./lib/response";
+import * as products from "./handlers/products";
+import * as categories from "./handlers/categories";
+import * as cart from "./handlers/cart";
+import * as orders from "./handlers/orders";
+import * as config from "./handlers/config";
+import * as uploads from "./handlers/uploads";
+import { stripeWebhook } from "./handlers/payments/stripe";
+import { razorpayWebhook } from "./handlers/payments/razorpay";
+
+type RouteHandler = (event: APIGatewayProxyEventV2) => Promise<APIGatewayProxyResultV2>;
+
+interface Route {
+  method: string;
+  pattern: RegExp;
+  handler: RouteHandler;
+  params?: string[];
+}
+
+const routes: Route[] = [
+  { method: "GET", pattern: /^\/health$/, handler: async () => ok({ status: "ok" }) },
+  { method: "GET", pattern: /^\/products$/, handler: products.listProducts },
+  { method: "GET", pattern: /^\/products\/([^/]+)$/, handler: products.getProduct, params: ["slug"] },
+  { method: "POST", pattern: /^\/products$/, handler: products.createProduct },
+  { method: "PUT", pattern: /^\/products\/([^/]+)$/, handler: products.updateProduct, params: ["slug"] },
+  { method: "DELETE", pattern: /^\/products\/([^/]+)$/, handler: products.deleteProduct, params: ["slug"] },
+  { method: "POST", pattern: /^\/products\/bulk$/, handler: products.bulkUploadProducts },
+  { method: "GET", pattern: /^\/categories$/, handler: categories.listCategories },
+  { method: "GET", pattern: /^\/categories\/([^/]+)$/, handler: categories.getCategory, params: ["slug"] },
+  { method: "POST", pattern: /^\/categories$/, handler: categories.createCategory },
+  { method: "DELETE", pattern: /^\/categories\/([^/]+)$/, handler: categories.deleteCategory, params: ["slug"] },
+  { method: "GET", pattern: /^\/cart$/, handler: cart.getCartHandler },
+  { method: "POST", pattern: /^\/cart\/items$/, handler: cart.addToCart },
+  { method: "PUT", pattern: /^\/cart\/items\/([^/]+)$/, handler: cart.updateCartItem, params: ["productSlug"] },
+  { method: "DELETE", pattern: /^\/cart\/items\/([^/]+)$/, handler: cart.removeFromCart, params: ["productSlug"] },
+  { method: "DELETE", pattern: /^\/cart$/, handler: cart.clearCart },
+  { method: "POST", pattern: /^\/checkout$/, handler: orders.checkout },
+  { method: "GET", pattern: /^\/orders$/, handler: orders.listOrders },
+  { method: "GET", pattern: /^\/orders\/([^/]+)$/, handler: orders.getOrder, params: ["orderId"] },
+  { method: "GET", pattern: /^\/admin\/orders$/, handler: orders.listAdminOrders },
+  { method: "GET", pattern: /^\/admin\/leads$/, handler: orders.listLeads },
+  { method: "POST", pattern: /^\/leads$/, handler: orders.captureLead },
+  { method: "GET", pattern: /^\/config\/payments$/, handler: config.getPaymentConfig },
+  { method: "PUT", pattern: /^\/config\/payments$/, handler: config.updatePaymentConfig },
+  { method: "POST", pattern: /^\/uploads\/presign$/, handler: uploads.getUploadUrl },
+  { method: "POST", pattern: /^\/products\/([^/]+)\/images$/, handler: uploads.attachImageToProduct, params: ["slug"] },
+  { method: "POST", pattern: /^\/webhooks\/stripe$/, handler: stripeWebhook },
+  { method: "POST", pattern: /^\/webhooks\/razorpay$/, handler: razorpayWebhook },
+];
+
+export async function route(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
+  const path = event.rawPath ?? event.requestContext.http.path ?? "/";
+  const method = event.requestContext.http.method;
+
+  for (const routeDef of routes) {
+    if (routeDef.method !== method) continue;
+    const match = path.match(routeDef.pattern);
+    if (!match) continue;
+
+    if (routeDef.params) {
+      const params: Record<string, string> = {};
+      routeDef.params.forEach((name, i) => {
+        params[name] = match[i + 1];
+      });
+      event.pathParameters = { ...event.pathParameters, ...params };
+    }
+
+    return routeDef.handler(event);
+  }
+
+  return notFound(`Route not found: ${method} ${path}`);
+}

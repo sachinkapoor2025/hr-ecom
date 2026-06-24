@@ -1,0 +1,27 @@
+version = 0.1
+
+[default.deploy.parameters]
+stack_name = "hr-ecom-dev"
+resolve_s3 = true
+s3_prefix = "hr-ecom"
+region = "us-east-1"
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "Environment=dev"
+confirm_changeset = true
+
+[staging.deploy.parameters]
+stack_name = "hr-ecom-staging"
+resolve_s3 = true
+s3_prefix = "hr-ecom"
+region = "us-east-1"
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "Environment=staging"
+
+[prod.deploy.parameters]
+stack_name = "hr-ecom-prod"
+resolve_s3 = true
+s3_prefix = "hr-ecom"
+region = "us-east-1"
+capabilities = "CAPABILITY_IAM"
+parameter_overrides = "Environment=prod"
+confirm_changeset = true

@@ -1,0 +1,186 @@
+import { PutCommand, GetCommand, QueryCommand, DeleteCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
+import type { APIGatewayProxyEventV2 } from "aws-lambda";
+import {
+  createProductSchema,
+  updateProductSchema,
+  bulkProductRowSchema,
+  productKeys,
+  type Product,
+} from "@hr-ecom/shared";
+import { docClient, TABLE_NAME, now, slugify } from "../lib/db";
+import { ok, created, badRequest, notFound, forbidden } from "../lib/response";
+import { getAuth } from "../lib/auth";
+
+export async function listProducts(event: APIGatewayProxyEventV2) {
+  const category = event.queryStringParameters?.category;
+  const search = event.queryStringParameters?.search?.toLowerCase();
+
+  let items: Product[] = [];
+
+  if (category) {
+    const result = await docClient.send(
+      new QueryCommand({
+        TableName: TABLE_NAME,
+        IndexName: "GSI1",
+        KeyConditionExpression: "GSI1PK = :pk",
+        ExpressionAttributeValues: { ":pk": productKeys.gsi1pk(category) },
+      })
+    );
+    items = (result.Items ?? []) as Product[];
+  } else {
+    const result = await docClient.send(
+      new ScanCommand({
+        TableName: TABLE_NAME,
+        FilterExpression: "begins_with(PK, :prefix) AND SK = :sk",
+        ExpressionAttributeValues: { ":prefix": "PRODUCT#", ":sk": "META" },
+      })
+    );
+    items = (result.Items ?? []) as Product[];
+  }
+
+  items = items.filter((p) => p.published !== false);
+  if (search) {
+    items = items.filter(
+      (p) =>
+        p.name.toLowerCase().includes(search) ||
+        p.description.toLowerCase().includes(search) ||
+        p.tags?.some((t) => t.toLowerCase().includes(search))
+    );
+  }
+
+  return ok({ products: items });
+}
+
+export async function getProduct(event: APIGatewayProxyEventV2) {
+  const slug = event.pathParameters?.slug;
+  if (!slug) return badRequest("Slug required");
+
+  const result = await docClient.send(
+    new GetCommand({
+      TableName: TABLE_NAME,
+      Key: { PK: productKeys.pk(slug), SK: productKeys.sk() },
+    })
+  );
+
+  if (!result.Item) return notFound("Product not found");
+  return ok({ product: result.Item });
+}
+
+export async function createProduct(event: APIGatewayProxyEventV2) {
+  const auth = getAuth(event);
+  if (!auth?.isAdmin) return forbidden();
+
+  const body = JSON.parse(event.body ?? "{}");
+  const parsed = createProductSchema.safeParse(body);
+  if (!parsed.success) return badRequest(parsed.error.message);
+
+  const slug = slugify(parsed.data.name);
+  const timestamp = now();
+  const item: Product & { PK: string; SK: string; GSI1PK: string; GSI1SK: string } = {
+    ...parsed.data,
+    slug,
+    PK: productKeys.pk(slug),
+    SK: productKeys.sk(),
+    GSI1PK: productKeys.gsi1pk(parsed.data.categorySlug),
+    GSI1SK: productKeys.gsi1sk(slug),
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  };
+
+  await docClient.send(new PutCommand({ TableName: TABLE_NAME, Item: item }));
+  return created({ product: item });
+}
+
+export async function updateProduct(event: APIGatewayProxyEventV2) {
+  const auth = getAuth(event);
+  if (!auth?.isAdmin) return forbidden();
+
+  const slug = event.pathParameters?.slug;
+  if (!slug) return badRequest("Slug required");
+
+  const existing = await docClient.send(
+    new GetCommand({
+      TableName: TABLE_NAME,
+      Key: { PK: productKeys.pk(slug), SK: productKeys.sk() },
+    })
+  );
+  if (!existing.Item) return notFound("Product not found");
+
+  const body = JSON.parse(event.body ?? "{}");
+  const parsed = updateProductSchema.safeParse(body);
+  if (!parsed.success) return badRequest(parsed.error.message);
+
+  const updated = {
+    ...existing.Item,
+    ...parsed.data,
+    updatedAt: now(),
+  } as Product & { PK: string; SK: string; GSI1PK: string; GSI1SK: string };
+
+  if (parsed.data.categorySlug) {
+    updated.GSI1PK = productKeys.gsi1pk(parsed.data.categorySlug);
+    updated.GSI1SK = productKeys.gsi1sk(slug);
+  }
+
+  await docClient.send(new PutCommand({ TableName: TABLE_NAME, Item: updated }));
+  return ok({ product: updated });
+}
+
+export async function deleteProduct(event: APIGatewayProxyEventV2) {
+  const auth = getAuth(event);
+  if (!auth?.isAdmin) return forbidden();
+
+  const slug = event.pathParameters?.slug;
+  if (!slug) return badRequest("Slug required");
+
+  await docClient.send(
+    new DeleteCommand({
+      TableName: TABLE_NAME,
+      Key: { PK: productKeys.pk(slug), SK: productKeys.sk() },
+    })
+  );
+  return ok({ deleted: true });
+}
+
+export async function bulkUploadProducts(event: APIGatewayProxyEventV2) {
+  const auth = getAuth(event);
+  if (!auth?.isAdmin) return forbidden();
+
+  const body = JSON.parse(event.body ?? "{}");
+  const rows: unknown[] = body.rows ?? body;
+  if (!Array.isArray(rows)) return badRequest("Expected array of products");
+
+  const createdProducts: Product[] = [];
+  const errors: { row: number; error: string }[] = [];
+
+  for (let i = 0; i < rows.length; i++) {
+    const parsed = bulkProductRowSchema.safeParse(rows[i]);
+    if (!parsed.success) {
+      errors.push({ row: i + 1, error: parsed.error.message });
+      continue;
+    }
+
+    const slug = slugify(parsed.data.name);
+    const timestamp = now();
+    const tags = parsed.data.tags
+      ? parsed.data.tags.split(",").map((t) => t.trim()).filter(Boolean)
+      : [];
+
+    const item = {
+      ...parsed.data,
+      slug,
+      tags,
+      images: [],
+      PK: productKeys.pk(slug),
+      SK: productKeys.sk(),
+      GSI1PK: productKeys.gsi1pk(parsed.data.categorySlug),
+      GSI1SK: productKeys.gsi1sk(slug),
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    };
+
+    await docClient.send(new PutCommand({ TableName: TABLE_NAME, Item: item }));
+    createdProducts.push(item as Product);
+  }
+
+  return ok({ created: createdProducts.length, errors, products: createdProducts });
+}

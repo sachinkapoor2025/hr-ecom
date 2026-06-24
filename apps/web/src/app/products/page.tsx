@@ -1,0 +1,82 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { api } from "@/lib/api";
+import { ProductCard } from "@/components/ProductCard";
+import { SearchBar } from "@/components/SearchBar";
+import type { Product, Category } from "@hr-ecom/shared";
+
+export const metadata: Metadata = {
+  title: "All Products",
+  description: "Browse our full product catalog.",
+};
+
+interface Props {
+  searchParams: Promise<{ search?: string; category?: string }>;
+}
+
+export default async function ProductsPage({ searchParams }: Props) {
+  const params = await searchParams;
+  const search = params.search;
+  const category = params.category;
+
+  let products: Product[] = [];
+  let categories: Category[] = [];
+
+  try {
+    const query = new URLSearchParams();
+    if (search) query.set("search", search);
+    if (category) query.set("category", category);
+    const qs = query.toString() ? `?${query.toString()}` : "";
+
+    const [productsData, categoriesData] = await Promise.all([
+      api<{ products: Product[] }>(`/products${qs}`),
+      api<{ categories: Category[] }>("/categories"),
+    ]);
+    products = productsData.products;
+    categories = categoriesData.categories;
+  } catch {
+    products = [];
+    categories = [];
+  }
+
+  return (
+    <div className="max-w-6xl mx-auto px-4 py-10">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <h1 className="text-3xl font-bold">All Products</h1>
+        <SearchBar />
+      </div>
+
+      {categories.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-8">
+          <Link
+            href="/products"
+            className={`px-3 py-1 rounded-full text-sm border ${!category ? "bg-accent text-white border-accent" : "border-slate-300 hover:border-accent"}`}
+          >
+            All
+          </Link>
+          {categories.map((c) => (
+            <Link
+              key={c.slug}
+              href={`/products?category=${c.slug}`}
+              className={`px-3 py-1 rounded-full text-sm border ${category === c.slug ? "bg-accent text-white border-accent" : "border-slate-300 hover:border-accent"}`}
+            >
+              {c.name}
+            </Link>
+          ))}
+        </div>
+      )}
+
+      {products.length === 0 ? (
+        <p className="text-slate-600">
+          No products found. Run <code className="bg-slate-100 px-1 rounded">npm run seed</code> or add products in admin.
+        </p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {products.map((p) => (
+            <ProductCard key={p.slug} product={p} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
