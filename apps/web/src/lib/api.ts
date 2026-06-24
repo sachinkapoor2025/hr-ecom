@@ -1,4 +1,6 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+import { apiUrl } from "@/lib/env";
+
+const API_URL = apiUrl;
 
 export async function api<T>(
   path: string,

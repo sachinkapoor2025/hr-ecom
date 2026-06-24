@@ -4,8 +4,7 @@ import { AuthProvider } from "@/lib/auth-context";
 import { CartProvider } from "@/lib/cart-context";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
-
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+import { siteUrl } from "@/lib/env";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
