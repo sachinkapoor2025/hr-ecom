@@ -12,6 +12,8 @@ export const metadata: Metadata = {
   description: site.description,
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
   let products: Product[] = [];
   let categories: Category[] = [];
@@ -72,8 +74,8 @@ export default async function HomePage() {
 
       {products.length === 0 && (
         <p className="text-center text-slate-500 py-12">
-          Products loading soon. Run{" "}
-          <code className="bg-slate-100 px-1 rounded">TABLE_NAME=hr-ecom-prod npm run import:usarakhi</code>
+          Products could not be loaded. Confirm Amplify env var{" "}
+          <code className="bg-slate-100 px-1 rounded">NEXT_PUBLIC_API_URL</code> is set and redeploy.
         </p>
       )}
 

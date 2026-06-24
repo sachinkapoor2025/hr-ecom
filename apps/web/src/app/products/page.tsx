@@ -10,6 +10,8 @@ export const metadata: Metadata = {
   description: "Browse our full Rakhi collection — combos, kids rakhis, Bhaiya Bhabhi sets, and more.",
 };
 
+export const dynamic = "force-dynamic";
+
 interface Props {
   searchParams: Promise<{ search?: string; category?: string }>;
 }

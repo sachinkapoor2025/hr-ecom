@@ -1,6 +1,4 @@
-import { apiUrl } from "@/lib/env";
-
-const API_URL = apiUrl;
+import { getApiUrl } from "@/lib/env";
 
 export async function api<T>(
   path: string,
@@ -15,10 +13,10 @@ export async function api<T>(
   if (sessionId) headers["X-Session-Id"] = sessionId;
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
-  const res = await fetch(`${API_URL}${path}`, {
+  const res = await fetch(`${getApiUrl()}${path}`, {
     ...fetchOptions,
     headers,
-    next: { revalidate: path.startsWith("/products") ? 60 : 0 },
+    cache: "no-store",
   });
 
   if (!res.ok) {
@@ -29,4 +27,4 @@ export async function api<T>(
   return res.json();
 }
 
-export { API_URL };
+export { getApiUrl as API_URL };
