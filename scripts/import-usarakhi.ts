@@ -6,7 +6,7 @@
  *   npm run import:usarakhi -- --fetch-only          # refresh catalog JSON
  *   TABLE_NAME=hr-ecom-prod npm run import:usarakhi  # import to AWS
  */
-import { writeFileSync, mkdirSync } from "fs";
+import { writeFileSync, mkdirSync, readFileSync, existsSync } from "fs";
 import { join } from "path";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb";
@@ -215,12 +215,20 @@ async function importToDb(catalog: { categories: CatalogCategory[]; products: Ca
 
 async function main() {
   const fetchOnly = process.argv.includes("--fetch-only");
+  const refresh = process.argv.includes("--refresh");
 
-  console.log("Fetching catalog from usarakhi.com...");
-  const catalog = await fetchCatalog();
-  mkdirSync(join(process.cwd(), "scripts/data"), { recursive: true });
-  writeFileSync(CATALOG_PATH, JSON.stringify(catalog, null, 2));
-  console.log(`Saved ${CATALOG_PATH} (${catalog.products.length} products)`);
+  let catalog: Awaited<ReturnType<typeof fetchCatalog>>;
+
+  if (!refresh && existsSync(CATALOG_PATH)) {
+    catalog = JSON.parse(readFileSync(CATALOG_PATH, "utf-8"));
+    console.log(`Using cached catalog: ${catalog.products.length} products`);
+  } else {
+    console.log("Fetching catalog from usarakhi.com...");
+    catalog = await fetchCatalog();
+    mkdirSync(join(process.cwd(), "scripts/data"), { recursive: true });
+    writeFileSync(CATALOG_PATH, JSON.stringify(catalog, null, 2));
+    console.log(`Saved ${CATALOG_PATH} (${catalog.products.length} products)`);
+  }
 
   if (!fetchOnly) {
     await importToDb(catalog);

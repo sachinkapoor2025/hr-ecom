@@ -68,7 +68,9 @@ export default async function ProductsPage({ searchParams }: Props) {
 
       {products.length === 0 ? (
         <p className="text-slate-600">
-          No products found. Run <code className="bg-slate-100 px-1 rounded">npm run seed</code> or add products in admin.
+          No products in this category yet. Products are imported automatically on deploy — if you
+          just set up the site, run the <strong>Import UsaRakhi Catalog</strong> workflow in GitHub
+          Actions or wait for the next deploy to finish.
         </p>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
