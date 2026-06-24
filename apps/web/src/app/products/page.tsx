@@ -6,8 +6,8 @@ import { SearchBar } from "@/components/SearchBar";
 import type { Product, Category } from "@hr-ecom/shared";
 
 export const metadata: Metadata = {
-  title: "All Products",
-  description: "Browse our full product catalog.",
+  title: "Shop Rakhi — Send Rakhi to USA",
+  description: "Browse our full Rakhi collection — combos, kids rakhis, Bhaiya Bhabhi sets, and more.",
 };
 
 interface Props {
@@ -42,7 +42,7 @@ export default async function ProductsPage({ searchParams }: Props) {
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-        <h1 className="text-3xl font-bold">All Products</h1>
+        <h1 className="text-3xl font-bold text-primary">Shop Rakhi</h1>
         <SearchBar />
       </div>
 
@@ -50,7 +50,7 @@ export default async function ProductsPage({ searchParams }: Props) {
         <div className="flex flex-wrap gap-2 mb-8">
           <Link
             href="/products"
-            className={`px-3 py-1 rounded-full text-sm border ${!category ? "bg-accent text-white border-accent" : "border-slate-300 hover:border-accent"}`}
+            className={`px-3 py-1 rounded-full text-sm border ${!category ? "bg-primary text-white border-primary" : "border-slate-300 hover:border-primary"}`}
           >
             All
           </Link>
@@ -58,7 +58,7 @@ export default async function ProductsPage({ searchParams }: Props) {
             <Link
               key={c.slug}
               href={`/products?category=${c.slug}`}
-              className={`px-3 py-1 rounded-full text-sm border ${category === c.slug ? "bg-accent text-white border-accent" : "border-slate-300 hover:border-accent"}`}
+              className={`px-3 py-1 rounded-full text-sm border ${category === c.slug ? "bg-primary text-white border-primary" : "border-slate-300 hover:border-primary"}`}
             >
               {c.name}
             </Link>

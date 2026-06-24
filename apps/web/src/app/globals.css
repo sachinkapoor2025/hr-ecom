@@ -3,10 +3,12 @@
 @import "tailwindcss/utilities";
 
 :root {
-  --foreground: #0f172a;
+  --foreground: #111827;
   --background: #ffffff;
-  --accent: #2563eb;
-  --muted: #64748b;
+  --primary: #183a68;
+  --accent: #e11d48;
+  --muted: #6b7280;
+  --gold: #d97706;
 }
 
 body {

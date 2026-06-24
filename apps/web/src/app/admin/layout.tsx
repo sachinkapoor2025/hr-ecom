@@ -22,8 +22,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="border-b bg-white">
           <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-6">
-              <Link href="/admin" className="font-bold text-slate-900">
-                Admin
+              <Link href="/admin" className="font-bold text-primary">
+                UsaRakhi Admin
               </Link>
               <nav className="flex gap-4 text-sm">
                 {links.map((l) => {

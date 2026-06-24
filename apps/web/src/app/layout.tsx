@@ -9,14 +9,15 @@ import { siteUrl } from "@/lib/env";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "HR Shop — Premium E-Commerce",
-    template: "%s | HR Shop",
+    default: "UsaRakhi — Send Rakhi to USA Online | Free Shipping",
+    template: "%s | UsaRakhi",
   },
-  description: "Shop quality products with secure checkout. Stripe in USA, Razorpay in India.",
+  description:
+    "Send Rakhi to USA with fast delivery, free shipping, and premium Rakhi combos. Trusted by sisters worldwide for Raksha Bandhan.",
   openGraph: {
     type: "website",
     locale: "en_US",
-    siteName: "HR Shop",
+    siteName: "UsaRakhi",
   },
   robots: { index: true, follow: true },
 };
