@@ -50,7 +50,15 @@ const routes: Route[] = [
 ];
 
 export async function route(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
-  const path = event.rawPath ?? event.requestContext.http.path ?? "/";
+  let path = event.rawPath ?? event.requestContext.http.path ?? "/";
+  const stage = event.requestContext.stage;
+  // HTTP API includes stage in path (e.g. /prod/products) — strip it for routing
+  if (stage && path.startsWith(`/${stage}/`)) {
+    path = path.slice(stage.length + 1);
+  } else if (stage && path === `/${stage}`) {
+    path = "/";
+  }
+
   const method = event.requestContext.http.method;
 
   for (const routeDef of routes) {
