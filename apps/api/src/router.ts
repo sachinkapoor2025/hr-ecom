@@ -1,5 +1,5 @@
 import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
-import { ok, notFound } from "./lib/response";
+import { ok, notFound, corsPreflight } from "./lib/response";
 import * as products from "./handlers/products";
 import * as categories from "./handlers/categories";
 import * as cart from "./handlers/cart";
@@ -60,6 +60,10 @@ export async function route(event: APIGatewayProxyEventV2): Promise<APIGatewayPr
   }
 
   const method = event.requestContext.http.method;
+
+  if (method === "OPTIONS") {
+    return corsPreflight();
+  }
 
   for (const routeDef of routes) {
     if (routeDef.method !== method) continue;

@@ -11,7 +11,12 @@ export async function handler(
     console.error(err);
     return {
       statusCode: 500,
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Session-Id",
+      },
       body: JSON.stringify({ error: "Internal server error" }),
     };
   }
