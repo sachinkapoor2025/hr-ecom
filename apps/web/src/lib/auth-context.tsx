@@ -14,6 +14,8 @@ import {
   login as cognitoLogin,
   logout as cognitoLogout,
   register as cognitoRegister,
+  confirmSignUp as cognitoConfirmSignUp,
+  resendConfirmationCode as cognitoResendCode,
   storeAuth,
 } from "./cognito";
 
@@ -21,7 +23,9 @@ interface AuthContextValue {
   user: AuthUser | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<AuthUser>;
-  register: (email: string, password: string, name?: string) => Promise<void>;
+  register: (email: string, password: string, name?: string) => Promise<{ userConfirmed: boolean }>;
+  confirmSignUp: (email: string, code: string) => Promise<void>;
+  resendConfirmationCode: (email: string) => Promise<void>;
   logout: () => void;
   token: string | undefined;
   isAdmin: boolean;
@@ -45,7 +49,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const register = useCallback(async (email: string, password: string, name?: string) => {
-    await cognitoRegister(email, password, name);
+    return cognitoRegister(email, password, name);
+  }, []);
+
+  const confirmSignUp = useCallback(async (email: string, code: string) => {
+    await cognitoConfirmSignUp(email, code);
+  }, []);
+
+  const resendConfirmationCode = useCallback(async (email: string) => {
+    await cognitoResendCode(email);
   }, []);
 
   const logout = useCallback(() => {
@@ -60,6 +72,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading,
         login,
         register,
+        confirmSignUp,
+        resendConfirmationCode,
         logout,
         token: user?.token,
         isAdmin: user?.isAdmin ?? false,
