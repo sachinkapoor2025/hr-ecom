@@ -21,7 +21,6 @@
     "typecheck": "npm run typecheck -w @hr-ecom/shared && npm run typecheck -w @hr-ecom/api && npm run typecheck -w @hr-ecom/web"
   },
   "devDependencies": {
-    "@types/node": "^24.0.0",
     "@aws-sdk/client-dynamodb": "^3.716.0",
     "@aws-sdk/lib-dynamodb": "^3.716.0",
     "concurrently": "^9.1.2",
@@ -29,6 +28,6 @@
     "typescript": "^5.7.2"
   },
   "engines": {
-    "node": ">=24"
+    "node": ">=20"
   }
 }
