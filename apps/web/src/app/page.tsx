@@ -3,6 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { api } from "@/lib/api";
 import { BannerCarousel } from "@/components/BannerCarousel";
+import { CustomerReviews } from "@/components/CustomerReviews";
 import { HomeProductCard } from "@/components/HomeProductCard";
 import { site, homeBanners, promoBanners, categoryOrder, faqs } from "@/lib/site";
 import type { Product, Category } from "@hr-ecom/shared";
@@ -86,6 +87,8 @@ export default async function HomePage() {
           </div>
         </section>
       )}
+
+      <CustomerReviews />
 
       <section className="max-w-3xl mx-auto px-4 py-12">
         <h2 className="text-2xl font-bold text-primary text-center mb-6">FAQ</h2>
