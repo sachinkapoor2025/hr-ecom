@@ -176,7 +176,7 @@ export function Header() {
         </Link>
 
         <div className="flex items-center shrink-0">
-          <AccountLink />
+          <AccountLink className="text-nav hover:text-primary" />
           <CartLink />
         </div>
       </div>

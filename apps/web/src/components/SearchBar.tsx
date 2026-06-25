@@ -28,11 +28,11 @@ function SearchBarInner({ variant = "default" }: { variant?: "default" | "header
           placeholder="Search products..."
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          className="w-full border border-slate-200 rounded-full pl-4 pr-11 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-nav focus:ring-1 focus:ring-nav"
+          className="w-full border border-slate-200 rounded-full pl-4 pr-12 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-nav focus:ring-1 focus:ring-nav md:pr-11"
         />
         <button
           type="submit"
-          className="absolute right-1 top-1/2 -translate-y-1/2 p-2 text-nav hover:text-primary"
+          className="absolute right-1 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full bg-nav text-white hover:bg-primary md:h-auto md:w-auto md:rounded-none md:bg-transparent md:p-2 md:text-nav md:hover:text-primary"
           aria-label="Search"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
