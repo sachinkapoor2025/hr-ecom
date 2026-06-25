@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useSearchParams } from "next/navigation";
@@ -86,6 +86,47 @@ function CartLink({ className = "" }: { className?: string }) {
   );
 }
 
+function DesktopHeaderAction({
+  href,
+  label,
+  children,
+}: {
+  href: string;
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <Link href={href} className="flex flex-col items-center gap-1 px-3 text-primary hover:text-nav min-w-[4.5rem]">
+      {children}
+      <span className="text-xs font-medium leading-none">{label}</span>
+    </Link>
+  );
+}
+
+function DesktopCartAction() {
+  const { itemCount } = useCart();
+
+  return (
+    <Link href="/cart" className="relative flex flex-col items-center gap-1 px-3 text-primary hover:text-nav min-w-[4.5rem]">
+      <span className="relative">
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+          />
+        </svg>
+        {itemCount > 0 && (
+          <span className="absolute -top-1.5 -right-2 bg-accent text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-bold">
+            {itemCount}
+          </span>
+        )}
+      </span>
+      <span className="text-xs font-medium leading-none">Cart</span>
+    </Link>
+  );
+}
+
 export function Header() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -141,18 +182,39 @@ export function Header() {
       </div>
 
       {/* Desktop top bar */}
-      <div className="hidden md:flex max-w-7xl mx-auto px-4 py-3 items-center justify-between gap-4">
+      <div className="hidden md:grid max-w-7xl mx-auto px-4 py-3 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-6">
         <Link href="/" className="shrink-0">
           <Image src={site.logoSrc} alt={site.name} width={150} height={50} className="h-11 w-auto" priority />
         </Link>
 
-        <div className="flex items-center shrink-0">
-          <AccountLink />
-          <CartLink />
+        <div className="w-full max-w-2xl mx-auto">
+          <SearchBar variant="header" />
+        </div>
+
+        <div className="flex items-start justify-end shrink-0">
+          <DesktopHeaderAction href="/account" label="Account">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+              />
+            </svg>
+          </DesktopHeaderAction>
+          <DesktopHeaderAction href="/wishlist" label="Wish Lists">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+              />
+            </svg>
+          </DesktopHeaderAction>
+          <DesktopCartAction />
         </div>
       </div>
 
-      <div className="border-t border-slate-100 bg-white px-4 py-2.5">
+      <div className="md:hidden border-t border-slate-100 bg-white px-4 py-2.5">
         <div className="max-w-7xl mx-auto">
           <SearchBar variant="header" />
         </div>
