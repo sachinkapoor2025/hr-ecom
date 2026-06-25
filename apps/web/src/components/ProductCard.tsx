@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import type { Product } from "@hr-ecom/shared";
+import { WishlistButton } from "@/components/WishlistButton";
 
 function formatPrice(product: Product) {
   return new Intl.NumberFormat("en-US", {
@@ -17,24 +20,24 @@ export function ProductCard({ product }: { product: Product }) {
   const discount = discountPercent(product);
 
   return (
-    <Link
-      href={`/products/${product.slug}`}
-      className="group block border border-slate-200 rounded-xl overflow-hidden hover:shadow-lg transition-shadow bg-white relative"
-    >
+    <div className="group border border-slate-200 rounded-xl overflow-hidden hover:shadow-lg transition-shadow bg-white relative">
       {discount && (
         <span className="absolute top-3 left-3 z-10 bg-accent text-white text-xs font-bold px-2 py-1 rounded">
           {discount}% OFF
         </span>
       )}
-      <div className="aspect-square bg-slate-50 flex items-center justify-center text-slate-400">
-        {product.images?.[0] ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
-        ) : (
-          <span>No image</span>
-        )}
+      <div className="relative aspect-square bg-slate-50 flex items-center justify-center text-slate-400">
+        <WishlistButton product={product} />
+        <Link href={`/products/${product.slug}`} className="block w-full h-full">
+          {product.images?.[0] ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
+          ) : (
+            <span>No image</span>
+          )}
+        </Link>
       </div>
-      <div className="p-4">
+      <Link href={`/products/${product.slug}`} className="block p-4">
         <h3 className="font-semibold text-slate-900 group-hover:text-primary line-clamp-2 min-h-[2.5rem]">
           {product.name}
         </h3>
@@ -48,7 +51,7 @@ export function ProductCard({ product }: { product: Product }) {
             </p>
           )}
         </div>
-      </div>
-    </Link>
+      </Link>
+    </div>
   );
 }

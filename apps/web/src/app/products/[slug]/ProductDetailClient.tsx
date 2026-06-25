@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { AddToCartControl } from "@/components/AddToCartControl";
+import { WishlistButton } from "@/components/WishlistButton";
 import { useSessionId, useDebouncedLeadCapture } from "@/lib/session";
 import { LeadCaptureInput } from "@/components/LeadCaptureInput";
 import type { Product } from "@hr-ecom/shared";
@@ -18,12 +19,13 @@ export function ProductDetailClient({ product }: { product: Product }) {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-10 grid md:grid-cols-2 gap-10">
-      <div className="aspect-square bg-slate-100 rounded-xl flex items-center justify-center">
+      <div className="relative aspect-square bg-slate-100 rounded-xl overflow-hidden">
+        <WishlistButton product={product} className="top-3 right-3" />
         {product.images?.[0] ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover rounded-xl" />
+          <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
         ) : (
-          <span className="text-slate-400">No image</span>
+          <span className="flex w-full h-full items-center justify-center text-slate-400">No image</span>
         )}
       </div>
       <div>

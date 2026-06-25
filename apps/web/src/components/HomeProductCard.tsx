@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { Product } from "@hr-ecom/shared";
 import { AddToCartControl } from "@/components/AddToCartControl";
+import { WishlistButton } from "@/components/WishlistButton";
 
 function formatPrice(product: Product) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: product.currency }).format(product.price);
@@ -23,15 +24,18 @@ export function HomeProductCard({ product }: { product: Product }) {
           {discount}% OFF
         </span>
       )}
-      <Link href={`/products/${product.slug}`} className="block">
-        <div className="aspect-square bg-slate-50">
+      <div className="relative aspect-square bg-slate-50">
+        <WishlistButton product={product} />
+        <Link href={`/products/${product.slug}`} className="block w-full h-full">
           {product.images?.[0] ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-slate-400 text-sm">No image</div>
           )}
-        </div>
+        </Link>
+      </div>
+      <Link href={`/products/${product.slug}`} className="block">
         <div className="p-3 flex-1">
           <h3 className="font-semibold text-sm text-slate-900 line-clamp-2 min-h-[2.5rem] hover:text-nav">
             {product.name}
