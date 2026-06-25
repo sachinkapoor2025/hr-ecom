@@ -1,30 +1,33 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { site, categoryOrder, faqs, homeBanners } from "@/lib/site";
+import { site, categoryOrder, homeBanners, cityLinks } from "@/lib/site";
 import {
   rakshaBandhanShowcase,
   rakshaBandhanSteps,
   rakshaBandhanStories,
+  rakshaBandhanFaqs,
+  rakshaBandhanContent,
 } from "@/lib/content/raksha-bandhan";
 import { JsonLd } from "@/components/JsonLd";
 import { faqJsonLd, pageMetadata, rakshaBandhanEventJsonLd } from "@/lib/seo";
 
 export const metadata: Metadata = pageMetadata({
-  title: "Raksha Bandhan 2026 USA — Send Rakhi Online",
+  title: "Raksha Bandhan 2026 USA — Send Rakhi Online | August 28",
   description:
-    "Celebrate Raksha Bandhan 2026 with UsaRakhi. Send Rakhi to brothers in all 50 US states. August 28, 2026. Fast delivery, premium rakhis, order from India.",
+    "Raksha Bandhan 2026 is August 28. Send Rakhi to brothers in all 50 US states from India, UK & worldwide. Premium rakhis, 5–7 day USA delivery, free shipping on selected orders.",
   path: "/raksha-bandhan",
   keywords:
-    "raksha bandhan 2026, raksha bandhan USA, send rakhi USA, rakhi delivery USA, raksha bandhan date 2026, usarakhi",
+    "raksha bandhan 2026, raksha bandhan USA, send rakhi USA, rakhi delivery USA, raksha bandhan date 2026, send rakhi from India to USA, rakhi for brother in USA, usarakhi",
 });
 
 export default function RakshaBandhanPage() {
   const hero = homeBanners[0];
+  const content = rakshaBandhanContent;
 
   return (
     <div>
-      <JsonLd data={[faqJsonLd(faqs.slice(0, 4)), rakshaBandhanEventJsonLd()]} />
+      <JsonLd data={[faqJsonLd(rakshaBandhanFaqs), rakshaBandhanEventJsonLd()]} />
 
       {/* Hero */}
       <section className="relative bg-primary text-white overflow-hidden">
@@ -59,10 +62,19 @@ export default function RakshaBandhanPage() {
         </div>
       </section>
 
+      {/* SEO intro */}
+      <section className="max-w-4xl mx-auto px-4 py-12">
+        <div className="space-y-4 text-slate-700 leading-relaxed">
+          {content.intro.map((para, i) => (
+            <p key={i}>{para}</p>
+          ))}
+        </div>
+      </section>
+
       {/* Showcase grid */}
-      <section className="max-w-7xl mx-auto px-4 py-14">
+      <section className="max-w-7xl mx-auto px-4 py-10 border-t border-slate-100">
         <h2 className="text-2xl md:text-3xl font-bold text-primary text-center mb-2">
-          Premium Rakhis for Raksha Bandhan
+          Premium Rakhis for Raksha Bandhan 2026
         </h2>
         <p className="text-center text-slate-600 mb-10 max-w-2xl mx-auto">
           Single rakhis, chocolate combos, kids designs, and Bhaiya Bhabhi sets — all delivered across the USA.
@@ -80,8 +92,23 @@ export default function RakshaBandhanPage() {
         </div>
       </section>
 
+      {/* Why UsaRakhi */}
+      <section className="bg-slate-50 border-y border-slate-200 py-12">
+        <div className="max-w-4xl mx-auto px-4">
+          <h2 className="text-2xl font-bold text-primary mb-6">{content.whyUsaRakhi.heading}</h2>
+          <ul className="grid sm:grid-cols-2 gap-3">
+            {content.whyUsaRakhi.points.map((point) => (
+              <li key={point} className="flex gap-2 text-slate-700 text-sm leading-relaxed">
+                <span className="text-nav shrink-0 font-bold">✓</span>
+                {point}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
       {/* Brother & sister stories */}
-      <section className="bg-slate-50 border-y border-slate-200 py-14">
+      <section className="py-14">
         <div className="max-w-7xl mx-auto px-4">
           <h2 className="text-2xl md:text-3xl font-bold text-primary text-center mb-2">
             Real Stories — Brothers & Sisters Across Miles
@@ -110,10 +137,20 @@ export default function RakshaBandhanPage() {
         </div>
       </section>
 
+      {/* Traditions */}
+      <section className="max-w-4xl mx-auto px-4 py-12">
+        <h2 className="text-2xl font-bold text-primary mb-6">{content.tradition.heading}</h2>
+        <div className="space-y-4 text-slate-700 leading-relaxed">
+          {content.tradition.paragraphs.map((para, i) => (
+            <p key={i}>{para}</p>
+          ))}
+        </div>
+      </section>
+
       {/* How to celebrate */}
-      <section className="max-w-5xl mx-auto px-4 py-14">
+      <section className="max-w-5xl mx-4 lg:mx-auto px-4 py-12 bg-slate-50 rounded-2xl">
         <h2 className="text-2xl font-bold text-primary text-center mb-10">
-          How to Celebrate Raksha Bandhan Across Distances
+          How to Send Rakhi to USA — 4 Simple Steps
         </h2>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {rakshaBandhanSteps.map((item) => (
@@ -128,10 +165,40 @@ export default function RakshaBandhanPage() {
         </div>
       </section>
 
+      {/* Order timeline */}
+      <section className="max-w-4xl mx-auto px-4 py-12">
+        <h2 className="text-2xl font-bold text-primary mb-6">{content.orderGuide.heading}</h2>
+        <ul className="space-y-3">
+          {content.orderGuide.paragraphs.map((item) => (
+            <li key={item} className="flex gap-3 text-slate-700 leading-relaxed">
+              <span className="text-accent shrink-0">●</span>
+              {item}
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      {/* Cities */}
+      <section className="max-w-4xl mx-auto px-4 py-10 border-t border-slate-100">
+        <h2 className="text-2xl font-bold text-primary mb-4">{content.cities.heading}</h2>
+        <p className="text-slate-700 leading-relaxed mb-6">{content.cities.text}</p>
+        <div className="flex flex-wrap gap-2">
+          {cityLinks.map((c) => (
+            <Link
+              key={c.slug}
+              href={`/cities/${c.slug}`}
+              className="px-3 py-1.5 rounded-full border border-slate-200 text-sm text-primary hover:border-nav hover:text-nav"
+            >
+              {c.label}
+            </Link>
+          ))}
+        </div>
+      </section>
+
       {/* Shop categories */}
-      <section className="max-w-5xl mx-auto px-4 pb-14">
-        <h2 className="text-2xl font-bold text-primary mb-6 text-center">Shop by Category</h2>
-        <div className="grid sm:grid-cols-2 gap-3">
+      <section className="max-w-5xl mx-auto px-4 py-12">
+        <h2 className="text-2xl font-bold text-primary mb-6 text-center">Shop Rakhi by Category</h2>
+        <div className="grid sm:grid-cols-2 gap-3 mb-8">
           {categoryOrder.map((slug) => (
             <Link
               key={slug}
@@ -143,12 +210,44 @@ export default function RakshaBandhanPage() {
             </Link>
           ))}
         </div>
-        <p className="text-center mt-8 text-slate-600">
-          Complete guide:{" "}
-          <Link href="/blog/raksha-bandhan-2026-usa" className="text-nav font-semibold hover:underline">
-            Raksha Bandhan 2026 USA — date, muhurat & delivery tips
+        <div className="flex flex-wrap justify-center gap-4 text-sm">
+          <Link href="/blog/send-rakhi-to-usa-from-india" className="text-nav font-semibold hover:underline">
+            Send Rakhi from India guide →
           </Link>
+          <Link href="/blog/best-rakhi-combo-with-chocolates" className="text-nav font-semibold hover:underline">
+            Best Rakhi combos →
+          </Link>
+          <Link href="/shipping" className="text-nav font-semibold hover:underline">
+            Shipping & delivery →
+          </Link>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="max-w-3xl mx-auto px-4 py-12 border-t border-slate-100">
+        <h2 className="text-2xl font-bold text-primary text-center mb-2">Raksha Bandhan 2026 — FAQ</h2>
+        <p className="text-center text-sm text-slate-500 mb-8">
+          <Link href="/faq" className="text-nav hover:underline">View all FAQs</Link>
         </p>
+        <div className="space-y-3">
+          {rakshaBandhanFaqs.map((f) => (
+            <details key={f.q} className="border border-slate-200 rounded-lg p-5 bg-white">
+              <summary className="font-semibold text-primary cursor-pointer text-sm">{f.q}</summary>
+              <p className="text-slate-600 text-sm mt-3 leading-relaxed">{f.a}</p>
+            </details>
+          ))}
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="bg-primary text-white py-14 text-center px-4">
+        <h2 className="text-2xl md:text-3xl font-bold mb-4">Ready for Raksha Bandhan 2026?</h2>
+        <p className="text-white/85 max-w-xl mx-auto mb-8 leading-relaxed">
+          Send Rakhi to your brother in the USA today. 126+ premium designs, 5–7 day delivery, roli chawal included.
+        </p>
+        <Link href="/products" className="inline-block px-8 py-3 bg-accent text-white font-semibold rounded-lg hover:opacity-90">
+          Shop Rakhis Now
+        </Link>
       </section>
     </div>
   );
