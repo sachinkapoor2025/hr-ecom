@@ -68,33 +68,35 @@ export function AddToCartControl({ productSlug, disabled, className = "", fullWi
     <div className={className} onClick={stop}>
       {error && <p className="text-xs text-red-600 mb-1">{error}</p>}
       <div
-        className={`flex items-center rounded-full bg-nav text-white font-semibold text-sm px-4 py-2.5 ${fullWidth ? "w-full" : ""}`}
+        className={`relative flex items-center justify-center rounded-full bg-nav text-white font-semibold text-sm px-4 py-2.5 ${fullWidth ? "w-full" : "min-w-[12rem]"}`}
       >
-        <button
-          type="button"
-          aria-label="Decrease quantity"
-          disabled={busy}
-          onClick={(e) => {
-            stop(e);
-            void run(() => (quantity <= 1 ? removeItem(productSlug) : updateItem(productSlug, quantity - 1)));
-          }}
-          className="px-2 hover:opacity-80 disabled:opacity-50"
-        >
-          −
-        </button>
-        <span className="min-w-[1.5rem] text-center">{quantity}</span>
-        <button
-          type="button"
-          aria-label="Increase quantity"
-          disabled={busy || disabled}
-          onClick={(e) => {
-            stop(e);
-            void run(() => addItem(productSlug, 1));
-          }}
-          className="px-2 hover:opacity-80 disabled:opacity-50"
-        >
-          +
-        </button>
+        <div className="flex items-center">
+          <button
+            type="button"
+            aria-label="Decrease quantity"
+            disabled={busy}
+            onClick={(e) => {
+              stop(e);
+              void run(() => (quantity <= 1 ? removeItem(productSlug) : updateItem(productSlug, quantity - 1)));
+            }}
+            className="px-2 hover:opacity-80 disabled:opacity-50"
+          >
+            −
+          </button>
+          <span className="min-w-[1.5rem] text-center">{quantity}</span>
+          <button
+            type="button"
+            aria-label="Increase quantity"
+            disabled={busy || disabled}
+            onClick={(e) => {
+              stop(e);
+              void run(() => addItem(productSlug, 1));
+            }}
+            className="px-2 hover:opacity-80 disabled:opacity-50"
+          >
+            +
+          </button>
+        </div>
         <button
           type="button"
           aria-label="Remove from cart"
@@ -103,7 +105,7 @@ export function AddToCartControl({ productSlug, disabled, className = "", fullWi
             stop(e);
             void run(() => removeItem(productSlug));
           }}
-          className="ml-auto pl-3 hover:opacity-80 disabled:opacity-50"
+          className="absolute right-4 hover:opacity-80 disabled:opacity-50"
         >
           <TrashIcon />
         </button>
