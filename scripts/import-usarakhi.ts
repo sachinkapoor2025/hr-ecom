@@ -23,6 +23,15 @@ const MAIN_CATEGORY_SLUGS = new Set([
   "lumba-rakhi",
 ]);
 
+/** Fetch more specific categories first so duplicates keep the best assignment. */
+const CATEGORY_FETCH_ORDER = [
+  "single-rakhi",
+  "kids-rakhi",
+  "bhaiya-bhabhi-rakhi",
+  "lumba-rakhi",
+  "rakhi-combo",
+] as const;
+
 interface WcCategory {
   id: number;
   name: string;
@@ -103,6 +112,30 @@ async function fetchJson<T>(url: string): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+function toCatalogProduct(p: WcProduct, fallbackCategorySlug: string): CatalogProduct {
+  const minor = p.prices.currency_minor_unit ?? 2;
+  const price = toPrice(p.prices.price, minor);
+  const regular = toPrice(p.prices.regular_price, minor);
+  const explicitCat = p.categories.find((c) => MAIN_CATEGORY_SLUGS.has(c.slug));
+  const plainDesc = stripHtml(p.description);
+
+  return {
+    name: decodeEntities(p.name),
+    slug: p.slug,
+    description: plainDesc,
+    price,
+    compareAtPrice: p.on_sale && regular > price ? regular : undefined,
+    currency: p.prices.currency_code === "INR" ? "INR" : "USD",
+    categorySlug: explicitCat?.slug ?? fallbackCategorySlug,
+    images: p.images.map((img) => img.src).filter(Boolean),
+    sku: p.sku || undefined,
+    inventory: 100,
+    tags: p.tags.map((t) => t.name),
+    seoTitle: decodeEntities(p.name),
+    seoDescription: plainDesc.slice(0, 160),
+  };
+}
+
 async function fetchCatalog(): Promise<{ categories: CatalogCategory[]; products: CatalogProduct[] }> {
   const wcCategories = await fetchJson<WcCategory[]>(`${WC_BASE}/products/categories?per_page=100`);
   const categories: CatalogCategory[] = wcCategories
@@ -114,38 +147,26 @@ async function fetchCatalog(): Promise<{ categories: CatalogCategory[]; products
       sortOrder: i + 1,
     }));
 
-  const products: CatalogProduct[] = [];
-  for (let page = 1; page <= 3; page++) {
-    const batch = await fetchJson<WcProduct[]>(`${WC_BASE}/products?per_page=100&page=${page}`);
-    if (batch.length === 0) break;
-    for (const p of batch) {
-      const minor = p.prices.currency_minor_unit ?? 2;
-      const price = toPrice(p.prices.price, minor);
-      const regular = toPrice(p.prices.regular_price, minor);
-      const mainCat =
-        p.categories.find((c) => MAIN_CATEGORY_SLUGS.has(c.slug)) ?? p.categories[0];
-      if (!mainCat) continue;
+  const activeSlugs = new Set(categories.map((c) => c.slug));
+  const productMap = new Map<string, CatalogProduct>();
 
-      const plainDesc = stripHtml(p.description);
-      products.push({
-        name: decodeEntities(p.name),
-        slug: p.slug,
-        description: plainDesc,
-        price,
-        compareAtPrice: p.on_sale && regular > price ? regular : undefined,
-        currency: p.prices.currency_code === "INR" ? "INR" : "USD",
-        categorySlug: mainCat.slug,
-        images: p.images.map((img) => img.src).filter(Boolean),
-        sku: p.sku || undefined,
-        inventory: 100,
-        tags: p.tags.map((t) => t.name),
-        seoTitle: decodeEntities(p.name),
-        seoDescription: plainDesc.slice(0, 160),
-      });
+  for (const catSlug of CATEGORY_FETCH_ORDER) {
+    if (!activeSlugs.has(catSlug)) continue;
+
+    for (let page = 1; page <= 5; page++) {
+      const batch = await fetchJson<WcProduct[]>(
+        `${WC_BASE}/products?category=${catSlug}&per_page=100&page=${page}`
+      );
+      if (batch.length === 0) break;
+
+      for (const p of batch) {
+        if (productMap.has(p.slug)) continue;
+        productMap.set(p.slug, toCatalogProduct(p, catSlug));
+      }
     }
   }
 
-  return { categories, products };
+  return { categories, products: Array.from(productMap.values()) };
 }
 
 function getDocClient() {
