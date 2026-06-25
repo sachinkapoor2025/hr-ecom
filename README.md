@@ -17,6 +17,8 @@ AI-first, full-featured e-commerce built for **prompt-driven development** with 
 
 ## Quick Start (Local)
 
+Requires **Node.js 24+** (see `.nvmrc` — `nvm use` or `fnm use`).
+
 ```bash
 cd hr-ecom
 npm install

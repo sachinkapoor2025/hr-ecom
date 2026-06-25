@@ -54,6 +54,8 @@ This repository is an **AI-first e-commerce platform**. Developers add features 
 
 ## Testing Changes Locally
 
+Requires **Node.js 24+** (see `.nvmrc`).
+
 ```bash
 npm install
 npm run dev          # Next.js on :3000
