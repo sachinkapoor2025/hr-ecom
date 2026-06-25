@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState, useCallback, type React
 import { api } from "./api";
 import { getOrCreateSessionId, useSessionId } from "./session";
 import { useAuth } from "./auth-context";
+import { trackCartAdd, trackCartRemove } from "./track";
 import type { Cart } from "@hr-ecom/shared";
 
 interface CartContextValue {
@@ -12,6 +13,7 @@ interface CartContextValue {
   sessionReady: boolean;
   refresh: () => Promise<void>;
   addItem: (productSlug: string, quantity?: number) => Promise<void>;
+  updateItem: (productSlug: string, quantity: number) => Promise<void>;
   removeItem: (productSlug: string) => Promise<void>;
   itemCount: number;
 }
@@ -63,6 +65,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
       body: JSON.stringify({ productSlug, quantity }),
     });
     setCart(normalizeCart(data.cart));
+    const added = data.cart.items.find((i) => i.productSlug === productSlug);
+    trackCartAdd(productSlug, added ? added.price * added.quantity : undefined);
   };
 
   const removeItem = async (productSlug: string) => {
@@ -75,12 +79,26 @@ export function CartProvider({ children }: { children: ReactNode }) {
       token,
     });
     setCart(normalizeCart(data.cart));
+    trackCartRemove(productSlug);
+  };
+
+  const updateItem = async (productSlug: string, quantity: number) => {
+    const sid = resolveSessionId();
+    if (!sid) throw new Error("Session not ready — please try again");
+
+    const data = await api<{ cart: Cart }>(`/cart/items/${productSlug}`, {
+      method: "PUT",
+      sessionId: sid,
+      token,
+      body: JSON.stringify({ quantity }),
+    });
+    setCart(normalizeCart(data.cart));
   };
 
   const itemCount = cart?.items.reduce((sum, i) => sum + i.quantity, 0) ?? 0;
 
   return (
-    <CartContext.Provider value={{ cart, loading, sessionReady, refresh, addItem, removeItem, itemCount }}>
+    <CartContext.Provider value={{ cart, loading, sessionReady, refresh, addItem, updateItem, removeItem, itemCount }}>
       {children}
     </CartContext.Provider>
   );

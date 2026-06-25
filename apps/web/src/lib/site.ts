@@ -6,7 +6,7 @@ export const site = {
     "Send Rakhi to USA with fast delivery, free shipping on selected orders, and premium Rakhi combos. Trusted by sisters worldwide for Raksha Bandhan.",
   supportEmail: "support@usarakhi.com",
   phone: "+1 (555) 123-4567",
-  logoSrc: "/logo.png",
+  logoSrc: "https://usarakhi.com/wp-content/uploads/2026/02/transparent-logo-1.png",
   primaryColor: "#183a68",
   navBlue: "#4876e8",
   accentColor: "#e11d48",
@@ -14,12 +14,13 @@ export const site = {
 
 export const navItems = [
   { label: "Home", href: "/" },
-  { label: "Single Rakhi", href: "/products?category=single-rakhi", category: "single-rakhi" },
-  { label: "Rakhi Combo", href: "/products?category=rakhi-combo", category: "rakhi-combo" },
-  { label: "Kids Rakhi", href: "/products?category=kids-rakhi", category: "kids-rakhi" },
-  { label: "Bhaiya Bhabhi Rakhi", href: "/products?category=bhaiya-bhabhi-rakhi", category: "bhaiya-bhabhi-rakhi" },
-  { label: "Lumba Rakhi", href: "/products?category=lumba-rakhi", category: "lumba-rakhi" },
-  { label: "Blogs", href: "/blog" },
+  { label: "Single Rakhi", href: "/categories/single-rakhi", category: "single-rakhi" },
+  { label: "Rakhi Combo", href: "/categories/rakhi-combo", category: "rakhi-combo" },
+  { label: "Kids Rakhi", href: "/categories/kids-rakhi", category: "kids-rakhi" },
+  { label: "Bhaiya Bhabhi Rakhi", href: "/categories/bhaiya-bhabhi-rakhi", category: "bhaiya-bhabhi-rakhi" },
+  { label: "Lumba Rakhi", href: "/categories/lumba-rakhi", category: "lumba-rakhi" },
+  { label: "Raksha Bandhan", href: "/raksha-bandhan" },
+  { label: "Blog", href: "/blog" },
   { label: "Contact Us", href: "/contact" },
 ] as const;
 
@@ -37,19 +38,40 @@ export const cityLinks = [
 
 export const homeBanners = [
   {
-    src: "https://usarakhi.com/wp-content/uploads/2026/03/border-banner-2-1.webp",
-    alt: "Send Rakhi to USA — Raksha Bandhan",
+    src: "/banners/banner-1-usa-rakhi-delivery.png",
+    alt: "USA Rakhi Delivery — Send Beautiful Rakhis to Your Loved Ones in the USA",
     href: "/products?category=rakhi-combo",
+    eyebrow: "RAKSHA BANDHAN · USA DELIVERY",
+    title: "Send Beautiful Rakhis to Your Loved Ones in the",
+    titleAccent: "USA",
+    description:
+      "Premium designer rakhis with express shipping across all 50 states. Same-day dispatch on most orders.",
+    cta: "Shop Rakhi Combos",
+    pill: "Premium Rakhis · Express Shipping · Celebrate Raksha Bandhan",
   },
   {
-    src: "https://usarakhi.com/wp-content/uploads/2026/06/Untitled-design-31-1.png",
-    alt: "Premium Rakhi collection",
+    src: "/banners/banner-2-connecting-hearts.png",
+    alt: "UsaRakhi.com — Connecting hearts across miles",
     href: "/products",
+    eyebrow: "EVERY SISTER · EVERY BROTHER",
+    title: "Connecting Hearts",
+    titleAccent: "Across Miles",
+    description:
+      "Distance may keep you apart, but the bond between siblings remains strong. Delivered with love to your brother.",
+    cta: "Browse All Rakhis",
+    pill: "Trusted by sisters worldwide · Free shipping on selected orders",
   },
   {
-    src: "https://usarakhi.com/wp-content/uploads/2026/06/puja3.png",
-    alt: "Rakhi with Roli Chawal",
+    src: "/banners/banner-3-india-usa.png",
+    alt: "Send Rakhi from India to USA — Premium Rakhis with Express Shipping",
     href: "/products?category=single-rakhi",
+    eyebrow: "INDIA → USA",
+    title: "Bridge the Distance This",
+    titleAccent: "Raksha Bandhan",
+    description:
+      "From India to America — send single rakhis, combos, and gifts with reliable USA delivery you can count on.",
+    cta: "Shop Single Rakhis",
+    pill: "Single Rakhis · Kids Rakhi · Bhaiya Bhabhi Sets",
   },
 ] as const;
 
@@ -75,23 +97,31 @@ export const categoryOrder = [
 export const testimonials = [
   {
     name: "Neha",
-    rating: 4,
-    text: "My brother lives in California and I miss tying Rakhi on his wrist every year. UsaRakhi helped me send Rakhi to the USA and it arrived right on time.",
+    rating: 5,
+    timeAgo: "2 days ago",
+    image: "https://usarakhi.com/wp-content/uploads/2026/06/Untitled-design-31-1.png",
+    text: "My brother lives in California and I miss tying Rakhi on his wrist every year. I used UsaRakhi.com to send Rakhi to the USA and it arrived right on time. He was very surprised and happy when he received it.",
   },
   {
     name: "Anjali",
-    rating: 4,
-    text: "Being away from my brother during Raksha Bandhan is never easy. The Rakhi was beautiful and delivered on time.",
+    rating: 5,
+    timeAgo: "1 week ago",
+    image: "https://usarakhi.com/wp-content/uploads/2026/06/review-picture-2.png",
+    text: "Being away from my brother during Raksha Bandhan is never easy. Thanks to UsaRakhi.com, I could send Rakhi to the USA and make him feel loved. The Rakhi was beautiful and delivered on time.",
   },
   {
     name: "Pooja",
-    rating: 3,
-    text: "UsaRakhi.com helped me send Rakhi to the USA quickly. The Rakhi looked beautiful and made the festival feel complete.",
+    rating: 5,
+    timeAgo: "2 weeks ago",
+    image: "https://usarakhi.com/wp-content/uploads/2026/06/puja3.png",
+    text: "Even though my brother is living in the USA, I never want to miss Raksha Bandhan. UsaRakhi.com helped me send Rakhi to the USA quickly. The Rakhi looked beautiful and made the festival feel complete.",
   },
   {
     name: "Meera",
-    rating: 4,
-    text: "When my brother in California received it, he called me immediately — it felt like we were celebrating together.",
+    rating: 5,
+    timeAgo: "3 weeks ago",
+    image: "https://usarakhi.com/wp-content/uploads/2026/03/coustomer-3-768x1152-1.webp",
+    text: "Distance can never break the bond between siblings. UsaRakhi.com helped me send Rakhi to my brother in California easily. When he received it, he called me immediately and it felt like we were celebrating together.",
   },
 ] as const;
 
@@ -102,7 +132,7 @@ export const faqs = [
   },
   {
     q: "Can I send Rakhi from India to the USA?",
-    a: "Yes. We accept orders from India, UK, Canada, Australia, and anywhere worldwide. Enter the US delivery address at checkout.",
+    a: "Yes. We accept orders from India, UK, Canada, Australia, and anywhere worldwide. Enter the US delivery address at checkout and we ship domestically within America.",
   },
   {
     q: "Can I send Rakhi with chocolates to the USA?",
@@ -110,6 +140,22 @@ export const faqs = [
   },
   {
     q: "Do you offer Bhaiya Bhabhi Rakhi sets?",
-    a: "Yes. Our Bhaiya Bhabhi collection features elegant matching sets for brothers and sisters-in-law.",
+    a: "Yes. Our Bhaiya Bhabhi collection features elegant matching sets for brothers and sisters-in-law, including Lumba rakhis.",
+  },
+  {
+    q: "What is included with Single Rakhi orders?",
+    a: "Most single rakhis include complimentary roli (kumkum) and chawal (rice) for the traditional Raksha Bandhan tilak ceremony.",
+  },
+  {
+    q: "Do you deliver to California, New York, and Texas?",
+    a: "Yes. We deliver to all 50 US states including California, New York, Texas, Florida, New Jersey, Illinois, and every other state.",
+  },
+  {
+    q: "When should I order for Raksha Bandhan 2026?",
+    a: "Raksha Bandhan 2026 is on August 28, 2026. Order by early August to ensure your brother receives the Rakhi before the festival.",
+  },
+  {
+    q: "What payment methods do you accept?",
+    a: "We accept Razorpay (INR) and Stripe (USD) for secure online checkout.",
   },
 ] as const;

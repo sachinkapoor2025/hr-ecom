@@ -1,16 +1,19 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import Image from "next/image";
 import { api } from "@/lib/api";
 import { BannerCarousel } from "@/components/BannerCarousel";
+import { CustomerReviews } from "@/components/CustomerReviews";
 import { HomeProductCard } from "@/components/HomeProductCard";
-import { site, homeBanners, promoBanners, categoryOrder, testimonials, faqs } from "@/lib/site";
+import { JsonLd } from "@/components/JsonLd";
+import { site, homeBanners, categoryOrder, faqs } from "@/lib/site";
+import { faqJsonLd, pageMetadata } from "@/lib/seo";
 import type { Product, Category } from "@hr-ecom/shared";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Send Rakhi to USA Online | Free Shipping",
   description: site.description,
-};
+  path: "/",
+});
 
 export const dynamic = "force-dynamic";
 
@@ -39,22 +42,38 @@ export default async function HomePage() {
 
   return (
     <div>
+      <JsonLd data={faqJsonLd(faqs)} />
       <BannerCarousel banners={homeBanners} />
 
-      <section className="max-w-7xl mx-auto px-4 py-8 text-center">
-        <h1 className="text-2xl md:text-4xl font-bold text-primary mb-3">{site.tagline}</h1>
-        <p className="text-slate-600 max-w-3xl mx-auto text-sm md:text-base">
-          Distance may keep you miles apart, but the bond between siblings remains strong. Send Rakhi to USA with
-          fast delivery, free shipping on selected orders, and same-day dispatch.
+      <section className="max-w-4xl mx-auto px-4 py-10 text-center">
+        <h1 className="text-2xl md:text-3xl font-bold text-primary mb-4">
+          Send Rakhi to USA — Premium Online Rakhi Delivery
+        </h1>
+        <p className="text-slate-600 leading-relaxed mb-4">
+          {site.name} helps sisters in India, UK, Canada, Australia, and worldwide send Rakhi to brothers
+          across all 50 United States. Shop 126+ designer rakhis — Single Rakhi, Combos with chocolates,
+          Kids Rakhi, Bhaiya Bhabhi sets, and Lumba Rakhi — delivered in 5–7 business days with roli chawal
+          included.
         </p>
+        <div className="flex flex-wrap justify-center gap-3 text-sm">
+          <Link href="/raksha-bandhan" className="text-nav font-semibold hover:underline">
+            Raksha Bandhan 2026 →
+          </Link>
+          <Link href="/blog/send-rakhi-to-usa-from-india" className="text-nav font-semibold hover:underline">
+            Send from India guide →
+          </Link>
+          <Link href="/shipping" className="text-nav font-semibold hover:underline">
+            Shipping info →
+          </Link>
+        </div>
       </section>
 
-      {productsByCategory.map((section, idx) =>
+      {productsByCategory.map((section) =>
         section.products.length > 0 ? (
           <section key={section.slug} className="max-w-7xl mx-auto px-4 py-8">
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-xl md:text-2xl font-bold text-primary capitalize">{section.name}</h2>
-              <Link href={`/products?category=${section.slug}`} className="text-nav font-semibold text-sm hover:underline">
+              <Link href={`/categories/${section.slug}`} className="text-nav font-semibold text-sm hover:underline">
                 View All →
               </Link>
             </div>
@@ -63,11 +82,6 @@ export default async function HomePage() {
                 <HomeProductCard key={p.slug} product={p} />
               ))}
             </div>
-            {idx === 1 && promoBanners[0] && (
-              <div className="mt-8 relative w-full aspect-[21/5] rounded-lg overflow-hidden bg-slate-100">
-                <Image src={promoBanners[0].src} alt={promoBanners[0].alt} fill className="object-cover" sizes="100vw" />
-              </div>
-            )}
           </section>
         ) : null
       )}
@@ -79,32 +93,15 @@ export default async function HomePage() {
         </p>
       )}
 
-      {promoBanners[1] && (
-        <section className="max-w-7xl mx-auto px-4 py-6">
-          <div className="relative w-full max-w-md mx-auto aspect-[768/1152] rounded-lg overflow-hidden bg-slate-100">
-            <Image src={promoBanners[1].src} alt={promoBanners[1].alt} fill className="object-cover" sizes="400px" />
-          </div>
-        </section>
-      )}
-
-      <section className="bg-primary text-white py-12">
-        <div className="max-w-7xl mx-auto px-4">
-          <h2 className="text-2xl font-bold text-center mb-8">Loved by Brothers &amp; Sisters</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {testimonials.map((t) => (
-              <blockquote key={t.name} className="bg-white/10 rounded-xl p-4 text-sm">
-                <p className="text-blue-100 mb-2">&ldquo;{t.text}&rdquo;</p>
-                <footer className="font-semibold">{t.name}</footer>
-              </blockquote>
-            ))}
-          </div>
-        </div>
-      </section>
+      <CustomerReviews />
 
       <section className="max-w-3xl mx-auto px-4 py-12">
-        <h2 className="text-2xl font-bold text-primary text-center mb-6">FAQ</h2>
+        <h2 className="text-2xl font-bold text-primary text-center mb-2">Frequently Asked Questions</h2>
+        <p className="text-center text-sm text-slate-500 mb-6">
+          <Link href="/faq" className="text-nav hover:underline">View all FAQs</Link>
+        </p>
         <div className="space-y-3">
-          {faqs.map((f) => (
+          {faqs.slice(0, 6).map((f) => (
             <details key={f.q} className="border border-slate-200 rounded-lg p-4 bg-white">
               <summary className="font-semibold text-primary cursor-pointer text-sm">{f.q}</summary>
               <p className="text-slate-600 text-sm mt-2">{f.a}</p>

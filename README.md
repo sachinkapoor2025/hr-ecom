@@ -13,9 +13,11 @@ AI-first, full-featured e-commerce built for **prompt-driven development** with 
 | Auth | AWS Cognito + local dev auth (admin@shop.com for admin) |
 | SEO | SSR metadata, sitemap, robots.txt, JSON-LD product schema |
 | Infrastructure | SAM: DynamoDB, Lambda, API Gateway, S3, CloudFront, Cognito |
-| CI/CD | GitHub Actions + Amplify hosting config |
+| CI/CD | GitHub Actions + Amplify hosting config | 
 
 ## Quick Start (Local)
+
+Requires **Node.js 20+** (see `.nvmrc` — `nvm use` or `fnm use`).
 
 ```bash
 cd hr-ecom
@@ -29,7 +31,7 @@ cp apps/api/.env.example apps/api/.env
 npm run dev:all
 
 # Option B: DynamoDB Local (requires Docker)
-# npm run setup:local   # docker + table + seed
+# npm run setup:local   # docker + table + seed 
 # npm run dev:all
 ```
 

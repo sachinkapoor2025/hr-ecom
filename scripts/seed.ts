@@ -17,7 +17,9 @@ const client = new DynamoDBClient({
 });
 
 const docClient = DynamoDBDocumentClient.from(client);
-const TABLE_NAME = process.env.TABLE_NAME ?? "hr-ecom-dev";
+const ENV = process.env.ENVIRONMENT ?? "dev";
+const PRODUCTS_TABLE = process.env.PRODUCTS_TABLE ?? `hr-ecom-products-${ENV}`;
+const CONFIG_TABLE = process.env.CONFIG_TABLE ?? `hr-ecom-config-${ENV}`;
 const now = () => new Date().toISOString();
 
 function loadCatalog() {
@@ -52,7 +54,7 @@ async function seed() {
   for (const cat of categories) {
     await docClient.send(
       new PutCommand({
-        TableName: TABLE_NAME,
+        TableName: PRODUCTS_TABLE,
         Item: {
           ...cat,
           published: true,
@@ -68,7 +70,7 @@ async function seed() {
   for (const p of products) {
     await docClient.send(
       new PutCommand({
-        TableName: TABLE_NAME,
+        TableName: PRODUCTS_TABLE,
         Item: {
           ...p,
           published: true,
@@ -85,7 +87,7 @@ async function seed() {
 
   await docClient.send(
     new PutCommand({
-      TableName: TABLE_NAME,
+      TableName: CONFIG_TABLE,
       Item: {
         PK: configKeys.payments.pk,
         SK: configKeys.payments.sk,

@@ -43,25 +43,26 @@ hr-ecom/
 └── docs/
 ```
 
-## DynamoDB Single-Table Design
+## DynamoDB Multi-Table Design
 
-Table: `hr-ecom-{env}`
+Per-domain tables (`PAY_PER_REQUEST`), named `hr-ecom-<domain>-{env}` and wired into
+the Lambda via env vars (`PRODUCTS_TABLE`, `ORDERS_TABLE`, `CARTS_TABLE`,
+`CUSTOMERS_TABLE`, `EVENTS_TABLE`, `CONFIG_TABLE`).
 
-| PK | SK | Entity |
-|----|-----|--------|
-| `PRODUCT#<slug>` | `META` | Product |
-| `CATEGORY#<slug>` | `META` | Category |
-| `USER#<userId>` | `PROFILE` | User profile |
-| `USER#<userId>` | `CART` | Cart |
-| `USER#<userId>` | `ORDER#<orderId>` | Order |
-| `LEAD#<leadId>` | `META` | Partial customer capture |
-| `SESSION#<sessionId>` | `META` | Anonymous visitor tracking |
-| `CONFIG#PAYMENTS` | `META` | Stripe/Razorpay settings |
-| `GSI1PK` | `GSI1SK` | Category → products, status queries |
+| Table | PK | SK | Notes / GSIs |
+|-------|----|----|--------------|
+| products | `PRODUCT#<slug>` / `CATEGORY#<slug>` | `META` | GSI1 `CATEGORY#<slug>` → products |
+| orders | `ORDER#<orderId>` | `META` | GSI1 byCustomer (`USER#<key>`), GSI2 byDate (`ENTITY#ORDER`), GSI3 byStatus (`STATUS#<status>`) |
+| carts | `CART#<userKey>` | `META` | GSI1 byUpdatedAt (`ENTITY#CART`) + `itemCount`; TTL `expiresAt` |
+| customers | `SESSION#<sessionId>` | `PROFILE` / `LEAD#<ts>` | GSI1 lead feed (`ENTITY#LEAD`) |
+| events | `SESSION#<sessionId>` | `<ts>#<eventId>` | GSI1 byTypeDay (`<type>#<yyyy-mm-dd>`); TTL `expiresAt` (90d). Rollups: PK `ROLLUP#<yyyy-mm-dd>` |
+| config | `CONFIG#PAYMENTS` | `META` | Stripe/Razorpay settings |
 
-GSIs:
-- **GSI1**: `GSI1PK` = `CATEGORY#<slug>`, `GSI1SK` = `PRODUCT#<slug>`
-- **GSI2**: `GSI2PK` = `ENTITY#ORDER`, `GSI2SK` = `<createdAt>`
+Order status lifecycle: `pending_payment → paid → processing → shipped → delivered`
+(plus `cancelled` / `refunded`), with a `statusHistory[]` audit trail and tracking number.
+
+Migration from the legacy single table: `npm run migrate:multitable` (copies orders +
+leads/sessions; products re-seed via `import:usarakhi`).
 
 ## API Routes (Lambda)
 
@@ -82,8 +83,19 @@ GSIs:
 | POST | `/webhooks/stripe` | Stripe webhook |
 | POST | `/webhooks/razorpay` | Razorpay webhook |
 | POST | `/leads` | Save partial customer info |
+| POST | `/events` | First-party analytics events (batched, public) |
 | GET | `/orders` | User orders |
-| GET | `/admin/orders` | Admin orders |
+| GET | `/orders/{orderId}` | Order detail (owner/admin) |
+| GET | `/admin/orders` | Admin: list orders (filter `?status=`) |
+| GET | `/admin/orders/{orderId}` | Admin: order detail |
+| PATCH | `/admin/orders/{orderId}` | Admin: update status + tracking |
+| GET | `/admin/analytics/overview` | Admin: traffic + funnel (`?days=`) |
+| GET | `/admin/analytics/products` | Admin: most-viewed products |
+| GET | `/admin/analytics/searches` | Admin: top + zero-result searches |
+| GET | `/admin/sessions` | Admin: recent visitor sessions |
+| GET | `/admin/sessions/{sessionId}` | Admin: full visitor journey |
+| GET | `/admin/carts/abandoned` | Admin: abandoned carts (CSV in UI) |
+| GET | `/admin/leads` | Admin: captured leads |
 | GET | `/config/payments` | Public payment region config |
 
 ## Payment Flow

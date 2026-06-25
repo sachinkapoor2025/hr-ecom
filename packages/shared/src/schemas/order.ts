@@ -16,7 +16,23 @@ export const shippingAddressSchema = z.object({
 
 export const checkoutSchema = z.object({
   shippingAddress: shippingAddressSchema,
-  paymentRegion: z.enum(["US", "IN"]),
+  paymentMethod: z.enum(["stripe", "razorpay"]),
+});
+
+const orderStatusEnum = z.enum([
+  ORDER_STATUS.PENDING_PAYMENT,
+  ORDER_STATUS.PAID,
+  ORDER_STATUS.PROCESSING,
+  ORDER_STATUS.SHIPPED,
+  ORDER_STATUS.DELIVERED,
+  ORDER_STATUS.CANCELLED,
+  ORDER_STATUS.REFUNDED,
+]);
+
+export const orderStatusHistoryEntrySchema = z.object({
+  status: orderStatusEnum,
+  at: z.string(),
+  note: z.string().optional(),
 });
 
 export const orderSchema = z.object({
@@ -29,23 +45,29 @@ export const orderSchema = z.object({
   tax: z.number().default(0),
   total: z.number(),
   currency: z.enum(["USD", "INR"]),
-  status: z.enum([
-    ORDER_STATUS.PENDING_PAYMENT,
-    ORDER_STATUS.PAID,
-    ORDER_STATUS.PROCESSING,
-    ORDER_STATUS.SHIPPED,
-    ORDER_STATUS.DELIVERED,
-    ORDER_STATUS.CANCELLED,
-    ORDER_STATUS.REFUNDED,
-  ]),
+  status: orderStatusEnum,
+  statusHistory: z.array(orderStatusHistoryEntrySchema).optional(),
   shippingAddress: shippingAddressSchema,
   paymentProvider: z.enum(["stripe", "razorpay"]).optional(),
   paymentIntentId: z.string().optional(),
   razorpayOrderId: z.string().optional(),
+  razorpayPaymentId: z.string().optional(),
+  trackingNumber: z.string().optional(),
+  carrier: z.string().optional(),
+});
+
+/** Admin order status update payload. */
+export const orderStatusUpdateSchema = z.object({
+  status: orderStatusEnum,
+  trackingNumber: z.string().optional(),
+  carrier: z.string().optional(),
+  note: z.string().max(500).optional(),
 });
 
 export type ShippingAddress = z.infer<typeof shippingAddressSchema>;
 export type CheckoutInput = z.infer<typeof checkoutSchema>;
+export type OrderStatusUpdate = z.infer<typeof orderStatusUpdateSchema>;
+export type OrderStatusHistoryEntry = z.infer<typeof orderStatusHistoryEntrySchema>;
 export type Order = z.infer<typeof orderSchema> & {
   createdAt: string;
   updatedAt: string;

@@ -70,12 +70,12 @@ export async function attachImageToProduct(event: APIGatewayProxyEventV2) {
   if (!imageUrl) return badRequest("imageUrl required");
 
   const { GetCommand, PutCommand } = await import("@aws-sdk/lib-dynamodb");
-  const { docClient, TABLE_NAME, now } = await import("../lib/db");
+  const { docClient, PRODUCTS_TABLE, now } = await import("../lib/db");
   const { productKeys } = await import("@hr-ecom/shared");
 
   const existing = await docClient.send(
     new GetCommand({
-      TableName: TABLE_NAME,
+      TableName: PRODUCTS_TABLE,
       Key: { PK: productKeys.pk(slug), SK: productKeys.sk() },
     })
   );
@@ -84,7 +84,7 @@ export async function attachImageToProduct(event: APIGatewayProxyEventV2) {
   const images = [...((existing.Item.images as string[]) ?? []), imageUrl];
   const updated = { ...existing.Item, images, updatedAt: now() };
 
-  await docClient.send(new PutCommand({ TableName: TABLE_NAME, Item: updated }));
+  await docClient.send(new PutCommand({ TableName: PRODUCTS_TABLE, Item: updated }));
   return ok({ product: updated });
 }
 

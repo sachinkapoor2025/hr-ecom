@@ -3,8 +3,8 @@
  * into DynamoDB. Also writes scripts/data/usarakhi-catalog.json for local seed.
  *
  * Usage:
- *   npm run import:usarakhi -- --fetch-only          # refresh catalog JSON
- *   TABLE_NAME=hr-ecom-prod npm run import:usarakhi  # import to AWS
+ *   npm run import:usarakhi -- --fetch-only           # refresh catalog JSON
+ *   ENVIRONMENT=prod npm run import:usarakhi          # import to AWS (prod tables)
  */
 import { writeFileSync, mkdirSync, readFileSync, existsSync } from "fs";
 import { join } from "path";
@@ -22,6 +22,15 @@ const MAIN_CATEGORY_SLUGS = new Set([
   "kids-rakhi",
   "lumba-rakhi",
 ]);
+
+/** Fetch more specific categories first so duplicates keep the best assignment. */
+const CATEGORY_FETCH_ORDER = [
+  "single-rakhi",
+  "kids-rakhi",
+  "bhaiya-bhabhi-rakhi",
+  "lumba-rakhi",
+  "rakhi-combo",
+] as const;
 
 interface WcCategory {
   id: number;
@@ -103,6 +112,122 @@ async function fetchJson<T>(url: string): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+/** Scrape WooCommerce product gallery (data-large_image) — Store API often returns only 1 image. */
+function isProductGalleryImage(url: string): boolean {
+  const lower = url.toLowerCase();
+  if (!lower.includes("/wp-content/uploads/")) return false;
+  if (lower.includes("logo") || lower.includes("border-banner") || lower.includes("cropped-transparent")) {
+    return false;
+  }
+  // Skip tiny favicon / icon sizes
+  if (/-(?:32x32|100x100|150x150|180x180|192x192|300x300)\.(?:png|jpe?g|webp)/i.test(url)) return false;
+  return true;
+}
+
+async function fetchGalleryImages(slug: string): Promise<string[]> {
+  try {
+    const res = await fetch(`https://usarakhi.com/product/${encodeURIComponent(slug)}/`, {
+      headers: { "User-Agent": "UsaRakhi-Catalog-Import/1.0" },
+    });
+    if (!res.ok) return [];
+    const html = await res.text();
+    const start = html.indexOf("woocommerce-product-gallery");
+    if (start < 0) return [];
+
+    let end = html.length;
+    for (const marker of ['class="related', "related products", "upsells products"]) {
+      const i = html.indexOf(marker, start + 80);
+      if (i > start && i < end) end = i;
+    }
+
+    const chunk = html.slice(start, end);
+    const urls: string[] = [];
+    for (const m of chunk.matchAll(/data-large_image="([^"]+)"/g)) {
+      const url = m[1];
+      if (isProductGalleryImage(url) && !urls.includes(url)) urls.push(url);
+    }
+    return urls;
+  } catch {
+    return [];
+  }
+}
+
+function normalizeImageKey(url: string): string {
+  return url.replace(/-\d+x\d+(\.(?:png|jpe?g|webp))/i, "$1");
+}
+
+async function fetchStoreProductImages(slug: string): Promise<string[]> {
+  try {
+    const data = await fetchJson<WcProduct[]>(
+      `${WC_BASE}/products?slug=${encodeURIComponent(slug)}`
+    );
+    const product = data[0];
+    if (!product) return [];
+    return product.images.map((img) => img.src).filter(isProductGalleryImage);
+  } catch {
+    return [];
+  }
+}
+
+async function enrichProductImages(products: CatalogProduct[]): Promise<void> {
+  const concurrency = 8;
+  let index = 0;
+  let multi = 0;
+
+  async function worker() {
+    while (index < products.length) {
+      const i = index++;
+      const product = products[i];
+      const [gallery, store] = await Promise.all([
+        fetchGalleryImages(product.slug),
+        fetchStoreProductImages(product.slug),
+      ]);
+      const merged: string[] = [];
+      const seen = new Set<string>();
+      for (const url of [...store, ...gallery, ...product.images]) {
+        if (!isProductGalleryImage(url)) continue;
+        const key = normalizeImageKey(url);
+        if (seen.has(key)) continue;
+        seen.add(key);
+        merged.push(url);
+      }
+      if (merged.length > 0) {
+        product.images = merged;
+        if (merged.length > 1) multi++;
+      }
+      if ((i + 1) % 25 === 0) console.log(`  Gallery images: ${i + 1}/${products.length}...`);
+    }
+  }
+
+  console.log(`Fetching product gallery images for ${products.length} products...`);
+  await Promise.all(Array.from({ length: concurrency }, () => worker()));
+  console.log(`Gallery complete: ${multi} products with multiple images`);
+}
+
+function toCatalogProduct(p: WcProduct, fallbackCategorySlug: string): CatalogProduct {
+  const minor = p.prices.currency_minor_unit ?? 2;
+  const price = toPrice(p.prices.price, minor);
+  const regular = toPrice(p.prices.regular_price, minor);
+  const explicitCat = p.categories.find((c) => MAIN_CATEGORY_SLUGS.has(c.slug));
+  const plainDesc = stripHtml(p.description);
+
+  return {
+    name: decodeEntities(p.name),
+    slug: p.slug,
+    description: plainDesc,
+    price,
+    compareAtPrice: p.on_sale && regular > price ? regular : undefined,
+    currency: p.prices.currency_code === "INR" ? "INR" : "USD",
+    categorySlug: explicitCat?.slug ?? fallbackCategorySlug,
+    images: p.images.map((img) => img.src).filter(Boolean),
+    sku: p.sku || undefined,
+    inventory: 100,
+    tags: p.tags.map((t) => t.name),
+    seoTitle: decodeEntities(p.name),
+    seoDescription: plainDesc.slice(0, 160),
+  };
+}
+
 async function fetchCatalog(): Promise<{ categories: CatalogCategory[]; products: CatalogProduct[] }> {
   const wcCategories = await fetchJson<WcCategory[]>(`${WC_BASE}/products/categories?per_page=100`);
   const categories: CatalogCategory[] = wcCategories
@@ -114,37 +239,27 @@ async function fetchCatalog(): Promise<{ categories: CatalogCategory[]; products
       sortOrder: i + 1,
     }));
 
-  const products: CatalogProduct[] = [];
-  for (let page = 1; page <= 3; page++) {
-    const batch = await fetchJson<WcProduct[]>(`${WC_BASE}/products?per_page=100&page=${page}`);
-    if (batch.length === 0) break;
-    for (const p of batch) {
-      const minor = p.prices.currency_minor_unit ?? 2;
-      const price = toPrice(p.prices.price, minor);
-      const regular = toPrice(p.prices.regular_price, minor);
-      const mainCat =
-        p.categories.find((c) => MAIN_CATEGORY_SLUGS.has(c.slug)) ?? p.categories[0];
-      if (!mainCat) continue;
+  const activeSlugs = new Set(categories.map((c) => c.slug));
+  const productMap = new Map<string, CatalogProduct>();
 
-      const plainDesc = stripHtml(p.description);
-      products.push({
-        name: decodeEntities(p.name),
-        slug: p.slug,
-        description: plainDesc,
-        price,
-        compareAtPrice: p.on_sale && regular > price ? regular : undefined,
-        currency: p.prices.currency_code === "INR" ? "INR" : "USD",
-        categorySlug: mainCat.slug,
-        images: p.images.map((img) => img.src).filter(Boolean),
-        sku: p.sku || undefined,
-        inventory: 100,
-        tags: p.tags.map((t) => t.name),
-        seoTitle: decodeEntities(p.name),
-        seoDescription: plainDesc.slice(0, 160),
-      });
+  for (const catSlug of CATEGORY_FETCH_ORDER) {
+    if (!activeSlugs.has(catSlug)) continue;
+
+    for (let page = 1; page <= 5; page++) {
+      const batch = await fetchJson<WcProduct[]>(
+        `${WC_BASE}/products?category=${catSlug}&per_page=100&page=${page}`
+      );
+      if (batch.length === 0) break;
+
+      for (const p of batch) {
+        if (productMap.has(p.slug)) continue;
+        productMap.set(p.slug, toCatalogProduct(p, catSlug));
+      }
     }
   }
 
+  const products = Array.from(productMap.values());
+  await enrichProductImages(products);
   return { categories, products };
 }
 
@@ -160,14 +275,16 @@ function getDocClient() {
 }
 
 async function importToDb(catalog: { categories: CatalogCategory[]; products: CatalogProduct[] }) {
-  const TABLE_NAME = process.env.TABLE_NAME ?? "hr-ecom-dev";
+  const ENV = process.env.ENVIRONMENT ?? "dev";
+  const PRODUCTS_TABLE = process.env.PRODUCTS_TABLE ?? `hr-ecom-products-${ENV}`;
+  const CONFIG_TABLE = process.env.CONFIG_TABLE ?? `hr-ecom-config-${ENV}`;
   const docClient = getDocClient();
   const timestamp = new Date().toISOString();
 
   for (const cat of catalog.categories) {
     await docClient.send(
       new PutCommand({
-        TableName: TABLE_NAME,
+        TableName: PRODUCTS_TABLE,
         Item: {
           ...cat,
           published: true,
@@ -183,7 +300,7 @@ async function importToDb(catalog: { categories: CatalogCategory[]; products: Ca
   for (const p of catalog.products) {
     await docClient.send(
       new PutCommand({
-        TableName: TABLE_NAME,
+        TableName: PRODUCTS_TABLE,
         Item: {
           ...p,
           published: true,
@@ -200,7 +317,7 @@ async function importToDb(catalog: { categories: CatalogCategory[]; products: Ca
 
   await docClient.send(
     new PutCommand({
-      TableName: TABLE_NAME,
+      TableName: CONFIG_TABLE,
       Item: {
         PK: configKeys.payments.pk,
         SK: configKeys.payments.sk,
@@ -210,7 +327,7 @@ async function importToDb(catalog: { categories: CatalogCategory[]; products: Ca
     })
   );
 
-  console.log(`Imported ${catalog.categories.length} categories, ${catalog.products.length} products → ${TABLE_NAME}`);
+  console.log(`Imported ${catalog.categories.length} categories, ${catalog.products.length} products → ${PRODUCTS_TABLE}`);
 }
 
 async function main() {

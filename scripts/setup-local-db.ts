@@ -1,11 +1,13 @@
 /**
- * Creates the DynamoDB table locally (matches SAM template schema).
+ * Creates the local DynamoDB tables (matches the SAM multi-table schema).
  * Run after: docker compose up -d
  */
 import {
   DynamoDBClient,
   CreateTableCommand,
   DescribeTableCommand,
+  type GlobalSecondaryIndex,
+  type AttributeDefinition,
 } from "@aws-sdk/client-dynamodb";
 
 const client = new DynamoDBClient({
@@ -14,55 +16,72 @@ const client = new DynamoDBClient({
   credentials: { accessKeyId: "local", secretAccessKey: "local" },
 });
 
-const TABLE_NAME = process.env.TABLE_NAME ?? "hr-ecom-dev";
+const ENV = process.env.ENVIRONMENT ?? "dev";
 
-async function main() {
+function gsi(name: string): GlobalSecondaryIndex {
+  return {
+    IndexName: name,
+    KeySchema: [
+      { AttributeName: `${name}PK`, KeyType: "HASH" },
+      { AttributeName: `${name}SK`, KeyType: "RANGE" },
+    ],
+    Projection: { ProjectionType: "ALL" },
+  };
+}
+
+function gsiAttrs(name: string): AttributeDefinition[] {
+  return [
+    { AttributeName: `${name}PK`, AttributeType: "S" },
+    { AttributeName: `${name}SK`, AttributeType: "S" },
+  ];
+}
+
+const BASE_ATTRS: AttributeDefinition[] = [
+  { AttributeName: "PK", AttributeType: "S" },
+  { AttributeName: "SK", AttributeType: "S" },
+];
+
+const TABLES: {
+  name: string;
+  indexes: string[];
+}[] = [
+  { name: process.env.PRODUCTS_TABLE ?? `hr-ecom-products-${ENV}`, indexes: ["GSI1"] },
+  { name: process.env.ORDERS_TABLE ?? `hr-ecom-orders-${ENV}`, indexes: ["GSI1", "GSI2", "GSI3"] },
+  { name: process.env.CARTS_TABLE ?? `hr-ecom-carts-${ENV}`, indexes: ["GSI1"] },
+  { name: process.env.CUSTOMERS_TABLE ?? `hr-ecom-customers-${ENV}`, indexes: ["GSI1"] },
+  { name: process.env.EVENTS_TABLE ?? `hr-ecom-events-${ENV}`, indexes: ["GSI1"] },
+  { name: process.env.CONFIG_TABLE ?? `hr-ecom-config-${ENV}`, indexes: [] },
+];
+
+async function ensureTable(name: string, indexes: string[]) {
   try {
-    await client.send(new DescribeTableCommand({ TableName: TABLE_NAME }));
-    console.log(`Table "${TABLE_NAME}" already exists.`);
+    await client.send(new DescribeTableCommand({ TableName: name }));
+    console.log(`Table "${name}" already exists.`);
     return;
   } catch {
     /* create */
   }
 
+  const attrs = [...BASE_ATTRS, ...indexes.flatMap(gsiAttrs)];
   await client.send(
     new CreateTableCommand({
-      TableName: TABLE_NAME,
+      TableName: name,
       BillingMode: "PAY_PER_REQUEST",
-      AttributeDefinitions: [
-        { AttributeName: "PK", AttributeType: "S" },
-        { AttributeName: "SK", AttributeType: "S" },
-        { AttributeName: "GSI1PK", AttributeType: "S" },
-        { AttributeName: "GSI1SK", AttributeType: "S" },
-        { AttributeName: "GSI2PK", AttributeType: "S" },
-        { AttributeName: "GSI2SK", AttributeType: "S" },
-      ],
+      AttributeDefinitions: attrs,
       KeySchema: [
         { AttributeName: "PK", KeyType: "HASH" },
         { AttributeName: "SK", KeyType: "RANGE" },
       ],
-      GlobalSecondaryIndexes: [
-        {
-          IndexName: "GSI1",
-          KeySchema: [
-            { AttributeName: "GSI1PK", KeyType: "HASH" },
-            { AttributeName: "GSI1SK", KeyType: "RANGE" },
-          ],
-          Projection: { ProjectionType: "ALL" },
-        },
-        {
-          IndexName: "GSI2",
-          KeySchema: [
-            { AttributeName: "GSI2PK", KeyType: "HASH" },
-            { AttributeName: "GSI2SK", KeyType: "RANGE" },
-          ],
-          Projection: { ProjectionType: "ALL" },
-        },
-      ],
+      ...(indexes.length ? { GlobalSecondaryIndexes: indexes.map(gsi) } : {}),
     })
   );
+  console.log(`Created table "${name}".`);
+}
 
-  console.log(`Created table "${TABLE_NAME}".`);
+async function main() {
+  for (const t of TABLES) {
+    await ensureTable(t.name, t.indexes);
+  }
 }
 
 main().catch((err) => {

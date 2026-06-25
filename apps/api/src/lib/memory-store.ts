@@ -1,6 +1,11 @@
 /**
  * In-memory DynamoDB fallback for local dev without Docker.
- * Enable with USE_MEMORY_DB=true
+ * Enable with USE_MEMORY_DB=true.
+ *
+ * Table-aware: items are namespaced by TableName so the multi-table design
+ * behaves correctly. Supports Put/Get/Delete/Query/Scan/Update with the
+ * expression patterns this codebase generates (PK/SK + GSI1..3, begins_with,
+ * ScanIndexForward, Limit, and SET/ADD update expressions).
  */
 import type {
   GetCommandInput,
@@ -13,69 +18,163 @@ import type {
 
 type Item = Record<string, unknown>;
 
-const store = new Map<string, Item>();
+const tables = new Map<string, Map<string, Item>>();
+
+function tableFor(name: string | undefined): Map<string, Item> {
+  const key = name ?? "default";
+  let t = tables.get(key);
+  if (!t) {
+    t = new Map();
+    tables.set(key, t);
+  }
+  return t;
+}
 
 function itemKey(pk: unknown, sk: unknown): string {
   return `${pk}::${sk}`;
 }
 
+function indexAttrs(indexName?: string): { pk: string; sk: string } {
+  if (!indexName) return { pk: "PK", sk: "SK" };
+  return { pk: `${indexName}PK`, sk: `${indexName}SK` };
+}
+
 function matchKeyCondition(
   item: Item,
+  indexName: string | undefined,
   keyCondition: string | undefined,
-  values: Record<string, unknown> | undefined
+  values: Record<string, unknown> | undefined,
+  names: Record<string, string> | undefined
 ): boolean {
   if (!keyCondition || !values) return true;
-  if (keyCondition.includes("PK = :pk AND begins_with(SK, :sk)")) {
-    return item.PK === values[":pk"] && String(item.SK).startsWith(String(values[":sk"]));
+  const { pk, sk } = indexAttrs(indexName);
+  const resolve = (placeholder: string) => values[placeholder.trim()];
+
+  // partition key: "<pk> = :x"
+  const pkMatch = keyCondition.match(/(\w+)\s*=\s*(:\w+)/);
+  if (pkMatch) {
+    const attr = names?.[pkMatch[1]] ?? pkMatch[1];
+    const targetAttr = attr.startsWith("#") || attr === pkMatch[1] ? pk : attr;
+    if (item[targetAttr] !== resolve(pkMatch[2])) return false;
   }
-  if (keyCondition.includes("GSI1PK = :pk")) {
-    return item.GSI1PK === values[":pk"];
+
+  // sort key conditions
+  const beginsWith = keyCondition.match(/begins_with\(\s*\w*?(SK)\s*,\s*(:\w+)\s*\)/i);
+  if (beginsWith) {
+    if (!String(item[sk] ?? "").startsWith(String(resolve(beginsWith[2])))) return false;
   }
-  if (keyCondition.includes("GSI2PK = :pk")) {
-    return item.GSI2PK === values[":pk"];
+  const skEq = keyCondition.match(new RegExp(`${sk}\\s*=\\s*(:\\w+)`));
+  if (skEq) {
+    if (item[sk] !== resolve(skEq[1])) return false;
   }
-  if (keyCondition.includes("PK = :pk")) {
-    return item.PK === values[":pk"] && (!values[":sk"] || item.SK === values[":sk"]);
+
+  return true;
+}
+
+function evalFilter(
+  item: Item,
+  expression?: string,
+  values?: Record<string, unknown>,
+  names?: Record<string, string>
+): boolean {
+  if (!expression) return true;
+  const v = values ?? {};
+  const n = names ?? {};
+  // AND-joined simple clauses
+  const clauses = expression.split(/\s+AND\s+/i);
+  for (const clause of clauses) {
+    const begins = clause.match(/begins_with\(\s*(\w+)\s*,\s*(:\w+)\s*\)/);
+    if (begins) {
+      const attr = n[begins[1]] ?? begins[1];
+      if (!String(item[attr] ?? "").startsWith(String(v[begins[2]]))) return false;
+      continue;
+    }
+    const gt = clause.match(/(#?\w+)\s*>\s*(:\w+)/);
+    if (gt) {
+      const attr = n[gt[1]] ?? gt[1];
+      if (!(Number(item[attr] ?? 0) > Number(v[gt[2]]))) return false;
+      continue;
+    }
+    const eq = clause.match(/(#?\w+)\s*=\s*(:\w+)/);
+    if (eq) {
+      const attr = n[eq[1]] ?? eq[1];
+      if (item[attr] !== v[eq[2]]) return false;
+      continue;
+    }
   }
   return true;
 }
 
-function matchFilter(item: Item, expression?: string, values?: Record<string, unknown>): boolean {
-  if (!expression || !values) return true;
-  if (expression.includes("begins_with(PK, :prefix)")) {
-    return String(item.PK).startsWith(String(values[":prefix"])) && item.SK === values[":sk"];
+function splitTopLevel(input: string): string[] {
+  const parts: string[] = [];
+  let depth = 0;
+  let current = "";
+  for (const char of input) {
+    if (char === "(") depth++;
+    if (char === ")") depth--;
+    if (char === "," && depth === 0) {
+      parts.push(current);
+      current = "";
+    } else {
+      current += char;
+    }
   }
-  if (expression.includes("orderId = :oid")) {
-    return item.orderId === values[":oid"];
-  }
-  return true;
+  if (current.trim()) parts.push(current);
+  return parts;
 }
 
 function applyUpdate(item: Item, input: UpdateCommandInput): Item {
   const updated = { ...item };
   const values = input.ExpressionAttributeValues ?? {};
   const names = input.ExpressionAttributeNames ?? {};
+  const expr = input.UpdateExpression ?? "";
 
-  if (input.UpdateExpression?.includes("#status")) {
-    const statusKey = names["#status"] ?? "status";
-    updated[statusKey] = values[":status"];
+  const resolveName = (raw: string) => names[raw.trim()] ?? raw.trim();
+  const resolveOperand = (raw: string): unknown => {
+    const token = raw.trim();
+    if (token.startsWith(":")) return values[token];
+    const listAppend = token.match(/^list_append\((.+),(.+)\)$/);
+    if (listAppend) {
+      const a = resolveOperand(listAppend[1]) as unknown[] | undefined;
+      const b = resolveOperand(listAppend[2]) as unknown[] | undefined;
+      return [...(a ?? []), ...(b ?? [])];
+    }
+    const ifNotExists = token.match(/^if_not_exists\((.+),(.+)\)$/);
+    if (ifNotExists) {
+      const attr = resolveName(ifNotExists[1]);
+      return updated[attr] ?? resolveOperand(ifNotExists[2]);
+    }
+    return updated[resolveName(token)];
+  };
+
+  const setMatch = expr.match(/SET\s+(.+?)(?:\s+ADD\s+|\s+REMOVE\s+|$)/is);
+  if (setMatch) {
+    for (const assignment of splitTopLevel(setMatch[1])) {
+      const [lhs, rhs] = assignment.split("=");
+      if (!lhs || rhs === undefined) continue;
+      updated[resolveName(lhs)] = resolveOperand(rhs);
+    }
   }
-  if (input.UpdateExpression?.includes("paymentIntentId")) {
-    updated.paymentIntentId = values[":pid"];
+
+  const addMatch = expr.match(/ADD\s+(.+?)(?:\s+SET\s+|\s+REMOVE\s+|$)/is);
+  if (addMatch) {
+    for (const clause of splitTopLevel(addMatch[1])) {
+      const tokens = clause.trim().split(/\s+/);
+      if (tokens.length < 2) continue;
+      const attr = resolveName(tokens[0]);
+      const delta = Number(values[tokens[1]] ?? 0);
+      updated[attr] = Number(updated[attr] ?? 0) + delta;
+    }
   }
-  if (input.UpdateExpression?.includes("razorpayPaymentId")) {
-    updated.razorpayPaymentId = values[":pid"];
-  }
-  if (input.UpdateExpression?.includes("updatedAt")) {
-    updated.updatedAt = values[":now"];
-  }
+
   return updated;
 }
 
 export const memoryStore = {
   send: async (command: { input: unknown; constructor: { name: string } }) => {
     const name = command.constructor.name;
-    const input = command.input as Record<string, unknown>;
+    const input = command.input as Record<string, unknown> & { TableName?: string };
+    const store = tableFor(input.TableName);
 
     if (name === "PutCommand") {
       const { Item } = input as PutCommandInput;
@@ -100,14 +199,20 @@ export const memoryStore = {
       const q = input as QueryCommandInput;
       let items = [...store.values()];
       items = items.filter((item) =>
-        matchKeyCondition(item, q.KeyConditionExpression, q.ExpressionAttributeValues)
+        matchKeyCondition(
+          item,
+          q.IndexName,
+          q.KeyConditionExpression,
+          q.ExpressionAttributeValues,
+          q.ExpressionAttributeNames
+        )
       );
       items = items.filter((item) =>
-        matchFilter(item, q.FilterExpression, q.ExpressionAttributeValues)
+        evalFilter(item, q.FilterExpression, q.ExpressionAttributeValues, q.ExpressionAttributeNames)
       );
-      if (q.IndexName === "GSI2" && q.ScanIndexForward === false) {
-        items.sort((a, b) => String(b.GSI2SK).localeCompare(String(a.GSI2SK)));
-      }
+      const { sk } = indexAttrs(q.IndexName);
+      items.sort((a, b) => String(a[sk] ?? "").localeCompare(String(b[sk] ?? "")));
+      if (q.ScanIndexForward === false) items.reverse();
       if (q.Limit) items = items.slice(0, q.Limit);
       return { Items: items };
     }
@@ -116,8 +221,9 @@ export const memoryStore = {
       const s = input as ScanCommandInput;
       let items = [...store.values()];
       items = items.filter((item) =>
-        matchFilter(item, s.FilterExpression, s.ExpressionAttributeValues)
+        evalFilter(item, s.FilterExpression, s.ExpressionAttributeValues, s.ExpressionAttributeNames)
       );
+      if (s.Limit) items = items.slice(0, s.Limit);
       return { Items: items };
     }
 
@@ -125,8 +231,7 @@ export const memoryStore = {
       const u = input as UpdateCommandInput;
       if (!u.Key) return {};
       const key = itemKey(u.Key.PK, u.Key.SK);
-      const existing = store.get(key);
-      if (!existing) return {};
+      const existing = store.get(key) ?? { PK: u.Key.PK, SK: u.Key.SK };
       const updated = applyUpdate(existing, u);
       store.set(key, updated);
       return { Attributes: updated };
@@ -137,9 +242,11 @@ export const memoryStore = {
 };
 
 export function clearMemoryStore() {
-  store.clear();
+  tables.clear();
 }
 
 export function getMemoryStoreSize() {
-  return store.size;
+  let total = 0;
+  for (const t of tables.values()) total += t.size;
+  return total;
 }

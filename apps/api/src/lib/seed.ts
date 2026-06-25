@@ -2,7 +2,7 @@ import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import { PutCommand } from "@aws-sdk/lib-dynamodb";
 import { productKeys, categoryKeys, configKeys, defaultPaymentConfig } from "@hr-ecom/shared";
-import { docClient, TABLE_NAME, now } from "./db";
+import { docClient, PRODUCTS_TABLE, CONFIG_TABLE, now } from "./db";
 import { getMemoryStoreSize } from "./memory-store";
 
 const CATALOG_PATH = join(process.cwd(), "scripts/data/usarakhi-catalog.json");
@@ -45,7 +45,7 @@ export async function seedIfEmpty() {
   for (const cat of catalog.categories) {
     await docClient.send(
       new PutCommand({
-        TableName: TABLE_NAME,
+        TableName: PRODUCTS_TABLE,
         Item: {
           ...cat,
           published: true,
@@ -61,7 +61,7 @@ export async function seedIfEmpty() {
   for (const p of catalog.products) {
     await docClient.send(
       new PutCommand({
-        TableName: TABLE_NAME,
+        TableName: PRODUCTS_TABLE,
         Item: {
           ...p,
           published: true,
@@ -78,7 +78,7 @@ export async function seedIfEmpty() {
 
   await docClient.send(
     new PutCommand({
-      TableName: TABLE_NAME,
+      TableName: CONFIG_TABLE,
       Item: {
         PK: configKeys.payments.pk,
         SK: configKeys.payments.sk,

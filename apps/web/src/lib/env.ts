@@ -26,7 +26,9 @@ export function getApiUrl(): string {
 export function getSiteUrl(): string {
   const fromEnv = process.env.NEXT_PUBLIC_SITE_URL?.trim();
   if (fromEnv) return fromEnv.replace(/\/$/, "");
-  if (process.env.NODE_ENV === "production") return "https://main.d1vlvm5li37k6g.amplifyapp.com";
+  // Before custom domain is bound in Amplify, canonical URLs still target production domain.
+  // Set NEXT_PUBLIC_SITE_URL=https://www.usarakhi.com when the domain is live.
+  if (process.env.NODE_ENV === "production") return "https://www.usarakhi.com";
   return "http://localhost:3000";
 }
 

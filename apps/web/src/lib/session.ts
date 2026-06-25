@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { api } from "./api";
 
@@ -35,7 +35,7 @@ export function useLeadCapture(sessionId: string) {
       phone?: string;
       page?: string;
       productSlug?: string;
-      source?: "checkout" | "newsletter" | "product" | "browse" | "admin";
+      source?: "checkout" | "newsletter" | "product" | "browse" | "admin" | "contact";
     }) => {
       const sid = sessionId || getOrCreateSessionId();
       if (!sid) return;
@@ -55,14 +55,13 @@ export function useLeadCapture(sessionId: string) {
 
 export function useDebouncedLeadCapture(sessionId: string, delay = 800) {
   const capture = useLeadCapture(sessionId);
-  const [timer, setTimer] = useState<ReturnType<typeof setTimeout> | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   return useCallback(
     (fields: Parameters<typeof capture>[0]) => {
-      if (timer) clearTimeout(timer);
-      const t = setTimeout(() => capture(fields), delay);
-      setTimer(t);
+      if (timerRef.current) clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(() => capture(fields), delay);
     },
-    [capture, delay, timer]
+    [capture, delay]
   );
 }

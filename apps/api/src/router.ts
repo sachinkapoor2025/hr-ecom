@@ -6,8 +6,11 @@ import * as cart from "./handlers/cart";
 import * as orders from "./handlers/orders";
 import * as config from "./handlers/config";
 import * as uploads from "./handlers/uploads";
+import * as events from "./handlers/events";
+import * as analytics from "./handlers/analytics";
+import * as adminCarts from "./handlers/admin-carts";
 import { stripeWebhook } from "./handlers/payments/stripe";
-import { razorpayWebhook } from "./handlers/payments/razorpay";
+import { razorpayWebhook, verifyRazorpayPayment } from "./handlers/payments/razorpay";
 
 type RouteHandler = (event: APIGatewayProxyEventV2) => Promise<APIGatewayProxyResultV2>;
 
@@ -39,14 +42,25 @@ const routes: Route[] = [
   { method: "GET", pattern: /^\/orders$/, handler: orders.listOrders },
   { method: "GET", pattern: /^\/orders\/([^/]+)$/, handler: orders.getOrder, params: ["orderId"] },
   { method: "GET", pattern: /^\/admin\/orders$/, handler: orders.listAdminOrders },
+  { method: "GET", pattern: /^\/admin\/orders\/([^/]+)$/, handler: orders.getAdminOrder, params: ["orderId"] },
+  { method: "PATCH", pattern: /^\/admin\/orders\/([^/]+)$/, handler: orders.updateOrderStatus, params: ["orderId"] },
+  { method: "PUT", pattern: /^\/admin\/orders\/([^/]+)$/, handler: orders.updateOrderStatus, params: ["orderId"] },
   { method: "GET", pattern: /^\/admin\/leads$/, handler: orders.listLeads },
+  { method: "GET", pattern: /^\/admin\/analytics\/overview$/, handler: analytics.getAnalyticsOverview },
+  { method: "GET", pattern: /^\/admin\/analytics\/products$/, handler: analytics.getTopProducts },
+  { method: "GET", pattern: /^\/admin\/analytics\/searches$/, handler: analytics.getTopSearches },
+  { method: "GET", pattern: /^\/admin\/sessions$/, handler: analytics.listSessions },
+  { method: "GET", pattern: /^\/admin\/sessions\/([^/]+)$/, handler: analytics.getSessionTimeline, params: ["sessionId"] },
+  { method: "GET", pattern: /^\/admin\/carts\/abandoned$/, handler: adminCarts.getAbandonedCarts },
   { method: "POST", pattern: /^\/leads$/, handler: orders.captureLead },
+  { method: "POST", pattern: /^\/events$/, handler: events.recordEvent },
   { method: "GET", pattern: /^\/config\/payments$/, handler: config.getPaymentConfig },
   { method: "PUT", pattern: /^\/config\/payments$/, handler: config.updatePaymentConfig },
   { method: "POST", pattern: /^\/uploads\/presign$/, handler: uploads.getUploadUrl },
   { method: "POST", pattern: /^\/products\/([^/]+)\/images$/, handler: uploads.attachImageToProduct, params: ["slug"] },
   { method: "POST", pattern: /^\/webhooks\/stripe$/, handler: stripeWebhook },
   { method: "POST", pattern: /^\/webhooks\/razorpay$/, handler: razorpayWebhook },
+  { method: "POST", pattern: /^\/payments\/razorpay\/verify$/, handler: verifyRazorpayPayment },
 ];
 
 export async function route(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {

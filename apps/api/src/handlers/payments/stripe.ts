@@ -1,10 +1,8 @@
 import Stripe from "stripe";
 import type { Order } from "@hr-ecom/shared";
-import { ORDER_STATUS } from "@hr-ecom/shared";
-import { UpdateCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import type { APIGatewayProxyEventV2 } from "aws-lambda";
-import { docClient, TABLE_NAME, now } from "../../lib/db";
 import { ok, badRequest, serverError } from "../../lib/response";
+import { markOrderPaid } from "../orders";
 
 function getStripe(): Stripe | null {
   const key = process.env.STRIPE_SECRET_KEY;
@@ -52,42 +50,11 @@ export async function stripeWebhook(event: APIGatewayProxyEventV2) {
 
     if (stripeEvent.type === "payment_intent.succeeded") {
       const intent = stripeEvent.data.object as Stripe.PaymentIntent;
-      await markOrderPaid(intent.metadata.orderId, intent.id);
+      await markOrderPaid(intent.metadata.orderId, { paymentIntentId: intent.id });
     }
 
     return ok({ received: true });
   } catch (err) {
     return serverError(String(err));
   }
-}
-
-async function markOrderPaid(orderId: string | undefined, paymentIntentId: string) {
-  if (!orderId) return;
-
-  const result = await docClient.send(
-    new QueryCommand({
-      TableName: TABLE_NAME,
-      IndexName: "GSI2",
-      KeyConditionExpression: "GSI2PK = :pk",
-      FilterExpression: "orderId = :oid",
-      ExpressionAttributeValues: { ":pk": "ENTITY#ORDER", ":oid": orderId },
-    })
-  );
-
-  const order = result.Items?.[0];
-  if (!order) return;
-
-  await docClient.send(
-    new UpdateCommand({
-      TableName: TABLE_NAME,
-      Key: { PK: order.PK, SK: order.SK },
-      UpdateExpression: "SET #status = :status, paymentIntentId = :pid, updatedAt = :now",
-      ExpressionAttributeNames: { "#status": "status" },
-      ExpressionAttributeValues: {
-        ":status": ORDER_STATUS.PAID,
-        ":pid": paymentIntentId,
-        ":now": now(),
-      },
-    })
-  );
 }

@@ -1,14 +1,14 @@
 import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import type { APIGatewayProxyEventV2 } from "aws-lambda";
 import { configKeys, defaultPaymentConfig, paymentConfigSchema } from "@hr-ecom/shared";
-import { docClient, TABLE_NAME, now } from "../lib/db";
+import { docClient, CONFIG_TABLE, now } from "../lib/db";
 import { ok, badRequest, forbidden } from "../lib/response";
 import { getAuth } from "../lib/auth";
 
 export async function getPaymentConfig(_event: APIGatewayProxyEventV2) {
   const result = await docClient.send(
     new GetCommand({
-      TableName: TABLE_NAME,
+      TableName: CONFIG_TABLE,
       Key: { PK: configKeys.payments.pk, SK: configKeys.payments.sk },
     })
   );
@@ -27,7 +27,7 @@ export async function updatePaymentConfig(event: APIGatewayProxyEventV2) {
 
   await docClient.send(
     new PutCommand({
-      TableName: TABLE_NAME,
+      TableName: CONFIG_TABLE,
       Item: {
         PK: configKeys.payments.pk,
         SK: configKeys.payments.sk,

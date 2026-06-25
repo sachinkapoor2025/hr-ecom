@@ -79,9 +79,13 @@ export function login(email: string, password: string): Promise<AuthUser> {
   });
 }
 
-export function register(email: string, password: string, name?: string): Promise<void> {
+export function register(
+  email: string,
+  password: string,
+  name?: string
+): Promise<{ userConfirmed: boolean }> {
   if (!userPool && devAuth) {
-    return Promise.resolve();
+    return Promise.resolve({ userConfirmed: true });
   }
 
   if (!userPool) {
@@ -94,9 +98,9 @@ export function register(email: string, password: string, name?: string): Promis
   if (name) attrs.push(new CognitoUserAttribute({ Name: "name", Value: name }));
 
   return new Promise((resolve, reject) => {
-    userPool.signUp(email, password, attrs, [], (err) => {
+    userPool.signUp(email, password, attrs, [], (err, result) => {
       if (err) reject(err);
-      else resolve();
+      else resolve({ userConfirmed: result?.userConfirmed ?? false });
     });
   });
 }
@@ -115,4 +119,47 @@ export function isCognitoConfigured(): boolean {
 
 export function isDevAuthEnabled(): boolean {
   return devAuth && !userPool;
+}
+
+export function isUnconfirmedError(err: unknown): boolean {
+  if (!err || typeof err !== "object") return false;
+  const e = err as { code?: string; message?: string };
+  return (
+    e.code === "UserNotConfirmedException" ||
+    (typeof e.message === "string" && e.message.toLowerCase().includes("not confirmed"))
+  );
+}
+
+export function formatAuthError(err: unknown): string {
+  if (isUnconfirmedError(err)) {
+    return "Your email is not verified yet. Enter the code we sent you below.";
+  }
+  if (err instanceof Error && err.message) return err.message;
+  return "Authentication failed";
+}
+
+export function confirmSignUp(email: string, code: string): Promise<void> {
+  if (!userPool && devAuth) return Promise.resolve();
+  if (!userPool) return Promise.reject(new Error("Auth not configured."));
+
+  return new Promise((resolve, reject) => {
+    const user = new CognitoUser({ Username: email, Pool: userPool });
+    user.confirmRegistration(code.trim(), true, (err) => {
+      if (err) reject(err);
+      else resolve();
+    });
+  });
+}
+
+export function resendConfirmationCode(email: string): Promise<void> {
+  if (!userPool && devAuth) return Promise.resolve();
+  if (!userPool) return Promise.reject(new Error("Auth not configured."));
+
+  return new Promise((resolve, reject) => {
+    const user = new CognitoUser({ Username: email, Pool: userPool });
+    user.resendConfirmationCode((err) => {
+      if (err) reject(err);
+      else resolve();
+    });
+  });
 }
