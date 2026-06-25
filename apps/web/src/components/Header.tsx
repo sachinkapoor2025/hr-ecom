@@ -7,6 +7,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useCart } from "@/lib/cart-context";
 import { useAuth } from "@/lib/auth-context";
 import { site, navItems, cityLinks } from "@/lib/site";
+import { SearchBar } from "@/components/SearchBar";
 
 function CitiesMenu({ onNavigate }: { onNavigate?: () => void }) {
   const [open, setOpen] = useState(false);
@@ -42,15 +43,6 @@ function CitiesMenu({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
-function CartBagIcon({ className = "w-6 h-6" }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.75}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M8 8h8l-1 12H9L8 8z" />
-      <path strokeLinecap="round" strokeLinejoin="round" d="M9 8V6.5a3 3 0 116 0V8" />
-    </svg>
-  );
-}
-
 function BurgerIcon() {
   return (
     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
@@ -63,8 +55,15 @@ function CartLink({ className = "" }: { className?: string }) {
   const { itemCount } = useCart();
 
   return (
-    <Link href="/cart" className={`relative p-2 text-nav hover:text-primary ${className}`} aria-label="Cart">
-      <CartBagIcon />
+    <Link href="/cart" className={`relative p-2 text-primary hover:text-nav ${className}`} aria-label="Cart">
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+        />
+      </svg>
       {itemCount > 0 && (
         <span className="absolute -top-0.5 -right-0.5 bg-accent text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
           {itemCount}
@@ -150,6 +149,12 @@ export function Header() {
               Login
             </Link>
           )}
+        </div>
+      </div>
+
+      <div className="border-t border-slate-100 bg-white px-4 py-2.5">
+        <div className="max-w-7xl mx-auto">
+          <SearchBar variant="header" />
         </div>
       </div>
 
