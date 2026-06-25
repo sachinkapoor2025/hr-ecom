@@ -5,7 +5,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useCart } from "@/lib/cart-context";
-import { useAuth } from "@/lib/auth-context";
 import { site, navItems, cityLinks } from "@/lib/site";
 import { SearchBar } from "@/components/SearchBar";
 
@@ -51,6 +50,20 @@ function BurgerIcon() {
   );
 }
 
+function AccountLink({ className = "" }: { className?: string }) {
+  return (
+    <Link href="/account" className={`p-2 text-primary hover:text-nav ${className}`} aria-label="Account">
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+        />
+      </svg>
+    </Link>
+  );
+}
+
 function CartLink({ className = "" }: { className?: string }) {
   const { itemCount } = useCart();
 
@@ -77,7 +90,6 @@ export function Header() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const activeCategory = searchParams.get("category");
-  const { user, logout, isAdmin } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [citiesOpen, setCitiesOpen] = useState(false);
 
@@ -122,7 +134,10 @@ export function Header() {
           <Image src={site.logoSrc} alt={site.name} width={150} height={50} className="h-10 w-auto" priority />
         </Link>
 
-        <CartLink className="shrink-0" />
+        <div className="flex items-center shrink-0">
+          <AccountLink />
+          <CartLink />
+        </div>
       </div>
 
       {/* Desktop top bar */}
@@ -131,24 +146,9 @@ export function Header() {
           <Image src={site.logoSrc} alt={site.name} width={150} height={50} className="h-11 w-auto" priority />
         </Link>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center shrink-0">
+          <AccountLink />
           <CartLink />
-          {user ? (
-            <>
-              {isAdmin && (
-                <Link href="/admin" className="text-xs text-slate-500 hover:text-nav">
-                  Admin
-                </Link>
-              )}
-              <button type="button" onClick={logout} className="text-xs text-slate-500 hover:text-nav">
-                Logout
-              </button>
-            </>
-          ) : (
-            <Link href="/account" className="text-xs text-slate-500 hover:text-nav">
-              Login
-            </Link>
-          )}
         </div>
       </div>
 
