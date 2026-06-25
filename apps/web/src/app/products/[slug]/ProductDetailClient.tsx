@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AddToCartControl } from "@/components/AddToCartControl";
+import { ProductImageGallery } from "@/components/ProductImageGallery";
 import { WishlistButton } from "@/components/WishlistButton";
 import { useSessionId, useDebouncedLeadCapture } from "@/lib/session";
 import { trackProductView } from "@/lib/track";
@@ -33,18 +34,9 @@ export function ProductDetailClient({ product }: { product: Product }) {
   return (
     <div className="max-w-6xl mx-auto px-4 py-6 pb-12">
       <div className="grid md:grid-cols-2 gap-10">
-        <div className="relative aspect-square bg-slate-100 rounded-xl overflow-hidden">
-          <WishlistButton product={product} className="top-3 right-3" />
-          {product.images?.[0] ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={product.images[0]}
-              alt={`${product.name} — Send Rakhi to USA`}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <span className="flex w-full h-full items-center justify-center text-slate-400">No image</span>
-          )}
+        <div className="relative">
+          <WishlistButton product={product} className="top-3 right-3 z-10" />
+          <ProductImageGallery images={product.images ?? []} alt={product.name} />
         </div>
         <div>
           <p className="text-sm text-nav font-medium mb-2 capitalize">

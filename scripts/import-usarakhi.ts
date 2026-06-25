@@ -112,6 +112,98 @@ async function fetchJson<T>(url: string): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+/** Scrape WooCommerce product gallery (data-large_image) — Store API often returns only 1 image. */
+function isProductGalleryImage(url: string): boolean {
+  const lower = url.toLowerCase();
+  if (!lower.includes("/wp-content/uploads/")) return false;
+  if (lower.includes("logo") || lower.includes("border-banner") || lower.includes("cropped-transparent")) {
+    return false;
+  }
+  // Skip tiny favicon / icon sizes
+  if (/-(?:32x32|100x100|150x150|180x180|192x192|300x300)\.(?:png|jpe?g|webp)/i.test(url)) return false;
+  return true;
+}
+
+async function fetchGalleryImages(slug: string): Promise<string[]> {
+  try {
+    const res = await fetch(`https://usarakhi.com/product/${encodeURIComponent(slug)}/`, {
+      headers: { "User-Agent": "UsaRakhi-Catalog-Import/1.0" },
+    });
+    if (!res.ok) return [];
+    const html = await res.text();
+    const start = html.indexOf("woocommerce-product-gallery");
+    if (start < 0) return [];
+
+    let end = html.length;
+    for (const marker of ['class="related', "related products", "upsells products"]) {
+      const i = html.indexOf(marker, start + 80);
+      if (i > start && i < end) end = i;
+    }
+
+    const chunk = html.slice(start, end);
+    const urls: string[] = [];
+    for (const m of chunk.matchAll(/data-large_image="([^"]+)"/g)) {
+      const url = m[1];
+      if (isProductGalleryImage(url) && !urls.includes(url)) urls.push(url);
+    }
+    return urls;
+  } catch {
+    return [];
+  }
+}
+
+function normalizeImageKey(url: string): string {
+  return url.replace(/-\d+x\d+(\.(?:png|jpe?g|webp))/i, "$1");
+}
+
+async function fetchStoreProductImages(slug: string): Promise<string[]> {
+  try {
+    const data = await fetchJson<WcProduct[]>(
+      `${WC_BASE}/products?slug=${encodeURIComponent(slug)}`
+    );
+    const product = data[0];
+    if (!product) return [];
+    return product.images.map((img) => img.src).filter(isProductGalleryImage);
+  } catch {
+    return [];
+  }
+}
+
+async function enrichProductImages(products: CatalogProduct[]): Promise<void> {
+  const concurrency = 8;
+  let index = 0;
+  let multi = 0;
+
+  async function worker() {
+    while (index < products.length) {
+      const i = index++;
+      const product = products[i];
+      const [gallery, store] = await Promise.all([
+        fetchGalleryImages(product.slug),
+        fetchStoreProductImages(product.slug),
+      ]);
+      const merged: string[] = [];
+      const seen = new Set<string>();
+      for (const url of [...store, ...gallery, ...product.images]) {
+        if (!isProductGalleryImage(url)) continue;
+        const key = normalizeImageKey(url);
+        if (seen.has(key)) continue;
+        seen.add(key);
+        merged.push(url);
+      }
+      if (merged.length > 0) {
+        product.images = merged;
+        if (merged.length > 1) multi++;
+      }
+      if ((i + 1) % 25 === 0) console.log(`  Gallery images: ${i + 1}/${products.length}...`);
+    }
+  }
+
+  console.log(`Fetching product gallery images for ${products.length} products...`);
+  await Promise.all(Array.from({ length: concurrency }, () => worker()));
+  console.log(`Gallery complete: ${multi} products with multiple images`);
+}
+
 function toCatalogProduct(p: WcProduct, fallbackCategorySlug: string): CatalogProduct {
   const minor = p.prices.currency_minor_unit ?? 2;
   const price = toPrice(p.prices.price, minor);
@@ -166,7 +258,9 @@ async function fetchCatalog(): Promise<{ categories: CatalogCategory[]; products
     }
   }
 
-  return { categories, products: Array.from(productMap.values()) };
+  const products = Array.from(productMap.values());
+  await enrichProductImages(products);
+  return { categories, products };
 }
 
 function getDocClient() {
