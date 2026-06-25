@@ -44,7 +44,7 @@ export function CustomerReviews() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-6">
           {testimonials.map((review) => (
             <article key={review.name} className="flex flex-col">
-              <div className="relative w-full max-w-[220px] aspect-[2/3] rounded-[999px] overflow-hidden bg-slate-100 mb-5">
+              <div className="relative w-full max-w-[220px] aspect-[2/3] rounded-[999px] overflow-hidden bg-slate-100 mb-5 mx-auto sm:mx-0">
                 <Image
                   src={review.image}
                   alt={`${review.name} customer review`}
