@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - feature/*
+      - dev
   workflow_dispatch:
 
 env:
