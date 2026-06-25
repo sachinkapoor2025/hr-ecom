@@ -3,21 +3,30 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { api } from "@/lib/api";
 import { HomeProductCard } from "@/components/HomeProductCard";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { JsonLd } from "@/components/JsonLd";
 import { cityLinks, site } from "@/lib/site";
+import { breadcrumbJsonLd, pageMetadata } from "@/lib/seo";
 import type { Product } from "@hr-ecom/shared";
 
 interface Props {
   params: Promise<{ slug: string }>;
 }
 
+export function generateStaticParams() {
+  return cityLinks.map((c) => ({ slug: c.slug }));
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const city = cityLinks.find((c) => c.slug === slug);
   if (!city) return { title: "City" };
-  return {
-    title: `Send Rakhi to ${city.label} | Free Shipping`,
-    description: `Send Rakhi to ${city.label}, USA with fast delivery from ${site.name}.`,
-  };
+  return pageMetadata({
+    title: `Send Rakhi to ${city.label} USA | Fast Delivery`,
+    description: `Send Rakhi to ${city.label}, USA with ${site.name}. Premium rakhis, 5–7 day delivery, roli chawal included. Order from India worldwide.`,
+    path: `/cities/${slug}`,
+    keywords: `send rakhi to ${city.label}, rakhi delivery ${city.label}, rakhi USA ${city.label}, UsaRakhi`,
+  });
 }
 
 export default async function CityPage({ params }: Props) {
@@ -33,15 +42,29 @@ export default async function CityPage({ params }: Props) {
     products = [];
   }
 
+  const crumbs = [
+    { label: "Home", href: "/" },
+    { label: `Rakhi to ${city.label}` },
+  ];
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
-      <h1 className="text-3xl font-bold text-primary mb-3">Send Rakhi to {city.label}</h1>
-      <p className="text-slate-600 mb-8 max-w-2xl">
-        Deliver premium Rakhis to your brother in {city.label} with {site.name}. Same-day dispatch, 5–7 business day
-        delivery, and free shipping on selected orders.
-      </p>
+      <JsonLd data={breadcrumbJsonLd(crumbs.map((c) => ({ name: c.label, path: c.href ?? `/cities/${slug}` })))} />
+      <Breadcrumbs items={crumbs} />
+      <h1 className="text-3xl font-bold text-primary mb-3">Send Rakhi to {city.label}, USA</h1>
+      <div className="text-slate-700 mb-8 max-w-3xl space-y-4 leading-relaxed">
+        <p>
+          Looking to send Rakhi to your brother in <strong>{city.label}</strong>? {site.name} delivers premium
+          Rakhis across {city.label} and all of America in 5–7 business days. Sisters in India, UK, Canada, and
+          worldwide order here — we ship domestically within the USA to your brother&apos;s doorstep.
+        </p>
+        <p>
+          Choose from Single Rakhi, Rakhi Combos with chocolates, Kids Rakhi, Bhaiya Bhabhi sets, and Lumba Rakhi.
+          Most orders include complimentary roli and chawal for the Raksha Bandhan tilak ceremony.
+        </p>
+      </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-        {products.map((p) => (
+        {products.slice(0, 20).map((p) => (
           <HomeProductCard key={p.slug} product={p} />
         ))}
       </div>
@@ -53,6 +76,18 @@ export default async function CityPage({ params }: Props) {
           </Link>
         </p>
       )}
+      <section className="mt-12 p-6 bg-slate-50 rounded-xl text-sm text-slate-600">
+        <h2 className="font-semibold text-primary mb-2">Also deliver to</h2>
+        <div className="flex flex-wrap gap-2">
+          {cityLinks
+            .filter((c) => c.slug !== slug)
+            .map((c) => (
+              <Link key={c.slug} href={`/cities/${c.slug}`} className="text-nav hover:underline">
+                {c.label}
+              </Link>
+            ))}
+        </div>
+      </section>
     </div>
   );
 }

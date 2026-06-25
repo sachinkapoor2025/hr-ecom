@@ -14,12 +14,13 @@ export const site = {
 
 export const navItems = [
   { label: "Home", href: "/" },
-  { label: "Single Rakhi", href: "/products?category=single-rakhi", category: "single-rakhi" },
-  { label: "Rakhi Combo", href: "/products?category=rakhi-combo", category: "rakhi-combo" },
-  { label: "Kids Rakhi", href: "/products?category=kids-rakhi", category: "kids-rakhi" },
-  { label: "Bhaiya Bhabhi Rakhi", href: "/products?category=bhaiya-bhabhi-rakhi", category: "bhaiya-bhabhi-rakhi" },
-  { label: "Lumba Rakhi", href: "/products?category=lumba-rakhi", category: "lumba-rakhi" },
-  { label: "Blogs", href: "/blog" },
+  { label: "Single Rakhi", href: "/categories/single-rakhi", category: "single-rakhi" },
+  { label: "Rakhi Combo", href: "/categories/rakhi-combo", category: "rakhi-combo" },
+  { label: "Kids Rakhi", href: "/categories/kids-rakhi", category: "kids-rakhi" },
+  { label: "Bhaiya Bhabhi Rakhi", href: "/categories/bhaiya-bhabhi-rakhi", category: "bhaiya-bhabhi-rakhi" },
+  { label: "Lumba Rakhi", href: "/categories/lumba-rakhi", category: "lumba-rakhi" },
+  { label: "Raksha Bandhan", href: "/raksha-bandhan" },
+  { label: "Blog", href: "/blog" },
   { label: "Contact Us", href: "/contact" },
 ] as const;
 
@@ -131,7 +132,7 @@ export const faqs = [
   },
   {
     q: "Can I send Rakhi from India to the USA?",
-    a: "Yes. We accept orders from India, UK, Canada, Australia, and anywhere worldwide. Enter the US delivery address at checkout.",
+    a: "Yes. We accept orders from India, UK, Canada, Australia, and anywhere worldwide. Enter the US delivery address at checkout and we ship domestically within America.",
   },
   {
     q: "Can I send Rakhi with chocolates to the USA?",
@@ -139,6 +140,22 @@ export const faqs = [
   },
   {
     q: "Do you offer Bhaiya Bhabhi Rakhi sets?",
-    a: "Yes. Our Bhaiya Bhabhi collection features elegant matching sets for brothers and sisters-in-law.",
+    a: "Yes. Our Bhaiya Bhabhi collection features elegant matching sets for brothers and sisters-in-law, including Lumba rakhis.",
+  },
+  {
+    q: "What is included with Single Rakhi orders?",
+    a: "Most single rakhis include complimentary roli (kumkum) and chawal (rice) for the traditional Raksha Bandhan tilak ceremony.",
+  },
+  {
+    q: "Do you deliver to California, New York, and Texas?",
+    a: "Yes. We deliver to all 50 US states including California, New York, Texas, Florida, New Jersey, Illinois, and every other state.",
+  },
+  {
+    q: "When should I order for Raksha Bandhan 2026?",
+    a: "Raksha Bandhan 2026 is on August 28, 2026. Order by early August to ensure your brother receives the Rakhi before the festival.",
+  },
+  {
+    q: "What payment methods do you accept?",
+    a: "We accept Razorpay (INR) and Stripe (USD) for secure online checkout.",
   },
 ] as const;

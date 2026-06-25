@@ -136,7 +136,12 @@ export function Header() {
 
   const isActive = (href: string, category?: string) => {
     if (href === "/") return pathname === "/" && !activeCategory;
-    if (category) return pathname === "/products" && activeCategory === category;
+    if (category) {
+      return (
+        (pathname === "/products" && activeCategory === category) ||
+        pathname === `/categories/${category}`
+      );
+    }
     return pathname.startsWith(href.split("?")[0]) && href !== "/";
   };
 
