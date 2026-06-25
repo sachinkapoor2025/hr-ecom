@@ -13,7 +13,7 @@ AI-first, full-featured e-commerce built for **prompt-driven development** with 
 | Auth | AWS Cognito + local dev auth (admin@shop.com for admin) |
 | SEO | SSR metadata, sitemap, robots.txt, JSON-LD product schema |
 | Infrastructure | SAM: DynamoDB, Lambda, API Gateway, S3, CloudFront, Cognito |
-| CI/CD | GitHub Actions + Amplify hosting config |
+| CI/CD | GitHub Actions + Amplify hosting config | 
 
 ## Quick Start (Local)
 
