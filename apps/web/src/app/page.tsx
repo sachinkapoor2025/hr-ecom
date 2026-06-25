@@ -42,14 +42,6 @@ export default async function HomePage() {
     <div>
       <BannerCarousel banners={homeBanners} />
 
-      <section className="max-w-7xl mx-auto px-4 py-8 text-center">
-        <h1 className="text-2xl md:text-4xl font-bold text-primary mb-3">{site.tagline}</h1>
-        <p className="text-slate-600 max-w-3xl mx-auto text-sm md:text-base">
-          Distance may keep you miles apart, but the bond between siblings remains strong. Send Rakhi to USA with
-          fast delivery, free shipping on selected orders, and same-day dispatch.
-        </p>
-      </section>
-
       {productsByCategory.map((section, idx) =>
         section.products.length > 0 ? (
           <section key={section.slug} className="max-w-7xl mx-auto px-4 py-8">

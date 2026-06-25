@@ -40,16 +40,37 @@ export const homeBanners = [
     src: "/banners/banner-1-usa-rakhi-delivery.png",
     alt: "USA Rakhi Delivery — Send Beautiful Rakhis to Your Loved Ones in the USA",
     href: "/products?category=rakhi-combo",
+    eyebrow: "RAKSHA BANDHAN · USA DELIVERY",
+    title: "Send Beautiful Rakhis to Your Loved Ones in the",
+    titleAccent: "USA",
+    description:
+      "Premium designer rakhis with express shipping across all 50 states. Same-day dispatch on most orders.",
+    cta: "Shop Rakhi Combos",
+    pill: "Premium Rakhis · Express Shipping · Celebrate Raksha Bandhan",
   },
   {
     src: "/banners/banner-2-connecting-hearts.png",
     alt: "UsaRakhi.com — Connecting hearts across miles",
     href: "/products",
+    eyebrow: "EVERY SISTER · EVERY BROTHER",
+    title: "Connecting Hearts",
+    titleAccent: "Across Miles",
+    description:
+      "Distance may keep you apart, but the bond between siblings remains strong. Delivered with love to your brother.",
+    cta: "Browse All Rakhis",
+    pill: "Trusted by sisters worldwide · Free shipping on selected orders",
   },
   {
     src: "/banners/banner-3-india-usa.png",
     alt: "Send Rakhi from India to USA — Premium Rakhis with Express Shipping",
     href: "/products?category=single-rakhi",
+    eyebrow: "INDIA → USA",
+    title: "Bridge the Distance This",
+    titleAccent: "Raksha Bandhan",
+    description:
+      "From India to America — send single rakhis, combos, and gifts with reliable USA delivery you can count on.",
+    cta: "Shop Single Rakhis",
+    pill: "Single Rakhis · Kids Rakhi · Bhaiya Bhabhi Sets",
   },
 ] as const;
 
