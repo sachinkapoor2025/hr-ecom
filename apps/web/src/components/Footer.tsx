@@ -45,8 +45,12 @@ export function Footer() {
           </ul>
         </div>
       </div>
-      <div className="border-t border-slate-200 text-center py-4 text-xs text-slate-400">
-        © {new Date().getFullYear()} {site.name}.com — Send Rakhi to USA with love.
+      <div className="border-t border-slate-200 text-center py-4 text-xs text-slate-400 space-y-1">
+        <p>© {new Date().getFullYear()} {site.name}.com — Send Rakhi to USA with love.</p>
+        <p>
+          We use first-party analytics (no third-party trackers) to understand how our store is used
+          and improve your experience.
+        </p>
       </div>
     </footer>
   );

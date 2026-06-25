@@ -3,8 +3,8 @@
  * into DynamoDB. Also writes scripts/data/usarakhi-catalog.json for local seed.
  *
  * Usage:
- *   npm run import:usarakhi -- --fetch-only          # refresh catalog JSON
- *   TABLE_NAME=hr-ecom-prod npm run import:usarakhi  # import to AWS
+ *   npm run import:usarakhi -- --fetch-only           # refresh catalog JSON
+ *   ENVIRONMENT=prod npm run import:usarakhi          # import to AWS (prod tables)
  */
 import { writeFileSync, mkdirSync, readFileSync, existsSync } from "fs";
 import { join } from "path";
@@ -181,14 +181,16 @@ function getDocClient() {
 }
 
 async function importToDb(catalog: { categories: CatalogCategory[]; products: CatalogProduct[] }) {
-  const TABLE_NAME = process.env.TABLE_NAME ?? "hr-ecom-dev";
+  const ENV = process.env.ENVIRONMENT ?? "dev";
+  const PRODUCTS_TABLE = process.env.PRODUCTS_TABLE ?? `hr-ecom-products-${ENV}`;
+  const CONFIG_TABLE = process.env.CONFIG_TABLE ?? `hr-ecom-config-${ENV}`;
   const docClient = getDocClient();
   const timestamp = new Date().toISOString();
 
   for (const cat of catalog.categories) {
     await docClient.send(
       new PutCommand({
-        TableName: TABLE_NAME,
+        TableName: PRODUCTS_TABLE,
         Item: {
           ...cat,
           published: true,
@@ -204,7 +206,7 @@ async function importToDb(catalog: { categories: CatalogCategory[]; products: Ca
   for (const p of catalog.products) {
     await docClient.send(
       new PutCommand({
-        TableName: TABLE_NAME,
+        TableName: PRODUCTS_TABLE,
         Item: {
           ...p,
           published: true,
@@ -221,7 +223,7 @@ async function importToDb(catalog: { categories: CatalogCategory[]; products: Ca
 
   await docClient.send(
     new PutCommand({
-      TableName: TABLE_NAME,
+      TableName: CONFIG_TABLE,
       Item: {
         PK: configKeys.payments.pk,
         SK: configKeys.payments.sk,
@@ -231,7 +233,7 @@ async function importToDb(catalog: { categories: CatalogCategory[]; products: Ca
     })
   );
 
-  console.log(`Imported ${catalog.categories.length} categories, ${catalog.products.length} products → ${TABLE_NAME}`);
+  console.log(`Imported ${catalog.categories.length} categories, ${catalog.products.length} products → ${PRODUCTS_TABLE}`);
 }
 
 async function main() {

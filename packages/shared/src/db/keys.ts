@@ -1,3 +1,9 @@
+/**
+ * Key builders for the multi-table DynamoDB design.
+ * Each domain has its own table; builders below are grouped per table.
+ */
+
+// ---- products table (products + categories) ----
 export const productKeys = {
   pk: (slug: string) => `PRODUCT#${slug}`,
   sk: () => "META" as const,
@@ -10,23 +16,63 @@ export const categoryKeys = {
   sk: () => "META" as const,
 };
 
-export const userKeys = {
-  pk: (userId: string) => `USER#${userId}`,
-  profileSk: () => "PROFILE" as const,
-  cartSk: () => "CART" as const,
-  orderSk: (orderId: string) => `ORDER#${orderId}` as const,
-};
-
-export const leadKeys = {
-  pk: (leadId: string) => `LEAD#${leadId}`,
+// ---- orders table ----
+export const orderKeys = {
+  pk: (orderId: string) => `ORDER#${orderId}`,
   sk: () => "META" as const,
+  // GSI1: list a customer's orders by date
+  gsi1pk: (userKey: string) => `USER#${userKey}`,
+  gsi1sk: (createdAt: string) => createdAt,
+  // GSI2: global admin feed by date
+  gsi2pk: () => "ENTITY#ORDER" as const,
+  gsi2sk: (createdAt: string) => createdAt,
+  // GSI3: filter by status, sorted by date
+  gsi3pk: (status: string) => `STATUS#${status}`,
+  gsi3sk: (createdAt: string) => createdAt,
 };
 
-export const sessionKeys = {
+// ---- carts table ----
+export const cartKeys = {
+  pk: (userKey: string) => `CART#${userKey}`,
+  sk: () => "META" as const,
+  // GSI1: scan recently-updated carts for abandoned-cart recovery
+  gsi1pk: () => "ENTITY#CART" as const,
+  gsi1sk: (updatedAt: string) => updatedAt,
+};
+
+// ---- customers table (session identity + lead events) ----
+export const customerKeys = {
   pk: (sessionId: string) => `SESSION#${sessionId}`,
-  sk: () => "META" as const,
+  profileSk: () => "PROFILE" as const,
+  leadSk: (timestamp: string) => `LEAD#${timestamp}`,
+  // GSI1: admin lead feed by date
+  gsi1pk: () => "ENTITY#LEAD" as const,
+  gsi1sk: (timestamp: string) => timestamp,
 };
 
+// ---- events table (analytics) ----
+export const eventKeys = {
+  // per-session timeline
+  pk: (sessionId: string) => `SESSION#${sessionId}`,
+  sk: (timestamp: string, eventId: string) => `${timestamp}#${eventId}`,
+  // GSI1: feed of one event type per day
+  gsi1pk: (type: string, day: string) => `${type}#${day}`,
+  gsi1sk: (timestamp: string) => timestamp,
+  // daily rollup counters (kept long-term)
+  rollupPk: (day: string) => `ROLLUP#${day}`,
+  rollupSk: (metric: string) => metric,
+};
+
+// ---- config table ----
 export const configKeys = {
   payments: { pk: "CONFIG#PAYMENTS", sk: "META" as const },
+};
+
+/**
+ * Legacy single-table helpers — retained only for the one-time migration script
+ * that reads the old `hr-ecom-{env}` table. Do not use in handlers.
+ */
+export const legacyKeys = {
+  userPk: (userId: string) => `USER#${userId}`,
+  orderSkPrefix: () => "ORDER#",
 };

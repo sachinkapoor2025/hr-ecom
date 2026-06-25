@@ -3,6 +3,7 @@ import Link from "next/link";
 import { api } from "@/lib/api";
 import { HomeProductCard } from "@/components/HomeProductCard";
 import { SearchBar } from "@/components/SearchBar";
+import { SearchTracker } from "@/components/SearchTracker";
 import type { Product, Category } from "@hr-ecom/shared";
 
 export const metadata: Metadata = {
@@ -43,6 +44,7 @@ export default async function ProductsPage({ searchParams }: Props) {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
+      {search ? <SearchTracker query={search} resultCount={products.length} /> : null}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <h1 className="text-3xl font-bold text-primary">Shop Rakhi</h1>
         <SearchBar />

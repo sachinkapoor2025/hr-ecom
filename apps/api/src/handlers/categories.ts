@@ -1,14 +1,14 @@
 import { PutCommand, GetCommand, ScanCommand, DeleteCommand } from "@aws-sdk/lib-dynamodb";
 import type { APIGatewayProxyEventV2 } from "aws-lambda";
 import { createCategorySchema, categoryKeys, type Category } from "@hr-ecom/shared";
-import { docClient, TABLE_NAME, now, slugify } from "../lib/db";
+import { docClient, PRODUCTS_TABLE, now, slugify } from "../lib/db";
 import { ok, created, badRequest, notFound, forbidden } from "../lib/response";
 import { getAuth } from "../lib/auth";
 
 export async function listCategories(_event: APIGatewayProxyEventV2) {
   const result = await docClient.send(
     new ScanCommand({
-      TableName: TABLE_NAME,
+      TableName: PRODUCTS_TABLE,
       FilterExpression: "begins_with(PK, :prefix) AND SK = :sk",
       ExpressionAttributeValues: { ":prefix": "CATEGORY#", ":sk": "META" },
     })
@@ -38,7 +38,7 @@ export async function createCategory(event: APIGatewayProxyEventV2) {
     updatedAt: timestamp,
   };
 
-  await docClient.send(new PutCommand({ TableName: TABLE_NAME, Item: item }));
+  await docClient.send(new PutCommand({ TableName: PRODUCTS_TABLE, Item: item }));
   return created({ category: item });
 }
 
@@ -51,7 +51,7 @@ export async function deleteCategory(event: APIGatewayProxyEventV2) {
 
   await docClient.send(
     new DeleteCommand({
-      TableName: TABLE_NAME,
+      TableName: PRODUCTS_TABLE,
       Key: { PK: categoryKeys.pk(slug), SK: categoryKeys.sk() },
     })
   );
@@ -64,7 +64,7 @@ export async function getCategory(event: APIGatewayProxyEventV2) {
 
   const result = await docClient.send(
     new GetCommand({
-      TableName: TABLE_NAME,
+      TableName: PRODUCTS_TABLE,
       Key: { PK: categoryKeys.pk(slug), SK: categoryKeys.sk() },
     })
   );

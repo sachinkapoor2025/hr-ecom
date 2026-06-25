@@ -1,30 +1,45 @@
 import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import type { APIGatewayProxyEventV2 } from "aws-lambda";
-import { addToCartSchema, userKeys, type Cart, type CartItem } from "@hr-ecom/shared";
-import { docClient, TABLE_NAME, now } from "../lib/db";
+import { addToCartSchema, cartKeys, productKeys, type Cart, type CartItem } from "@hr-ecom/shared";
+import { docClient, CARTS_TABLE, PRODUCTS_TABLE, now, ttlInDays } from "../lib/db";
 import { ok, badRequest, unauthorized } from "../lib/response";
-import { getUserOrSessionKey } from "../lib/auth";
-import { productKeys } from "@hr-ecom/shared";
+import { getUserOrSessionKey, getSessionId } from "../lib/auth";
+
+/** Stale carts auto-expire after this many days (TTL). */
+const CART_TTL_DAYS = 30;
 
 async function getCart(userKey: string): Promise<Cart> {
   const result = await docClient.send(
     new GetCommand({
-      TableName: TABLE_NAME,
-      Key: { PK: userKeys.pk(userKey), SK: userKeys.cartSk() },
+      TableName: CARTS_TABLE,
+      Key: { PK: cartKeys.pk(userKey), SK: cartKeys.sk() },
     })
   );
   return (result.Item as Cart) ?? { items: [], updatedAt: now() };
 }
 
-async function saveCart(userKey: string, cart: Cart) {
+async function saveCart(userKey: string, cart: Cart, sessionId?: string) {
+  const timestamp = now();
+  const itemCount = cart.items.reduce((sum, i) => sum + i.quantity, 0);
+  const value = cart.items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+
   await docClient.send(
     new PutCommand({
-      TableName: TABLE_NAME,
+      TableName: CARTS_TABLE,
       Item: {
-        PK: userKeys.pk(userKey),
-        SK: userKeys.cartSk(),
+        PK: cartKeys.pk(userKey),
+        SK: cartKeys.sk(),
         ...cart,
-        updatedAt: now(),
+        userKey,
+        sessionId,
+        itemCount,
+        value,
+        currency: cart.items[0]?.currency,
+        updatedAt: timestamp,
+        // GSI1: recently-updated carts for abandoned-cart recovery
+        GSI1PK: cartKeys.gsi1pk(),
+        GSI1SK: cartKeys.gsi1sk(timestamp),
+        expiresAt: ttlInDays(CART_TTL_DAYS),
       },
     })
   );
@@ -48,7 +63,7 @@ export async function addToCart(event: APIGatewayProxyEventV2) {
 
   const productResult = await docClient.send(
     new GetCommand({
-      TableName: TABLE_NAME,
+      TableName: PRODUCTS_TABLE,
       Key: { PK: productKeys.pk(parsed.data.productSlug), SK: productKeys.sk() },
     })
   );
@@ -87,7 +102,7 @@ export async function addToCart(event: APIGatewayProxyEventV2) {
     cart.items.push(item);
   }
 
-  await saveCart(userKey, cart);
+  await saveCart(userKey, cart, getSessionId(event));
   return ok({ cart });
 }
 
@@ -100,7 +115,7 @@ export async function removeFromCart(event: APIGatewayProxyEventV2) {
 
   const cart = await getCart(userKey);
   cart.items = cart.items.filter((i) => i.productSlug !== productSlug);
-  await saveCart(userKey, cart);
+  await saveCart(userKey, cart, getSessionId(event));
   return ok({ cart });
 }
 
@@ -121,7 +136,7 @@ export async function updateCartItem(event: APIGatewayProxyEventV2) {
 
   const productResult = await docClient.send(
     new GetCommand({
-      TableName: TABLE_NAME,
+      TableName: PRODUCTS_TABLE,
       Key: { PK: productKeys.pk(productSlug), SK: productKeys.sk() },
     })
   );
@@ -130,7 +145,7 @@ export async function updateCartItem(event: APIGatewayProxyEventV2) {
   if (quantity > product.inventory) return badRequest("Insufficient inventory");
 
   item.quantity = quantity;
-  await saveCart(userKey, cart);
+  await saveCart(userKey, cart, getSessionId(event));
   return ok({ cart });
 }
 

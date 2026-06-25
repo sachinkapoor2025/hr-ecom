@@ -56,7 +56,7 @@ jobs:
       - name: Seed UsaRakhi catalog (110 products)
         run: npm run import:usarakhi
         env:
-          TABLE_NAME: hr-ecom-prod
+          ENVIRONMENT: prod
 
   deploy-web:
     runs-on: ubuntu-latest

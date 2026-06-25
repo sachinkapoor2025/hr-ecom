@@ -7,7 +7,7 @@ import {
   productKeys,
   type Product,
 } from "@hr-ecom/shared";
-import { docClient, TABLE_NAME, now, slugify } from "../lib/db";
+import { docClient, PRODUCTS_TABLE, now, slugify } from "../lib/db";
 import { ok, created, badRequest, notFound, forbidden } from "../lib/response";
 import { getAuth } from "../lib/auth";
 
@@ -20,7 +20,7 @@ export async function listProducts(event: APIGatewayProxyEventV2) {
   if (category) {
     const result = await docClient.send(
       new QueryCommand({
-        TableName: TABLE_NAME,
+        TableName: PRODUCTS_TABLE,
         IndexName: "GSI1",
         KeyConditionExpression: "GSI1PK = :pk",
         ExpressionAttributeValues: { ":pk": productKeys.gsi1pk(category) },
@@ -30,7 +30,7 @@ export async function listProducts(event: APIGatewayProxyEventV2) {
   } else {
     const result = await docClient.send(
       new ScanCommand({
-        TableName: TABLE_NAME,
+        TableName: PRODUCTS_TABLE,
         FilterExpression: "begins_with(PK, :prefix) AND SK = :sk",
         ExpressionAttributeValues: { ":prefix": "PRODUCT#", ":sk": "META" },
       })
@@ -57,7 +57,7 @@ export async function getProduct(event: APIGatewayProxyEventV2) {
 
   const result = await docClient.send(
     new GetCommand({
-      TableName: TABLE_NAME,
+      TableName: PRODUCTS_TABLE,
       Key: { PK: productKeys.pk(slug), SK: productKeys.sk() },
     })
   );
@@ -89,7 +89,7 @@ export async function createProduct(event: APIGatewayProxyEventV2) {
     updatedAt: timestamp,
   };
 
-  await docClient.send(new PutCommand({ TableName: TABLE_NAME, Item: item }));
+  await docClient.send(new PutCommand({ TableName: PRODUCTS_TABLE, Item: item }));
   return created({ product: item });
 }
 
@@ -102,7 +102,7 @@ export async function updateProduct(event: APIGatewayProxyEventV2) {
 
   const existing = await docClient.send(
     new GetCommand({
-      TableName: TABLE_NAME,
+      TableName: PRODUCTS_TABLE,
       Key: { PK: productKeys.pk(slug), SK: productKeys.sk() },
     })
   );
@@ -123,7 +123,7 @@ export async function updateProduct(event: APIGatewayProxyEventV2) {
     updated.GSI1SK = productKeys.gsi1sk(slug);
   }
 
-  await docClient.send(new PutCommand({ TableName: TABLE_NAME, Item: updated }));
+  await docClient.send(new PutCommand({ TableName: PRODUCTS_TABLE, Item: updated }));
   return ok({ product: updated });
 }
 
@@ -136,7 +136,7 @@ export async function deleteProduct(event: APIGatewayProxyEventV2) {
 
   await docClient.send(
     new DeleteCommand({
-      TableName: TABLE_NAME,
+      TableName: PRODUCTS_TABLE,
       Key: { PK: productKeys.pk(slug), SK: productKeys.sk() },
     })
   );
@@ -180,7 +180,7 @@ export async function bulkUploadProducts(event: APIGatewayProxyEventV2) {
       updatedAt: timestamp,
     };
 
-    await docClient.send(new PutCommand({ TableName: TABLE_NAME, Item: item }));
+    await docClient.send(new PutCommand({ TableName: PRODUCTS_TABLE, Item: item }));
     createdProducts.push(item as Product);
   }
 

@@ -15,6 +15,7 @@
     "seed": "tsx scripts/seed.ts",
     "import:usarakhi": "tsx scripts/import-usarakhi.ts",
     "import:usarakhi:fetch": "tsx scripts/import-usarakhi.ts --fetch-only",
+    "migrate:multitable": "tsx scripts/migrate-to-multitable.ts",
     "setup:local": "npm run db:up && sleep 3 && npm run db:setup && npm run seed",
     "build": "npm run build -w @hr-ecom/shared && npm run build -w @hr-ecom/api && npm run build -w @hr-ecom/web",
     "lint": "npm run lint -w @hr-ecom/web && npm run lint -w @hr-ecom/api",

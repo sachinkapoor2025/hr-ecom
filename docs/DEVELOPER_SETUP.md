@@ -12,7 +12,16 @@ For full local testing without AWS, prompt Cursor:
 
 > "Add DynamoDB Local docker-compose for development"
 
-By default, API uses env `TABLE_NAME` — point to deployed dev stack or local.
+The API uses a multi-table DynamoDB design. Table names come from env vars
+`PRODUCTS_TABLE`, `ORDERS_TABLE`, `CARTS_TABLE`, `CUSTOMERS_TABLE`, `EVENTS_TABLE`,
+and `CONFIG_TABLE` (each defaulting to `hr-ecom-<domain>-<ENVIRONMENT>`). Create the
+local tables with `npm run db:setup` (or set `USE_MEMORY_DB=true`).
+
+Migrating from the legacy single table? Run:
+
+```bash
+ENVIRONMENT=prod LEGACY_TABLE=hr-ecom-prod npm run migrate:multitable
+```
 
 ## Cognito Admin User
 

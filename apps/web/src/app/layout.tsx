@@ -5,6 +5,7 @@ import { CartProvider } from "@/lib/cart-context";
 import { WishlistProvider } from "@/lib/wishlist-context";
 import { HeaderShell } from "@/components/HeaderShell";
 import { Footer } from "@/components/Footer";
+import { TrackingProvider } from "@/components/TrackingProvider";
 import { siteUrl } from "@/lib/env";
 
 export const metadata: Metadata = {
@@ -30,6 +31,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <AuthProvider>
           <CartProvider>
             <WishlistProvider>
+            <TrackingProvider />
             <HeaderShell />
             <main className="flex-1">{children}</main>
             <Footer />

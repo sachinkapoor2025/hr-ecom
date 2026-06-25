@@ -26,10 +26,38 @@ export const docClient = useMemory
       marshallOptions: { removeUndefinedValues: true },
     });
 
-export const TABLE_NAME = process.env.TABLE_NAME ?? "hr-ecom-dev";
+const ENV = process.env.ENVIRONMENT ?? "dev";
+
+/** Per-domain tables (multi-table design). Each can be overridden by env var. */
+export const PRODUCTS_TABLE = process.env.PRODUCTS_TABLE ?? `hr-ecom-products-${ENV}`;
+export const ORDERS_TABLE = process.env.ORDERS_TABLE ?? `hr-ecom-orders-${ENV}`;
+export const CARTS_TABLE = process.env.CARTS_TABLE ?? `hr-ecom-carts-${ENV}`;
+export const CUSTOMERS_TABLE = process.env.CUSTOMERS_TABLE ?? `hr-ecom-customers-${ENV}`;
+export const EVENTS_TABLE = process.env.EVENTS_TABLE ?? `hr-ecom-events-${ENV}`;
+export const CONFIG_TABLE = process.env.CONFIG_TABLE ?? `hr-ecom-config-${ENV}`;
+
+/** All table names, useful for setup/migration scripts. */
+export const ALL_TABLES = {
+  products: PRODUCTS_TABLE,
+  orders: ORDERS_TABLE,
+  carts: CARTS_TABLE,
+  customers: CUSTOMERS_TABLE,
+  events: EVENTS_TABLE,
+  config: CONFIG_TABLE,
+};
 
 export function now(): string {
   return new Date().toISOString();
+}
+
+/** Epoch-seconds TTL value `days` in the future. */
+export function ttlInDays(days: number): number {
+  return Math.floor(Date.now() / 1000) + days * 24 * 60 * 60;
+}
+
+/** UTC day bucket (YYYY-MM-DD) for rollups/analytics. */
+export function dayBucket(date: Date = new Date()): string {
+  return date.toISOString().slice(0, 10);
 }
 
 export function slugify(text: string): string {

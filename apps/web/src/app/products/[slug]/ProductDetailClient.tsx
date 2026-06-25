@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AddToCartControl } from "@/components/AddToCartControl";
 import { WishlistButton } from "@/components/WishlistButton";
 import { useSessionId, useDebouncedLeadCapture } from "@/lib/session";
+import { trackProductView } from "@/lib/track";
 import { LeadCaptureInput } from "@/components/LeadCaptureInput";
 import type { Product } from "@hr-ecom/shared";
 
@@ -11,6 +12,10 @@ export function ProductDetailClient({ product }: { product: Product }) {
   const sessionId = useSessionId();
   const captureLead = useDebouncedLeadCapture(sessionId);
   const [name, setName] = useState("");
+
+  useEffect(() => {
+    trackProductView(product.slug);
+  }, [product.slug]);
 
   const price = new Intl.NumberFormat(undefined, {
     style: "currency",

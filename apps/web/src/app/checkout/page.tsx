@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { loadStripe } from "@stripe/stripe-js";
 import { api } from "@/lib/api";
 import { useCart } from "@/lib/cart-context";
 import { useAuth } from "@/lib/auth-context";
 import { useSessionId, useDebouncedLeadCapture } from "@/lib/session";
+import { trackCheckoutStart, trackPurchase } from "@/lib/track";
 import Script from "next/script";
 import { LeadCaptureInput } from "@/components/LeadCaptureInput";
 import { PaymentMethodPicker, type PaymentMethod } from "@/components/PaymentMethodPicker";
@@ -41,6 +42,14 @@ export default function CheckoutPage() {
     country: "US",
   });
 
+  const checkoutTracked = useRef(false);
+  useEffect(() => {
+    if (checkoutTracked.current || !cart?.items.length) return;
+    checkoutTracked.current = true;
+    const value = cart.items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+    trackCheckoutStart(value);
+  }, [cart]);
+
   const update = (field: string, value: string) => {
     setForm((f) => ({ ...f, [field]: value }));
     if (field === "name" || field === "email" || field === "phone") {
@@ -55,6 +64,7 @@ export default function CheckoutPage() {
   const openRazorpayCheckout = async (order: Order, razorpayOrderId: string, razorpayKeyId?: string) => {
     const key = razorpayKeyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
     if (!key || razorpayOrderId.includes("_dev_")) {
+      trackPurchase(order.total, { orderId: order.orderId, provider: "razorpay_dev" });
       await refresh();
       router.push(`/orders/${order.orderId}?dev=1`);
       return;
@@ -95,6 +105,7 @@ export default function CheckoutPage() {
                 razorpaySignature: response.razorpay_signature,
               }),
             });
+            trackPurchase(order.total, { orderId: order.orderId, provider: "razorpay" });
             await refresh();
             resolve();
             router.push(`/orders/${order.orderId}`);
@@ -152,6 +163,7 @@ export default function CheckoutPage() {
             return;
           }
         }
+        trackPurchase(data.order.total, { orderId: data.order.orderId, provider: "stripe_dev" });
         await refresh();
         router.push(`/orders/${data.order.orderId}?dev=1`);
         return;

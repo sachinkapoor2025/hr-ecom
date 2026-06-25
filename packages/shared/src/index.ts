@@ -3,6 +3,7 @@ export * from "./schemas/category";
 export * from "./schemas/cart";
 export * from "./schemas/order";
 export * from "./schemas/lead";
+export * from "./schemas/event";
 export * from "./schemas/user";
 export * from "./schemas/payment";
 export * from "./db/keys";

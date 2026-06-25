@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState, useCallback, type React
 import { api } from "./api";
 import { getOrCreateSessionId, useSessionId } from "./session";
 import { useAuth } from "./auth-context";
+import { trackCartAdd, trackCartRemove } from "./track";
 import type { Cart } from "@hr-ecom/shared";
 
 interface CartContextValue {
@@ -64,6 +65,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
       body: JSON.stringify({ productSlug, quantity }),
     });
     setCart(normalizeCart(data.cart));
+    const added = data.cart.items.find((i) => i.productSlug === productSlug);
+    trackCartAdd(productSlug, added ? added.price * added.quantity : undefined);
   };
 
   const removeItem = async (productSlug: string) => {
@@ -76,6 +79,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       token,
     });
     setCart(normalizeCart(data.cart));
+    trackCartRemove(productSlug);
   };
 
   const updateItem = async (productSlug: string, quantity: number) => {
