@@ -4,7 +4,7 @@ import Image from "next/image";
 import { api } from "@/lib/api";
 import { BannerCarousel } from "@/components/BannerCarousel";
 import { HomeProductCard } from "@/components/HomeProductCard";
-import { site, homeBanners, promoBanners, categoryOrder, testimonials, faqs } from "@/lib/site";
+import { site, homeBanners, promoBanners, categoryOrder, faqs } from "@/lib/site";
 import type { Product, Category } from "@hr-ecom/shared";
 
 export const metadata: Metadata = {
@@ -86,20 +86,6 @@ export default async function HomePage() {
           </div>
         </section>
       )}
-
-      <section className="bg-primary text-white py-12">
-        <div className="max-w-7xl mx-auto px-4">
-          <h2 className="text-2xl font-bold text-center mb-8">Loved by Brothers &amp; Sisters</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {testimonials.map((t) => (
-              <blockquote key={t.name} className="bg-white/10 rounded-xl p-4 text-sm">
-                <p className="text-blue-100 mb-2">&ldquo;{t.text}&rdquo;</p>
-                <footer className="font-semibold">{t.name}</footer>
-              </blockquote>
-            ))}
-          </div>
-        </div>
-      </section>
 
       <section className="max-w-3xl mx-auto px-4 py-12">
         <h2 className="text-2xl font-bold text-primary text-center mb-6">FAQ</h2>
