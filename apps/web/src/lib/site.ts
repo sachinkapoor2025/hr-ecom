@@ -37,18 +37,18 @@ export const cityLinks = [
 
 export const homeBanners = [
   {
-    src: "https://usarakhi.com/wp-content/uploads/2026/03/border-banner-2-1.webp",
-    alt: "Send Rakhi to USA — Raksha Bandhan",
+    src: "/banners/banner-1-usa-rakhi-delivery.png",
+    alt: "USA Rakhi Delivery — Send Beautiful Rakhis to Your Loved Ones in the USA",
     href: "/products?category=rakhi-combo",
   },
   {
-    src: "https://usarakhi.com/wp-content/uploads/2026/06/Untitled-design-31-1.png",
-    alt: "Premium Rakhi collection",
+    src: "/banners/banner-2-connecting-hearts.png",
+    alt: "UsaRakhi.com — Connecting hearts across miles",
     href: "/products",
   },
   {
-    src: "https://usarakhi.com/wp-content/uploads/2026/06/puja3.png",
-    alt: "Rakhi with Roli Chawal",
+    src: "/banners/banner-3-india-usa.png",
+    alt: "Send Rakhi from India to USA — Premium Rakhis with Express Shipping",
     href: "/products?category=single-rakhi",
   },
 ] as const;
