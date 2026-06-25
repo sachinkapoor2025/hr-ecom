@@ -68,9 +68,12 @@ export function AddToCartControl({ productSlug, disabled, className = "", fullWi
     <div className={className} onClick={stop}>
       {error && <p className="text-xs text-red-600 mb-1">{error}</p>}
       <div
-        className={`relative flex items-center justify-center rounded-full bg-nav text-white font-semibold text-sm px-4 py-2.5 ${fullWidth ? "w-full" : "min-w-[12rem]"}`}
+        className={`grid grid-cols-3 items-center rounded-full bg-nav text-white font-semibold text-sm px-4 py-2.5 ${fullWidth ? "w-full" : "min-w-[12rem]"}`}
       >
-        <div className="flex items-center">
+        <div className="flex justify-start opacity-0 pointer-events-none" aria-hidden>
+          <TrashIcon />
+        </div>
+        <div className="flex items-center justify-center">
           <button
             type="button"
             aria-label="Decrease quantity"
@@ -97,18 +100,20 @@ export function AddToCartControl({ productSlug, disabled, className = "", fullWi
             +
           </button>
         </div>
-        <button
-          type="button"
-          aria-label="Remove from cart"
-          disabled={busy}
-          onClick={(e) => {
-            stop(e);
-            void run(() => removeItem(productSlug));
-          }}
-          className="absolute right-4 hover:opacity-80 disabled:opacity-50"
-        >
-          <TrashIcon />
-        </button>
+        <div className="flex justify-end">
+          <button
+            type="button"
+            aria-label="Remove from cart"
+            disabled={busy}
+            onClick={(e) => {
+              stop(e);
+              void run(() => removeItem(productSlug));
+            }}
+            className="hover:opacity-80 disabled:opacity-50"
+          >
+            <TrashIcon />
+          </button>
+        </div>
       </div>
       <Link
         href="/cart"
