@@ -63,6 +63,8 @@ export async function getProduct(event: APIGatewayProxyEventV2) {
   );
 
   if (!result.Item) return notFound("Product not found");
+  const product = result.Item as { published?: boolean };
+  if (product.published === false) return notFound("Product not found");
   return ok({ product: result.Item });
 }
 

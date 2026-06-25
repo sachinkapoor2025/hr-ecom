@@ -6,7 +6,7 @@ export const site = {
     "Send Rakhi to USA with fast delivery, free shipping on selected orders, and premium Rakhi combos. Trusted by sisters worldwide for Raksha Bandhan.",
   supportEmail: "support@usarakhi.com",
   phone: "+1 (555) 123-4567",
-  logoSrc: "/logo.png",
+  logoSrc: "https://usarakhi.com/wp-content/uploads/2026/02/transparent-logo-1.png",
   primaryColor: "#183a68",
   navBlue: "#4876e8",
   accentColor: "#e11d48",

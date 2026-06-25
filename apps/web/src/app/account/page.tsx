@@ -1,15 +1,23 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { isDevAuthEnabled, isCognitoConfigured } from "@/lib/cognito";
+import { api } from "@/lib/api";
+import { useSessionId } from "@/lib/session";
+import type { Order } from "@hr-ecom/shared";
 
 function AccountForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") ?? "/";
-  const { user, login, register, logout, isAdmin } = useAuth();
+  const { user, login, register, logout, isAdmin, token } = useAuth();
+  const sessionId = useSessionId();
+
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
 
   const [mode, setMode] = useState<"login" | "register">("login");
   const [email, setEmail] = useState("");
@@ -18,6 +26,28 @@ function AccountForm() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!user || !token || !sessionId) return;
+
+    const loadOrders = async () => {
+      setOrdersLoading(true);
+      try {
+        const data = await api<{ orders: Order[] }>("/orders", { sessionId, token });
+        setOrders(
+          [...data.orders].sort(
+            (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          )
+        );
+      } catch {
+        setOrders([]);
+      } finally {
+        setOrdersLoading(false);
+      }
+    };
+
+    void loadOrders();
+  }, [user, token, sessionId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,6 +102,41 @@ function AccountForm() {
             Logout
           </button>
         </div>
+
+        <section className="mt-10">
+          <h2 className="text-xl font-bold mb-4">Order History</h2>
+          {ordersLoading ? (
+            <p className="text-slate-500 text-sm">Loading orders...</p>
+          ) : orders.length === 0 ? (
+            <p className="text-slate-500 text-sm">No orders yet.</p>
+          ) : (
+            <ul className="space-y-3">
+              {orders.map((order) => (
+                <li key={order.orderId} className="border border-slate-200 rounded-lg p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <p className="font-mono text-xs text-slate-500">{order.orderId}</p>
+                      <p className="text-sm text-slate-600">
+                        {new Date(order.createdAt).toLocaleDateString()} ·{" "}
+                        <span className="capitalize">{order.status.replace(/_/g, " ")}</span>
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-nav">
+                        {new Intl.NumberFormat(undefined, { style: "currency", currency: order.currency }).format(
+                          order.total
+                        )}
+                      </p>
+                      <Link href={`/orders/${order.orderId}`} className="text-sm text-nav hover:underline">
+                        View details
+                      </Link>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
       </div>
     );
   }

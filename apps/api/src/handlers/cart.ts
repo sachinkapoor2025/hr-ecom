@@ -80,7 +80,9 @@ export async function addToCart(event: APIGatewayProxyEventV2) {
   };
 
   if (existingIdx >= 0) {
-    cart.items[existingIdx].quantity += parsed.data.quantity;
+    const newQty = cart.items[existingIdx].quantity + parsed.data.quantity;
+    if (newQty > product.inventory) return badRequest("Insufficient inventory");
+    cart.items[existingIdx].quantity = newQty;
   } else {
     cart.items.push(item);
   }
@@ -117,15 +119,29 @@ export async function updateCartItem(event: APIGatewayProxyEventV2) {
   const item = cart.items.find((i) => i.productSlug === productSlug);
   if (!item) return badRequest("Item not in cart");
 
+  const productResult = await docClient.send(
+    new GetCommand({
+      TableName: TABLE_NAME,
+      Key: { PK: productKeys.pk(productSlug), SK: productKeys.sk() },
+    })
+  );
+  const product = productResult.Item as { inventory: number } | undefined;
+  if (!product) return badRequest("Product not found");
+  if (quantity > product.inventory) return badRequest("Insufficient inventory");
+
   item.quantity = quantity;
   await saveCart(userKey, cart);
   return ok({ cart });
+}
+
+export async function clearCartForUser(userKey: string) {
+  await saveCart(userKey, { items: [], updatedAt: now() });
 }
 
 export async function clearCart(event: APIGatewayProxyEventV2) {
   const userKey = getUserOrSessionKey(event);
   if (!userKey) return unauthorized("Session or auth required");
 
-  await saveCart(userKey, { items: [], updatedAt: now() });
+  await clearCartForUser(userKey);
   return ok({ cart: { items: [] } });
 }

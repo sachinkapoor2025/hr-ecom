@@ -13,7 +13,7 @@ import {
 import { docClient, TABLE_NAME, now } from "../lib/db";
 import { ok, created, badRequest, unauthorized, forbidden } from "../lib/response";
 import { getAuth, getSessionId, getUserOrSessionKey } from "../lib/auth";
-import { getCartHandler } from "./cart";
+import { getCartHandler, clearCartForUser } from "./cart";
 import { createStripePaymentIntent } from "./payments/stripe";
 import { createRazorpayOrder } from "./payments/razorpay";
 
@@ -70,6 +70,14 @@ export async function checkout(event: APIGatewayProxyEventV2) {
 
   if (!cart?.items?.length) return badRequest("Cart is empty");
 
+  const cartCurrency = cart.items[0]?.currency ?? "USD";
+  if (parsed.data.paymentRegion === "IN" && cartCurrency !== "INR") {
+    return badRequest("Razorpay is only available for INR-priced products. Please pay with Stripe (USA).");
+  }
+  if (parsed.data.paymentRegion === "US" && cartCurrency === "INR") {
+    return badRequest("Stripe checkout is not available for INR-priced products.");
+  }
+
   const subtotal = cart.items.reduce(
     (sum: number, item: { price: number; quantity: number }) => sum + item.price * item.quantity,
     0
@@ -113,6 +121,7 @@ export async function checkout(event: APIGatewayProxyEventV2) {
     order.paymentProvider = "stripe";
     order.paymentIntentId = payment.paymentIntentId;
     await docClient.send(new PutCommand({ TableName: TABLE_NAME, Item: order }));
+    await clearCartForUser(userKey);
     return created({ order, clientSecret: payment.clientSecret });
   }
 
@@ -120,6 +129,7 @@ export async function checkout(event: APIGatewayProxyEventV2) {
   order.paymentProvider = "razorpay";
   order.razorpayOrderId = payment.razorpayOrderId;
   await docClient.send(new PutCommand({ TableName: TABLE_NAME, Item: order }));
+  await clearCartForUser(userKey);
   return created({ order, razorpayOrderId: payment.razorpayOrderId, razorpayKeyId: payment.keyId });
 }
 

@@ -18,7 +18,7 @@ declare global {
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { cart, refresh } = useCart();
+  const { cart, loading: cartLoading, refresh } = useCart();
   const { token } = useAuth();
   const sessionId = useSessionId();
   const captureLead = useDebouncedLeadCapture(sessionId);
@@ -82,12 +82,14 @@ export default function CheckoutPage() {
               confirmParams: { return_url: `${window.location.origin}/orders/${data.order.orderId}` },
             });
             if (stripeError) throw new Error(stripeError.message);
+            return;
           }
-        } else {
-          router.push(`/orders/${data.order.orderId}?dev=1`);
         }
+        await refresh();
+        router.push(`/orders/${data.order.orderId}?dev=1`);
       } else if (region === "IN" && data.razorpayOrderId) {
         if (typeof window.Razorpay === "undefined" || data.razorpayOrderId.includes("_dev_")) {
+          await refresh();
           router.push(`/orders/${data.order.orderId}?dev=1`);
         } else {
           const rzp = new window.Razorpay({
@@ -99,15 +101,19 @@ export default function CheckoutPage() {
           });
           rzp.open();
         }
+      } else {
+        throw new Error("Payment could not be started. Check payment configuration and try again.");
       }
-
-      await refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Checkout failed");
     } finally {
       setLoading(false);
     }
   };
+
+  if (cartLoading) {
+    return <div className="max-w-lg mx-auto px-4 py-16 text-center text-slate-600">Loading cart...</div>;
+  }
 
   if (!cart?.items.length) {
     return (
@@ -116,6 +122,9 @@ export default function CheckoutPage() {
       </div>
     );
   }
+
+  const cartCurrency = cart.items[0]?.currency ?? "USD";
+  const showRazorpay = cartCurrency === "INR";
 
   return (
     <>
@@ -131,13 +140,15 @@ export default function CheckoutPage() {
         >
           Pay with Stripe (USA)
         </button>
-        <button
-          type="button"
-          onClick={() => setRegion("IN")}
-          className={`px-4 py-2 rounded-lg border ${region === "IN" ? "border-accent bg-blue-50" : "border-slate-200"}`}
-        >
-          Pay with Razorpay (India)
-        </button>
+        {showRazorpay && (
+          <button
+            type="button"
+            onClick={() => setRegion("IN")}
+            className={`px-4 py-2 rounded-lg border ${region === "IN" ? "border-accent bg-blue-50" : "border-slate-200"}`}
+          >
+            Pay with Razorpay (India)
+          </button>
+        )}
       </div>
 
       <form onSubmit={handleCheckout} className="space-y-4">

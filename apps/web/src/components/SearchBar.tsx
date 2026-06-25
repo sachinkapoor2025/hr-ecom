@@ -1,12 +1,16 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 
 function SearchBarInner({ variant = "default" }: { variant?: "default" | "header" }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [q, setQ] = useState(searchParams.get("search") ?? "");
+
+  useEffect(() => {
+    setQ(searchParams.get("search") ?? "");
+  }, [searchParams]);
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
