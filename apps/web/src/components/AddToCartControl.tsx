@@ -117,7 +117,7 @@ export function AddToCartControl({ productSlug, disabled, className = "", fullWi
       </div>
       <Link
         href="/cart"
-        onClick={stop}
+        onClick={(e) => e.stopPropagation()}
         className="block text-center text-nav text-sm font-semibold mt-2 hover:underline"
       >
         View Cart

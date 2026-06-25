@@ -5,6 +5,7 @@ import { api } from "@/lib/api";
 import { HomeProductCard } from "@/components/HomeProductCard";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { JsonLd } from "@/components/JsonLd";
+import { getCategoryContent } from "@/lib/content/category-content";
 import { categoryOrder } from "@/lib/site";
 import { breadcrumbJsonLd, itemListJsonLd, pageMetadata } from "@/lib/seo";
 import type { Product, Category } from "@hr-ecom/shared";
@@ -57,9 +58,10 @@ export default async function CategoryPage({ params }: Props) {
   }
 
   const name = category?.name ?? slug.replace(/-/g, " ");
-  const description =
-    category?.description ||
+  const baseDescription =
+    category?.description?.trim() ||
     `Browse our ${name} collection — premium Rakhis delivered to all 50 US states. Order online from India, UK, Canada, or anywhere worldwide.`;
+  const extra = getCategoryContent(slug);
 
   const crumbs = [
     { label: "Home", href: "/" },
@@ -79,10 +81,7 @@ export default async function CategoryPage({ params }: Props) {
         ]}
       />
       <Breadcrumbs items={crumbs} />
-      <h1 className="text-3xl font-bold text-primary mb-4">{name} — Send to USA</h1>
-      <div className="text-slate-600 mb-8 max-w-3xl leading-relaxed">
-        <p>{description}</p>
-      </div>
+      <h1 className="text-3xl font-bold text-primary mb-8">{name} — Send to USA</h1>
 
       {products.length > 0 ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
@@ -93,17 +92,61 @@ export default async function CategoryPage({ params }: Props) {
       ) : (
         <p className="text-slate-500">
           Products loading soon.{" "}
-          <Link href="/products" className="text-nav hover:underline">Browse all Rakhis</Link>
+          <Link href="/products" className="text-nav hover:underline">
+            Browse all Rakhis
+          </Link>
         </p>
       )}
 
-      <section className="mt-12 p-6 bg-slate-50 rounded-xl">
-        <h2 className="font-semibold text-primary mb-2">Why order {name} from UsaRakhi?</h2>
-        <ul className="text-sm text-slate-600 space-y-2 list-disc list-inside">
-          <li>Fast Rakhi delivery to all 50 US states (5–7 business days)</li>
-          <li>Order from India, UK, Canada, Australia — we deliver inside USA</li>
-          <li>Complimentary roli and chawal with most rakhis</li>
-          <li>Secure checkout with Razorpay and Stripe</li>
+      <section className="mt-12 pt-10 border-t border-slate-200">
+        <div className="grid lg:grid-cols-2 gap-x-12 gap-y-6 text-slate-700 leading-relaxed">
+          <div className="space-y-4">
+            {baseDescription.split(/(?<=\.)\s+/).map((para, i) => (
+              <p key={i}>{para}</p>
+            ))}
+            {extra?.extraParagraphs.map((para, i) => (
+              <p key={`extra-${i}`}>{para}</p>
+            ))}
+          </div>
+          {extra?.sections && extra.sections.length > 0 && (
+            <div className="space-y-6">
+              {extra.sections.map((section) => (
+                <div key={section.heading}>
+                  <h2 className="text-lg font-bold text-primary mb-3">{section.heading}</h2>
+                  <ul className="space-y-2 text-sm">
+                    {section.paragraphs.map((item, i) => (
+                      <li key={i} className="flex gap-2">
+                        <span className="text-nav mt-1 shrink-0">•</span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className="mt-10 p-6 bg-slate-50 rounded-xl">
+        <h2 className="font-semibold text-primary mb-3">Why order {name} from UsaRakhi?</h2>
+        <ul className="grid sm:grid-cols-2 gap-x-8 gap-y-2 text-sm text-slate-600">
+          <li className="flex gap-2">
+            <span className="text-nav shrink-0">✓</span>
+            Fast Rakhi delivery to all 50 US states (5–7 business days)
+          </li>
+          <li className="flex gap-2">
+            <span className="text-nav shrink-0">✓</span>
+            Order from India, UK, Canada, Australia — we deliver inside USA
+          </li>
+          <li className="flex gap-2">
+            <span className="text-nav shrink-0">✓</span>
+            Complimentary roli and chawal with most rakhis
+          </li>
+          <li className="flex gap-2">
+            <span className="text-nav shrink-0">✓</span>
+            Secure checkout with Razorpay and Stripe
+          </li>
         </ul>
       </section>
     </div>

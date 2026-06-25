@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import Image from "next/image";
 import { api } from "@/lib/api";
 import { BannerCarousel } from "@/components/BannerCarousel";
 import { CustomerReviews } from "@/components/CustomerReviews";
 import { HomeProductCard } from "@/components/HomeProductCard";
 import { JsonLd } from "@/components/JsonLd";
-import { site, homeBanners, promoBanners, categoryOrder, faqs } from "@/lib/site";
+import { site, homeBanners, categoryOrder, faqs } from "@/lib/site";
 import { faqJsonLd, pageMetadata } from "@/lib/seo";
 import type { Product, Category } from "@hr-ecom/shared";
 
@@ -69,7 +68,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {productsByCategory.map((section, idx) =>
+      {productsByCategory.map((section) =>
         section.products.length > 0 ? (
           <section key={section.slug} className="max-w-7xl mx-auto px-4 py-8">
             <div className="flex items-center justify-between mb-5">
@@ -83,11 +82,6 @@ export default async function HomePage() {
                 <HomeProductCard key={p.slug} product={p} />
               ))}
             </div>
-            {idx === 1 && promoBanners[0] && (
-              <div className="mt-8 relative w-full aspect-[21/5] rounded-lg overflow-hidden bg-slate-100">
-                <Image src={promoBanners[0].src} alt={promoBanners[0].alt} fill className="object-cover" sizes="100vw" />
-              </div>
-            )}
           </section>
         ) : null
       )}
@@ -97,14 +91,6 @@ export default async function HomePage() {
           Products could not be loaded. Confirm Amplify env var{" "}
           <code className="bg-slate-100 px-1 rounded">NEXT_PUBLIC_API_URL</code> is set and redeploy.
         </p>
-      )}
-
-      {promoBanners[1] && (
-        <section className="max-w-7xl mx-auto px-4 py-6">
-          <div className="relative w-full max-w-md mx-auto aspect-[768/1152] rounded-lg overflow-hidden bg-slate-100">
-            <Image src={promoBanners[1].src} alt={promoBanners[1].alt} fill className="object-cover" sizes="400px" />
-          </div>
-        </section>
       )}
 
       <CustomerReviews />
