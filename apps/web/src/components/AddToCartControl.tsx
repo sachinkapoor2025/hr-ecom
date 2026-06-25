@@ -73,7 +73,7 @@ export function AddToCartControl({ productSlug, disabled, className = "", fullWi
         <div className="flex justify-start opacity-0 pointer-events-none" aria-hidden>
           <TrashIcon />
         </div>
-        <div className="flex items-center justify-center">
+        <div className="flex items-center justify-center gap-4">
           <button
             type="button"
             aria-label="Decrease quantity"
@@ -82,11 +82,11 @@ export function AddToCartControl({ productSlug, disabled, className = "", fullWi
               stop(e);
               void run(() => (quantity <= 1 ? removeItem(productSlug) : updateItem(productSlug, quantity - 1)));
             }}
-            className="px-2 hover:opacity-80 disabled:opacity-50"
+            className="px-3 hover:opacity-80 disabled:opacity-50"
           >
             −
           </button>
-          <span className="min-w-[1.5rem] text-center">{quantity}</span>
+          <span className="min-w-[1.75rem] text-center">{quantity}</span>
           <button
             type="button"
             aria-label="Increase quantity"
@@ -95,7 +95,7 @@ export function AddToCartControl({ productSlug, disabled, className = "", fullWi
               stop(e);
               void run(() => addItem(productSlug, 1));
             }}
-            className="px-2 hover:opacity-80 disabled:opacity-50"
+            className="px-3 hover:opacity-80 disabled:opacity-50"
           >
             +
           </button>
