@@ -71,12 +71,6 @@ export async function checkout(event: APIGatewayProxyEventV2) {
   if (!cart?.items?.length) return badRequest("Cart is empty");
 
   const cartCurrency = cart.items[0]?.currency ?? "USD";
-  if (parsed.data.paymentRegion === "IN" && cartCurrency !== "INR") {
-    return badRequest("Razorpay is only available for INR-priced products. Please pay with Stripe (USA).");
-  }
-  if (parsed.data.paymentRegion === "US" && cartCurrency === "INR") {
-    return badRequest("Stripe checkout is not available for INR-priced products.");
-  }
 
   const subtotal = cart.items.reduce(
     (sum: number, item: { price: number; quantity: number }) => sum + item.price * item.quantity,
@@ -85,7 +79,7 @@ export async function checkout(event: APIGatewayProxyEventV2) {
   const shipping = 0;
   const tax = 0;
   const total = subtotal + shipping + tax;
-  const currency = parsed.data.paymentRegion === "IN" ? "INR" : "USD";
+  const currency = cartCurrency;
 
   const orderId = uuidv4();
   const timestamp = now();
@@ -116,7 +110,7 @@ export async function checkout(event: APIGatewayProxyEventV2) {
     updatedAt: timestamp,
   };
 
-  if (parsed.data.paymentRegion === "US") {
+  if (parsed.data.paymentMethod === "stripe") {
     const payment = await createStripePaymentIntent(order);
     order.paymentProvider = "stripe";
     order.paymentIntentId = payment.paymentIntentId;

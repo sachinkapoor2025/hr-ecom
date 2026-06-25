@@ -16,7 +16,7 @@ export const shippingAddressSchema = z.object({
 
 export const checkoutSchema = z.object({
   shippingAddress: shippingAddressSchema,
-  paymentRegion: z.enum(["US", "IN"]),
+  paymentMethod: z.enum(["stripe", "razorpay"]),
 });
 
 export const orderSchema = z.object({

@@ -7,7 +7,7 @@ import * as orders from "./handlers/orders";
 import * as config from "./handlers/config";
 import * as uploads from "./handlers/uploads";
 import { stripeWebhook } from "./handlers/payments/stripe";
-import { razorpayWebhook } from "./handlers/payments/razorpay";
+import { razorpayWebhook, verifyRazorpayPayment } from "./handlers/payments/razorpay";
 
 type RouteHandler = (event: APIGatewayProxyEventV2) => Promise<APIGatewayProxyResultV2>;
 
@@ -47,6 +47,7 @@ const routes: Route[] = [
   { method: "POST", pattern: /^\/products\/([^/]+)\/images$/, handler: uploads.attachImageToProduct, params: ["slug"] },
   { method: "POST", pattern: /^\/webhooks\/stripe$/, handler: stripeWebhook },
   { method: "POST", pattern: /^\/webhooks\/razorpay$/, handler: razorpayWebhook },
+  { method: "POST", pattern: /^\/payments\/razorpay\/verify$/, handler: verifyRazorpayPayment },
 ];
 
 export async function route(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {

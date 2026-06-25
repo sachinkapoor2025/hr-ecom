@@ -16,6 +16,14 @@ Parameters:
   RazorpaySecretArn:
     Type: String
     Default: ""
+  RazorpayKeyId:
+    Type: String
+    Default: ""
+    NoEcho: true
+  RazorpayKeySecret:
+    Type: String
+    Default: ""
+    NoEcho: true
 
 Globals:
   Function:
@@ -32,6 +40,8 @@ Globals:
         ENVIRONMENT: !Ref Environment
         STRIPE_SECRET_ARN: !Ref StripeSecretArn
         RAZORPAY_SECRET_ARN: !Ref RazorpaySecretArn
+        RAZORPAY_KEY_ID: !Ref RazorpayKeyId
+        RAZORPAY_KEY_SECRET: !Ref RazorpayKeySecret
         CLOUDFRONT_DOMAIN: !GetAtt CloudFrontDistribution.DomainName
 
 Resources:
