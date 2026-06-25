@@ -31,7 +31,7 @@ cp apps/api/.env.example apps/api/.env
 npm run dev:all
 
 # Option B: DynamoDB Local (requires Docker)
-# npm run setup:local   # docker + table + seed
+# npm run setup:local   # docker + table + seed 
 # npm run dev:all
 ```
 
