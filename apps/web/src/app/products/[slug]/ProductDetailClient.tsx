@@ -1,33 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { useCart } from "@/lib/cart-context";
+import { AddToCartControl } from "@/components/AddToCartControl";
 import { useSessionId, useDebouncedLeadCapture } from "@/lib/session";
 import { LeadCaptureInput } from "@/components/LeadCaptureInput";
 import type { Product } from "@hr-ecom/shared";
 
 export function ProductDetailClient({ product }: { product: Product }) {
-  const { addItem } = useCart();
   const sessionId = useSessionId();
   const captureLead = useDebouncedLeadCapture(sessionId);
-  const [adding, setAdding] = useState(false);
   const [name, setName] = useState("");
 
   const price = new Intl.NumberFormat(undefined, {
     style: "currency",
     currency: product.currency,
   }).format(product.price);
-
-  const handleAddToCart = async () => {
-    setAdding(true);
-    try {
-      await addItem(product.slug);
-    } catch (err) {
-      alert(err instanceof Error ? err.message : "Could not add to cart");
-    } finally {
-      setAdding(false);
-    }
-  };
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-10 grid md:grid-cols-2 gap-10">
@@ -56,13 +43,12 @@ export function ProductDetailClient({ product }: { product: Product }) {
           />
         </div>
 
-        <button
-          onClick={handleAddToCart}
-          disabled={adding || product.inventory <= 0}
-          className="btn-cart px-8 py-3 disabled:opacity-50"
-        >
-          {product.inventory <= 0 ? "Out of Stock" : adding ? "Adding..." : "Add to Cart"}
-        </button>
+        <AddToCartControl
+          productSlug={product.slug}
+          disabled={product.inventory <= 0}
+          fullWidth={false}
+          className="inline-block"
+        />
       </div>
     </div>
   );

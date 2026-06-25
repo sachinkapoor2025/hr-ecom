@@ -12,6 +12,7 @@ interface CartContextValue {
   sessionReady: boolean;
   refresh: () => Promise<void>;
   addItem: (productSlug: string, quantity?: number) => Promise<void>;
+  updateItem: (productSlug: string, quantity: number) => Promise<void>;
   removeItem: (productSlug: string) => Promise<void>;
   itemCount: number;
 }
@@ -77,10 +78,23 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setCart(normalizeCart(data.cart));
   };
 
+  const updateItem = async (productSlug: string, quantity: number) => {
+    const sid = resolveSessionId();
+    if (!sid) throw new Error("Session not ready — please try again");
+
+    const data = await api<{ cart: Cart }>(`/cart/items/${productSlug}`, {
+      method: "PUT",
+      sessionId: sid,
+      token,
+      body: JSON.stringify({ quantity }),
+    });
+    setCart(normalizeCart(data.cart));
+  };
+
   const itemCount = cart?.items.reduce((sum, i) => sum + i.quantity, 0) ?? 0;
 
   return (
-    <CartContext.Provider value={{ cart, loading, sessionReady, refresh, addItem, removeItem, itemCount }}>
+    <CartContext.Provider value={{ cart, loading, sessionReady, refresh, addItem, updateItem, removeItem, itemCount }}>
       {children}
     </CartContext.Provider>
   );

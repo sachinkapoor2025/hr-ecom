@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import type { Product } from "@hr-ecom/shared";
-import { useCart } from "@/lib/cart-context";
+import { AddToCartControl } from "@/components/AddToCartControl";
 
 function formatPrice(product: Product) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: product.currency }).format(product.price);
@@ -15,27 +14,7 @@ function discountPercent(product: Product) {
 }
 
 export function HomeProductCard({ product }: { product: Product }) {
-  const { addItem, sessionReady } = useCart();
-  const [adding, setAdding] = useState(false);
-  const [added, setAdded] = useState(false);
-  const [error, setError] = useState("");
   const discount = discountPercent(product);
-
-  const handleAddToCart = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setError("");
-    setAdding(true);
-    try {
-      await addItem(product.slug);
-      setAdded(true);
-      setTimeout(() => setAdded(false), 2000);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not add to cart");
-    } finally {
-      setAdding(false);
-    }
-  };
 
   return (
     <div className="border border-slate-200 rounded-xl overflow-hidden bg-white hover:shadow-md transition-shadow relative flex flex-col">
@@ -70,15 +49,7 @@ export function HomeProductCard({ product }: { product: Product }) {
         </div>
       </Link>
       <div className="px-3 pb-3">
-        {error && <p className="text-xs text-red-600 mb-1">{error}</p>}
-        <button
-          type="button"
-          onClick={handleAddToCart}
-          disabled={adding || !sessionReady || product.inventory <= 0}
-          className="btn-cart w-full text-sm"
-        >
-          {added ? "Added ✓" : product.inventory <= 0 ? "Out of Stock" : adding ? "Adding..." : "Add to cart"}
-        </button>
+        <AddToCartControl productSlug={product.slug} disabled={product.inventory <= 0} />
       </div>
     </div>
   );
