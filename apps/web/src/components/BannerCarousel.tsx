@@ -100,10 +100,10 @@ export function BannerCarousel({ banners }: { banners: readonly HomeBanner[] }) 
       aria-label="Featured promotions"
     >
       <div className="relative overflow-hidden bg-white border-b border-slate-100">
-        <div className="relative max-w-7xl mx-auto lg:grid lg:grid-cols-2 lg:gap-8 lg:items-center lg:px-4 lg:py-6">
-          {/* Banner image — native ~1024×365 aspect ratio, no letterboxing */}
+        <div className="relative max-w-7xl mx-auto lg:grid lg:grid-cols-[2fr_3fr] lg:gap-6 lg:items-center lg:px-4 lg:py-4">
+          {/* Banner image */}
           <div className="order-1 lg:order-2 relative w-full">
-            <div className="relative w-full aspect-[1024/365] overflow-hidden bg-slate-900/5">
+            <div className="relative w-full aspect-[5/2] sm:aspect-[1024/420] overflow-hidden bg-slate-900/5">
               {banners.map((b, i) => (
                 <div
                   key={b.src}
@@ -119,7 +119,7 @@ export function BannerCarousel({ banners }: { banners: readonly HomeBanner[] }) 
                         alt={b.alt}
                         fill
                         className="object-cover object-center"
-                        sizes="(max-width: 1024px) 100vw, 50vw"
+                        sizes="(max-width: 1024px) 100vw, 60vw"
                         priority={i === 0}
                       />
                     </Link>
@@ -129,7 +129,7 @@ export function BannerCarousel({ banners }: { banners: readonly HomeBanner[] }) 
                       alt={b.alt}
                       fill
                       className="object-cover object-center"
-                      sizes="(max-width: 1024px) 100vw, 50vw"
+                      sizes="(max-width: 1024px) 100vw, 60vw"
                       priority={i === 0}
                     />
                   )}
