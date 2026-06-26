@@ -37,9 +37,16 @@ interface AddToCartControlProps {
   disabled?: boolean;
   className?: string;
   fullWidth?: boolean;
+  variant?: "default" | "detail";
 }
 
-export function AddToCartControl({ productSlug, disabled, className = "", fullWidth = true }: AddToCartControlProps) {
+export function AddToCartControl({
+  productSlug,
+  disabled,
+  className = "",
+  fullWidth = true,
+  variant = "default",
+}: AddToCartControlProps) {
   const { cart, sessionReady, addItem, updateItem, removeItem } = useCart();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -64,6 +71,9 @@ export function AddToCartControl({ productSlug, disabled, className = "", fullWi
     e.stopPropagation();
   };
 
+  const isDetail = variant === "detail";
+  const addLabel = disabled ? "Out of Stock" : busy ? "Adding..." : isDetail ? "Add to cart" : "Add to cart";
+
   if (!inCart) {
     return (
       <div className={className}>
@@ -75,9 +85,13 @@ export function AddToCartControl({ productSlug, disabled, className = "", fullWi
             void run(() => addItem(productSlug));
           }}
           disabled={disabled || busy || !sessionReady}
-          className={`btn-cart ${fullWidth ? "w-full" : ""} text-xs sm:text-sm px-3 py-2 sm:px-5 sm:py-2.5`}
+          className={
+            isDetail
+              ? `w-full rounded-md bg-nav text-white font-bold text-sm uppercase tracking-wide py-3.5 hover:bg-primary transition disabled:opacity-50`
+              : `btn-cart ${fullWidth ? "w-full" : ""} text-xs sm:text-sm px-3 py-2 sm:px-5 sm:py-2.5`
+          }
         >
-          {disabled ? "Out of Stock" : busy ? "Adding..." : "Add to cart"}
+          {isDetail ? addLabel.toUpperCase() : addLabel}
         </button>
       </div>
     );
@@ -87,7 +101,11 @@ export function AddToCartControl({ productSlug, disabled, className = "", fullWi
     <div className={className} onClick={stop}>
       {error && <p className="text-xs text-red-600 mb-1">{error}</p>}
       <div
-        className={`flex items-center justify-between gap-1 rounded-full bg-nav text-white font-semibold text-sm px-1.5 py-1.5 sm:px-3 sm:py-2 ${fullWidth ? "w-full" : "min-w-[10rem] sm:min-w-[12rem]"}`}
+        className={`flex items-center justify-between gap-1 bg-nav text-white font-semibold text-sm ${
+          isDetail
+            ? "w-full rounded-md px-2 py-2"
+            : `rounded-full px-1.5 py-1.5 sm:px-3 sm:py-2 ${fullWidth ? "w-full" : "min-w-[10rem] sm:min-w-[12rem]"}`
+        }`}
       >
         <button
           type="button"
@@ -129,13 +147,15 @@ export function AddToCartControl({ productSlug, disabled, className = "", fullWi
           <TrashIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
         </button>
       </div>
-      <Link
-        href="/cart"
-        onClick={(e) => e.stopPropagation()}
-        className="block text-center text-nav text-sm font-semibold mt-2 hover:underline"
-      >
-        View Cart
-      </Link>
+      {!isDetail && (
+        <Link
+          href="/cart"
+          onClick={(e) => e.stopPropagation()}
+          className="block text-center text-nav text-sm font-semibold mt-2 hover:underline"
+        >
+          View Cart
+        </Link>
+      )}
     </div>
   );
 }
