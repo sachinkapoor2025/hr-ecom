@@ -77,7 +77,7 @@ export default async function HomePage() {
                 View All →
               </Link>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 items-stretch auto-rows-fr">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 items-stretch">
               {section.products.slice(0, 10).map((p) => (
                 <HomeProductCard key={p.slug} product={p} />
               ))}

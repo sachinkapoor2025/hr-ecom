@@ -96,7 +96,6 @@ export function ProductDetailClient({ product }: { product: Product }) {
             productSlug={product.slug}
             disabled={product.inventory <= 0}
             fullWidth={false}
-            showViewCart
             className="inline-block"
           />
         </div>

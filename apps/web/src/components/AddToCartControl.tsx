@@ -37,16 +37,9 @@ interface AddToCartControlProps {
   disabled?: boolean;
   className?: string;
   fullWidth?: boolean;
-  showViewCart?: boolean;
 }
 
-export function AddToCartControl({
-  productSlug,
-  disabled,
-  className = "",
-  fullWidth = true,
-  showViewCart = false,
-}: AddToCartControlProps) {
+export function AddToCartControl({ productSlug, disabled, className = "", fullWidth = true }: AddToCartControlProps) {
   const { cart, sessionReady, addItem, updateItem, removeItem } = useCart();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -136,15 +129,13 @@ export function AddToCartControl({
           <TrashIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
         </button>
       </div>
-      {showViewCart && (
-        <Link
-          href="/cart"
-          onClick={(e) => e.stopPropagation()}
-          className="block text-center text-nav text-sm font-semibold mt-2 hover:underline"
-        >
-          View Cart
-        </Link>
-      )}
+      <Link
+        href="/cart"
+        onClick={(e) => e.stopPropagation()}
+        className="block text-center text-nav text-sm font-semibold mt-2 hover:underline"
+      >
+        View Cart
+      </Link>
     </div>
   );
 }
