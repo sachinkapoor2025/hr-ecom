@@ -7,6 +7,7 @@ import { SearchTracker } from "@/components/SearchTracker";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { pageMetadata } from "@/lib/seo";
 import type { Product, Category } from "@hr-ecom/shared";
+import { homeCategoryOrder, orderCategories } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 
@@ -93,6 +94,15 @@ export default async function ProductsPage({ searchParams }: Props) {
       ? categories.find((c) => c.slug === category)?.name ?? category.replace(/-/g, " ")
       : "Shop Rakhi — Send to USA";
 
+  const sortedCategories = orderCategories(categories);
+  const categoryMap = new Map(categories.map((c) => [c.slug, c]));
+  const productsByCategory = homeCategoryOrder.map((slug) => ({
+    slug,
+    name: categoryMap.get(slug)?.name ?? slug.replace(/-/g, " "),
+    products: products.filter((p) => p.categorySlug === slug),
+  }));
+  const showGrouped = !search && !category;
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
       {search ? <SearchTracker query={search} resultCount={products.length} /> : null}
@@ -121,7 +131,7 @@ export default async function ProductsPage({ searchParams }: Props) {
           >
             All
           </Link>
-          {categories.map((c) => (
+          {sortedCategories.map((c) => (
             <Link
               key={c.slug}
               href={`/categories/${c.slug}`}
@@ -135,6 +145,26 @@ export default async function ProductsPage({ searchParams }: Props) {
 
       {products.length === 0 ? (
         <p className="text-slate-600">No products found. Try another category or search term.</p>
+      ) : showGrouped ? (
+        <div className="space-y-10">
+          {productsByCategory.map((section) =>
+            section.products.length > 0 ? (
+              <section key={section.slug}>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold text-primary capitalize">{section.name}</h2>
+                  <Link href={`/categories/${section.slug}`} className="text-nav font-semibold text-sm hover:underline">
+                    View All →
+                  </Link>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 items-stretch">
+                  {section.products.map((p) => (
+                    <HomeProductCard key={p.slug} product={p} />
+                  ))}
+                </div>
+              </section>
+            ) : null
+          )}
+        </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {products.map((p) => (

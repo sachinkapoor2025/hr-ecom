@@ -97,6 +97,12 @@ export const homeCategoryOrder = [
 
 export const categoryOrder = homeCategoryOrder;
 
+/** Sort API categories to match site display order (home + shop). */
+export function orderCategories<T extends { slug: string }>(categories: readonly T[]): T[] {
+  const rank = new Map<string, number>(homeCategoryOrder.map((slug, index) => [slug, index]));
+  return [...categories].sort((a, b) => (rank.get(a.slug) ?? 99) - (rank.get(b.slug) ?? 99));
+}
+
 export const testimonials = [
   {
     name: "Neha",
