@@ -251,28 +251,6 @@ export function Header() {
         </div>
       </nav>
 
-      {/* Desktop cities slider */}
-      <div className="hidden md:block border-t border-slate-100 bg-slate-50/80">
-        <div className="max-w-7xl mx-auto px-4 py-2 overflow-x-auto">
-          <div className="flex items-center gap-2 min-w-max">
-            <span className="text-xs font-bold text-primary uppercase tracking-wide shrink-0 pr-1">Cities:</span>
-            {cityLinks.map((c) => (
-              <Link
-                key={c.slug}
-                href={`/cities/${c.slug}`}
-                className={`inline-flex items-center rounded-full border px-3 py-1.5 text-xs font-semibold whitespace-nowrap transition ${
-                  pathname === `/cities/${c.slug}`
-                    ? "bg-nav text-white border-nav"
-                    : "bg-white text-primary border-slate-200 hover:border-nav hover:text-nav"
-                }`}
-              >
-                Rakhi to {c.label}
-              </Link>
-            ))}
-          </div>
-        </div>
-      </div>
-
       {/* Mobile slide-out menu */}
       {menuOpen && (
         <>
