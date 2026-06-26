@@ -7,6 +7,7 @@ import { CurrencyProvider } from "@/lib/currency-context";
 import { HeaderShell } from "@/components/HeaderShell";
 import { Footer } from "@/components/Footer";
 import { CurrencySwitcher } from "@/components/CurrencySwitcher";
+import { WhatsAppFloat } from "@/components/WhatsAppFloat";
 import { TrackingProvider } from "@/components/TrackingProvider";
 import { JsonLd } from "@/components/JsonLd";
 import { site } from "@/lib/site";
@@ -59,6 +60,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <main className="flex-1">{children}</main>
             <Footer />
             <CurrencySwitcher />
+            <WhatsAppFloat />
             </CurrencyProvider>
             </WishlistProvider>
           </CartProvider>
