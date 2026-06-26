@@ -8,6 +8,7 @@ import { WishlistButton } from "@/components/WishlistButton";
 import { useSessionId, useDebouncedLeadCapture } from "@/lib/session";
 import { trackProductView } from "@/lib/track";
 import { useCurrency } from "@/lib/currency-context";
+import { getDiscountPercent } from "@/lib/pricing";
 import { LeadCaptureInput } from "@/components/LeadCaptureInput";
 import type { Product } from "@hr-ecom/shared";
 
@@ -27,6 +28,7 @@ export function ProductDetailClient({ product }: { product: Product }) {
     product.compareAtPrice && product.compareAtPrice > product.price
       ? format(product.compareAtPrice, product.currency)
       : null;
+  const discount = getDiscountPercent(product.price, product.compareAtPrice);
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6 pb-12">
@@ -42,9 +44,12 @@ export function ProductDetailClient({ product }: { product: Product }) {
             </Link>
           </p>
           <h1 className="text-3xl font-bold mb-3">{product.name}</h1>
-          <div className="flex items-baseline gap-3 mb-6">
+          <div className="flex items-baseline gap-3 mb-6 w-full max-w-md">
             <p className="text-2xl font-bold text-accent">{price}</p>
             {comparePrice && <p className="text-lg text-slate-400 line-through">{comparePrice}</p>}
+            {discount !== null && (
+              <span className="text-sm font-semibold text-green-600 ml-auto">{discount}% OFF</span>
+            )}
           </div>
 
           <article className="text-slate-700 mb-6 leading-relaxed space-y-3">

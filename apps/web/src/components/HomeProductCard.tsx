@@ -5,15 +5,11 @@ import type { Product } from "@hr-ecom/shared";
 import { AddToCartControl } from "@/components/AddToCartControl";
 import { WishlistButton } from "@/components/WishlistButton";
 import { useCurrency } from "@/lib/currency-context";
-
-function discountPercent(product: Product) {
-  if (!product.compareAtPrice || product.compareAtPrice <= product.price) return null;
-  return Math.round(((product.compareAtPrice - product.price) / product.compareAtPrice) * 100);
-}
+import { getDiscountPercent } from "@/lib/pricing";
 
 export function HomeProductCard({ product }: { product: Product }) {
   const { format } = useCurrency();
-  const discount = discountPercent(product);
+  const discount = getDiscountPercent(product.price, product.compareAtPrice);
 
   return (
     <div className="border border-slate-200 rounded-xl overflow-hidden bg-white hover:shadow-md transition-shadow relative flex h-full flex-col">
@@ -42,12 +38,15 @@ export function HomeProductCard({ product }: { product: Product }) {
           <h3 className="font-semibold text-sm text-slate-900 line-clamp-2 min-h-[2.75rem] hover:text-nav">
             {product.name}
           </h3>
-          <div className="mt-2 flex items-center gap-2 flex-wrap">
+          <div className="mt-2 flex items-center gap-2 w-full">
             <span className="text-nav font-bold">{format(product.price, product.currency)}</span>
             {product.compareAtPrice && product.compareAtPrice > product.price && (
               <span className="text-xs text-slate-400 line-through">
                 {format(product.compareAtPrice, product.currency)}
               </span>
+            )}
+            {discount !== null && (
+              <span className="text-xs font-semibold text-green-600 ml-auto shrink-0">{discount}% OFF</span>
             )}
           </div>
         </div>
