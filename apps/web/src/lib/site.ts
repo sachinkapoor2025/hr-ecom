@@ -39,7 +39,6 @@ export const cityLinks = [
 export const homeBanners = [
   {
     src: "/banners/banner-1-usa-rakhi-delivery.png",
-    desktopSrc: "/banners/desktop/banner-1-usa-rakhi-delivery.png",
     alt: "USA Rakhi Delivery — Send Beautiful Rakhis to Your Loved Ones in the USA",
     href: "/products?category=rakhi-combo",
     eyebrow: "RAKSHA BANDHAN · USA DELIVERY",
@@ -52,7 +51,6 @@ export const homeBanners = [
   },
   {
     src: "/banners/banner-2-connecting-hearts.png",
-    desktopSrc: "/banners/desktop/banner-2-connecting-hearts.png",
     alt: "UsaRakhi.com — Connecting hearts across miles",
     href: "/products",
     eyebrow: "EVERY SISTER · EVERY BROTHER",
@@ -65,7 +63,6 @@ export const homeBanners = [
   },
   {
     src: "/banners/banner-3-india-usa.png",
-    desktopSrc: "/banners/desktop/banner-3-india-usa.png",
     alt: "Send Rakhi from India to USA — Premium Rakhis with Express Shipping",
     href: "/products?category=single-rakhi",
     eyebrow: "INDIA → USA",
