@@ -149,7 +149,7 @@ function AccountForm() {
             <button
               type="button"
               onClick={() => router.push("/admin")}
-              className="bg-accent text-white px-6 py-2 rounded-lg"
+              className="bg-nav text-white px-6 py-2 rounded-lg hover:bg-primary transition"
             >
               Admin Portal
             </button>
@@ -308,7 +308,7 @@ function AccountForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-accent text-white py-3 rounded-lg font-semibold disabled:opacity-50"
+          className="w-full bg-nav text-white py-3 rounded-lg font-semibold hover:bg-primary transition disabled:opacity-50"
         >
           {loading
             ? "Please wait..."
@@ -326,13 +326,13 @@ function AccountForm() {
             type="button"
             onClick={handleResendCode}
             disabled={resending || !email}
-            className="text-sm text-accent underline disabled:opacity-50"
+            className="text-sm text-nav underline hover:text-primary disabled:opacity-50"
           >
             {resending ? "Sending..." : "Resend verification code"}
           </button>
           <p className="text-sm text-slate-500">
             Wrong email?{" "}
-            <button type="button" onClick={() => switchMode("register")} className="text-accent underline">
+            <button type="button" onClick={() => switchMode("register")} className="text-nav underline hover:text-primary">
               Register again
             </button>
           </p>
@@ -344,7 +344,7 @@ function AccountForm() {
           <button
             type="button"
             onClick={() => switchMode("register")}
-            className="block text-sm text-accent underline"
+            className="block text-sm text-nav underline hover:text-primary"
           >
             Need an account? Register
           </button>
@@ -362,7 +362,7 @@ function AccountForm() {
         <button
           type="button"
           onClick={() => switchMode("login")}
-          className="mt-4 text-sm text-accent underline"
+          className="mt-4 text-sm text-nav underline hover:text-primary"
         >
           Already have an account? Login
         </button>
