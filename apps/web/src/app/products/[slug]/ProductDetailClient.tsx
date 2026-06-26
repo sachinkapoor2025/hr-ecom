@@ -7,28 +7,25 @@ import { ProductImageGallery } from "@/components/ProductImageGallery";
 import { WishlistButton } from "@/components/WishlistButton";
 import { useSessionId, useDebouncedLeadCapture } from "@/lib/session";
 import { trackProductView } from "@/lib/track";
+import { useCurrency } from "@/lib/currency-context";
 import { LeadCaptureInput } from "@/components/LeadCaptureInput";
 import type { Product } from "@hr-ecom/shared";
 
 export function ProductDetailClient({ product }: { product: Product }) {
   const sessionId = useSessionId();
   const captureLead = useDebouncedLeadCapture(sessionId);
+  const { format } = useCurrency();
   const [name, setName] = useState("");
 
   useEffect(() => {
     trackProductView(product.slug);
   }, [product.slug]);
 
-  const price = new Intl.NumberFormat(undefined, {
-    style: "currency",
-    currency: product.currency,
-  }).format(product.price);
+  const price = format(product.price, product.currency);
 
   const comparePrice =
     product.compareAtPrice && product.compareAtPrice > product.price
-      ? new Intl.NumberFormat(undefined, { style: "currency", currency: product.currency }).format(
-          product.compareAtPrice
-        )
+      ? format(product.compareAtPrice, product.currency)
       : null;
 
   return (

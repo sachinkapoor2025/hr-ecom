@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useCart } from "@/lib/cart-context";
+import { useCurrency } from "@/lib/currency-context";
+import type { DisplayCurrency } from "@/lib/currency-context";
 
 function CartQuantityControls({ productSlug, quantity }: { productSlug: string; quantity: number }) {
   const { addItem, updateItem, removeItem } = useCart();
@@ -53,12 +55,13 @@ function CartQuantityControls({ productSlug, quantity }: { productSlug: string; 
 
 export default function CartPage() {
   const { cart, loading } = useCart();
+  const { format } = useCurrency();
 
   if (loading) return <div className="p-10 text-center">Loading cart...</div>;
 
   const items = cart?.items ?? [];
   const total = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
-  const currency = items[0]?.currency ?? "USD";
+  const currency = (items[0]?.currency ?? "USD") as DisplayCurrency;
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-10">
@@ -79,20 +82,13 @@ export default function CartPage() {
                 <div>
                   <p className="font-medium">{item.name}</p>
                   <p className="text-sm text-slate-500 mt-1">
-                    {new Intl.NumberFormat(undefined, {
-                      style: "currency",
-                      currency: item.currency,
-                    }).format(item.price)}{" "}
-                    each
+                    {format(item.price, item.currency as DisplayCurrency)} each
                   </p>
                 </div>
                 <div className="flex items-center gap-4">
                   <CartQuantityControls productSlug={item.productSlug} quantity={item.quantity} />
                   <span className="font-semibold min-w-[5rem] text-right">
-                    {new Intl.NumberFormat(undefined, {
-                      style: "currency",
-                      currency: item.currency,
-                    }).format(item.price * item.quantity)}
+                    {format(item.price * item.quantity, item.currency as DisplayCurrency)}
                   </span>
                 </div>
               </li>
@@ -100,9 +96,7 @@ export default function CartPage() {
           </ul>
           <div className="flex justify-between items-center border-t pt-4">
             <span className="text-lg font-bold">Total</span>
-            <span className="text-xl font-bold text-nav">
-              {new Intl.NumberFormat(undefined, { style: "currency", currency }).format(total)}
-            </span>
+            <span className="text-xl font-bold text-nav">{format(total, currency)}</span>
           </div>
           <Link href="/checkout" className="mt-6 block text-center btn-cart py-3 text-base">
             Proceed to Checkout

@@ -4,10 +4,7 @@ import Link from "next/link";
 import type { Product } from "@hr-ecom/shared";
 import { AddToCartControl } from "@/components/AddToCartControl";
 import { WishlistButton } from "@/components/WishlistButton";
-
-function formatPrice(product: Product) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: product.currency }).format(product.price);
-}
+import { useCurrency } from "@/lib/currency-context";
 
 function discountPercent(product: Product) {
   if (!product.compareAtPrice || product.compareAtPrice <= product.price) return null;
@@ -15,6 +12,7 @@ function discountPercent(product: Product) {
 }
 
 export function HomeProductCard({ product }: { product: Product }) {
+  const { format } = useCurrency();
   const discount = discountPercent(product);
 
   return (
@@ -41,12 +39,10 @@ export function HomeProductCard({ product }: { product: Product }) {
             {product.name}
           </h3>
           <div className="mt-2 flex items-center gap-2 flex-wrap">
-            <span className="text-nav font-bold">{formatPrice(product)}</span>
+            <span className="text-nav font-bold">{format(product.price, product.currency)}</span>
             {product.compareAtPrice && product.compareAtPrice > product.price && (
               <span className="text-xs text-slate-400 line-through">
-                {new Intl.NumberFormat("en-US", { style: "currency", currency: product.currency }).format(
-                  product.compareAtPrice
-                )}
+                {format(product.compareAtPrice, product.currency)}
               </span>
             )}
           </div>

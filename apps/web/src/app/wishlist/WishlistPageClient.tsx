@@ -3,15 +3,11 @@
 import Link from "next/link";
 import { useWishlist } from "@/lib/wishlist-context";
 import { AddToCartControl } from "@/components/AddToCartControl";
-import { WishlistButton } from "@/components/WishlistButton";
-import type { Product } from "@hr-ecom/shared";
-
-function formatPrice(price: number, currency: string) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(price);
-}
+import { useCurrency, type DisplayCurrency } from "@/lib/currency-context";
 
 export function WishlistPageClient() {
   const { items, remove } = useWishlist();
+  const { format } = useCurrency();
 
   if (items.length === 0) {
     return (
@@ -31,18 +27,7 @@ export function WishlistPageClient() {
       <p className="text-slate-600 mb-8">{items.length} saved {items.length === 1 ? "item" : "items"}</p>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-        {items.map((item) => {
-          const product = {
-            slug: item.slug,
-            name: item.name,
-            price: item.price,
-            currency: item.currency,
-            compareAtPrice: item.compareAtPrice,
-            images: item.image ? [item.image] : [],
-            inventory: 1,
-          } as Product;
-
-          return (
+        {items.map((item) => (
             <div
               key={item.slug}
               className="border border-slate-200 rounded-xl overflow-hidden bg-white hover:shadow-md transition-shadow relative flex flex-col"
@@ -71,14 +56,15 @@ export function WishlistPageClient() {
                 <h3 className="font-semibold text-sm text-slate-900 line-clamp-2 min-h-[2.5rem] hover:text-nav">
                   {item.name}
                 </h3>
-                <p className="mt-2 text-nav font-bold">{formatPrice(item.price, item.currency)}</p>
+                <p className="mt-2 text-nav font-bold">
+                  {format(item.price, item.currency as DisplayCurrency)}
+                </p>
               </Link>
               <div className="px-3 pb-3">
                 <AddToCartControl productSlug={item.slug} />
               </div>
             </div>
-          );
-        })}
+        ))}
       </div>
     </div>
   );
