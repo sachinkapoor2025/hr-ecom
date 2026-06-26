@@ -6,6 +6,7 @@ import Image from "next/image";
 
 export interface HomeBanner {
   src: string;
+  desktopSrc?: string;
   alt: string;
   href?: string;
   eyebrow: string;
@@ -14,6 +15,52 @@ export interface HomeBanner {
   description: string;
   cta: string;
   pill: string;
+}
+
+function BannerSlideImage({
+  banner,
+  visible,
+  variant,
+  priority,
+}: {
+  banner: HomeBanner;
+  visible: boolean;
+  variant: "mobile" | "desktop";
+  priority?: boolean;
+}) {
+  const src = variant === "desktop" ? (banner.desktopSrc ?? banner.src) : banner.src;
+  const className =
+    variant === "desktop"
+      ? "hidden lg:block object-contain object-center"
+      : "lg:hidden object-cover object-center";
+
+  const image = (
+    <Image
+      src={src}
+      alt={banner.alt}
+      fill
+      className={className}
+      sizes={variant === "desktop" ? "50vw" : "100vw"}
+      priority={priority}
+    />
+  );
+
+  return (
+    <div
+      className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
+        visible ? "opacity-100 z-10" : "opacity-0 z-0"
+      }`}
+      aria-hidden={!visible}
+    >
+      {banner.href ? (
+        <Link href={banner.href} className="block h-full w-full" tabIndex={visible ? 0 : -1}>
+          {image}
+        </Link>
+      ) : (
+        image
+      )}
+    </div>
+  );
 }
 
 const TRUST_FEATURES = [
@@ -105,34 +152,9 @@ export function BannerCarousel({ banners }: { banners: readonly HomeBanner[] }) 
           <div className="order-1 lg:order-2 relative w-full">
             <div className="relative w-full aspect-[1024/365] overflow-hidden bg-slate-900/5">
               {banners.map((b, i) => (
-                <div
-                  key={b.src}
-                  className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
-                    i === index ? "opacity-100 z-10" : "opacity-0 z-0"
-                  }`}
-                  aria-hidden={i !== index}
-                >
-                  {b.href ? (
-                    <Link href={b.href} className="block h-full w-full" tabIndex={i === index ? 0 : -1}>
-                      <Image
-                        src={b.src}
-                        alt={b.alt}
-                        fill
-                        className="object-cover object-center"
-                        sizes="(max-width: 1024px) 100vw, 50vw"
-                        priority={i === 0}
-                      />
-                    </Link>
-                  ) : (
-                    <Image
-                      src={b.src}
-                      alt={b.alt}
-                      fill
-                      className="object-cover object-center"
-                      sizes="(max-width: 1024px) 100vw, 50vw"
-                      priority={i === 0}
-                    />
-                  )}
+                <div key={b.src} className="absolute inset-0">
+                  <BannerSlideImage banner={b} visible={i === index} variant="mobile" priority={i === 0} />
+                  <BannerSlideImage banner={b} visible={i === index} variant="desktop" priority={i === 0} />
                 </div>
               ))}
 
