@@ -32,6 +32,9 @@ function PlusIcon({ className = "w-4 h-4" }: { className?: string }) {
 const stepBtnClass =
   "flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full bg-white/20 hover:bg-white/30 active:scale-95 disabled:opacity-50 transition";
 
+const detailPillBtnClass =
+  "flex h-9 w-9 shrink-0 items-center justify-center hover:bg-white/15 rounded-full disabled:opacity-50 transition";
+
 interface AddToCartControlProps {
   productSlug: string;
   disabled?: boolean;
@@ -97,7 +100,35 @@ export function AddToCartControl({
     );
   }
 
-  const quantityControls = (
+  const quantityControls = isDetail ? (
+    <>
+      <button
+        type="button"
+        aria-label="Decrease quantity"
+        disabled={busy}
+        onClick={(e) => {
+          stop(e);
+          void run(() => (quantity <= 1 ? removeItem(productSlug) : updateItem(productSlug, quantity - 1)));
+        }}
+        className={detailPillBtnClass}
+      >
+        <MinusIcon className="w-4 h-4" />
+      </button>
+      <span className="min-w-[1.25rem] text-center text-base font-bold tabular-nums">{quantity}</span>
+      <button
+        type="button"
+        aria-label="Increase quantity"
+        disabled={busy || disabled}
+        onClick={(e) => {
+          stop(e);
+          void run(() => addItem(productSlug, 1));
+        }}
+        className={detailPillBtnClass}
+      >
+        <PlusIcon className="w-4 h-4" />
+      </button>
+    </>
+  ) : (
     <>
       <button
         type="button"
@@ -148,9 +179,9 @@ export function AddToCartControl({
     <div className={className} onClick={stop}>
       {error && <p className="text-xs text-red-600 mb-1">{error}</p>}
       {isDetail ? (
-        <div className="flex items-center w-full rounded-md bg-nav text-white font-semibold text-sm px-2 py-2">
-          <div className="inline-flex items-center gap-0.5 shrink-0">{quantityControls}</div>
-          <div className="flex-1" aria-hidden />
+        <div className="flex items-center rounded-full bg-nav text-white font-semibold text-sm px-3 py-2 w-full">
+          <div className="inline-flex items-center gap-1 shrink-0">{quantityControls}</div>
+          <div className="flex-1 min-w-2" aria-hidden />
           {removeButton}
         </div>
       ) : (

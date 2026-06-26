@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { AddToCartControl } from "@/components/AddToCartControl";
 import { ProductImageGallery } from "@/components/ProductImageGallery";
 import { WishlistButton } from "@/components/WishlistButton";
@@ -10,6 +11,7 @@ import { useCurrency } from "@/lib/currency-context";
 import { getDiscountPercent } from "@/lib/pricing";
 import { LeadCaptureInput } from "@/components/LeadCaptureInput";
 import { HomeProductCard } from "@/components/HomeProductCard";
+import { useCart } from "@/lib/cart-context";
 import type { Product } from "@hr-ecom/shared";
 
 type Tab = "description" | "reviews";
@@ -84,6 +86,7 @@ export function ProductDetailClient({
 }) {
   const sessionId = useSessionId();
   const captureLead = useDebouncedLeadCapture(sessionId);
+  const { cart, itemCount } = useCart();
   const { format } = useCurrency();
   const [name, setName] = useState("");
   const [tab, setTab] = useState<Tab>("description");
@@ -101,6 +104,8 @@ export function ProductDetailClient({
       : null;
   const discount = getDiscountPercent(product.price, product.compareAtPrice);
   const summary = shortDescription(product.description);
+  const cartQuantity = cart?.items.find((i) => i.productSlug === product.slug)?.quantity ?? 0;
+  const inCart = cartQuantity > 0;
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6 pb-12">
@@ -131,18 +136,50 @@ export function ProductDetailClient({
             </span>
           </div>
 
-          <div className="flex items-stretch gap-2 mb-3">
-            <div className="flex-1 min-w-0">
-              <AddToCartControl
-                productSlug={product.slug}
-                disabled={product.inventory <= 0}
-                fullWidth
-                variant="detail"
-              />
+          {inCart ? (
+            <div className="flex flex-wrap items-center gap-3 mb-3">
+              <Link
+                href="/cart"
+                className="flex items-center gap-2 text-green-700 hover:text-green-800 shrink-0"
+              >
+                <span className="flex h-5 w-5 items-center justify-center rounded bg-green-600 text-white">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3} aria-hidden>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </span>
+                <span className="text-sm font-semibold whitespace-nowrap">
+                  {itemCount} {itemCount === 1 ? "item" : "items"} in cart
+                </span>
+              </Link>
+
+              <div className="flex-1 min-w-[11rem] max-w-[15rem]">
+                <AddToCartControl
+                  productSlug={product.slug}
+                  disabled={product.inventory <= 0}
+                  fullWidth
+                  variant="detail"
+                />
+              </div>
+
+              <div className="flex items-center gap-2 sm:ml-auto">
+                <WishlistButton product={product} variant="toolbar" />
+                {productUrl ? <ShareButton title={product.name} url={productUrl} /> : null}
+              </div>
             </div>
-            <WishlistButton product={product} variant="toolbar" />
-            {productUrl ? <ShareButton title={product.name} url={productUrl} /> : <div className="w-12 shrink-0" />}
-          </div>
+          ) : (
+            <div className="flex items-stretch gap-2 mb-3">
+              <div className="flex-1 min-w-0">
+                <AddToCartControl
+                  productSlug={product.slug}
+                  disabled={product.inventory <= 0}
+                  fullWidth
+                  variant="detail"
+                />
+              </div>
+              <WishlistButton product={product} variant="toolbar" />
+              {productUrl ? <ShareButton title={product.name} url={productUrl} /> : <div className="w-12 shrink-0" />}
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-3">
             <button
