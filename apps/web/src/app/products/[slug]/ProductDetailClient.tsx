@@ -152,7 +152,7 @@ export function ProductDetailClient({
                 </span>
               </Link>
 
-              <div className="flex-1 min-w-[11rem] max-w-[15rem]">
+              <div className="flex-1 min-w-[13rem] max-w-[18rem]">
                 <AddToCartControl
                   productSlug={product.slug}
                   disabled={product.inventory <= 0}

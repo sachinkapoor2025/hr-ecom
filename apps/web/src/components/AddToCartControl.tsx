@@ -100,35 +100,7 @@ export function AddToCartControl({
     );
   }
 
-  const quantityControls = isDetail ? (
-    <>
-      <button
-        type="button"
-        aria-label="Decrease quantity"
-        disabled={busy}
-        onClick={(e) => {
-          stop(e);
-          void run(() => (quantity <= 1 ? removeItem(productSlug) : updateItem(productSlug, quantity - 1)));
-        }}
-        className={detailPillBtnClass}
-      >
-        <MinusIcon className="w-4 h-4" />
-      </button>
-      <span className="min-w-[1.25rem] text-center text-base font-bold tabular-nums">{quantity}</span>
-      <button
-        type="button"
-        aria-label="Increase quantity"
-        disabled={busy || disabled}
-        onClick={(e) => {
-          stop(e);
-          void run(() => addItem(productSlug, 1));
-        }}
-        className={detailPillBtnClass}
-      >
-        <PlusIcon className="w-4 h-4" />
-      </button>
-    </>
-  ) : (
+  const quantityControls = (
     <>
       <button
         type="button"
@@ -179,9 +151,32 @@ export function AddToCartControl({
     <div className={className} onClick={stop}>
       {error && <p className="text-xs text-red-600 mb-1">{error}</p>}
       {isDetail ? (
-        <div className="flex items-center rounded-full bg-nav text-white font-semibold text-sm px-3 py-2 w-full">
-          <div className="inline-flex items-center gap-1 shrink-0">{quantityControls}</div>
-          <div className="flex-1 min-w-2" aria-hidden />
+        <div className="flex items-center justify-between gap-3 rounded-full bg-nav text-white font-semibold text-sm px-4 py-2.5 w-full">
+          <button
+            type="button"
+            aria-label="Decrease quantity"
+            disabled={busy}
+            onClick={(e) => {
+              stop(e);
+              void run(() => (quantity <= 1 ? removeItem(productSlug) : updateItem(productSlug, quantity - 1)));
+            }}
+            className={detailPillBtnClass}
+          >
+            <MinusIcon className="w-4 h-4" />
+          </button>
+          <span className="min-w-[1.5rem] text-center text-base font-bold tabular-nums">{quantity}</span>
+          <button
+            type="button"
+            aria-label="Increase quantity"
+            disabled={busy || disabled}
+            onClick={(e) => {
+              stop(e);
+              void run(() => addItem(productSlug, 1));
+            }}
+            className={detailPillBtnClass}
+          >
+            <PlusIcon className="w-4 h-4" />
+          </button>
           {removeButton}
         </div>
       ) : (
