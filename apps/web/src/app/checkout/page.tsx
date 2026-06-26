@@ -17,6 +17,7 @@ import {
   loadSavedAddresses,
   saveShippingAddress,
 } from "@/lib/shipping-address";
+import { fetchAccount, createAccountAddress } from "@/lib/account";
 import type { Order, ShippingAddress } from "@hr-ecom/shared";
 
 declare global {
@@ -50,45 +51,77 @@ export default function CheckoutPage() {
   }, [cart]);
 
   useEffect(() => {
-    if (addressPrefilled.current) return;
+    if (addressPrefilled.current || !sessionId) return;
 
-    const saved = loadSavedAddresses();
-    if (saved.length > 0) {
-      const latest = saved[0];
-      setAddress({
-        name: latest.name,
-        line1: latest.line1,
-        line2: latest.line2,
-        city: latest.city,
-        state: latest.state,
-        postalCode: latest.postalCode,
-        country: latest.country,
-        phone: latest.phone,
-        email: latest.email || user?.email || "",
-      });
-      addressPrefilled.current = true;
-      return;
-    }
-
-    if (user?.email) {
-      setAddress((a) => ({ ...a, email: user.email }));
-    }
-    addressPrefilled.current = true;
-  }, [user]);
-
-  useEffect(() => {
-    if (!token || !sessionId) return;
-
-    void api<{ orders: Order[] }>("/orders", { sessionId, token })
-      .then((data) => {
-        if (loadSavedAddresses().length > 0) return;
-        const latest = data.orders[0];
-        if (latest?.shippingAddress) {
-          setAddress(latest.shippingAddress);
+    const prefill = async () => {
+      if (token) {
+        try {
+          const account = await fetchAccount(token, sessionId);
+          if (account.profile.preferredPaymentMethod) {
+            setPaymentMethod(account.profile.preferredPaymentMethod);
+          }
+          const defaultAddress =
+            account.addresses.find((a) => a.isDefault) ?? account.addresses[0];
+          if (defaultAddress) {
+            setAddress({
+              name: defaultAddress.name,
+              line1: defaultAddress.line1,
+              line2: defaultAddress.line2,
+              city: defaultAddress.city,
+              state: defaultAddress.state,
+              postalCode: defaultAddress.postalCode,
+              country: defaultAddress.country,
+              phone: defaultAddress.phone,
+              email: defaultAddress.email || user?.email || "",
+            });
+            addressPrefilled.current = true;
+            return;
+          }
+        } catch {
+          // fall through to local storage
         }
-      })
-      .catch(() => {});
-  }, [token, sessionId]);
+      }
+
+      const saved = loadSavedAddresses();
+      if (saved.length > 0) {
+        const latest = saved[0];
+        setAddress({
+          name: latest.name,
+          line1: latest.line1,
+          line2: latest.line2,
+          city: latest.city,
+          state: latest.state,
+          postalCode: latest.postalCode,
+          country: latest.country,
+          phone: latest.phone,
+          email: latest.email || user?.email || "",
+        });
+        addressPrefilled.current = true;
+        return;
+      }
+
+      if (token) {
+        try {
+          const data = await api<{ orders: Order[] }>("/orders", { sessionId, token });
+          const latest = data.orders[0];
+          if (latest?.shippingAddress) {
+            setAddress(latest.shippingAddress);
+            addressPrefilled.current = true;
+            return;
+          }
+        } catch {
+          // ignore
+        }
+      }
+
+      if (user?.email) {
+        setAddress((a) => ({ ...a, email: user.email }));
+      }
+      addressPrefilled.current = true;
+    };
+
+    void prefill();
+  }, [user, token, sessionId]);
 
   const captureField = (field: string, value: string) => {
     captureLead({
@@ -163,10 +196,39 @@ export default function CheckoutPage() {
     });
   };
 
-  const persistAddressIfNeeded = () => {
-    if (saveForLater) {
-      saveShippingAddress(address);
+  const persistAddressIfNeeded = async () => {
+    if (!saveForLater) return;
+
+    const payload = {
+      ...address,
+      country: "US" as const,
+      label: address.name,
+      isDefault: true,
+      ...(address.phone?.trim() ? { phone: address.phone.trim() } : {}),
+      ...(address.line2?.trim() ? { line2: address.line2.trim() } : { line2: undefined }),
+    };
+
+    if (token && sessionId) {
+      try {
+        const account = await fetchAccount(token, sessionId);
+        const exists = account.addresses.some(
+          (a) =>
+            a.line1 === address.line1 &&
+            a.city === address.city &&
+            a.state === address.state &&
+            a.postalCode === address.postalCode &&
+            a.name === address.name
+        );
+        if (!exists) {
+          await createAccountAddress(token, sessionId, payload);
+        }
+        return;
+      } catch {
+        // fall back to local storage
+      }
     }
+
+    saveShippingAddress(address);
   };
 
   const handleCheckout = async (e: React.FormEvent) => {
@@ -197,7 +259,7 @@ export default function CheckoutPage() {
         }),
       });
 
-      persistAddressIfNeeded();
+      await persistAddressIfNeeded();
 
       if (paymentMethod === "stripe") {
         const stripeKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;

@@ -32,19 +32,6 @@ aws cognito-idp admin-create-user --user-pool-id <POOL_ID> --username admin@your
 aws cognito-idp admin-add-user-to-group --user-pool-id <POOL_ID> --username admin@yourstore.com --group-name admin
 ```
 
-## Google Sign-In (Cognito Hosted UI)
-
-1. In [Google Cloud Console](https://console.cloud.google.com/apis/credentials), create an **OAuth 2.0 Web client**.
-2. Add **Authorized redirect URI**: `https://<CognitoHostedUIDomain>/oauth2/idpresponse`  
-   (use the `CognitoHostedUIDomain` stack output, e.g. `hr-ecom-prod-123456789.auth.us-east-1.amazoncognito.com`).
-3. Redeploy SAM with parameters:
-   ```bash
-   sam deploy --parameter-overrides GoogleOAuthClientId=<id> GoogleOAuthClientSecret=<secret>
-   ```
-4. Set web env `NEXT_PUBLIC_COGNITO_DOMAIN` to the hosted UI domain (same as stack output).
-
-The account page shows **Sign in with Google** when Cognito pool, client ID, and domain are configured.
-
 ## Bulk Product CSV Format
 
 ```csv

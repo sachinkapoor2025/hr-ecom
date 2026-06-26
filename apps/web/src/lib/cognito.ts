@@ -117,25 +117,6 @@ export function isCognitoConfigured(): boolean {
   return !!userPool;
 }
 
-function decodeJwtPayload(token: string): Record<string, unknown> {
-  const part = token.split(".")[1];
-  if (!part) throw new Error("Invalid token");
-  const json = atob(part.replace(/-/g, "+").replace(/_/g, "/"));
-  return JSON.parse(json) as Record<string, unknown>;
-}
-
-export function authUserFromIdToken(idToken: string): AuthUser {
-  const payload = decodeJwtPayload(idToken);
-  const groups = (payload["cognito:groups"] as string[] | undefined) ?? [];
-  const email = (payload.email as string | undefined) ?? (payload["cognito:username"] as string) ?? "";
-  return {
-    email,
-    name: payload.name as string | undefined,
-    token: idToken,
-    isAdmin: groups.includes("admin"),
-  };
-}
-
 export function isDevAuthEnabled(): boolean {
   return devAuth && !userPool;
 }

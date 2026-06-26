@@ -9,6 +9,7 @@ import * as uploads from "./handlers/uploads";
 import * as events from "./handlers/events";
 import * as analytics from "./handlers/analytics";
 import * as adminCarts from "./handlers/admin-carts";
+import * as account from "./handlers/account";
 import { stripeWebhook } from "./handlers/payments/stripe";
 import { razorpayWebhook, verifyRazorpayPayment } from "./handlers/payments/razorpay";
 
@@ -41,6 +42,11 @@ const routes: Route[] = [
   { method: "POST", pattern: /^\/checkout$/, handler: orders.checkout },
   { method: "GET", pattern: /^\/orders$/, handler: orders.listOrders },
   { method: "GET", pattern: /^\/orders\/([^/]+)$/, handler: orders.getOrder, params: ["orderId"] },
+  { method: "GET", pattern: /^\/account$/, handler: account.getAccount },
+  { method: "PUT", pattern: /^\/account\/profile$/, handler: account.updateAccountProfile },
+  { method: "POST", pattern: /^\/account\/addresses$/, handler: account.createAccountAddress },
+  { method: "PUT", pattern: /^\/account\/addresses\/([^/]+)$/, handler: account.updateAccountAddress, params: ["addressId"] },
+  { method: "DELETE", pattern: /^\/account\/addresses\/([^/]+)$/, handler: account.deleteAccountAddress, params: ["addressId"] },
   { method: "GET", pattern: /^\/admin\/orders$/, handler: orders.listAdminOrders },
   { method: "GET", pattern: /^\/admin\/orders\/([^/]+)$/, handler: orders.getAdminOrder, params: ["orderId"] },
   { method: "PATCH", pattern: /^\/admin\/orders\/([^/]+)$/, handler: orders.updateOrderStatus, params: ["orderId"] },

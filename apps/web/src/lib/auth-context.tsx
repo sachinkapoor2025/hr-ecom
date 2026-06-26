@@ -16,7 +16,6 @@ import {
   register as cognitoRegister,
   confirmSignUp as cognitoConfirmSignUp,
   resendConfirmationCode as cognitoResendCode,
-  storeAuth,
 } from "./cognito";
 
 interface AuthContextValue {
@@ -26,7 +25,6 @@ interface AuthContextValue {
   register: (email: string, password: string, name?: string) => Promise<{ userConfirmed: boolean }>;
   confirmSignUp: (email: string, code: string) => Promise<void>;
   resendConfirmationCode: (email: string) => Promise<void>;
-  completeOAuthSignIn: (user: AuthUser) => void;
   logout: () => void;
   token: string | undefined;
   isAdmin: boolean;
@@ -61,11 +59,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await cognitoResendCode(email);
   }, []);
 
-  const completeOAuthSignIn = useCallback((authUser: AuthUser) => {
-    storeAuth(authUser);
-    setUser(authUser);
-  }, []);
-
   const logout = useCallback(() => {
     cognitoLogout();
     setUser(null);
@@ -80,7 +73,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         register,
         confirmSignUp,
         resendConfirmationCode,
-        completeOAuthSignIn,
         logout,
         token: user?.token,
         isAdmin: user?.isAdmin ?? false,

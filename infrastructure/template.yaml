@@ -24,22 +24,8 @@ Parameters:
     Type: String
     Default: ""
     NoEcho: true
-  WebCallbackUrls:
-    Type: CommaDelimitedList
-    Default: "http://localhost:3000/account/callback,https://www.usarakhi.com/account/callback"
-  WebLogoutUrls:
-    Type: CommaDelimitedList
-    Default: "http://localhost:3000/account,https://www.usarakhi.com/account"
-  GoogleOAuthClientId:
-    Type: String
-    Default: ""
-  GoogleOAuthClientSecret:
-    Type: String
-    Default: ""
-    NoEcho: true
 
-Conditions:
-  HasGoogleOAuth: !Not [!Equals [!Ref GoogleOAuthClientId, ""]]
+Globals:
   Function:
     Runtime: nodejs20.x
     Timeout: 29
@@ -359,32 +345,8 @@ Resources:
           Required: false
           Mutable: true
 
-  UserPoolDomain:
-    Type: AWS::Cognito::UserPoolDomain
-    Properties:
-      Domain: !Sub hr-ecom-${Environment}-${AWS::AccountId}
-      UserPoolId: !Ref UserPool
-
-  GoogleIdentityProvider:
-    Type: AWS::Cognito::UserPoolIdentityProvider
-    Condition: HasGoogleOAuth
-    Properties:
-      ProviderName: Google
-      ProviderType: Google
-      UserPoolId: !Ref UserPool
-      ProviderDetails:
-        client_id: !Ref GoogleOAuthClientId
-        client_secret: !Ref GoogleOAuthClientSecret
-        authorize_scopes: openid email profile
-      AttributeMapping:
-        email: email
-        name: name
-        username: sub
-
   UserPoolClient:
     Type: AWS::Cognito::UserPoolClient
-    DependsOn:
-      - GoogleIdentityProvider
     Properties:
       ClientName: !Sub hr-ecom-web-${Environment}
       UserPoolId: !Ref UserPool
@@ -393,19 +355,7 @@ Resources:
         - ALLOW_USER_SRP_AUTH
         - ALLOW_REFRESH_TOKEN_AUTH
         - ALLOW_USER_PASSWORD_AUTH
-      CallbackURLs: !Ref WebCallbackUrls
-      LogoutURLs: !Ref WebLogoutUrls
-      AllowedOAuthFlows:
-        - code
-      AllowedOAuthScopes:
-        - email
-        - openid
-        - profile
-      AllowedOAuthFlowsUserPoolClient: true
-      SupportedIdentityProviders: !If
-        - HasGoogleOAuth
-        - [COGNITO, Google]
-        - [COGNITO]
+      SupportedIdentityProviders: [COGNITO]
       PreventUserExistenceErrors: ENABLED
 
   AdminGroup:
@@ -487,9 +437,6 @@ Outputs:
     Value: !Ref UserPool
   UserPoolClientId:
     Value: !Ref UserPoolClient
-  CognitoHostedUIDomain:
-    Description: Set NEXT_PUBLIC_COGNITO_DOMAIN to this value in the web app
-    Value: !Sub hr-ecom-${Environment}-${AWS::AccountId}.auth.${AWS::Region}.amazoncognito.com
   UploadBucketName:
     Value: !Ref UploadBucket
   CloudFrontDomain:
