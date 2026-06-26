@@ -9,6 +9,7 @@ import { trackProductView } from "@/lib/track";
 import { useCurrency } from "@/lib/currency-context";
 import { getDiscountPercent } from "@/lib/pricing";
 import { LeadCaptureInput } from "@/components/LeadCaptureInput";
+import { HomeProductCard } from "@/components/HomeProductCard";
 import type { Product } from "@hr-ecom/shared";
 
 type Tab = "description" | "reviews";
@@ -74,7 +75,13 @@ function ShareButton({ title, url }: { title: string; url: string }) {
   );
 }
 
-export function ProductDetailClient({ product }: { product: Product }) {
+export function ProductDetailClient({
+  product,
+  relatedProducts = [],
+}: {
+  product: Product;
+  relatedProducts?: Product[];
+}) {
   const sessionId = useSessionId();
   const captureLead = useDebouncedLeadCapture(sessionId);
   const { format } = useCurrency();
@@ -226,6 +233,17 @@ export function ProductDetailClient({ product }: { product: Product }) {
                 }
               />
             </div>
+
+            {relatedProducts.length > 0 && (
+              <div>
+                <h2 className="text-lg font-bold text-primary mb-4">You might also like</h2>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 items-stretch">
+                  {relatedProducts.map((p) => (
+                    <HomeProductCard key={p.slug} product={p} />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <p className="text-slate-500 text-sm">No reviews yet. Be the first to review this Rakhi after your order.</p>

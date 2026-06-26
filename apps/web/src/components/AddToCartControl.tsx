@@ -97,56 +97,70 @@ export function AddToCartControl({
     );
   }
 
+  const quantityControls = (
+    <>
+      <button
+        type="button"
+        aria-label="Decrease quantity"
+        disabled={busy}
+        onClick={(e) => {
+          stop(e);
+          void run(() => (quantity <= 1 ? removeItem(productSlug) : updateItem(productSlug, quantity - 1)));
+        }}
+        className={stepBtnClass}
+      >
+        <MinusIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+      </button>
+      <span className="min-w-[1.25rem] sm:min-w-[1.5rem] text-center text-sm sm:text-base font-bold tabular-nums px-0.5">
+        {quantity}
+      </span>
+      <button
+        type="button"
+        aria-label="Increase quantity"
+        disabled={busy || disabled}
+        onClick={(e) => {
+          stop(e);
+          void run(() => addItem(productSlug, 1));
+        }}
+        className={stepBtnClass}
+      >
+        <PlusIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+      </button>
+    </>
+  );
+
+  const removeButton = (
+    <button
+      type="button"
+      aria-label="Remove from cart"
+      disabled={busy}
+      onClick={(e) => {
+        stop(e);
+        void run(() => removeItem(productSlug));
+      }}
+      className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full hover:bg-white/10 active:scale-95 disabled:opacity-50 transition"
+    >
+      <TrashIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+    </button>
+  );
+
   return (
     <div className={className} onClick={stop}>
       {error && <p className="text-xs text-red-600 mb-1">{error}</p>}
-      <div
-        className={`flex items-center justify-between gap-1 bg-nav text-white font-semibold text-sm ${
-          isDetail
-            ? "w-full rounded-md px-2 py-2"
-            : `rounded-full px-1.5 py-1.5 sm:px-3 sm:py-2 ${fullWidth ? "w-full" : "min-w-[10rem] sm:min-w-[12rem]"}`
-        }`}
-      >
-        <button
-          type="button"
-          aria-label="Decrease quantity"
-          disabled={busy}
-          onClick={(e) => {
-            stop(e);
-            void run(() => (quantity <= 1 ? removeItem(productSlug) : updateItem(productSlug, quantity - 1)));
-          }}
-          className={stepBtnClass}
+      {isDetail ? (
+        <div className="flex items-center w-full rounded-md bg-nav text-white font-semibold text-sm px-2 py-2">
+          <div className="inline-flex items-center gap-0.5 shrink-0">{quantityControls}</div>
+          <div className="flex-1" aria-hidden />
+          {removeButton}
+        </div>
+      ) : (
+        <div
+          className={`flex items-center justify-between gap-1 rounded-full bg-nav text-white font-semibold text-sm px-1.5 py-1.5 sm:px-3 sm:py-2 ${fullWidth ? "w-full" : "min-w-[10rem] sm:min-w-[12rem]"}`}
         >
-          <MinusIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-        </button>
-        <span className="min-w-[1.25rem] sm:min-w-[1.75rem] text-center text-sm sm:text-base font-bold tabular-nums">
-          {quantity}
-        </span>
-        <button
-          type="button"
-          aria-label="Increase quantity"
-          disabled={busy || disabled}
-          onClick={(e) => {
-            stop(e);
-            void run(() => addItem(productSlug, 1));
-          }}
-          className={stepBtnClass}
-        >
-          <PlusIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-        </button>
-        <button
-          type="button"
-          aria-label="Remove from cart"
-          disabled={busy}
-          onClick={(e) => {
-            stop(e);
-            void run(() => removeItem(productSlug));
-          }}
-          className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full hover:bg-white/10 active:scale-95 disabled:opacity-50 transition"
-        >
-          <TrashIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-        </button>
-      </div>
+          {quantityControls}
+          {removeButton}
+        </div>
+      )}
       {!isDetail && (
         <Link
           href="/cart"
