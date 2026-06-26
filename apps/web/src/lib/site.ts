@@ -15,10 +15,10 @@ export const site = {
 export const navItems = [
   { label: "Home", href: "/" },
   { label: "Single Rakhi", href: "/categories/single-rakhi", category: "single-rakhi" },
-  { label: "Rakhi Combo", href: "/categories/rakhi-combo", category: "rakhi-combo" },
-  { label: "Kids Rakhi", href: "/categories/kids-rakhi", category: "kids-rakhi" },
   { label: "Bhaiya Bhabhi Rakhi", href: "/categories/bhaiya-bhabhi-rakhi", category: "bhaiya-bhabhi-rakhi" },
+  { label: "Kids Rakhi", href: "/categories/kids-rakhi", category: "kids-rakhi" },
   { label: "Lumba Rakhi", href: "/categories/lumba-rakhi", category: "lumba-rakhi" },
+  { label: "Rakhi Combo", href: "/categories/rakhi-combo", category: "rakhi-combo" },
   { label: "Raksha Bandhan", href: "/raksha-bandhan" },
   { label: "Blog", href: "/blog" },
   { label: "Contact Us", href: "/contact" },
@@ -86,13 +86,16 @@ export const promoBanners = [
   },
 ] as const;
 
-export const categoryOrder = [
-  "rakhi-combo",
+/** Homepage Rakhi sections: Single → Bhaiya Bhabhi → Kids → Lumba → Combo */
+export const homeCategoryOrder = [
   "single-rakhi",
   "bhaiya-bhabhi-rakhi",
   "kids-rakhi",
   "lumba-rakhi",
+  "rakhi-combo",
 ] as const;
+
+export const categoryOrder = homeCategoryOrder;
 
 export const testimonials = [
   {

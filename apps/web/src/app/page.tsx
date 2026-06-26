@@ -5,7 +5,7 @@ import { BannerCarousel } from "@/components/BannerCarousel";
 import { CustomerReviews } from "@/components/CustomerReviews";
 import { HomeProductCard } from "@/components/HomeProductCard";
 import { JsonLd } from "@/components/JsonLd";
-import { site, homeBanners, categoryOrder, faqs } from "@/lib/site";
+import { site, homeBanners, homeCategoryOrder, faqs } from "@/lib/site";
 import { faqJsonLd, pageMetadata } from "@/lib/seo";
 import type { Product, Category } from "@hr-ecom/shared";
 
@@ -34,7 +34,7 @@ export default async function HomePage() {
   }
 
   const categoryMap = new Map(categories.map((c) => [c.slug, c]));
-  const productsByCategory = categoryOrder.map((slug) => ({
+  const productsByCategory = homeCategoryOrder.map((slug) => ({
     slug,
     name: categoryMap.get(slug)?.name ?? slug.replace(/-/g, " "),
     products: products.filter((p) => p.categorySlug === slug),
