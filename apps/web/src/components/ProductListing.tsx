@@ -42,28 +42,21 @@ function ProductListingInner({ products, syncSortToUrl = false }: ProductListing
   const searchParams = useSearchParams();
 
   const urlSort = searchParams.get("sort");
-  const [sort, setSort] = useState<ProductSortValue>(
-    isProductSortValue(urlSort) ? urlSort : "popularity"
-  );
-
-  const originalOrder = useMemo(() => {
-    const map = new Map<string, number>();
-    products.forEach((product, index) => map.set(product.slug, index));
-    return map;
-  }, [products]);
+  const [sort, setSort] = useState<ProductSortValue | null>(isProductSortValue(urlSort) ? urlSort : null);
 
   const sortedProducts = useMemo(
-    () => sortProducts(products, sort, originalOrder),
-    [products, sort, originalOrder]
+    () => (sort ? sortProducts(products, sort) : products),
+    [products, sort]
   );
 
-  const handleSortChange = (next: ProductSortValue) => {
+  const handleSortChange = (value: string) => {
+    const next = isProductSortValue(value) ? value : null;
     setSort(next);
 
     if (!syncSortToUrl) return;
 
     const params = new URLSearchParams(searchParams.toString());
-    if (next === "popularity") params.delete("sort");
+    if (!next) params.delete("sort");
     else params.set("sort", next);
 
     const qs = params.toString();
@@ -82,10 +75,13 @@ function ProductListingInner({ products, syncSortToUrl = false }: ProductListing
         </label>
         <select
           id="product-sort"
-          value={sort}
-          onChange={(e) => handleSortChange(e.target.value as ProductSortValue)}
+          value={sort ?? ""}
+          onChange={(e) => handleSortChange(e.target.value)}
           className="border border-slate-300 rounded-md px-3 py-2 text-sm text-slate-800 bg-white min-w-[11rem] focus:outline-none focus:ring-2 focus:ring-nav/30 focus:border-nav"
         >
+          <option value="" disabled>
+            Select
+          </option>
           {PRODUCT_SORT_OPTIONS.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}

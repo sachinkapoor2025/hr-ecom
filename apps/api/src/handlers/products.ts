@@ -51,8 +51,9 @@ export async function listProducts(event: APIGatewayProxyEventV2) {
   }
 
   const sortParam = event.queryStringParameters?.sort;
-  const sort = isProductSortValue(sortParam) ? sortParam : "popularity";
-  items = sortProducts(items, sort);
+  if (isProductSortValue(sortParam)) {
+    items = sortProducts(items, sortParam);
+  }
 
   return ok({ products: items });
 }
