@@ -10,13 +10,21 @@ import {
   updateAccountAddress,
   deleteAccountAddress,
 } from "@/lib/account";
+import {
+  loadUserAddresses,
+  upsertUserAddress,
+  removeUserAddress,
+  setDefaultUserAddress,
+} from "@/lib/user-addresses";
 
 interface Props {
   addresses: AccountAddress[];
   token: string;
   sessionId: string;
   userEmail: string;
+  offlineMode?: boolean;
   onRefresh: () => Promise<void>;
+  onAddressesChange?: (addresses: AccountAddress[]) => void;
 }
 
 type Mode = "list" | "add" | "edit";
@@ -26,7 +34,9 @@ export function AccountAddressesPanel({
   token,
   sessionId,
   userEmail,
+  offlineMode = false,
   onRefresh,
+  onAddressesChange,
 }: Props) {
   const [mode, setMode] = useState<Mode>("list");
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -92,17 +102,35 @@ export function AccountAddressesPanel({
     };
 
     try {
-      if (mode === "edit" && editingId) {
+      if (offlineMode) {
+        const id = mode === "edit" && editingId ? editingId : crypto.randomUUID();
+        const saved = upsertUserAddress(userEmail, {
+          ...payload,
+          id,
+          isDefault,
+        });
+        onAddressesChange?.(saved);
+        setMessage("Address saved on this device.");
+      } else if (mode === "edit" && editingId) {
         await updateAccountAddress(token, sessionId, editingId, payload);
         setMessage("Address updated successfully.");
+        await onRefresh();
       } else {
         await createAccountAddress(token, sessionId, payload);
         setMessage("Address saved successfully.");
+        await onRefresh();
       }
-      await onRefresh();
       resetForm();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not save address");
+      if (!offlineMode) {
+        const id = mode === "edit" && editingId ? editingId : crypto.randomUUID();
+        const saved = upsertUserAddress(userEmail, { ...payload, id, isDefault });
+        onAddressesChange?.(saved);
+        setMessage("Address saved on this device (API unavailable).");
+        resetForm();
+      } else {
+        setError(err instanceof Error ? err.message : "Could not save address");
+      }
     } finally {
       setLoading(false);
     }
@@ -113,12 +141,25 @@ export function AccountAddressesPanel({
     setLoading(true);
     setError("");
     try {
-      await deleteAccountAddress(token, sessionId, id);
-      await onRefresh();
+      if (offlineMode) {
+        const saved = removeUserAddress(userEmail, id);
+        onAddressesChange?.(saved);
+        setMessage("Address deleted.");
+      } else {
+        await deleteAccountAddress(token, sessionId, id);
+        await onRefresh();
+        setMessage("Address deleted.");
+      }
       if (editingId === id) resetForm();
-      setMessage("Address deleted.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not delete address");
+      if (!offlineMode) {
+        const saved = removeUserAddress(userEmail, id);
+        onAddressesChange?.(saved);
+        if (editingId === id) resetForm();
+        setMessage("Address deleted on this device.");
+      } else {
+        setError(err instanceof Error ? err.message : "Could not delete address");
+      }
     } finally {
       setLoading(false);
     }
@@ -128,11 +169,23 @@ export function AccountAddressesPanel({
     setLoading(true);
     setError("");
     try {
-      await updateAccountAddress(token, sessionId, address.id, { isDefault: true });
-      await onRefresh();
-      setMessage("Default address updated.");
+      if (offlineMode) {
+        const saved = setDefaultUserAddress(userEmail, address.id);
+        onAddressesChange?.(saved);
+        setMessage("Default address updated.");
+      } else {
+        await updateAccountAddress(token, sessionId, address.id, { isDefault: true });
+        await onRefresh();
+        setMessage("Default address updated.");
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not update default address");
+      if (!offlineMode) {
+        const saved = setDefaultUserAddress(userEmail, address.id);
+        onAddressesChange?.(saved);
+        setMessage("Default address updated on this device.");
+      } else {
+        setError(err instanceof Error ? err.message : "Could not update default address");
+      }
     } finally {
       setLoading(false);
     }

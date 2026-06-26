@@ -17,7 +17,7 @@ function AccountLoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") ?? "/account";
-  const { user, login, register, confirmSignUp, resendConfirmationCode, logout, isAdmin, token } =
+  const { user, login, register, confirmSignUp, resendConfirmationCode, logout, isAdmin, loading: authLoading } =
     useAuth();
 
   const [mode, setMode] = useState<AuthMode>("login");
@@ -107,11 +107,15 @@ function AccountLoginForm() {
     if (next !== "confirm") setConfirmCode("");
   };
 
-  if (user && token) {
+  if (authLoading) {
+    return <div className="p-16 text-center text-slate-600">Loading account...</div>;
+  }
+
+  if (user) {
     return (
       <AccountDashboard
         user={user}
-        token={token}
+        token={user.token}
         isAdmin={isAdmin}
         onLogout={() => {
           logout();

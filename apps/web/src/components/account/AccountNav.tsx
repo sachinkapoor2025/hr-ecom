@@ -52,7 +52,7 @@ export function AccountNav({
   onChange: (tab: AccountTab) => void;
 }) {
   return (
-    <nav className="flex flex-wrap gap-x-8 gap-y-3 border-b border-slate-100 pb-4">
+    <nav className="flex flex-wrap gap-x-6 sm:gap-x-10 gap-y-3 pt-1">
       {TABS.map((tab) => {
         const selected = active === tab.id;
         return (
@@ -60,8 +60,10 @@ export function AccountNav({
             key={tab.id}
             type="button"
             onClick={() => onChange(tab.id)}
-            className={`flex items-center gap-2 text-sm font-medium transition ${
-              selected ? "text-primary" : "text-slate-600 hover:text-primary"
+            className={`flex items-center gap-2 text-sm font-semibold transition pb-1 border-b-2 ${
+              selected
+                ? "text-primary border-primary"
+                : "text-slate-600 border-transparent hover:text-primary hover:border-slate-200"
             }`}
           >
             {tab.icon}
