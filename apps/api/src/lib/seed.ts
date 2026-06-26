@@ -58,12 +58,13 @@ export async function seedIfEmpty() {
     );
   }
 
-  for (const p of catalog.products) {
+  for (const [index, p] of catalog.products.entries()) {
     await docClient.send(
       new PutCommand({
         TableName: PRODUCTS_TABLE,
         Item: {
           ...p,
+          popularity: p.popularity ?? catalog.products.length - index,
           published: true,
           PK: productKeys.pk(p.slug),
           SK: productKeys.sk(),

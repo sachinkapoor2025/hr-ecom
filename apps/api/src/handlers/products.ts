@@ -5,6 +5,8 @@ import {
   updateProductSchema,
   bulkProductRowSchema,
   productKeys,
+  sortProducts,
+  isProductSortValue,
   type Product,
 } from "@hr-ecom/shared";
 import { docClient, PRODUCTS_TABLE, now, slugify } from "../lib/db";
@@ -47,6 +49,10 @@ export async function listProducts(event: APIGatewayProxyEventV2) {
         p.tags?.some((t) => t.toLowerCase().includes(search))
     );
   }
+
+  const sortParam = event.queryStringParameters?.sort;
+  const sort = isProductSortValue(sortParam) ? sortParam : "popularity";
+  items = sortProducts(items, sort);
 
   return ok({ products: items });
 }

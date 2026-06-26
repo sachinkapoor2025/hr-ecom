@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { api } from "@/lib/api";
-import { HomeProductCard } from "@/components/HomeProductCard";
+import { ProductListing } from "@/components/ProductListing";
 import { SearchBar } from "@/components/SearchBar";
 import { SearchTracker } from "@/components/SearchTracker";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
@@ -136,11 +136,7 @@ export default async function ProductsPage({ searchParams }: Props) {
       {products.length === 0 ? (
         <p className="text-slate-600">No products found. Try another category or search term.</p>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-          {products.map((p) => (
-            <HomeProductCard key={p.slug} product={p} />
-          ))}
-        </div>
+        <ProductListing products={products} syncSortToUrl />
       )}
     </div>
   );

@@ -15,6 +15,7 @@ export const productSchema = z.object({
   seoTitle: z.string().optional(),
   seoDescription: z.string().optional(),
   published: z.boolean().default(true),
+  popularity: z.number().int().min(0).optional(),
 });
 
 export const createProductSchema = productSchema.omit({ slug: true }).extend({

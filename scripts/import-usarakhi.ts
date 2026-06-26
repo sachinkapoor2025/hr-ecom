@@ -80,6 +80,7 @@ interface CatalogProduct {
   tags: string[];
   seoTitle?: string;
   seoDescription?: string;
+  popularity?: number;
 }
 
 function stripHtml(html: string): string {
@@ -241,19 +242,22 @@ async function fetchCatalog(): Promise<{ categories: CatalogCategory[]; products
 
   const activeSlugs = new Set(categories.map((c) => c.slug));
   const productMap = new Map<string, CatalogProduct>();
+  let popularityRank = 100_000;
 
   for (const catSlug of CATEGORY_FETCH_ORDER) {
     if (!activeSlugs.has(catSlug)) continue;
 
     for (let page = 1; page <= 5; page++) {
       const batch = await fetchJson<WcProduct[]>(
-        `${WC_BASE}/products?category=${catSlug}&per_page=100&page=${page}`
+        `${WC_BASE}/products?category=${catSlug}&per_page=100&page=${page}&orderby=popularity&order=desc`
       );
       if (batch.length === 0) break;
 
       for (const p of batch) {
         if (productMap.has(p.slug)) continue;
-        productMap.set(p.slug, toCatalogProduct(p, catSlug));
+        const product = toCatalogProduct(p, catSlug);
+        product.popularity = popularityRank--;
+        productMap.set(p.slug, product);
       }
     }
   }
@@ -297,12 +301,13 @@ async function importToDb(catalog: { categories: CatalogCategory[]; products: Ca
     );
   }
 
-  for (const p of catalog.products) {
+  for (const [index, p] of catalog.products.entries()) {
     await docClient.send(
       new PutCommand({
         TableName: PRODUCTS_TABLE,
         Item: {
           ...p,
+          popularity: p.popularity ?? catalog.products.length - index,
           published: true,
           PK: productKeys.pk(p.slug),
           SK: productKeys.sk(),
