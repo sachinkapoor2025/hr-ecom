@@ -8,4 +8,3 @@ export * from "./schemas/user";
 export * from "./schemas/payment";
 export * from "./db/keys";
 export * from "./constants";
-export * from "./product-sort";
