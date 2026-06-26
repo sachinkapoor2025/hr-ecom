@@ -4,9 +4,10 @@ import { api } from "@/lib/api";
 import { BannerCarousel } from "@/components/BannerCarousel";
 import { CustomerReviews } from "@/components/CustomerReviews";
 import { HomeProductCard } from "@/components/HomeProductCard";
+import { HomeSeoSection } from "@/components/HomeSeoSection";
 import { JsonLd } from "@/components/JsonLd";
 import { site, homeBanners, homeCategoryOrder, faqs } from "@/lib/site";
-import { faqJsonLd, pageMetadata } from "@/lib/seo";
+import { faqJsonLd, howToSendRakhiJsonLd, pageMetadata } from "@/lib/seo";
 import type { Product, Category } from "@hr-ecom/shared";
 
 export const metadata: Metadata = pageMetadata({
@@ -42,7 +43,7 @@ export default async function HomePage() {
 
   return (
     <div>
-      <JsonLd data={faqJsonLd(faqs)} />
+      <JsonLd data={[faqJsonLd(faqs), howToSendRakhiJsonLd()]} />
       <BannerCarousel banners={homeBanners} />
 
       <section className="max-w-4xl mx-auto px-4 py-10 text-center">
@@ -94,6 +95,8 @@ export default async function HomePage() {
       )}
 
       <CustomerReviews />
+
+      <HomeSeoSection />
 
       <section className="max-w-3xl mx-auto px-4 py-12">
         <h2 className="text-2xl font-bold text-primary text-center mb-2">Frequently Asked Questions</h2>
