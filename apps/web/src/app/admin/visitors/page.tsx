@@ -1,8 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useApiClient } from "@/lib/auth-context";
+import {
+  downloadCsv,
+  formatDurationMs,
+  paginate,
+  referrerLabel,
+} from "@/lib/admin-utils";
+import { TableControls } from "@/components/admin/TableControls";
 
 interface SessionSummary {
   sessionId: string;
@@ -85,6 +92,10 @@ function visitorLabel(s: SessionSummary): string {
 
 export default function AdminVisitorsPage() {
   const apiClient = useApiClient();
+  const [days, setDays] = useState(7);
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -95,14 +106,69 @@ export default function AdminVisitorsPage() {
   useEffect(() => {
     setLoading(true);
     setError("");
-    apiClient<{ sessions: SessionSummary[] }>("/admin/sessions?days=7")
+    apiClient<{ sessions: SessionSummary[] }>(`/admin/sessions?days=${days}`)
       .then((d) => setSessions(d.sessions))
       .catch((err) => {
         setSessions([]);
         setError(err instanceof Error ? err.message : "Could not load sessions");
       })
       .finally(() => setLoading(false));
-  }, [apiClient]);
+  }, [apiClient, days]);
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return sessions;
+    return sessions.filter(
+      (s) =>
+        s.sessionId.toLowerCase().includes(q) ||
+        s.name?.toLowerCase().includes(q) ||
+        s.email?.toLowerCase().includes(q) ||
+        s.phone?.toLowerCase().includes(q)
+    );
+  }, [sessions, search]);
+
+  const { items: pageItems, totalPages, total } = paginate(filtered, page, pageSize);
+
+  const exportSessions = () => {
+    downloadCsv(
+      `visitors-${new Date().toISOString().slice(0, 10)}.csv`,
+      [
+        [
+          "Session ID",
+          "Name",
+          "Email",
+          "Phone",
+          "Country",
+          "Referrer",
+          "First seen",
+          "Last activity",
+          "Duration",
+          "Events",
+          "Converted",
+          "Landing page",
+          "Exit page",
+        ],
+        ...filtered.map((s) => {
+          const duration = new Date(s.lastSeen).getTime() - new Date(s.firstSeen).getTime();
+          return [
+            s.sessionId,
+            s.name ?? "",
+            s.email ?? "",
+            s.phone ?? "",
+            countryLabel(s),
+            referrerLabel(s.referrer),
+            s.firstSeen,
+            s.lastSeen,
+            formatDurationMs(duration),
+            String(s.eventCount),
+            s.name || s.email ? "Maybe" : "Guest",
+            s.pages[0] ?? s.lastPath ?? "",
+            s.lastPath ?? "",
+          ];
+        }),
+      ]
+    );
+  };
 
   const openSession = useCallback(
     (sessionId: string) => {
@@ -119,35 +185,70 @@ export default function AdminVisitorsPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
-      <h1 className="text-2xl font-bold mb-1">Visitors</h1>
-      <p className="text-slate-600 text-sm mb-6">
-        Recent sessions (last 7 days). Click a visitor to see pages visited, products viewed, and where
-        they dropped off.
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold mb-1">Visitors</h1>
+          <p className="text-slate-600 text-sm">
+            Session tracking — click a row for full journey timeline.
+          </p>
+        </div>
+        <select
+          value={days}
+          onChange={(e) => setDays(Number(e.target.value))}
+          className="border border-slate-300 rounded-lg px-3 py-1.5 text-sm"
+        >
+          <option value={7}>Last 7 days</option>
+          <option value={14}>Last 14 days</option>
+          <option value={30}>Last 30 days</option>
+          <option value={90}>Last 90 days</option>
+        </select>
+      </div>
+
+      <input
+        type="search"
+        placeholder="Search session, name, email, phone…"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        className="w-full mb-4 border rounded-lg px-3 py-2 text-sm"
+      />
+
+      <TableControls
+        page={page}
+        totalPages={totalPages}
+        total={total}
+        pageSize={pageSize}
+        onPageChange={setPage}
+        onPageSizeChange={setPageSize}
+        onExport={exportSessions}
+      />
 
       {loading ? (
         <p className="text-slate-500">Loading sessions…</p>
       ) : error ? (
         <p className="text-red-600 text-sm">{error}</p>
-      ) : sessions.length === 0 ? (
+      ) : pageItems.length === 0 ? (
         <p className="text-slate-600">
           No visitor sessions recorded yet. Once shoppers browse the storefront, sessions will appear here.
         </p>
       ) : (
         <div className="bg-white rounded-lg overflow-hidden border overflow-x-auto">
-          <table className="w-full text-sm min-w-[800px]">
+          <table className="w-full text-sm min-w-[1000px]">
             <thead className="bg-slate-50">
               <tr className="text-left">
                 <th className="py-3 px-4">Visitor</th>
+                <th className="py-3 px-4">Type</th>
                 <th className="py-3 px-4">Country</th>
+                <th className="py-3 px-4">Referrer</th>
+                <th className="py-3 px-4">Duration</th>
                 <th className="py-3 px-4">Last activity</th>
                 <th className="py-3 px-4">Events</th>
-                <th className="py-3 px-4">Pages visited</th>
-                <th className="py-3 px-4">Products</th>
+                <th className="py-3 px-4">Pages</th>
               </tr>
             </thead>
             <tbody>
-              {sessions.map((s) => (
+              {pageItems.map((s) => {
+                const duration = new Date(s.lastSeen).getTime() - new Date(s.firstSeen).getTime();
+                return (
                 <tr
                   key={s.sessionId}
                   onClick={() => openSession(s.sessionId)}
@@ -155,13 +256,19 @@ export default function AdminVisitorsPage() {
                 >
                   <td className="py-3 px-4">
                     <div className="font-medium">{visitorLabel(s)}</div>
-                    {(s.email || s.phone) && s.name && (
+                    <div className="text-xs text-slate-400 font-mono">{s.sessionId.slice(0, 8)}…</div>
+                    {(s.email || s.phone) && (
                       <div className="text-xs text-slate-400">
                         {[s.email, s.phone].filter(Boolean).join(" · ")}
                       </div>
                     )}
                   </td>
+                  <td className="py-3 px-4 text-xs">
+                    {s.name || s.email ? "Registered" : "Guest"}
+                  </td>
                   <td className="py-3 px-4 text-slate-600">{countryLabel(s)}</td>
+                  <td className="py-3 px-4 text-xs text-slate-500">{referrerLabel(s.referrer)}</td>
+                  <td className="py-3 px-4 text-xs">{formatDurationMs(duration)}</td>
                   <td className="py-3 px-4 text-slate-500 whitespace-nowrap">
                     {new Date(s.lastSeen).toLocaleString()}
                   </td>
@@ -176,18 +283,9 @@ export default function AdminVisitorsPage() {
                       s.lastPath ?? "—"
                     )}
                   </td>
-                  <td className="py-3 px-4 text-xs text-slate-500 max-w-[160px]">
-                    {s.products.length ? (
-                      <span title={s.products.join(", ")}>
-                        {s.products.slice(0, 2).join(", ")}
-                        {s.products.length > 2 ? ` +${s.products.length - 2}` : ""}
-                      </span>
-                    ) : (
-                      "—"
-                    )}
-                  </td>
                 </tr>
-              ))}
+              );
+              })}
             </tbody>
           </table>
         </div>
@@ -218,6 +316,23 @@ export default function AdminVisitorsPage() {
                     {timeline.profile.name && <p className="font-medium">{timeline.profile.name}</p>}
                     {timeline.profile.email && <p className="text-slate-500">{timeline.profile.email}</p>}
                     {timeline.profile.phone && <p className="text-slate-500">{timeline.profile.phone}</p>}
+                  </div>
+                )}
+
+                {timeline.events[0]?.metadata?.userAgent && (
+                  <p className="text-xs text-slate-500 mb-2 break-all">
+                    Browser: {timeline.events[0].metadata.userAgent.slice(0, 120)}
+                  </p>
+                )}
+
+                {timeline.leads.length > 0 && (
+                  <div className="mb-4 text-xs bg-amber-50 rounded-lg p-3">
+                    <p className="font-medium">Lead captures ({timeline.leads.length})</p>
+                    {timeline.leads.map((l, i) => (
+                      <p key={i} className="text-slate-600 mt-1">
+                        {l.source}: {[l.name, l.email, l.phone].filter(Boolean).join(" · ")}
+                      </p>
+                    ))}
                   </div>
                 )}
 

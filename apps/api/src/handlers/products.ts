@@ -128,6 +128,25 @@ export async function updateProduct(event: APIGatewayProxyEventV2) {
   return ok({ product: updated });
 }
 
+/** Admin: list all products including unpublished. */
+export async function listAdminProducts(event: APIGatewayProxyEventV2) {
+  const auth = getAuth(event);
+  if (!auth?.isAdmin) return forbidden();
+
+  const result = await docClient.send(
+    new ScanCommand({
+      TableName: PRODUCTS_TABLE,
+      FilterExpression: "begins_with(PK, :prefix) AND SK = :sk",
+      ExpressionAttributeValues: { ":prefix": "PRODUCT#", ":sk": "META" },
+    })
+  );
+
+  const items = ((result.Items ?? []) as Product[]).sort(
+    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+  );
+  return ok({ products: items.map(withResolvedProductImages) });
+}
+
 export async function deleteProduct(event: APIGatewayProxyEventV2) {
   const auth = getAuth(event);
   if (!auth?.isAdmin) return forbidden();
