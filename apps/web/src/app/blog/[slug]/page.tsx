@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { JsonLd } from "@/components/JsonLd";
@@ -22,6 +23,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: post.title,
     description: post.description,
     path: `/blog/${slug}`,
+    ogImage: post.image,
   });
 }
 
@@ -37,23 +39,45 @@ export default async function BlogPostPage({ params }: Props) {
   ];
 
   return (
-    <article className="max-w-3xl mx-auto px-4 py-10">
-      <JsonLd data={[articleJsonLd(post), breadcrumbJsonLd(crumbs.map((c) => ({ name: c.label, path: c.href ?? `/blog/${slug}` })))]} />
+    <article className="max-w-3xl mx-auto px-4 py-10 overflow-x-hidden min-w-0 w-full">
+      <JsonLd
+        data={[
+          articleJsonLd(post),
+          breadcrumbJsonLd(crumbs.map((c) => ({ name: c.label, path: c.href ?? `/blog/${slug}` }))),
+        ]}
+      />
       <Breadcrumbs items={crumbs} />
-      <header className="mb-8">
+      <header className="mb-8 min-w-0">
         <time dateTime={post.publishedAt} className="text-sm text-slate-500">
-          {new Date(post.publishedAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
+          {new Date(post.publishedAt).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          })}
         </time>
-        <h1 className="text-3xl font-bold text-primary mt-2 mb-3">{post.title}</h1>
-        <p className="text-lg text-slate-600">{post.excerpt}</p>
+        <h1 className="text-2xl sm:text-3xl font-bold text-primary mt-2 mb-3 break-words">{post.title}</h1>
+        <p className="text-base sm:text-lg text-slate-600 break-words">{post.excerpt}</p>
       </header>
 
-      <div className="prose prose-slate max-w-none space-y-8">
+      <div className="relative aspect-[16/9] rounded-xl overflow-hidden mb-8 bg-slate-100">
+        <Image
+          src={post.image}
+          alt={post.title}
+          fill
+          className="object-cover"
+          sizes="(max-width: 768px) 100vw, 768px"
+          priority
+        />
+      </div>
+
+      <div className="space-y-8 min-w-0 break-words [overflow-wrap:anywhere]">
         {post.sections.map((section, i) => (
-          <section key={i}>
-            {section.heading && <h2 className="text-xl font-bold text-primary mb-3">{section.heading}</h2>}
+          <section key={i} className="min-w-0">
+            {section.heading && (
+              <h2 className="text-xl font-bold text-primary mb-3 break-words">{section.heading}</h2>
+            )}
             {section.paragraphs.map((p, j) => (
-              <p key={j} className="text-slate-700 leading-relaxed mb-4">
+              <p key={j} className="text-slate-700 leading-relaxed mb-4 break-words [overflow-wrap:anywhere]">
                 {p}
               </p>
             ))}
@@ -62,7 +86,7 @@ export default async function BlogPostPage({ params }: Props) {
       </div>
 
       {post.relatedCategory && (
-        <div className="mt-10 p-6 bg-slate-50 rounded-xl border">
+        <div className="mt-10 p-6 bg-slate-50 rounded-xl border min-w-0">
           <h2 className="font-semibold text-primary mb-2">Shop related Rakhis</h2>
           <Link href={`/categories/${post.relatedCategory}`} className="text-nav font-semibold hover:underline">
             Browse {post.relatedCategory.replace(/-/g, " ")} →
@@ -71,7 +95,9 @@ export default async function BlogPostPage({ params }: Props) {
       )}
 
       <div className="mt-8 pt-6 border-t">
-        <Link href="/blog" className="text-nav hover:underline text-sm">← All articles</Link>
+        <Link href="/blog" className="text-nav hover:underline text-sm">
+          ← All articles
+        </Link>
       </div>
     </article>
   );

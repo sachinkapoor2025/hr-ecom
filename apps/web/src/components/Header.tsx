@@ -72,6 +72,20 @@ function AccountLink({ className = "" }: { className?: string }) {
   );
 }
 
+function WishlistLink({ className = "" }: { className?: string }) {
+  return (
+    <Link href="/wishlist" className={`p-2 text-primary hover:text-nav ${className}`} aria-label="Wishlist">
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+        />
+      </svg>
+    </Link>
+  );
+}
+
 function CartLink({ className = "" }: { className?: string }) {
   const { itemCount } = useCart();
 
@@ -173,10 +187,10 @@ export function Header() {
   return (
     <header className="border-b border-slate-200 bg-white sticky top-0 z-50 shadow-sm overflow-visible">
       {/* Mobile top bar */}
-      <div className="md:hidden max-w-7xl mx-auto px-4 py-3 flex items-center gap-3">
+      <div className="md:hidden max-w-7xl mx-auto px-3 py-3 flex items-center gap-2">
         <button
           type="button"
-          className="p-1 text-nav hover:text-primary shrink-0"
+          className="p-1.5 text-nav hover:text-primary shrink-0"
           aria-label="Open menu"
           aria-expanded={menuOpen}
           onClick={() => setMenuOpen(true)}
@@ -184,13 +198,16 @@ export function Header() {
           <BurgerIcon />
         </button>
 
-        <Link href="/" className="flex-1 flex justify-center min-w-0" onClick={closeMenu}>
-          <Image src={site.logoSrc} alt={site.name} width={150} height={50} className="h-10 w-auto" priority />
+        <Link href="/" className="shrink-0 min-w-0" onClick={closeMenu}>
+          <Image src={site.logoSrc} alt={site.name} width={130} height={44} className="h-9 w-auto max-w-[130px]" priority />
         </Link>
 
+        <div className="flex-1" />
+
         <div className="flex items-center shrink-0">
-          <AccountLink className="text-nav hover:text-primary" />
-          <CartLink />
+          <AccountLink className="text-nav hover:text-primary p-1.5" />
+          <WishlistLink className="text-nav hover:text-primary p-1.5" />
+          <CartLink className="p-1.5" />
         </div>
       </div>
 
@@ -277,21 +294,33 @@ export function Header() {
 
             <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-1">
               {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={closeMenu}
-                  className={`block rounded-lg px-4 py-3 text-sm font-semibold ${
-                    isActive(item.href, "category" in item ? item.category : undefined)
-                      ? "bg-nav text-white"
-                      : "text-primary hover:bg-blue-50 hover:text-nav"
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              ))}
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={closeMenu}
+                className={`block rounded-lg px-4 py-3 text-sm font-semibold ${
+                  isActive(item.href, "category" in item ? item.category : undefined)
+                    ? "bg-nav text-white"
+                    : "text-primary hover:bg-blue-50 hover:text-nav"
+                }`}
+              >
+                {item.label}
+              </Link>
+            ))}
 
-              <div>
+            <Link
+              href="/wishlist"
+              onClick={closeMenu}
+              className={`block rounded-lg px-4 py-3 text-sm font-semibold ${
+                pathname === "/wishlist"
+                  ? "bg-nav text-white"
+                  : "text-primary hover:bg-blue-50 hover:text-nav"
+              }`}
+            >
+              Wish Lists
+            </Link>
+
+            <div>
                 <button
                   type="button"
                   onClick={() => setCitiesOpen((v) => !v)}

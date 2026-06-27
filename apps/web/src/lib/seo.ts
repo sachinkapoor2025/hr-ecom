@@ -210,6 +210,7 @@ export function articleJsonLd(article: {
   description: string;
   publishedAt: string;
   updatedAt?: string;
+  image?: string;
 }) {
   return {
     "@context": "https://schema.org",
@@ -219,6 +220,7 @@ export function articleJsonLd(article: {
     url: canonical(`/blog/${article.slug}`),
     datePublished: article.publishedAt,
     dateModified: article.updatedAt ?? article.publishedAt,
+    ...(article.image ? { image: article.image } : {}),
     author: { "@type": "Organization", name: site.name },
     publisher: { "@id": `${siteUrl}/#organization` },
   };

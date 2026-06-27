@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import {
   isDevAuthEnabled,
-  isCognitoConfigured,
   isUnconfirmedError,
   formatAuthError,
 } from "@/lib/cognito";
@@ -33,7 +32,7 @@ function AccountLoginForm() {
   const finishLogin = async () => {
     const authUser = await login(email, password);
     if (redirect.startsWith("/admin") && !authUser.isAdmin) {
-      setError("Admin access required. Your account must be in the Cognito admin group.");
+      setError("You don't have permission to access that area.");
       logout();
       return;
     }
@@ -66,7 +65,7 @@ function AccountLoginForm() {
       } else {
         setMode("confirm");
         setConfirmCode("");
-        setMessage(`We sent a verification code to ${email}. Enter it below to activate your account.`);
+        setMessage(`We sent a verification code to ${email}. Enter it below to activate your account. Check your spam or junk folder if you don't see it within a few minutes.`);
       }
     } catch (err) {
       if (mode === "login" && isUnconfirmedError(err)) {
@@ -139,15 +138,22 @@ function AccountLoginForm() {
         </p>
       )}
 
-      {isCognitoConfigured() && mode !== "confirm" && (
+      {mode !== "confirm" && (
         <p className="text-slate-600 text-sm mb-6">
-          Secure login via AWS Cognito. Admin users must be in the Cognito <code>admin</code> group.
+          Secure login with encrypted password protection. Your account details are kept private and safe.
         </p>
       )}
 
       {mode === "confirm" && (
-        <p className="text-slate-600 text-sm mb-6">
+        <p className="text-slate-600 text-sm mb-4">
           Enter the 6-digit code from your email to verify <strong>{email || "your account"}</strong>.
+        </p>
+      )}
+
+      {mode === "confirm" && (
+        <p className="text-amber-800 text-sm bg-amber-50 border border-amber-200 rounded-lg p-3 mb-6">
+          Didn&apos;t receive the code? Check your <strong>spam or junk</strong> folder — verification emails
+          sometimes land there. You can also tap &quot;Resend verification code&quot; below.
         </p>
       )}
 
