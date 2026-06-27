@@ -13,7 +13,9 @@ import { productKeys, DEFAULT_PRODUCT_INVENTORY } from "@hr-ecom/shared";
 const ENV = process.env.ENVIRONMENT ?? "prod";
 const TABLE = process.env.PRODUCTS_TABLE ?? `hr-ecom-products-${ENV}`;
 
-const doc = DynamoDBDocumentClient.from(new DynamoDBClient({}));
+const REGION = process.env.AWS_DEFAULT_REGION ?? process.env.AWS_REGION ?? "us-east-1";
+
+const doc = DynamoDBDocumentClient.from(new DynamoDBClient({ region: REGION }));
 
 async function main() {
   console.log(`Setting inventory on ${TABLE} → ${DEFAULT_PRODUCT_INVENTORY} for all products`);
