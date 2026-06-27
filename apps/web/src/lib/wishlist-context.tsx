@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import type { Product } from "@hr-ecom/shared";
+import { resolveImageUrl } from "@/lib/images";
 
 const WISHLIST_KEY = "hr_ecom_wishlist";
 
@@ -28,7 +29,7 @@ function toWishlistItem(product: Product): WishlistItem {
   return {
     slug: product.slug,
     name: product.name,
-    image: product.images?.[0],
+    image: resolveImageUrl(product.images?.[0]),
     price: product.price,
     currency: product.currency,
     compareAtPrice: product.compareAtPrice,

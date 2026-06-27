@@ -9,7 +9,7 @@ export const site = {
   /** WhatsApp support — digits only with country code (no +). */
   whatsapp: "919650457697",
   whatsappDisplay: "+91 96504 57697",
-  logoSrc: "https://usarakhi.com/wp-content/uploads/2026/02/transparent-logo-1.png",
+  logoSrc: "/logo.png",
   primaryColor: "#183a68",
   navBlue: "#4876e8",
   accentColor: "#e11d48",

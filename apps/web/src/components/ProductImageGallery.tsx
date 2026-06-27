@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { resolveImageUrls } from "@/lib/images";
 
 interface ProductImageGalleryProps {
   images: string[];
@@ -65,7 +66,7 @@ export function ProductImageGallery({ images, alt }: ProductImageGalleryProps) {
   const imgRef = useRef<HTMLImageElement>(null);
   const isDesktop = useDesktopHoverZoom();
 
-  const imgs = images.filter(Boolean);
+  const imgs = resolveImageUrls(images);
   const current = imgs[selected] ?? "";
 
   const updateBounds = useCallback(() => {

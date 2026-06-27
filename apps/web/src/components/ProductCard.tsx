@@ -5,6 +5,7 @@ import type { Product } from "@hr-ecom/shared";
 import { WishlistButton } from "@/components/WishlistButton";
 import { useCurrency } from "@/lib/currency-context";
 import { getDiscountPercent } from "@/lib/pricing";
+import { resolveImageUrl } from "@/lib/images";
 
 export function ProductCard({ product }: { product: Product }) {
   const { format } = useCurrency();
@@ -22,7 +23,7 @@ export function ProductCard({ product }: { product: Product }) {
         <Link href={`/products/${product.slug}`} className="block w-full h-full">
           {product.images?.[0] ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
+            <img src={resolveImageUrl(product.images[0])} alt={product.name} className="w-full h-full object-cover" />
           ) : (
             <span>No image</span>
           )}
