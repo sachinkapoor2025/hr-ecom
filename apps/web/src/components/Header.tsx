@@ -201,7 +201,7 @@ export function Header() {
         </Link>
 
         <div className="w-full max-w-2xl mx-auto">
-          <SearchBar variant="header" />
+          <SearchBar />
         </div>
 
         <div className="flex items-start justify-end shrink-0">
@@ -229,7 +229,7 @@ export function Header() {
 
       <div className="md:hidden border-t border-slate-100 bg-white px-4 py-2.5">
         <div className="max-w-7xl mx-auto">
-          <SearchBar variant="header" />
+          <SearchBar />
         </div>
       </div>
 

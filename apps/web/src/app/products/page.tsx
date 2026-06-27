@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { api } from "@/lib/api";
 import { HomeProductCard } from "@/components/HomeProductCard";
-import { SearchBar } from "@/components/SearchBar";
 import { SearchTracker } from "@/components/SearchTracker";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { pageMetadata } from "@/lib/seo";
@@ -112,9 +111,8 @@ export default async function ProductsPage({ searchParams }: Props) {
           ...(category ? [{ label: h1 }] : [{ label: "Shop" }]),
         ]}
       />
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+      <div className="mb-4">
         <h1 className="text-3xl font-bold text-primary">{h1}</h1>
-        <SearchBar />
       </div>
       {!search && !category && (
         <p className="text-slate-600 mb-8 max-w-2xl">
