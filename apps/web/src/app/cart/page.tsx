@@ -7,6 +7,7 @@ import { useCurrency } from "@/lib/currency-context";
 import { SecureCheckoutBadge } from "@/components/SecureCheckoutBadge";
 import { PaymentMethodIcons } from "@/components/PaymentMethodIcons";
 import { CheckoutLegalNotice } from "@/components/CheckoutLegalNotice";
+import { TrustBadges } from "@/components/TrustBadges";
 import { resolveImageUrl } from "@/lib/images";
 import type { DisplayCurrency } from "@/lib/currency-context";
 
@@ -172,6 +173,8 @@ export default function CartPage() {
               </p>
               <PaymentMethodIcons />
             </div>
+
+            <TrustBadges variant="compact" className="mb-5" />
 
             <Link
               href="/checkout"

@@ -15,6 +15,7 @@ import { PaymentMethodPicker, type PaymentMethod } from "@/components/PaymentMet
 import { ShippingAddressForm } from "@/components/ShippingAddressForm";
 import { SecureCheckoutBadge } from "@/components/SecureCheckoutBadge";
 import { CheckoutLegalNotice } from "@/components/CheckoutLegalNotice";
+import { TrustBadges } from "@/components/TrustBadges";
 import {
   emptyShippingAddress,
   loadSavedAddresses,
@@ -417,6 +418,8 @@ export default function CheckoutPage() {
             </button>
 
             <CheckoutLegalNotice className="text-center" />
+
+            <TrustBadges variant="compact" className="pt-2" />
 
             <SecureCheckoutBadge />
 

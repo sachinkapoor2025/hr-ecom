@@ -20,6 +20,7 @@ import { docClient, ORDERS_TABLE, CUSTOMERS_TABLE, now } from "../lib/db";
 import { ok, created, badRequest, unauthorized, forbidden, notFound } from "../lib/response";
 import { getAuth, getSessionId, getUserOrSessionKey, requireAdmin } from "../lib/auth";
 import { getCartHandler, clearCartForUser } from "./cart";
+import { notifyAdminLead, notifyAdminOrderPaid, notifyAdminOrderPlaced } from "../lib/email";
 
 type StoredOrder = Order & {
   PK: string;
@@ -112,7 +113,25 @@ export async function captureLead(event: APIGatewayProxyEventV2) {
     })
   );
 
-  return created({ ok: true });
+  const emailResult = await notifyAdminLead(parsed.data);
+  const emailRequired = parsed.data.source === "contact" || parsed.data.source === "newsletter";
+
+  if (emailRequired && emailResult.skipped) {
+    console.error("Email skipped — SMTP not configured:", parsed.data.source);
+    return badRequest(
+      "Email is not configured on the server yet. Please contact us on WhatsApp or at order@usarakhi.com."
+    );
+  }
+
+  if (emailRequired && !emailResult.ok) {
+    console.error("Lead email failed:", parsed.data.source, emailResult.error);
+    return badRequest(
+      emailResult.error ??
+        "Your message was saved but email could not be sent. Please WhatsApp us or email order@usarakhi.com directly."
+    );
+  }
+
+  return created({ ok: true, emailSent: emailResult.ok });
 }
 
 export async function checkout(event: APIGatewayProxyEventV2) {
@@ -183,6 +202,8 @@ export async function checkout(event: APIGatewayProxyEventV2) {
     order.paymentIntentId = payment.paymentIntentId;
     await docClient.send(new PutCommand({ TableName: ORDERS_TABLE, Item: buildOrderItem(order, userKey) }));
     await clearCartForUser(userKey);
+    const emailResult = await notifyAdminOrderPlaced(order);
+    if (!emailResult.ok) console.error("Order placed email failed:", emailResult.error);
     return created({ order, clientSecret: payment.clientSecret });
   }
 
@@ -191,6 +212,8 @@ export async function checkout(event: APIGatewayProxyEventV2) {
   order.razorpayOrderId = payment.razorpayOrderId;
   await docClient.send(new PutCommand({ TableName: ORDERS_TABLE, Item: buildOrderItem(order, userKey) }));
   await clearCartForUser(userKey);
+  const emailResult = await notifyAdminOrderPlaced(order);
+  if (!emailResult.ok) console.error("Order placed email failed:", emailResult.error);
   return created({ order, razorpayOrderId: payment.razorpayOrderId, razorpayKeyId: payment.keyId });
 }
 
@@ -362,6 +385,8 @@ export async function markOrderPaid(
   };
 
   await docClient.send(new PutCommand({ TableName: ORDERS_TABLE, Item: updated }));
+  const emailResult = await notifyAdminOrderPaid(updated);
+  if (!emailResult.ok) console.error("Order paid email failed:", emailResult.error);
 }
 
 /** Lookup an order by id (used by Razorpay verify for ownership/amount checks). */

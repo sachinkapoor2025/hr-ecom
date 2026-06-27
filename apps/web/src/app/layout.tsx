@@ -8,9 +8,11 @@ import { HeaderShell } from "@/components/HeaderShell";
 import { Footer } from "@/components/Footer";
 import { CurrencySwitcher } from "@/components/CurrencySwitcher";
 import { WhatsAppFloat } from "@/components/WhatsAppFloat";
-import { ChatWidget } from "@/components/ChatWidget";
 import { TrackingProvider } from "@/components/TrackingProvider";
 import { JsonLd } from "@/components/JsonLd";
+import { RakshaBandhanCountdown } from "@/components/RakshaBandhanCountdown";
+import { ClientDeferredWidgets } from "@/components/ClientDeferredWidgets";
+import { AnalyticsScripts } from "@/components/AnalyticsScripts";
 import { site } from "@/lib/site";
 import { organizationJsonLd, webSiteJsonLd, onlineStoreJsonLd, defaultKeywords, canonical } from "@/lib/seo";
 
@@ -22,7 +24,14 @@ export const metadata: Metadata = {
   },
   description: site.description,
   keywords: defaultKeywords,
-  alternates: { canonical: canonical("/") },
+  alternates: {
+    canonical: canonical("/"),
+    languages: {
+      "en-US": canonical("/"),
+      "en-IN": canonical("/"),
+      "x-default": canonical("/"),
+    },
+  },
   openGraph: {
     type: "website",
     locale: "en_US",
@@ -50,20 +59,23 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <head>
         <link rel="alternate" type="text/plain" href="/llms.txt" title="LLMs.txt — AI site summary" />
+        <link rel="alternate" type="text/plain" href="/llms-full.txt" title="LLMs-full.txt — product catalog for AI" />
         <link rel="help" type="text/plain" href="/llms.txt" title="Information for AI assistants" />
       </head>
       <body className="min-h-screen antialiased flex flex-col">
+        <AnalyticsScripts />
         <JsonLd data={[organizationJsonLd(), webSiteJsonLd(), onlineStoreJsonLd()]} />
         <AuthProvider>
           <CartProvider>
             <WishlistProvider>
             <CurrencyProvider>
             <TrackingProvider />
+            <RakshaBandhanCountdown />
             <HeaderShell />
             <main className="flex-1">{children}</main>
             <Footer />
             <CurrencySwitcher />
-            <ChatWidget />
+            <ClientDeferredWidgets />
             <WhatsAppFloat />
             </CurrencyProvider>
             </WishlistProvider>

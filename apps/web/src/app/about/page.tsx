@@ -35,6 +35,12 @@ export default function AboutPage() {
           <li>Rakhi with chocolates — Ferrero Rocher, Lindt, Hershey&apos;s combos</li>
           <li>Secure payments via Razorpay and Stripe</li>
         </ul>
+        <h2 className="text-xl font-bold text-primary pt-4">Who we are</h2>
+        <p>
+          {site.name} is operated by <strong>Divit Global Ventures (DGV)</strong>, a team focused on connecting
+          Indian diaspora families across borders. Our India-based curation team selects premium Rakhis; orders
+          ship from US domestic fulfillment so brothers receive gifts quickly without international customs delays.
+        </p>
         <h2 className="text-xl font-bold text-primary pt-4">Our promise</h2>
         <p>
           Every Rakhi is carefully packed for the festival. We understand Raksha Bandhan is emotional — not just a
@@ -55,7 +61,8 @@ export default function AboutPage() {
           <a href={`mailto:${site.supportEmail}`} className="text-nav hover:underline">
             {site.supportEmail}
           </a>
-          , or visit our <Link href="/contact" className="text-nav hover:underline">contact page</Link>.
+          ,           or visit our <Link href="/contact" className="text-nav hover:underline">contact page</Link>.
+          Media inquiries: <Link href="/press" className="text-nav hover:underline">Press kit</Link>.
         </p>
       </div>
       <div className="mt-10 flex flex-wrap gap-3">

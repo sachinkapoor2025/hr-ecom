@@ -5,7 +5,8 @@ import { api } from "@/lib/api";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { JsonLd } from "@/components/JsonLd";
 import { ProductDetailClient } from "./ProductDetailClient";
-import { breadcrumbJsonLd, pageMetadata, productJsonLd } from "@/lib/seo";
+import { breadcrumbJsonLd, faqJsonLd, pageMetadata, productJsonLd } from "@/lib/seo";
+import { productPageFaqs } from "@/lib/content/product-faqs";
 import { resolveImageUrl } from "@/lib/images";
 import type { Product } from "@hr-ecom/shared";
 
@@ -72,6 +73,7 @@ export default async function ProductPage({ params }: Props) {
         data={[
           productJsonLd(product),
           breadcrumbJsonLd(crumbs.map((c) => ({ name: c.label, path: c.href ?? `/products/${slug}` }))),
+          faqJsonLd(productPageFaqs),
         ]}
       />
       <div className="max-w-6xl mx-auto px-4 pt-6">
