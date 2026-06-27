@@ -1,9 +1,16 @@
 import nodemailer from "nodemailer";
+import type SMTPTransport from "nodemailer/lib/smtp-transport";
 import type { Order } from "@hr-ecom/shared";
 import type { LeadCaptureInput } from "@hr-ecom/shared";
 
 const DEFAULT_NOTIFY = "order@usarakhi.com";
 const SITE_NAME = "UsaRakhi";
+
+export type EmailSendResult = {
+  ok: boolean;
+  error?: string;
+  skipped?: boolean;
+};
 
 function smtpConfigured(): boolean {
   return Boolean(
@@ -13,23 +20,60 @@ function smtpConfigured(): boolean {
   );
 }
 
-function getTransporter() {
-  if (!smtpConfigured()) return null;
+function smtpHosts(): string[] {
+  const primary = process.env.SMTP_HOST?.trim();
+  const extras = (process.env.SMTP_HOSTS ?? "mail.usarakhi.com,smtp.usarakhi.com")
+    .split(",")
+    .map((h) => h.trim())
+    .filter(Boolean);
+  const all = primary ? [primary, ...extras] : extras;
+  return [...new Set(all)];
+}
 
-  const port = Number(process.env.SMTP_PORT?.trim()) || 465;
-  const secure = process.env.SMTP_SECURE?.trim()
-    ? process.env.SMTP_SECURE === "true"
-    : port === 465;
+function transportConfigs(host: string): SMTPTransport.Options[] {
+  const user = process.env.SMTP_USER!.trim();
+  const pass = process.env.SMTP_PASS!.trim();
+  const portEnv = process.env.SMTP_PORT?.trim();
 
-  return nodemailer.createTransport({
-    host: process.env.SMTP_HOST!.trim(),
-    port,
-    secure,
-    auth: {
-      user: process.env.SMTP_USER!.trim(),
-      pass: process.env.SMTP_PASS!.trim(),
-    },
-  });
+  if (portEnv) {
+    const port = Number(portEnv);
+    const secure = process.env.SMTP_SECURE?.trim()
+      ? process.env.SMTP_SECURE === "true"
+      : port === 465;
+    return [{ host, port, secure, auth: { user, pass } }];
+  }
+
+  return [
+    { host, port: 465, secure: true, auth: { user, pass } },
+    { host, port: 587, secure: false, auth: { user, pass }, requireTLS: true },
+  ];
+}
+
+async function createWorkingTransporter() {
+  const hosts = smtpHosts();
+  let lastError: unknown;
+
+  for (const host of hosts) {
+    for (const config of transportConfigs(host)) {
+      const transporter = nodemailer.createTransport({
+        ...config,
+        connectionTimeout: 15000,
+        greetingTimeout: 15000,
+        socketTimeout: 20000,
+        tls: { minVersion: "TLSv1.2", rejectUnauthorized: true },
+      });
+
+      try {
+        await transporter.verify();
+        return transporter;
+      } catch (err) {
+        lastError = err;
+        console.error("SMTP verify failed", { host, port: config.port, err });
+      }
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error("SMTP connection failed");
 }
 
 function notifyAddress(): string {
@@ -46,14 +90,14 @@ export async function sendEmail(opts: {
   text: string;
   html?: string;
   replyTo?: string;
-}): Promise<boolean> {
-  const transporter = getTransporter();
-  if (!transporter) {
-    console.warn("Email skipped: SMTP_HOST, SMTP_USER, or SMTP_PASS not configured");
-    return false;
+}): Promise<EmailSendResult> {
+  if (!smtpConfigured()) {
+    console.warn("Email skipped: SMTP not configured");
+    return { ok: false, skipped: true, error: "SMTP not configured on server" };
   }
 
   try {
+    const transporter = await createWorkingTransporter();
     await transporter.sendMail({
       from: `"${SITE_NAME}" <${fromAddress()}>`,
       to: opts.to,
@@ -62,10 +106,11 @@ export async function sendEmail(opts: {
       html: opts.html ?? opts.text.replace(/\n/g, "<br>"),
       replyTo: opts.replyTo,
     });
-    return true;
+    return { ok: true };
   } catch (err) {
-    console.error("sendEmail failed:", err instanceof Error ? err.message : err);
-    return false;
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("sendEmail failed:", message);
+    return { ok: false, error: message };
   }
 }
 
@@ -86,15 +131,81 @@ function formatLeadSource(source?: string): string {
   }
 }
 
-/** Notify admin when a contact or enquiry lead is captured. */
-export async function notifyAdminLead(lead: LeadCaptureInput): Promise<void> {
-  if (!smtpConfigured()) return;
+export type ContactEmailInput = {
+  name: string;
+  email: string;
+  phone?: string;
+  message: string;
+  page?: string;
+};
 
+export async function sendContactEmails(input: ContactEmailInput): Promise<EmailSendResult> {
+  if (!smtpConfigured()) {
+    return { ok: false, skipped: true, error: "SMTP not configured on server" };
+  }
+
+  const adminText = [
+    `Source: Contact form`,
+    `Name: ${input.name}`,
+    `Email: ${input.email}`,
+    input.phone ? `Phone: ${input.phone}` : null,
+    input.page ? `Page: ${input.page}` : null,
+    "",
+    "Message:",
+    input.message,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const admin = await sendEmail({
+    to: notifyAddress(),
+    subject: `[${SITE_NAME}] New contact enquiry from ${input.name}`,
+    text: adminText,
+    replyTo: input.email,
+  });
+
+  if (!admin.ok) return admin;
+
+  const customer = await sendEmail({
+    to: input.email,
+    subject: `We received your message — ${SITE_NAME}`,
+    text: `Hi ${input.name},
+
+Thank you for contacting ${SITE_NAME}. We received your message and will reply as soon as possible (usually within 24 hours).
+
+For urgent order help, WhatsApp us or email order@usarakhi.com.
+
+— ${SITE_NAME} Team
+https://www.usarakhi.com`,
+  });
+
+  if (!customer.ok) {
+    console.error("Customer auto-reply failed:", customer.error);
+  }
+
+  return { ok: true };
+}
+
+export async function notifyAdminLead(lead: LeadCaptureInput): Promise<EmailSendResult> {
   const message = lead.metadata?.message?.trim();
   const isContact = lead.source === "contact";
-  const isEnquiry = isContact || Boolean(message) || lead.source === "newsletter";
 
-  if (!isEnquiry) return;
+  if (isContact && lead.name && lead.email && message) {
+    return sendContactEmails({
+      name: lead.name,
+      email: lead.email,
+      phone: lead.phone,
+      message,
+      page: lead.page,
+    });
+  }
+
+  if (!smtpConfigured()) {
+    return { ok: false, skipped: true, error: "SMTP not configured" };
+  }
+
+  const isEnquiry = isContact || Boolean(message) || lead.source === "newsletter";
+  if (!isEnquiry) return { ok: true, skipped: true };
 
   const lines = [
     `Source: ${formatLeadSource(lead.source)}`,
@@ -112,27 +223,12 @@ export async function notifyAdminLead(lead: LeadCaptureInput): Promise<void> {
     .filter(Boolean)
     .join("\n");
 
-  await sendEmail({
+  return sendEmail({
     to: notifyAddress(),
     subject: `[${SITE_NAME}] New enquiry — ${formatLeadSource(lead.source)}`,
     text: lines,
     replyTo: lead.email,
   });
-
-  if (isContact && lead.email) {
-    await sendEmail({
-      to: lead.email,
-      subject: `We received your message — ${SITE_NAME}`,
-      text: `Hi${lead.name ? ` ${lead.name}` : ""},
-
-Thank you for contacting ${SITE_NAME}. We received your message and will reply as soon as possible (usually within 24 hours).
-
-For urgent order help, WhatsApp us or email order@usarakhi.com.
-
-— ${SITE_NAME} Team
-https://www.usarakhi.com`,
-    });
-  }
 }
 
 function formatOrderItems(order: Order): string {
@@ -176,11 +272,8 @@ function buildOrderAdminBody(order: Order, headline: string): string {
   ].join("\n");
 }
 
-/** Notify admin when customer completes checkout (order created, payment may still be pending). */
-export async function notifyAdminOrderPlaced(order: Order): Promise<void> {
-  if (!smtpConfigured()) return;
-
-  await sendEmail({
+export async function notifyAdminOrderPlaced(order: Order): Promise<EmailSendResult> {
+  return sendEmail({
     to: notifyAddress(),
     subject: `[${SITE_NAME}] New order placed — ${order.orderId.slice(0, 8)} (${order.currency} ${order.total.toFixed(2)})`,
     text: buildOrderAdminBody(
@@ -191,18 +284,15 @@ export async function notifyAdminOrderPlaced(order: Order): Promise<void> {
   });
 }
 
-/** Notify admin when payment is confirmed for a new order. */
-export async function notifyAdminOrderPaid(order: Order): Promise<void> {
-  if (!smtpConfigured()) return;
-
-  const text = buildOrderAdminBody(order, `Payment confirmed — new order on ${SITE_NAME}`);
-
-  await sendEmail({
+export async function notifyAdminOrderPaid(order: Order): Promise<EmailSendResult> {
+  const admin = await sendEmail({
     to: notifyAddress(),
     subject: `[${SITE_NAME}] ✅ Payment received — Order ${order.orderId.slice(0, 8)} (${order.currency} ${order.total.toFixed(2)})`,
-    text,
+    text: buildOrderAdminBody(order, `Payment confirmed — new order on ${SITE_NAME}`),
     replyTo: order.shippingAddress?.email,
   });
+
+  if (!admin.ok) return admin;
 
   const customerEmail = order.shippingAddress?.email?.trim();
   if (customerEmail && customerEmail.includes("@")) {
@@ -223,17 +313,6 @@ Questions? Reply to this email or WhatsApp us.
 — ${SITE_NAME} Team`,
     });
   }
-}
 
-/** Fire-and-forget wrapper — never throws to callers. */
-export function queueLeadEmail(lead: LeadCaptureInput): void {
-  void notifyAdminLead(lead).catch((err) => console.error("notifyAdminLead:", err));
-}
-
-export function queueOrderPlacedEmail(order: Order): void {
-  void notifyAdminOrderPlaced(order).catch((err) => console.error("notifyAdminOrderPlaced:", err));
-}
-
-export function queueOrderPaidEmail(order: Order): void {
-  void notifyAdminOrderPaid(order).catch((err) => console.error("notifyAdminOrderPaid:", err));
+  return { ok: true };
 }

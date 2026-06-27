@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { site, whatsappChatUrl } from "@/lib/site";
 import { useSessionId } from "@/lib/session";
-import { api } from "@/lib/api";
 import { PhoneInput, buildPhoneValue } from "@/components/PhoneInput";
 import { DEFAULT_COUNTRY_ISO } from "@/lib/country-codes";
 
@@ -31,19 +30,25 @@ export function ContactForm() {
       if (phoneLocal.replace(/\D/g, "").length < 6) {
         throw new Error("Please enter a valid phone number");
       }
-      await api("/leads", {
+
+      const res = await fetch("/api/contact", {
         method: "POST",
-        sessionId: sid,
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          sessionId: sid,
           name,
           email,
           phone,
-          page: "/contact",
-          source: "contact",
-          metadata: { message, countryIso },
+          message,
+          sessionId: sid,
         }),
       });
+
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
+
+      if (!res.ok) {
+        throw new Error(data.error ?? "Could not send message");
+      }
+
       setSubmittedEmail(email);
       setSent(true);
       setName("");

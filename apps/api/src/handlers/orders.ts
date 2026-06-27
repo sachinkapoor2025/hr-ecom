@@ -20,7 +20,7 @@ import { docClient, ORDERS_TABLE, CUSTOMERS_TABLE, now } from "../lib/db";
 import { ok, created, badRequest, unauthorized, forbidden, notFound } from "../lib/response";
 import { getAuth, getSessionId, getUserOrSessionKey, requireAdmin } from "../lib/auth";
 import { getCartHandler, clearCartForUser } from "./cart";
-import { queueLeadEmail, queueOrderPaidEmail, queueOrderPlacedEmail } from "../lib/email";
+import { notifyAdminLead, notifyAdminOrderPaid, notifyAdminOrderPlaced } from "../lib/email";
 
 type StoredOrder = Order & {
   PK: string;
@@ -113,9 +113,15 @@ export async function captureLead(event: APIGatewayProxyEventV2) {
     })
   );
 
-  queueLeadEmail(parsed.data);
+  const emailResult = await notifyAdminLead(parsed.data);
+  if (parsed.data.source === "contact" && !emailResult.ok && !emailResult.skipped) {
+    console.error("Contact email failed:", emailResult.error);
+    return badRequest(
+      "Your message was saved but email could not be sent. Please WhatsApp us or email order@usarakhi.com directly."
+    );
+  }
 
-  return created({ ok: true });
+  return created({ ok: true, emailSent: emailResult.ok });
 }
 
 export async function checkout(event: APIGatewayProxyEventV2) {
@@ -186,7 +192,8 @@ export async function checkout(event: APIGatewayProxyEventV2) {
     order.paymentIntentId = payment.paymentIntentId;
     await docClient.send(new PutCommand({ TableName: ORDERS_TABLE, Item: buildOrderItem(order, userKey) }));
     await clearCartForUser(userKey);
-    queueOrderPlacedEmail(order);
+    const emailResult = await notifyAdminOrderPlaced(order);
+    if (!emailResult.ok) console.error("Order placed email failed:", emailResult.error);
     return created({ order, clientSecret: payment.clientSecret });
   }
 
@@ -195,7 +202,8 @@ export async function checkout(event: APIGatewayProxyEventV2) {
   order.razorpayOrderId = payment.razorpayOrderId;
   await docClient.send(new PutCommand({ TableName: ORDERS_TABLE, Item: buildOrderItem(order, userKey) }));
   await clearCartForUser(userKey);
-  queueOrderPlacedEmail(order);
+  const emailResult = await notifyAdminOrderPlaced(order);
+  if (!emailResult.ok) console.error("Order placed email failed:", emailResult.error);
   return created({ order, razorpayOrderId: payment.razorpayOrderId, razorpayKeyId: payment.keyId });
 }
 
@@ -367,7 +375,8 @@ export async function markOrderPaid(
   };
 
   await docClient.send(new PutCommand({ TableName: ORDERS_TABLE, Item: updated }));
-  queueOrderPaidEmail(updated);
+  const emailResult = await notifyAdminOrderPaid(updated);
+  if (!emailResult.ok) console.error("Order paid email failed:", emailResult.error);
 }
 
 /** Lookup an order by id (used by Razorpay verify for ownership/amount checks). */
