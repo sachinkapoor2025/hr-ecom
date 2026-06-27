@@ -9,17 +9,14 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import {
-  convertCurrency,
-  normalizeDisplayCurrency,
-  type DisplayCurrency,
-} from "@hr-ecom/shared";
+import { DEFAULT_USD_INR_RATE, fetchLiveUsdInrRate } from "@hr-ecom/shared";
+import { getApiUrl } from "./env";
 
 const STORAGE_KEY = "hr_ecom_currency";
-const RATE_CACHE_KEY = "hr_ecom_usd_inr_rate_v2";
-const RATE_CACHE_TIME_KEY = "hr_ecom_usd_inr_rate_at";
-const DEFAULT_USD_INR = Number(process.env.NEXT_PUBLIC_USD_INR_RATE) || 94;
-const RATE_MAX_AGE_MS = 15 * 60 * 1000;
+const RATE_CACHE_KEY = "hr_ecom_usd_inr_rate";
+const RATE_CACHE_AT_KEY = "hr_ecom_usd_inr_rate_at";
+const RATE_CACHE_TTL_MS = 30 * 60 * 1000; // 30 min — match server cache
+const ENV_FALLBACK = Number(process.env.NEXT_PUBLIC_USD_INR_RATE) || DEFAULT_USD_INR_RATE;
 
 export type { DisplayCurrency };
 
@@ -28,9 +25,9 @@ interface CurrencyContextValue {
   setDisplayCurrency: (c: DisplayCurrency) => void;
   usdInrRate: number;
   rateLoading: boolean;
-  convert: (amount: number, from: DisplayCurrency | string) => number;
-  format: (amount: number, from: DisplayCurrency | string) => string;
-  formatDisplay: (amount: number) => string;
+  rateSource: string;
+  convert: (amount: number, from: DisplayCurrency) => number;
+  format: (amount: number, from: DisplayCurrency) => string;
 }
 
 const CurrencyContext = createContext<CurrencyContextValue | null>(null);
@@ -55,41 +52,61 @@ function writeCachedRate(rate: number) {
   sessionStorage.setItem(RATE_CACHE_TIME_KEY, String(Date.now()));
 }
 
-async function fetchUsdInrRate(force = false): Promise<number> {
-  if (!force) {
-    const cached = readCachedRate();
-    if (cached) return cached;
+function readCachedRate(): number | null {
+  if (typeof window === "undefined") return null;
+  const cachedAt = sessionStorage.getItem(RATE_CACHE_AT_KEY);
+  const cached = sessionStorage.getItem(RATE_CACHE_KEY);
+  if (!cached || !cachedAt) return null;
+  if (Date.now() - Number(cachedAt) > RATE_CACHE_TTL_MS) return null;
+  const n = Number(cached);
+  return n > 0 ? n : null;
+}
+
+function storeCachedRate(rate: number) {
+  sessionStorage.setItem(RATE_CACHE_KEY, String(rate));
+  sessionStorage.setItem(RATE_CACHE_AT_KEY, String(Date.now()));
+}
+
+async function fetchUsdInrRate(): Promise<{ rate: number; source: string }> {
+  try {
+    const res = await fetch(`${getApiUrl()}/config/usd-inr-rate`, { cache: "no-store" });
+    if (!res.ok) throw new Error("api rate failed");
+    const data = (await res.json()) as { rate?: number; source?: string };
+    if (!data.rate || data.rate <= 0) throw new Error("invalid api rate");
+    storeCachedRate(data.rate);
+    return { rate: data.rate, source: data.source ?? "api" };
+  } catch {
+    /* fall through */
   }
 
   try {
-    const res = await fetch("/api/exchange-rate", { cache: "no-store" });
-    if (!res.ok) throw new Error("rate fetch failed");
-    const data = (await res.json()) as { rate?: number };
-    const rate = data.rate;
-    if (!rate || rate <= 0) throw new Error("invalid rate");
-    writeCachedRate(rate);
-    return rate;
-  } catch {
-    const stale = sessionStorage.getItem(RATE_CACHE_KEY);
-    if (stale) {
-      const n = Number(stale);
-      if (n > 0) return n;
+    const live = await fetchLiveUsdInrRate();
+    if (live) {
+      storeCachedRate(live.rate);
+      return { rate: live.rate, source: live.source };
     }
-    return DEFAULT_USD_INR;
+  } catch {
+    /* fall through */
   }
+
+  const cached = readCachedRate();
+  if (cached) return { rate: cached, source: "session-cache" };
+
+  return { rate: ENV_FALLBACK, source: "fallback" };
 }
 
 export function CurrencyProvider({ children }: { children: ReactNode }) {
   const [displayCurrency, setDisplayCurrencyState] = useState<DisplayCurrency>("USD");
-  const [usdInrRate, setUsdInrRate] = useState(DEFAULT_USD_INR);
+  const [usdInrRate, setUsdInrRate] = useState(ENV_FALLBACK);
+  const [rateSource, setRateSource] = useState("loading");
   const [rateLoading, setRateLoading] = useState(true);
   const [ready, setReady] = useState(false);
 
-  const refreshRate = useCallback(async (force = false) => {
-    const rate = await fetchUsdInrRate(force);
+  const refreshRate = useCallback(async () => {
+    const { rate, source } = await fetchUsdInrRate();
     setUsdInrRate(rate);
+    setRateSource(source);
     setRateLoading(false);
-    return rate;
   }, []);
 
   useEffect(() => {
@@ -99,8 +116,8 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     void refreshRate();
 
     const interval = setInterval(() => {
-      void refreshRate(true);
-    }, RATE_MAX_AGE_MS);
+      void refreshRate();
+    }, RATE_CACHE_TTL_MS);
 
     return () => clearInterval(interval);
   }, [refreshRate]);
@@ -150,16 +167,8 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo(
-    () => ({
-      displayCurrency,
-      setDisplayCurrency,
-      usdInrRate,
-      rateLoading,
-      convert,
-      format,
-      formatDisplay,
-    }),
-    [displayCurrency, setDisplayCurrency, usdInrRate, rateLoading, convert, format, formatDisplay]
+    () => ({ displayCurrency, setDisplayCurrency, usdInrRate, rateLoading, rateSource, convert, format }),
+    [displayCurrency, setDisplayCurrency, usdInrRate, rateLoading, rateSource, convert, format]
   );
 
   return <CurrencyContext.Provider value={value}>{children}</CurrencyContext.Provider>;
