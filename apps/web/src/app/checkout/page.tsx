@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { loadStripe } from "@stripe/stripe-js";
 import { api } from "@/lib/api";
 import { useCart } from "@/lib/cart-context";
 import { useAuth } from "@/lib/auth-context";
@@ -17,6 +16,7 @@ import { SecureCheckoutBadge } from "@/components/SecureCheckoutBadge";
 import { CheckoutLegalNotice } from "@/components/CheckoutLegalNotice";
 import { TrustBadges } from "@/components/TrustBadges";
 import { CouponInput } from "@/components/CouponInput";
+import { StripePaymentForm } from "@/components/StripePaymentForm";
 import { loadWelcomeCoupon } from "@/lib/welcome-coupon";
 import {
   emptyShippingAddress,
@@ -49,6 +49,9 @@ export default function CheckoutPage() {
   const [discount, setDiscount] = useState(0);
   const [appliedCouponCode, setAppliedCouponCode] = useState("");
   const [savedCouponCode, setSavedCouponCode] = useState("");
+  const [stripeCheckout, setStripeCheckout] = useState<{ clientSecret: string; orderId: string } | null>(
+    null
+  );
   const [address, setAddress] = useState<ShippingAddress>(emptyShippingAddress);
   const [saveForLater, setSaveForLater] = useState(true);
   const addressPrefilled = useRef(false);
@@ -58,6 +61,7 @@ export default function CheckoutPage() {
   useEffect(() => {
     if (displayCurrency === "INR") setPaymentMethod("razorpay");
     else if (displayCurrency === "USD") setPaymentMethod("stripe");
+    setStripeCheckout(null);
   }, [displayCurrency]);
 
   useEffect(() => {
@@ -302,21 +306,16 @@ export default function CheckoutPage() {
       await persistAddressIfNeeded();
 
       if (paymentMethod === "stripe") {
-        const stripeKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
-        if (stripeKey && data.clientSecret && !data.clientSecret.includes("_dev_")) {
-          const stripe = await loadStripe(stripeKey);
-          if (stripe) {
-            const { error: stripeError } = await stripe.confirmPayment({
-              clientSecret: data.clientSecret,
-              confirmParams: { return_url: `${window.location.origin}/orders/${data.order.orderId}` },
-            });
-            if (stripeError) throw new Error(stripeError.message);
-            return;
-          }
+        const stripeKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.trim();
+        if (!stripeKey) {
+          throw new Error("Stripe is not configured. Contact support or pay with Razorpay (INR).");
         }
-        trackPurchase(data.order.total, { orderId: data.order.orderId, provider: "stripe_dev" });
-        await refresh();
-        router.push(`/orders/${data.order.orderId}?dev=1`);
+        if (!data.clientSecret || data.clientSecret.includes("_dev_")) {
+          throw new Error(
+            "Stripe payment could not be started. Ensure STRIPE_SECRET_KEY is set on the API and redeploy."
+          );
+        }
+        setStripeCheckout({ clientSecret: data.clientSecret, orderId: data.order.orderId });
         return;
       }
 
@@ -438,13 +437,26 @@ export default function CheckoutPage() {
               <p className="text-sm font-semibold text-slate-700 mb-3">Payment method</p>
               <PaymentMethodPicker
                 value={paymentMethod}
-                onChange={setPaymentMethod}
+                onChange={(method) => {
+                  setPaymentMethod(method);
+                  setStripeCheckout(null);
+                }}
                 checkoutCurrency={displayCurrency}
               />
             </div>
 
             {error && <p className="text-red-500 text-sm">{error}</p>}
 
+            {stripeCheckout && paymentMethod === "stripe" && (
+              <StripePaymentForm
+                clientSecret={stripeCheckout.clientSecret}
+                returnUrl={`${typeof window !== "undefined" ? window.location.origin : ""}/orders/${stripeCheckout.orderId}`}
+                amountLabel={format(orderTotal, displayCurrency)}
+                onError={setError}
+              />
+            )}
+
+            {!stripeCheckout && (
             <button
               type="submit"
               disabled={loading}
@@ -454,8 +466,9 @@ export default function CheckoutPage() {
                 ? "Processing..."
                 : paymentMethod === "razorpay"
                   ? "Pay with Razorpay"
-                  : "Pay with Stripe"}
+                  : "Continue to Stripe payment"}
             </button>
+            )}
 
             <CheckoutLegalNotice className="text-center" />
 

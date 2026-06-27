@@ -50,9 +50,11 @@ jobs:
           RAZORPAY_KEY_ID: ${{ secrets.RAZOR_KEY_ID }}
           RAZORPAY_KEY_SECRET: ${{ secrets.RAZOR_KEY_SECRET }}
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
         run: |
           sam build && sam deploy --no-confirm-changeset --no-fail-on-empty-changeset --config-env prod \
-            --parameter-overrides "Environment=prod RazorpayKeyId=${RAZORPAY_KEY_ID} RazorpayKeySecret=${RAZORPAY_KEY_SECRET} SmtpPassword=${SMTP_PASSWORD}"
+            --parameter-overrides "Environment=prod RazorpayKeyId=${RAZORPAY_KEY_ID} RazorpayKeySecret=${RAZORPAY_KEY_SECRET} SmtpPassword=${SMTP_PASSWORD} StripeSecretKey=${STRIPE_SECRET_KEY} StripeWebhookSecret=${STRIPE_WEBHOOK_SECRET}"
 
       - name: Seed UsaRakhi catalog (110 products)
         run: npm run import:usarakhi

@@ -13,6 +13,14 @@ Parameters:
   StripeSecretArn:
     Type: String
     Default: ""
+  StripeSecretKey:
+    Type: String
+    Default: ""
+    NoEcho: true
+  StripeWebhookSecret:
+    Type: String
+    Default: ""
+    NoEcho: true
   RazorpaySecretArn:
     Type: String
     Default: ""
@@ -48,7 +56,8 @@ Globals:
         USER_POOL_ID: !Ref UserPool
         USER_POOL_CLIENT_ID: !Ref UserPoolClient
         ENVIRONMENT: !Ref Environment
-        STRIPE_SECRET_ARN: !Ref StripeSecretArn
+        STRIPE_SECRET_KEY: !Ref StripeSecretKey
+        STRIPE_WEBHOOK_SECRET: !Ref StripeWebhookSecret
         RAZORPAY_SECRET_ARN: !Ref RazorpaySecretArn
         RAZORPAY_KEY_ID: !Ref RazorpayKeyId
         RAZORPAY_KEY_SECRET: !Ref RazorpayKeySecret
