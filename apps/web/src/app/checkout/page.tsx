@@ -20,7 +20,6 @@ import {
   saveShippingAddress,
 } from "@/lib/shipping-address";
 import { fetchAccount, createAccountAddress } from "@/lib/account";
-import { useCurrency, type DisplayCurrency } from "@/lib/currency-context";
 import type { Order, ShippingAddress } from "@hr-ecom/shared";
 
 declare global {
