@@ -413,7 +413,7 @@ Resources:
     Properties:
       StageName: !Ref Environment
       CorsConfiguration:
-        AllowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+        AllowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
         AllowHeaders: ["Content-Type", "Authorization", "X-Session-Id"]
         AllowOrigins: ["*"]
 

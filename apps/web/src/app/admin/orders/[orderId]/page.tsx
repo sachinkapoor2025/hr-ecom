@@ -60,7 +60,7 @@ export default function AdminOrderDetailPage() {
     setError("");
     try {
       const data = await apiClient<{ order: Order }>(`/admin/orders/${orderId}`, {
-        method: "PATCH",
+        method: "PUT",
         body: JSON.stringify({
           status: newStatus,
           trackingNumber: trackingNumber || undefined,
