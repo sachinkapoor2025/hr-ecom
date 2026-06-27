@@ -1,3 +1,5 @@
+import { cdnUploadUrl } from "@hr-ecom/shared";
+
 export const site = {
   name: "UsaRakhi",
   domain: "usarakhi.com",
@@ -80,11 +82,11 @@ export const homeBanners = [
 
 export const promoBanners = [
   {
-    src: "https://usarakhi.com/wp-content/uploads/2026/06/review-picture-2.png",
+    src: cdnUploadUrl("2026/06/review-picture-2.png"),
     alt: "Customer reviews",
   },
   {
-    src: "https://usarakhi.com/wp-content/uploads/2026/03/coustomer-3-768x1152-1.webp",
+    src: cdnUploadUrl("2026/03/coustomer-3-768x1152-1.webp"),
     alt: "Happy customers",
   },
 ] as const;
@@ -115,28 +117,28 @@ export const testimonials = [
     name: "Neha",
     rating: 5,
     timeAgo: "2 days ago",
-    image: "https://usarakhi.com/wp-content/uploads/2026/06/Untitled-design-31-1.png",
+    image: cdnUploadUrl("2026/06/Untitled-design-31-1.png"),
     text: "My brother lives in California and I miss tying Rakhi on his wrist every year. I used UsaRakhi.com to send Rakhi to the USA and it arrived right on time. He was very surprised and happy when he received it.",
   },
   {
     name: "Anjali",
     rating: 5,
     timeAgo: "1 week ago",
-    image: "https://usarakhi.com/wp-content/uploads/2026/06/review-picture-2.png",
+    image: cdnUploadUrl("2026/06/review-picture-2.png"),
     text: "Being away from my brother during Raksha Bandhan is never easy. Thanks to UsaRakhi.com, I could send Rakhi to the USA and make him feel loved. The Rakhi was beautiful and delivered on time.",
   },
   {
     name: "Pooja",
     rating: 5,
     timeAgo: "2 weeks ago",
-    image: "https://usarakhi.com/wp-content/uploads/2026/06/puja3.png",
+    image: cdnUploadUrl("2026/06/puja3.png"),
     text: "Even though my brother is living in the USA, I never want to miss Raksha Bandhan. UsaRakhi.com helped me send Rakhi to the USA quickly. The Rakhi looked beautiful and made the festival feel complete.",
   },
   {
     name: "Meera",
     rating: 5,
     timeAgo: "3 weeks ago",
-    image: "https://usarakhi.com/wp-content/uploads/2026/03/coustomer-3-768x1152-1.webp",
+    image: cdnUploadUrl("2026/03/coustomer-3-768x1152-1.webp"),
     text: "Distance can never break the bond between siblings. UsaRakhi.com helped me send Rakhi to my brother in California easily. When he received it, he called me immediately and it felt like we were celebrating together.",
   },
 ] as const;

@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useCart } from "@/lib/cart-context";
 import { useCurrency } from "@/lib/currency-context";
 import { SecureCheckoutBadge } from "@/components/SecureCheckoutBadge";
+import { resolveImageUrl } from "@/lib/images";
 import type { DisplayCurrency } from "@/lib/currency-context";
 
 function TrashIcon() {
@@ -107,7 +108,7 @@ export default function CartPage() {
                   >
                     {item.image ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                      <img src={resolveImageUrl(item.image)} alt={item.name} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs">No image</div>
                     )}

@@ -10,6 +10,7 @@ import {
 import { docClient, PRODUCTS_TABLE, now, slugify } from "../lib/db";
 import { ok, created, badRequest, notFound, forbidden } from "../lib/response";
 import { getAuth } from "../lib/auth";
+import { withResolvedProductImages, resolveProductImageUrl } from "../lib/images";
 
 export async function listProducts(event: APIGatewayProxyEventV2) {
   const category = event.queryStringParameters?.category;
@@ -48,7 +49,7 @@ export async function listProducts(event: APIGatewayProxyEventV2) {
     );
   }
 
-  return ok({ products: items });
+  return ok({ products: items.map(withResolvedProductImages) });
 }
 
 export async function getProduct(event: APIGatewayProxyEventV2) {
@@ -65,7 +66,7 @@ export async function getProduct(event: APIGatewayProxyEventV2) {
   if (!result.Item) return notFound("Product not found");
   const product = result.Item as { published?: boolean };
   if (product.published === false) return notFound("Product not found");
-  return ok({ product: result.Item });
+  return ok({ product: withResolvedProductImages(result.Item as Product) });
 }
 
 export async function createProduct(event: APIGatewayProxyEventV2) {
