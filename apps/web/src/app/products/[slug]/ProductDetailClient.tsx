@@ -11,9 +11,10 @@ import { useCurrency } from "@/lib/currency-context";
 import { getDiscountPercent } from "@/lib/pricing";
 import { LeadCaptureInput } from "@/components/LeadCaptureInput";
 import { HomeProductCard } from "@/components/HomeProductCard";
-import { ProductDescriptionSection } from "@/components/ProductDescriptionSection";
 import { useCart } from "@/lib/cart-context";
 import type { Product } from "@hr-ecom/shared";
+
+type Tab = "description" | "reviews";
 
 function addBusinessDays(from: Date, days: number): Date {
   const date = new Date(from);
@@ -88,6 +89,7 @@ export function ProductDetailClient({
   const { cart, itemCount } = useCart();
   const { format } = useCurrency();
   const [name, setName] = useState("");
+  const [tab, setTab] = useState<Tab>("description");
   const [productUrl, setProductUrl] = useState("");
 
   useEffect(() => {
@@ -205,54 +207,84 @@ export function ProductDetailClient({
         </div>
       </div>
 
-      <ProductDescriptionSection product={product} />
-
       <section className="mt-10 pt-8 border-t border-slate-200">
-        <h2 className="text-sm font-semibold text-primary border-b border-slate-200 pb-3 mb-6">Reviews (0)</h2>
-        <p className="text-slate-500 text-sm">No reviews yet. Be the first to review this Rakhi after your order.</p>
-
-        <div className="mt-8 space-y-8">
-          {product.tags && product.tags.length > 0 && (
-            <div>
-              <p className="text-xs font-semibold text-slate-500 uppercase mb-3">Related searches</p>
-              <div className="flex flex-wrap gap-2">
-                {product.tags.map((tag) => (
-                  <span key={tag} className="px-3 py-1.5 bg-slate-100 text-slate-600 text-xs rounded-full">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="max-w-md">
-            <LeadCaptureInput
-              label="Your name (helps us assist you)"
-              placeholder="Start typing your name..."
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              onDebouncedChange={(value) =>
-                captureLead({
-                  name: value,
-                  page: `/products/${product.slug}`,
-                  productSlug: product.slug,
-                  source: "product",
-                })
-              }
-            />
-          </div>
-
-          {relatedProducts.length > 0 && (
-            <div>
-              <h2 className="text-lg font-bold text-primary mb-4">You might also like</h2>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 items-stretch">
-                {relatedProducts.map((p) => (
-                  <HomeProductCard key={p.slug} product={p} />
-                ))}
-              </div>
-            </div>
-          )}
+        <div className="flex gap-6 border-b border-slate-200 mb-6">
+          <button
+            type="button"
+            onClick={() => setTab("description")}
+            className={`pb-3 text-sm font-semibold border-b-2 -mb-px transition ${
+              tab === "description"
+                ? "border-primary text-primary"
+                : "border-transparent text-slate-500 hover:text-primary"
+            }`}
+          >
+            Description
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab("reviews")}
+            className={`pb-3 text-sm font-semibold border-b-2 -mb-px transition ${
+              tab === "reviews"
+                ? "border-primary text-primary"
+                : "border-transparent text-slate-500 hover:text-primary"
+            }`}
+          >
+            Reviews (0)
+          </button>
         </div>
+
+        {tab === "description" ? (
+          <div className="space-y-8">
+            <article className="text-slate-700 leading-relaxed space-y-4 max-w-4xl">
+              {product.description.split(/(?<=\.)\s+/).map((para, i) => (
+                <p key={i}>{para}</p>
+              ))}
+            </article>
+
+            {product.tags && product.tags.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold text-slate-500 uppercase mb-3">Related searches</p>
+                <div className="flex flex-wrap gap-2">
+                  {product.tags.map((tag) => (
+                    <span key={tag} className="px-3 py-1.5 bg-slate-100 text-slate-600 text-xs rounded-full">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="max-w-md">
+              <LeadCaptureInput
+                label="Your name (helps us assist you)"
+                placeholder="Start typing your name..."
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                onDebouncedChange={(value) =>
+                  captureLead({
+                    name: value,
+                    page: `/products/${product.slug}`,
+                    productSlug: product.slug,
+                    source: "product",
+                  })
+                }
+              />
+            </div>
+
+            {relatedProducts.length > 0 && (
+              <div>
+                <h2 className="text-lg font-bold text-primary mb-4">You might also like</h2>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 items-stretch">
+                  {relatedProducts.map((p) => (
+                    <HomeProductCard key={p.slug} product={p} />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <p className="text-slate-500 text-sm">No reviews yet. Be the first to review this Rakhi after your order.</p>
+        )}
       </section>
     </div>
   );
