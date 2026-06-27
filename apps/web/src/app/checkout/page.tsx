@@ -69,11 +69,10 @@ export default function CheckoutPage() {
   useEffect(() => {
     if (checkoutTracked.current || !cart?.items.length) return;
     checkoutTracked.current = true;
-    const storedCurrency = (cart.items[0]?.currency ?? "USD") as DisplayCurrency;
-    const value = cart.items.reduce(
-      (sum, i) => sum + convert(i.price, storedCurrency) * i.quantity,
-      0
-    );
+    const value = cart.items.reduce((sum, item) => {
+      const lineCurrency = (item.currency ?? "USD") as DisplayCurrency;
+      return sum + convert(item.price * item.quantity, lineCurrency);
+    }, 0);
     trackCheckoutStart(value);
   }, [cart, convert]);
 
@@ -348,13 +347,14 @@ export default function CheckoutPage() {
     );
   }
 
-  const storedCurrency = (cart.items[0]?.currency ?? "USD") as DisplayCurrency;
-  const rawSubtotal = cart.items.reduce(
-    (sum, item) => sum + convert(item.price, storedCurrency) * item.quantity,
-    0
-  );
+  const cartCurrency = (cart.items[0]?.currency ?? "USD") as DisplayCurrency;
+  /** Subtotal in the shopper's selected display currency (matches cart page). */
+  const displaySubtotal = cart.items.reduce((sum, item) => {
+    const lineCurrency = (item.currency ?? cartCurrency) as DisplayCurrency;
+    return sum + convert(item.price * item.quantity, lineCurrency);
+  }, 0);
   const itemCount = cart.items.reduce((sum, i) => sum + i.quantity, 0);
-  const orderTotal = Math.max(0, rawSubtotal - discount);
+  const orderTotal = Math.max(0, displaySubtotal - discount);
 
   return (
     <>
@@ -380,27 +380,30 @@ export default function CheckoutPage() {
             <h2 className="text-sm font-bold text-slate-900 tracking-wide">ORDER SUMMARY</h2>
 
             <ul className="space-y-3 text-sm border-b border-slate-200 pb-4">
-              {cart.items.map((item) => (
+              {cart.items.map((item) => {
+                const lineCurrency = (item.currency ?? cartCurrency) as DisplayCurrency;
+                return (
                 <li key={item.productSlug} className="flex justify-between gap-3">
                   <span className="text-slate-700 line-clamp-2">
                     {item.name} × {item.quantity}
                   </span>
                   <span className="font-medium text-slate-900 shrink-0">
-                    {format(convert(item.price, storedCurrency) * item.quantity, storedCurrency)}
+                    {format(item.price * item.quantity, lineCurrency)}
                   </span>
                 </li>
-              ))}
+              );
+              })}
             </ul>
 
             <div className="space-y-2 text-sm">
               <div className="flex justify-between gap-4">
                 <span className="text-slate-700">Items ({itemCount})</span>
-                <span className="font-medium">{format(rawSubtotal, storedCurrency)}</span>
+                <span className="font-medium">{format(displaySubtotal, displayCurrency)}</span>
               </div>
               {discount > 0 && (
                 <div className="flex justify-between gap-4 text-green-700">
                   <span>Coupon ({appliedCouponCode})</span>
-                  <span>−{format(discount, storedCurrency)}</span>
+                  <span>−{format(discount, displayCurrency)}</span>
                 </div>
               )}
               <div className="flex justify-between gap-4">
@@ -410,15 +413,15 @@ export default function CheckoutPage() {
               <div className="flex justify-between gap-4 pt-2 border-t border-slate-200">
                 <span className="font-bold text-slate-900">Total</span>
                 <span className="font-bold text-nav text-base">
-                  {format(orderTotal, storedCurrency)}
+                  {format(orderTotal, displayCurrency)}
                 </span>
               </div>
             </div>
 
             <CouponInput
               email={address.email}
-              subtotal={rawSubtotal}
-              currency={storedCurrency}
+              subtotal={displaySubtotal}
+              currency={displayCurrency}
               formatMoney={format}
               initialCode={savedCouponCode}
               onApplied={(amount, code) => {
