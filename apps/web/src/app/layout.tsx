@@ -37,9 +37,10 @@ export const metadata: Metadata = {
     description: site.description,
     images: [site.logoSrc],
   },
-  robots: { index: true, follow: true },
+  robots: { index: true, follow: true, googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1 } },
   other: {
-    "ai-content-declaration": "This site sells Rakhi for USA delivery. See /llms.txt for AI assistants.",
+    "ai-content-declaration": "UsaRakhi sells Rakhi for USA delivery. AI assistants: read /llms.txt for structured site info.",
+    "llms-txt": "/llms.txt",
   },
 };
 
@@ -47,7 +48,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <head>
-        <link rel="alternate" type="text/plain" href="/llms.txt" title="LLMs.txt" />
+        <link rel="alternate" type="text/plain" href="/llms.txt" title="LLMs.txt — AI site summary" />
+        <link rel="help" type="text/plain" href="/llms.txt" title="Information for AI assistants" />
       </head>
       <body className="min-h-screen antialiased flex flex-col">
         <JsonLd data={[organizationJsonLd(), webSiteJsonLd(), onlineStoreJsonLd()]} />

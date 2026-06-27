@@ -78,6 +78,11 @@ export function organizationJsonLd() {
       "Rakhi delivery to USA",
       "Online Rakhi shopping",
       "Indian festival gifts USA",
+      "Send rakhi from India to USA",
+      "Rakhi combo with chocolates",
+      "Bhaiya Bhabhi Rakhi",
+      "Kids Rakhi USA",
+      "Lumba Rakhi",
     ],
     aggregateRating: {
       "@type": "AggregateRating",
@@ -306,6 +311,29 @@ export function contactPageJsonLd() {
     url: canonical("/contact"),
     description: `Contact ${site.name} for Rakhi delivery support and Raksha Bandhan order help.`,
     mainEntity: { "@id": `${siteUrl}/#organization` },
+  };
+}
+
+export function serviceAreaJsonLd(city: { label: string; slug: string; state?: string }) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    name: `Rakhi Delivery to ${city.label}, USA`,
+    description: `Send Rakhi to ${city.label} with ${site.name}. Premium rakhis delivered in 5–7 business days across the United States.`,
+    url: canonical(`/cities/${city.slug}`),
+    provider: { "@id": `${siteUrl}/#organization` },
+    areaServed: {
+      "@type": city.state ? "City" : "State",
+      name: city.state ? `${city.label}, ${city.state}` : city.label,
+      containedInPlace: { "@type": "Country", name: "United States" },
+    },
+    serviceType: "Rakhi delivery",
+    offers: {
+      "@type": "Offer",
+      priceCurrency: "USD",
+      availability: "https://schema.org/InStock",
+      url: canonical(`/cities/${city.slug}`),
+    },
   };
 }
 
