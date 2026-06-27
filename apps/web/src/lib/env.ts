@@ -46,11 +46,15 @@ export function getSiteUrl(): string {
   return "http://localhost:3000";
 }
 
+/** Production CDN for WordPress media migrated to S3/CloudFront. */
+export const PROD_CDN_URL = "https://d301af4ndyn9qx.cloudfront.net";
+
 /** CloudFront (or cdn.usarakhi.com) base for product/media images migrated off WordPress. */
-export function getCdnUrl(): string | undefined {
+export function getCdnUrl(): string {
   const fromEnv = process.env.NEXT_PUBLIC_CDN_URL?.trim();
   if (fromEnv) return fromEnv.replace(/\/$/, "");
-  return undefined;
+  if (process.env.NODE_ENV === "production") return PROD_CDN_URL;
+  return PROD_CDN_URL;
 }
 
 export const siteUrl = getSiteUrl();

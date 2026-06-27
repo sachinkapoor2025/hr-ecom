@@ -4,6 +4,7 @@ import { addToCartSchema, cartKeys, productKeys, type Cart, type CartItem } from
 import { docClient, CARTS_TABLE, PRODUCTS_TABLE, now, ttlInDays } from "../lib/db";
 import { ok, badRequest, unauthorized } from "../lib/response";
 import { getUserOrSessionKey, getSessionId } from "../lib/auth";
+import { resolveProductImageUrl } from "../lib/images";
 
 /** Stale carts auto-expire after this many days (TTL). */
 const CART_TTL_DAYS = 30;
@@ -50,7 +51,11 @@ export async function getCartHandler(event: APIGatewayProxyEventV2) {
   if (!userKey) return unauthorized("Session or auth required");
 
   const raw = await getCart(userKey);
-  return ok({ cart: { items: raw.items ?? [], updatedAt: raw.updatedAt ?? now() } });
+  const items = (raw.items ?? []).map((item) => ({
+    ...item,
+    image: item.image ? resolveProductImageUrl(item.image) : item.image,
+  }));
+  return ok({ cart: { items, updatedAt: raw.updatedAt ?? now() } });
 }
 
 export async function addToCart(event: APIGatewayProxyEventV2) {
@@ -91,7 +96,7 @@ export async function addToCart(event: APIGatewayProxyEventV2) {
     price: product.price,
     currency: product.currency,
     quantity: parsed.data.quantity,
-    image: product.images?.[0],
+    image: resolveProductImageUrl(product.images?.[0]),
   };
 
   if (existingIdx >= 0) {

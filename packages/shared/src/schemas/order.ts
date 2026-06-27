@@ -60,14 +60,19 @@ export const orderSchema = z.object({
   razorpayPaymentId: z.string().optional(),
   trackingNumber: z.string().optional(),
   carrier: z.string().optional(),
+  adminNotes: z.string().max(2000).optional(),
+  estimatedDeliveryAt: z.string().optional(),
+  deliveredAt: z.string().optional(),
 });
 
 /** Admin order status update payload. */
 export const orderStatusUpdateSchema = z.object({
-  status: orderStatusEnum,
+  status: orderStatusEnum.optional(),
   trackingNumber: z.string().optional(),
   carrier: z.string().optional(),
   note: z.string().max(500).optional(),
+  adminNotes: z.string().max(2000).optional(),
+  estimatedDeliveryAt: z.string().optional(),
 });
 
 export type ShippingAddress = z.infer<typeof shippingAddressSchema>;

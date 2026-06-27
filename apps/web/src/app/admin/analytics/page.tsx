@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useApiClient } from "@/lib/auth-context";
 import { HorizontalBarChart, AreaChart } from "@/components/admin/Charts";
+import { downloadCsv } from "@/lib/admin-utils";
 
 interface ProductStat {
   slug: string;
@@ -68,19 +69,57 @@ export default function AdminAnalyticsPage() {
     sub: s.zero ? `${s.zero} zero-result` : undefined,
   }));
 
+  const conversionRate =
+    overview && overview.totals.page_view
+      ? (((overview.totals.purchase ?? 0) / overview.totals.page_view) * 100).toFixed(2)
+      : "0";
+
+  const exportAnalytics = () => {
+    if (!overview) return;
+    downloadCsv(`analytics-${days}d-${new Date().toISOString().slice(0, 10)}.csv`, [
+      ["Metric", "Value"],
+      ["Page views", String(overview.totals.page_view ?? 0)],
+      ["Product views", String(overview.totals.product_view ?? 0)],
+      ["Cart adds", String(overview.totals.cart_add ?? 0)],
+      ["Searches", String(overview.totals.search ?? 0)],
+      ["Purchases", String(overview.totals.purchase ?? 0)],
+      ["Conversion rate %", conversionRate],
+      [],
+      ["Day", "Page views", "Purchases"],
+      ...overview.trafficByDay.map((d) => [d.day, String(d.pageViews), String(d.purchases)]),
+      [],
+      ["Product", "Views", "Adds"],
+      ...products.map((p) => [p.slug, String(p.views), String(p.adds)]),
+      [],
+      ["Search term", "Count", "Zero results"],
+      ...searches.map((s) => [s.term, String(s.count), String(s.zero ?? 0)]),
+    ]);
+  };
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Analytics</h1>
-        <select
-          value={days}
-          onChange={(e) => setDays(Number(e.target.value))}
-          className="border border-slate-300 rounded-lg px-3 py-1.5 text-sm"
-        >
-          <option value={7}>Last 7 days</option>
-          <option value={30}>Last 30 days</option>
-          <option value={90}>Last 90 days</option>
-        </select>
+        <div className="flex items-center gap-2">
+          <select
+            value={days}
+            onChange={(e) => setDays(Number(e.target.value))}
+            className="border border-slate-300 rounded-lg px-3 py-1.5 text-sm"
+          >
+            <option value={7}>Last 7 days</option>
+            <option value={30}>Last 30 days</option>
+            <option value={90}>Last 90 days</option>
+          </select>
+          {overview && (
+            <button
+              type="button"
+              onClick={exportAnalytics}
+              className="text-sm bg-nav text-white px-3 py-1.5 rounded-lg"
+            >
+              Export CSV
+            </button>
+          )}
+        </div>
       </div>
 
       {loading ? (
@@ -90,16 +129,19 @@ export default function AdminAnalyticsPage() {
       ) : (
         <>
           {overview && (
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
               {[
                 { label: "Page views", value: overview.totals.page_view ?? 0 },
                 { label: "Product views", value: overview.totals.product_view ?? 0 },
                 { label: "Cart adds", value: overview.totals.cart_add ?? 0 },
                 { label: "Searches", value: overview.totals.search ?? 0 },
+                { label: "Conversion rate", value: `${conversionRate}%` },
               ].map((kpi) => (
                 <div key={kpi.label} className="bg-white border rounded-xl p-4">
                   <p className="text-xs uppercase text-slate-400">{kpi.label}</p>
-                  <p className="text-xl font-bold mt-1">{kpi.value.toLocaleString()}</p>
+                  <p className="text-xl font-bold mt-1">
+                    {typeof kpi.value === "number" ? kpi.value.toLocaleString() : kpi.value}
+                  </p>
                 </div>
               ))}
             </div>
@@ -107,12 +149,20 @@ export default function AdminAnalyticsPage() {
 
           {overview && overview.trafficByDay.length > 0 && (
             <section className="bg-white border rounded-xl p-5 mb-6">
-              <h2 className="font-semibold mb-1">Traffic trend</h2>
-              <p className="text-xs text-slate-500 mb-4">Page views per day</p>
+              <h2 className="font-semibold mb-1">Orders & traffic trend</h2>
+              <p className="text-xs text-slate-500 mb-4">Page views and purchases per day</p>
               <AreaChart
                 data={overview.trafficByDay.map((d) => ({ label: d.day, value: d.pageViews }))}
                 height={160}
               />
+              <div className="mt-4 grid grid-cols-7 gap-1 text-[10px] text-slate-500">
+                {overview.trafficByDay.slice(-7).map((d) => (
+                  <div key={d.day} className="text-center">
+                    <div>{d.day.slice(5)}</div>
+                    <div className="font-medium text-green-700">{d.purchases} orders</div>
+                  </div>
+                ))}
+              </div>
             </section>
           )}
 

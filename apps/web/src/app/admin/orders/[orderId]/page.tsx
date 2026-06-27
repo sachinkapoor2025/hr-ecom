@@ -12,17 +12,25 @@ import {
   nextStatuses,
   FULFILLMENT_STEPS,
 } from "@/lib/order-status";
+import {
+  formatMoney,
+  paymentStatusClass,
+  paymentStatusLabel,
+  shippingStatusLabel,
+} from "@/lib/admin-utils";
 
-function money(amount: number, currency: string) {
-  return new Intl.NumberFormat(undefined, { style: "currency", currency }).format(amount);
-}
+type AdminOrder = Order & {
+  adminNotes?: string;
+  estimatedDeliveryAt?: string;
+  deliveredAt?: string;
+};
 
 export default function AdminOrderDetailPage() {
   const apiClient = useApiClient();
   const params = useParams();
   const orderId = params.orderId as string;
 
-  const [order, setOrder] = useState<Order | null>(null);
+  const [order, setOrder] = useState<AdminOrder | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -30,16 +38,20 @@ export default function AdminOrderDetailPage() {
   const [trackingNumber, setTrackingNumber] = useState("");
   const [carrier, setCarrier] = useState("");
   const [note, setNote] = useState("");
+  const [adminNotes, setAdminNotes] = useState("");
+  const [estimatedDeliveryAt, setEstimatedDeliveryAt] = useState("");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await apiClient<{ order: Order }>(`/admin/orders/${orderId}`);
+      const data = await apiClient<{ order: AdminOrder }>(`/admin/orders/${orderId}`);
       setOrder(data.order);
       setTrackingNumber(data.order.trackingNumber ?? "");
       setCarrier(data.order.carrier ?? "");
+      setAdminNotes(data.order.adminNotes ?? "");
+      setEstimatedDeliveryAt(data.order.estimatedDeliveryAt?.slice(0, 10) ?? "");
       const next = nextStatuses(data.order.status);
       setNewStatus(next[0] ?? data.order.status);
     } catch {
@@ -59,14 +71,22 @@ export default function AdminOrderDetailPage() {
     setMessage("");
     setError("");
     try {
-      const data = await apiClient<{ order: Order }>(`/admin/orders/${orderId}`, {
+      const payload: Record<string, string | undefined> = {
+        trackingNumber: trackingNumber || undefined,
+        carrier: carrier || undefined,
+        note: note || undefined,
+        adminNotes,
+        estimatedDeliveryAt: estimatedDeliveryAt
+          ? new Date(estimatedDeliveryAt).toISOString()
+          : undefined,
+      };
+      const allowed = order ? nextStatuses(order.status) : [];
+      if (allowed.length > 0 && newStatus) {
+        payload.status = newStatus;
+      }
+      const data = await apiClient<{ order: AdminOrder }>(`/admin/orders/${orderId}`, {
         method: "PUT",
-        body: JSON.stringify({
-          status: newStatus,
-          trackingNumber: trackingNumber || undefined,
-          carrier: carrier || undefined,
-          note: note || undefined,
-        }),
+        body: JSON.stringify(payload),
       });
       setOrder(data.order);
       setNote("");
@@ -79,6 +99,27 @@ export default function AdminOrderDetailPage() {
       setSaving(false);
     }
   };
+
+  const quickStatus = async (status: string) => {
+    setSaving(true);
+    setError("");
+    try {
+      const data = await apiClient<{ order: AdminOrder }>(`/admin/orders/${orderId}`, {
+        method: "PUT",
+        body: JSON.stringify({ status, note: `Status changed to ${statusLabel(status)}` }),
+      });
+      setOrder(data.order);
+      setMessage(`Order marked as ${statusLabel(status)}.`);
+      const next = nextStatuses(data.order.status);
+      setNewStatus(next[0] ?? data.order.status);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Update failed.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const printInvoice = () => window.print();
 
   if (loading) return <div className="max-w-4xl mx-auto px-4 py-10 text-slate-500">Loading…</div>;
   if (!order) return <div className="max-w-4xl mx-auto px-4 py-10 text-red-600">{error || "Order not found."}</div>;
@@ -95,12 +136,43 @@ export default function AdminOrderDetailPage() {
 
       <div className="flex flex-wrap items-center justify-between gap-3 mt-3 mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Order {order.orderId.slice(0, 8)}…</h1>
-          <p className="text-sm text-slate-500">{new Date(order.createdAt).toLocaleString()}</p>
+          <h1 className="text-2xl font-bold">Order {order.orderId}</h1>
+          <p className="text-sm text-slate-500">
+            Placed {new Date(order.createdAt).toLocaleString()} · Updated{" "}
+            {new Date(order.updatedAt).toLocaleString()}
+          </p>
         </div>
-        <span className={`px-3 py-1 rounded-full text-sm font-medium ${badgeClass(order.status)}`}>
-          {statusLabel(order.status)}
-        </span>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className={`px-3 py-1 rounded-full text-sm font-medium ${badgeClass(order.status)}`}>
+            {statusLabel(order.status)}
+          </span>
+          <span
+            className={`px-3 py-1 rounded-full text-sm font-medium ${paymentStatusClass(order.status)}`}
+          >
+            {paymentStatusLabel(order.status)}
+          </span>
+          <button
+            type="button"
+            onClick={printInvoice}
+            className="text-sm border border-slate-200 rounded-lg px-3 py-1.5 hover:bg-slate-50 print:hidden"
+          >
+            Download invoice
+          </button>
+          {order.status === ORDER_STATUS.PENDING_PAYMENT && (
+            <Link
+              href={`/checkout?orderId=${order.orderId}`}
+              className="text-sm bg-amber-600 text-white rounded-lg px-3 py-1.5 print:hidden"
+            >
+              Retry payment
+            </Link>
+          )}
+        </div>
+      </div>
+
+      <div id="invoice-print" className="hidden print:block mb-8">
+        <h2 className="text-xl font-bold">Invoice — {order.orderId}</h2>
+        <p className="text-sm">{addr.name} · {addr.email}</p>
+        <p className="text-sm mt-4 font-bold">Total: {formatMoney(order.total, order.currency)}</p>
       </div>
 
       {/* Fulfillment stepper */}
@@ -147,22 +219,22 @@ export default function AdminOrderDetailPage() {
                     <p className="text-sm font-medium">{item.name}</p>
                     <p className="text-xs text-slate-500">Qty {item.quantity}</p>
                   </div>
-                  <span className="text-sm">{money(item.price * item.quantity, order.currency)}</span>
+                  <span className="text-sm">{formatMoney(item.price * item.quantity, order.currency)}</span>
                 </li>
               ))}
             </ul>
             <div className="border-t mt-3 pt-3 space-y-1 text-sm">
               <div className="flex justify-between text-slate-500">
                 <span>Subtotal</span>
-                <span>{money(order.subtotal, order.currency)}</span>
+                <span>{formatMoney(order.subtotal, order.currency)}</span>
               </div>
               <div className="flex justify-between text-slate-500">
                 <span>Shipping</span>
-                <span>{money(order.shipping, order.currency)}</span>
+                <span>{formatMoney(order.shipping, order.currency)}</span>
               </div>
               <div className="flex justify-between font-bold text-base">
-                <span>Total</span>
-                <span>{money(order.total, order.currency)}</span>
+                <span>Total ({order.currency})</span>
+                <span>{formatMoney(order.total, order.currency)}</span>
               </div>
             </div>
           </section>
@@ -205,8 +277,28 @@ export default function AdminOrderDetailPage() {
           </section>
 
           <section className="bg-white border rounded-xl p-5 text-sm">
-            <h2 className="font-semibold mb-3">Payment</h2>
-            <p className="text-slate-600 capitalize">Provider: {order.paymentProvider ?? "—"}</p>
+            <h2 className="font-semibold mb-3">Payment & shipping</h2>
+            <p className="text-slate-600 capitalize">Method: {order.paymentProvider ?? "—"}</p>
+            <p className="text-slate-600 mt-1">Shipping: {shippingStatusLabel(order.status)}</p>
+            {order.trackingNumber && (
+              <p className="text-slate-600 mt-1">
+                Tracking: {order.trackingNumber}
+                {order.carrier ? ` (${order.carrier})` : ""}
+              </p>
+            )}
+            {order.estimatedDeliveryAt && (
+              <p className="text-slate-600 mt-1">
+                Est. delivery: {new Date(order.estimatedDeliveryAt).toLocaleDateString()}
+              </p>
+            )}
+            {order.deliveredAt && (
+              <p className="text-slate-600 mt-1">
+                Delivered: {new Date(order.deliveredAt).toLocaleDateString()}
+              </p>
+            )}
+            <p className="text-xs text-slate-400 mt-2">
+              Invoice: {order.status === ORDER_STATUS.PENDING_PAYMENT ? "Pending payment" : "Generated"}
+            </p>
             {order.razorpayPaymentId && (
               <p className="text-xs text-slate-400 break-all mt-1">RZP: {order.razorpayPaymentId}</p>
             )}
@@ -216,11 +308,48 @@ export default function AdminOrderDetailPage() {
           </section>
 
           <section className="bg-white border rounded-xl p-5">
+            <h2 className="font-semibold mb-3">Admin notes</h2>
+            <textarea
+              value={adminNotes}
+              onChange={(e) => setAdminNotes(e.target.value)}
+              rows={3}
+              className="w-full border border-slate-300 rounded-lg px-2 py-2 text-sm"
+              placeholder="Internal remarks (not visible to customer)"
+            />
+          </section>
+
+          <section className="bg-white border rounded-xl p-5">
             <h2 className="font-semibold mb-3">Update order</h2>
+            {(transitions.includes(ORDER_STATUS.CANCELLED) ||
+              transitions.includes(ORDER_STATUS.REFUNDED)) && (
+              <div className="flex flex-wrap gap-2 mb-3">
+                {transitions.includes(ORDER_STATUS.CANCELLED) && (
+                  <button
+                    type="button"
+                    disabled={saving}
+                    onClick={() => quickStatus(ORDER_STATUS.CANCELLED)}
+                    className="text-xs border border-red-200 text-red-700 px-2 py-1 rounded"
+                  >
+                    Cancel order
+                  </button>
+                )}
+                {transitions.includes(ORDER_STATUS.REFUNDED) && (
+                  <button
+                    type="button"
+                    disabled={saving}
+                    onClick={() => quickStatus(ORDER_STATUS.REFUNDED)}
+                    className="text-xs border border-purple-200 text-purple-700 px-2 py-1 rounded"
+                  >
+                    Mark refunded
+                  </button>
+                )}
+              </div>
+            )}
             {transitions.length === 0 ? (
-              <p className="text-sm text-slate-500">This order is in a final state.</p>
-            ) : (
-              <form onSubmit={handleUpdate} className="space-y-3">
+              <p className="text-sm text-slate-500">This order is in a final state. You can still update tracking and notes.</p>
+            ) : null}
+            <form onSubmit={handleUpdate} className="space-y-3">
+              {transitions.length > 0 && (
                 <label className="block text-xs font-medium text-slate-500">
                   New status
                   <select
@@ -235,46 +364,56 @@ export default function AdminOrderDetailPage() {
                     ))}
                   </select>
                 </label>
+              )}
 
-                <label className="block text-xs font-medium text-slate-500">
-                  Tracking number
-                  <input
-                    value={trackingNumber}
-                    onChange={(e) => setTrackingNumber(e.target.value)}
-                    className="mt-1 w-full border border-slate-300 rounded-lg px-2 py-2 text-sm"
-                    placeholder="e.g. 1Z999…"
-                  />
-                </label>
+              <label className="block text-xs font-medium text-slate-500">
+                Expected delivery date
+                <input
+                  type="date"
+                  value={estimatedDeliveryAt}
+                  onChange={(e) => setEstimatedDeliveryAt(e.target.value)}
+                  className="mt-1 w-full border border-slate-300 rounded-lg px-2 py-2 text-sm"
+                />
+              </label>
 
-                <label className="block text-xs font-medium text-slate-500">
-                  Carrier
-                  <input
-                    value={carrier}
-                    onChange={(e) => setCarrier(e.target.value)}
-                    className="mt-1 w-full border border-slate-300 rounded-lg px-2 py-2 text-sm"
-                    placeholder="e.g. FedEx, DHL"
-                  />
-                </label>
+              <label className="block text-xs font-medium text-slate-500">
+                Tracking number
+                <input
+                  value={trackingNumber}
+                  onChange={(e) => setTrackingNumber(e.target.value)}
+                  className="mt-1 w-full border border-slate-300 rounded-lg px-2 py-2 text-sm"
+                  placeholder="e.g. 1Z999…"
+                />
+              </label>
 
-                <label className="block text-xs font-medium text-slate-500">
-                  Note (optional)
-                  <textarea
-                    value={note}
-                    onChange={(e) => setNote(e.target.value)}
-                    rows={2}
-                    className="mt-1 w-full border border-slate-300 rounded-lg px-2 py-2 text-sm"
-                  />
-                </label>
+              <label className="block text-xs font-medium text-slate-500">
+                Carrier
+                <input
+                  value={carrier}
+                  onChange={(e) => setCarrier(e.target.value)}
+                  className="mt-1 w-full border border-slate-300 rounded-lg px-2 py-2 text-sm"
+                  placeholder="e.g. FedEx, DHL"
+                />
+              </label>
 
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="w-full bg-nav text-white py-2 rounded-lg text-sm font-medium disabled:opacity-50"
-                >
-                  {saving ? "Saving…" : "Save update"}
-                </button>
-              </form>
-            )}
+              <label className="block text-xs font-medium text-slate-500">
+                Status note (optional)
+                <textarea
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  rows={2}
+                  className="mt-1 w-full border border-slate-300 rounded-lg px-2 py-2 text-sm"
+                />
+              </label>
+
+              <button
+                type="submit"
+                disabled={saving}
+                className="w-full bg-nav text-white py-2 rounded-lg text-sm font-medium disabled:opacity-50"
+              >
+                {saving ? "Saving…" : "Save update"}
+              </button>
+            </form>
             {message && <p className="text-green-600 text-xs mt-2">{message}</p>}
             {error && <p className="text-red-600 text-xs mt-2">{error}</p>}
           </section>

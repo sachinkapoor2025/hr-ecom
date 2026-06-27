@@ -8,6 +8,7 @@ export * from "./schemas/user";
 export * from "./schemas/account";
 export * from "./schemas/payment";
 export * from "./lib/currency-display";
+export * from "./lib/image-url";
 export * from "./db/keys";
 export * from "./constants";
 export * from "./currency";

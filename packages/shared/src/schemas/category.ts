@@ -14,9 +14,12 @@ export const categorySchema = z.object({
 
 export const createCategorySchema = categorySchema.omit({ slug: true });
 
+export const updateCategorySchema = categorySchema.partial().omit({ slug: true });
+
 export type Category = z.infer<typeof categorySchema> & {
   createdAt: string;
   updatedAt: string;
 };
 
 export type CreateCategoryInput = z.infer<typeof createCategorySchema>;
+export type UpdateCategoryInput = z.infer<typeof updateCategorySchema>;

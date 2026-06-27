@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from "uuid";
 import {
   checkoutSchema,
   leadCaptureSchema,
+  updateLeadSchema,
   orderStatusUpdateSchema,
   orderKeys,
   customerKeys,
@@ -294,30 +295,44 @@ export async function updateOrderStatus(event: APIGatewayProxyEventV2) {
   const order = await fetchOrder(orderId);
   if (!order) return notFound("Order not found");
 
-  const nextStatus = parsed.data.status;
-  if (nextStatus !== order.status) {
+  const nextStatus = parsed.data.status ?? order.status;
+  if (parsed.data.status && parsed.data.status !== order.status) {
     const allowed = ORDER_STATUS_TRANSITIONS[order.status] ?? [];
-    if (!allowed.includes(nextStatus)) {
-      return badRequest(`Cannot change status from ${order.status} to ${nextStatus}`);
+    if (!allowed.includes(parsed.data.status)) {
+      return badRequest(`Cannot change status from ${order.status} to ${parsed.data.status}`);
     }
   }
 
   const timestamp = now();
-  const historyEntry: OrderStatusHistoryEntry = {
-    status: nextStatus,
-    at: timestamp,
-    ...(parsed.data.note ? { note: parsed.data.note } : {}),
-  };
+  const historyEntry: OrderStatusHistoryEntry | null =
+    parsed.data.status && parsed.data.status !== order.status
+      ? {
+          status: parsed.data.status,
+          at: timestamp,
+          ...(parsed.data.note ? { note: parsed.data.note } : {}),
+        }
+      : parsed.data.note
+        ? { status: order.status, at: timestamp, note: parsed.data.note }
+        : null;
 
   const updated: StoredOrder = {
     ...order,
     status: nextStatus,
-    statusHistory: [...(order.statusHistory ?? []), historyEntry],
+    statusHistory: historyEntry
+      ? [...(order.statusHistory ?? []), historyEntry]
+      : order.statusHistory,
     ...(parsed.data.trackingNumber !== undefined && { trackingNumber: parsed.data.trackingNumber }),
     ...(parsed.data.carrier !== undefined && { carrier: parsed.data.carrier }),
+    ...(parsed.data.adminNotes !== undefined && { adminNotes: parsed.data.adminNotes }),
+    ...(parsed.data.estimatedDeliveryAt !== undefined && {
+      estimatedDeliveryAt: parsed.data.estimatedDeliveryAt,
+    }),
     updatedAt: timestamp,
-    GSI3PK: orderKeys.gsi3pk(nextStatus),
-    GSI3SK: orderKeys.gsi3sk(order.createdAt),
+    ...(parsed.data.status &&
+      parsed.data.status !== order.status && {
+        GSI3PK: orderKeys.gsi3pk(nextStatus),
+        GSI3SK: orderKeys.gsi3sk(order.createdAt),
+      }),
   };
 
   await docClient.send(new PutCommand({ TableName: ORDERS_TABLE, Item: updated }));
@@ -369,4 +384,34 @@ export async function listLeads(event: APIGatewayProxyEventV2) {
   );
 
   return ok({ leads: result.Items ?? [] });
+}
+
+export async function updateLead(event: APIGatewayProxyEventV2) {
+  if (!requireAdmin(event)) return forbidden();
+
+  const body = JSON.parse(event.body ?? "{}");
+  const parsed = updateLeadSchema.safeParse(body);
+  if (!parsed.success) return badRequest(parsed.error.message);
+
+  const { sessionId, createdAt, ...fields } = parsed.data;
+  const existing = await docClient.send(
+    new GetCommand({
+      TableName: CUSTOMERS_TABLE,
+      Key: {
+        PK: customerKeys.pk(sessionId),
+        SK: customerKeys.leadSk(createdAt),
+      },
+    })
+  );
+  if (!existing.Item) return notFound("Lead not found");
+
+  const timestamp = now();
+  const updated = {
+    ...existing.Item,
+    ...fields,
+    updatedAt: timestamp,
+  };
+
+  await docClient.send(new PutCommand({ TableName: CUSTOMERS_TABLE, Item: updated }));
+  return ok({ lead: updated });
 }
