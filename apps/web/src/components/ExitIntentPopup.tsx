@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { getOrCreateSessionId } from "@/lib/session";
 import { api } from "@/lib/api";
+import { saveWelcomeCoupon, formatCouponExpiry } from "@/lib/welcome-coupon";
 
 const STORAGE_KEY = "usarakhi_exit_intent_shown";
 
@@ -14,6 +15,7 @@ export function ExitIntentPopup() {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "done">("idle");
   const [error, setError] = useState("");
+  const [coupon, setCoupon] = useState<{ code: string; expiresAt: string; discountPercent: number } | null>(null);
 
   useEffect(() => {
     if (pathname.startsWith("/admin") || pathname.startsWith("/checkout")) return;
@@ -37,7 +39,10 @@ export function ExitIntentPopup() {
     setError("");
     const sessionId = getOrCreateSessionId();
     try {
-      await api("/leads", {
+      const res = await api<{
+        ok: boolean;
+        coupon?: { code: string; expiresAt: string; discountPercent: number };
+      }>("/leads", {
         method: "POST",
         sessionId,
         body: JSON.stringify({
@@ -48,6 +53,10 @@ export function ExitIntentPopup() {
           metadata: { offer: "first_order_10_percent", trigger: "exit_intent" },
         }),
       });
+      if (res.coupon) {
+        setCoupon(res.coupon);
+        saveWelcomeCoupon({ ...res.coupon, email: email.trim() });
+      }
       setStatus("done");
     } catch (err) {
       setStatus("idle");
@@ -74,15 +83,28 @@ export function ExitIntentPopup() {
         {status === "done" ? (
           <div className="text-center py-4">
             <p className="text-lg font-bold text-primary mb-2">Thank you!</p>
-            <p className="text-sm text-slate-600">
-              Check your inbox for your 10% first-order offer. Order soon — Raksha Bandhan is August 28, 2026.
-            </p>
+            {coupon ? (
+              <>
+                <p className="text-sm text-slate-600 mb-3">
+                  Your {coupon.discountPercent}% off code (valid 4 hours):
+                </p>
+                <div className="rounded-lg border-2 border-dashed border-nav bg-slate-50 px-4 py-3 mb-3">
+                  <p className="text-xl font-bold tracking-widest text-primary">{coupon.code}</p>
+                  <p className="text-xs text-slate-500 mt-1">Expires {formatCouponExpiry(coupon.expiresAt)}</p>
+                </div>
+                <p className="text-xs text-slate-500 mb-3">Also sent to your email. Enter at checkout.</p>
+              </>
+            ) : (
+              <p className="text-sm text-slate-600 mb-3">
+                Check your inbox for your 10% first-order offer. Order soon — Raksha Bandhan is August 28, 2026.
+              </p>
+            )}
             <Link
-              href="/products"
+              href="/checkout"
               onClick={() => setOpen(false)}
-              className="inline-block mt-4 rounded-md bg-primary text-white font-semibold text-sm px-5 py-2.5"
+              className="inline-block mt-2 rounded-md bg-primary text-white font-semibold text-sm px-5 py-2.5"
             >
-              Shop Rakhis
+              Go to checkout
             </Link>
           </div>
         ) : (

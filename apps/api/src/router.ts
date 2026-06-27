@@ -10,6 +10,7 @@ import * as events from "./handlers/events";
 import * as analytics from "./handlers/analytics";
 import * as adminCarts from "./handlers/admin-carts";
 import * as account from "./handlers/account";
+import * as coupons from "./handlers/coupons";
 import { stripeWebhook } from "./handlers/payments/stripe";
 import { razorpayWebhook, verifyRazorpayPayment } from "./handlers/payments/razorpay";
 
@@ -61,6 +62,8 @@ const routes: Route[] = [
   { method: "GET", pattern: /^\/admin\/sessions$/, handler: analytics.listSessions },
   { method: "GET", pattern: /^\/admin\/sessions\/([^/]+)$/, handler: analytics.getSessionTimeline, params: ["sessionId"] },
   { method: "GET", pattern: /^\/admin\/carts\/abandoned$/, handler: adminCarts.getAbandonedCarts },
+  { method: "POST", pattern: /^\/coupons\/validate$/, handler: coupons.validateCouponHandler },
+  { method: "GET", pattern: /^\/admin\/welcome-coupons$/, handler: coupons.listWelcomeCoupons },
   { method: "POST", pattern: /^\/leads$/, handler: orders.captureLead },
   { method: "POST", pattern: /^\/events$/, handler: events.recordEvent },
   { method: "GET", pattern: /^\/config\/payments$/, handler: config.getPaymentConfig },

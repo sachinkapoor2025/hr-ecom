@@ -21,6 +21,12 @@ import { ok, created, badRequest, unauthorized, forbidden, notFound } from "../l
 import { getAuth, getSessionId, getUserOrSessionKey, requireAdmin } from "../lib/auth";
 import { getCartHandler, clearCartForUser } from "./cart";
 import { notifyAdminLead, notifyAdminOrderPaid, notifyAdminOrderPlaced } from "../lib/email";
+import {
+  applyPercentDiscount,
+  issueWelcomeCoupon,
+  markCouponUsed,
+  validateCouponRecord,
+} from "./coupons";
 
 type StoredOrder = Order & {
   PK: string;
@@ -69,12 +75,27 @@ export async function captureLead(event: APIGatewayProxyEventV2) {
   const sessionId = parsed.data.sessionId;
   const email = normalizeEmail(parsed.data.email);
 
+  let welcomeCoupon: { code: string; expiresAt: string; discountPercent: number } | undefined;
+  let leadPayload = parsed.data;
+  if (parsed.data.source === "newsletter" && email) {
+    welcomeCoupon = await issueWelcomeCoupon({ email, sessionId });
+    leadPayload = {
+      ...parsed.data,
+      metadata: {
+        ...parsed.data.metadata,
+        couponCode: welcomeCoupon.code,
+        couponExpiresAt: welcomeCoupon.expiresAt,
+        discountPercent: String(welcomeCoupon.discountPercent),
+      },
+    };
+  }
+
   // lead event (co-located under the session)
   await docClient.send(
     new PutCommand({
       TableName: CUSTOMERS_TABLE,
       Item: {
-        ...parsed.data,
+        ...leadPayload,
         ...(email ? { email } : {}),
         leadId: uuidv4(),
         PK: customerKeys.pk(sessionId),
@@ -106,32 +127,36 @@ export async function captureLead(event: APIGatewayProxyEventV2) {
         createdAt: (prev.createdAt as string) ?? timestamp,
         lastSeenAt: timestamp,
         updatedAt: timestamp,
-        name: pickContactField(parsed.data.name, prev.name as string | undefined),
+        name: pickContactField(leadPayload.name, prev.name as string | undefined),
         email: email ?? (prev.email as string | undefined),
-        phone: pickContactField(parsed.data.phone, prev.phone as string | undefined),
+        phone: pickContactField(leadPayload.phone, prev.phone as string | undefined),
       },
     })
   );
 
-  const emailResult = await notifyAdminLead(parsed.data);
-  const emailRequired = parsed.data.source === "contact" || parsed.data.source === "newsletter";
+  const emailResult = await notifyAdminLead(leadPayload);
+  const emailRequired = leadPayload.source === "contact" || leadPayload.source === "newsletter";
 
   if (emailRequired && emailResult.skipped) {
-    console.error("Email skipped — SMTP not configured:", parsed.data.source);
+    console.error("Email skipped — SMTP not configured:", leadPayload.source);
     return badRequest(
       "Email is not configured on the server yet. Please contact us on WhatsApp or at order@usarakhi.com."
     );
   }
 
   if (emailRequired && !emailResult.ok) {
-    console.error("Lead email failed:", parsed.data.source, emailResult.error);
+    console.error("Lead email failed:", leadPayload.source, emailResult.error);
     return badRequest(
       emailResult.error ??
         "Your message was saved but email could not be sent. Please WhatsApp us or email order@usarakhi.com directly."
     );
   }
 
-  return created({ ok: true, emailSent: emailResult.ok });
+  return created({
+    ok: true,
+    emailSent: emailResult.ok,
+    ...(welcomeCoupon ? { coupon: welcomeCoupon } : {}),
+  });
 }
 
 export async function checkout(event: APIGatewayProxyEventV2) {
@@ -169,7 +194,20 @@ export async function checkout(event: APIGatewayProxyEventV2) {
   const subtotal = cartSubtotal(orderItems);
   const shipping = 0;
   const tax = 0;
-  const total = subtotal + shipping + tax;
+
+  let discount = 0;
+  let couponCode: string | undefined;
+  const checkoutEmail = normalizeEmail(parsed.data.shippingAddress.email);
+
+  if (parsed.data.couponCode?.trim()) {
+    if (!checkoutEmail) return badRequest("Email is required to apply a coupon");
+    const coupon = await validateCouponRecord(parsed.data.couponCode, checkoutEmail);
+    if (!coupon.valid) return badRequest(coupon.error ?? "Invalid coupon code");
+    discount = applyPercentDiscount(subtotal, coupon.discountPercent!);
+    couponCode = coupon.code;
+  }
+
+  const total = Math.max(0, subtotal - discount + shipping + tax);
   const currency = checkoutCurrency;
 
   const orderId = uuidv4();
@@ -182,6 +220,8 @@ export async function checkout(event: APIGatewayProxyEventV2) {
     sessionId: getSessionId(event),
     items: orderItems,
     subtotal,
+    discount,
+    ...(couponCode ? { couponCode } : {}),
     shipping,
     tax,
     total,
@@ -385,6 +425,9 @@ export async function markOrderPaid(
   };
 
   await docClient.send(new PutCommand({ TableName: ORDERS_TABLE, Item: updated }));
+  if (order.couponCode) {
+    await markCouponUsed(order.couponCode, order.orderId);
+  }
   const emailResult = await notifyAdminOrderPaid(updated);
   if (!emailResult.ok) console.error("Order paid email failed:", emailResult.error);
 }

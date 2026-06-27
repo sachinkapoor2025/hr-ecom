@@ -16,6 +16,8 @@ import { ShippingAddressForm } from "@/components/ShippingAddressForm";
 import { SecureCheckoutBadge } from "@/components/SecureCheckoutBadge";
 import { CheckoutLegalNotice } from "@/components/CheckoutLegalNotice";
 import { TrustBadges } from "@/components/TrustBadges";
+import { CouponInput } from "@/components/CouponInput";
+import { loadWelcomeCoupon } from "@/lib/welcome-coupon";
 import {
   emptyShippingAddress,
   loadSavedAddresses,
@@ -44,6 +46,9 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("razorpay");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [discount, setDiscount] = useState(0);
+  const [appliedCouponCode, setAppliedCouponCode] = useState("");
+  const [savedCouponCode, setSavedCouponCode] = useState("");
   const [address, setAddress] = useState<ShippingAddress>(emptyShippingAddress);
   const [saveForLater, setSaveForLater] = useState(true);
   const addressPrefilled = useRef(false);
@@ -54,6 +59,11 @@ export default function CheckoutPage() {
     if (displayCurrency === "INR") setPaymentMethod("razorpay");
     else if (displayCurrency === "USD") setPaymentMethod("stripe");
   }, [displayCurrency]);
+
+  useEffect(() => {
+    const stored = loadWelcomeCoupon();
+    if (stored?.code) setSavedCouponCode(stored.code);
+  }, []);
 
   const checkoutTracked = useRef(false);
   useEffect(() => {
@@ -286,6 +296,7 @@ export default function CheckoutPage() {
           checkoutCurrency: displayCurrency,
           ...(displayCurrency === "INR" ? { usdInrRate } : {}),
           shippingAddress: payload,
+          ...(appliedCouponCode ? { couponCode: appliedCouponCode } : {}),
         }),
       });
 
@@ -338,8 +349,12 @@ export default function CheckoutPage() {
   }
 
   const storedCurrency = (cart.items[0]?.currency ?? "USD") as DisplayCurrency;
-  const rawSubtotal = cart.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const rawSubtotal = cart.items.reduce(
+    (sum, item) => sum + convert(item.price, storedCurrency) * item.quantity,
+    0
+  );
   const itemCount = cart.items.reduce((sum, i) => sum + i.quantity, 0);
+  const orderTotal = Math.max(0, rawSubtotal - discount);
 
   return (
     <>
@@ -371,7 +386,7 @@ export default function CheckoutPage() {
                     {item.name} × {item.quantity}
                   </span>
                   <span className="font-medium text-slate-900 shrink-0">
-                    {format(item.price * item.quantity, storedCurrency)}
+                    {format(convert(item.price, storedCurrency) * item.quantity, storedCurrency)}
                   </span>
                 </li>
               ))}
@@ -382,6 +397,12 @@ export default function CheckoutPage() {
                 <span className="text-slate-700">Items ({itemCount})</span>
                 <span className="font-medium">{format(rawSubtotal, storedCurrency)}</span>
               </div>
+              {discount > 0 && (
+                <div className="flex justify-between gap-4 text-green-700">
+                  <span>Coupon ({appliedCouponCode})</span>
+                  <span>−{format(discount, storedCurrency)}</span>
+                </div>
+              )}
               <div className="flex justify-between gap-4">
                 <span className="text-slate-700">Shipping</span>
                 <span className="font-bold text-accent">FREE</span>
@@ -389,10 +410,26 @@ export default function CheckoutPage() {
               <div className="flex justify-between gap-4 pt-2 border-t border-slate-200">
                 <span className="font-bold text-slate-900">Total</span>
                 <span className="font-bold text-nav text-base">
-                  {format(rawSubtotal, storedCurrency)}
+                  {format(orderTotal, storedCurrency)}
                 </span>
               </div>
             </div>
+
+            <CouponInput
+              email={address.email}
+              subtotal={rawSubtotal}
+              currency={storedCurrency}
+              formatMoney={format}
+              initialCode={savedCouponCode}
+              onApplied={(amount, code) => {
+                setDiscount(amount);
+                setAppliedCouponCode(code);
+              }}
+              onCleared={() => {
+                setDiscount(0);
+                setAppliedCouponCode("");
+              }}
+            />
 
             <div>
               <p className="text-sm font-semibold text-slate-700 mb-3">Payment method</p>

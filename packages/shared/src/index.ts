@@ -9,6 +9,7 @@ export * from "./schemas/account";
 export * from "./schemas/payment";
 export * from "./schemas/chat";
 export * from "./schemas/contact";
+export * from "./schemas/coupon";
 export * from "./lib/currency-display";
 export * from "./lib/image-url";
 export * from "./db/keys";

@@ -2,6 +2,7 @@ import nodemailer from "nodemailer";
 import type SMTPTransport from "nodemailer/lib/smtp-transport";
 import type { Order } from "@hr-ecom/shared";
 import type { LeadCaptureInput } from "@hr-ecom/shared";
+import { WELCOME_DISCOUNT_PERCENT } from "@hr-ecom/shared";
 
 const DEFAULT_NOTIFY = "order@usarakhi.com";
 const SITE_NAME = "UsaRakhi";
@@ -97,14 +98,31 @@ export async function sendNewsletterEmails(input: {
   email: string;
   page?: string;
   metadata?: Record<string, string>;
+  coupon?: { code: string; expiresAt: string; discountPercent: number };
 }): Promise<EmailSendResult> {
   if (!smtpConfigured()) {
     return { ok: false, skipped: true, error: "SMTP not configured on server" };
   }
 
+  const coupon = input.coupon ?? {
+    code: input.metadata?.couponCode ?? "",
+    expiresAt: input.metadata?.couponExpiresAt ?? "",
+    discountPercent: Number(input.metadata?.discountPercent ?? WELCOME_DISCOUNT_PERCENT),
+  };
+
+  const expiryLabel = coupon.expiresAt
+    ? new Date(coupon.expiresAt).toLocaleString("en-US", {
+        dateStyle: "medium",
+        timeStyle: "short",
+        timeZone: "America/New_York",
+      })
+    : "4 hours";
+
   const adminText = [
     "Source: Newsletter / 10% welcome offer",
     `Email: ${input.email}`,
+    coupon.code ? `Coupon: ${coupon.code}` : null,
+    coupon.expiresAt ? `Expires: ${coupon.expiresAt}` : null,
     input.page ? `Page: ${input.page}` : null,
     input.metadata ? `Details: ${JSON.stringify(input.metadata)}` : null,
   ]
@@ -121,10 +139,16 @@ export async function sendNewsletterEmails(input: {
 
   const customer = await sendEmail({
     to: input.email,
-    subject: `Your 10% off first order — ${SITE_NAME}`,
+    subject: `Your 10% off code — ${SITE_NAME}`,
     text: `Thank you for joining UsaRakhi!
 
-As a welcome gift, enjoy 10% off your first Rakhi order. Reply to this email or mention "welcome offer" at checkout and our team will apply your discount.
+Your exclusive welcome discount:
+
+  Coupon code: ${coupon.code}
+  Discount: ${coupon.discountPercent}% off your first order
+  Valid until: ${expiryLabel} (4 hours from signup)
+
+Enter this code at checkout on https://www.usarakhi.com/checkout
 
 Shop premium Rakhis with delivery to all 50 US states:
 https://www.usarakhi.com/products
@@ -260,10 +284,19 @@ export async function notifyAdminLead(lead: LeadCaptureInput): Promise<EmailSend
   }
 
   if (lead.source === "newsletter" && lead.email) {
+    const coupon =
+      lead.metadata?.couponCode && lead.metadata?.couponExpiresAt
+        ? {
+            code: lead.metadata.couponCode,
+            expiresAt: lead.metadata.couponExpiresAt,
+            discountPercent: Number(lead.metadata.discountPercent ?? WELCOME_DISCOUNT_PERCENT),
+          }
+        : undefined;
     return sendNewsletterEmails({
       email: lead.email,
       page: lead.page,
       metadata: lead.metadata,
+      coupon,
     });
   }
 

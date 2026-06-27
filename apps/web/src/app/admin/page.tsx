@@ -143,6 +143,7 @@ export default function AdminDashboard() {
           { href: "/admin/products", title: "Products", desc: "Add, edit, bulk upload" },
           { href: "/admin/categories", title: "Categories", desc: "Organize catalog" },
           { href: "/admin/leads", title: "Customer Leads", desc: "Partial captures" },
+          { href: "/admin/welcome-leads", title: "Welcome Email Leads", desc: "10% coupon signups" },
           { href: "/admin/payments", title: "Payment Config", desc: "Stripe / Razorpay" },
         ].map((item) => (
           <Link

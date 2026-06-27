@@ -21,6 +21,8 @@ export const checkoutSchema = z.object({
   checkoutCurrency: z.enum(["USD", "INR"]).optional(),
   /** Live USD→INR rate shown to the customer (optional; server validates). */
   usdInrRate: z.number().positive().max(200).optional(),
+  /** Welcome or promo coupon (e.g. RAKHI-ABC123). */
+  couponCode: z.string().min(4).max(32).optional(),
 });
 
 const orderStatusEnum = z.enum([
@@ -47,6 +49,8 @@ export const orderSchema = z.object({
   sessionId: z.string().optional(),
   items: z.array(cartItemSchema),
   subtotal: z.number(),
+  discount: z.number().default(0),
+  couponCode: z.string().optional(),
   shipping: z.number().default(0),
   tax: z.number().default(0),
   total: z.number(),

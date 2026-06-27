@@ -76,6 +76,13 @@ export const configKeys = {
   payments: { pk: "CONFIG#PAYMENTS", sk: "META" as const },
 };
 
+export const couponKeys = {
+  pk: (code: string) => `COUPON#${code.trim().toUpperCase()}`,
+  sk: () => "META" as const,
+  welcomeEmailPk: (email: string) => `WELCOME#${email.trim().toLowerCase()}`,
+  welcomeEmailSk: () => "ACTIVE" as const,
+};
+
 /**
  * Legacy single-table helpers — retained only for the one-time migration script
  * that reads the old `hr-ecom-{env}` table. Do not use in handlers.
