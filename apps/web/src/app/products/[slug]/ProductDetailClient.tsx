@@ -181,29 +181,6 @@ export function ProductDetailClient({
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              disabled
-              aria-label="Amazon Pay (coming soon)"
-              className="flex h-11 items-center justify-center rounded-md bg-[#FFD814] text-[#111] font-semibold text-sm opacity-90 cursor-not-allowed"
-            >
-              <span className="lowercase">
-                amazon <span className="font-bold">pay</span>
-              </span>
-            </button>
-            <button
-              type="button"
-              disabled
-              aria-label="Pay with Link (coming soon)"
-              className="flex h-11 items-center justify-center gap-1.5 rounded-md bg-[#00D66F] text-white font-semibold text-sm opacity-90 cursor-not-allowed"
-            >
-              Pay with
-              <span className="inline-flex items-center rounded bg-[#1a1f36] px-1.5 py-0.5 text-xs font-bold text-white">
-                link
-              </span>
-            </button>
-          </div>
         </div>
       </div>
 

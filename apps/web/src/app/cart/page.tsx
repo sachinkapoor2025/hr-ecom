@@ -141,35 +141,6 @@ export default function CartPage() {
               </div>
             </div>
 
-            <div className="rounded-lg border border-violet-200 bg-violet-50/50 p-4 space-y-3 mb-4">
-              <button
-                type="button"
-                disabled
-                aria-label="Amazon Pay (coming soon)"
-                className="w-full flex h-11 items-center justify-center rounded-md bg-[#FFD814] text-[#111] font-semibold text-sm opacity-90 cursor-not-allowed"
-              >
-                <span className="lowercase">
-                  amazon <span className="font-bold">pay</span>
-                </span>
-              </button>
-              <button
-                type="button"
-                disabled
-                aria-label="Pay with Link (coming soon)"
-                className="w-full flex h-11 items-center justify-center gap-1.5 rounded-md bg-[#00D66F] text-white font-semibold text-sm opacity-90 cursor-not-allowed"
-              >
-                Pay with
-                <span className="inline-flex items-center rounded bg-[#1a1f36] px-1.5 py-0.5 text-xs font-bold text-white">
-                  link
-                </span>
-              </button>
-              <div className="flex items-center gap-3 py-1">
-                <span className="h-px flex-1 bg-slate-300" />
-                <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Or</span>
-                <span className="h-px flex-1 bg-slate-300" />
-              </div>
-            </div>
-
             <Link
               href="/checkout"
               className="block w-full text-center rounded-md bg-primary text-white font-bold text-sm uppercase tracking-wide py-3.5 hover:bg-primary/90 transition"
