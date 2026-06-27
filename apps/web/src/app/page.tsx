@@ -98,16 +98,19 @@ export default async function HomePage() {
 
       <HomeSeoSection />
 
-      <section className="max-w-3xl mx-auto px-4 py-12">
-        <h2 className="text-2xl font-bold text-primary text-center mb-2">Frequently Asked Questions</h2>
+      <section className="max-w-7xl mx-auto px-4 py-12">
+        <h2 className="text-2xl font-bold text-primary text-center mb-2">More Questions?</h2>
         <p className="text-center text-sm text-slate-500 mb-6">
-          <Link href="/faq" className="text-nav hover:underline">View all FAQs</Link>
+          Quick answers below — or{" "}
+          <Link href="/faq" className="text-nav hover:underline">
+            read our full FAQ page
+          </Link>
         </p>
-        <div className="space-y-3">
+        <div className="grid md:grid-cols-2 gap-4">
           {faqs.slice(0, 6).map((f) => (
-            <details key={f.q} className="border border-slate-200 rounded-lg p-4 bg-white">
+            <details key={f.q} className="border border-slate-200 rounded-xl p-5 bg-white">
               <summary className="font-semibold text-primary cursor-pointer text-sm">{f.q}</summary>
-              <p className="text-slate-600 text-sm mt-2">{f.a}</p>
+              <p className="text-slate-600 text-sm mt-2 leading-relaxed">{f.a}</p>
             </details>
           ))}
         </div>

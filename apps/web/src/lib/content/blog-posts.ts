@@ -1,8 +1,11 @@
+import { cdnUploadUrl } from "@hr-ecom/shared";
+
 export interface BlogPost {
   slug: string;
   title: string;
   description: string;
   excerpt: string;
+  image: string;
   publishedAt: string;
   updatedAt: string;
   /** HTML-safe markdown-ish paragraphs */
@@ -20,6 +23,7 @@ export const blogPosts: BlogPost[] = [
       "Living in India but your brother is in America? Here is everything you need to know about sending Rakhi to the USA online.",
     publishedAt: "2026-01-15",
     updatedAt: "2026-06-01",
+    image: "/banners/banner-3-india-usa.png",
     relatedCategory: "single-rakhi",
     sections: [
       {
@@ -68,6 +72,7 @@ export const blogPosts: BlogPost[] = [
       "Combine tradition with a sweet treat — our favorite Rakhi chocolate combos for brothers in the USA.",
     publishedAt: "2026-02-01",
     updatedAt: "2026-06-01",
+    image: "/banners/banner-1-usa-rakhi-delivery.png",
     relatedCategory: "rakhi-combo",
     sections: [
       {
@@ -104,6 +109,7 @@ export const blogPosts: BlogPost[] = [
       "Celebrate both your brother and sister-in-law with elegant Bhaiya Bhabhi Rakhi sets delivered across America.",
     publishedAt: "2026-02-15",
     updatedAt: "2026-06-01",
+    image: cdnUploadUrl("2026/06/Untitled-design-31-1.png"),
     relatedCategory: "bhaiya-bhabhi-rakhi",
     sections: [
       {
@@ -134,6 +140,7 @@ export const blogPosts: BlogPost[] = [
       "When is Raksha Bandhan 2026? How to plan Rakhi delivery to USA so your brother receives it on time.",
     publishedAt: "2026-03-01",
     updatedAt: "2026-06-01",
+    image: "/banners/banner-2-connecting-hearts.png",
     relatedCategory: "single-rakhi",
     sections: [
       {
@@ -176,6 +183,7 @@ export const blogPosts: BlogPost[] = [
       "Fun, safe, and festival-ready — how to pick Kids Rakhi for brothers living in the United States.",
     publishedAt: "2026-04-01",
     updatedAt: "2026-06-01",
+    image: cdnUploadUrl("2026/06/review-picture-2.png"),
     relatedCategory: "kids-rakhi",
     sections: [
       {
@@ -211,6 +219,7 @@ export const blogPosts: BlogPost[] = [
       "The bracelet Rakhi for Bhabhi — tradition explained and the easiest way to deliver Lumba Rakhi in America.",
     publishedAt: "2026-04-15",
     updatedAt: "2026-06-01",
+    image: cdnUploadUrl("2026/03/coustomer-3-768x1152-1.webp"),
     relatedCategory: "lumba-rakhi",
     sections: [
       {

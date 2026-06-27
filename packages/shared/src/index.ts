@@ -7,6 +7,7 @@ export * from "./schemas/event";
 export * from "./schemas/user";
 export * from "./schemas/account";
 export * from "./schemas/payment";
+export * from "./schemas/chat";
 export * from "./lib/currency-display";
 export * from "./lib/image-url";
 export * from "./db/keys";

@@ -2,11 +2,11 @@
 
 import { useState, useEffect, type ReactNode } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useCart } from "@/lib/cart-context";
 import { site, navItems, cityLinks } from "@/lib/site";
 import { SearchBar } from "@/components/SearchBar";
+import { SiteLogoLink } from "@/components/SiteLogo";
 
 function CitiesMenu({ onNavigate }: { onNavigate?: () => void }) {
   const [open, setOpen] = useState(false);
@@ -66,6 +66,20 @@ function AccountLink({ className = "" }: { className?: string }) {
           strokeLinecap="round"
           strokeLinejoin="round"
           d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+        />
+      </svg>
+    </Link>
+  );
+}
+
+function WishlistLink({ className = "" }: { className?: string }) {
+  return (
+    <Link href="/wishlist" className={`p-2 text-primary hover:text-nav ${className}`} aria-label="Wishlist">
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
         />
       </svg>
     </Link>
@@ -173,10 +187,10 @@ export function Header() {
   return (
     <header className="border-b border-slate-200 bg-white sticky top-0 z-50 shadow-sm overflow-visible">
       {/* Mobile top bar */}
-      <div className="md:hidden max-w-7xl mx-auto px-4 py-3 flex items-center gap-3">
+      <div className="md:hidden max-w-7xl mx-auto px-3 py-3 flex items-center gap-2">
         <button
           type="button"
-          className="p-1 text-nav hover:text-primary shrink-0"
+          className="p-1.5 text-nav hover:text-primary shrink-0"
           aria-label="Open menu"
           aria-expanded={menuOpen}
           onClick={() => setMenuOpen(true)}
@@ -184,21 +198,20 @@ export function Header() {
           <BurgerIcon />
         </button>
 
-        <Link href="/" className="flex-1 flex justify-center min-w-0" onClick={closeMenu}>
-          <Image src={site.logoSrc} alt={site.name} width={150} height={50} className="h-10 w-auto" priority />
-        </Link>
+        <SiteLogoLink size="mobile" priority onClick={closeMenu} />
+
+        <div className="flex-1" />
 
         <div className="flex items-center shrink-0">
-          <AccountLink className="text-nav hover:text-primary" />
-          <CartLink />
+          <AccountLink className="text-nav hover:text-primary p-1.5" />
+          <WishlistLink className="text-nav hover:text-primary p-1.5" />
+          <CartLink className="p-1.5" />
         </div>
       </div>
 
       {/* Desktop top bar */}
       <div className="hidden md:grid max-w-7xl mx-auto px-4 py-3 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-6">
-        <Link href="/" className="shrink-0">
-          <Image src={site.logoSrc} alt={site.name} width={150} height={50} className="h-11 w-auto" priority />
-        </Link>
+        <SiteLogoLink size="desktop" priority />
 
         <div className="w-full max-w-2xl mx-auto">
           <SearchBar />
@@ -277,21 +290,33 @@ export function Header() {
 
             <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-1">
               {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={closeMenu}
-                  className={`block rounded-lg px-4 py-3 text-sm font-semibold ${
-                    isActive(item.href, "category" in item ? item.category : undefined)
-                      ? "bg-nav text-white"
-                      : "text-primary hover:bg-blue-50 hover:text-nav"
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              ))}
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={closeMenu}
+                className={`block rounded-lg px-4 py-3 text-sm font-semibold ${
+                  isActive(item.href, "category" in item ? item.category : undefined)
+                    ? "bg-nav text-white"
+                    : "text-primary hover:bg-blue-50 hover:text-nav"
+                }`}
+              >
+                {item.label}
+              </Link>
+            ))}
 
-              <div>
+            <Link
+              href="/wishlist"
+              onClick={closeMenu}
+              className={`block rounded-lg px-4 py-3 text-sm font-semibold ${
+                pathname === "/wishlist"
+                  ? "bg-nav text-white"
+                  : "text-primary hover:bg-blue-50 hover:text-nav"
+              }`}
+            >
+              Wish Lists
+            </Link>
+
+            <div>
                 <button
                   type="button"
                   onClick={() => setCitiesOpen((v) => !v)}

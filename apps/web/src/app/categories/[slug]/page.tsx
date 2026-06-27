@@ -4,10 +4,12 @@ import { notFound } from "next/navigation";
 import { api } from "@/lib/api";
 import { HomeProductCard } from "@/components/HomeProductCard";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { CategoryContentSection } from "@/components/CategoryContentSection";
 import { JsonLd } from "@/components/JsonLd";
 import { getCategoryContent } from "@/lib/content/category-content";
+import { getCategoryRichContent } from "@/lib/content/category-rich-content";
 import { categoryOrder } from "@/lib/site";
-import { breadcrumbJsonLd, itemListJsonLd, pageMetadata } from "@/lib/seo";
+import { breadcrumbJsonLd, faqJsonLd, itemListJsonLd, pageMetadata } from "@/lib/seo";
 import type { Product, Category } from "@hr-ecom/shared";
 
 interface Props {
@@ -62,6 +64,7 @@ export default async function CategoryPage({ params }: Props) {
     category?.description?.trim() ||
     `Browse our ${name} collection — premium Rakhis delivered to all 50 US states. Order online from India, UK, Canada, or anywhere worldwide.`;
   const extra = getCategoryContent(slug);
+  const rich = getCategoryRichContent(slug);
 
   const crumbs = [
     { label: "Home", href: "/" },
@@ -78,6 +81,7 @@ export default async function CategoryPage({ params }: Props) {
             `${name} — UsaRakhi USA`,
             products.map((p) => ({ name: p.name, path: `/products/${p.slug}` }))
           ),
+          ...(rich ? [faqJsonLd(rich.faqs)] : []),
         ]}
       />
       <Breadcrumbs items={crumbs} />
@@ -98,57 +102,63 @@ export default async function CategoryPage({ params }: Props) {
         </p>
       )}
 
-      <section className="mt-12 pt-10 border-t border-slate-200">
-        <div className="grid lg:grid-cols-2 gap-x-12 gap-y-6 text-slate-700 leading-relaxed">
-          <div className="space-y-4">
-            {baseDescription.split(/(?<=\.)\s+/).map((para, i) => (
-              <p key={i}>{para}</p>
-            ))}
-            {extra?.extraParagraphs.map((para, i) => (
-              <p key={`extra-${i}`}>{para}</p>
-            ))}
-          </div>
-          {extra?.sections && extra.sections.length > 0 && (
-            <div className="space-y-6">
-              {extra.sections.map((section) => (
-                <div key={section.heading}>
-                  <h2 className="text-lg font-bold text-primary mb-3">{section.heading}</h2>
-                  <ul className="space-y-2 text-sm">
-                    {section.paragraphs.map((item, i) => (
-                      <li key={i} className="flex gap-2">
-                        <span className="text-nav mt-1 shrink-0">•</span>
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
+      {rich ? (
+        <CategoryContentSection content={rich} categoryName={name} />
+      ) : (
+        <>
+          <section className="mt-12 pt-10 border-t border-slate-200">
+            <div className="grid lg:grid-cols-2 gap-x-12 gap-y-6 text-slate-700 leading-relaxed">
+              <div className="space-y-4">
+                {baseDescription.split(/(?<=\.)\s+/).map((para, i) => (
+                  <p key={i}>{para}</p>
+                ))}
+                {extra?.extraParagraphs.map((para, i) => (
+                  <p key={`extra-${i}`}>{para}</p>
+                ))}
+              </div>
+              {extra?.sections && extra.sections.length > 0 && (
+                <div className="space-y-6">
+                  {extra.sections.map((section) => (
+                    <div key={section.heading}>
+                      <h2 className="text-lg font-bold text-primary mb-3">{section.heading}</h2>
+                      <ul className="space-y-2 text-sm">
+                        {section.paragraphs.map((item, i) => (
+                          <li key={i} className="flex gap-2">
+                            <span className="text-nav mt-1 shrink-0">•</span>
+                            <span>{item}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
-          )}
-        </div>
-      </section>
+          </section>
 
-      <section className="mt-10 p-6 bg-slate-50 rounded-xl">
-        <h2 className="font-semibold text-primary mb-3">Why order {name} from UsaRakhi?</h2>
-        <ul className="grid sm:grid-cols-2 gap-x-8 gap-y-2 text-sm text-slate-600">
-          <li className="flex gap-2">
-            <span className="text-nav shrink-0">✓</span>
-            Fast Rakhi delivery to all 50 US states (5–7 business days)
-          </li>
-          <li className="flex gap-2">
-            <span className="text-nav shrink-0">✓</span>
-            Order from India, UK, Canada, Australia — we deliver inside USA
-          </li>
-          <li className="flex gap-2">
-            <span className="text-nav shrink-0">✓</span>
-            Complimentary roli and chawal with most rakhis
-          </li>
-          <li className="flex gap-2">
-            <span className="text-nav shrink-0">✓</span>
-            Secure checkout with Razorpay and Stripe
-          </li>
-        </ul>
-      </section>
+          <section className="mt-10 p-6 bg-slate-50 rounded-xl">
+            <h2 className="font-semibold text-primary mb-3">Why order {name} from UsaRakhi?</h2>
+            <ul className="grid sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-2 text-sm text-slate-600">
+              <li className="flex gap-2">
+                <span className="text-nav shrink-0">✓</span>
+                Fast Rakhi delivery to all 50 US states (5–7 business days)
+              </li>
+              <li className="flex gap-2">
+                <span className="text-nav shrink-0">✓</span>
+                Order from India, UK, Canada, Australia — we deliver inside USA
+              </li>
+              <li className="flex gap-2">
+                <span className="text-nav shrink-0">✓</span>
+                Complimentary roli and chawal with most rakhis
+              </li>
+              <li className="flex gap-2">
+                <span className="text-nav shrink-0">✓</span>
+                Secure checkout with Razorpay and Stripe
+              </li>
+            </ul>
+          </section>
+        </>
+      )}
     </div>
   );
 }
