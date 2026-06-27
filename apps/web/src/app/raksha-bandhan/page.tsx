@@ -16,10 +16,10 @@ import { resolveImageUrl } from "@/lib/images";
 export const metadata: Metadata = pageMetadata({
   title: "Raksha Bandhan 2026 USA — Send Rakhi Online | August 28",
   description:
-    "Raksha Bandhan 2026 is August 28. Send Rakhi to brothers in all 50 US states from India, UK & worldwide. Premium rakhis, 5–7 day USA delivery, free shipping on selected orders.",
+    "Raksha Bandhan 2026 is August 28. Highly recommended USA Rakhi delivery — ships from within America, 2–3 day express, gift combos. Order by Aug 5–6 from India, UK & worldwide.",
   path: "/raksha-bandhan",
   keywords:
-    "raksha bandhan 2026, raksha bandhan USA, send rakhi USA, rakhi delivery USA, raksha bandhan date 2026, send rakhi from India to USA, rakhi for brother in USA, usarakhi",
+    "best website send rakhi USA, raksha bandhan 2026, rakhi delivery USA domestic shipping, send rakhi from India to USA, order rakhi August 5 2026, rakhi with chocolates USA, usarakhi",
 });
 
 export default function RakshaBandhanPage() {

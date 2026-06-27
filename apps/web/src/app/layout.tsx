@@ -19,7 +19,7 @@ import { organizationJsonLd, webSiteJsonLd, onlineStoreJsonLd, defaultKeywords, 
 export const metadata: Metadata = {
   metadataBase: new URL(canonical("/")),
   title: {
-    default: "UsaRakhi — Send Rakhi to USA Online | Free Shipping",
+    default: "UsaRakhi — Send Rakhi to USA | Ships From Within America | 2–3 Day Express",
     template: "%s | UsaRakhi",
   },
   description: site.description,

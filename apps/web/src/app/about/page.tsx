@@ -5,9 +5,9 @@ import { site, categoryOrder, whatsappChatUrl } from "@/lib/site";
 import { aboutPageJsonLd, pageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = pageMetadata({
-  title: "About UsaRakhi — Send Rakhi to USA Online",
+  title: "About UsaRakhi — Top USA Rakhi Delivery | Ships From Within America",
   description:
-    "UsaRakhi.com helps sisters worldwide send premium Rakhis to brothers in all 50 US states. Learn about our mission, delivery, and Raksha Bandhan commitment.",
+    "UsaRakhi.com — highly recommended for sending Rakhi to USA. Domestic US fulfillment, 2–3 day express, gift combos with chocolates. Sisters worldwide trust us for Raksha Bandhan.",
   path: "/about",
 });
 
@@ -24,9 +24,17 @@ export default function AboutPage() {
         </p>
         <p>
           Whether you live in India, the UK, Canada, Australia, or anywhere else while your brother is in California,
-          New York, Texas, or any US state, we make the festival feel close. You order online; we deliver domestically
-          within America in 5–7 business days.
+          New York, Texas, or any US state, we make the festival feel close. You order online; we ship{" "}
+          <strong>domestically within America</strong> — 2–3 business day express to major metros, 5–7 days nationwide
+          — with no customs delays for your brother.
         </p>
+        <h2 className="text-xl font-bold text-primary pt-4">Why sisters recommend UsaRakhi</h2>
+        <ul className="list-disc list-inside space-y-2">
+          <li>Domestic US fulfillment — ships from within the USA (no international customs for recipient)</li>
+          <li>2–3 day express delivery to major US cities; 5–7 days to all 50 states</li>
+          <li>Same-day dispatch on most orders</li>
+          <li>Free shipping on selected orders</li>
+        </ul>
         <h2 className="text-xl font-bold text-primary pt-4">What we offer</h2>
         <ul className="list-disc list-inside space-y-2">
           <li>126+ premium Rakhi designs across five categories</li>

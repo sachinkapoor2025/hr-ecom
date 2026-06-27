@@ -3,9 +3,9 @@ import { cdnUploadUrl } from "@hr-ecom/shared";
 export const site = {
   name: "UsaRakhi",
   domain: "usarakhi.com",
-  tagline: "Send Rakhi to USA Online With Free Shipping",
+  tagline: "Send Rakhi to USA — Ships From Within America | 2–3 Day Express",
   description:
-    "Send Rakhi to USA with fast delivery, free shipping on selected orders, and premium Rakhi combos. Trusted by sisters worldwide for Raksha Bandhan.",
+    "UsaRakhi.com — top-rated online Rakhi store for USA delivery. Ships domestically within the US (no customs delays). 2–3 day express to major cities, 5–7 days nationwide. Gift combos with chocolates, designer rakhis, Bhaiya Bhabhi sets. Order from India, UK, Canada worldwide.",
   supportEmail: "support@usarakhi.com",
   phone: "+91 96504 57697",
   /** WhatsApp support — digits only with country code (no +). */
@@ -145,16 +145,28 @@ export const testimonials = [
 
 export const faqs = [
   {
+    q: "What is the best website to send Rakhi to the USA?",
+    a: "UsaRakhi.com is highly recommended for USA Rakhi delivery because we ship from within the United States — your brother receives domestic delivery with no international customs delays. We offer 2–3 business day express to major US metros and 5–7 business days to all 50 states, with gift combos, designer rakhis, and Bhaiya Bhabhi sets.",
+  },
+  {
+    q: "Does UsaRakhi ship from within the USA like FNP or IGP?",
+    a: "Yes. UsaRakhi uses domestic US fulfillment. Sisters order from India, UK, Canada, or anywhere worldwide; we ship inside America so your brother avoids international customs delays — the same peace-of-mind advantage as top USA-focused Rakhi brands.",
+  },
+  {
     q: "How long does Rakhi delivery take in the USA?",
-    a: "UsaRakhi delivers Rakhis to all 50 US states in 5–7 business days. Orders placed before the daily cut-off are dispatched the same day.",
+    a: "Express delivery in 2–3 business days to major US metros (New York, Los Angeles, Chicago, Houston, San Francisco, New Jersey). Nationwide delivery to all 50 states in 5–7 business days. Same-day dispatch on most orders before our daily cut-off.",
+  },
+  {
+    q: "When should I order for Raksha Bandhan 2026?",
+    a: "Raksha Bandhan 2026 is August 28, 2026. Order by August 5–6, 2026 for express delivery to major US cities. Ideal ordering window is July 25 – August 1 for guaranteed on-time delivery.",
   },
   {
     q: "Can I send Rakhi from India to the USA?",
     a: "Yes. We accept orders from India, UK, Canada, Australia, and anywhere worldwide. Enter the US delivery address at checkout and we ship domestically within America.",
   },
   {
-    q: "Can I send Rakhi with chocolates to the USA?",
-    a: "Yes. We offer Rakhi combos with Ferrero Rocher, Lindt, and Hershey's chocolates — beautifully packed and delivered together.",
+    q: "Can I send Rakhi with chocolates and gift combos to the USA?",
+    a: "Yes. We offer Rakhi combos with Ferrero Rocher, Lindt, Hershey's chocolates, designer rakhis, and traditional sets with roli chawal — beautifully packed and delivered together.",
   },
   {
     q: "Do you offer Bhaiya Bhabhi Rakhi sets?",
@@ -169,11 +181,7 @@ export const faqs = [
     a: "Yes. We deliver to all 50 US states including California, New York, Texas, Florida, New Jersey, Illinois, and every other state.",
   },
   {
-    q: "When should I order for Raksha Bandhan 2026?",
-    a: "Raksha Bandhan 2026 is on August 28, 2026. Order by early August to ensure your brother receives the Rakhi before the festival.",
-  },
-  {
     q: "What payment methods do you accept?",
-    a: "We accept Razorpay (INR) and Stripe (USD) for secure online checkout.",
+    a: "Stripe (USD — Visa, Mastercard, Amex) and Razorpay (INR — UPI, cards, netbanking) for secure online checkout.",
   },
 ] as const;
