@@ -45,16 +45,31 @@ async function incrementRollup(
   );
 }
 
-async function persistEvent(e: TrackEventInput) {
+function viewerCountry(event: APIGatewayProxyEventV2): string | undefined {
+  const headers = event.headers ?? {};
+  const raw =
+    headers["cloudfront-viewer-country"] ??
+    headers["CloudFront-Viewer-Country"] ??
+    headers["x-country-code"];
+  if (!raw || raw.length !== 2) return undefined;
+  return raw.toUpperCase();
+}
+
+async function persistEvent(e: TrackEventInput, country?: string) {
   const timestamp = e.at ?? now();
   const day = dayBucket(new Date(timestamp));
   const eventId = uuidv4();
+  const metadata = {
+    ...e.metadata,
+    ...(country ? { country } : {}),
+  };
 
   await docClient.send(
     new PutCommand({
       TableName: EVENTS_TABLE,
       Item: {
         ...e,
+        metadata: Object.keys(metadata).length ? metadata : undefined,
         eventId,
         createdAt: timestamp,
         PK: eventKeys.pk(e.sessionId),
@@ -96,6 +111,7 @@ export async function recordEvent(event: APIGatewayProxyEventV2) {
   const parsed = trackEventBatchSchema.safeParse(payload);
   if (!parsed.success) return badRequest(parsed.error.message);
 
-  await Promise.all(parsed.data.events.map((e) => persistEvent(e)));
+  const country = viewerCountry(event);
+  await Promise.all(parsed.data.events.map((e) => persistEvent(e, country)));
   return ok({ recorded: parsed.data.events.length });
 }

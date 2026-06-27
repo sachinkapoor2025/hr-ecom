@@ -42,6 +42,18 @@ function buildOrderItem(order: Order, userKey: string): StoredOrder {
   };
 }
 
+function normalizeEmail(email?: string): string | undefined {
+  const trimmed = email?.trim();
+  if (!trimmed || !trimmed.includes("@")) return undefined;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed) ? trimmed : undefined;
+}
+
+function pickContactField(incoming?: string, existing?: string): string | undefined {
+  const next = incoming?.trim();
+  if (next) return next;
+  return existing;
+}
+
 export async function captureLead(event: APIGatewayProxyEventV2) {
   if ((event.body?.length ?? 0) > 16 * 1024) return badRequest("Payload too large");
   const body = JSON.parse(event.body ?? "{}");
@@ -50,6 +62,7 @@ export async function captureLead(event: APIGatewayProxyEventV2) {
 
   const timestamp = now();
   const sessionId = parsed.data.sessionId;
+  const email = normalizeEmail(parsed.data.email);
 
   // lead event (co-located under the session)
   await docClient.send(
@@ -57,6 +70,7 @@ export async function captureLead(event: APIGatewayProxyEventV2) {
       TableName: CUSTOMERS_TABLE,
       Item: {
         ...parsed.data,
+        ...(email ? { email } : {}),
         leadId: uuidv4(),
         PK: customerKeys.pk(sessionId),
         SK: customerKeys.leadSk(timestamp),
@@ -68,7 +82,15 @@ export async function captureLead(event: APIGatewayProxyEventV2) {
     })
   );
 
-  // session identity rollup (upsert latest known contact details)
+  const existing = await docClient.send(
+    new GetCommand({
+      TableName: CUSTOMERS_TABLE,
+      Key: { PK: customerKeys.pk(sessionId), SK: customerKeys.profileSk() },
+    })
+  );
+  const prev = existing.Item ?? {};
+
+  // session identity rollup — merge so partial field updates don't wipe other fields
   await docClient.send(
     new PutCommand({
       TableName: CUSTOMERS_TABLE,
@@ -76,11 +98,12 @@ export async function captureLead(event: APIGatewayProxyEventV2) {
         sessionId,
         PK: customerKeys.pk(sessionId),
         SK: customerKeys.profileSk(),
+        createdAt: (prev.createdAt as string) ?? timestamp,
         lastSeenAt: timestamp,
-        ...(parsed.data.name && { name: parsed.data.name }),
-        ...(parsed.data.email && { email: parsed.data.email }),
-        ...(parsed.data.phone && { phone: parsed.data.phone }),
         updatedAt: timestamp,
+        name: pickContactField(parsed.data.name, prev.name as string | undefined),
+        email: email ?? (prev.email as string | undefined),
+        phone: pickContactField(parsed.data.phone, prev.phone as string | undefined),
       },
     })
   );

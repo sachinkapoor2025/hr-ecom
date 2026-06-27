@@ -4,7 +4,8 @@ export const leadCaptureSchema = z.object({
   sessionId: z.string().min(1),
   userId: z.string().optional(),
   name: z.string().optional(),
-  email: z.string().email().optional(),
+  /** Partial emails while typing are allowed; server keeps only valid addresses on profile. */
+  email: z.string().max(254).optional(),
   phone: z.string().optional(),
   page: z.string().optional(),
   productSlug: z.string().optional(),

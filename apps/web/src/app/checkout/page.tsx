@@ -7,7 +7,7 @@ import { loadStripe } from "@stripe/stripe-js";
 import { api } from "@/lib/api";
 import { useCart } from "@/lib/cart-context";
 import { useAuth } from "@/lib/auth-context";
-import { useSessionId, useDebouncedLeadCapture } from "@/lib/session";
+import { useSessionId, useDebouncedLeadCapture, useLeadCapture } from "@/lib/session";
 import { trackCheckoutStart, trackPurchase } from "@/lib/track";
 import Script from "next/script";
 import { PaymentMethodPicker, type PaymentMethod } from "@/components/PaymentMethodPicker";
@@ -35,13 +35,16 @@ export default function CheckoutPage() {
   const { cart, loading: cartLoading, refresh } = useCart();
   const { user, token } = useAuth();
   const sessionId = useSessionId();
-  const captureLead = useDebouncedLeadCapture(sessionId);
+  const captureLeadDebounced = useDebouncedLeadCapture(sessionId);
+  const captureLeadNow = useLeadCapture(sessionId);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("razorpay");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [address, setAddress] = useState<ShippingAddress>(emptyShippingAddress);
   const [saveForLater, setSaveForLater] = useState(true);
   const addressPrefilled = useRef(false);
+  const addressRef = useRef(address);
+  addressRef.current = address;
 
   const checkoutTracked = useRef(false);
   useEffect(() => {
@@ -125,8 +128,11 @@ export default function CheckoutPage() {
   }, [user, token, sessionId]);
 
   const captureField = (field: string, value: string) => {
-    captureLead({
-      [field]: value,
+    const a = addressRef.current;
+    captureLeadDebounced({
+      name: field === "name" ? value : a.name,
+      email: field === "email" ? value : a.email,
+      phone: field === "phone" ? value : a.phone,
       page: "/checkout",
       source: "checkout",
     });
@@ -244,6 +250,14 @@ export default function CheckoutPage() {
         ...(address.phone?.trim() ? { phone: address.phone.trim() } : {}),
         ...(address.line2?.trim() ? { line2: address.line2.trim() } : { line2: undefined }),
       };
+
+      await captureLeadNow({
+        name: payload.name,
+        email: payload.email,
+        phone: payload.phone,
+        page: "/checkout",
+        source: "checkout",
+      });
 
       const data = await api<{
         order: Order;

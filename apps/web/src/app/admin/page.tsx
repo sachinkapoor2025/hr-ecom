@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useApiClient } from "@/lib/auth-context";
+import { BarChart, AreaChart, ChartLegend } from "@/components/admin/Charts";
 
 interface Overview {
   days: number;
@@ -35,17 +36,26 @@ export default function AdminDashboard() {
   const [data, setData] = useState<Overview | null>(null);
   const [days, setDays] = useState(30);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     setLoading(true);
+    setError("");
     apiClient<Overview>(`/admin/analytics/overview?days=${days}`)
       .then(setData)
-      .catch(() => setData(null))
+      .catch((err) => {
+        setData(null);
+        setError(err instanceof Error ? err.message : "Could not load analytics");
+      })
       .finally(() => setLoading(false));
   }, [apiClient, days]);
 
-  const maxTraffic = Math.max(1, ...(data?.trafficByDay.map((d) => d.pageViews) ?? [1]));
   const maxFunnel = Math.max(1, ...(data?.funnel.map((f) => f.count) ?? [1]));
+  const trafficChart = (data?.trafficByDay ?? []).map((d) => ({
+    label: d.day,
+    value: d.pageViews,
+    secondary: d.purchases,
+  }));
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
@@ -64,6 +74,8 @@ export default function AdminDashboard() {
 
       {loading ? (
         <p className="text-slate-500">Loading analytics…</p>
+      ) : error ? (
+        <p className="text-red-600 text-sm mb-6">{error}</p>
       ) : (
         <>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -79,25 +91,27 @@ export default function AdminDashboard() {
 
           <div className="grid lg:grid-cols-2 gap-6 mb-8">
             <section className="bg-white border rounded-xl p-5">
-              <h2 className="font-semibold mb-4">Traffic ({days}d)</h2>
-              {data?.trafficByDay.length ? (
-                <div className="flex items-end gap-1 h-40">
-                  {data.trafficByDay.map((d) => (
-                    <div key={d.day} className="flex-1 flex flex-col items-center justify-end group">
-                      <div
-                        className="w-full bg-nav/80 rounded-t hover:bg-nav transition-all"
-                        style={{ height: `${(d.pageViews / maxTraffic) * 100}%` }}
-                        title={`${d.day}: ${d.pageViews} views, ${d.purchases} purchases`}
-                      />
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-slate-500">No traffic yet.</p>
-              )}
+              <h2 className="font-semibold mb-1">Traffic ({days}d)</h2>
+              <p className="text-xs text-slate-500 mb-4">Daily page views and purchases</p>
+              <BarChart data={trafficChart} showSecondary height={180} />
+              <ChartLegend
+                items={[
+                  { color: "#183a68", label: "Page views" },
+                  { color: "#16a34a", label: "Purchases" },
+                ]}
+              />
             </section>
 
             <section className="bg-white border rounded-xl p-5">
+              <h2 className="font-semibold mb-1">Page views trend</h2>
+              <p className="text-xs text-slate-500 mb-4">Visitor traffic over time</p>
+              <AreaChart
+                data={(data?.trafficByDay ?? []).map((d) => ({ label: d.day, value: d.pageViews }))}
+                height={180}
+              />
+            </section>
+
+            <section className="bg-white border rounded-xl p-5 lg:col-span-2">
               <h2 className="font-semibold mb-4">Conversion funnel</h2>
               <div className="space-y-2">
                 {(data?.funnel ?? []).map((f) => (
@@ -108,7 +122,7 @@ export default function AdminDashboard() {
                     </div>
                     <div className="h-5 bg-slate-100 rounded">
                       <div
-                        className="h-5 bg-accent rounded"
+                        className="h-5 bg-accent rounded transition-all"
                         style={{ width: `${(f.count / maxFunnel) * 100}%` }}
                       />
                     </div>
