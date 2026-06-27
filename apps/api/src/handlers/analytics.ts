@@ -1,7 +1,7 @@
 import { QueryCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
 import type { APIGatewayProxyEventV2 } from "aws-lambda";
 import { eventKeys, customerKeys, EVENT_TYPES } from "@hr-ecom/shared";
-import { docClient, EVENTS_TABLE, CUSTOMERS_TABLE, dayBucket } from "../lib/db";
+import { docClient, EVENTS_TABLE, CUSTOMERS_TABLE, dayBucket, now } from "../lib/db";
 import { ok, forbidden, badRequest } from "../lib/response";
 import { requireAdmin } from "../lib/auth";
 
@@ -138,45 +138,90 @@ interface SessionSummary {
   name?: string;
   email?: string;
   phone?: string;
+  country?: string;
+  timezone?: string;
+  locale?: string;
+  referrer?: string;
+  pages: string[];
+  products: string[];
+}
+
+const SESSION_EVENT_TYPES = [
+  EVENT_TYPES.PAGE_VIEW,
+  EVENT_TYPES.PRODUCT_VIEW,
+  EVENT_TYPES.CART_ADD,
+  EVENT_TYPES.CHECKOUT_START,
+  EVENT_TYPES.PURCHASE,
+  EVENT_TYPES.SEARCH,
+] as const;
+
+function mergeSessionEvent(
+  sessions: Map<string, SessionSummary>,
+  raw: Record<string, unknown>,
+  sessionId: string
+) {
+  const at = (raw.createdAt as string) ?? (raw.at as string) ?? now();
+  const path = raw.path as string | undefined;
+  const productSlug = raw.productSlug as string | undefined;
+  const metadata = (raw.metadata as Record<string, string> | undefined) ?? {};
+
+  const existing = sessions.get(sessionId);
+  if (!existing) {
+    sessions.set(sessionId, {
+      sessionId,
+      firstSeen: at,
+      lastSeen: at,
+      eventCount: 1,
+      lastPath: path,
+      country: metadata.country,
+      timezone: metadata.timezone,
+      locale: metadata.locale,
+      referrer: (raw.referrer as string | undefined) ?? undefined,
+      pages: path ? [path] : [],
+      products: productSlug ? [productSlug] : [],
+    });
+    return;
+  }
+
+  existing.eventCount += 1;
+  if (at > existing.lastSeen) {
+    existing.lastSeen = at;
+    existing.lastPath = path ?? existing.lastPath;
+    if (metadata.country) existing.country = metadata.country;
+    if (metadata.timezone) existing.timezone = metadata.timezone;
+    if (metadata.locale) existing.locale = metadata.locale;
+  }
+  if (at < existing.firstSeen) existing.firstSeen = at;
+  if (!existing.referrer && raw.referrer) existing.referrer = raw.referrer as string;
+  if (path && !existing.pages.includes(path)) existing.pages.push(path);
+  if (productSlug && !existing.products.includes(productSlug)) existing.products.push(productSlug);
+  if (!existing.country && metadata.country) existing.country = metadata.country;
+  if (!existing.timezone && metadata.timezone) existing.timezone = metadata.timezone;
+  if (!existing.locale && metadata.locale) existing.locale = metadata.locale;
 }
 
 export async function listSessions(event: APIGatewayProxyEventV2) {
   if (!requireAdmin(event)) return forbidden();
-  const days = parseDays(event, 2, 14);
+  const days = parseDays(event, 7, 14);
 
   const sessions = new Map<string, SessionSummary>();
 
   for (const day of rangeDays(days)) {
-    const res = await docClient.send(
-      new QueryCommand({
-        TableName: EVENTS_TABLE,
-        IndexName: "GSI1",
-        KeyConditionExpression: "GSI1PK = :pk",
-        ExpressionAttributeValues: { ":pk": eventKeys.gsi1pk(EVENT_TYPES.PAGE_VIEW, day) },
-        ScanIndexForward: false,
-        Limit: 1000,
-      })
-    );
-    for (const raw of (res.Items ?? []) as Record<string, unknown>[]) {
-      const sessionId = raw.sessionId as string;
-      if (!sessionId) continue;
-      const at = (raw.createdAt as string) ?? (raw.at as string) ?? day;
-      const existing = sessions.get(sessionId);
-      if (!existing) {
-        sessions.set(sessionId, {
-          sessionId,
-          firstSeen: at,
-          lastSeen: at,
-          eventCount: 1,
-          lastPath: raw.path as string | undefined,
-        });
-      } else {
-        existing.eventCount += 1;
-        if (at > existing.lastSeen) {
-          existing.lastSeen = at;
-          existing.lastPath = raw.path as string | undefined;
-        }
-        if (at < existing.firstSeen) existing.firstSeen = at;
+    for (const type of SESSION_EVENT_TYPES) {
+      const res = await docClient.send(
+        new QueryCommand({
+          TableName: EVENTS_TABLE,
+          IndexName: "GSI1",
+          KeyConditionExpression: "GSI1PK = :pk",
+          ExpressionAttributeValues: { ":pk": eventKeys.gsi1pk(type, day) },
+          ScanIndexForward: false,
+          Limit: 500,
+        })
+      );
+      for (const raw of (res.Items ?? []) as Record<string, unknown>[]) {
+        const sessionId = raw.sessionId as string;
+        if (!sessionId) continue;
+        mergeSessionEvent(sessions, raw, sessionId);
       }
     }
   }

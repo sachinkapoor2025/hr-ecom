@@ -9,9 +9,12 @@ import {
   customerKeys,
   ORDER_STATUS,
   ORDER_STATUS_TRANSITIONS,
+  convertCartItemsToCurrency,
+  cartSubtotal,
   type Order,
   type OrderStatusHistoryEntry,
 } from "@hr-ecom/shared";
+import { resolveCheckoutUsdInrRate } from "../lib/exchange-rate";
 import { docClient, ORDERS_TABLE, CUSTOMERS_TABLE, now } from "../lib/db";
 import { ok, created, badRequest, unauthorized, forbidden, notFound } from "../lib/response";
 import { getAuth, getSessionId, getUserOrSessionKey, requireAdmin } from "../lib/auth";
@@ -42,6 +45,18 @@ function buildOrderItem(order: Order, userKey: string): StoredOrder {
   };
 }
 
+function normalizeEmail(email?: string): string | undefined {
+  const trimmed = email?.trim();
+  if (!trimmed || !trimmed.includes("@")) return undefined;
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed) ? trimmed : undefined;
+}
+
+function pickContactField(incoming?: string, existing?: string): string | undefined {
+  const next = incoming?.trim();
+  if (next) return next;
+  return existing;
+}
+
 export async function captureLead(event: APIGatewayProxyEventV2) {
   if ((event.body?.length ?? 0) > 16 * 1024) return badRequest("Payload too large");
   const body = JSON.parse(event.body ?? "{}");
@@ -50,6 +65,7 @@ export async function captureLead(event: APIGatewayProxyEventV2) {
 
   const timestamp = now();
   const sessionId = parsed.data.sessionId;
+  const email = normalizeEmail(parsed.data.email);
 
   // lead event (co-located under the session)
   await docClient.send(
@@ -57,6 +73,7 @@ export async function captureLead(event: APIGatewayProxyEventV2) {
       TableName: CUSTOMERS_TABLE,
       Item: {
         ...parsed.data,
+        ...(email ? { email } : {}),
         leadId: uuidv4(),
         PK: customerKeys.pk(sessionId),
         SK: customerKeys.leadSk(timestamp),
@@ -68,7 +85,15 @@ export async function captureLead(event: APIGatewayProxyEventV2) {
     })
   );
 
-  // session identity rollup (upsert latest known contact details)
+  const existing = await docClient.send(
+    new GetCommand({
+      TableName: CUSTOMERS_TABLE,
+      Key: { PK: customerKeys.pk(sessionId), SK: customerKeys.profileSk() },
+    })
+  );
+  const prev = existing.Item ?? {};
+
+  // session identity rollup — merge so partial field updates don't wipe other fields
   await docClient.send(
     new PutCommand({
       TableName: CUSTOMERS_TABLE,
@@ -76,11 +101,12 @@ export async function captureLead(event: APIGatewayProxyEventV2) {
         sessionId,
         PK: customerKeys.pk(sessionId),
         SK: customerKeys.profileSk(),
+        createdAt: (prev.createdAt as string) ?? timestamp,
         lastSeenAt: timestamp,
-        ...(parsed.data.name && { name: parsed.data.name }),
-        ...(parsed.data.email && { email: parsed.data.email }),
-        ...(parsed.data.phone && { phone: parsed.data.phone }),
         updatedAt: timestamp,
+        name: pickContactField(parsed.data.name, prev.name as string | undefined),
+        email: email ?? (prev.email as string | undefined),
+        phone: pickContactField(parsed.data.phone, prev.phone as string | undefined),
       },
     })
   );
@@ -105,15 +131,26 @@ export async function checkout(event: APIGatewayProxyEventV2) {
   if (!cart?.items?.length) return badRequest("Cart is empty");
 
   const cartCurrency = cart.items[0]?.currency ?? "USD";
+  const checkoutCurrency = parsed.data.checkoutCurrency ?? cartCurrency;
 
-  const subtotal = cart.items.reduce(
-    (sum: number, item: { price: number; quantity: number }) => sum + item.price * item.quantity,
-    0
-  );
+  if (parsed.data.paymentMethod === "stripe" && checkoutCurrency !== "USD") {
+    return badRequest("Stripe checkout requires USD. Switch currency to USD or pay with Razorpay.");
+  }
+
+  const orderItems =
+    checkoutCurrency !== cartCurrency
+      ? convertCartItemsToCurrency(
+          cart.items,
+          checkoutCurrency,
+          await resolveCheckoutUsdInrRate(parsed.data.usdInrRate)
+        )
+      : cart.items;
+
+  const subtotal = cartSubtotal(orderItems);
   const shipping = 0;
   const tax = 0;
   const total = subtotal + shipping + tax;
-  const currency = cartCurrency;
+  const currency = checkoutCurrency;
 
   const orderId = uuidv4();
   const timestamp = now();
@@ -123,7 +160,7 @@ export async function checkout(event: APIGatewayProxyEventV2) {
     orderId,
     userId: auth?.userId,
     sessionId: getSessionId(event),
-    items: cart.items,
+    items: orderItems,
     subtotal,
     shipping,
     tax,

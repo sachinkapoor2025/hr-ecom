@@ -89,6 +89,8 @@ export function ProductDetailClient({
   const { cart, itemCount } = useCart();
   const { format } = useCurrency();
   const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [tab, setTab] = useState<Tab>("description");
   const [productUrl, setProductUrl] = useState("");
 
@@ -181,29 +183,6 @@ export function ProductDetailClient({
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              disabled
-              aria-label="Amazon Pay (coming soon)"
-              className="flex h-11 items-center justify-center rounded-md bg-[#FFD814] text-[#111] font-semibold text-sm opacity-90 cursor-not-allowed"
-            >
-              <span className="lowercase">
-                amazon <span className="font-bold">pay</span>
-              </span>
-            </button>
-            <button
-              type="button"
-              disabled
-              aria-label="Pay with Link (coming soon)"
-              className="flex h-11 items-center justify-center gap-1.5 rounded-md bg-[#00D66F] text-white font-semibold text-sm opacity-90 cursor-not-allowed"
-            >
-              Pay with
-              <span className="inline-flex items-center rounded bg-[#1a1f36] px-1.5 py-0.5 text-xs font-bold text-white">
-                link
-              </span>
-            </button>
-          </div>
         </div>
       </div>
 
@@ -254,7 +233,7 @@ export function ProductDetailClient({
               </div>
             )}
 
-            <div className="max-w-md">
+            <div className="max-w-md space-y-3">
               <LeadCaptureInput
                 label="Your name (helps us assist you)"
                 placeholder="Start typing your name..."
@@ -263,6 +242,42 @@ export function ProductDetailClient({
                 onDebouncedChange={(value) =>
                   captureLead({
                     name: value,
+                    email: email || undefined,
+                    phone: phone || undefined,
+                    page: `/products/${product.slug}`,
+                    productSlug: product.slug,
+                    source: "product",
+                  })
+                }
+              />
+              <LeadCaptureInput
+                label="Email (optional — for order updates)"
+                placeholder="you@example.com"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                onDebouncedChange={(value) =>
+                  captureLead({
+                    name: name || undefined,
+                    email: value,
+                    phone: phone || undefined,
+                    page: `/products/${product.slug}`,
+                    productSlug: product.slug,
+                    source: "product",
+                  })
+                }
+              />
+              <LeadCaptureInput
+                label="Phone (optional — WhatsApp support)"
+                placeholder="+1 555 000 0000"
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                onDebouncedChange={(value) =>
+                  captureLead({
+                    name: name || undefined,
+                    email: email || undefined,
+                    phone: value,
                     page: `/products/${product.slug}`,
                     productSlug: product.slug,
                     source: "product",

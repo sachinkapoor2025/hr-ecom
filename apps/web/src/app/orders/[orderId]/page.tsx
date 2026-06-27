@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useRef, useState, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { api } from "@/lib/api";
 import { useSessionId } from "@/lib/session";
 import { useAuth } from "@/lib/auth-context";
+import { trackPurchase } from "@/lib/track";
 import type { Order } from "@hr-ecom/shared";
 
 function OrderDetailInner({ orderId }: { orderId: string }) {
@@ -15,6 +16,7 @@ function OrderDetailInner({ orderId }: { orderId: string }) {
   const [order, setOrder] = useState<Order | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const purchaseTracked = useRef(false);
 
   const isDev = searchParams.get("dev") === "1";
   const redirectStatus = searchParams.get("redirect_status");
@@ -37,6 +39,17 @@ function OrderDetailInner({ orderId }: { orderId: string }) {
 
     void load();
   }, [orderId, sessionId, token]);
+
+  useEffect(() => {
+    if (!order || purchaseTracked.current) return;
+    const paid = order.status === "paid" || redirectStatus === "succeeded" || isDev;
+    if (!paid) return;
+    purchaseTracked.current = true;
+    trackPurchase(order.total, {
+      orderId: order.orderId,
+      provider: order.paymentProvider ?? "unknown",
+    });
+  }, [order, redirectStatus, isDev]);
 
   if (loading) {
     return <div className="max-w-lg mx-auto px-4 py-16 text-center text-slate-600">Loading order...</div>;

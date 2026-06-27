@@ -17,14 +17,20 @@ export const shippingAddressSchema = z.object({
 export const checkoutSchema = z.object({
   shippingAddress: shippingAddressSchema,
   paymentMethod: z.enum(["stripe", "razorpay"]),
+  /** Customer-selected display/checkout currency (from currency switcher). */
+  checkoutCurrency: z.enum(["USD", "INR"]).optional(),
+  /** Live USD→INR rate shown to the customer (optional; server validates). */
+  usdInrRate: z.number().positive().max(200).optional(),
 });
 
 const orderStatusEnum = z.enum([
   ORDER_STATUS.PENDING_PAYMENT,
   ORDER_STATUS.PAID,
+  ORDER_STATUS.ACCEPTED,
   ORDER_STATUS.PROCESSING,
   ORDER_STATUS.SHIPPED,
   ORDER_STATUS.DELIVERED,
+  ORDER_STATUS.COMPLETE,
   ORDER_STATUS.CANCELLED,
   ORDER_STATUS.REFUNDED,
 ]);
