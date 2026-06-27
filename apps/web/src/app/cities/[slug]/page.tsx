@@ -54,18 +54,8 @@ export default async function CityPage({ params }: Props) {
     <div className="max-w-7xl mx-auto px-4 py-10">
       <JsonLd data={breadcrumbJsonLd(crumbs.map((c) => ({ name: c.label, path: c.href ?? `/cities/${slug}` })))} />
       <Breadcrumbs items={crumbs} />
-      <h1 className="text-3xl font-bold text-primary mb-3">Send Rakhi to {city.label}, USA</h1>
-      <div className="text-slate-700 mb-8 max-w-3xl space-y-4 leading-relaxed">
-        <p>
-          Looking to send Rakhi to your brother in <strong>{city.label}</strong>? {site.name} delivers premium
-          Rakhis across {city.label} and all of America in 5–7 business days. Sisters in India, UK, Canada, and
-          worldwide order here — we ship domestically within the USA to your brother&apos;s doorstep.
-        </p>
-        <p>
-          Choose from Single Rakhi, Rakhi Combos with chocolates, Kids Rakhi, Bhaiya Bhabhi sets, and Lumba Rakhi.
-          Most orders include complimentary roli and chawal for the Raksha Bandhan tilak ceremony.
-        </p>
-      </div>
+      <h1 className="text-3xl font-bold text-primary mb-6">Send Rakhi to {city.label}, USA</h1>
+
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
         {cityProducts.map((p) => (
           <HomeProductCard key={p.slug} product={p} />
@@ -79,6 +69,21 @@ export default async function CityPage({ params }: Props) {
           </Link>
         </p>
       )}
+
+      <section className="mt-12 pt-8 border-t border-slate-200 max-w-3xl">
+        <div className="text-slate-700 space-y-4 leading-relaxed">
+          <p>
+            Looking to send Rakhi to your brother in <strong>{city.label}</strong>? {site.name} delivers premium
+            Rakhis across {city.label} and all of America in 5–7 business days. Sisters in India, UK, Canada, and
+            worldwide order here — we ship domestically within the USA to your brother&apos;s doorstep.
+          </p>
+          <p>
+            Choose from Single Rakhi, Rakhi Combos with chocolates, Kids Rakhi, Bhaiya Bhabhi sets, and Lumba Rakhi.
+            Most orders include complimentary roli and chawal for the Raksha Bandhan tilak ceremony.
+          </p>
+        </div>
+      </section>
+
       <section className="mt-12 p-6 bg-slate-50 rounded-xl text-sm text-slate-600">
         <h2 className="font-semibold text-primary mb-2">Also deliver to</h2>
         <div className="flex flex-wrap gap-2">
