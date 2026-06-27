@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { chatRequestSchema, type ChatMessage } from "@hr-ecom/shared";
 import { buildChatSystemPrompt } from "@/lib/chat/prompt";
+import { fallbackChatReply } from "@/lib/chat/fallback";
 
 const OPENAI_URL = "https://api.openai.com/v1/chat/completions";
 
@@ -10,6 +11,13 @@ function getApiKey(): string | undefined {
 
 function getModel(): string {
   return process.env.OPENAI_MODEL?.trim() || "gpt-4o-mini";
+}
+
+function lastUserMessage(messages: ChatMessage[]): string {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (messages[i].role === "user") return messages[i].content;
+  }
+  return "";
 }
 
 async function callOpenAI(systemPrompt: string, messages: ChatMessage[]): Promise<string> {
@@ -59,24 +67,24 @@ export async function POST(req: Request) {
     }
 
     const { messages, page } = parsed.data;
-
-    // Only send recent history to control token usage
     const recent = messages.slice(-10);
-    const systemPrompt = buildChatSystemPrompt(page);
+    const userText = lastUserMessage(recent);
 
-    const reply = await callOpenAI(systemPrompt, recent);
+    let reply: string;
+
+    if (getApiKey()) {
+      const systemPrompt = buildChatSystemPrompt(page);
+      reply = await callOpenAI(systemPrompt, recent);
+    } else {
+      reply = fallbackChatReply(userText);
+    }
 
     return NextResponse.json({ message: reply });
   } catch (err) {
     const code = err instanceof Error ? err.message : "UNKNOWN";
 
     if (code === "CHAT_NOT_CONFIGURED") {
-      return NextResponse.json(
-        {
-          error: "Chat is temporarily unavailable. Please WhatsApp us or email support@usarakhi.com.",
-        },
-        { status: 503 }
-      );
+      return NextResponse.json({ message: fallbackChatReply(lastUserMessage([])) });
     }
 
     return NextResponse.json(

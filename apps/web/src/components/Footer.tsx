@@ -1,7 +1,7 @@
 import Link from "next/link";
-import Image from "next/image";
 import { site, navItems, cityLinks, whatsappChatUrl } from "@/lib/site";
 import { PaymentMethodIcons } from "@/components/PaymentMethodIcons";
+import { SiteLogoLink } from "@/components/SiteLogo";
 
 const FACEBOOK_URL = "https://www.facebook.com/usarakhi/";
 const INSTAGRAM_URL = "https://www.instagram.com/usarakhi/";
@@ -13,15 +13,7 @@ export function Footer() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-8 sm:gap-x-8 sm:gap-y-10 text-sm">
           {/* Brand + contact — full width on mobile, one column on desktop */}
           <div className="col-span-2 lg:col-span-1">
-            <Link href="/" className="inline-block mb-5">
-              <Image
-                src={site.logoSrc}
-                alt={site.name}
-                width={180}
-                height={60}
-                className="h-12 w-auto max-w-[180px] object-contain mix-blend-lighten"
-              />
-            </Link>
+            <SiteLogoLink size="desktop" className="mb-5" />
             <p className="text-white/80 leading-relaxed mb-4 max-w-xs">
               Send Rakhi to USA from India, UK, Canada &amp; worldwide. Premium Rakhis delivered to all 50 US
               states.

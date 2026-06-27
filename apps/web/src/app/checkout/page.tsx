@@ -14,6 +14,7 @@ import Script from "next/script";
 import { PaymentMethodPicker, type PaymentMethod } from "@/components/PaymentMethodPicker";
 import { ShippingAddressForm } from "@/components/ShippingAddressForm";
 import { SecureCheckoutBadge } from "@/components/SecureCheckoutBadge";
+import { CheckoutLegalNotice } from "@/components/CheckoutLegalNotice";
 import {
   emptyShippingAddress,
   loadSavedAddresses,
@@ -50,6 +51,7 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     if (displayCurrency === "INR") setPaymentMethod("razorpay");
+    else if (displayCurrency === "USD") setPaymentMethod("stripe");
   }, [displayCurrency]);
 
   const checkoutTracked = useRef(false);
@@ -413,6 +415,8 @@ export default function CheckoutPage() {
                   ? "Pay with Razorpay"
                   : "Pay with Stripe"}
             </button>
+
+            <CheckoutLegalNotice className="text-center" />
 
             <SecureCheckoutBadge />
 

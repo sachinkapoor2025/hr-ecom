@@ -5,6 +5,8 @@ import { useState } from "react";
 import { useCart } from "@/lib/cart-context";
 import { useCurrency } from "@/lib/currency-context";
 import { SecureCheckoutBadge } from "@/components/SecureCheckoutBadge";
+import { PaymentMethodIcons } from "@/components/PaymentMethodIcons";
+import { CheckoutLegalNotice } from "@/components/CheckoutLegalNotice";
 import { resolveImageUrl } from "@/lib/images";
 import type { DisplayCurrency } from "@/lib/currency-context";
 
@@ -97,34 +99,52 @@ export default function CartPage() {
             </h1>
 
             <ul className="space-y-6">
-              {items.map((item) => (
-                <li
-                  key={item.productSlug}
-                  className="flex flex-col sm:flex-row sm:items-center gap-4 pb-6 border-b border-slate-200 last:border-0 last:pb-0"
-                >
-                  <Link
-                    href={`/products/${item.productSlug}`}
-                    className="shrink-0 w-24 h-24 sm:w-28 sm:h-28 rounded-lg overflow-hidden bg-slate-50 border border-slate-100"
-                  >
-                    {item.image ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={resolveImageUrl(item.image)} alt={item.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs">No image</div>
-                    )}
-                  </Link>
+              {items.map((item) => {
+                const lineCurrency = (item.currency ?? currency) as DisplayCurrency;
+                const lineTotal = item.price * item.quantity;
 
-                  <div className="flex-1 min-w-0 space-y-3">
+                return (
+                  <li
+                    key={item.productSlug}
+                    className="flex gap-4 pb-6 border-b border-slate-200 last:border-0 last:pb-0"
+                  >
                     <Link
                       href={`/products/${item.productSlug}`}
-                      className="font-bold text-slate-900 hover:text-nav line-clamp-2 leading-snug"
+                      className="shrink-0 w-24 h-24 sm:w-28 sm:h-28 rounded-lg overflow-hidden bg-slate-50 border border-slate-100"
                     >
-                      {item.name}
+                      {item.image ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={resolveImageUrl(item.image)} alt={item.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs">No image</div>
+                      )}
                     </Link>
-                    <CartQuantityControls productSlug={item.productSlug} quantity={item.quantity} />
-                  </div>
-                </li>
-              ))}
+
+                    <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                      <div className="space-y-3 min-w-0">
+                        <Link
+                          href={`/products/${item.productSlug}`}
+                          className="font-bold text-slate-900 hover:text-nav line-clamp-2 leading-snug block"
+                        >
+                          {item.name}
+                        </Link>
+                        <CartQuantityControls productSlug={item.productSlug} quantity={item.quantity} />
+                      </div>
+
+                      <div className="sm:text-right shrink-0">
+                        <p className="font-bold text-accent text-base sm:text-lg">
+                          {format(lineTotal, lineCurrency)}
+                        </p>
+                        {item.quantity > 1 && (
+                          <p className="text-xs text-slate-500 mt-0.5">
+                            {format(item.price, lineCurrency)} each
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           </div>
 
@@ -133,13 +153,24 @@ export default function CartPage() {
 
             <div className="space-y-3 text-sm border-b border-slate-200 pb-4 mb-5">
               <div className="flex items-center justify-between gap-4">
+                <span className="text-slate-700">Subtotal ({itemCount} {itemCount === 1 ? "item" : "items"})</span>
+                <span className="font-medium text-slate-900">{format(total, currency)}</span>
+              </div>
+              <div className="flex items-center justify-between gap-4">
                 <span className="text-slate-700">Shipping fee</span>
                 <span className="font-bold text-accent">FREE</span>
               </div>
-              <div className="flex items-center justify-between gap-4">
-                <span className="text-slate-700">Estimated total</span>
+              <div className="flex items-center justify-between gap-4 pt-2 border-t border-slate-100">
+                <span className="font-bold text-slate-900">Estimated total</span>
                 <span className="font-bold text-accent text-base">{format(total, currency)}</span>
               </div>
+            </div>
+
+            <div className="mb-5">
+              <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2">
+                Accepted payment methods
+              </p>
+              <PaymentMethodIcons />
             </div>
 
             <Link
@@ -149,6 +180,7 @@ export default function CartPage() {
               Proceed to checkout
             </Link>
 
+            <CheckoutLegalNotice className="mt-4 text-center" />
             <SecureCheckoutBadge className="mt-4" />
           </aside>
         </div>
