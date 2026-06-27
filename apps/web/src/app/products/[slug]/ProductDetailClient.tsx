@@ -89,6 +89,8 @@ export function ProductDetailClient({
   const { cart, itemCount } = useCart();
   const { format } = useCurrency();
   const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [tab, setTab] = useState<Tab>("description");
   const [productUrl, setProductUrl] = useState("");
 
@@ -231,7 +233,7 @@ export function ProductDetailClient({
               </div>
             )}
 
-            <div className="max-w-md">
+            <div className="max-w-md space-y-3">
               <LeadCaptureInput
                 label="Your name (helps us assist you)"
                 placeholder="Start typing your name..."
@@ -240,6 +242,42 @@ export function ProductDetailClient({
                 onDebouncedChange={(value) =>
                   captureLead({
                     name: value,
+                    email: email || undefined,
+                    phone: phone || undefined,
+                    page: `/products/${product.slug}`,
+                    productSlug: product.slug,
+                    source: "product",
+                  })
+                }
+              />
+              <LeadCaptureInput
+                label="Email (optional — for order updates)"
+                placeholder="you@example.com"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                onDebouncedChange={(value) =>
+                  captureLead({
+                    name: name || undefined,
+                    email: value,
+                    phone: phone || undefined,
+                    page: `/products/${product.slug}`,
+                    productSlug: product.slug,
+                    source: "product",
+                  })
+                }
+              />
+              <LeadCaptureInput
+                label="Phone (optional — WhatsApp support)"
+                placeholder="+1 555 000 0000"
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                onDebouncedChange={(value) =>
+                  captureLead({
+                    name: name || undefined,
+                    email: email || undefined,
+                    phone: value,
                     page: `/products/${product.slug}`,
                     productSlug: product.slug,
                     source: "product",
