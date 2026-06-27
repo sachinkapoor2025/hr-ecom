@@ -6,6 +6,7 @@ import { AddToCartControl } from "@/components/AddToCartControl";
 import { WishlistButton } from "@/components/WishlistButton";
 import { useCurrency } from "@/lib/currency-context";
 import { getDiscountPercent } from "@/lib/pricing";
+import { resolveImageUrl } from "@/lib/images";
 
 export function HomeProductCard({ product }: { product: Product }) {
   const { format } = useCurrency();
@@ -24,7 +25,7 @@ export function HomeProductCard({ product }: { product: Product }) {
           {product.images?.[0] ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={product.images[0]}
+              src={resolveImageUrl(product.images[0])}
               alt={product.name}
               className="absolute inset-0 h-full w-full object-cover object-center"
             />

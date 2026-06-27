@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { testimonials } from "@/lib/site";
+import { resolveImageUrl } from "@/lib/images";
 
 function StarRating({ rating }: { rating: number }) {
   return (
@@ -46,7 +47,7 @@ export function CustomerReviews() {
             <article key={review.name} className="flex flex-col">
               <div className="relative w-full max-w-[220px] aspect-[2/3] rounded-[999px] overflow-hidden bg-slate-100 mb-5 mx-auto sm:mx-0">
                 <Image
-                  src={review.image}
+                  src={resolveImageUrl(review.image)}
                   alt={`${review.name} customer review`}
                   fill
                   className="object-cover"

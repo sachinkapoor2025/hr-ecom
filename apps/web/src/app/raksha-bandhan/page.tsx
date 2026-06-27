@@ -11,6 +11,7 @@ import {
 } from "@/lib/content/raksha-bandhan";
 import { JsonLd } from "@/components/JsonLd";
 import { faqJsonLd, pageMetadata, rakshaBandhanEventJsonLd } from "@/lib/seo";
+import { resolveImageUrl } from "@/lib/images";
 
 export const metadata: Metadata = pageMetadata({
   title: "Raksha Bandhan 2026 USA — Send Rakhi Online | August 28",
@@ -84,7 +85,7 @@ export default function RakshaBandhanPage() {
             <figure key={item.src} className="rounded-xl overflow-hidden border border-slate-200 bg-white shadow-sm">
               <div className="relative aspect-square bg-slate-50">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={item.src} alt={item.alt} className="w-full h-full object-contain p-2" />
+                <img src={resolveImageUrl(item.src)} alt={item.alt} className="w-full h-full object-contain p-2" />
               </div>
               <figcaption className="p-3 text-sm font-medium text-primary text-center">{item.caption}</figcaption>
             </figure>
@@ -122,7 +123,7 @@ export default function RakshaBandhanPage() {
               <article key={story.sister} className="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
                 <div className="relative aspect-[4/5] max-h-72 bg-slate-100">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={story.image} alt={`${story.sister} and ${story.brother}`} className="w-full h-full object-cover object-top" />
+                  <img src={resolveImageUrl(story.image)} alt={`${story.sister} and ${story.brother}`} className="w-full h-full object-cover object-top" />
                 </div>
                 <div className="p-6">
                   <p className="text-xs font-semibold text-nav uppercase tracking-wide mb-1">
