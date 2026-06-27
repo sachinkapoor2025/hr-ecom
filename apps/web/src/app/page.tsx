@@ -4,9 +4,10 @@ import { api } from "@/lib/api";
 import { BannerCarousel } from "@/components/BannerCarousel";
 import { CustomerReviews } from "@/components/CustomerReviews";
 import { HomeProductCard } from "@/components/HomeProductCard";
+import { HomeSeoSection } from "@/components/HomeSeoSection";
 import { JsonLd } from "@/components/JsonLd";
-import { site, homeBanners, categoryOrder, faqs } from "@/lib/site";
-import { faqJsonLd, pageMetadata } from "@/lib/seo";
+import { site, homeBanners, homeCategoryOrder, faqs } from "@/lib/site";
+import { faqJsonLd, howToSendRakhiJsonLd, pageMetadata } from "@/lib/seo";
 import type { Product, Category } from "@hr-ecom/shared";
 
 export const metadata: Metadata = pageMetadata({
@@ -34,7 +35,7 @@ export default async function HomePage() {
   }
 
   const categoryMap = new Map(categories.map((c) => [c.slug, c]));
-  const productsByCategory = categoryOrder.map((slug) => ({
+  const productsByCategory = homeCategoryOrder.map((slug) => ({
     slug,
     name: categoryMap.get(slug)?.name ?? slug.replace(/-/g, " "),
     products: products.filter((p) => p.categorySlug === slug),
@@ -42,7 +43,7 @@ export default async function HomePage() {
 
   return (
     <div>
-      <JsonLd data={faqJsonLd(faqs)} />
+      <JsonLd data={[faqJsonLd(faqs), howToSendRakhiJsonLd()]} />
       <BannerCarousel banners={homeBanners} />
 
       <section className="max-w-4xl mx-auto px-4 py-10 text-center">
@@ -77,7 +78,7 @@ export default async function HomePage() {
                 View All →
               </Link>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 items-stretch">
               {section.products.slice(0, 10).map((p) => (
                 <HomeProductCard key={p.slug} product={p} />
               ))}
@@ -94,6 +95,8 @@ export default async function HomePage() {
       )}
 
       <CustomerReviews />
+
+      <HomeSeoSection />
 
       <section className="max-w-3xl mx-auto px-4 py-12">
         <h2 className="text-2xl font-bold text-primary text-center mb-2">Frequently Asked Questions</h2>

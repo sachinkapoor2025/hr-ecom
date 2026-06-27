@@ -94,64 +94,16 @@ export function BannerCarousel({ banners }: { banners: readonly HomeBanner[] }) 
 
   return (
     <section
-      className="max-w-7xl mx-auto px-4 pt-4 pb-2"
+      className="w-full"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       aria-label="Featured promotions"
     >
-      <div className="relative overflow-hidden rounded-2xl md:rounded-3xl border border-blue-100 bg-gradient-to-br from-sky-50 via-white to-blue-50 shadow-[0_8px_40px_-12px_rgba(24,58,104,0.18)]">
-        {/* Soft decorative blobs */}
-        <div className="pointer-events-none absolute -top-20 -right-20 h-56 w-56 rounded-full bg-nav/10 blur-3xl" aria-hidden />
-        <div className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-accent/5 blur-3xl" aria-hidden />
-
-        <div className="relative grid lg:grid-cols-2 gap-6 lg:gap-8 p-5 sm:p-8 lg:p-10 items-center">
-          {/* Copy */}
-          <div className="order-2 lg:order-1 text-center lg:text-left z-10">
-            <div key={banner.src} className="hero-slide-in">
-            <Eyebrow text={banner.eyebrow} />
-
-            <h1 className="font-serif text-3xl sm:text-4xl lg:text-[2.65rem] leading-tight text-primary mb-4">
-              {banner.title}{" "}
-              <span className="text-nav italic">{banner.titleAccent}</span>
-            </h1>
-
-            <p className="text-slate-600 text-sm sm:text-base leading-relaxed max-w-md mx-auto lg:mx-0 mb-6">
-              {banner.description}
-            </p>
-
-            {banner.href && (
-              <Link
-                href={banner.href}
-                className="inline-flex items-center justify-center rounded-full bg-nav text-white font-semibold text-sm px-7 py-3 hover:bg-primary transition shadow-md shadow-nav/25"
-              >
-                {banner.cta}
-                <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                </svg>
-              </Link>
-            )}
-
-            {/* Trust icons — desktop inline under CTA */}
-            <ul className="hidden sm:grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8 max-w-lg mx-auto lg:mx-0">
-              {TRUST_FEATURES.map((f) => (
-                <li key={f.label} className="flex flex-col items-center lg:items-start gap-2">
-                  <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white border border-blue-100 text-nav shadow-sm">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.75}>
-                      {f.icon}
-                    </svg>
-                  </span>
-                  <span className="text-[11px] font-semibold text-primary/90 leading-tight text-center lg:text-left">
-                    {f.label}
-                  </span>
-                </li>
-              ))}
-            </ul>
-            </div>
-          </div>
-
+      <div className="relative overflow-hidden bg-white border-b border-slate-100">
+        <div className="relative max-w-7xl mx-auto lg:grid lg:grid-cols-[2fr_3fr] lg:gap-6 lg:items-center lg:px-4 lg:py-4">
           {/* Banner image */}
-          <div className="order-1 lg:order-2 relative">
-            <div className="relative aspect-[16/10] sm:aspect-[16/9] lg:aspect-[4/3] rounded-xl md:rounded-2xl overflow-hidden border border-white/80 shadow-lg ring-1 ring-primary/5 bg-white">
+          <div className="order-1 lg:order-2 relative w-full">
+            <div className="relative w-full aspect-[5/2] sm:aspect-[1024/420] overflow-hidden bg-slate-900/5">
               {banners.map((b, i) => (
                 <div
                   key={b.src}
@@ -166,8 +118,8 @@ export function BannerCarousel({ banners }: { banners: readonly HomeBanner[] }) 
                         src={b.src}
                         alt={b.alt}
                         fill
-                        className="object-contain object-center p-1 sm:p-2"
-                        sizes="(max-width: 1024px) 100vw, 50vw"
+                        className="object-cover object-center"
+                        sizes="(max-width: 1024px) 100vw, 60vw"
                         priority={i === 0}
                       />
                     </Link>
@@ -176,45 +128,87 @@ export function BannerCarousel({ banners }: { banners: readonly HomeBanner[] }) 
                       src={b.src}
                       alt={b.alt}
                       fill
-                      className="object-contain object-center p-1 sm:p-2"
-                      sizes="(max-width: 1024px) 100vw, 50vw"
+                      className="object-cover object-center"
+                      sizes="(max-width: 1024px) 100vw, 60vw"
                       priority={i === 0}
                     />
                   )}
                 </div>
               ))}
-            </div>
 
-            {/* Prev / next */}
-            {banners.length > 1 && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => goTo(index - 1)}
-                  className="absolute left-2 top-1/2 -translate-y-1/2 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-white/95 text-primary shadow-md border border-blue-100 hover:bg-nav hover:text-white transition"
-                  aria-label="Previous slide"
+              {banners.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => goTo(index - 1)}
+                    className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-white/95 text-primary shadow-md border border-blue-100 hover:bg-nav hover:text-white transition"
+                    aria-label="Previous slide"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => goTo(index + 1)}
+                    className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-white/95 text-primary shadow-md border border-blue-100 hover:bg-nav hover:text-white transition"
+                    aria-label="Next slide"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Copy */}
+          <div className="order-2 lg:order-1 text-center lg:text-left z-10 px-4 py-6 sm:py-8 lg:py-0 lg:pl-2 lg:pr-4">
+            <div key={banner.src} className="hero-slide-in">
+              <Eyebrow text={banner.eyebrow} />
+
+              <h1 className="font-serif text-3xl sm:text-4xl lg:text-[2.65rem] leading-tight text-primary mb-4">
+                {banner.title}{" "}
+                <span className="text-nav italic">{banner.titleAccent}</span>
+              </h1>
+
+              <p className="text-slate-600 text-sm sm:text-base leading-relaxed max-w-md mx-auto lg:mx-0 mb-6">
+                {banner.description}
+              </p>
+
+              {banner.href && (
+                <Link
+                  href={banner.href}
+                  className="inline-flex items-center justify-center rounded-full bg-nav text-white font-semibold text-sm px-7 py-3 hover:bg-primary transition shadow-md shadow-nav/25"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+                  {banner.cta}
+                  <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => goTo(index + 1)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-white/95 text-primary shadow-md border border-blue-100 hover:bg-nav hover:text-white transition"
-                  aria-label="Next slide"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-              </>
-            )}
+                </Link>
+              )}
+
+              <ul className="hidden sm:grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8 max-w-lg mx-auto lg:mx-0">
+                {TRUST_FEATURES.map((f) => (
+                  <li key={f.label} className="flex flex-col items-center lg:items-start gap-2">
+                    <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white border border-blue-100 text-nav shadow-sm">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.75}>
+                        {f.icon}
+                      </svg>
+                    </span>
+                    <span className="text-[11px] font-semibold text-primary/90 leading-tight text-center lg:text-left">
+                      {f.label}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </div>
 
         {/* Mobile trust icons */}
-        <ul className="sm:hidden grid grid-cols-4 gap-2 px-5 pb-4">
+        <ul className="sm:hidden grid grid-cols-4 gap-2 px-4 pb-4">
           {TRUST_FEATURES.map((f) => (
             <li key={f.label} className="flex flex-col items-center gap-1.5">
               <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white border border-blue-100 text-nav">
@@ -228,7 +222,7 @@ export function BannerCarousel({ banners }: { banners: readonly HomeBanner[] }) 
         </ul>
 
         {/* Bottom pill strip */}
-        <div className="mx-5 sm:mx-8 mb-5 sm:mb-6">
+        <div className="px-4 sm:px-6 pb-4 sm:pb-5 max-w-7xl mx-auto">
           <div className="flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-blue-100/80 via-sky-50 to-blue-100/80 border border-blue-100 px-4 sm:px-6 py-3 text-center">
             <svg className="w-4 h-4 text-accent shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
               <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
@@ -251,7 +245,7 @@ export function BannerCarousel({ banners }: { banners: readonly HomeBanner[] }) 
 
       {/* Pagination pills */}
       {banners.length > 1 && (
-        <div className="flex justify-center items-center gap-2 mt-4" role="tablist" aria-label="Banner slides">
+        <div className="flex justify-center items-center gap-2 py-3 bg-white" role="tablist" aria-label="Banner slides">
           {banners.map((_, i) => (
             <button
               key={i}

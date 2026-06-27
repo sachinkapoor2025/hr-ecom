@@ -6,6 +6,9 @@ export const site = {
     "Send Rakhi to USA with fast delivery, free shipping on selected orders, and premium Rakhi combos. Trusted by sisters worldwide for Raksha Bandhan.",
   supportEmail: "support@usarakhi.com",
   phone: "+1 (555) 123-4567",
+  /** WhatsApp support — digits only with country code (no +). */
+  whatsapp: "918510999847",
+  whatsappDisplay: "+91 85109 99847",
   logoSrc: "https://usarakhi.com/wp-content/uploads/2026/02/transparent-logo-1.png",
   primaryColor: "#183a68",
   navBlue: "#4876e8",
@@ -15,10 +18,10 @@ export const site = {
 export const navItems = [
   { label: "Home", href: "/" },
   { label: "Single Rakhi", href: "/categories/single-rakhi", category: "single-rakhi" },
-  { label: "Rakhi Combo", href: "/categories/rakhi-combo", category: "rakhi-combo" },
-  { label: "Kids Rakhi", href: "/categories/kids-rakhi", category: "kids-rakhi" },
   { label: "Bhaiya Bhabhi Rakhi", href: "/categories/bhaiya-bhabhi-rakhi", category: "bhaiya-bhabhi-rakhi" },
+  { label: "Kids Rakhi", href: "/categories/kids-rakhi", category: "kids-rakhi" },
   { label: "Lumba Rakhi", href: "/categories/lumba-rakhi", category: "lumba-rakhi" },
+  { label: "Rakhi Combo", href: "/categories/rakhi-combo", category: "rakhi-combo" },
   { label: "Raksha Bandhan", href: "/raksha-bandhan" },
   { label: "Blog", href: "/blog" },
   { label: "Contact Us", href: "/contact" },
@@ -86,13 +89,26 @@ export const promoBanners = [
   },
 ] as const;
 
-export const categoryOrder = [
-  "rakhi-combo",
+/** Homepage Rakhi sections: Single → Bhaiya Bhabhi → Kids → Lumba → Combo */
+export const homeCategoryOrder = [
   "single-rakhi",
   "bhaiya-bhabhi-rakhi",
   "kids-rakhi",
   "lumba-rakhi",
+  "rakhi-combo",
 ] as const;
+
+export const categoryOrder = homeCategoryOrder;
+
+/** Sort API categories to match site display order (home + shop). */
+export function orderCategories<T extends { slug: string }>(categories: readonly T[]): T[] {
+  const rank = new Map<string, number>(homeCategoryOrder.map((slug, index) => [slug, index]));
+  return [...categories].sort((a, b) => (rank.get(a.slug) ?? 99) - (rank.get(b.slug) ?? 99));
+}
+
+export function whatsappChatUrl(message = "Hi UsaRakhi, I need help with my order."): string {
+  return `https://wa.me/${site.whatsapp}?text=${encodeURIComponent(message)}`;
+}
 
 export const testimonials = [
   {

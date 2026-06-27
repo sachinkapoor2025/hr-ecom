@@ -3,15 +3,12 @@
 import Link from "next/link";
 import { useWishlist } from "@/lib/wishlist-context";
 import { AddToCartControl } from "@/components/AddToCartControl";
-import { WishlistButton } from "@/components/WishlistButton";
-import type { Product } from "@hr-ecom/shared";
-
-function formatPrice(price: number, currency: string) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(price);
-}
+import { useCurrency, type DisplayCurrency } from "@/lib/currency-context";
+import { getDiscountPercent } from "@/lib/pricing";
 
 export function WishlistPageClient() {
   const { items, remove } = useWishlist();
+  const { format } = useCurrency();
 
   if (items.length === 0) {
     return (
@@ -32,16 +29,7 @@ export function WishlistPageClient() {
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
         {items.map((item) => {
-          const product = {
-            slug: item.slug,
-            name: item.name,
-            price: item.price,
-            currency: item.currency,
-            compareAtPrice: item.compareAtPrice,
-            images: item.image ? [item.image] : [],
-            inventory: 1,
-          } as Product;
-
+          const discount = getDiscountPercent(item.price, item.compareAtPrice);
           return (
             <div
               key={item.slug}
@@ -71,7 +59,19 @@ export function WishlistPageClient() {
                 <h3 className="font-semibold text-sm text-slate-900 line-clamp-2 min-h-[2.5rem] hover:text-nav">
                   {item.name}
                 </h3>
-                <p className="mt-2 text-nav font-bold">{formatPrice(item.price, item.currency)}</p>
+                <div className="mt-2 flex items-center gap-2 w-full">
+                  <span className="text-nav font-bold">
+                    {format(item.price, item.currency as DisplayCurrency)}
+                  </span>
+                  {item.compareAtPrice && item.compareAtPrice > item.price && (
+                    <span className="text-xs text-slate-400 line-through">
+                      {format(item.compareAtPrice, item.currency as DisplayCurrency)}
+                    </span>
+                  )}
+                  {discount !== null && (
+                    <span className="text-xs font-semibold text-green-600 ml-auto shrink-0">{discount}% OFF</span>
+                  )}
+                </div>
               </Link>
               <div className="px-3 pb-3">
                 <AddToCartControl productSlug={item.slug} />

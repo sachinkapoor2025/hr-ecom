@@ -41,12 +41,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ProductPage({ params }: Props) {
   const { slug } = await params;
   let product: Product;
+  let relatedProducts: Product[] = [];
 
   try {
     const data = await api<{ product: Product }>(`/products/${slug}`);
     product = data.product;
   } catch {
     notFound();
+  }
+
+  try {
+    const related = await api<{ products: Product[] }>(`/products?category=${product.categorySlug}`);
+    relatedProducts = related.products.filter((p) => p.slug !== product.slug).slice(0, 5);
+  } catch {
+    relatedProducts = [];
   }
 
   const categoryLabel = product.categorySlug.replace(/-/g, " ");
@@ -68,7 +76,7 @@ export default async function ProductPage({ params }: Props) {
       <div className="max-w-6xl mx-auto px-4 pt-6">
         <Breadcrumbs items={crumbs} />
       </div>
-      <ProductDetailClient product={product} />
+      <ProductDetailClient product={product} relatedProducts={relatedProducts} />
     </>
   );
 }

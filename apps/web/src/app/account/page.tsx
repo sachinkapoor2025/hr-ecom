@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
-import Link from "next/link";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import {
@@ -10,22 +9,16 @@ import {
   isUnconfirmedError,
   formatAuthError,
 } from "@/lib/cognito";
-import { api } from "@/lib/api";
-import { useSessionId } from "@/lib/session";
-import type { Order } from "@hr-ecom/shared";
+import { AccountDashboard } from "@/components/account/AccountDashboard";
 
 type AuthMode = "login" | "register" | "confirm";
 
-function AccountForm() {
+function AccountLoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirect = searchParams.get("redirect") ?? "/";
-  const { user, login, register, confirmSignUp, resendConfirmationCode, logout, isAdmin, token } =
+  const redirect = searchParams.get("redirect") ?? "/account";
+  const { user, login, register, confirmSignUp, resendConfirmationCode, logout, isAdmin, loading: authLoading } =
     useAuth();
-  const sessionId = useSessionId();
-
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [ordersLoading, setOrdersLoading] = useState(false);
 
   const [mode, setMode] = useState<AuthMode>("login");
   const [email, setEmail] = useState("");
@@ -37,28 +30,6 @@ function AccountForm() {
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
 
-  useEffect(() => {
-    if (!user || !token || !sessionId) return;
-
-    const loadOrders = async () => {
-      setOrdersLoading(true);
-      try {
-        const data = await api<{ orders: Order[] }>("/orders", { sessionId, token });
-        setOrders(
-          [...data.orders].sort(
-            (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-          )
-        );
-      } catch {
-        setOrders([]);
-      } finally {
-        setOrdersLoading(false);
-      }
-    };
-
-    void loadOrders();
-  }, [user, token, sessionId]);
-
   const finishLogin = async () => {
     const authUser = await login(email, password);
     if (redirect.startsWith("/admin") && !authUser.isAdmin) {
@@ -66,7 +37,7 @@ function AccountForm() {
       logout();
       return;
     }
-    router.push(redirect);
+    router.push(redirect.startsWith("/account") ? redirect : "/account");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -136,72 +107,21 @@ function AccountForm() {
     if (next !== "confirm") setConfirmCode("");
   };
 
+  if (authLoading) {
+    return <div className="p-16 text-center text-slate-600">Loading account...</div>;
+  }
+
   if (user) {
     return (
-      <div className="max-w-md mx-auto px-4 py-16">
-        <h1 className="text-3xl font-bold mb-4">My Account</h1>
-        <p className="text-slate-600 mb-2">
-          Signed in as <strong>{user.email}</strong>
-        </p>
-        {isAdmin && <p className="text-sm text-green-600 mb-4">Admin access enabled</p>}
-        <div className="flex gap-4 mt-6">
-          {isAdmin && (
-            <button
-              type="button"
-              onClick={() => router.push("/admin")}
-              className="bg-accent text-white px-6 py-2 rounded-lg"
-            >
-              Admin Portal
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={() => {
-              logout();
-              router.push("/");
-            }}
-            className="border border-slate-300 px-6 py-2 rounded-lg hover:bg-slate-50"
-          >
-            Logout
-          </button>
-        </div>
-
-        <section className="mt-10">
-          <h2 className="text-xl font-bold mb-4">Order History</h2>
-          {ordersLoading ? (
-            <p className="text-slate-500 text-sm">Loading orders...</p>
-          ) : orders.length === 0 ? (
-            <p className="text-slate-500 text-sm">No orders yet.</p>
-          ) : (
-            <ul className="space-y-3">
-              {orders.map((order) => (
-                <li key={order.orderId} className="border border-slate-200 rounded-lg p-4">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div>
-                      <p className="font-mono text-xs text-slate-500">{order.orderId}</p>
-                      <p className="text-sm text-slate-600">
-                        {new Date(order.createdAt).toLocaleDateString()} ·{" "}
-                        <span className="capitalize">{order.status.replace(/_/g, " ")}</span>
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold text-nav">
-                        {new Intl.NumberFormat(undefined, {
-                          style: "currency",
-                          currency: order.currency,
-                        }).format(order.total)}
-                      </p>
-                      <Link href={`/orders/${order.orderId}`} className="text-sm text-nav hover:underline">
-                        View details
-                      </Link>
-                    </div>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-      </div>
+      <AccountDashboard
+        user={user}
+        token={user.token}
+        isAdmin={isAdmin}
+        onLogout={() => {
+          logout();
+          router.push("/");
+        }}
+      />
     );
   }
 
@@ -308,7 +228,7 @@ function AccountForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-accent text-white py-3 rounded-lg font-semibold disabled:opacity-50"
+          className="w-full bg-nav text-white py-3 rounded-lg font-semibold hover:bg-primary transition disabled:opacity-50"
         >
           {loading
             ? "Please wait..."
@@ -326,13 +246,13 @@ function AccountForm() {
             type="button"
             onClick={handleResendCode}
             disabled={resending || !email}
-            className="text-sm text-accent underline disabled:opacity-50"
+            className="text-sm text-nav underline hover:text-primary disabled:opacity-50"
           >
             {resending ? "Sending..." : "Resend verification code"}
           </button>
           <p className="text-sm text-slate-500">
             Wrong email?{" "}
-            <button type="button" onClick={() => switchMode("register")} className="text-accent underline">
+            <button type="button" onClick={() => switchMode("register")} className="text-nav underline hover:text-primary">
               Register again
             </button>
           </p>
@@ -344,7 +264,7 @@ function AccountForm() {
           <button
             type="button"
             onClick={() => switchMode("register")}
-            className="block text-sm text-accent underline"
+            className="block text-sm text-nav underline hover:text-primary"
           >
             Need an account? Register
           </button>
@@ -362,7 +282,7 @@ function AccountForm() {
         <button
           type="button"
           onClick={() => switchMode("login")}
-          className="mt-4 text-sm text-accent underline"
+          className="mt-4 text-sm text-nav underline hover:text-primary"
         >
           Already have an account? Login
         </button>
@@ -374,7 +294,7 @@ function AccountForm() {
 export default function AccountPage() {
   return (
     <Suspense fallback={<div className="p-16 text-center">Loading...</div>}>
-      <AccountForm />
+      <AccountLoginForm />
     </Suspense>
   );
 }

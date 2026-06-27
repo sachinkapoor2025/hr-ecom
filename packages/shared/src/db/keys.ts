@@ -50,6 +50,14 @@ export const customerKeys = {
   gsi1sk: (timestamp: string) => timestamp,
 };
 
+// ---- customers table (registered user account data) ----
+export const accountKeys = {
+  pk: (userId: string) => `USER#${userId}`,
+  profileSk: () => "PROFILE" as const,
+  addressSk: (addressId: string) => `ADDRESS#${addressId}`,
+  addressSkPrefix: () => "ADDRESS#" as const,
+};
+
 // ---- events table (analytics) ----
 export const eventKeys = {
   // per-session timeline

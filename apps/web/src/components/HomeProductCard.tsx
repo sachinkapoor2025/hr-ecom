@@ -4,55 +4,54 @@ import Link from "next/link";
 import type { Product } from "@hr-ecom/shared";
 import { AddToCartControl } from "@/components/AddToCartControl";
 import { WishlistButton } from "@/components/WishlistButton";
-
-function formatPrice(product: Product) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: product.currency }).format(product.price);
-}
-
-function discountPercent(product: Product) {
-  if (!product.compareAtPrice || product.compareAtPrice <= product.price) return null;
-  return Math.round(((product.compareAtPrice - product.price) / product.compareAtPrice) * 100);
-}
+import { useCurrency } from "@/lib/currency-context";
+import { getDiscountPercent } from "@/lib/pricing";
 
 export function HomeProductCard({ product }: { product: Product }) {
-  const discount = discountPercent(product);
+  const { format } = useCurrency();
+  const discount = getDiscountPercent(product.price, product.compareAtPrice);
 
   return (
-    <div className="border border-slate-200 rounded-xl overflow-hidden bg-white hover:shadow-md transition-shadow relative flex flex-col">
-      {discount && (
+    <div className="border border-slate-200 rounded-xl overflow-hidden bg-white hover:shadow-md transition-shadow relative flex h-full flex-col">
+      {discount !== null && (
         <span className="absolute top-3 left-3 z-10 bg-accent text-white text-xs font-bold px-2 py-1 rounded">
           {discount}% OFF
         </span>
       )}
-      <div className="relative aspect-square bg-slate-50">
+      <div className="relative aspect-square w-full shrink-0 overflow-hidden bg-slate-50">
         <WishlistButton product={product} />
-        <Link href={`/products/${product.slug}`} className="block w-full h-full">
+        <Link href={`/products/${product.slug}`} className="absolute inset-0 block">
           {product.images?.[0] ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
+            <img
+              src={product.images[0]}
+              alt={product.name}
+              className="absolute inset-0 h-full w-full object-cover object-center"
+            />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-slate-400 text-sm">No image</div>
+            <div className="absolute inset-0 flex items-center justify-center text-slate-400 text-sm">No image</div>
           )}
         </Link>
       </div>
-      <Link href={`/products/${product.slug}`} className="block">
-        <div className="p-3 flex-1">
-          <h3 className="font-semibold text-sm text-slate-900 line-clamp-2 min-h-[2.5rem] hover:text-nav">
+      <Link href={`/products/${product.slug}`} className="block flex-1">
+        <div className="p-3 flex h-full flex-col">
+          <h3 className="font-semibold text-sm text-slate-900 line-clamp-2 min-h-[2.75rem] hover:text-nav">
             {product.name}
           </h3>
-          <div className="mt-2 flex items-center gap-2 flex-wrap">
-            <span className="text-nav font-bold">{formatPrice(product)}</span>
+          <div className="mt-2 flex items-center gap-2 w-full">
+            <span className="text-nav font-bold">{format(product.price, product.currency)}</span>
             {product.compareAtPrice && product.compareAtPrice > product.price && (
               <span className="text-xs text-slate-400 line-through">
-                {new Intl.NumberFormat("en-US", { style: "currency", currency: product.currency }).format(
-                  product.compareAtPrice
-                )}
+                {format(product.compareAtPrice, product.currency)}
               </span>
+            )}
+            {discount !== null && (
+              <span className="text-xs font-semibold text-green-600 ml-auto shrink-0">{discount}% OFF</span>
             )}
           </div>
         </div>
       </Link>
-      <div className="px-3 pb-3">
+      <div className="mt-auto px-3 pb-3">
         <AddToCartControl productSlug={product.slug} disabled={product.inventory <= 0} />
       </div>
     </div>

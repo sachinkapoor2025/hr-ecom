@@ -5,6 +5,7 @@ export * from "./schemas/order";
 export * from "./schemas/lead";
 export * from "./schemas/event";
 export * from "./schemas/user";
+export * from "./schemas/account";
 export * from "./schemas/payment";
 export * from "./db/keys";
 export * from "./constants";

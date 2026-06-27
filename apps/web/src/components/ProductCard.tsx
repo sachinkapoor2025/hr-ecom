@@ -3,21 +3,12 @@
 import Link from "next/link";
 import type { Product } from "@hr-ecom/shared";
 import { WishlistButton } from "@/components/WishlistButton";
-
-function formatPrice(product: Product) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: product.currency,
-  }).format(product.price);
-}
-
-function discountPercent(product: Product) {
-  if (!product.compareAtPrice || product.compareAtPrice <= product.price) return null;
-  return Math.round(((product.compareAtPrice - product.price) / product.compareAtPrice) * 100);
-}
+import { useCurrency } from "@/lib/currency-context";
+import { getDiscountPercent } from "@/lib/pricing";
 
 export function ProductCard({ product }: { product: Product }) {
-  const discount = discountPercent(product);
+  const { format } = useCurrency();
+  const discount = getDiscountPercent(product.price, product.compareAtPrice);
 
   return (
     <div className="group border border-slate-200 rounded-xl overflow-hidden hover:shadow-lg transition-shadow bg-white relative">
@@ -41,14 +32,15 @@ export function ProductCard({ product }: { product: Product }) {
         <h3 className="font-semibold text-slate-900 group-hover:text-primary line-clamp-2 min-h-[2.5rem]">
           {product.name}
         </h3>
-        <div className="mt-2 flex items-center gap-2">
-          <p className="text-accent font-bold">{formatPrice(product)}</p>
+        <div className="mt-2 flex items-center gap-2 w-full">
+          <p className="text-accent font-bold">{format(product.price, product.currency)}</p>
           {product.compareAtPrice && product.compareAtPrice > product.price && (
             <p className="text-sm text-slate-400 line-through">
-              {new Intl.NumberFormat("en-US", { style: "currency", currency: product.currency }).format(
-                product.compareAtPrice
-              )}
+              {format(product.compareAtPrice, product.currency)}
             </p>
+          )}
+          {discount !== null && (
+            <span className="text-xs font-semibold text-green-600 ml-auto shrink-0">{discount}% OFF</span>
           )}
         </div>
       </Link>

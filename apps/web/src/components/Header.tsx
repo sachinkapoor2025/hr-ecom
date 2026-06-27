@@ -12,30 +12,38 @@ function CitiesMenu({ onNavigate }: { onNavigate?: () => void }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="relative" onMouseLeave={() => setOpen(false)}>
+    <div
+      className="relative shrink-0"
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        aria-haspopup="true"
         className={`btn-nav gap-1 ${open ? "btn-nav-active" : ""}`}
       >
         Cities
-        <span className="text-xs">▼</span>
+        <span className={`text-xs transition-transform ${open ? "rotate-180" : ""}`}>▼</span>
       </button>
       {open && (
-        <div className="absolute top-full left-0 mt-1 z-50 min-w-[180px] bg-white border border-slate-200 rounded-lg shadow-lg py-1">
-          {cityLinks.map((c) => (
-            <Link
-              key={c.slug}
-              href={`/cities/${c.slug}`}
-              className="block px-4 py-2 text-sm text-slate-700 hover:bg-blue-50 hover:text-nav"
-              onClick={() => {
-                setOpen(false);
-                onNavigate?.();
-              }}
-            >
-              Rakhi to {c.label}
-            </Link>
-          ))}
+        <div className="absolute top-full right-0 pt-1.5 z-[100]">
+          <div className="min-w-[220px] max-h-[min(70vh,360px)] overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 shadow-xl">
+            {cityLinks.map((c) => (
+              <Link
+                key={c.slug}
+                href={`/cities/${c.slug}`}
+                className="block px-4 py-2.5 text-sm text-slate-700 hover:bg-blue-50 hover:text-nav whitespace-nowrap"
+                onClick={() => {
+                  setOpen(false);
+                  onNavigate?.();
+                }}
+              >
+                Rakhi to {c.label}
+              </Link>
+            ))}
+          </div>
         </div>
       )}
     </div>
@@ -163,7 +171,7 @@ export function Header() {
   }, [menuOpen]);
 
   return (
-    <header className="border-b border-slate-200 bg-white sticky top-0 z-50 shadow-sm">
+    <header className="border-b border-slate-200 bg-white sticky top-0 z-50 shadow-sm overflow-visible">
       {/* Mobile top bar */}
       <div className="md:hidden max-w-7xl mx-auto px-4 py-3 flex items-center gap-3">
         <button
@@ -226,9 +234,9 @@ export function Header() {
       </div>
 
       {/* Desktop nav */}
-      <nav className="hidden md:block border-t border-slate-100 bg-white">
-        <div className="max-w-7xl mx-auto px-4 py-2.5 overflow-x-auto">
-          <div className="flex items-center gap-2 min-w-max">
+      <nav className="hidden md:block border-t border-slate-100 bg-white overflow-visible">
+        <div className="max-w-7xl mx-auto px-4 py-2.5">
+          <div className="flex flex-wrap items-center gap-2">
             {navItems.map((item) => (
               <Link
                 key={item.href}

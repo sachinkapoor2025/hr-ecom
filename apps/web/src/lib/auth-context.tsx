@@ -16,7 +16,6 @@ import {
   register as cognitoRegister,
   confirmSignUp as cognitoConfirmSignUp,
   resendConfirmationCode as cognitoResendCode,
-  storeAuth,
 } from "./cognito";
 
 interface AuthContextValue {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { loadStripe } from "@stripe/stripe-js";
 import { api } from "@/lib/api";
@@ -9,9 +10,16 @@ import { useAuth } from "@/lib/auth-context";
 import { useSessionId, useDebouncedLeadCapture } from "@/lib/session";
 import { trackCheckoutStart, trackPurchase } from "@/lib/track";
 import Script from "next/script";
-import { LeadCaptureInput } from "@/components/LeadCaptureInput";
 import { PaymentMethodPicker, type PaymentMethod } from "@/components/PaymentMethodPicker";
-import type { Order } from "@hr-ecom/shared";
+import { ShippingAddressForm } from "@/components/ShippingAddressForm";
+import { SecureCheckoutBadge } from "@/components/SecureCheckoutBadge";
+import {
+  emptyShippingAddress,
+  loadSavedAddresses,
+  saveShippingAddress,
+} from "@/lib/shipping-address";
+import { fetchAccount, createAccountAddress } from "@/lib/account";
+import type { Order, ShippingAddress } from "@hr-ecom/shared";
 
 declare global {
   interface Window {
@@ -25,22 +33,15 @@ declare global {
 export default function CheckoutPage() {
   const router = useRouter();
   const { cart, loading: cartLoading, refresh } = useCart();
-  const { token } = useAuth();
+  const { user, token } = useAuth();
   const sessionId = useSessionId();
   const captureLead = useDebouncedLeadCapture(sessionId);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("razorpay");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    line1: "",
-    city: "",
-    state: "",
-    postalCode: "",
-    country: "US",
-  });
+  const [address, setAddress] = useState<ShippingAddress>(emptyShippingAddress);
+  const [saveForLater, setSaveForLater] = useState(true);
+  const addressPrefilled = useRef(false);
 
   const checkoutTracked = useRef(false);
   useEffect(() => {
@@ -50,15 +51,85 @@ export default function CheckoutPage() {
     trackCheckoutStart(value);
   }, [cart]);
 
-  const update = (field: string, value: string) => {
-    setForm((f) => ({ ...f, [field]: value }));
-    if (field === "name" || field === "email" || field === "phone") {
-      captureLead({
-        [field]: value,
-        page: "/checkout",
-        source: "checkout",
-      });
-    }
+  useEffect(() => {
+    if (addressPrefilled.current || !sessionId) return;
+
+    const prefill = async () => {
+      if (token) {
+        try {
+          const account = await fetchAccount(token, sessionId);
+          if (account.profile.preferredPaymentMethod) {
+            setPaymentMethod(account.profile.preferredPaymentMethod);
+          }
+          const defaultAddress =
+            account.addresses.find((a) => a.isDefault) ?? account.addresses[0];
+          if (defaultAddress) {
+            setAddress({
+              name: defaultAddress.name,
+              line1: defaultAddress.line1,
+              line2: defaultAddress.line2,
+              city: defaultAddress.city,
+              state: defaultAddress.state,
+              postalCode: defaultAddress.postalCode,
+              country: defaultAddress.country,
+              phone: defaultAddress.phone,
+              email: defaultAddress.email || user?.email || "",
+            });
+            addressPrefilled.current = true;
+            return;
+          }
+        } catch {
+          // fall through to local storage
+        }
+      }
+
+      const saved = loadSavedAddresses();
+      if (saved.length > 0) {
+        const latest = saved[0];
+        setAddress({
+          name: latest.name,
+          line1: latest.line1,
+          line2: latest.line2,
+          city: latest.city,
+          state: latest.state,
+          postalCode: latest.postalCode,
+          country: latest.country,
+          phone: latest.phone,
+          email: latest.email || user?.email || "",
+        });
+        addressPrefilled.current = true;
+        return;
+      }
+
+      if (token) {
+        try {
+          const data = await api<{ orders: Order[] }>("/orders", { sessionId, token });
+          const latest = data.orders[0];
+          if (latest?.shippingAddress) {
+            setAddress(latest.shippingAddress);
+            addressPrefilled.current = true;
+            return;
+          }
+        } catch {
+          // ignore
+        }
+      }
+
+      if (user?.email) {
+        setAddress((a) => ({ ...a, email: user.email }));
+      }
+      addressPrefilled.current = true;
+    };
+
+    void prefill();
+  }, [user, token, sessionId]);
+
+  const captureField = (field: string, value: string) => {
+    captureLead({
+      [field]: value,
+      page: "/checkout",
+      source: "checkout",
+    });
   };
 
   const openRazorpayCheckout = async (order: Order, razorpayOrderId: string, razorpayKeyId?: string) => {
@@ -83,9 +154,9 @@ export default function CheckoutPage() {
         description: `Order ${order.orderId.slice(0, 8)}`,
         order_id: razorpayOrderId,
         prefill: {
-          name: form.name,
-          email: form.email,
-          contact: form.phone || undefined,
+          name: address.name,
+          email: address.email,
+          contact: address.phone || undefined,
         },
         theme: { color: "#183a68" },
         handler: async (response: {
@@ -126,12 +197,54 @@ export default function CheckoutPage() {
     });
   };
 
+  const persistAddressIfNeeded = async () => {
+    if (!saveForLater) return;
+
+    const payload = {
+      ...address,
+      country: "US" as const,
+      label: address.name,
+      isDefault: true,
+      ...(address.phone?.trim() ? { phone: address.phone.trim() } : {}),
+      ...(address.line2?.trim() ? { line2: address.line2.trim() } : { line2: undefined }),
+    };
+
+    if (token && sessionId) {
+      try {
+        const account = await fetchAccount(token, sessionId);
+        const exists = account.addresses.some(
+          (a) =>
+            a.line1 === address.line1 &&
+            a.city === address.city &&
+            a.state === address.state &&
+            a.postalCode === address.postalCode &&
+            a.name === address.name
+        );
+        if (!exists) {
+          await createAccountAddress(token, sessionId, payload);
+        }
+        return;
+      } catch {
+        // fall back to local storage
+      }
+    }
+
+    saveShippingAddress(address);
+  };
+
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
     try {
+      const payload: ShippingAddress = {
+        ...address,
+        country: "US",
+        ...(address.phone?.trim() ? { phone: address.phone.trim() } : {}),
+        ...(address.line2?.trim() ? { line2: address.line2.trim() } : { line2: undefined }),
+      };
+
       const data = await api<{
         order: Order;
         clientSecret?: string;
@@ -143,12 +256,11 @@ export default function CheckoutPage() {
         token,
         body: JSON.stringify({
           paymentMethod,
-          shippingAddress: {
-            ...form,
-            country: form.country || "US",
-          },
+          shippingAddress: payload,
         }),
       });
+
+      await persistAddressIfNeeded();
 
       if (paymentMethod === "stripe") {
         const stripeKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
@@ -188,71 +300,100 @@ export default function CheckoutPage() {
   if (!cart?.items.length) {
     return (
       <div className="max-w-lg mx-auto px-4 py-16 text-center">
-        <p className="text-slate-600">Your cart is empty.</p>
+        <p className="text-slate-600 mb-4">Your cart is empty.</p>
+        <Link href="/products" className="text-nav font-semibold hover:underline">
+          Continue shopping →
+        </Link>
       </div>
     );
   }
 
   const subtotal = cart.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const currency = cart.items[0]?.currency ?? "USD";
+  const itemCount = cart.items.reduce((sum, i) => sum + i.quantity, 0);
 
   return (
     <>
       <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
-      <div className="max-w-2xl mx-auto px-4 py-10">
-        <h1 className="text-3xl font-bold mb-2">Checkout</h1>
-        <p className="text-slate-600 mb-6">
-          Total:{" "}
-          <span className="font-bold text-nav">
-            {new Intl.NumberFormat(undefined, { style: "currency", currency }).format(subtotal)}
-          </span>
-        </p>
+      <div className="max-w-6xl mx-auto px-4 py-8 sm:py-10">
+        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-6">Checkout</h1>
 
-        <p className="text-sm font-semibold text-slate-700 mb-3">Choose payment method</p>
-        <PaymentMethodPicker value={paymentMethod} onChange={setPaymentMethod} />
-
-        <form onSubmit={handleCheckout} className="space-y-4">
-          <LeadCaptureInput
-            label="Full name"
-            value={form.name}
-            onChange={(e) => update("name", e.target.value)}
-            required
-          />
-          <LeadCaptureInput
-            label="Email"
-            type="email"
-            value={form.email}
-            onChange={(e) => update("email", e.target.value)}
-            required
-          />
-          <LeadCaptureInput label="Phone" value={form.phone} onChange={(e) => update("phone", e.target.value)} />
-          <LeadCaptureInput
-            label="Address"
-            value={form.line1}
-            onChange={(e) => update("line1", e.target.value)}
-            required
-          />
-          <div className="grid grid-cols-2 gap-4">
-            <LeadCaptureInput label="City" value={form.city} onChange={(e) => update("city", e.target.value)} required />
-            <LeadCaptureInput
-              label="State"
-              value={form.state}
-              onChange={(e) => update("state", e.target.value)}
-              required
+        <form
+          onSubmit={handleCheckout}
+          className="grid lg:grid-cols-[1fr_minmax(280px,360px)] gap-8 lg:gap-10 items-start"
+        >
+          <div className="space-y-6">
+            <ShippingAddressForm
+              value={address}
+              onChange={setAddress}
+              onFieldLeadCapture={captureField}
+              saveForLater={saveForLater}
+              onSaveForLaterChange={setSaveForLater}
             />
           </div>
-          <LeadCaptureInput
-            label="Postal code"
-            value={form.postalCode}
-            onChange={(e) => update("postalCode", e.target.value)}
-            required
-          />
 
-          {error && <p className="text-red-500 text-sm">{error}</p>}
+          <aside className="border border-slate-200 rounded-lg bg-white p-5 sm:p-6 lg:sticky lg:top-24 space-y-5">
+            <h2 className="text-sm font-bold text-slate-900 tracking-wide">ORDER SUMMARY</h2>
 
-          <button type="submit" disabled={loading} className="w-full btn-cart py-3 text-base disabled:opacity-50">
-            {loading ? "Processing..." : paymentMethod === "razorpay" ? "Pay with Razorpay" : "Pay with Stripe"}
-          </button>
+            <ul className="space-y-3 text-sm border-b border-slate-200 pb-4">
+              {cart.items.map((item) => (
+                <li key={item.productSlug} className="flex justify-between gap-3">
+                  <span className="text-slate-700 line-clamp-2">
+                    {item.name} × {item.quantity}
+                  </span>
+                  <span className="font-medium text-slate-900 shrink-0">
+                    {new Intl.NumberFormat(undefined, { style: "currency", currency }).format(
+                      item.price * item.quantity
+                    )}
+                  </span>
+                </li>
+              ))}
+            </ul>
+
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between gap-4">
+                <span className="text-slate-700">Items ({itemCount})</span>
+                <span className="font-medium">
+                  {new Intl.NumberFormat(undefined, { style: "currency", currency }).format(subtotal)}
+                </span>
+              </div>
+              <div className="flex justify-between gap-4">
+                <span className="text-slate-700">Shipping</span>
+                <span className="font-bold text-accent">FREE</span>
+              </div>
+              <div className="flex justify-between gap-4 pt-2 border-t border-slate-200">
+                <span className="font-bold text-slate-900">Total</span>
+                <span className="font-bold text-nav text-base">
+                  {new Intl.NumberFormat(undefined, { style: "currency", currency }).format(subtotal)}
+                </span>
+              </div>
+            </div>
+
+            <div>
+              <p className="text-sm font-semibold text-slate-700 mb-3">Payment method</p>
+              <PaymentMethodPicker value={paymentMethod} onChange={setPaymentMethod} />
+            </div>
+
+            {error && <p className="text-red-500 text-sm">{error}</p>}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full rounded-md bg-primary text-white font-bold text-sm uppercase tracking-wide py-3.5 hover:bg-primary/90 transition disabled:opacity-50"
+            >
+              {loading
+                ? "Processing..."
+                : paymentMethod === "razorpay"
+                  ? "Pay with Razorpay"
+                  : "Pay with Stripe"}
+            </button>
+
+            <SecureCheckoutBadge />
+
+            <Link href="/cart" className="block text-center text-sm text-nav hover:underline">
+              ← Back to cart
+            </Link>
+          </aside>
         </form>
       </div>
     </>

@@ -6,6 +6,7 @@ import { HomeProductCard } from "@/components/HomeProductCard";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { JsonLd } from "@/components/JsonLd";
 import { cityLinks, site } from "@/lib/site";
+import { shuffleForCity } from "@/lib/city-products";
 import { breadcrumbJsonLd, pageMetadata } from "@/lib/seo";
 import type { Product } from "@hr-ecom/shared";
 
@@ -42,6 +43,8 @@ export default async function CityPage({ params }: Props) {
     products = [];
   }
 
+  const cityProducts = shuffleForCity(products, slug).slice(0, 20);
+
   const crumbs = [
     { label: "Home", href: "/" },
     { label: `Rakhi to ${city.label}` },
@@ -64,7 +67,7 @@ export default async function CityPage({ params }: Props) {
         </p>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-        {products.slice(0, 20).map((p) => (
+        {cityProducts.map((p) => (
           <HomeProductCard key={p.slug} product={p} />
         ))}
       </div>
