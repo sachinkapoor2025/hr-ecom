@@ -61,6 +61,7 @@ const routes: Route[] = [
   { method: "POST", pattern: /^\/leads$/, handler: orders.captureLead },
   { method: "POST", pattern: /^\/events$/, handler: events.recordEvent },
   { method: "GET", pattern: /^\/config\/payments$/, handler: config.getPaymentConfig },
+  { method: "GET", pattern: /^\/config\/usd-inr-rate$/, handler: config.getUsdInrRate },
   { method: "PUT", pattern: /^\/config\/payments$/, handler: config.updatePaymentConfig },
   { method: "POST", pattern: /^\/uploads\/presign$/, handler: uploads.getUploadUrl },
   { method: "POST", pattern: /^\/products\/([^/]+)\/images$/, handler: uploads.attachImageToProduct, params: ["slug"] },

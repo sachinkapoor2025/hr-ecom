@@ -4,6 +4,12 @@ import { configKeys, defaultPaymentConfig, paymentConfigSchema } from "@hr-ecom/
 import { docClient, CONFIG_TABLE, now } from "../lib/db";
 import { ok, badRequest, forbidden } from "../lib/response";
 import { getAuth } from "../lib/auth";
+import { getLiveUsdInrRate } from "../lib/exchange-rate";
+
+export async function getUsdInrRate(_event: APIGatewayProxyEventV2) {
+  const quote = await getLiveUsdInrRate();
+  return ok(quote);
+}
 
 export async function getPaymentConfig(_event: APIGatewayProxyEventV2) {
   const result = await docClient.send(

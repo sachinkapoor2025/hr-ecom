@@ -29,14 +29,21 @@ function StripeIcon() {
 export function PaymentMethodPicker({
   value,
   onChange,
+  checkoutCurrency = "USD",
 }: {
   value: PaymentMethod;
   onChange: (method: PaymentMethod) => void;
+  checkoutCurrency?: "USD" | "INR";
 }) {
-  const options: { id: PaymentMethod; label: string; icon: ReactNode }[] = [
+  const allOptions: { id: PaymentMethod; label: string; icon: ReactNode }[] = [
     { id: "razorpay", label: "Pay with Razorpay", icon: <RazorpayIcon /> },
     { id: "stripe", label: "Pay with Stripe", icon: <StripeIcon /> },
   ];
+
+  const options =
+    checkoutCurrency === "INR"
+      ? allOptions.filter((o) => o.id === "razorpay")
+      : allOptions;
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">

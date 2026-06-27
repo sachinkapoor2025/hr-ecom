@@ -7,6 +7,7 @@ import { loadStripe } from "@stripe/stripe-js";
 import { api } from "@/lib/api";
 import { useCart } from "@/lib/cart-context";
 import { useAuth } from "@/lib/auth-context";
+import { useCurrency, type DisplayCurrency } from "@/lib/currency-context";
 import { useSessionId, useDebouncedLeadCapture, useLeadCapture } from "@/lib/session";
 import { trackCheckoutStart, trackPurchase } from "@/lib/track";
 import Script from "next/script";
@@ -34,6 +35,7 @@ export default function CheckoutPage() {
   const router = useRouter();
   const { cart, loading: cartLoading, refresh } = useCart();
   const { user, token } = useAuth();
+  const { format, displayCurrency, convert, usdInrRate } = useCurrency();
   const sessionId = useSessionId();
   const captureLeadDebounced = useDebouncedLeadCapture(sessionId);
   const captureLeadNow = useLeadCapture(sessionId);
@@ -46,13 +48,21 @@ export default function CheckoutPage() {
   const addressRef = useRef(address);
   addressRef.current = address;
 
+  useEffect(() => {
+    if (displayCurrency === "INR") setPaymentMethod("razorpay");
+  }, [displayCurrency]);
+
   const checkoutTracked = useRef(false);
   useEffect(() => {
     if (checkoutTracked.current || !cart?.items.length) return;
     checkoutTracked.current = true;
-    const value = cart.items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+    const storedCurrency = (cart.items[0]?.currency ?? "USD") as DisplayCurrency;
+    const value = cart.items.reduce(
+      (sum, i) => sum + convert(i.price, storedCurrency) * i.quantity,
+      0
+    );
     trackCheckoutStart(value);
-  }, [cart]);
+  }, [cart, convert]);
 
   useEffect(() => {
     if (addressPrefilled.current || !sessionId) return;
@@ -270,6 +280,8 @@ export default function CheckoutPage() {
         token,
         body: JSON.stringify({
           paymentMethod,
+          checkoutCurrency: displayCurrency,
+          ...(displayCurrency === "INR" ? { usdInrRate } : {}),
           shippingAddress: payload,
         }),
       });
@@ -322,8 +334,13 @@ export default function CheckoutPage() {
     );
   }
 
+<<<<<<< HEAD
   const subtotal = cart.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const currency = cart.items[0]?.currency ?? "USD";
+=======
+  const storedCurrency = (cart.items[0]?.currency ?? "USD") as DisplayCurrency;
+  const rawSubtotal = cart.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+>>>>>>> c38cbde4055a2df9b5ecf4423d6ae04e38b95748
   const itemCount = cart.items.reduce((sum, i) => sum + i.quantity, 0);
 
   return (
@@ -356,9 +373,13 @@ export default function CheckoutPage() {
                     {item.name} × {item.quantity}
                   </span>
                   <span className="font-medium text-slate-900 shrink-0">
+<<<<<<< HEAD
                     {new Intl.NumberFormat(undefined, { style: "currency", currency }).format(
                       item.price * item.quantity
                     )}
+=======
+                    {format(item.price * item.quantity, storedCurrency)}
+>>>>>>> c38cbde4055a2df9b5ecf4423d6ae04e38b95748
                   </span>
                 </li>
               ))}
@@ -367,9 +388,13 @@ export default function CheckoutPage() {
             <div className="space-y-2 text-sm">
               <div className="flex justify-between gap-4">
                 <span className="text-slate-700">Items ({itemCount})</span>
+<<<<<<< HEAD
                 <span className="font-medium">
                   {new Intl.NumberFormat(undefined, { style: "currency", currency }).format(subtotal)}
                 </span>
+=======
+                <span className="font-medium">{format(rawSubtotal, storedCurrency)}</span>
+>>>>>>> c38cbde4055a2df9b5ecf4423d6ae04e38b95748
               </div>
               <div className="flex justify-between gap-4">
                 <span className="text-slate-700">Shipping</span>
@@ -378,14 +403,22 @@ export default function CheckoutPage() {
               <div className="flex justify-between gap-4 pt-2 border-t border-slate-200">
                 <span className="font-bold text-slate-900">Total</span>
                 <span className="font-bold text-nav text-base">
+<<<<<<< HEAD
                   {new Intl.NumberFormat(undefined, { style: "currency", currency }).format(subtotal)}
+=======
+                  {format(rawSubtotal, storedCurrency)}
+>>>>>>> c38cbde4055a2df9b5ecf4423d6ae04e38b95748
                 </span>
               </div>
             </div>
 
             <div>
               <p className="text-sm font-semibold text-slate-700 mb-3">Payment method</p>
-              <PaymentMethodPicker value={paymentMethod} onChange={setPaymentMethod} />
+              <PaymentMethodPicker
+                value={paymentMethod}
+                onChange={setPaymentMethod}
+                checkoutCurrency={displayCurrency}
+              />
             </div>
 
             {error && <p className="text-red-500 text-sm">{error}</p>}

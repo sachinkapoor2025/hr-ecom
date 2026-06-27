@@ -9,9 +9,12 @@ import {
   customerKeys,
   ORDER_STATUS,
   ORDER_STATUS_TRANSITIONS,
+  convertCartItemsToCurrency,
+  cartSubtotal,
   type Order,
   type OrderStatusHistoryEntry,
 } from "@hr-ecom/shared";
+import { resolveCheckoutUsdInrRate } from "../lib/exchange-rate";
 import { docClient, ORDERS_TABLE, CUSTOMERS_TABLE, now } from "../lib/db";
 import { ok, created, badRequest, unauthorized, forbidden, notFound } from "../lib/response";
 import { getAuth, getSessionId, getUserOrSessionKey, requireAdmin } from "../lib/auth";
@@ -128,15 +131,26 @@ export async function checkout(event: APIGatewayProxyEventV2) {
   if (!cart?.items?.length) return badRequest("Cart is empty");
 
   const cartCurrency = cart.items[0]?.currency ?? "USD";
+  const checkoutCurrency = parsed.data.checkoutCurrency ?? cartCurrency;
 
-  const subtotal = cart.items.reduce(
-    (sum: number, item: { price: number; quantity: number }) => sum + item.price * item.quantity,
-    0
-  );
+  if (parsed.data.paymentMethod === "stripe" && checkoutCurrency !== "USD") {
+    return badRequest("Stripe checkout requires USD. Switch currency to USD or pay with Razorpay.");
+  }
+
+  const orderItems =
+    checkoutCurrency !== cartCurrency
+      ? convertCartItemsToCurrency(
+          cart.items,
+          checkoutCurrency,
+          await resolveCheckoutUsdInrRate(parsed.data.usdInrRate)
+        )
+      : cart.items;
+
+  const subtotal = cartSubtotal(orderItems);
   const shipping = 0;
   const tax = 0;
   const total = subtotal + shipping + tax;
-  const currency = cartCurrency;
+  const currency = checkoutCurrency;
 
   const orderId = uuidv4();
   const timestamp = now();
@@ -146,7 +160,7 @@ export async function checkout(event: APIGatewayProxyEventV2) {
     orderId,
     userId: auth?.userId,
     sessionId: getSessionId(event),
-    items: cart.items,
+    items: orderItems,
     subtotal,
     shipping,
     tax,
