@@ -31,7 +31,7 @@ function CurrencyButton({
 
 export function CurrencySwitcher() {
   const pathname = usePathname();
-  const { displayCurrency, setDisplayCurrency } = useCurrency();
+  const { displayCurrency, setDisplayCurrency, usdInrRate, rateLoading } = useCurrency();
 
   if (pathname.startsWith("/admin")) return null;
 
@@ -53,6 +53,12 @@ export function CurrencySwitcher() {
         onClick={() => setDisplayCurrency("INR")}
         activeClass="bg-[#f88379]"
       />
+      <p
+        className="w-11 sm:w-12 bg-slate-900/95 text-[9px] text-center text-white/80 py-1 leading-tight"
+        title="Live USD to INR exchange rate"
+      >
+        {rateLoading ? "…" : `1$=${Math.round(usdInrRate)}₹`}
+      </p>
     </div>
   );
 }

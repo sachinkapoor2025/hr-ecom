@@ -9,12 +9,16 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import {
+  convertWithInrAnchor,
+  type DisplayCurrency,
+} from "@hr-ecom/shared";
 
 const STORAGE_KEY = "hr_ecom_currency";
 const RATE_CACHE_KEY = "hr_ecom_usd_inr_rate";
 const DEFAULT_USD_INR = Number(process.env.NEXT_PUBLIC_USD_INR_RATE) || 84;
 
-export type DisplayCurrency = "USD" | "INR";
+export type { DisplayCurrency };
 
 interface CurrencyContextValue {
   displayCurrency: DisplayCurrency;
@@ -23,23 +27,14 @@ interface CurrencyContextValue {
   rateLoading: boolean;
   convert: (amount: number, from: DisplayCurrency) => number;
   format: (amount: number, from: DisplayCurrency) => string;
+  /** Format an amount already in the selected display currency. */
+  formatDisplay: (amount: number) => string;
 }
 
 const CurrencyContext = createContext<CurrencyContextValue | null>(null);
 
 function roundForCurrency(amount: number, currency: DisplayCurrency): number {
   return currency === "INR" ? Math.round(amount) : Math.round(amount * 100) / 100;
-}
-
-function convertAmount(
-  amount: number,
-  from: DisplayCurrency,
-  to: DisplayCurrency,
-  rate: number
-): number {
-  if (from === to) return amount;
-  if (from === "USD" && to === "INR") return amount * rate;
-  return amount / rate;
 }
 
 async function fetchUsdInrRate(): Promise<number> {
@@ -97,7 +92,10 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
 
   const convert = useCallback(
     (amount: number, from: DisplayCurrency) =>
-      roundForCurrency(convertAmount(amount, from, displayCurrency, usdInrRate), displayCurrency),
+      roundForCurrency(
+        convertWithInrAnchor(amount, from, displayCurrency, usdInrRate),
+        displayCurrency
+      ),
     [displayCurrency, usdInrRate]
   );
 
@@ -113,9 +111,28 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     [convert, displayCurrency]
   );
 
+  const formatDisplay = useCallback(
+    (amount: number) => {
+      return new Intl.NumberFormat(displayCurrency === "INR" ? "en-IN" : "en-US", {
+        style: "currency",
+        currency: displayCurrency,
+        maximumFractionDigits: displayCurrency === "INR" ? 0 : 2,
+      }).format(amount);
+    },
+    [displayCurrency]
+  );
+
   const value = useMemo(
-    () => ({ displayCurrency, setDisplayCurrency, usdInrRate, rateLoading, convert, format }),
-    [displayCurrency, setDisplayCurrency, usdInrRate, rateLoading, convert, format]
+    () => ({
+      displayCurrency,
+      setDisplayCurrency,
+      usdInrRate,
+      rateLoading,
+      convert,
+      format,
+      formatDisplay,
+    }),
+    [displayCurrency, setDisplayCurrency, usdInrRate, rateLoading, convert, format, formatDisplay]
   );
 
   return <CurrencyContext.Provider value={value}>{children}</CurrencyContext.Provider>;
