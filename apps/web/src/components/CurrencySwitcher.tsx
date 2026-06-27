@@ -55,7 +55,7 @@ export function CurrencySwitcher() {
       />
       <p
         className="w-11 sm:w-12 bg-slate-900/95 text-[9px] text-center text-white/80 py-1 leading-tight"
-        title="Live USD to INR exchange rate"
+        title={`Live rate: 1 USD = ${usdInrRate.toFixed(2)} INR`}
       >
         {rateLoading ? "…" : `1$=${Math.round(usdInrRate)}₹`}
       </p>
