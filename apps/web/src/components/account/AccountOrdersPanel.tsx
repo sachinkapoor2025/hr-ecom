@@ -6,9 +6,11 @@ import type { Order } from "@hr-ecom/shared";
 const STATUS_COLORS: Record<string, string> = {
   pending_payment: "bg-amber-100 text-amber-800",
   paid: "bg-green-100 text-green-800",
+  accepted: "bg-cyan-100 text-cyan-800",
   processing: "bg-blue-100 text-blue-800",
   shipped: "bg-indigo-100 text-indigo-800",
   delivered: "bg-emerald-100 text-emerald-800",
+  complete: "bg-emerald-100 text-emerald-900",
   cancelled: "bg-slate-100 text-slate-600",
   refunded: "bg-red-100 text-red-700",
 };

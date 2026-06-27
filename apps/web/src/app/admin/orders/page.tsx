@@ -20,9 +20,11 @@ const STATUS_TABS: { id: string; label: string }[] = [
   { id: "all", label: "All" },
   { id: ORDER_STATUS.PENDING_PAYMENT, label: "Pending" },
   { id: ORDER_STATUS.PAID, label: "Paid" },
+  { id: ORDER_STATUS.ACCEPTED, label: "Accepted" },
   { id: ORDER_STATUS.PROCESSING, label: "Processing" },
   { id: ORDER_STATUS.SHIPPED, label: "Shipped" },
   { id: ORDER_STATUS.DELIVERED, label: "Delivered" },
+  { id: ORDER_STATUS.COMPLETE, label: "Complete" },
   { id: ORDER_STATUS.CANCELLED, label: "Cancelled" },
   { id: ORDER_STATUS.REFUNDED, label: "Refunded" },
 ];
