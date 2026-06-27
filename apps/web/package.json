@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@hr-ecom/shared": "*",
+    "@stripe/react-stripe-js": "^3.10.0",
     "@stripe/stripe-js": "^5.5.0",
     "amazon-cognito-identity-js": "^6.3.12",
     "next": "^15.1.3",

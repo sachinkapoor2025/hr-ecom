@@ -120,8 +120,10 @@ export default function AdminPaymentsPage() {
           <h3 className="font-medium text-slate-800">Setup reference</h3>
           <ul className="list-disc ml-5 space-y-1 text-xs">
             <li>
-              <strong>Stripe:</strong> Set <code>STRIPE_SECRET_KEY</code>, <code>STRIPE_WEBHOOK_SECRET</code>{" "}
-              in API env. Webhook URL: <code>/webhooks/stripe</code>
+              <strong>Stripe:</strong> Set GitHub secrets <code>STRIPE_SECRET_KEY</code>,{" "}
+              <code>STRIPE_WEBHOOK_SECRET</code> (deployed to Lambda on push). Publishable key:{" "}
+              <code>NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY</code> in Amplify. Webhook URL:{" "}
+              <code>/webhooks/stripe</code>
             </li>
             <li>
               <strong>Razorpay:</strong> Set <code>RAZOR_KEY_ID</code>, <code>RAZOR_KEY_SECRET</code> in API
