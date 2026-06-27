@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- Node.js 20+
+- Node.js 22+ (see `.nvmrc`)
 - AWS CLI + SAM CLI (for deploy)
 - Stripe + Razorpay test accounts (optional for local dev)
 
