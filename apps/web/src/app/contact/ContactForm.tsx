@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { site } from "@/lib/site";
+import { site, whatsappChatUrl } from "@/lib/site";
 import { useSessionId } from "@/lib/session";
 import { api } from "@/lib/api";
 
@@ -54,11 +54,22 @@ export function ContactForm() {
         Have questions about your Rakhi order or delivery to the USA? Our team is here to help you before, during, and
         after Raksha Bandhan.
       </p>
-      <div className="grid md:grid-cols-2 gap-6 mb-10">
+      <div className="grid md:grid-cols-3 gap-6 mb-10">
         <div className="border border-slate-200 rounded-xl p-6">
           <h2 className="font-bold text-primary mb-2">Email</h2>
           <a href={`mailto:${site.supportEmail}`} className="text-nav hover:underline">
             {site.supportEmail}
+          </a>
+        </div>
+        <div className="border border-slate-200 rounded-xl p-6">
+          <h2 className="font-bold text-primary mb-2">WhatsApp</h2>
+          <a
+            href={whatsappChatUrl("Hi UsaRakhi, I have a question about my order.")}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-nav hover:underline"
+          >
+            {site.whatsappDisplay}
           </a>
         </div>
         <div className="border border-slate-200 rounded-xl p-6">

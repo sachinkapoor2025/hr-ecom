@@ -70,6 +70,7 @@ ${cities.join("\n")}
 
 ## Contact
 - Email: ${site.supportEmail}
+- WhatsApp: ${site.whatsappDisplay}
 - Website: ${siteUrl}
 
 ## Keywords

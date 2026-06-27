@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { site, faqs, navItems, cityLinks } from "@/lib/site";
+import { site, faqs, navItems, cityLinks, whatsappChatUrl } from "@/lib/site";
 
 export function Footer() {
   return (
@@ -42,6 +42,16 @@ export function Footer() {
           <Link href="/contact" className="text-nav font-semibold hover:underline">
             Contact Us
           </Link>
+          <p className="mt-2">
+            <a
+              href={whatsappChatUrl()}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-nav font-semibold hover:underline"
+            >
+              WhatsApp: {site.whatsappDisplay}
+            </a>
+          </p>
         </div>
         <div>
           <p className="font-semibold text-primary mb-3">Shop Rakhi</p>

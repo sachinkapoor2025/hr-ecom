@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { JsonLd } from "@/components/JsonLd";
-import { site, categoryOrder } from "@/lib/site";
+import { site, categoryOrder, whatsappChatUrl } from "@/lib/site";
 import { aboutPageJsonLd, pageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = pageMetadata({
@@ -42,11 +42,20 @@ export default function AboutPage() {
           person.
         </p>
         <p>
-          Questions? Reach us at{" "}
+          Questions? Reach us on{" "}
+          <a
+            href={whatsappChatUrl()}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-nav hover:underline"
+          >
+            WhatsApp ({site.whatsappDisplay})
+          </a>
+          , email{" "}
           <a href={`mailto:${site.supportEmail}`} className="text-nav hover:underline">
             {site.supportEmail}
-          </a>{" "}
-          or visit our <Link href="/contact" className="text-nav hover:underline">contact page</Link>.
+          </a>
+          , or visit our <Link href="/contact" className="text-nav hover:underline">contact page</Link>.
         </p>
       </div>
       <div className="mt-10 flex flex-wrap gap-3">
