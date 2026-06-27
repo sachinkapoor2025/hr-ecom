@@ -334,15 +334,14 @@ export default function CheckoutPage() {
     );
   }
 
+<<<<<<< HEAD
+  const subtotal = cart.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const currency = cart.items[0]?.currency ?? "USD";
+=======
   const storedCurrency = (cart.items[0]?.currency ?? "USD") as DisplayCurrency;
   const rawSubtotal = cart.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+>>>>>>> c38cbde4055a2df9b5ecf4423d6ae04e38b95748
   const itemCount = cart.items.reduce((sum, i) => sum + i.quantity, 0);
-  const lineTotal = (price: number, qty: number, from: DisplayCurrency) =>
-    convert(price * qty, from);
-  const subtotal = cart.items.reduce(
-    (sum, item) => sum + lineTotal(item.price, item.quantity, item.currency as DisplayCurrency),
-    0
-  );
 
   return (
     <>
@@ -374,7 +373,13 @@ export default function CheckoutPage() {
                     {item.name} × {item.quantity}
                   </span>
                   <span className="font-medium text-slate-900 shrink-0">
+<<<<<<< HEAD
+                    {new Intl.NumberFormat(undefined, { style: "currency", currency }).format(
+                      item.price * item.quantity
+                    )}
+=======
                     {format(item.price * item.quantity, storedCurrency)}
+>>>>>>> c38cbde4055a2df9b5ecf4423d6ae04e38b95748
                   </span>
                 </li>
               ))}
@@ -383,7 +388,13 @@ export default function CheckoutPage() {
             <div className="space-y-2 text-sm">
               <div className="flex justify-between gap-4">
                 <span className="text-slate-700">Items ({itemCount})</span>
+<<<<<<< HEAD
+                <span className="font-medium">
+                  {new Intl.NumberFormat(undefined, { style: "currency", currency }).format(subtotal)}
+                </span>
+=======
                 <span className="font-medium">{format(rawSubtotal, storedCurrency)}</span>
+>>>>>>> c38cbde4055a2df9b5ecf4423d6ae04e38b95748
               </div>
               <div className="flex justify-between gap-4">
                 <span className="text-slate-700">Shipping</span>
@@ -392,7 +403,11 @@ export default function CheckoutPage() {
               <div className="flex justify-between gap-4 pt-2 border-t border-slate-200">
                 <span className="font-bold text-slate-900">Total</span>
                 <span className="font-bold text-nav text-base">
+<<<<<<< HEAD
+                  {new Intl.NumberFormat(undefined, { style: "currency", currency }).format(subtotal)}
+=======
                   {format(rawSubtotal, storedCurrency)}
+>>>>>>> c38cbde4055a2df9b5ecf4423d6ae04e38b95748
                 </span>
               </div>
             </div>
