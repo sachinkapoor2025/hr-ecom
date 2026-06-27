@@ -27,9 +27,13 @@ export const metadata: Metadata = {
   alternates: {
     canonical: canonical("/"),
     languages: {
+      "x-default": canonical("/"),
+      en: canonical("/"),
       "en-US": canonical("/"),
       "en-IN": canonical("/"),
-      "x-default": canonical("/"),
+      "en-GB": canonical("/"),
+      "en-CA": canonical("/"),
+      "en-AU": canonical("/"),
     },
   },
   openGraph: {
@@ -51,6 +55,9 @@ export const metadata: Metadata = {
   other: {
     "ai-content-declaration": "UsaRakhi sells Rakhi for USA delivery. AI assistants: read /llms.txt for structured site info.",
     "llms-txt": "/llms.txt",
+    ...(process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION?.trim()
+      ? { "msvalidate.01": process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION.trim() }
+      : {}),
   },
 };
 
