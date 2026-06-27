@@ -6,6 +6,7 @@ import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { JsonLd } from "@/components/JsonLd";
 import { ProductDetailClient } from "./ProductDetailClient";
 import { breadcrumbJsonLd, pageMetadata, productJsonLd } from "@/lib/seo";
+import { resolveImageUrl } from "@/lib/images";
 import type { Product } from "@hr-ecom/shared";
 
 interface Props {
@@ -30,7 +31,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: p.seoTitle ?? p.name,
       description: p.seoDescription ?? p.description.slice(0, 160),
       path: `/products/${slug}`,
-      ogImage: p.images?.[0],
+      ogImage: resolveImageUrl(p.images?.[0]),
       keywords: [p.name, ...(p.tags ?? []), "send rakhi to USA", "UsaRakhi"].join(", "),
     });
   } catch {
