@@ -114,10 +114,20 @@ export async function captureLead(event: APIGatewayProxyEventV2) {
   );
 
   const emailResult = await notifyAdminLead(parsed.data);
-  if (parsed.data.source === "contact" && !emailResult.ok && !emailResult.skipped) {
-    console.error("Contact email failed:", emailResult.error);
+  const emailRequired = parsed.data.source === "contact" || parsed.data.source === "newsletter";
+
+  if (emailRequired && emailResult.skipped) {
+    console.error("Email skipped — SMTP not configured:", parsed.data.source);
     return badRequest(
-      "Your message was saved but email could not be sent. Please WhatsApp us or email order@usarakhi.com directly."
+      "Email is not configured on the server yet. Please contact us on WhatsApp or at order@usarakhi.com."
+    );
+  }
+
+  if (emailRequired && !emailResult.ok) {
+    console.error("Lead email failed:", parsed.data.source, emailResult.error);
+    return badRequest(
+      emailResult.error ??
+        "Your message was saved but email could not be sent. Please WhatsApp us or email order@usarakhi.com directly."
     );
   }
 

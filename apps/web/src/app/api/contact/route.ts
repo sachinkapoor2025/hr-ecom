@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { contactFormSchema } from "@hr-ecom/shared";
-import { sendContactFormEmails } from "@/lib/smtp";
 import { getApiUrl } from "@/lib/env";
 
+/** Proxies contact submissions to Lambda /leads (SMTP lives on API, not Amplify). */
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -13,52 +13,39 @@ export async function POST(req: Request) {
     }
 
     const { name, email, phone, message, sessionId } = parsed.data;
+    const sid = sessionId ?? `contact-${Date.now()}`;
 
-    const emailResult = await sendContactFormEmails({ name, email, phone, message });
+    const res = await fetch(`${getApiUrl()}/leads`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Session-Id": sid,
+      },
+      body: JSON.stringify({
+        sessionId: sid,
+        name,
+        email,
+        phone,
+        page: "/contact",
+        source: "contact",
+        metadata: { message },
+      }),
+    });
 
-    if (!emailResult.ok && !emailResult.skipped) {
+    const data = (await res.json().catch(() => ({}))) as { error?: string; emailSent?: boolean };
+
+    if (!res.ok) {
       return NextResponse.json(
-        {
-          error:
-            emailResult.error ??
-            "Could not send email. Please try WhatsApp or email order@usarakhi.com directly.",
-        },
+        { error: data.error ?? "Could not send message. Please try WhatsApp or email order@usarakhi.com." },
+        { status: res.status >= 400 && res.status < 600 ? res.status : 502 }
+      );
+    }
+
+    if (data.emailSent === false) {
+      return NextResponse.json(
+        { error: "Your message was saved but email could not be sent. Please email order@usarakhi.com directly." },
         { status: 502 }
       );
-    }
-
-    if (emailResult.skipped) {
-      return NextResponse.json(
-        {
-          error:
-            "Email is not configured on the server yet. Please contact us on WhatsApp or at order@usarakhi.com.",
-        },
-        { status: 503 }
-      );
-    }
-
-    // Save lead to API (best-effort — email already sent)
-    if (sessionId) {
-      try {
-        await fetch(`${getApiUrl()}/leads`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Session-Id": sessionId,
-          },
-          body: JSON.stringify({
-            sessionId,
-            name,
-            email,
-            phone,
-            page: "/contact",
-            source: "contact",
-            metadata: { message, emailSent: "true" },
-          }),
-        });
-      } catch {
-        /* non-blocking */
-      }
     }
 
     return NextResponse.json({ ok: true, emailSent: true });

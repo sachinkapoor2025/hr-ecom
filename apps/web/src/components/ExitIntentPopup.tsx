@@ -13,6 +13,7 @@ export function ExitIntentPopup() {
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "done">("idle");
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (pathname.startsWith("/admin") || pathname.startsWith("/checkout")) return;
@@ -33,6 +34,7 @@ export function ExitIntentPopup() {
     e.preventDefault();
     if (!email.trim() || status !== "idle") return;
     setStatus("sending");
+    setError("");
     const sessionId = getOrCreateSessionId();
     try {
       await api("/leads", {
@@ -46,10 +48,11 @@ export function ExitIntentPopup() {
           metadata: { offer: "first_order_10_percent", trigger: "exit_intent" },
         }),
       });
-    } catch {
-      /* still show thank you — lead capture is best-effort */
+      setStatus("done");
+    } catch (err) {
+      setStatus("idle");
+      setError(err instanceof Error ? err.message : "Could not send offer email. Try again or email order@usarakhi.com.");
     }
-    setStatus("done");
   };
 
   if (!open) return null;
@@ -105,6 +108,7 @@ export function ExitIntentPopup() {
               >
                 {status === "sending" ? "Sending…" : "Get my 10% off"}
               </button>
+              {error && <p className="text-red-500 text-xs text-center">{error}</p>}
             </form>
             <p className="text-[10px] text-slate-400 mt-3 text-center">
               Free USA shipping on selected orders · 5–7 day delivery

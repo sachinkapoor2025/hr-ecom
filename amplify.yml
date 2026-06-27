@@ -31,11 +31,3 @@ applications:
         NEXT_PUBLIC_RAZORPAY_KEY_ID: ${RAZOR_KEY_ID}
         NEXT_PUBLIC_CDN_URL: ${NEXT_PUBLIC_CDN_URL}
         NEXT_PUBLIC_USD_INR_RATE: ${NEXT_PUBLIC_USD_INR_RATE}
-        # Server-side only — contact form emails (set values in Amplify env vars)
-        SMTP_HOST: ${SMTP_HOST}
-        SMTP_PORT: ${SMTP_PORT}
-        SMTP_SECURE: ${SMTP_SECURE}
-        SMTP_USER: ${SMTP_USER}
-        SMTP_PASS: ${SMTP_PASS}
-        SMTP_FROM: ${SMTP_FROM}
-        NOTIFY_EMAIL: ${NOTIFY_EMAIL}

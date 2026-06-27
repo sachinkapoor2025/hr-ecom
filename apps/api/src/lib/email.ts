@@ -12,12 +12,21 @@ export type EmailSendResult = {
   skipped?: boolean;
 };
 
-function smtpConfigured(): boolean {
-  return Boolean(
-    process.env.SMTP_HOST?.trim() &&
-      process.env.SMTP_USER?.trim() &&
-      process.env.SMTP_PASS?.trim()
+function smtpPassword(): string | undefined {
+  return (
+    process.env.SMTP_PASS?.trim() ||
+    process.env.SMTP_PASSWORD?.trim() ||
+    undefined
   );
+}
+
+function smtpConfigured(): boolean {
+  const user = process.env.SMTP_USER?.trim() || DEFAULT_NOTIFY;
+  return Boolean(user && smtpPassword());
+}
+
+function smtpUser(): string {
+  return process.env.SMTP_USER?.trim() || DEFAULT_NOTIFY;
 }
 
 function smtpHosts(): string[] {
@@ -31,8 +40,8 @@ function smtpHosts(): string[] {
 }
 
 function transportConfigs(host: string): SMTPTransport.Options[] {
-  const user = process.env.SMTP_USER!.trim();
-  const pass = process.env.SMTP_PASS!.trim();
+  const user = smtpUser();
+  const pass = smtpPassword()!;
   const portEnv = process.env.SMTP_PORT?.trim();
 
   if (portEnv) {
@@ -81,7 +90,57 @@ function notifyAddress(): string {
 }
 
 function fromAddress(): string {
-  return process.env.SMTP_FROM?.trim() || process.env.SMTP_USER!.trim() || notifyAddress();
+  return process.env.SMTP_FROM?.trim() || smtpUser() || notifyAddress();
+}
+
+export async function sendNewsletterEmails(input: {
+  email: string;
+  page?: string;
+  metadata?: Record<string, string>;
+}): Promise<EmailSendResult> {
+  if (!smtpConfigured()) {
+    return { ok: false, skipped: true, error: "SMTP not configured on server" };
+  }
+
+  const adminText = [
+    "Source: Newsletter / 10% welcome offer",
+    `Email: ${input.email}`,
+    input.page ? `Page: ${input.page}` : null,
+    input.metadata ? `Details: ${JSON.stringify(input.metadata)}` : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const admin = await sendEmail({
+    to: notifyAddress(),
+    subject: `[${SITE_NAME}] New newsletter signup — ${input.email}`,
+    text: adminText,
+    replyTo: input.email,
+  });
+  if (!admin.ok) return admin;
+
+  const customer = await sendEmail({
+    to: input.email,
+    subject: `Your 10% off first order — ${SITE_NAME}`,
+    text: `Thank you for joining UsaRakhi!
+
+As a welcome gift, enjoy 10% off your first Rakhi order. Reply to this email or mention "welcome offer" at checkout and our team will apply your discount.
+
+Shop premium Rakhis with delivery to all 50 US states:
+https://www.usarakhi.com/products
+
+Raksha Bandhan 2026 is August 28 — order early for on-time delivery.
+
+— ${SITE_NAME} Team
+order@usarakhi.com`,
+  });
+
+  if (!customer.ok) {
+    console.error("Newsletter welcome email failed:", customer.error);
+    return customer;
+  }
+
+  return { ok: true };
 }
 
 export async function sendEmail(opts: {
@@ -200,11 +259,19 @@ export async function notifyAdminLead(lead: LeadCaptureInput): Promise<EmailSend
     });
   }
 
+  if (lead.source === "newsletter" && lead.email) {
+    return sendNewsletterEmails({
+      email: lead.email,
+      page: lead.page,
+      metadata: lead.metadata,
+    });
+  }
+
   if (!smtpConfigured()) {
     return { ok: false, skipped: true, error: "SMTP not configured" };
   }
 
-  const isEnquiry = isContact || Boolean(message) || lead.source === "newsletter";
+  const isEnquiry = isContact || Boolean(message);
   if (!isEnquiry) return { ok: true, skipped: true };
 
   const lines = [
