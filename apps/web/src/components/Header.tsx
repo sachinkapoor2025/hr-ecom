@@ -199,7 +199,14 @@ export function Header() {
         </button>
 
         <Link href="/" className="shrink-0 min-w-0" onClick={closeMenu}>
-          <Image src={site.logoSrc} alt={site.name} width={130} height={44} className="h-9 w-auto max-w-[130px]" priority />
+          <Image
+            src={site.logoSrc}
+            alt={site.name}
+            width={160}
+            height={52}
+            className="h-11 w-auto max-w-[160px] object-contain mix-blend-lighten"
+            priority
+          />
         </Link>
 
         <div className="flex-1" />
@@ -214,7 +221,14 @@ export function Header() {
       {/* Desktop top bar */}
       <div className="hidden md:grid max-w-7xl mx-auto px-4 py-3 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-6">
         <Link href="/" className="shrink-0">
-          <Image src={site.logoSrc} alt={site.name} width={150} height={50} className="h-11 w-auto" priority />
+          <Image
+            src={site.logoSrc}
+            alt={site.name}
+            width={180}
+            height={60}
+            className="h-12 w-auto max-w-[180px] object-contain mix-blend-lighten"
+            priority
+          />
         </Link>
 
         <div className="w-full max-w-2xl mx-auto">

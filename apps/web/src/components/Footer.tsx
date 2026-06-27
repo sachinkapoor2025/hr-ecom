@@ -13,16 +13,13 @@ export function Footer() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-8 sm:gap-x-8 sm:gap-y-10 text-sm">
           {/* Brand + contact — full width on mobile, one column on desktop */}
           <div className="col-span-2 lg:col-span-1">
-            <Link
-              href="/"
-              className="inline-flex items-center mb-5 rounded-xl bg-white px-4 py-2.5 shadow-md ring-1 ring-white/10"
-            >
+            <Link href="/" className="inline-block mb-5">
               <Image
                 src={site.logoSrc}
                 alt={site.name}
-                width={160}
-                height={52}
-                className="h-11 w-auto max-w-[160px] object-contain"
+                width={180}
+                height={60}
+                className="h-12 w-auto max-w-[180px] object-contain mix-blend-lighten"
               />
             </Link>
             <p className="text-white/80 leading-relaxed mb-4 max-w-xs">

@@ -35,7 +35,7 @@ export function useLeadCapture(sessionId: string) {
       phone?: string;
       page?: string;
       productSlug?: string;
-      source?: "checkout" | "newsletter" | "product" | "browse" | "admin" | "contact";
+      source?: "checkout" | "newsletter" | "product" | "browse" | "admin" | "contact" | "chat";
     }) => {
       const sid = sessionId || getOrCreateSessionId();
       if (!sid) return;
