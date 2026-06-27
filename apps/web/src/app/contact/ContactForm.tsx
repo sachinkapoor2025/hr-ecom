@@ -5,11 +5,15 @@ import Link from "next/link";
 import { site, whatsappChatUrl } from "@/lib/site";
 import { useSessionId } from "@/lib/session";
 import { api } from "@/lib/api";
+import { PhoneInput, buildPhoneValue } from "@/components/PhoneInput";
+import { DEFAULT_COUNTRY_ISO } from "@/lib/country-codes";
 
 export function ContactForm() {
   const sessionId = useSessionId();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [countryIso, setCountryIso] = useState(DEFAULT_COUNTRY_ISO);
+  const [phoneLocal, setPhoneLocal] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
@@ -23,6 +27,10 @@ export function ContactForm() {
     try {
       const sid = sessionId;
       if (!sid) throw new Error("Session not ready");
+      const phone = buildPhoneValue(countryIso, phoneLocal);
+      if (phoneLocal.replace(/\D/g, "").length < 6) {
+        throw new Error("Please enter a valid phone number");
+      }
       await api("/leads", {
         method: "POST",
         sessionId: sid,
@@ -30,15 +38,18 @@ export function ContactForm() {
           sessionId: sid,
           name,
           email,
+          phone,
           page: "/contact",
           source: "contact",
-          metadata: { message },
+          metadata: { message, countryIso },
         }),
       });
       setSubmittedEmail(email);
       setSent(true);
       setName("");
       setEmail("");
+      setCountryIso(DEFAULT_COUNTRY_ISO);
+      setPhoneLocal("");
       setMessage("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not send message");
@@ -107,6 +118,14 @@ export function ContactForm() {
               required
             />
           </div>
+          <PhoneInput
+            countryIso={countryIso}
+            localNumber={phoneLocal}
+            onCountryChange={setCountryIso}
+            onLocalNumberChange={setPhoneLocal}
+            required
+            placeholder="98765 43210"
+          />
           <div>
             <label className="block text-sm font-medium mb-1">Message</label>
             <textarea
