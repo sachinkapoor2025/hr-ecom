@@ -18,7 +18,9 @@ import { HomeProductCard } from "@/components/HomeProductCard";
 import { useCart } from "@/lib/cart-context";
 import { productPageFaqs } from "@/lib/content/product-faqs";
 import { testimonials } from "@/lib/site";
+import { LOW_STOCK_THRESHOLD, isFastSelling, getUnitsSold } from "@hr-ecom/shared";
 import type { Product } from "@hr-ecom/shared";
+import { FastSellingBanner } from "@/components/FastSellingBadge";
 
 type Tab = "description" | "reviews" | "faq";
 
@@ -41,8 +43,6 @@ function estimatedDeliveryLabel(): string {
   const end = addBusinessDays(new Date(), 7);
   return `Order today → arrives ${formatDeliveryDate(start)} – ${formatDeliveryDate(end)} (USA)`;
 }
-
-const LOW_STOCK_THRESHOLD = 12;
 
 function shortDescription(description: string): string {
   const first = description.split(/(?<=\.)\s+/)[0]?.trim();
@@ -117,6 +117,8 @@ export function ProductDetailClient({
   const cartQuantity = cart?.items.find((i) => i.productSlug === product.slug)?.quantity ?? 0;
   const inCart = cartQuantity > 0;
   const lowStock = product.inventory > 0 && product.inventory <= LOW_STOCK_THRESHOLD;
+  const fastSelling = isFastSelling(product);
+  const unitsSold = getUnitsSold(product);
 
   return (
     <>
@@ -142,6 +144,8 @@ export function ProductDetailClient({
           <div className="mb-3">
             <RakshaBandhanCountdown variant="inline" />
           </div>
+
+          {fastSelling && <FastSellingBanner unitsSold={unitsSold} />}
 
           {lowStock && (
             <p className="text-sm font-semibold text-orange-700 bg-orange-50 border border-orange-100 rounded-md px-3 py-2 mb-3">

@@ -89,6 +89,7 @@ leads/sessions; products re-seed via `import:usarakhi`).
 | GET | `/admin/orders` | Admin: list orders (filter `?status=`) |
 | GET | `/admin/orders/{orderId}` | Admin: order detail |
 | PATCH | `/admin/orders/{orderId}` | Admin: update status + tracking |
+| GET | `/admin/analytics/sales` | Admin: day/week/month payments received (excludes refunds) |
 | GET | `/admin/analytics/overview` | Admin: traffic + funnel (`?days=`) |
 | GET | `/admin/analytics/products` | Admin: most-viewed products |
 | GET | `/admin/analytics/searches` | Admin: top + zero-result searches |

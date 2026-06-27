@@ -5,12 +5,14 @@ import {
   updateProductSchema,
   bulkProductRowSchema,
   productKeys,
+  DEFAULT_PRODUCT_INVENTORY,
   type Product,
 } from "@hr-ecom/shared";
 import { docClient, PRODUCTS_TABLE, now, slugify } from "../lib/db";
 import { ok, created, badRequest, notFound, forbidden } from "../lib/response";
 import { getAuth } from "../lib/auth";
 import { withResolvedProductImages, resolveProductImageUrl } from "../lib/images";
+import { syncInventoryAlertState } from "../lib/inventory";
 
 export async function listProducts(event: APIGatewayProxyEventV2) {
   const category = event.queryStringParameters?.category;
@@ -39,7 +41,7 @@ export async function listProducts(event: APIGatewayProxyEventV2) {
     items = (result.Items ?? []) as Product[];
   }
 
-  items = items.filter((p) => p.published !== false);
+  items = items.filter((p) => p.published !== false && (p.inventory ?? 0) > 0);
   if (search) {
     items = items.filter(
       (p) =>
@@ -79,8 +81,10 @@ export async function createProduct(event: APIGatewayProxyEventV2) {
 
   const slug = slugify(parsed.data.name);
   const timestamp = now();
+  const inventory = parsed.data.inventory ?? DEFAULT_PRODUCT_INVENTORY;
   const item: Product & { PK: string; SK: string; GSI1PK: string; GSI1SK: string } = {
     ...parsed.data,
+    inventory,
     slug,
     PK: productKeys.pk(slug),
     SK: productKeys.sk(),
@@ -109,12 +113,13 @@ export async function updateProduct(event: APIGatewayProxyEventV2) {
   );
   if (!existing.Item) return notFound("Product not found");
 
+  const previous = existing.Item as Product;
   const body = JSON.parse(event.body ?? "{}");
   const parsed = updateProductSchema.safeParse(body);
   if (!parsed.success) return badRequest(parsed.error.message);
 
   const updated = {
-    ...existing.Item,
+    ...previous,
     ...parsed.data,
     updatedAt: now(),
   } as Product & { PK: string; SK: string; GSI1PK: string; GSI1SK: string };
@@ -125,6 +130,11 @@ export async function updateProduct(event: APIGatewayProxyEventV2) {
   }
 
   await docClient.send(new PutCommand({ TableName: PRODUCTS_TABLE, Item: updated }));
+
+  if (parsed.data.inventory !== undefined) {
+    await syncInventoryAlertState(slug, previous, parsed.data.inventory);
+  }
+
   return ok({ product: updated });
 }
 

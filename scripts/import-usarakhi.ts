@@ -221,7 +221,7 @@ function toCatalogProduct(p: WcProduct, fallbackCategorySlug: string): CatalogPr
     categorySlug: explicitCat?.slug ?? fallbackCategorySlug,
     images: p.images.map((img) => img.src).filter(Boolean),
     sku: p.sku || undefined,
-    inventory: 100,
+    inventory: 200,
     tags: p.tags.map((t) => t.name),
     seoTitle: decodeEntities(p.name),
     seoDescription: plainDesc.slice(0, 160),

@@ -1,0 +1,60 @@
+/**
+ * Set inventory to 200 for all products that have 0 or missing stock.
+ * Run after deploy: npm run seed:inventory
+ *
+ * Requires AWS credentials and PRODUCTS_TABLE / ENVIRONMENT env vars.
+ */
+import { ScanCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocumentClient } from "@aws-sdk/lib-dynamodb";
+import { productKeys, DEFAULT_PRODUCT_INVENTORY } from "@hr-ecom/shared";
+
+const ENV = process.env.ENVIRONMENT ?? "prod";
+const TABLE = process.env.PRODUCTS_TABLE ?? `hr-ecom-products-${ENV}`;
+
+const doc = DynamoDBDocumentClient.from(new DynamoDBClient({}));
+
+async function main() {
+  console.log(`Seeding inventory on ${TABLE} → ${DEFAULT_PRODUCT_INVENTORY} where stock is 0 or unset`);
+
+  const scan = await doc.send(
+    new ScanCommand({
+      TableName: TABLE,
+      FilterExpression: "begins_with(PK, :prefix) AND SK = :sk",
+      ExpressionAttributeValues: { ":prefix": "PRODUCT#", ":sk": "META" },
+    })
+  );
+
+  const items = scan.Items ?? [];
+  let updated = 0;
+
+  for (const item of items) {
+    const slug = (item.slug as string) ?? item.PK?.replace("PRODUCT#", "");
+    if (!slug) continue;
+
+    const inv = item.inventory;
+    if (typeof inv === "number" && inv > 0) continue;
+
+    const timestamp = new Date().toISOString();
+    await doc.send(
+      new UpdateCommand({
+        TableName: TABLE,
+        Key: { PK: productKeys.pk(slug), SK: productKeys.sk() },
+        UpdateExpression: "SET inventory = :inv, updatedAt = :now REMOVE lowStockAlertSentAt",
+        ExpressionAttributeValues: {
+          ":inv": DEFAULT_PRODUCT_INVENTORY,
+          ":now": timestamp,
+        },
+      })
+    );
+    updated++;
+    console.log(`  ✓ ${slug} → ${DEFAULT_PRODUCT_INVENTORY}`);
+  }
+
+  console.log(`Done. Updated ${updated} of ${items.length} products.`);
+}
+
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

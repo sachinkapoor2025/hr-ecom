@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useApiClient } from "@/lib/auth-context";
 import { BarChart, AreaChart, ChartLegend } from "@/components/admin/Charts";
+import { SalesReportPanel } from "@/components/admin/SalesReportPanel";
 
 interface Overview {
   days: number;
@@ -78,6 +79,10 @@ export default function AdminDashboard() {
         <p className="text-red-600 text-sm mb-6">{error}</p>
       ) : (
         <>
+          <div className="mb-8">
+            <SalesReportPanel compact />
+          </div>
+
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <KpiCard label="Page views" value={(data?.totals.page_view ?? 0).toLocaleString()} />
             <KpiCard label="Product views" value={(data?.totals.product_view ?? 0).toLocaleString()} />

@@ -4,6 +4,7 @@ import { api } from "@/lib/api";
 import { BannerCarousel } from "@/components/BannerCarousel";
 import { CustomerReviews } from "@/components/CustomerReviews";
 import { HomeProductCard } from "@/components/HomeProductCard";
+import { FastSellingSection } from "@/components/FastSellingSection";
 import { HomeSeoSection } from "@/components/HomeSeoSection";
 import { JsonLd } from "@/components/JsonLd";
 import { site, homeBanners, homeCategoryOrder, faqs } from "@/lib/site";
@@ -68,6 +69,8 @@ export default async function HomePage() {
           </Link>
         </div>
       </section>
+
+      <FastSellingSection products={products} />
 
       {productsByCategory.map((section) =>
         section.products.length > 0 ? (

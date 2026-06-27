@@ -21,6 +21,7 @@ import { ok, created, badRequest, unauthorized, forbidden, notFound } from "../l
 import { getAuth, getSessionId, getUserOrSessionKey, requireAdmin } from "../lib/auth";
 import { getCartHandler, clearCartForUser } from "./cart";
 import { notifyAdminLead, notifyAdminOrderPaid, notifyAdminOrderPlaced } from "../lib/email";
+import { decrementInventoryForOrder, validateOrderInventory } from "../lib/inventory";
 import {
   applyPercentDiscount,
   issueWelcomeCoupon,
@@ -190,6 +191,9 @@ export async function checkout(event: APIGatewayProxyEventV2) {
           await resolveCheckoutUsdInrRate(parsed.data.usdInrRate)
         )
       : cart.items;
+
+  const stockError = await validateOrderInventory(orderItems);
+  if (stockError) return badRequest(stockError);
 
   const subtotal = cartSubtotal(orderItems);
   const shipping = 0;
@@ -428,6 +432,7 @@ export async function markOrderPaid(
   if (order.couponCode) {
     await markCouponUsed(order.couponCode, order.orderId);
   }
+  await decrementInventoryForOrder(updated);
   const emailResult = await notifyAdminOrderPaid(updated);
   if (!emailResult.ok) console.error("Order paid email failed:", emailResult.error);
 }

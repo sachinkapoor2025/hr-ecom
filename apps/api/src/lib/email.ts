@@ -1,8 +1,8 @@
 import nodemailer from "nodemailer";
 import type SMTPTransport from "nodemailer/lib/smtp-transport";
-import type { Order } from "@hr-ecom/shared";
+import type { Order, Product } from "@hr-ecom/shared";
 import type { LeadCaptureInput } from "@hr-ecom/shared";
-import { WELCOME_DISCOUNT_PERCENT } from "@hr-ecom/shared";
+import { WELCOME_DISCOUNT_PERCENT, LOW_STOCK_ALERT_EMAIL } from "@hr-ecom/shared";
 
 const DEFAULT_NOTIFY = "order@usarakhi.com";
 const SITE_NAME = "UsaRakhi";
@@ -415,4 +415,41 @@ Questions? Reply to this email or WhatsApp us.
   }
 
   return { ok: true };
+}
+
+export async function notifyLowStock(product: Product, inventory: number): Promise<EmailSendResult> {
+  const soldOut = inventory <= 0;
+  const subject = soldOut
+    ? `[${SITE_NAME}] SOLD OUT — restock ${product.name}`
+    : `[${SITE_NAME}] Low stock (${inventory} left) — ${product.name}`;
+
+  const text = soldOut
+    ? `Product sold out on ${SITE_NAME}
+
+Product: ${product.name}
+SKU: ${product.sku ?? "—"}
+Slug: ${product.slug}
+Category: ${product.categorySlug}
+Current inventory: 0
+
+Please restock this item in the admin portal (Products → edit stock).
+
+Admin: https://www.usarakhi.com/admin/products`
+    : `Low stock alert on ${SITE_NAME}
+
+Product: ${product.name}
+SKU: ${product.sku ?? "—"}
+Slug: ${product.slug}
+Category: ${product.categorySlug}
+Current inventory: ${inventory} (threshold: 10 or below)
+
+Please restock this item in the admin portal.
+
+Admin: https://www.usarakhi.com/admin/products`;
+
+  return sendEmail({
+    to: LOW_STOCK_ALERT_EMAIL,
+    subject,
+    text,
+  });
 }
