@@ -92,7 +92,10 @@ export function ContactForm() {
       {sent ? (
         <div className="border border-green-200 bg-green-50 rounded-xl p-6 text-green-800">
           <p className="font-semibold mb-2">Message sent!</p>
-          <p className="text-sm">We&apos;ll get back to you at {submittedEmail} as soon as possible.</p>
+          <p className="text-sm">
+            We&apos;ll get back to you at {submittedEmail} as soon as possible. A confirmation email has been sent to
+            your inbox (check spam if you don&apos;t see it).
+          </p>
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4 border border-slate-200 rounded-xl p-6 bg-slate-50">

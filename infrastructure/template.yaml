@@ -24,6 +24,11 @@ Parameters:
     Type: String
     Default: ""
     NoEcho: true
+  SmtpPassword:
+    Type: String
+    Default: ""
+    NoEcho: true
+    Description: SMTP password for order@usarakhi.com (contact & order emails)
 
 Globals:
   Function:
@@ -48,6 +53,13 @@ Globals:
         RAZORPAY_KEY_ID: !Ref RazorpayKeyId
         RAZORPAY_KEY_SECRET: !Ref RazorpayKeySecret
         CLOUDFRONT_DOMAIN: !GetAtt CloudFrontDistribution.DomainName
+        SMTP_HOST: smtp.usarakhi.com
+        SMTP_PORT: "465"
+        SMTP_SECURE: "true"
+        SMTP_USER: order@usarakhi.com
+        SMTP_FROM: order@usarakhi.com
+        NOTIFY_EMAIL: order@usarakhi.com
+        SMTP_PASS: !Ref SmtpPassword
 
 Resources:
   ProductsTable:
