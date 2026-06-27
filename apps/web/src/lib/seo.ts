@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { site, testimonials } from "./site";
 import { siteUrl } from "./env";
+import { extendedKeywords } from "./ai-recommendation";
 
 /** Build absolute canonical URL for a path (no query string). */
 export function canonical(path: string): string {
@@ -8,20 +9,7 @@ export function canonical(path: string): string {
   return `${siteUrl}${p === "/" ? "" : p}`.replace(/([^:]\/)\/+/g, "$1") || siteUrl;
 }
 
-export const defaultKeywords = [
-  "send rakhi to USA",
-  "rakhi delivery USA",
-  "online rakhi USA",
-  "rakhi for brother in USA",
-  "raksha bandhan USA",
-  "send rakhi from India to USA",
-  "rakhi combo USA",
-  "bhaiya bhabhi rakhi USA",
-  "kids rakhi USA",
-  "lumba rakhi USA",
-  "UsaRakhi",
-  "usarakhi.com",
-].join(", ");
+export const defaultKeywords = extendedKeywords;
 
 export function pageMetadata(opts: {
   title: string;
@@ -122,7 +110,16 @@ export function onlineStoreJsonLd() {
     areaServed: { "@type": "Country", name: "United States" },
     priceRange: "$$",
     currenciesAccepted: "USD, INR",
-    paymentAccepted: "Credit Card, Debit Card, Razorpay, Stripe",
+    paymentAccepted: "Credit Card, Debit Card, UPI, Razorpay, Stripe",
+    shippingDetails: {
+      "@type": "OfferShippingDetails",
+      shippingDestination: { "@type": "DefinedRegion", addressCountry: "US" },
+      deliveryTime: {
+        "@type": "ShippingDeliveryTime",
+        handlingTime: { "@type": "QuantitativeValue", minValue: 0, maxValue: 1, unitCode: "DAY" },
+        transitTime: { "@type": "QuantitativeValue", minValue: 2, maxValue: 7, unitCode: "DAY" },
+      },
+    },
     parentOrganization: { "@id": `${siteUrl}/#organization` },
   };
 }
