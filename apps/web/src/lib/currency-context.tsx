@@ -18,7 +18,7 @@ const RATE_CACHE_AT_KEY = "hr_ecom_usd_inr_rate_at";
 const RATE_CACHE_TTL_MS = 30 * 60 * 1000; // 30 min — match server cache
 const ENV_FALLBACK = Number(process.env.NEXT_PUBLIC_USD_INR_RATE) || DEFAULT_USD_INR_RATE;
 
-export type DisplayCurrency = "USD" | "INR";
+export type { DisplayCurrency };
 
 interface CurrencyContextValue {
   displayCurrency: DisplayCurrency;
@@ -36,15 +36,20 @@ function roundForCurrency(amount: number, currency: DisplayCurrency): number {
   return currency === "INR" ? Math.round(amount) : Math.round(amount * 100) / 100;
 }
 
-function convertAmount(
-  amount: number,
-  from: DisplayCurrency,
-  to: DisplayCurrency,
-  rate: number
-): number {
-  if (from === to) return amount;
-  if (from === "USD" && to === "INR") return amount * rate;
-  return amount / rate;
+function readCachedRate(): number | null {
+  if (typeof sessionStorage === "undefined") return null;
+  const cached = sessionStorage.getItem(RATE_CACHE_KEY);
+  const cachedAt = sessionStorage.getItem(RATE_CACHE_TIME_KEY);
+  if (!cached || !cachedAt) return null;
+  const age = Date.now() - Number(cachedAt);
+  if (!Number.isFinite(age) || age > RATE_MAX_AGE_MS) return null;
+  const n = Number(cached);
+  return n > 0 ? n : null;
+}
+
+function writeCachedRate(rate: number) {
+  sessionStorage.setItem(RATE_CACHE_KEY, String(rate));
+  sessionStorage.setItem(RATE_CACHE_TIME_KEY, String(Date.now()));
 }
 
 function readCachedRate(): number | null {
@@ -122,18 +127,25 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(STORAGE_KEY, displayCurrency);
   }, [displayCurrency, ready]);
 
-  const setDisplayCurrency = useCallback((c: DisplayCurrency) => {
-    setDisplayCurrencyState(c);
-  }, []);
+  const setDisplayCurrency = useCallback(
+    (c: DisplayCurrency) => {
+      setDisplayCurrencyState(c);
+      void refreshRate(true);
+    },
+    [refreshRate]
+  );
 
   const convert = useCallback(
-    (amount: number, from: DisplayCurrency) =>
-      roundForCurrency(convertAmount(amount, from, displayCurrency, usdInrRate), displayCurrency),
+    (amount: number, from: DisplayCurrency | string) =>
+      roundForCurrency(
+        convertCurrency(amount, normalizeDisplayCurrency(from), displayCurrency, usdInrRate),
+        displayCurrency
+      ),
     [displayCurrency, usdInrRate]
   );
 
   const format = useCallback(
-    (amount: number, from: DisplayCurrency) => {
+    (amount: number, from: DisplayCurrency | string) => {
       const value = convert(amount, from);
       return new Intl.NumberFormat(displayCurrency === "INR" ? "en-IN" : "en-US", {
         style: "currency",
@@ -142,6 +154,16 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
       }).format(value);
     },
     [convert, displayCurrency]
+  );
+
+  const formatDisplay = useCallback(
+    (amount: number) =>
+      new Intl.NumberFormat(displayCurrency === "INR" ? "en-IN" : "en-US", {
+        style: "currency",
+        currency: displayCurrency,
+        maximumFractionDigits: displayCurrency === "INR" ? 0 : 2,
+      }).format(amount),
+    [displayCurrency]
   );
 
   const value = useMemo(

@@ -20,6 +20,7 @@ import {
   saveShippingAddress,
 } from "@/lib/shipping-address";
 import { fetchAccount, createAccountAddress } from "@/lib/account";
+import { useCurrency, type DisplayCurrency } from "@/lib/currency-context";
 import type { Order, ShippingAddress } from "@hr-ecom/shared";
 
 declare global {
@@ -337,6 +338,12 @@ export default function CheckoutPage() {
   const storedCurrency = (cart.items[0]?.currency ?? "USD") as DisplayCurrency;
   const rawSubtotal = cart.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const itemCount = cart.items.reduce((sum, i) => sum + i.quantity, 0);
+  const lineTotal = (price: number, qty: number, from: DisplayCurrency) =>
+    convert(price * qty, from);
+  const subtotal = cart.items.reduce(
+    (sum, item) => sum + lineTotal(item.price, item.quantity, item.currency as DisplayCurrency),
+    0
+  );
 
   return (
     <>
