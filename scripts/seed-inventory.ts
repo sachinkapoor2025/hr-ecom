@@ -1,7 +1,8 @@
 /**
- * Set inventory to 200 for all products that have 0 or missing stock.
- * Run after deploy: npm run seed:inventory
+ * Set inventory to 200 for all products (catalog was seeded at 100; target is 200).
+ * Does not change unitsSold — that counter is only updated when orders are paid.
  *
+ * Run: npm run seed:inventory
  * Requires AWS credentials and PRODUCTS_TABLE / ENVIRONMENT env vars.
  */
 import { ScanCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
@@ -15,7 +16,7 @@ const TABLE = process.env.PRODUCTS_TABLE ?? `hr-ecom-products-${ENV}`;
 const doc = DynamoDBDocumentClient.from(new DynamoDBClient({}));
 
 async function main() {
-  console.log(`Seeding inventory on ${TABLE} → ${DEFAULT_PRODUCT_INVENTORY} where stock is 0 or unset`);
+  console.log(`Setting inventory on ${TABLE} → ${DEFAULT_PRODUCT_INVENTORY} for all products`);
 
   const scan = await doc.send(
     new ScanCommand({
@@ -32,8 +33,7 @@ async function main() {
     const slug = (item.slug as string) ?? item.PK?.replace("PRODUCT#", "");
     if (!slug) continue;
 
-    const inv = item.inventory;
-    if (typeof inv === "number" && inv > 0) continue;
+    if (item.inventory === DEFAULT_PRODUCT_INVENTORY) continue;
 
     const timestamp = new Date().toISOString();
     await doc.send(

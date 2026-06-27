@@ -1,14 +1,12 @@
-import { DEFAULT_PRODUCT_INVENTORY, FAST_SELLING_THRESHOLD } from "../constants";
+import { FAST_SELLING_THRESHOLD } from "../constants";
 import type { Product } from "../schemas/product";
 
-/** Total units sold — uses tracked counter, or estimates from starting inventory. */
+/** Total units sold — only the counter incremented when orders are paid (never inferred from stock). */
 export function getUnitsSold(product: Product): number {
-  if (typeof product.unitsSold === "number") return product.unitsSold;
-  const inv = product.inventory ?? DEFAULT_PRODUCT_INVENTORY;
-  return Math.max(0, DEFAULT_PRODUCT_INVENTORY - inv);
+  return product.unitsSold ?? 0;
 }
 
-/** In stock and sold at least FAST_SELLING_THRESHOLD units. */
+/** In stock and at least FAST_SELLING_THRESHOLD real paid orders. */
 export function isFastSelling(product: Product): boolean {
   return (product.inventory ?? 0) > 0 && getUnitsSold(product) >= FAST_SELLING_THRESHOLD;
 }
