@@ -12,6 +12,7 @@ import { trackCheckoutStart, trackPurchase } from "@/lib/track";
 import Script from "next/script";
 import { PaymentMethodPicker, type PaymentMethod } from "@/components/PaymentMethodPicker";
 import { ShippingAddressForm } from "@/components/ShippingAddressForm";
+import { SecureCheckoutBadge } from "@/components/SecureCheckoutBadge";
 import {
   emptyShippingAddress,
   loadSavedAddresses,
@@ -386,6 +387,8 @@ export default function CheckoutPage() {
                   ? "Pay with Razorpay"
                   : "Pay with Stripe"}
             </button>
+
+            <SecureCheckoutBadge />
 
             <Link href="/cart" className="block text-center text-sm text-nav hover:underline">
               ← Back to cart

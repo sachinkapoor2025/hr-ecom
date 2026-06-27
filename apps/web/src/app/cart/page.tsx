@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useCart } from "@/lib/cart-context";
 import { useCurrency } from "@/lib/currency-context";
+import { SecureCheckoutBadge } from "@/components/SecureCheckoutBadge";
 import type { DisplayCurrency } from "@/lib/currency-context";
 
 function TrashIcon() {
@@ -175,6 +176,8 @@ export default function CartPage() {
             >
               Proceed to checkout
             </Link>
+
+            <SecureCheckoutBadge className="mt-4" />
           </aside>
         </div>
       )}
