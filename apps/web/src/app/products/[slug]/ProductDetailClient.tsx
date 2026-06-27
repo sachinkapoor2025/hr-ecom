@@ -5,6 +5,10 @@ import Link from "next/link";
 import { AddToCartControl } from "@/components/AddToCartControl";
 import { ProductImageGallery } from "@/components/ProductImageGallery";
 import { WishlistButton } from "@/components/WishlistButton";
+import { TrustBadges } from "@/components/TrustBadges";
+import { RakshaBandhanCountdown } from "@/components/RakshaBandhanCountdown";
+import { ProductReviewsPreview } from "@/components/ProductReviewsPreview";
+import { StickyAddToCartBar } from "@/components/StickyAddToCartBar";
 import { useSessionId, useDebouncedLeadCapture } from "@/lib/session";
 import { trackProductView } from "@/lib/track";
 import { useCurrency } from "@/lib/currency-context";
@@ -12,9 +16,11 @@ import { getDiscountPercent } from "@/lib/pricing";
 import { LeadCaptureInput } from "@/components/LeadCaptureInput";
 import { HomeProductCard } from "@/components/HomeProductCard";
 import { useCart } from "@/lib/cart-context";
+import { productPageFaqs } from "@/lib/content/product-faqs";
+import { testimonials } from "@/lib/site";
 import type { Product } from "@hr-ecom/shared";
 
-type Tab = "description" | "reviews";
+type Tab = "description" | "reviews" | "faq";
 
 function addBusinessDays(from: Date, days: number): Date {
   const date = new Date(from);
@@ -33,8 +39,10 @@ function formatDeliveryDate(date: Date): string {
 function estimatedDeliveryLabel(): string {
   const start = addBusinessDays(new Date(), 5);
   const end = addBusinessDays(new Date(), 7);
-  return `${formatDeliveryDate(start)} – ${formatDeliveryDate(end)}`;
+  return `Order today → arrives ${formatDeliveryDate(start)} – ${formatDeliveryDate(end)} (USA)`;
 }
+
+const LOW_STOCK_THRESHOLD = 12;
 
 function shortDescription(description: string): string {
   const first = description.split(/(?<=\.)\s+/)[0]?.trim();
@@ -108,9 +116,11 @@ export function ProductDetailClient({
   const summary = shortDescription(product.description);
   const cartQuantity = cart?.items.find((i) => i.productSlug === product.slug)?.quantity ?? 0;
   const inCart = cartQuantity > 0;
+  const lowStock = product.inventory > 0 && product.inventory <= LOW_STOCK_THRESHOLD;
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-6 pb-12">
+    <>
+    <div className="max-w-6xl mx-auto px-4 py-6 pb-24 md:pb-12">
       <div className="grid md:grid-cols-2 gap-8 lg:gap-10 items-start">
         <div>
           <ProductImageGallery images={product.images ?? []} alt={product.name} />
@@ -127,16 +137,28 @@ export function ProductDetailClient({
             )}
           </div>
 
-          <p className="text-slate-600 text-sm sm:text-base mb-4 leading-relaxed">{summary}</p>
+          <p className="text-slate-600 text-sm sm:text-base mb-3 leading-relaxed">{summary}</p>
 
-          <div className="flex items-center gap-2 rounded-md bg-orange-50 border border-orange-100 px-3 py-2.5 mb-5 text-sm text-slate-700">
+          <div className="mb-3">
+            <RakshaBandhanCountdown variant="inline" />
+          </div>
+
+          {lowStock && (
+            <p className="text-sm font-semibold text-orange-700 bg-orange-50 border border-orange-100 rounded-md px-3 py-2 mb-3">
+              Only {product.inventory} left in stock — order soon for Raksha Bandhan delivery
+            </p>
+          )}
+
+          <div className="flex items-center gap-2 rounded-md bg-orange-50 border border-orange-100 px-3 py-2.5 mb-4 text-sm text-slate-700">
             <svg className="w-5 h-5 shrink-0 text-nav" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.75} aria-hidden>
               <path strokeLinecap="round" strokeLinejoin="round" d="M8 17h8M8 17a2 2 0 11-4 0 2 2 0 014 0zm8 0a2 2 0 104 0m-4 0V9m0 0H5.5M12 9h6.5M12 9L9 5m3 4l3-4" />
             </svg>
             <span>
-              <span className="font-semibold text-primary">Estimated Delivery:</span> {estimatedDeliveryLabel()}
+              <span className="font-semibold text-primary">Estimated delivery:</span> {estimatedDeliveryLabel()}
             </span>
           </div>
+
+          <TrustBadges variant="compact" className="mb-5" />
 
           {inCart ? (
             <div className="flex flex-wrap items-center gap-3 mb-3">
@@ -208,7 +230,18 @@ export function ProductDetailClient({
                 : "border-transparent text-slate-500 hover:text-primary"
             }`}
           >
-            Reviews (0)
+            Reviews ({testimonials.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab("faq")}
+            className={`pb-3 text-sm font-semibold border-b-2 -mb-px transition ${
+              tab === "faq"
+                ? "border-primary text-primary"
+                : "border-transparent text-slate-500 hover:text-primary"
+            }`}
+          >
+            FAQ
           </button>
         </div>
 
@@ -232,6 +265,18 @@ export function ProductDetailClient({
                 </div>
               </div>
             )}
+
+            <div className="max-w-2xl">
+              <h3 className="text-sm font-bold text-primary mb-3">Common questions</h3>
+              <dl className="space-y-4">
+                {productPageFaqs.map((f) => (
+                  <div key={f.q}>
+                    <dt className="font-semibold text-slate-800 text-sm">{f.q}</dt>
+                    <dd className="text-sm text-slate-600 mt-1 leading-relaxed">{f.a}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
 
             <div className="max-w-md space-y-3">
               <LeadCaptureInput
@@ -297,10 +342,21 @@ export function ProductDetailClient({
               </div>
             )}
           </div>
+        ) : tab === "reviews" ? (
+          <ProductReviewsPreview />
         ) : (
-          <p className="text-slate-500 text-sm">No reviews yet. Be the first to review this Rakhi after your order.</p>
+          <dl className="space-y-5 max-w-2xl">
+            {productPageFaqs.map((f) => (
+              <div key={f.q}>
+                <dt className="font-semibold text-slate-900">{f.q}</dt>
+                <dd className="text-slate-600 mt-2 leading-relaxed">{f.a}</dd>
+              </div>
+            ))}
+          </dl>
         )}
       </section>
     </div>
+    <StickyAddToCartBar product={product} />
+    </>
   );
 }

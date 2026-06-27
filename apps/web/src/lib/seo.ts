@@ -71,7 +71,11 @@ export function organizationJsonLd() {
     description: site.description,
     email: site.supportEmail,
     telephone: site.phone,
-    sameAs: [`https://${site.domain}`],
+    sameAs: [
+      "https://www.facebook.com/usarakhi/",
+      "https://www.instagram.com/usarakhi/",
+      `https://www.${site.domain}`,
+    ],
     areaServed: { "@type": "Country", name: "United States" },
     knowsAbout: [
       "Raksha Bandhan",
@@ -179,6 +183,9 @@ export function productJsonLd(product: {
   inventory: number;
   categorySlug?: string;
 }) {
+  const avgRating =
+    testimonials.reduce((sum, t) => sum + t.rating, 0) / testimonials.length;
+
   return {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -186,20 +193,56 @@ export function productJsonLd(product: {
     name: product.name,
     description: product.description,
     image: product.images ?? [],
-    sku: product.sku,
+    sku: product.sku ?? product.slug,
+    mpn: product.slug,
     url: canonical(`/products/${product.slug}`),
     brand: { "@type": "Brand", name: site.name },
     category: product.categorySlug?.replace(/-/g, " "),
+    aggregateRating: {
+      "@type": "AggregateRating",
+      ratingValue: avgRating.toFixed(1),
+      bestRating: "5",
+      worstRating: "1",
+      reviewCount: String(testimonials.length),
+    },
     offers: {
       "@type": "Offer",
       url: canonical(`/products/${product.slug}`),
       price: product.price,
       priceCurrency: product.currency,
+      itemCondition: "https://schema.org/NewCondition",
       availability:
         product.inventory > 0
           ? "https://schema.org/InStock"
           : "https://schema.org/OutOfStock",
       seller: { "@id": `${siteUrl}/#organization` },
+      shippingDetails: {
+        "@type": "OfferShippingDetails",
+        shippingRate: {
+          "@type": "MonetaryAmount",
+          value: "0",
+          currency: product.currency,
+        },
+        deliveryTime: {
+          "@type": "ShippingDeliveryTime",
+          handlingTime: {
+            "@type": "QuantitativeValue",
+            minValue: 0,
+            maxValue: 1,
+            unitCode: "DAY",
+          },
+          transitTime: {
+            "@type": "QuantitativeValue",
+            minValue: 5,
+            maxValue: 7,
+            unitCode: "DAY",
+          },
+        },
+        shippingDestination: {
+          "@type": "DefinedRegion",
+          addressCountry: "US",
+        },
+      },
     },
   };
 }

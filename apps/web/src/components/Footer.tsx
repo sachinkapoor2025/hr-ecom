@@ -102,6 +102,7 @@ export function Footer() {
               <li><Link href="/shipping" className="hover:text-white hover:underline">Shipping &amp; Delivery</Link></li>
               <li><Link href="/faq" className="hover:text-white hover:underline">FAQ</Link></li>
               <li><Link href="/about" className="hover:text-white hover:underline">About Us</Link></li>
+              <li><Link href="/returns" className="hover:text-white hover:underline">Returns &amp; Guarantee</Link></li>
               <li><Link href="/contact" className="hover:text-white hover:underline">Contact Us</Link></li>
             </ul>
           </div>
@@ -138,6 +139,15 @@ export function Footer() {
         <div className="max-w-7xl mx-auto px-4 py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs text-white/50">
           <p>© 2025 {site.name}.com. All rights reserved. Celebrating sibling love across every mile.</p>
           <p className="flex flex-wrap gap-x-3 gap-y-1">
+            <Link href="/terms" className="hover:text-white underline underline-offset-2">
+              Terms
+            </Link>
+            <Link href="/privacy" className="hover:text-white underline underline-offset-2">
+              Privacy
+            </Link>
+            <Link href="/press" className="hover:text-white underline underline-offset-2">
+              Press
+            </Link>
             <Link href="/llms.txt" className="hover:text-white underline underline-offset-2">
               LLMs.txt
             </Link>

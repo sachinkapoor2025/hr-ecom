@@ -122,6 +122,7 @@ ${faqList}
 ## Machine-readable resources
 
 - llms.txt (this file): ${siteUrl}/llms.txt
+- llms-full.txt (full product catalog): ${siteUrl}/llms-full.txt
 - humans.txt: ${siteUrl}/humans.txt
 - sitemap.xml: ${siteUrl}/sitemap.xml
 - robots.txt: ${siteUrl}/robots.txt
