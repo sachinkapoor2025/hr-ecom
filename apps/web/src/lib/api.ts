@@ -7,6 +7,23 @@ type ApiOptions = RequestInit & {
   revalidate?: number | false;
 };
 
+async function fetchWithRetry(url: string, init: RequestInit, attempts = 3): Promise<Response> {
+  let lastError: unknown;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const res = await fetch(url, init);
+      if (res.ok || res.status < 500) return res;
+      lastError = new Error(`HTTP ${res.status}`);
+    } catch (err) {
+      lastError = err;
+    }
+    if (i < attempts - 1) {
+      await new Promise((r) => setTimeout(r, 250 * (i + 1)));
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error("Fetch failed");
+}
+
 export async function api<T>(path: string, options: ApiOptions = {}): Promise<T> {
   const { sessionId, token, revalidate, ...fetchOptions } = options;
   const headers: Record<string, string> = {
@@ -27,7 +44,7 @@ export async function api<T>(path: string, options: ApiOptions = {}): Promise<T>
       : { next: { revalidate: typeof revalidate === "number" ? revalidate : 300 } }
     : { cache: "default" };
 
-  const res = await fetch(url, {
+  const res = await fetchWithRetry(url, {
     ...fetchOptions,
     headers,
     ...cacheOptions,

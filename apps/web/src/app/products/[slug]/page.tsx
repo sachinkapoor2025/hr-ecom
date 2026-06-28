@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { api } from "@/lib/api";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { JsonLd } from "@/components/JsonLd";
 import { ProductDetailClient } from "./ProductDetailClient";
 import { breadcrumbJsonLd, faqJsonLd, productJsonLd, productPageMetadata } from "@/lib/seo";
 import { productPageFaqs } from "@/lib/content/product-faqs";
 import { resolveImageUrl } from "@/lib/images";
+import { loadProduct, loadRelatedProducts, getStaticProductSlugs } from "@/lib/product-loader";
+import { api } from "@/lib/api";
 import type { Product } from "@hr-ecom/shared";
 
 interface Props {
@@ -18,6 +18,10 @@ interface Props {
 export const revalidate = 3600;
 
 export async function generateStaticParams() {
+  const slugs = getStaticProductSlugs();
+  if (slugs.length > 0) {
+    return slugs.map((slug) => ({ slug }));
+  }
   try {
     const data = await api<{ products: Product[] }>("/products", { revalidate: 3600 });
     return data.products.map((p) => ({ slug: p.slug }));
@@ -28,44 +32,27 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  try {
-    const data = await api<{ product: Product }>(`/products/${slug}`, { revalidate: 3600 });
-    const p = data.product;
-    return productPageMetadata({
-      title: p.seoTitle ?? p.name,
-      seoDescription: p.seoDescription,
-      description: p.description,
-      path: `/products/${slug}`,
-      price: p.price,
-      currency: p.currency,
-      ogImage: resolveImageUrl(p.images?.[0]),
-      keywords: [p.name, ...(p.tags ?? []), "send rakhi to USA", "UsaRakhi"].join(", "),
-    });
-  } catch {
-    return { title: "Product" };
-  }
+  const p = await loadProduct(slug);
+  if (!p) return { title: "Product" };
+
+  return productPageMetadata({
+    title: p.seoTitle ?? p.name,
+    seoDescription: p.seoDescription,
+    description: p.description,
+    path: `/products/${slug}`,
+    price: p.price,
+    currency: p.currency,
+    ogImage: resolveImageUrl(p.images?.[0]),
+    keywords: [p.name, ...(p.tags ?? []), "send rakhi to USA", "UsaRakhi"].join(", "),
+  });
 }
 
 export default async function ProductPage({ params }: Props) {
   const { slug } = await params;
-  let product: Product;
-  let relatedProducts: Product[] = [];
+  const product = await loadProduct(slug);
+  if (!product) notFound();
 
-  try {
-    const data = await api<{ product: Product }>(`/products/${slug}`, { revalidate: 3600 });
-    product = data.product;
-  } catch {
-    notFound();
-  }
-
-  try {
-    const related = await api<{ products: Product[] }>(`/products?category=${product.categorySlug}`, {
-      revalidate: 3600,
-    });
-    relatedProducts = related.products.filter((p) => p.slug !== product.slug).slice(0, 5);
-  } catch {
-    relatedProducts = [];
-  }
+  const relatedProducts = await loadRelatedProducts(product.categorySlug, product.slug);
 
   const categoryLabel = product.categorySlug.replace(/-/g, " ");
   const crumbs = [

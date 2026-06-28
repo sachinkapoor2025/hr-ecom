@@ -62,7 +62,7 @@ export function productPageMetadata(opts: {
   const description = productMetaDescription(opts.seoDescription, opts.description);
   const url = canonical(opts.path);
   const image = opts.ogImage ?? site.logoSrc;
-  const price = opts.price.toFixed(2);
+  const price = Number.isFinite(opts.price) ? opts.price.toFixed(2) : "0.00";
   const currency = opts.currency === "INR" ? "INR" : "USD";
 
   return {
@@ -76,8 +76,7 @@ export function productPageMetadata(opts: {
       url,
       siteName: site.name,
       locale: "en_US",
-      // Facebook/WhatsApp product previews — valid OG type, omitted from Next.js union
-      type: "product" as "website",
+      type: "website",
       images: [{ url: image, alt: opts.title }],
     },
     twitter: {
