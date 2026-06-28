@@ -5,9 +5,9 @@ type Variant = "compact" | "full";
 
 export function TrustBadges({ variant = "full", className = "" }: { variant?: Variant; className?: string }) {
   const items = [
+    { icon: "🇺🇸", label: "Ships from USA" },
     { icon: "🔒", label: "SSL Secure Checkout" },
     { icon: "🚚", label: "5–7 Day USA Delivery" },
-    { icon: "🇺🇸", label: "All 50 States" },
     { icon: "✓", label: "Satisfaction Guarantee", href: "/returns" },
   ] as const;
 

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import Image from "next/image";
 import { testimonials } from "@/lib/site";
 import { resolveImageUrl } from "@/lib/images";
@@ -19,7 +20,7 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
-function VerifiedBadge() {
+function CustomerBadge() {
   return (
     <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
       <svg className="w-3 h-3" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
@@ -29,18 +30,32 @@ function VerifiedBadge() {
           clipRule="evenodd"
         />
       </svg>
-      Verified Buyer
+      UsaRakhi customer
     </span>
   );
 }
 
-export function CustomerReviews() {
+type CustomerReviewsProps = {
+  showIntro?: boolean;
+};
+
+export function CustomerReviews({ showIntro = true }: CustomerReviewsProps) {
   return (
     <section className="bg-white border-t border-slate-100 py-12 md:py-16">
       <div className="max-w-7xl mx-auto px-4">
-        <h2 className="text-2xl md:text-3xl font-bold text-primary mb-8 md:mb-10">
+        <h2 className="text-2xl md:text-3xl font-bold text-primary mb-3 md:mb-4">
           Loved by Brothers &amp; Sisters
         </h2>
+        {showIntro && (
+          <p className="text-slate-600 text-sm md:text-base max-w-2xl mb-8 md:mb-10 leading-relaxed">
+            Stories from sisters who sent Rakhi to brothers across the USA — domestic delivery, thoughtful packaging,
+            and on-time Raksha Bandhan gifts.{" "}
+            <Link href="/reviews" className="text-nav font-semibold hover:underline">
+              Share your review →
+            </Link>
+          </p>
+        )}
+        {!showIntro && <div className="mb-8" />}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-6">
           {testimonials.map((review) => (
@@ -57,7 +72,7 @@ export function CustomerReviews() {
 
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-2">
                 <h3 className="text-lg font-bold text-slate-800">{review.name}</h3>
-                <VerifiedBadge />
+                <CustomerBadge />
                 <span className="text-xs text-slate-400">{review.timeAgo}</span>
               </div>
 

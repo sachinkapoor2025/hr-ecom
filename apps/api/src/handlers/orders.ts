@@ -22,6 +22,7 @@ import { getAuth, getSessionId, getUserOrSessionKey, requireAdmin } from "../lib
 import { getCartHandler, clearCartForUser } from "./cart";
 import { notifyAdminLead, notifyAdminOrderPaid, notifyAdminOrderPlaced } from "../lib/email";
 import { decrementInventoryForOrder, validateOrderInventory } from "../lib/inventory";
+import { applyDeliveryReviewSchedule } from "./review-emails";
 import {
   applyPercentDiscount,
   issueWelcomeCoupon,
@@ -394,6 +395,7 @@ export async function updateOrderStatus(event: APIGatewayProxyEventV2) {
     ...(parsed.data.estimatedDeliveryAt !== undefined && {
       estimatedDeliveryAt: parsed.data.estimatedDeliveryAt,
     }),
+    ...applyDeliveryReviewSchedule(order, nextStatus, timestamp),
     updatedAt: timestamp,
     ...(parsed.data.status &&
       parsed.data.status !== order.status && {

@@ -14,6 +14,7 @@ export * from "./lib/currency-display";
 export * from "./lib/image-url";
 export * from "./lib/product-sales";
 export * from "./lib/sales-report";
+export * from "./lib/review-email";
 export * from "./db/keys";
 export * from "./constants";
 export * from "./currency";

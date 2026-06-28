@@ -205,6 +205,8 @@ function formatLeadSource(source?: string): string {
       return "Newsletter / exit offer";
     case "chat":
       return "Chat widget";
+    case "review":
+      return "Customer review";
     case "checkout":
       return "Checkout";
     case "product":
@@ -272,6 +274,7 @@ https://www.usarakhi.com`,
 export async function notifyAdminLead(lead: LeadCaptureInput): Promise<EmailSendResult> {
   const message = lead.metadata?.message?.trim();
   const isContact = lead.source === "contact";
+  const isReview = lead.source === "review";
 
   if (isContact && lead.name && lead.email && message) {
     return sendContactEmails({
@@ -304,7 +307,7 @@ export async function notifyAdminLead(lead: LeadCaptureInput): Promise<EmailSend
     return { ok: false, skipped: true, error: "SMTP not configured" };
   }
 
-  const isEnquiry = isContact || Boolean(message);
+  const isEnquiry = isContact || isReview || Boolean(message);
   if (!isEnquiry) return { ok: true, skipped: true };
 
   const lines = [
@@ -325,7 +328,7 @@ export async function notifyAdminLead(lead: LeadCaptureInput): Promise<EmailSend
 
   return sendEmail({
     to: notifyAddress(),
-    subject: `[${SITE_NAME}] New enquiry — ${formatLeadSource(lead.source)}`,
+    subject: `[${SITE_NAME}] New ${isReview ? "review" : "enquiry"} — ${formatLeadSource(lead.source)}`,
     text: lines,
     replyTo: lead.email,
   });
@@ -451,5 +454,48 @@ Admin: https://www.usarakhi.com/admin/products`;
     to: LOW_STOCK_ALERT_EMAIL,
     subject,
     text,
+  });
+}
+
+function siteUrl(): string {
+  return (process.env.SITE_URL ?? "https://www.usarakhi.com").replace(/\/$/, "");
+}
+
+export async function sendReviewRequestEmail(order: Order): Promise<EmailSendResult> {
+  if (!smtpConfigured()) {
+    return { ok: false, skipped: true, error: "SMTP not configured" };
+  }
+
+  const customerEmail = order.shippingAddress?.email?.trim();
+  if (!customerEmail?.includes("@")) {
+    return { ok: false, skipped: true, error: "No customer email" };
+  }
+
+  const name = order.shippingAddress?.name?.split(" ")[0] ?? "there";
+  const shortId = order.orderId.slice(0, 8).toUpperCase();
+  const reviewUrl = `${siteUrl()}/reviews`;
+
+  const text = `Hi ${name},
+
+We hope your Rakhi order #${shortId} arrived safely and made Raksha Bandhan special!
+
+We're UsaRakhi — in our first Raksha Bandhan season — and your feedback helps other sisters trust us for USA Rakhi delivery.
+
+Would you take 30 seconds to share your experience?
+${reviewUrl}
+
+You can mention delivery speed, packaging, or how your brother liked the Rakhi. We read every review.
+
+Thank you for choosing ${SITE_NAME}.
+
+— Team ${SITE_NAME}
+${siteUrl()}
+WhatsApp / support: support@usarakhi.com`;
+
+  return sendEmail({
+    to: customerEmail,
+    subject: `How was your Rakhi delivery? — ${SITE_NAME}`,
+    text,
+    replyTo: notifyAddress(),
   });
 }

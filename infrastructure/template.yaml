@@ -69,6 +69,7 @@ Globals:
         SMTP_FROM: order@usarakhi.com
         NOTIFY_EMAIL: order@usarakhi.com
         SMTP_PASS: !Ref SmtpPassword
+        SITE_URL: https://www.usarakhi.com
 
 Resources:
   ProductsTable:
@@ -426,6 +427,26 @@ Resources:
             ApiId: !Ref HttpApi
             Path: /health
             Method: GET
+    Metadata:
+      BuildMethod: makefile
+
+  ReviewEmailsCronFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub hr-ecom-review-emails-${Environment}
+      Handler: scheduled.handler
+      Timeout: 120
+      CodeUri: ..
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref OrdersTable
+      Events:
+        HourlyReviewEmails:
+          Type: Schedule
+          Properties:
+            Schedule: rate(1 hour)
+            Description: Send post-delivery review request emails (1 day after delivered)
+            Enabled: true
     Metadata:
       BuildMethod: makefile
 

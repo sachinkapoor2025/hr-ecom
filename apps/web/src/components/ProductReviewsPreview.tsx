@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { testimonials } from "@/lib/site";
 
 function StarRating({ rating }: { rating: number }) {
@@ -28,7 +29,7 @@ export function ProductReviewsPreview() {
       <div className="flex flex-wrap items-center gap-2">
         <StarRating rating={Math.round(avg)} />
         <span className="text-sm font-semibold text-slate-800">{avg.toFixed(1)} / 5</span>
-        <span className="text-xs text-slate-500">from {testimonials.length}+ verified sisters</span>
+        <span className="text-xs text-slate-500">from {testimonials.length} customer stories</span>
       </div>
       <ul className="space-y-3">
         {preview.map((t) => (
@@ -42,7 +43,10 @@ export function ProductReviewsPreview() {
         ))}
       </ul>
       <p className="text-xs text-slate-500">
-        Reviews from verified UsaRakhi customers. Share yours after delivery via WhatsApp or email.
+        Real experiences from UsaRakhi customers.{" "}
+        <Link href="/reviews" className="text-nav font-semibold hover:underline">
+          Write a review after delivery →
+        </Link>
       </p>
     </div>
   );
