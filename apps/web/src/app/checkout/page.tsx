@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "@/lib/api";
 import { useCart } from "@/lib/cart-context";
 import { useAuth } from "@/lib/auth-context";
@@ -17,6 +17,7 @@ import { CheckoutLegalNotice } from "@/components/CheckoutLegalNotice";
 import { TrustBadges } from "@/components/TrustBadges";
 import { CouponInput } from "@/components/CouponInput";
 import { StripePaymentForm } from "@/components/StripePaymentForm";
+import { EstimatedDeliveryNote } from "@/components/EstimatedDeliveryNote";
 import { loadWelcomeCoupon } from "@/lib/welcome-coupon";
 import {
   emptyShippingAddress,
@@ -24,7 +25,7 @@ import {
   saveShippingAddress,
 } from "@/lib/shipping-address";
 import { fetchAccount, createAccountAddress } from "@/lib/account";
-import type { Order, ShippingAddress } from "@hr-ecom/shared";
+import { ORDER_STATUS, type Order, type ShippingAddress } from "@hr-ecom/shared";
 
 declare global {
   interface Window {
@@ -36,7 +37,17 @@ declare global {
 }
 
 export default function CheckoutPage() {
+  return (
+    <Suspense fallback={<div className="max-w-lg mx-auto px-4 py-16 text-center text-slate-600">Loading checkout…</div>}>
+      <CheckoutPageInner />
+    </Suspense>
+  );
+}
+
+function CheckoutPageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const retryOrderId = searchParams.get("orderId");
   const { cart, loading: cartLoading, refresh } = useCart();
   const { user, token } = useAuth();
   const { format, displayCurrency, convert, usdInrRate } = useCurrency();
@@ -52,6 +63,8 @@ export default function CheckoutPage() {
   const [stripeCheckout, setStripeCheckout] = useState<{ clientSecret: string; orderId: string } | null>(
     null
   );
+  const [retryOrder, setRetryOrder] = useState<Order | null>(null);
+  const [retryLoading, setRetryLoading] = useState(Boolean(retryOrderId));
   const [address, setAddress] = useState<ShippingAddress>(emptyShippingAddress);
   const [saveForLater, setSaveForLater] = useState(true);
   const addressPrefilled = useRef(false);
@@ -68,6 +81,31 @@ export default function CheckoutPage() {
     const stored = loadWelcomeCoupon();
     if (stored?.code) setSavedCouponCode(stored.code);
   }, []);
+
+  useEffect(() => {
+    if (!retryOrderId || !sessionId) {
+      setRetryLoading(false);
+      return;
+    }
+    setRetryLoading(true);
+    api<{ order: Order }>(`/orders/${retryOrderId}`, { sessionId, token })
+      .then((data) => {
+        if (data.order.status !== ORDER_STATUS.PENDING_PAYMENT) {
+          router.replace(`/orders/${retryOrderId}`);
+          return;
+        }
+        setRetryOrder(data.order);
+        if (data.order.shippingAddress) setAddress(data.order.shippingAddress);
+        if (data.order.paymentProvider === "razorpay") setPaymentMethod("razorpay");
+        else if (data.order.paymentProvider === "stripe") setPaymentMethod("stripe");
+        if (data.order.discount > 0) {
+          setDiscount(data.order.discount);
+          if (data.order.couponCode) setAppliedCouponCode(data.order.couponCode);
+        }
+      })
+      .catch((err) => setError(err instanceof Error ? err.message : "Could not load order for retry"))
+      .finally(() => setRetryLoading(false));
+  }, [retryOrderId, sessionId, token, router]);
 
   const checkoutTracked = useRef(false);
   useEffect(() => {
@@ -167,7 +205,11 @@ export default function CheckoutPage() {
   const openRazorpayCheckout = async (order: Order, razorpayOrderId: string, razorpayKeyId?: string) => {
     const key = razorpayKeyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
     if (!key || razorpayOrderId.includes("_dev_")) {
-      trackPurchase(order.total, { orderId: order.orderId, provider: "razorpay_dev" });
+      trackPurchase(order.total, {
+        orderId: order.orderId,
+        provider: "razorpay_dev",
+        currency: order.currency,
+      });
       await refresh();
       router.push(`/orders/${order.orderId}?dev=1`);
       return;
@@ -208,7 +250,11 @@ export default function CheckoutPage() {
                 razorpaySignature: response.razorpay_signature,
               }),
             });
-            trackPurchase(order.total, { orderId: order.orderId, provider: "razorpay" });
+            trackPurchase(order.total, {
+              orderId: order.orderId,
+              provider: "razorpay",
+              currency: order.currency,
+            });
             await refresh();
             resolve();
             router.push(`/orders/${order.orderId}`);
@@ -270,6 +316,35 @@ export default function CheckoutPage() {
     setError("");
 
     try {
+      if (retryOrder) {
+        const data = await api<{
+          order: Order;
+          clientSecret?: string;
+          razorpayOrderId?: string;
+          razorpayKeyId?: string;
+        }>(`/orders/${retryOrder.orderId}/retry-payment`, {
+          method: "POST",
+          sessionId,
+          token,
+          body: JSON.stringify({ paymentMethod }),
+        });
+
+        if (paymentMethod === "stripe") {
+          const stripeKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.trim();
+          if (!stripeKey) throw new Error("Stripe is not configured.");
+          if (!data.clientSecret || data.clientSecret.includes("_dev_")) {
+            throw new Error("Stripe payment could not be started.");
+          }
+          setStripeCheckout({ clientSecret: data.clientSecret, orderId: data.order.orderId });
+          setRetryOrder(data.order);
+          return;
+        }
+
+        if (!data.razorpayOrderId) throw new Error("Razorpay could not be started.");
+        await openRazorpayCheckout(data.order, data.razorpayOrderId, data.razorpayKeyId);
+        return;
+      }
+
       const payload: ShippingAddress = {
         ...address,
         country: "US",
@@ -331,11 +406,14 @@ export default function CheckoutPage() {
     }
   };
 
-  if (cartLoading) {
-    return <div className="max-w-lg mx-auto px-4 py-16 text-center text-slate-600">Loading cart...</div>;
+  if (cartLoading || retryLoading) {
+    return <div className="max-w-lg mx-auto px-4 py-16 text-center text-slate-600">Loading checkout...</div>;
   }
 
-  if (!cart?.items.length) {
+  const isRetry = Boolean(retryOrder);
+  const checkoutItems = isRetry ? retryOrder!.items : cart?.items ?? [];
+
+  if (!checkoutItems.length) {
     return (
       <div className="max-w-lg mx-auto px-4 py-16 text-center">
         <p className="text-slate-600 mb-4">Your cart is empty.</p>
@@ -346,20 +424,30 @@ export default function CheckoutPage() {
     );
   }
 
-  const cartCurrency = (cart.items[0]?.currency ?? "USD") as DisplayCurrency;
+  const cartCurrency = (checkoutItems[0]?.currency ?? "USD") as DisplayCurrency;
   /** Subtotal in the shopper's selected display currency (matches cart page). */
-  const displaySubtotal = cart.items.reduce((sum, item) => {
-    const lineCurrency = (item.currency ?? cartCurrency) as DisplayCurrency;
-    return sum + convert(item.price * item.quantity, lineCurrency);
-  }, 0);
-  const itemCount = cart.items.reduce((sum, i) => sum + i.quantity, 0);
-  const orderTotal = Math.max(0, displaySubtotal - discount);
+  const displaySubtotal = isRetry
+    ? retryOrder!.subtotal
+    : checkoutItems.reduce((sum, item) => {
+        const lineCurrency = (item.currency ?? cartCurrency) as DisplayCurrency;
+        return sum + convert(item.price * item.quantity, lineCurrency);
+      }, 0);
+  const itemCount = checkoutItems.reduce((sum, i) => sum + i.quantity, 0);
+  const orderTotal = isRetry
+    ? retryOrder!.total
+    : Math.max(0, displaySubtotal - discount);
 
   return (
     <>
       <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
       <div className="max-w-6xl mx-auto px-4 py-8 sm:py-10">
-        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-6">Checkout</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">Checkout</h1>
+        {isRetry && (
+          <p className="text-sm text-amber-800 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mb-4">
+            Retrying payment for order <span className="font-mono">{retryOrder!.orderId.slice(0, 8)}…</span>
+          </p>
+        )}
+        <EstimatedDeliveryNote variant="banner" prefix="Estimated delivery:" className="mb-6" />
 
         <form
           onSubmit={handleCheckout}
@@ -379,7 +467,7 @@ export default function CheckoutPage() {
             <h2 className="text-sm font-bold text-slate-900 tracking-wide">ORDER SUMMARY</h2>
 
             <ul className="space-y-3 text-sm border-b border-slate-200 pb-4">
-              {cart.items.map((item) => {
+              {checkoutItems.map((item) => {
                 const lineCurrency = (item.currency ?? cartCurrency) as DisplayCurrency;
                 return (
                 <li key={item.productSlug} className="flex justify-between gap-3">
@@ -417,21 +505,23 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            <CouponInput
-              email={address.email}
-              subtotal={displaySubtotal}
-              currency={displayCurrency}
-              formatMoney={format}
-              initialCode={savedCouponCode}
-              onApplied={(amount, code) => {
-                setDiscount(amount);
-                setAppliedCouponCode(code);
-              }}
-              onCleared={() => {
-                setDiscount(0);
-                setAppliedCouponCode("");
-              }}
-            />
+            {!isRetry && (
+              <CouponInput
+                email={address.email}
+                subtotal={displaySubtotal}
+                currency={displayCurrency}
+                formatMoney={format}
+                initialCode={savedCouponCode}
+                onApplied={(amount, code) => {
+                  setDiscount(amount);
+                  setAppliedCouponCode(code);
+                }}
+                onCleared={() => {
+                  setDiscount(0);
+                  setAppliedCouponCode("");
+                }}
+              />
+            )}
 
             <div>
               <p className="text-sm font-semibold text-slate-700 mb-3">Payment method</p>

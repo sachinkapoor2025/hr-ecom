@@ -3,12 +3,10 @@ import { z } from "zod";
 export const WELCOME_DISCOUNT_PERCENT = 10;
 export const WELCOME_COUPON_HOURS = 4;
 
-export const couponValidateSchema = z.object({
-  code: z.string().min(4).max(32),
-  email: z.string().email().max(254),
-});
+export const couponSourceSchema = z.enum(["welcome", "abandoned"]);
+export type CouponSource = z.infer<typeof couponSourceSchema>;
 
-export const welcomeCouponSchema = z.object({
+export const couponSchema = z.object({
   code: z.string(),
   email: z.string().email(),
   discountPercent: z.number().int().min(1).max(100),
@@ -17,6 +15,17 @@ export const welcomeCouponSchema = z.object({
   sessionId: z.string().optional(),
   usedAt: z.string().optional(),
   orderId: z.string().optional(),
+  source: couponSourceSchema,
+});
+
+export type StoreCoupon = z.infer<typeof couponSchema>;
+
+export const couponValidateSchema = z.object({
+  code: z.string().min(4).max(32),
+  email: z.string().email().max(254),
+});
+
+export const welcomeCouponSchema = couponSchema.extend({
   source: z.literal("welcome"),
 });
 

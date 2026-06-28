@@ -6,7 +6,7 @@ import { useApiClient } from "@/lib/auth-context";
 import type { Product } from "@hr-ecom/shared";
 import { DEFAULT_PRODUCT_INVENTORY, LOW_STOCK_THRESHOLD } from "@hr-ecom/shared";
 import { getUnitsSold, isFastSelling } from "@hr-ecom/shared";
-import { formatMoney, paginate } from "@/lib/admin-utils";
+import { formatMoney, paginate, downloadCsv } from "@/lib/admin-utils";
 import { TableControls } from "@/components/admin/TableControls";
 
 export default function AdminProductsPage() {
@@ -524,7 +524,48 @@ export default function AdminProductsPage() {
             </div>
           )}
           <div>
-            <h2 className="text-xl font-bold mb-4">Bulk Upload (CSV)</h2>
+            <h2 className="text-xl font-bold mb-2">Bulk Upload (CSV)</h2>
+            <p className="text-sm text-slate-600 mb-3">
+              Download the sample template, fill in your products, then paste or upload the CSV below.
+            </p>
+            <button
+              type="button"
+              onClick={() =>
+                downloadCsv("usarakhi-product-import-template.csv", [
+                  [
+                    "name",
+                    "description",
+                    "price",
+                    "compareAtPrice",
+                    "currency",
+                    "categorySlug",
+                    "sku",
+                    "inventory",
+                    "tags",
+                    "seoTitle",
+                    "seoDescription",
+                    "published",
+                  ],
+                  [
+                    "Premium Designer Rakhi",
+                    "Handcrafted rakhi with beads and thread",
+                    "12.99",
+                    "15.99",
+                    "USD",
+                    "designer-rakhi",
+                    "RAK-001",
+                    "50",
+                    "rakhi,festival",
+                    "Premium Designer Rakhi | UsaRakhi",
+                    "Shop premium designer rakhi with USA delivery",
+                    "true",
+                  ],
+                ])
+              }
+              className="text-sm text-nav border border-nav px-4 py-2 rounded-lg hover:bg-nav/5 mb-4"
+            >
+              Download sample CSV template
+            </button>
             <textarea
               value={csv}
               onChange={(e) => setCsv(e.target.value)}

@@ -50,6 +50,7 @@ function OrderDetailInner({ orderId }: { orderId: string }) {
     trackPurchase(order.total, {
       orderId: order.orderId,
       provider: order.paymentProvider ?? "unknown",
+      currency: order.currency,
     });
   }, [order, redirectStatus, isDev]);
 

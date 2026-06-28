@@ -16,6 +16,7 @@ export function ExitIntentPopup() {
   const [status, setStatus] = useState<"idle" | "sending" | "done">("idle");
   const [error, setError] = useState("");
   const [coupon, setCoupon] = useState<{ code: string; expiresAt: string; discountPercent: number } | null>(null);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (pathname.startsWith("/admin") || pathname.startsWith("/checkout")) return;
@@ -31,6 +32,17 @@ export function ExitIntentPopup() {
     document.addEventListener("mouseleave", onMouseLeave);
     return () => document.removeEventListener("mouseleave", onMouseLeave);
   }, [pathname]);
+
+  const copyCode = async () => {
+    if (!coupon) return;
+    try {
+      await navigator.clipboard.writeText(coupon.code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      /* clipboard blocked */
+    }
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,7 +101,17 @@ export function ExitIntentPopup() {
                   Your {coupon.discountPercent}% off code (valid 4 hours):
                 </p>
                 <div className="rounded-lg border-2 border-dashed border-nav bg-slate-50 px-4 py-3 mb-3">
-                  <p className="text-xl font-bold tracking-widest text-primary">{coupon.code}</p>
+                  <div className="flex items-center justify-center gap-2">
+                    <p className="text-xl font-bold tracking-widest text-primary">{coupon.code}</p>
+                    <button
+                      type="button"
+                      onClick={() => void copyCode()}
+                      className="shrink-0 rounded-md border border-nav bg-white px-2.5 py-1.5 text-xs font-semibold text-nav hover:bg-blue-50 transition"
+                      aria-label="Copy coupon code"
+                    >
+                      {copied ? "Copied!" : "Copy"}
+                    </button>
+                  </div>
                   <p className="text-xs text-slate-500 mt-1">Expires {formatCouponExpiry(coupon.expiresAt)}</p>
                 </div>
                 <p className="text-xs text-slate-500 mb-3">Also sent to your email. Enter at checkout.</p>
@@ -100,11 +122,11 @@ export function ExitIntentPopup() {
               </p>
             )}
             <Link
-              href="/checkout"
+              href="/products"
               onClick={() => setOpen(false)}
               className="inline-block mt-2 rounded-md bg-primary text-white font-semibold text-sm px-5 py-2.5"
             >
-              Go to checkout
+              Shop now
             </Link>
           </div>
         ) : (

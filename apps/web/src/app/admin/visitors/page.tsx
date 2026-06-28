@@ -28,6 +28,10 @@ interface SessionSummary {
   timezone?: string;
   locale?: string;
   referrer?: string;
+  deviceType?: string;
+  browser?: string;
+  os?: string;
+  purchased?: boolean;
   pages: string[];
   products: string[];
 }
@@ -146,13 +150,16 @@ export default function AdminVisitorsPage() {
           "Name",
           "Email",
           "Phone",
+          "Device",
+          "Browser",
+          "OS",
           "Location",
           "Referrer",
           "First seen",
           "Last activity",
           "Duration",
           "Events",
-          "Converted",
+          "Purchased",
           "Landing page",
           "Exit page",
         ],
@@ -163,13 +170,16 @@ export default function AdminVisitorsPage() {
             s.name ?? "",
             s.email ?? "",
             s.phone ?? "",
+            s.deviceType ?? "",
+            s.browser ?? "",
+            s.os ?? "",
             locationLabel(s),
             referrerLabel(s.referrer),
             s.firstSeen,
             s.lastSeen,
             formatDurationMs(duration),
             String(s.eventCount),
-            s.name || s.email ? "Maybe" : "Guest",
+            s.purchased ? "Yes" : "No",
             s.pages[0] ?? s.lastPath ?? "",
             s.lastPath ?? "",
           ];
@@ -240,17 +250,18 @@ export default function AdminVisitorsPage() {
         </p>
       ) : (
         <div className="bg-white rounded-lg overflow-hidden border overflow-x-auto">
-          <table className="w-full text-sm min-w-[1000px]">
+          <table className="w-full text-sm min-w-[1200px]">
             <thead className="bg-slate-50">
               <tr className="text-left">
                 <th className="py-3 px-4">Visitor</th>
-                <th className="py-3 px-4">Type</th>
+                <th className="py-3 px-4">Device</th>
+                <th className="py-3 px-4">Browser / OS</th>
                 <th className="py-3 px-4">Location</th>
                 <th className="py-3 px-4">Referrer</th>
                 <th className="py-3 px-4">Duration</th>
                 <th className="py-3 px-4">Last activity</th>
                 <th className="py-3 px-4">Events</th>
-                <th className="py-3 px-4">Pages</th>
+                <th className="py-3 px-4">Converted</th>
               </tr>
             </thead>
             <tbody>
@@ -271,8 +282,10 @@ export default function AdminVisitorsPage() {
                       </div>
                     )}
                   </td>
-                  <td className="py-3 px-4 text-xs">
-                    {s.name || s.email ? "Registered" : "Guest"}
+                  <td className="py-3 px-4 text-xs capitalize">{s.deviceType ?? "—"}</td>
+                  <td className="py-3 px-4 text-xs text-slate-600">
+                    <div>{s.browser ?? "—"}</div>
+                    <div className="text-slate-400">{s.os ?? ""}</div>
                   </td>
                   <td className="py-3 px-4 text-slate-600 text-xs">{locationLabel(s)}</td>
                   <td className="py-3 px-4 text-xs text-slate-500">{referrerLabel(s.referrer)}</td>
@@ -281,14 +294,11 @@ export default function AdminVisitorsPage() {
                     {new Date(s.lastSeen).toLocaleString()}
                   </td>
                   <td className="py-3 px-4">{s.eventCount}</td>
-                  <td className="py-3 px-4 text-xs text-slate-500 max-w-[180px]">
-                    {s.pages.length ? (
-                      <span title={s.pages.join(", ")}>
-                        {s.pages.slice(0, 2).join(", ")}
-                        {s.pages.length > 2 ? ` +${s.pages.length - 2}` : ""}
-                      </span>
+                  <td className="py-3 px-4 text-xs">
+                    {s.purchased ? (
+                      <span className="text-green-700 font-medium">Yes</span>
                     ) : (
-                      s.lastPath ?? "—"
+                      <span className="text-slate-400">—</span>
                     )}
                   </td>
                 </tr>

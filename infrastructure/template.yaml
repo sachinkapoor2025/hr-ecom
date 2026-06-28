@@ -440,12 +440,18 @@ Resources:
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref OrdersTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CartsTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CustomersTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ConfigTable
       Events:
         HourlyReviewEmails:
           Type: Schedule
           Properties:
-            Schedule: rate(1 hour)
-            Description: Send post-delivery review request emails (1 day after delivered)
+            Schedule: rate(15 minutes)
+            Description: Review request emails + abandoned cart recovery (15 min / 4 hr)
             Enabled: true
     Metadata:
       BuildMethod: makefile

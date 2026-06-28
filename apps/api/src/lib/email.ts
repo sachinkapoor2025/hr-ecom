@@ -1,8 +1,8 @@
 import nodemailer from "nodemailer";
 import type SMTPTransport from "nodemailer/lib/smtp-transport";
-import type { Order, Product } from "@hr-ecom/shared";
+import type { Order, Product, CartItem } from "@hr-ecom/shared";
 import type { LeadCaptureInput } from "@hr-ecom/shared";
-import { WELCOME_DISCOUNT_PERCENT, LOW_STOCK_ALERT_EMAIL } from "@hr-ecom/shared";
+import { WELCOME_DISCOUNT_PERCENT, LOW_STOCK_ALERT_EMAIL, ABANDONED_CART_DISCOUNT_PERCENT } from "@hr-ecom/shared";
 
 const DEFAULT_NOTIFY = "order@usarakhi.com";
 const SITE_NAME = "UsaRakhi";
@@ -497,5 +497,69 @@ WhatsApp / support: support@usarakhi.com`;
     subject: `How was your Rakhi delivery? — ${SITE_NAME}`,
     text,
     replyTo: notifyAddress(),
+  });
+}
+
+function formatCartLines(items: CartItem[], currency: string): string {
+  if (!items.length) return "  (items in your cart)";
+  return items
+    .map((i) => `  • ${i.quantity}× ${i.name} — ${i.currency ?? currency} ${(i.price * i.quantity).toFixed(2)}`)
+    .join("\n");
+}
+
+export async function sendAbandonedCartEmail(input: {
+  email: string;
+  name: string;
+  items: CartItem[];
+  value: number;
+  currency: string;
+  couponCode: string;
+  expiresAt: string;
+  reminder: 1 | 2;
+}): Promise<EmailSendResult> {
+  if (!smtpConfigured()) {
+    return { ok: false, skipped: true, error: "SMTP not configured on server" };
+  }
+
+  const expiryLabel = input.expiresAt
+    ? new Date(input.expiresAt).toLocaleString("en-US", {
+        dateStyle: "medium",
+        timeStyle: "short",
+        timeZone: "America/New_York",
+      })
+    : "4 hours";
+
+  const cartLines = formatCartLines(input.items, input.currency);
+  const totalLabel = `${input.currency} ${input.value.toFixed(2)}`;
+  const reminderLine =
+    input.reminder === 1
+      ? "You left some beautiful Rakhis in your cart."
+      : "Still thinking it over? Your cart is waiting — plus an extra nudge from us.";
+
+  const text = `Hi ${input.name},
+
+${reminderLine}
+
+Your cart (${totalLabel}):
+${cartLines}
+
+Complete checkout with ${ABANDONED_CART_DISCOUNT_PERCENT}% off — use code ${input.couponCode} at checkout.
+Valid until: ${expiryLabel}
+
+→ https://www.usarakhi.com/cart
+→ https://www.usarakhi.com/checkout
+
+Raksha Bandhan 2026 is August 28 — order early for on-time USA delivery.
+
+— ${SITE_NAME} Team
+order@usarakhi.com`;
+
+  return sendEmail({
+    to: input.email,
+    subject:
+      input.reminder === 1
+        ? `You left items in your cart — ${ABANDONED_CART_DISCOUNT_PERCENT}% off inside`
+        : `Last chance: ${ABANDONED_CART_DISCOUNT_PERCENT}% off your cart (${input.couponCode})`,
+    text,
   });
 }

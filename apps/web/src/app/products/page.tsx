@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { api } from "@/lib/api";
 import { HomeProductCard } from "@/components/HomeProductCard";
+import { Suspense } from "react";
+import { ProductGrid } from "@/components/ProductGrid";
 import { SearchTracker } from "@/components/SearchTracker";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { pageMetadata } from "@/lib/seo";
@@ -164,11 +166,9 @@ export default async function ProductsPage({ searchParams }: Props) {
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-          {products.map((p) => (
-            <HomeProductCard key={p.slug} product={p} />
-          ))}
-        </div>
+        <Suspense fallback={<p className="text-slate-500">Loading products…</p>}>
+          <ProductGrid products={products} />
+        </Suspense>
       )}
     </div>
   );

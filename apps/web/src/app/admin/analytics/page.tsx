@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useApiClient } from "@/lib/auth-context";
-import { HorizontalBarChart, AreaChart } from "@/components/admin/Charts";
+import { HorizontalBarChart, AreaChart, ChartLegend } from "@/components/admin/Charts";
 import { SalesReportPanel } from "@/components/admin/SalesReportPanel";
-import { downloadCsv } from "@/lib/admin-utils";
+import { downloadCsv, downloadPdfReport, formatMoney } from "@/lib/admin-utils";
 
 interface ProductStat {
   slug: string;
@@ -22,13 +22,42 @@ interface Overview {
   trafficByDay: { day: string; pageViews: number; purchases: number }[];
 }
 
+interface LocationStat {
+  location: string;
+  orderCount: number;
+  revenueUSD: number;
+  revenueINR: number;
+}
+
+interface TrafficStat {
+  source: string;
+  visitors: number;
+  orders: number;
+  conversionRate: number;
+}
+
+interface LabelCount {
+  label: string;
+  count: number;
+}
+
+interface Insights {
+  byLocation: LocationStat[];
+  byTrafficSource: TrafficStat[];
+  byDevice: LabelCount[];
+  byBrowser: LabelCount[];
+  byOs: LabelCount[];
+  ordersByDay: { day: string; orders: number; pageViews: number }[];
+}
+
 export default function AdminAnalyticsPage() {
   const apiClient = useApiClient();
-  const [days, setDays] = useState(30);
+  const [days, setDays] = useState(7);
   const [products, setProducts] = useState<ProductStat[]>([]);
   const [searches, setSearches] = useState<SearchStat[]>([]);
   const [zeroResult, setZeroResult] = useState<SearchStat[]>([]);
   const [overview, setOverview] = useState<Overview | null>(null);
+  const [insights, setInsights] = useState<Insights | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -41,18 +70,21 @@ export default function AdminAnalyticsPage() {
         `/admin/analytics/searches?days=${days}`
       ),
       apiClient<Overview>(`/admin/analytics/overview?days=${days}`),
+      apiClient<Insights>(`/admin/analytics/insights?days=${days}`),
     ])
-      .then(([p, s, o]) => {
+      .then(([p, s, o, i]) => {
         setProducts(p.products);
         setSearches(s.searches);
         setZeroResult(s.zeroResult);
         setOverview(o);
+        setInsights(i);
       })
       .catch((err) => {
         setProducts([]);
         setSearches([]);
         setZeroResult([]);
         setOverview(null);
+        setInsights(null);
         setError(err instanceof Error ? err.message : "Could not load analytics");
       })
       .finally(() => setLoading(false));
@@ -75,6 +107,15 @@ export default function AdminAnalyticsPage() {
       ? (((overview.totals.purchase ?? 0) / overview.totals.page_view) * 100).toFixed(2)
       : "0";
 
+  const trendData =
+    insights?.ordersByDay ??
+    overview?.trafficByDay.map((d) => ({
+      day: d.day,
+      orders: d.purchases,
+      pageViews: d.pageViews,
+    })) ??
+    [];
+
   const exportAnalytics = () => {
     if (!overview) return;
     downloadCsv(`analytics-${days}d-${new Date().toISOString().slice(0, 10)}.csv`, [
@@ -86,8 +127,24 @@ export default function AdminAnalyticsPage() {
       ["Purchases", String(overview.totals.purchase ?? 0)],
       ["Conversion rate %", conversionRate],
       [],
-      ["Day", "Page views", "Purchases"],
-      ...overview.trafficByDay.map((d) => [d.day, String(d.pageViews), String(d.purchases)]),
+      ["Day", "Page views", "Orders"],
+      ...trendData.map((d) => [d.day, String(d.pageViews), String(d.orders)]),
+      [],
+      ["Location", "Orders", "Revenue USD", "Revenue INR"],
+      ...(insights?.byLocation ?? []).map((l) => [
+        l.location,
+        String(l.orderCount),
+        l.revenueUSD.toFixed(2),
+        l.revenueINR.toFixed(2),
+      ]),
+      [],
+      ["Traffic source", "Visitors", "Orders", "Conversion %"],
+      ...(insights?.byTrafficSource ?? []).map((t) => [
+        t.source,
+        String(t.visitors),
+        String(t.orders),
+        (t.conversionRate * 100).toFixed(2),
+      ]),
       [],
       ["Product", "Views", "Adds"],
       ...products.map((p) => [p.slug, String(p.views), String(p.adds)]),
@@ -95,6 +152,31 @@ export default function AdminAnalyticsPage() {
       ["Search term", "Count", "Zero results"],
       ...searches.map((s) => [s.term, String(s.count), String(s.zero ?? 0)]),
     ]);
+  };
+
+  const exportPdf = () => {
+    if (!overview) return;
+    const rows = (insights?.byLocation ?? [])
+      .map(
+        (l) =>
+          `<tr><td>${l.location}</td><td>${l.orderCount}</td><td>${formatMoney(l.revenueUSD, "USD")}</td><td>${formatMoney(l.revenueINR, "INR")}</td></tr>`
+      )
+      .join("");
+    const traffic = (insights?.byTrafficSource ?? [])
+      .map(
+        (t) =>
+          `<tr><td>${t.source}</td><td>${t.visitors}</td><td>${t.orders}</td><td>${(t.conversionRate * 100).toFixed(1)}%</td></tr>`
+      )
+      .join("");
+    downloadPdfReport(
+      `Analytics ${days}d`,
+      `<h1>Analytics — last ${days} days</h1>
+      <p>Page views: ${overview.totals.page_view ?? 0} · Purchases: ${overview.totals.purchase ?? 0} · Conversion: ${conversionRate}%</p>
+      <h2>Orders &amp; revenue by location</h2>
+      <table><thead><tr><th>Location</th><th>Orders</th><th>USD</th><th>INR</th></tr></thead><tbody>${rows || "<tr><td colspan=4>No data</td></tr>"}</tbody></table>
+      <h2>Traffic sources</h2>
+      <table><thead><tr><th>Source</th><th>Visitors</th><th>Orders</th><th>Conv.</th></tr></thead><tbody>${traffic || "<tr><td colspan=4>No data</td></tr>"}</tbody></table>`
+    );
   };
 
   return (
@@ -112,13 +194,22 @@ export default function AdminAnalyticsPage() {
             <option value={90}>Last 90 days</option>
           </select>
           {overview && (
-            <button
-              type="button"
-              onClick={exportAnalytics}
-              className="text-sm bg-nav text-white px-3 py-1.5 rounded-lg"
-            >
-              Export CSV
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={exportAnalytics}
+                className="text-sm border border-slate-300 px-3 py-1.5 rounded-lg hover:bg-slate-50"
+              >
+                Export CSV
+              </button>
+              <button
+                type="button"
+                onClick={exportPdf}
+                className="text-sm bg-nav text-white px-3 py-1.5 rounded-lg"
+              >
+                Export PDF
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -152,23 +243,112 @@ export default function AdminAnalyticsPage() {
             </div>
           )}
 
-          {overview && overview.trafficByDay.length > 0 && (
+          {trendData.length > 0 && (
             <section className="bg-white border rounded-xl p-5 mb-6">
-              <h2 className="font-semibold mb-1">Orders & traffic trend</h2>
-              <p className="text-xs text-slate-500 mb-4">Page views and purchases per day</p>
+              <h2 className="font-semibold mb-1">Daily order &amp; traffic trend</h2>
+              <p className="text-xs text-slate-500 mb-4">Hover for counts · updates with date range</p>
               <AreaChart
-                data={overview.trafficByDay.map((d) => ({ label: d.day, value: d.pageViews }))}
-                height={160}
+                data={trendData.map((d) => ({
+                  label: d.day,
+                  value: d.pageViews,
+                  secondary: d.orders,
+                }))}
+                height={180}
+                showSecondary
+                valueLabel="Page views"
+                secondaryLabel="Orders"
               />
-              <div className="mt-4 grid grid-cols-7 gap-1 text-[10px] text-slate-500">
-                {overview.trafficByDay.slice(-7).map((d) => (
-                  <div key={d.day} className="text-center">
-                    <div>{d.day.slice(5)}</div>
-                    <div className="font-medium text-green-700">{d.purchases} orders</div>
-                  </div>
-                ))}
-              </div>
+              <ChartLegend
+                items={[
+                  { color: "#183a68", label: "Page views" },
+                  { color: "#16a34a", label: "Orders" },
+                ]}
+              />
             </section>
+          )}
+
+          {insights && (
+            <div className="grid lg:grid-cols-2 gap-6 mb-6">
+              <section className="bg-white border rounded-xl p-5">
+                <h2 className="font-semibold mb-3">Orders &amp; revenue by location</h2>
+                {insights.byLocation.length === 0 ? (
+                  <p className="text-sm text-slate-500">No paid orders in this period yet.</p>
+                ) : (
+                  <table className="w-full text-sm">
+                    <thead className="text-left text-xs text-slate-400">
+                      <tr>
+                        <th className="py-1">Location</th>
+                        <th className="py-1 text-right">Orders</th>
+                        <th className="py-1 text-right">Revenue</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {insights.byLocation.map((l) => (
+                        <tr key={l.location} className="border-t">
+                          <td className="py-2">{l.location}</td>
+                          <td className="py-2 text-right">{l.orderCount}</td>
+                          <td className="py-2 text-right text-xs">
+                            {l.revenueUSD > 0 && formatMoney(l.revenueUSD, "USD")}
+                            {l.revenueUSD > 0 && l.revenueINR > 0 && " + "}
+                            {l.revenueINR > 0 && formatMoney(l.revenueINR, "INR")}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </section>
+
+              <section className="bg-white border rounded-xl p-5">
+                <h2 className="font-semibold mb-3">Traffic sources</h2>
+                {insights.byTrafficSource.length === 0 ? (
+                  <p className="text-sm text-slate-500">No session data yet.</p>
+                ) : (
+                  <table className="w-full text-sm">
+                    <thead className="text-left text-xs text-slate-400">
+                      <tr>
+                        <th className="py-1">Source</th>
+                        <th className="py-1 text-right">Visitors</th>
+                        <th className="py-1 text-right">Orders</th>
+                        <th className="py-1 text-right">Conv.</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {insights.byTrafficSource.map((t) => (
+                        <tr key={t.source} className="border-t">
+                          <td className="py-2">{t.source}</td>
+                          <td className="py-2 text-right">{t.visitors}</td>
+                          <td className="py-2 text-right">{t.orders}</td>
+                          <td className="py-2 text-right">{(t.conversionRate * 100).toFixed(1)}%</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </section>
+            </div>
+          )}
+
+          {insights && (
+            <div className="grid sm:grid-cols-3 gap-4 mb-6">
+              {[
+                { title: "Device", data: insights.byDevice },
+                { title: "Browser", data: insights.byBrowser },
+                { title: "Operating system", data: insights.byOs },
+              ].map((block) => (
+                <section key={block.title} className="bg-white border rounded-xl p-5">
+                  <h2 className="font-semibold mb-3 text-sm">{block.title}</h2>
+                  {block.data.length === 0 ? (
+                    <p className="text-xs text-slate-500">No data yet.</p>
+                  ) : (
+                    <HorizontalBarChart
+                      items={block.data.map((d) => ({ label: d.label, value: d.count }))}
+                      maxItems={6}
+                    />
+                  )}
+                </section>
+              ))}
+            </div>
           )}
 
           <div className="grid lg:grid-cols-2 gap-6">

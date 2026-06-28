@@ -25,12 +25,12 @@ export default function BlogPage() {
             key={post.slug}
             className="border border-slate-200 rounded-xl overflow-hidden hover:shadow-md transition bg-white flex flex-col"
           >
-            <Link href={`/blog/${post.slug}`} className="block relative aspect-[16/10] bg-slate-100">
+            <Link href={`/blog/${post.slug}`} className="block relative aspect-[16/10] bg-slate-100 flex items-center justify-center p-2">
               <Image
                 src={post.image}
                 alt={post.title}
                 fill
-                className="object-cover"
+                className="object-contain p-1"
                 sizes="(max-width: 640px) 100vw, 50vw"
               />
             </Link>

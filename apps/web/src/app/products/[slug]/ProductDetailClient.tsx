@@ -18,31 +18,12 @@ import { HomeProductCard } from "@/components/HomeProductCard";
 import { useCart } from "@/lib/cart-context";
 import { productPageFaqs } from "@/lib/content/product-faqs";
 import { testimonials } from "@/lib/site";
-import { LOW_STOCK_THRESHOLD, isFastSelling, getUnitsSold } from "@hr-ecom/shared";
+import { LOW_STOCK_THRESHOLD, isFastSelling, getUnitsSold, estimatedDeliveryLabel } from "@hr-ecom/shared";
+import { EstimatedDeliveryNote } from "@/components/EstimatedDeliveryNote";
 import type { Product } from "@hr-ecom/shared";
 import { FastSellingBanner } from "@/components/FastSellingBadge";
 
 type Tab = "description" | "reviews" | "faq";
-
-function addBusinessDays(from: Date, days: number): Date {
-  const date = new Date(from);
-  let added = 0;
-  while (added < days) {
-    date.setDate(date.getDate() + 1);
-    if (date.getDay() !== 0 && date.getDay() !== 6) added++;
-  }
-  return date;
-}
-
-function formatDeliveryDate(date: Date): string {
-  return date.toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" });
-}
-
-function estimatedDeliveryLabel(): string {
-  const start = addBusinessDays(new Date(), 5);
-  const end = addBusinessDays(new Date(), 7);
-  return `Order today → arrives ${formatDeliveryDate(start)} – ${formatDeliveryDate(end)} (USA)`;
-}
 
 function shortDescription(description: string): string {
   const first = description.split(/(?<=\.)\s+/)[0]?.trim();
@@ -153,14 +134,7 @@ export function ProductDetailClient({
             </p>
           )}
 
-          <div className="flex items-center gap-2 rounded-md bg-orange-50 border border-orange-100 px-3 py-2.5 mb-4 text-sm text-slate-700">
-            <svg className="w-5 h-5 shrink-0 text-nav" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.75} aria-hidden>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M8 17h8M8 17a2 2 0 11-4 0 2 2 0 014 0zm8 0a2 2 0 104 0m-4 0V9m0 0H5.5M12 9h6.5M12 9L9 5m3 4l3-4" />
-            </svg>
-            <span>
-              <span className="font-semibold text-primary">Estimated delivery:</span> {estimatedDeliveryLabel()}
-            </span>
-          </div>
+          <EstimatedDeliveryNote variant="banner" prefix="Estimated delivery:" className="mb-4" />
 
           <TrustBadges variant="compact" className="mb-5" />
 
@@ -270,18 +244,6 @@ export function ProductDetailClient({
               </div>
             )}
 
-            <div className="max-w-2xl">
-              <h3 className="text-sm font-bold text-primary mb-3">Common questions</h3>
-              <dl className="space-y-4">
-                {productPageFaqs.map((f) => (
-                  <div key={f.q}>
-                    <dt className="font-semibold text-slate-800 text-sm">{f.q}</dt>
-                    <dd className="text-sm text-slate-600 mt-1 leading-relaxed">{f.a}</dd>
-                  </div>
-                ))}
-              </dl>
-            </div>
-
             <div className="max-w-md space-y-3">
               <LeadCaptureInput
                 label="Your name (helps us assist you)"
@@ -345,6 +307,18 @@ export function ProductDetailClient({
                 </div>
               </div>
             )}
+
+            <div className="max-w-2xl">
+              <h3 className="text-sm font-bold text-primary mb-3">Common questions</h3>
+              <dl className="space-y-4">
+                {productPageFaqs.map((f) => (
+                  <div key={f.q}>
+                    <dt className="font-semibold text-slate-800 text-sm">{f.q}</dt>
+                    <dd className="text-sm text-slate-600 mt-1 leading-relaxed">{f.a}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
           </div>
         ) : tab === "reviews" ? (
           <ProductReviewsPreview />

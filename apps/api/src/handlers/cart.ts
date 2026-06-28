@@ -9,18 +9,25 @@ import { resolveProductImageUrl } from "../lib/images";
 /** Stale carts auto-expire after this many days (TTL). */
 const CART_TTL_DAYS = 30;
 
-async function getCart(userKey: string): Promise<Cart> {
+async function getCart(userKey: string): Promise<Cart & { createdAt?: string }> {
   const result = await docClient.send(
     new GetCommand({
       TableName: CARTS_TABLE,
       Key: { PK: cartKeys.pk(userKey), SK: cartKeys.sk() },
     })
   );
-  return (result.Item as Cart) ?? { items: [], updatedAt: now() };
+  return (result.Item as Cart & { createdAt?: string }) ?? { items: [], updatedAt: now() };
 }
 
 async function saveCart(userKey: string, cart: Cart, sessionId?: string) {
   const timestamp = now();
+  const existing = await docClient.send(
+    new GetCommand({
+      TableName: CARTS_TABLE,
+      Key: { PK: cartKeys.pk(userKey), SK: cartKeys.sk() },
+    })
+  );
+  const createdAt = (existing.Item?.createdAt as string | undefined) ?? timestamp;
   const itemCount = cart.items.reduce((sum, i) => sum + i.quantity, 0);
   const value = cart.items.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
@@ -33,11 +40,11 @@ async function saveCart(userKey: string, cart: Cart, sessionId?: string) {
         ...cart,
         userKey,
         sessionId,
+        createdAt,
         itemCount,
         value,
         currency: cart.items[0]?.currency,
         updatedAt: timestamp,
-        // GSI1: recently-updated carts for abandoned-cart recovery
         GSI1PK: cartKeys.gsi1pk(),
         GSI1SK: cartKeys.gsi1sk(timestamp),
         expiresAt: ttlInDays(CART_TTL_DAYS),

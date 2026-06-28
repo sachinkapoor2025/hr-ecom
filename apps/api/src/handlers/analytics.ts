@@ -1,7 +1,17 @@
 import { QueryCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
 import type { APIGatewayProxyEventV2 } from "aws-lambda";
-import { eventKeys, customerKeys, EVENT_TYPES, viewerGeoFromMetadata } from "@hr-ecom/shared";
-import { docClient, EVENTS_TABLE, CUSTOMERS_TABLE, dayBucket, now } from "../lib/db";
+import {
+  eventKeys,
+  customerKeys,
+  orderKeys,
+  EVENT_TYPES,
+  ORDER_STATUS,
+  viewerGeoFromMetadata,
+  isRevenueOrder,
+  getOrderPaidAt,
+  type Order,
+} from "@hr-ecom/shared";
+import { docClient, EVENTS_TABLE, CUSTOMERS_TABLE, ORDERS_TABLE, dayBucket, now } from "../lib/db";
 import { ok, forbidden, badRequest } from "../lib/response";
 import { requireAdmin } from "../lib/auth";
 
@@ -145,6 +155,10 @@ interface SessionSummary {
   timezone?: string;
   locale?: string;
   referrer?: string;
+  deviceType?: string;
+  browser?: string;
+  os?: string;
+  purchased?: boolean;
   pages: string[];
   products: string[];
 }
@@ -168,6 +182,7 @@ function mergeSessionEvent(
   const productSlug = raw.productSlug as string | undefined;
   const metadata = (raw.metadata as Record<string, string> | undefined) ?? {};
   const geo = viewerGeoFromMetadata(metadata);
+  const eventType = (raw.type as string | undefined) ?? "";
 
   const existing = sessions.get(sessionId);
   if (!existing) {
@@ -184,6 +199,10 @@ function mergeSessionEvent(
       timezone: metadata.timezone,
       locale: metadata.locale,
       referrer: (raw.referrer as string | undefined) ?? undefined,
+      deviceType: metadata.deviceType,
+      browser: metadata.browser,
+      os: metadata.os,
+      purchased: eventType === EVENT_TYPES.PURCHASE,
       pages: path ? [path] : [],
       products: productSlug ? [productSlug] : [],
     });
@@ -191,6 +210,7 @@ function mergeSessionEvent(
   }
 
   existing.eventCount += 1;
+  if (eventType === EVENT_TYPES.PURCHASE) existing.purchased = true;
   if (at > existing.lastSeen) {
     existing.lastSeen = at;
     existing.lastPath = path ?? existing.lastPath;
@@ -211,6 +231,9 @@ function mergeSessionEvent(
   if (!existing.regionName && geo.regionName) existing.regionName = geo.regionName;
   if (!existing.timezone && metadata.timezone) existing.timezone = metadata.timezone;
   if (!existing.locale && metadata.locale) existing.locale = metadata.locale;
+  if (!existing.deviceType && metadata.deviceType) existing.deviceType = metadata.deviceType;
+  if (!existing.browser && metadata.browser) existing.browser = metadata.browser;
+  if (!existing.os && metadata.os) existing.os = metadata.os;
 }
 
 export async function listSessions(event: APIGatewayProxyEventV2) {
@@ -292,5 +315,167 @@ export async function getSessionTimeline(event: APIGatewayProxyEventV2) {
     profile: profile ?? null,
     leads,
     events: eventsRes.Items ?? [],
+  });
+}
+
+function trafficSourceLabel(referrer?: string): string {
+  if (!referrer) return "Direct";
+  try {
+    const host = new URL(referrer).hostname.replace(/^www\./, "");
+    if (host.includes("google")) return "Google";
+    if (host.includes("facebook") || host.includes("fb.")) return "Facebook";
+    if (host.includes("instagram")) return "Instagram";
+    if (host.includes("bing")) return "Bing";
+    if (host.includes("usarakhi")) return "Internal";
+    return host;
+  } catch {
+    return referrer.slice(0, 40);
+  }
+}
+
+async function collectSessions(days: number): Promise<Map<string, SessionSummary>> {
+  const sessions = new Map<string, SessionSummary>();
+  for (const day of rangeDays(days)) {
+    for (const type of SESSION_EVENT_TYPES) {
+      const res = await docClient.send(
+        new QueryCommand({
+          TableName: EVENTS_TABLE,
+          IndexName: "GSI1",
+          KeyConditionExpression: "GSI1PK = :pk",
+          ExpressionAttributeValues: { ":pk": eventKeys.gsi1pk(type, day) },
+          ScanIndexForward: false,
+          Limit: 500,
+        })
+      );
+      for (const raw of (res.Items ?? []) as Record<string, unknown>[]) {
+        const sessionId = raw.sessionId as string;
+        if (!sessionId) continue;
+        mergeSessionEvent(sessions, raw, sessionId);
+      }
+    }
+  }
+  return sessions;
+}
+
+async function fetchPaidOrdersSince(isoFrom: string): Promise<Order[]> {
+  const items: Order[] = [];
+  let lastKey: Record<string, unknown> | undefined;
+  do {
+    const res = await docClient.send(
+      new QueryCommand({
+        TableName: ORDERS_TABLE,
+        IndexName: "GSI2",
+        KeyConditionExpression: "GSI2PK = :pk AND GSI2SK >= :from",
+        ExpressionAttributeValues: {
+          ":pk": orderKeys.gsi2pk(),
+          ":from": isoFrom,
+        },
+        ExclusiveStartKey: lastKey,
+        ScanIndexForward: false,
+      })
+    );
+    items.push(...((res.Items ?? []) as Order[]));
+    lastKey = res.LastEvaluatedKey;
+  } while (lastKey);
+  return items;
+}
+
+export async function getAnalyticsInsights(event: APIGatewayProxyEventV2) {
+  if (!requireAdmin(event)) return forbidden();
+  const days = parseDays(event, 7, 90);
+  const dayList = rangeDays(days);
+  const fromIso = new Date();
+  fromIso.setUTCDate(fromIso.getUTCDate() - days);
+  const fromIsoStr = fromIso.toISOString();
+
+  const [sessions, orders] = await Promise.all([
+    collectSessions(days),
+    fetchPaidOrdersSince(fromIsoStr),
+  ]);
+
+  const sessionList = [...sessions.values()];
+
+  const byLocation = new Map<
+    string,
+    { location: string; orderCount: number; revenueUSD: number; revenueINR: number }
+  >();
+  for (const order of orders) {
+    if (!isRevenueOrder(order.status) || order.status === ORDER_STATUS.PENDING_PAYMENT) continue;
+    const paidAt = getOrderPaidAt(order);
+    if (!paidAt || paidAt < fromIsoStr) continue;
+
+    const state = order.shippingAddress?.state?.trim();
+    const country = order.shippingAddress?.country?.trim() ?? "Unknown";
+    const location = state ? `${state}, ${country}` : country;
+    const entry = byLocation.get(location) ?? {
+      location,
+      orderCount: 0,
+      revenueUSD: 0,
+      revenueINR: 0,
+    };
+    entry.orderCount += 1;
+    if (order.currency === "USD") entry.revenueUSD += order.total;
+    else entry.revenueINR += order.total;
+    byLocation.set(location, entry);
+  }
+
+  const byTraffic = new Map<
+    string,
+    { source: string; visitors: number; orders: number }
+  >();
+  const byDevice = new Map<string, number>();
+  const byBrowser = new Map<string, number>();
+  const byOs = new Map<string, number>();
+
+  for (const s of sessionList) {
+    const source = trafficSourceLabel(s.referrer);
+    const t = byTraffic.get(source) ?? { source, visitors: 0, orders: 0 };
+    t.visitors += 1;
+    if (s.purchased) t.orders += 1;
+    byTraffic.set(source, t);
+
+    const device = s.deviceType ?? "Unknown";
+    byDevice.set(device, (byDevice.get(device) ?? 0) + 1);
+    const browser = s.browser ?? "Unknown";
+    byBrowser.set(browser, (byBrowser.get(browser) ?? 0) + 1);
+    const os = s.os ?? "Unknown";
+    byOs.set(os, (byOs.get(os) ?? 0) + 1);
+  }
+
+  const rollups = await Promise.all(dayList.map((d) => getRollup(d)));
+  const ordersByDay: { day: string; orders: number; pageViews: number }[] = [];
+  dayList.forEach((day, idx) => {
+    const items = rollups[idx];
+    let pageViews = 0;
+    let orders = 0;
+    for (const item of items) {
+      if (item.kind !== "type") continue;
+      if (item.label === EVENT_TYPES.PAGE_VIEW) pageViews = Number(item.count ?? 0);
+      if (item.label === EVENT_TYPES.PURCHASE) orders = Number(item.count ?? 0);
+    }
+    ordersByDay.push({ day, orders, pageViews });
+  });
+  ordersByDay.reverse();
+
+  return ok({
+    days,
+    byLocation: [...byLocation.values()].sort((a, b) => b.orderCount - a.orderCount).slice(0, 25),
+    byTrafficSource: [...byTraffic.values()]
+      .map((t) => ({
+        ...t,
+        conversionRate: t.visitors > 0 ? t.orders / t.visitors : 0,
+      }))
+      .sort((a, b) => b.visitors - a.visitors)
+      .slice(0, 20),
+    byDevice: [...byDevice.entries()]
+      .map(([label, count]) => ({ label, count }))
+      .sort((a, b) => b.count - a.count),
+    byBrowser: [...byBrowser.entries()]
+      .map(([label, count]) => ({ label, count }))
+      .sort((a, b) => b.count - a.count),
+    byOs: [...byOs.entries()]
+      .map(([label, count]) => ({ label, count }))
+      .sort((a, b) => b.count - a.count),
+    ordersByDay,
   });
 }

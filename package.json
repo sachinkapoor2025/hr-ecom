@@ -16,6 +16,7 @@
     "import:usarakhi": "tsx scripts/import-usarakhi.ts",
     "import:usarakhi:fetch": "tsx scripts/import-usarakhi.ts --fetch-only",
     "seed:inventory": "tsx scripts/seed-inventory.ts",
+    "fix:seo-descriptions": "tsx scripts/fix-seo-descriptions.ts",
     "migrate:images": "tsx scripts/migrate-images-to-s3.ts",
     "rewrite:product-images": "tsx scripts/rewrite-product-image-urls.ts",
     "migrate:multitable": "tsx scripts/migrate-to-multitable.ts",
