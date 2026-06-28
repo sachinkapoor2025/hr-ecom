@@ -15,6 +15,7 @@ export * from "./lib/image-url";
 export * from "./lib/product-sales";
 export * from "./lib/sales-report";
 export * from "./lib/review-email";
+export * from "./lib/viewer-geo";
 export * from "./db/keys";
 export * from "./constants";
 export * from "./currency";

@@ -1,16 +1,21 @@
 import { headers } from "next/headers";
+import { parseViewerGeoFromHeaders, type ViewerGeo } from "@hr-ecom/shared";
+
+/** Full geo from CloudFront edge headers on Amplify (country, region, city). */
+export async function detectViewerGeo(): Promise<ViewerGeo & { country: string }> {
+  const h = await headers();
+  const record: Record<string, string> = {};
+  h.forEach((value, key) => {
+    record[key.toLowerCase()] = value;
+  });
+  const geo = parseViewerGeoFromHeaders(record);
+  return { country: geo.country ?? "US", ...geo };
+}
 
 /** ISO 3166-1 alpha-2 country from CDN / edge headers (CloudFront on Amplify). */
 export async function detectViewerCountry(): Promise<string> {
-  const h = await headers();
-  const raw =
-    h.get("cloudfront-viewer-country") ??
-    h.get("CloudFront-Viewer-Country") ??
-    h.get("x-country-code") ??
-    h.get("cf-ipcountry");
-
-  if (raw && /^[A-Za-z]{2}$/.test(raw)) return raw.toUpperCase();
-  return "US";
+  const geo = await detectViewerGeo();
+  return geo.country;
 }
 
 /** Map visitor country to default storefront currency. */

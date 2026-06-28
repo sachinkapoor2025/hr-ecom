@@ -6,6 +6,8 @@ import {
   eventKeys,
   EVENT_TYPES,
   EVENT_TTL_DAYS,
+  mergeViewerGeo,
+  parseViewerGeoFromHeaders,
   type TrackEventInput,
 } from "@hr-ecom/shared";
 import { docClient, EVENTS_TABLE, now, ttlInDays, dayBucket } from "../lib/db";
@@ -45,23 +47,37 @@ async function incrementRollup(
   );
 }
 
-function viewerCountry(event: APIGatewayProxyEventV2): string | undefined {
-  const headers = event.headers ?? {};
-  const raw =
-    headers["cloudfront-viewer-country"] ??
-    headers["CloudFront-Viewer-Country"] ??
-    headers["x-country-code"];
-  if (!raw || raw.length !== 2) return undefined;
-  return raw.toUpperCase();
+function viewerGeoFromRequest(event: APIGatewayProxyEventV2) {
+  return parseViewerGeoFromHeaders(event.headers ?? {});
 }
 
-async function persistEvent(e: TrackEventInput, country?: string) {
+function geoMetadata(client: Record<string, string | undefined>, edge: ReturnType<typeof viewerGeoFromRequest>) {
+  const merged = mergeViewerGeo(
+    {
+      country: client.country,
+      city: client.city,
+      region: client.region,
+      regionName: client.regionName,
+    },
+    edge
+  );
+  const out: Record<string, string> = {};
+  if (merged.country) out.country = merged.country;
+  if (merged.city) out.city = merged.city;
+  if (merged.region) out.region = merged.region;
+  if (merged.regionName) out.regionName = merged.regionName;
+  return out;
+}
+
+async function persistEvent(e: TrackEventInput, edgeGeo: ReturnType<typeof viewerGeoFromRequest>) {
   const timestamp = e.at ?? now();
   const day = dayBucket(new Date(timestamp));
   const eventId = uuidv4();
+  const clientMeta = (e.metadata ?? {}) as Record<string, string | undefined>;
+  const geoFields = geoMetadata(clientMeta, edgeGeo);
   const metadata = {
     ...e.metadata,
-    ...(country ? { country } : {}),
+    ...geoFields,
   };
 
   await docClient.send(
@@ -111,7 +127,7 @@ export async function recordEvent(event: APIGatewayProxyEventV2) {
   const parsed = trackEventBatchSchema.safeParse(payload);
   if (!parsed.success) return badRequest(parsed.error.message);
 
-  const country = viewerCountry(event);
-  await Promise.all(parsed.data.events.map((e) => persistEvent(e, country)));
+  const edgeGeo = viewerGeoFromRequest(event);
+  await Promise.all(parsed.data.events.map((e) => persistEvent(e, edgeGeo)));
   return ok({ recorded: parsed.data.events.length });
 }

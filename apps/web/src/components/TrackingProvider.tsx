@@ -2,14 +2,14 @@
 
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { flushEvents, trackPageView } from "@/lib/track";
+import { flushEvents, trackPageView, ensureVisitorGeo } from "@/lib/track";
 
 /** Emits a page_view on every route change and flushes the event queue on unload. */
 export function TrackingProvider() {
   const pathname = usePathname();
 
   useEffect(() => {
-    trackPageView();
+    void ensureVisitorGeo().then(() => trackPageView());
   }, [pathname]);
 
   useEffect(() => {
