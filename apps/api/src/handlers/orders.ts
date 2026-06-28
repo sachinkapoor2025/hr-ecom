@@ -23,6 +23,7 @@ import { getCartHandler, clearCartForUser } from "./cart";
 import { notifyAdminLead, notifyAdminOrderPaid, notifyAdminOrderPlaced } from "../lib/email";
 import { decrementInventoryForOrder, validateOrderInventory } from "../lib/inventory";
 import { applyDeliveryReviewSchedule } from "./review-emails";
+import { markCartConverted } from "./abandoned-cart-emails";
 import {
   applyPercentDiscount,
   issueWelcomeCoupon,
@@ -434,6 +435,7 @@ export async function markOrderPaid(
   if (order.couponCode) {
     await markCouponUsed(order.couponCode, order.orderId);
   }
+  await markCartConverted(order.sessionId, order.orderId);
   await decrementInventoryForOrder(updated);
   const emailResult = await notifyAdminOrderPaid(updated);
   if (!emailResult.ok) console.error("Order paid email failed:", emailResult.error);
@@ -442,6 +444,66 @@ export async function markOrderPaid(
 /** Lookup an order by id (used by Razorpay verify for ownership/amount checks). */
 export async function getOrderById(orderId: string): Promise<StoredOrder | undefined> {
   return fetchOrder(orderId);
+}
+
+function assertOrderAccess(event: APIGatewayProxyEventV2, order: StoredOrder): boolean {
+  const auth = getAuth(event);
+  const sessionId = getSessionId(event);
+  return Boolean(
+    auth?.isAdmin ||
+      (auth?.userId && order.userId === auth.userId) ||
+      (sessionId && order.sessionId === sessionId)
+  );
+}
+
+/** Re-create payment for a pending order (retry after failed/cancelled checkout). */
+export async function retryOrderPayment(event: APIGatewayProxyEventV2) {
+  const orderId = event.pathParameters?.orderId;
+  if (!orderId) return badRequest("Order ID required");
+
+  const order = await fetchOrder(orderId);
+  if (!order) return notFound("Order not found");
+  if (!assertOrderAccess(event, order)) return forbidden();
+  if (order.status !== ORDER_STATUS.PENDING_PAYMENT) {
+    return badRequest("This order is not awaiting payment");
+  }
+
+  const body = JSON.parse(event.body ?? "{}");
+  const paymentMethod = (body.paymentMethod as string | undefined) ?? order.paymentProvider ?? "stripe";
+
+  if (paymentMethod === "stripe" && order.currency !== "USD") {
+    return badRequest("Stripe retry requires USD orders");
+  }
+
+  const { createStripePaymentIntent } = await import("./payments/stripe");
+  const { createRazorpayOrder } = await import("./payments/razorpay");
+  const timestamp = now();
+
+  if (paymentMethod === "stripe") {
+    const payment = await createStripePaymentIntent(order);
+    const updated: StoredOrder = {
+      ...order,
+      paymentProvider: "stripe",
+      paymentIntentId: payment.paymentIntentId,
+      updatedAt: timestamp,
+    };
+    await docClient.send(new PutCommand({ TableName: ORDERS_TABLE, Item: updated }));
+    return ok({ order: updated, clientSecret: payment.clientSecret });
+  }
+
+  const payment = await createRazorpayOrder(order);
+  const updated: StoredOrder = {
+    ...order,
+    paymentProvider: "razorpay",
+    razorpayOrderId: payment.razorpayOrderId,
+    updatedAt: timestamp,
+  };
+  await docClient.send(new PutCommand({ TableName: ORDERS_TABLE, Item: updated }));
+  return ok({
+    order: updated,
+    razorpayOrderId: payment.razorpayOrderId,
+    razorpayKeyId: payment.keyId,
+  });
 }
 
 export async function listLeads(event: APIGatewayProxyEventV2) {

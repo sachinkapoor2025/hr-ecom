@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { api } from "@/lib/api";
-import { HomeProductCard } from "@/components/HomeProductCard";
+import { Suspense } from "react";
+import { ProductGrid } from "@/components/ProductGrid";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { CategoryContentSection } from "@/components/CategoryContentSection";
 import { JsonLd } from "@/components/JsonLd";
@@ -90,11 +91,9 @@ export default async function CategoryPage({ params }: Props) {
       <h1 className="text-3xl font-bold text-primary mb-8">{name} — Send to USA</h1>
 
       {products.length > 0 ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-          {products.map((p) => (
-            <HomeProductCard key={p.slug} product={p} />
-          ))}
-        </div>
+        <Suspense fallback={<p className="text-slate-500">Loading products…</p>}>
+          <ProductGrid products={products} />
+        </Suspense>
       ) : (
         <p className="text-slate-500">
           Products loading soon.{" "}

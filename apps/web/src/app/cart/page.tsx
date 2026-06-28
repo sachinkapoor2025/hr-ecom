@@ -9,6 +9,7 @@ import { PaymentMethodIcons } from "@/components/PaymentMethodIcons";
 import { CheckoutLegalNotice } from "@/components/CheckoutLegalNotice";
 import { TrustBadges } from "@/components/TrustBadges";
 import { resolveImageUrl } from "@/lib/images";
+import { EstimatedDeliveryNote } from "@/components/EstimatedDeliveryNote";
 import type { DisplayCurrency } from "@/lib/currency-context";
 
 function TrashIcon() {
@@ -174,7 +175,9 @@ export default function CartPage() {
               <PaymentMethodIcons />
             </div>
 
-            <TrustBadges variant="compact" className="mb-5" />
+            <TrustBadges variant="compact" className="mb-4" />
+
+            <EstimatedDeliveryNote variant="banner" prefix="Order today →" className="mb-5" />
 
             <Link
               href="/checkout"

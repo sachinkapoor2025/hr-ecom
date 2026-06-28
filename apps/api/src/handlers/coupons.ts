@@ -6,8 +6,11 @@ import {
   couponKeys,
   WELCOME_COUPON_HOURS,
   WELCOME_DISCOUNT_PERCENT,
+  ABANDONED_CART_COUPON_HOURS,
+  ABANDONED_CART_DISCOUNT_PERCENT,
   type CouponValidationResult,
   type WelcomeCoupon,
+  type StoreCoupon,
 } from "@hr-ecom/shared";
 import { docClient, CONFIG_TABLE, now } from "../lib/db";
 import { ok, badRequest, forbidden } from "../lib/response";
@@ -43,7 +46,7 @@ export async function validateCouponRecord(
     })
   );
 
-  const coupon = result.Item as WelcomeCoupon | undefined;
+  const coupon = result.Item as StoreCoupon | undefined;
   if (!coupon) {
     return { valid: false, error: "Invalid coupon code" };
   }
@@ -130,6 +133,66 @@ export async function issueWelcomeCoupon(input: {
   );
 
   return { code, expiresAt, discountPercent: WELCOME_DISCOUNT_PERCENT };
+}
+
+export async function issueAbandonedCartCoupon(input: {
+  email: string;
+  sessionId?: string;
+}): Promise<{ code: string; expiresAt: string; discountPercent: number }> {
+  const email = normalizeEmail(input.email);
+  const timestamp = now();
+  const expiresAt = new Date(
+    Date.now() + ABANDONED_CART_COUPON_HOURS * 60 * 60 * 1000
+  ).toISOString();
+
+  const existing = await docClient.send(
+    new GetCommand({
+      TableName: CONFIG_TABLE,
+      Key: { PK: couponKeys.abandonedEmailPk(email), SK: couponKeys.abandonedEmailSk() },
+    })
+  );
+
+  const activeCode = existing.Item?.code as string | undefined;
+  if (activeCode) {
+    const active = await validateCouponRecord(activeCode, email);
+    if (active.valid) {
+      return {
+        code: active.code!,
+        expiresAt: active.expiresAt!,
+        discountPercent: active.discountPercent!,
+      };
+    }
+  }
+
+  const code = generateCode();
+  const coupon: StoreCoupon & { PK: string; SK: string } = {
+    PK: couponKeys.pk(code),
+    SK: couponKeys.sk(),
+    code,
+    email,
+    discountPercent: ABANDONED_CART_DISCOUNT_PERCENT,
+    expiresAt,
+    createdAt: timestamp,
+    sessionId: input.sessionId,
+    source: "abandoned",
+  };
+
+  await docClient.send(new PutCommand({ TableName: CONFIG_TABLE, Item: coupon }));
+  await docClient.send(
+    new PutCommand({
+      TableName: CONFIG_TABLE,
+      Item: {
+        PK: couponKeys.abandonedEmailPk(email),
+        SK: couponKeys.abandonedEmailSk(),
+        code,
+        expiresAt,
+        createdAt: timestamp,
+        email,
+      },
+    })
+  );
+
+  return { code, expiresAt, discountPercent: ABANDONED_CART_DISCOUNT_PERCENT };
 }
 
 export async function markCouponUsed(code: string, orderId: string): Promise<void> {

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { estimatedDeliveryShort } from "@hr-ecom/shared";
 import { useCart } from "@/lib/cart-context";
 
 function TrashIcon({ className = "w-4 h-4" }: { className?: string }) {
@@ -53,6 +54,7 @@ export function AddToCartControl({
   const { cart, sessionReady, addItem, updateItem, removeItem } = useCart();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [addedNote, setAddedNote] = useState("");
 
   const quantity = cart?.items.find((i) => i.productSlug === productSlug)?.quantity ?? 0;
   const inCart = quantity > 0;
@@ -81,11 +83,16 @@ export function AddToCartControl({
     return (
       <div className={className}>
         {error && <p className="text-xs text-red-600 mb-1">{error}</p>}
+        {addedNote && <p className="text-xs text-green-700 mb-1">{addedNote}</p>}
         <button
           type="button"
           onClick={(e) => {
             stop(e);
-            void run(() => addItem(productSlug));
+            void run(async () => {
+              await addItem(productSlug);
+              setAddedNote(`Added! Est. delivery ${estimatedDeliveryShort()}`);
+              window.setTimeout(() => setAddedNote(""), 5000);
+            });
           }}
           disabled={disabled || busy || !sessionReady}
           className={

@@ -15,6 +15,18 @@ export function downloadCsv(filename: string, rows: string[][]) {
   URL.revokeObjectURL(url);
 }
 
+/** Opens browser print dialog for a simple HTML report (Save as PDF). */
+export function downloadPdfReport(title: string, htmlBody: string) {
+  const win = window.open("", "_blank", "width=900,height=700");
+  if (!win) return;
+  win.document.write(`<!DOCTYPE html><html><head><title>${title}</title>
+    <style>body{font-family:system-ui,sans-serif;margin:24px;color:#0f172a} table{width:100%;border-collapse:collapse;margin:12px 0}
+    th,td{border:1px solid #e2e8f0;padding:6px 8px;text-align:left;font-size:12px} th{background:#f8fafc}</style></head><body>${htmlBody}</body></html>`);
+  win.document.close();
+  win.focus();
+  win.print();
+}
+
 export function paginate<T>(items: T[], page: number, pageSize: number) {
   const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
   const safePage = Math.min(Math.max(1, page), totalPages);

@@ -2,7 +2,7 @@
 
 import { getApiUrl } from "./env";
 import { getOrCreateSessionId } from "./session";
-import { EVENT_TYPES, type EventType } from "@hr-ecom/shared";
+import { EVENT_TYPES, type EventType, parseClientDevice } from "@hr-ecom/shared";
 
 interface TrackPayload {
   type: EventType;
@@ -69,6 +69,13 @@ function getClientMetadata(): Record<string, string> {
     clientMeta.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     clientMeta.locale = navigator.language;
     if (screen?.width) clientMeta.screen = `${screen.width}x${screen.height}`;
+    if (typeof navigator !== "undefined" && navigator.userAgent) {
+      const device = parseClientDevice(navigator.userAgent);
+      clientMeta.userAgent = device.userAgent;
+      clientMeta.deviceType = device.deviceType;
+      clientMeta.browser = device.browser;
+      clientMeta.os = device.os;
+    }
   } catch {
     /* ignore */
   }

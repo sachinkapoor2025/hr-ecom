@@ -81,6 +81,8 @@ export const couponKeys = {
   sk: () => "META" as const,
   welcomeEmailPk: (email: string) => `WELCOME#${email.trim().toLowerCase()}`,
   welcomeEmailSk: () => "ACTIVE" as const,
+  abandonedEmailPk: (email: string) => `ABANDONED#${email.trim().toLowerCase()}`,
+  abandonedEmailSk: () => "ACTIVE" as const,
 };
 
 /**

@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 interface BarChartProps {
   data: { label: string; value: number; secondary?: number }[];
   primaryColor?: string;
@@ -108,37 +110,130 @@ export function HorizontalBarChart({
 }
 
 interface AreaChartProps {
-  data: { label: string; value: number }[];
+  data: { label: string; value: number; secondary?: number }[];
   color?: string;
+  secondaryColor?: string;
   height?: number;
+  showSecondary?: boolean;
+  valueLabel?: string;
+  secondaryLabel?: string;
 }
 
-export function AreaChart({ data, color = "#183a68", height = 140 }: AreaChartProps) {
+export function AreaChart({
+  data,
+  color = "#183a68",
+  secondaryColor = "#16a34a",
+  height = 140,
+  showSecondary = false,
+  valueLabel = "Value",
+  secondaryLabel = "Orders",
+}: AreaChartProps) {
+  const [hoverIdx, setHoverIdx] = useState<number | null>(null);
+
   if (!data.length) {
     return <p className="text-sm text-slate-500">No data yet.</p>;
   }
 
-  const max = Math.max(1, ...data.map((d) => d.value));
+  const max = Math.max(
+    1,
+    ...data.flatMap((d) => [d.value, showSecondary ? (d.secondary ?? 0) : 0])
+  );
   const width = 100;
   const points = data.map((d, i) => {
     const x = data.length === 1 ? width / 2 : (i / (data.length - 1)) * width;
     const y = height - (d.value / max) * (height - 8);
-    return `${x},${y}`;
+    return { x, y, d };
   });
-  const areaPath = `M0,${height} L${points.join(" L")} L${width},${height} Z`;
-  const linePath = `M${points.join(" L")}`;
+  const areaPath = `M0,${height} L${points.map((p) => `${p.x},${p.y}`).join(" L")} L${width},${height} Z`;
+  const linePath = `M${points.map((p) => `${p.x},${p.y}`).join(" L")}`;
+
+  const hovered = hoverIdx != null ? data[hoverIdx] : null;
 
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="w-full" preserveAspectRatio="none" style={{ height }}>
-      <defs>
-        <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity="0.35" />
-          <stop offset="100%" stopColor={color} stopOpacity="0.02" />
-        </linearGradient>
-      </defs>
-      <path d={areaPath} fill="url(#areaGrad)" />
-      <path d={linePath} fill="none" stroke={color} strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
-    </svg>
+    <div className="relative">
+      {hovered && (
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 z-10 bg-slate-900 text-white text-xs rounded-lg px-3 py-2 shadow-lg pointer-events-none whitespace-nowrap">
+          <div className="font-semibold">{hovered.label}</div>
+          <div>
+            {valueLabel}: {hovered.value.toLocaleString()}
+            {showSecondary && hovered.secondary != null && (
+              <> · {secondaryLabel}: {hovered.secondary.toLocaleString()}</>
+            )}
+          </div>
+        </div>
+      )}
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        className="w-full"
+        preserveAspectRatio="none"
+        style={{ height }}
+        onMouseLeave={() => setHoverIdx(null)}
+      >
+        <defs>
+          <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={color} stopOpacity="0.35" />
+            <stop offset="100%" stopColor={color} stopOpacity="0.02" />
+          </linearGradient>
+        </defs>
+        <path d={areaPath} fill="url(#areaGrad)" />
+        <path d={linePath} fill="none" stroke={color} strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
+        {points.map((p, i) => (
+          <rect
+            key={p.d.label}
+            x={i === 0 ? 0 : (points[i - 1]!.x + p.x) / 2}
+            y={0}
+            width={
+              i === 0
+                ? data.length === 1
+                  ? width
+                  : (points[1]!.x + p.x) / 2
+                : i === data.length - 1
+                  ? width - (points[i - 1]!.x + p.x) / 2
+                  : (p.x - points[i - 1]!.x) / 2 + (points[i + 1]!.x - p.x) / 2
+            }
+            height={height}
+            fill="transparent"
+            onMouseEnter={() => setHoverIdx(i)}
+          />
+        ))}
+        {points.map((p, i) => (
+          <circle
+            key={`dot-${p.d.label}`}
+            cx={p.x}
+            cy={p.y}
+            r={hoverIdx === i ? 2.5 : 1.5}
+            fill={color}
+            className="pointer-events-none"
+          />
+        ))}
+        {showSecondary &&
+          data.map((d, i) => {
+            const x = data.length === 1 ? width / 2 : (i / (data.length - 1)) * width;
+            const y = height - ((d.secondary ?? 0) / max) * (height - 8);
+            return (
+              <circle
+                key={`sec-${d.label}`}
+                cx={x}
+                cy={y}
+                r={1.5}
+                fill={secondaryColor}
+                className="pointer-events-none"
+              />
+            );
+          })}
+      </svg>
+      <div className="flex gap-1 text-[10px] text-slate-400 mt-1">
+        {data.map((d, i) => (
+          <span key={d.label} className="flex-1 text-center truncate" title={d.label}>
+            {i === 0 || i === data.length - 1 || data.length <= 7
+              ? d.label.slice(-5)
+              : i % Math.ceil(data.length / 6) === 0
+                ? d.label.slice(-5)
+                : ""}
+          </span>
+        ))}
+      </div>
+    </div>
   );
 }
 

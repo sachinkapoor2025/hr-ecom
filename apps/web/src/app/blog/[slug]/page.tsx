@@ -59,12 +59,13 @@ export default async function BlogPostPage({ params }: Props) {
         <p className="text-base sm:text-lg text-slate-600 break-words">{post.excerpt}</p>
       </header>
 
-      <div className="relative aspect-[16/9] rounded-xl overflow-hidden mb-8 bg-slate-100">
+      <div className="relative w-full max-h-[420px] min-h-[200px] rounded-xl overflow-hidden mb-8 bg-slate-100 flex items-center justify-center">
         <Image
           src={post.image}
           alt={post.title}
-          fill
-          className="object-cover"
+          width={1200}
+          height={675}
+          className="w-full h-auto max-h-[420px] object-contain"
           sizes="(max-width: 768px) 100vw, 768px"
           priority
         />

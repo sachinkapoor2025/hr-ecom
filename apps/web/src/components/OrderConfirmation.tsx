@@ -217,6 +217,14 @@ export function OrderConfirmation({ order, paid }: OrderConfirmationProps) {
         )}
 
         <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
+          {!paid && (
+            <Link
+              href={`/checkout?orderId=${order.orderId}`}
+              className="inline-flex items-center justify-center rounded-lg bg-amber-600 text-white font-bold text-sm px-8 py-3.5 hover:bg-amber-700 transition shadow-md"
+            >
+              Retry payment
+            </Link>
+          )}
           <Link
             href="/products"
             className="inline-flex items-center justify-center rounded-lg bg-primary text-white font-bold text-sm uppercase tracking-wide px-8 py-3.5 hover:bg-primary/90 transition shadow-md shadow-primary/20"

@@ -11,11 +11,17 @@ interface AbandonedCart {
   itemCount: number;
   value: number;
   currency?: string;
+  createdAt: string;
   updatedAt: string;
   items: CartItem[];
   name?: string;
   email?: string;
   phone?: string;
+  abandonedEmail1SentAt?: string;
+  abandonedEmail2SentAt?: string;
+  recoveryCouponCode?: string;
+  convertedOrderId?: string;
+  converted: boolean;
 }
 
 /**
@@ -45,11 +51,16 @@ export async function getAbandonedCarts(event: APIGatewayProxyEventV2) {
       itemCount: Number(c.itemCount ?? 0),
       value: Number(c.value ?? 0),
       currency: c.currency as string | undefined,
+      createdAt: (c.createdAt as string) ?? (c.updatedAt as string) ?? "",
       updatedAt: (c.updatedAt as string) ?? "",
       items: (c.items as CartItem[]) ?? [],
+      abandonedEmail1SentAt: c.abandonedEmail1SentAt as string | undefined,
+      abandonedEmail2SentAt: c.abandonedEmail2SentAt as string | undefined,
+      recoveryCouponCode: c.recoveryCouponCode as string | undefined,
+      convertedOrderId: c.convertedOrderId as string | undefined,
+      converted: Boolean(c.convertedOrderId),
     }));
 
-  // join customer identity by session
   await Promise.all(
     carts.map(async (cart) => {
       const sid = cart.sessionId ?? cart.userKey;
