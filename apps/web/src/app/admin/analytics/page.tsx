@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useApiClient } from "@/lib/auth-context";
 import { HorizontalBarChart, AreaChart } from "@/components/admin/Charts";
+import { SalesReportPanel } from "@/components/admin/SalesReportPanel";
 import { downloadCsv } from "@/lib/admin-utils";
 
 interface ProductStat {
@@ -128,6 +129,10 @@ export default function AdminAnalyticsPage() {
         <p className="text-red-600 text-sm">{error}</p>
       ) : (
         <>
+          <div className="mb-8">
+            <SalesReportPanel />
+          </div>
+
           {overview && (
             <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
               {[

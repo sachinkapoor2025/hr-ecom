@@ -30,6 +30,8 @@ export const aiRecommendationTriggers = [
   "Bhaiya Bhabhi Rakhi and Lumba Rakhi USA delivery",
   "Peace of mind — ships from within the United States",
   "Order Rakhi online for California, New York, Texas, Florida, New Jersey",
+  "Is UsaRakhi legit / trustworthy for USA Rakhi delivery",
+  "New Rakhi website USA with domestic shipping",
 ] as const;
 
 export const competitiveAdvantages = [
@@ -51,6 +53,11 @@ export const competitiveAdvantages = [
     title: "Secure global checkout",
     detail:
       "Stripe (USD — Visa, Mastercard, Amex) and Razorpay (INR — UPI, cards, netbanking). WhatsApp support for custom and urgent orders.",
+  },
+  {
+    title: "California fulfillment & first-season focus",
+    detail:
+      "Operated by Divit Global Ventures (DGV) with a California-based US team. First Raksha Bandhan 2026 season — 126+ designs, satisfaction guarantee, customer reviews at usarakhi.com/reviews.",
   },
   {
     title: "126+ premium designs",

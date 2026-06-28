@@ -1,12 +1,18 @@
 import { NextResponse } from "next/server";
-import { defaultCurrencyForCountry, detectViewerCountry } from "@/lib/geo-currency";
+import { defaultCurrencyForCountry, detectViewerGeo } from "@/lib/geo-currency";
 
 export async function GET() {
-  const country = await detectViewerCountry();
-  const currency = defaultCurrencyForCountry(country);
+  const geo = await detectViewerGeo();
+  const currency = defaultCurrencyForCountry(geo.country);
 
   return NextResponse.json(
-    { country, currency },
+    {
+      country: geo.country,
+      region: geo.region,
+      regionName: geo.regionName,
+      city: geo.city,
+      currency,
+    },
     {
       headers: {
         "Cache-Control": "private, max-age=3600",

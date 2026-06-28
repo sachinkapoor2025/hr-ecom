@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { DEFAULT_PRODUCT_INVENTORY } from "../constants";
 
 export const productSchema = z.object({
   slug: z.string().min(1),
@@ -10,11 +11,15 @@ export const productSchema = z.object({
   categorySlug: z.string().min(1),
   images: z.array(z.string().url()).default([]),
   sku: z.string().optional(),
-  inventory: z.number().int().min(0).default(0),
+  inventory: z.number().int().min(0).default(DEFAULT_PRODUCT_INVENTORY),
   tags: z.array(z.string()).default([]),
   seoTitle: z.string().optional(),
   seoDescription: z.string().optional(),
   published: z.boolean().default(true),
+  /** Set when low-stock email sent; cleared when restocked above threshold. */
+  lowStockAlertSentAt: z.string().optional(),
+  /** Lifetime units sold (incremented when order is paid). */
+  unitsSold: z.number().int().min(0).optional(),
 });
 
 export const createProductSchema = productSchema.omit({ slug: true }).extend({
@@ -31,7 +36,7 @@ export const bulkProductRowSchema = z.object({
   currency: z.enum(["USD", "INR"]).default("USD"),
   categorySlug: z.string().min(1),
   sku: z.string().optional(),
-  inventory: z.coerce.number().int().min(0).default(0),
+  inventory: z.coerce.number().int().min(0).default(DEFAULT_PRODUCT_INVENTORY),
   tags: z.string().optional(),
   seoTitle: z.string().optional(),
   seoDescription: z.string().optional(),

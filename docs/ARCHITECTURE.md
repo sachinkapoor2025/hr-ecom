@@ -64,6 +64,14 @@ Order status lifecycle: `pending_payment → paid → processing → shipped →
 Migration from the legacy single table: `npm run migrate:multitable` (copies orders +
 leads/sessions; products re-seed via `import:usarakhi`).
 
+## Background jobs
+
+| Job | Schedule | Purpose |
+|-----|----------|---------|
+| `ReviewEmailsCronFunction` | Every hour | Email customers 1 day after order is marked **Delivered** or **Complete**, linking to `/reviews` |
+
+When admin sets order status to **Delivered** or **Complete**, the API sets `reviewEmailDueAt` (delivery + 1 day). The cron sends one email per order (tracked via `reviewEmailSentAt`).
+
 ## API Routes (Lambda)
 
 | Method | Path | Purpose |
@@ -88,7 +96,8 @@ leads/sessions; products re-seed via `import:usarakhi`).
 | GET | `/orders/{orderId}` | Order detail (owner/admin) |
 | GET | `/admin/orders` | Admin: list orders (filter `?status=`) |
 | GET | `/admin/orders/{orderId}` | Admin: order detail |
-| PATCH | `/admin/orders/{orderId}` | Admin: update status + tracking |
+| PATCH | `/admin/orders/{orderId}` | Admin: update status + tracking (schedules review email 1 day after delivered) |
+| GET | `/admin/analytics/sales` | Admin: day/week/month payments received (excludes refunds) |
 | GET | `/admin/analytics/overview` | Admin: traffic + funnel (`?days=`) |
 | GET | `/admin/analytics/products` | Admin: most-viewed products |
 | GET | `/admin/analytics/searches` | Admin: top + zero-result searches |

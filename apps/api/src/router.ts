@@ -8,6 +8,7 @@ import * as config from "./handlers/config";
 import * as uploads from "./handlers/uploads";
 import * as events from "./handlers/events";
 import * as analytics from "./handlers/analytics";
+import * as salesReport from "./handlers/sales-report";
 import * as adminCarts from "./handlers/admin-carts";
 import * as account from "./handlers/account";
 import * as coupons from "./handlers/coupons";
@@ -57,6 +58,7 @@ const routes: Route[] = [
   { method: "GET", pattern: /^\/admin\/leads$/, handler: orders.listLeads },
   { method: "PATCH", pattern: /^\/admin\/leads$/, handler: orders.updateLead },
   { method: "GET", pattern: /^\/admin\/analytics\/overview$/, handler: analytics.getAnalyticsOverview },
+  { method: "GET", pattern: /^\/admin\/analytics\/sales$/, handler: salesReport.getSalesReport },
   { method: "GET", pattern: /^\/admin\/analytics\/products$/, handler: analytics.getTopProducts },
   { method: "GET", pattern: /^\/admin\/analytics\/searches$/, handler: analytics.getTopSearches },
   { method: "GET", pattern: /^\/admin\/sessions$/, handler: analytics.listSessions },

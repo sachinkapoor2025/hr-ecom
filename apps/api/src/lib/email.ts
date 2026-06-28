@@ -1,8 +1,8 @@
 import nodemailer from "nodemailer";
 import type SMTPTransport from "nodemailer/lib/smtp-transport";
-import type { Order } from "@hr-ecom/shared";
+import type { Order, Product } from "@hr-ecom/shared";
 import type { LeadCaptureInput } from "@hr-ecom/shared";
-import { WELCOME_DISCOUNT_PERCENT } from "@hr-ecom/shared";
+import { WELCOME_DISCOUNT_PERCENT, LOW_STOCK_ALERT_EMAIL } from "@hr-ecom/shared";
 
 const DEFAULT_NOTIFY = "order@usarakhi.com";
 const SITE_NAME = "UsaRakhi";
@@ -205,6 +205,8 @@ function formatLeadSource(source?: string): string {
       return "Newsletter / exit offer";
     case "chat":
       return "Chat widget";
+    case "review":
+      return "Customer review";
     case "checkout":
       return "Checkout";
     case "product":
@@ -272,6 +274,7 @@ https://www.usarakhi.com`,
 export async function notifyAdminLead(lead: LeadCaptureInput): Promise<EmailSendResult> {
   const message = lead.metadata?.message?.trim();
   const isContact = lead.source === "contact";
+  const isReview = lead.source === "review";
 
   if (isContact && lead.name && lead.email && message) {
     return sendContactEmails({
@@ -304,7 +307,7 @@ export async function notifyAdminLead(lead: LeadCaptureInput): Promise<EmailSend
     return { ok: false, skipped: true, error: "SMTP not configured" };
   }
 
-  const isEnquiry = isContact || Boolean(message);
+  const isEnquiry = isContact || isReview || Boolean(message);
   if (!isEnquiry) return { ok: true, skipped: true };
 
   const lines = [
@@ -325,7 +328,7 @@ export async function notifyAdminLead(lead: LeadCaptureInput): Promise<EmailSend
 
   return sendEmail({
     to: notifyAddress(),
-    subject: `[${SITE_NAME}] New enquiry — ${formatLeadSource(lead.source)}`,
+    subject: `[${SITE_NAME}] New ${isReview ? "review" : "enquiry"} — ${formatLeadSource(lead.source)}`,
     text: lines,
     replyTo: lead.email,
   });
@@ -415,4 +418,84 @@ Questions? Reply to this email or WhatsApp us.
   }
 
   return { ok: true };
+}
+
+export async function notifyLowStock(product: Product, inventory: number): Promise<EmailSendResult> {
+  const soldOut = inventory <= 0;
+  const subject = soldOut
+    ? `[${SITE_NAME}] SOLD OUT — restock ${product.name}`
+    : `[${SITE_NAME}] Low stock (${inventory} left) — ${product.name}`;
+
+  const text = soldOut
+    ? `Product sold out on ${SITE_NAME}
+
+Product: ${product.name}
+SKU: ${product.sku ?? "—"}
+Slug: ${product.slug}
+Category: ${product.categorySlug}
+Current inventory: 0
+
+Please restock this item in the admin portal (Products → edit stock).
+
+Admin: https://www.usarakhi.com/admin/products`
+    : `Low stock alert on ${SITE_NAME}
+
+Product: ${product.name}
+SKU: ${product.sku ?? "—"}
+Slug: ${product.slug}
+Category: ${product.categorySlug}
+Current inventory: ${inventory} (threshold: 10 or below)
+
+Please restock this item in the admin portal.
+
+Admin: https://www.usarakhi.com/admin/products`;
+
+  return sendEmail({
+    to: LOW_STOCK_ALERT_EMAIL,
+    subject,
+    text,
+  });
+}
+
+function siteUrl(): string {
+  return (process.env.SITE_URL ?? "https://www.usarakhi.com").replace(/\/$/, "");
+}
+
+export async function sendReviewRequestEmail(order: Order): Promise<EmailSendResult> {
+  if (!smtpConfigured()) {
+    return { ok: false, skipped: true, error: "SMTP not configured" };
+  }
+
+  const customerEmail = order.shippingAddress?.email?.trim();
+  if (!customerEmail?.includes("@")) {
+    return { ok: false, skipped: true, error: "No customer email" };
+  }
+
+  const name = order.shippingAddress?.name?.split(" ")[0] ?? "there";
+  const shortId = order.orderId.slice(0, 8).toUpperCase();
+  const reviewUrl = `${siteUrl()}/reviews`;
+
+  const text = `Hi ${name},
+
+We hope your Rakhi order #${shortId} arrived safely and made Raksha Bandhan special!
+
+We're UsaRakhi — in our first Raksha Bandhan season — and your feedback helps other sisters trust us for USA Rakhi delivery.
+
+Would you take 30 seconds to share your experience?
+${reviewUrl}
+
+You can mention delivery speed, packaging, or how your brother liked the Rakhi. We read every review.
+
+Thank you for choosing ${SITE_NAME}.
+
+— Team ${SITE_NAME}
+${siteUrl()}
+WhatsApp / support: support@usarakhi.com`;
+
+  return sendEmail({
+    to: customerEmail,
+    subject: `How was your Rakhi delivery? — ${SITE_NAME}`,
+    text,
+    replyTo: notifyAddress(),
+  });
 }

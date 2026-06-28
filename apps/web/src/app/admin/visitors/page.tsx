@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { formatViewerLocation, viewerGeoFromMetadata } from "@hr-ecom/shared";
 import { useApiClient } from "@/lib/auth-context";
 import {
   downloadCsv,
@@ -21,6 +22,9 @@ interface SessionSummary {
   email?: string;
   phone?: string;
   country?: string;
+  city?: string;
+  region?: string;
+  regionName?: string;
   timezone?: string;
   locale?: string;
   referrer?: string;
@@ -75,12 +79,16 @@ function describe(e: TimelineEvent): string {
   return e.path ?? "";
 }
 
-function countryLabel(s: SessionSummary): string {
-  if (s.country) return s.country;
-  if (s.timezone?.includes("Kolkata") || s.timezone?.includes("Calcutta")) return "IN (est.)";
-  if (s.locale?.startsWith("en-IN")) return "IN (est.)";
-  if (s.locale?.startsWith("en-US")) return "US (est.)";
-  return s.timezone ?? "—";
+function locationLabel(s: SessionSummary): string {
+  return formatViewerLocation(
+    {
+      country: s.country,
+      city: s.city,
+      region: s.region,
+      regionName: s.regionName,
+    },
+    { timezone: s.timezone, locale: s.locale }
+  );
 }
 
 function visitorLabel(s: SessionSummary): string {
@@ -138,7 +146,7 @@ export default function AdminVisitorsPage() {
           "Name",
           "Email",
           "Phone",
-          "Country",
+          "Location",
           "Referrer",
           "First seen",
           "Last activity",
@@ -155,7 +163,7 @@ export default function AdminVisitorsPage() {
             s.name ?? "",
             s.email ?? "",
             s.phone ?? "",
-            countryLabel(s),
+            locationLabel(s),
             referrerLabel(s.referrer),
             s.firstSeen,
             s.lastSeen,
@@ -237,7 +245,7 @@ export default function AdminVisitorsPage() {
               <tr className="text-left">
                 <th className="py-3 px-4">Visitor</th>
                 <th className="py-3 px-4">Type</th>
-                <th className="py-3 px-4">Country</th>
+                <th className="py-3 px-4">Location</th>
                 <th className="py-3 px-4">Referrer</th>
                 <th className="py-3 px-4">Duration</th>
                 <th className="py-3 px-4">Last activity</th>
@@ -266,7 +274,7 @@ export default function AdminVisitorsPage() {
                   <td className="py-3 px-4 text-xs">
                     {s.name || s.email ? "Registered" : "Guest"}
                   </td>
-                  <td className="py-3 px-4 text-slate-600">{countryLabel(s)}</td>
+                  <td className="py-3 px-4 text-slate-600 text-xs">{locationLabel(s)}</td>
                   <td className="py-3 px-4 text-xs text-slate-500">{referrerLabel(s.referrer)}</td>
                   <td className="py-3 px-4 text-xs">{formatDurationMs(duration)}</td>
                   <td className="py-3 px-4 text-slate-500 whitespace-nowrap">
@@ -336,10 +344,17 @@ export default function AdminVisitorsPage() {
                   </div>
                 )}
 
-                {timeline.events[0]?.metadata?.country && (
+                {(timeline.events[0]?.metadata?.country ||
+                  timeline.events[0]?.metadata?.city) && (
                   <p className="text-xs text-slate-500 mb-4">
-                    Country: {timeline.events[0].metadata.country}
-                    {timeline.events[0].metadata.timezone ? ` · ${timeline.events[0].metadata.timezone}` : ""}
+                    Location:{" "}
+                    {formatViewerLocation(viewerGeoFromMetadata(timeline.events[0].metadata), {
+                      timezone: timeline.events[0].metadata?.timezone,
+                      locale: timeline.events[0].metadata?.locale,
+                    })}
+                    {timeline.events[0].metadata?.timezone
+                      ? ` · TZ ${timeline.events[0].metadata.timezone}`
+                      : ""}
                   </p>
                 )}
 

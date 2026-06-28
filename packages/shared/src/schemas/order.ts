@@ -67,6 +67,10 @@ export const orderSchema = z.object({
   adminNotes: z.string().max(2000).optional(),
   estimatedDeliveryAt: z.string().optional(),
   deliveredAt: z.string().optional(),
+  /** ISO timestamp when post-delivery review email should send (deliveredAt + 1 day). */
+  reviewEmailDueAt: z.string().optional(),
+  /** Set after review request email is sent (idempotency). */
+  reviewEmailSentAt: z.string().optional(),
 });
 
 /** Admin order status update payload. */

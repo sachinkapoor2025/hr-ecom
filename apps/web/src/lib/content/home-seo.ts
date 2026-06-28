@@ -72,6 +72,7 @@ export const homeSeoContent = {
       "Roli and chawal included on most orders",
       "Pay in USD (Stripe) or INR (Razorpay) from anywhere",
       "5–7 business day delivery to all 50 states",
+      "California-based US fulfillment team (DGV)",
       "Trusted by sisters sending rakhi from India to USA",
     ],
   },

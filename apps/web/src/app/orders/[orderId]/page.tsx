@@ -7,6 +7,8 @@ import { api } from "@/lib/api";
 import { useSessionId } from "@/lib/session";
 import { useAuth } from "@/lib/auth-context";
 import { trackPurchase } from "@/lib/track";
+import { OrderConfirmation } from "@/components/OrderConfirmation";
+import { SiteLogoLink } from "@/components/SiteLogo";
 import type { Order } from "@hr-ecom/shared";
 
 function OrderDetailInner({ orderId }: { orderId: string }) {
@@ -52,15 +54,24 @@ function OrderDetailInner({ orderId }: { orderId: string }) {
   }, [order, redirectStatus, isDev]);
 
   if (loading) {
-    return <div className="max-w-lg mx-auto px-4 py-16 text-center text-slate-600">Loading order...</div>;
+    return (
+      <div className="min-h-[50vh] flex flex-col items-center justify-center gap-4 px-4">
+        <SiteLogoLink />
+        <p className="text-slate-600 animate-pulse">Loading your order…</p>
+      </div>
+    );
   }
 
   if (error || !order) {
     return (
-      <div className="max-w-lg mx-auto px-4 py-16 text-center">
-        <h1 className="text-2xl font-bold text-primary mb-3">Order</h1>
-        <p className="text-slate-600 mb-6">{error || "Order not found."}</p>
-        <Link href="/products" className="text-nav font-semibold hover:underline">
+      <div className="min-h-[50vh] flex flex-col items-center justify-center px-4 text-center">
+        <SiteLogoLink className="mb-6" />
+        <h1 className="text-2xl font-bold text-primary mb-3">Order not found</h1>
+        <p className="text-slate-600 mb-6 max-w-sm">{error || "We couldn't find this order."}</p>
+        <Link
+          href="/products"
+          className="inline-flex rounded-lg bg-primary text-white font-bold px-6 py-3 hover:bg-primary/90 transition"
+        >
           Continue shopping
         </Link>
       </div>
@@ -68,53 +79,8 @@ function OrderDetailInner({ orderId }: { orderId: string }) {
   }
 
   const paid = order.status === "paid" || redirectStatus === "succeeded" || isDev;
-  const statusLabel = paid ? "Order confirmed" : order.status === "pending_payment" ? "Awaiting payment" : order.status;
 
-  return (
-    <div className="max-w-lg mx-auto px-4 py-16">
-      <h1 className={`text-3xl font-bold mb-2 ${paid ? "text-green-600" : "text-primary"}`}>{statusLabel}</h1>
-      <p className="text-slate-600 mb-6">
-        {paid
-          ? "Thank you for your purchase. You will receive a confirmation email shortly."
-          : "Complete payment to confirm your order."}
-      </p>
-
-      <div className="border border-slate-200 rounded-xl p-5 bg-white space-y-3 text-sm">
-        <div className="flex justify-between">
-          <span className="text-slate-500">Order ID</span>
-          <span className="font-mono text-xs">{order.orderId}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-slate-500">Status</span>
-          <span className="font-semibold capitalize">{order.status.replace(/_/g, " ")}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-slate-500">Total</span>
-          <span className="font-bold text-nav">
-            {new Intl.NumberFormat(undefined, { style: "currency", currency: order.currency }).format(order.total)}
-          </span>
-        </div>
-        <ul className="border-t border-slate-100 pt-3 space-y-2">
-          {order.items.map((item) => (
-            <li key={item.productSlug} className="flex justify-between gap-4">
-              <span>
-                {item.name} × {item.quantity}
-              </span>
-              <span>
-                {new Intl.NumberFormat(undefined, { style: "currency", currency: item.currency }).format(
-                  item.price * item.quantity
-                )}
-              </span>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      <Link href="/products" className="mt-8 inline-block text-nav font-semibold hover:underline">
-        Continue shopping →
-      </Link>
-    </div>
-  );
+  return <OrderConfirmation order={order} paid={paid} />;
 }
 
 export default function OrderPage({ params }: { params: Promise<{ orderId: string }> }) {
@@ -125,11 +91,17 @@ export default function OrderPage({ params }: { params: Promise<{ orderId: strin
   }, [params]);
 
   if (!orderId) {
-    return <div className="max-w-lg mx-auto px-4 py-16 text-center text-slate-600">Loading...</div>;
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center text-slate-600">Loading…</div>
+    );
   }
 
   return (
-    <Suspense fallback={<div className="max-w-lg mx-auto px-4 py-16 text-center">Loading...</div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-[50vh] flex items-center justify-center text-slate-600">Loading…</div>
+      }
+    >
       <OrderDetailInner orderId={orderId} />
     </Suspense>
   );

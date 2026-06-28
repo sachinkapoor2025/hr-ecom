@@ -4,7 +4,10 @@ import { api } from "@/lib/api";
 import { BannerCarousel } from "@/components/BannerCarousel";
 import { CustomerReviews } from "@/components/CustomerReviews";
 import { HomeProductCard } from "@/components/HomeProductCard";
+import { FastSellingSection } from "@/components/FastSellingSection";
 import { HomeSeoSection } from "@/components/HomeSeoSection";
+import { TrustStrip } from "@/components/TrustStrip";
+import { WhyTrustUsSection } from "@/components/WhyTrustUsSection";
 import { JsonLd } from "@/components/JsonLd";
 import { site, homeBanners, homeCategoryOrder, faqs } from "@/lib/site";
 import { faqJsonLd, howToSendRakhiJsonLd, pageMetadata } from "@/lib/seo";
@@ -45,6 +48,7 @@ export default async function HomePage() {
     <div>
       <JsonLd data={[faqJsonLd(faqs), howToSendRakhiJsonLd()]} />
       <BannerCarousel banners={homeBanners} />
+      <TrustStrip />
 
       <section className="max-w-4xl mx-auto px-4 py-10 text-center">
         <h1 className="text-2xl md:text-3xl font-bold text-primary mb-4">
@@ -68,6 +72,8 @@ export default async function HomePage() {
           </Link>
         </div>
       </section>
+
+      <FastSellingSection products={products} />
 
       {productsByCategory.map((section) =>
         section.products.length > 0 ? (
@@ -93,6 +99,8 @@ export default async function HomePage() {
           <code className="bg-slate-100 px-1 rounded">NEXT_PUBLIC_API_URL</code> is set and redeploy.
         </p>
       )}
+
+      <WhyTrustUsSection />
 
       <CustomerReviews />
 

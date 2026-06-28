@@ -101,6 +101,7 @@ export function Footer() {
               <li><Link href="/blog" className="hover:text-white hover:underline">Blog &amp; Guides</Link></li>
               <li><Link href="/shipping" className="hover:text-white hover:underline">Shipping &amp; Delivery</Link></li>
               <li><Link href="/faq" className="hover:text-white hover:underline">FAQ</Link></li>
+              <li><Link href="/reviews" className="hover:text-white hover:underline">Customer Reviews</Link></li>
               <li><Link href="/about" className="hover:text-white hover:underline">About Us</Link></li>
               <li><Link href="/returns" className="hover:text-white hover:underline">Returns &amp; Guarantee</Link></li>
               <li><Link href="/contact" className="hover:text-white hover:underline">Contact Us</Link></li>

@@ -2,15 +2,24 @@
 
 import Link from "next/link";
 import type { Product } from "@hr-ecom/shared";
+import { isFastSelling } from "@hr-ecom/shared";
 import { AddToCartControl } from "@/components/AddToCartControl";
 import { WishlistButton } from "@/components/WishlistButton";
+import { FastSellingBadge } from "@/components/FastSellingBadge";
 import { useCurrency } from "@/lib/currency-context";
 import { getDiscountPercent } from "@/lib/pricing";
 import { resolveImageUrl } from "@/lib/images";
 
-export function HomeProductCard({ product }: { product: Product }) {
+export function HomeProductCard({
+  product,
+  showFastSellingBadge = false,
+}: {
+  product: Product;
+  showFastSellingBadge?: boolean;
+}) {
   const { format } = useCurrency();
   const discount = getDiscountPercent(product.price, product.compareAtPrice);
+  const fastSelling = showFastSellingBadge || isFastSelling(product);
 
   return (
     <div className="border border-slate-200 rounded-xl overflow-hidden bg-white hover:shadow-md transition-shadow relative flex h-full flex-col">
@@ -18,6 +27,11 @@ export function HomeProductCard({ product }: { product: Product }) {
         <span className="absolute top-3 left-3 z-10 bg-accent text-white text-xs font-bold px-2 py-1 rounded">
           {discount}% OFF
         </span>
+      )}
+      {fastSelling && (
+        <div className={`absolute top-3 z-10 ${discount !== null ? "right-3" : "left-3"}`}>
+          <FastSellingBadge />
+        </div>
       )}
       <div className="relative aspect-square w-full shrink-0 overflow-hidden bg-slate-50">
         <WishlistButton product={product} />

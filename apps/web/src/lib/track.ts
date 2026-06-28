@@ -29,9 +29,37 @@ const FLUSH_DELAY_MS = 1200;
 let queue: QueuedEvent[] = [];
 let timer: ReturnType<typeof setTimeout> | null = null;
 let clientMeta: Record<string, string> | null = null;
+let geoPromise: Promise<void> | null = null;
 
 function endpoint(): string {
   return `${getApiUrl()}/events`;
+}
+
+function applyGeoFields(data: Record<string, string | undefined>) {
+  clientMeta = clientMeta ?? {};
+  for (const key of ["country", "city", "region", "regionName"] as const) {
+    const value = data[key];
+    if (value) clientMeta[key] = value;
+  }
+}
+
+/** Load city/state/country from /api/geo (CloudFront headers on Amplify). */
+export function ensureVisitorGeo(): Promise<void> {
+  if (typeof window === "undefined") return Promise.resolve();
+  if (clientMeta?.country && clientMeta?.city) return Promise.resolve();
+  if (!geoPromise) {
+    geoPromise = fetch("/api/geo", { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && typeof data === "object") {
+          applyGeoFields(data as Record<string, string | undefined>);
+        }
+      })
+      .catch(() => {
+        /* analytics must never break UX */
+      });
+  }
+  return geoPromise;
 }
 
 function getClientMetadata(): Record<string, string> {
@@ -59,7 +87,6 @@ export function flushEvents(): void {
 
   const body = JSON.stringify({ events });
 
-  // fetch + keepalive handles CORS preflight reliably; sendBeacon often drops JSON POSTs.
   fetch(endpoint(), {
     method: "POST",
     headers: { "Content-Type": "application/json" },

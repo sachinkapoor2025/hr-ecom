@@ -25,8 +25,8 @@ SAMPLE_ENV=$(cat <<'EOF'
   "NEXT_PUBLIC_CDN_URL": "https://d301af4ndyn9qx.cloudfront.net",
   "NEXT_PUBLIC_GTM_ID": "GTM-XXXXXXX",
   "NEXT_PUBLIC_GA4_ID": "G-XXXXXXXXXX",
-  "NEXT_PUBLIC_META_PIXEL_ID": "123456789012345",
-  "NEXT_PUBLIC_CLARITY_ID": "sample_clarity_project_id",
+  "NEXT_PUBLIC_META_PIXEL_ID": "1459099935879507",
+  "NEXT_PUBLIC_CLARITY_ID": "xdpv6v2lq9",
   "NEXT_PUBLIC_BING_SITE_VERIFICATION": "SAMPLE_BING_VERIFICATION_CODE",
   "NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION": "google882629f2a0f6ec6d"
 }
@@ -45,7 +45,7 @@ update_branch() {
 import json, os
 existing = json.loads(os.environ.get('EXISTING') or '{}')
 samples = json.loads(os.environ.get('SAMPLE_ENV') or '{}')
-merged = {**samples, **existing}  # existing wins over samples if both set
+merged = {**existing, **samples}  # samples override when script is re-run with new IDs
 print(json.dumps(merged))
 " EXISTING="$EXISTING" SAMPLE_ENV="$SAMPLE_ENV")
 
@@ -74,7 +74,7 @@ else
 fi
 
 echo ""
-echo "Sample analytics IDs are set. Replace in AWS Amplify Console → hr-ecom → Environment variables:"
+echo "Analytics IDs applied (Meta Pixel, Clarity). Set GTM/GA4/Bing in Amplify Console if needed:"
 echo "  NEXT_PUBLIC_GTM_ID, NEXT_PUBLIC_GA4_ID, NEXT_PUBLIC_META_PIXEL_ID,"
 echo "  NEXT_PUBLIC_CLARITY_ID, NEXT_PUBLIC_BING_SITE_VERIFICATION,"
 echo "  NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION"

@@ -45,15 +45,16 @@ export default function AboutPage() {
         </ul>
         <h2 className="text-xl font-bold text-primary pt-4">Who we are</h2>
         <p>
-          {site.name} is operated by <strong>Divit Global Ventures (DGV)</strong>, a team focused on connecting
-          Indian diaspora families across borders. Our India-based curation team selects premium Rakhis; orders
-          ship from US domestic fulfillment so brothers receive gifts quickly without international customs delays.
+          {site.name} is operated by <strong>Divit Global Ventures (DGV)</strong> with a{" "}
+          <strong>California-based US fulfillment team</strong>. Our team curates premium Rakhis and packs every
+          order for domestic delivery across all 50 states — so sisters in India, the UK, Canada, and worldwide can
+          send Rakhi without international customs delays for their brothers in America.
         </p>
         <h2 className="text-xl font-bold text-primary pt-4">Our promise</h2>
         <p>
           Every Rakhi is carefully packed for the festival. We understand Raksha Bandhan is emotional — not just a
-          transaction. That is why thousands of sisters trust {site.name} to send love when they cannot be there in
-          person.
+          transaction. This is our first Raksha Bandhan season, and we&apos;re earning trust one delivery at a time
+          with reliable USA shipping, responsive WhatsApp support, and a satisfaction guarantee.
         </p>
         <p>
           Questions? Reach us on{" "}

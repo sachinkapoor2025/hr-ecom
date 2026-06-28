@@ -9,7 +9,7 @@ export const leadCaptureSchema = z.object({
   phone: z.string().optional(),
   page: z.string().optional(),
   productSlug: z.string().optional(),
-  source: z.enum(["checkout", "newsletter", "product", "browse", "admin", "contact", "chat"]).default("browse"),
+  source: z.enum(["checkout", "newsletter", "product", "browse", "admin", "contact", "chat", "review"]).default("browse"),
   metadata: z.record(z.string()).optional(),
 });
 

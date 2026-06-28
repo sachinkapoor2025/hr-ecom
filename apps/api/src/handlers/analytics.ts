@@ -1,6 +1,6 @@
 import { QueryCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
 import type { APIGatewayProxyEventV2 } from "aws-lambda";
-import { eventKeys, customerKeys, EVENT_TYPES } from "@hr-ecom/shared";
+import { eventKeys, customerKeys, EVENT_TYPES, viewerGeoFromMetadata } from "@hr-ecom/shared";
 import { docClient, EVENTS_TABLE, CUSTOMERS_TABLE, dayBucket, now } from "../lib/db";
 import { ok, forbidden, badRequest } from "../lib/response";
 import { requireAdmin } from "../lib/auth";
@@ -139,6 +139,9 @@ interface SessionSummary {
   email?: string;
   phone?: string;
   country?: string;
+  city?: string;
+  region?: string;
+  regionName?: string;
   timezone?: string;
   locale?: string;
   referrer?: string;
@@ -164,6 +167,7 @@ function mergeSessionEvent(
   const path = raw.path as string | undefined;
   const productSlug = raw.productSlug as string | undefined;
   const metadata = (raw.metadata as Record<string, string> | undefined) ?? {};
+  const geo = viewerGeoFromMetadata(metadata);
 
   const existing = sessions.get(sessionId);
   if (!existing) {
@@ -173,7 +177,10 @@ function mergeSessionEvent(
       lastSeen: at,
       eventCount: 1,
       lastPath: path,
-      country: metadata.country,
+      country: geo.country,
+      city: geo.city,
+      region: geo.region,
+      regionName: geo.regionName,
       timezone: metadata.timezone,
       locale: metadata.locale,
       referrer: (raw.referrer as string | undefined) ?? undefined,
@@ -187,7 +194,10 @@ function mergeSessionEvent(
   if (at > existing.lastSeen) {
     existing.lastSeen = at;
     existing.lastPath = path ?? existing.lastPath;
-    if (metadata.country) existing.country = metadata.country;
+    if (geo.country) existing.country = geo.country;
+    if (geo.city) existing.city = geo.city;
+    if (geo.region) existing.region = geo.region;
+    if (geo.regionName) existing.regionName = geo.regionName;
     if (metadata.timezone) existing.timezone = metadata.timezone;
     if (metadata.locale) existing.locale = metadata.locale;
   }
@@ -195,7 +205,10 @@ function mergeSessionEvent(
   if (!existing.referrer && raw.referrer) existing.referrer = raw.referrer as string;
   if (path && !existing.pages.includes(path)) existing.pages.push(path);
   if (productSlug && !existing.products.includes(productSlug)) existing.products.push(productSlug);
-  if (!existing.country && metadata.country) existing.country = metadata.country;
+  if (!existing.country && geo.country) existing.country = geo.country;
+  if (!existing.city && geo.city) existing.city = geo.city;
+  if (!existing.region && geo.region) existing.region = geo.region;
+  if (!existing.regionName && geo.regionName) existing.regionName = geo.regionName;
   if (!existing.timezone && metadata.timezone) existing.timezone = metadata.timezone;
   if (!existing.locale && metadata.locale) existing.locale = metadata.locale;
 }

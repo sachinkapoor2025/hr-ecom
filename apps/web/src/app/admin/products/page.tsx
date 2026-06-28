@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useApiClient } from "@/lib/auth-context";
 import type { Product } from "@hr-ecom/shared";
+import { DEFAULT_PRODUCT_INVENTORY, LOW_STOCK_THRESHOLD } from "@hr-ecom/shared";
+import { getUnitsSold, isFastSelling } from "@hr-ecom/shared";
 import { formatMoney, paginate } from "@/lib/admin-utils";
 import { TableControls } from "@/components/admin/TableControls";
 
@@ -21,7 +23,7 @@ export default function AdminProductsPage() {
     description: "",
     price: "",
     categorySlug: "",
-    inventory: "10",
+    inventory: String(DEFAULT_PRODUCT_INVENTORY),
     currency: "USD" as "USD" | "INR",
     sku: "",
     compareAtPrice: "",
@@ -71,7 +73,7 @@ export default function AdminProductsPage() {
       description: "",
       price: "",
       categorySlug: categories[0]?.slug ?? "",
-      inventory: "10",
+      inventory: String(DEFAULT_PRODUCT_INVENTORY),
       currency: "USD",
       sku: "",
       compareAtPrice: "",
@@ -158,6 +160,41 @@ export default function AdminProductsPage() {
     if (!confirm("Delete this product?")) return;
     await apiClient(`/products/${slug}`, { method: "DELETE" });
     load();
+  };
+
+  const saveStock = async (slug: string, inventory: number) => {
+    if (!Number.isFinite(inventory) || inventory < 0) {
+      setMessage("Stock must be 0 or greater.");
+      return;
+    }
+    try {
+      await apiClient(`/products/${slug}`, {
+        method: "PUT",
+        body: JSON.stringify({ inventory: Math.floor(inventory) }),
+      });
+      setMessage(`Stock updated for ${slug}.`);
+      load();
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "Stock update failed");
+    }
+  };
+
+  const stockBadge = (inventory: number) => {
+    if (inventory <= 0) {
+      return (
+        <span className="ml-2 text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-red-100 text-red-800">
+          Sold out
+        </span>
+      );
+    }
+    if (inventory <= LOW_STOCK_THRESHOLD) {
+      return (
+        <span className="ml-2 text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-amber-100 text-amber-900">
+          Low
+        </span>
+      );
+    }
+    return null;
   };
 
   const bulkUpload = async () => {
@@ -360,6 +397,7 @@ export default function AdminProductsPage() {
                     <th className="py-3 px-4">Category</th>
                     <th className="py-3 px-4">Price</th>
                     <th className="py-3 px-4">Stock</th>
+                    <th className="py-3 px-4">Sold</th>
                     <th className="py-3 px-4">Status</th>
                     <th className="py-3 px-4">Actions</th>
                   </tr>
@@ -381,15 +419,52 @@ export default function AdminProductsPage() {
                           </div>
                         )}
                       </td>
-                      <td className="py-3 px-4">{p.inventory}</td>
                       <td className="py-3 px-4">
+                        <form
+                          className="flex items-center gap-1"
+                          onSubmit={(e) => {
+                            e.preventDefault();
+                            const input = (e.currentTarget.elements.namedItem("stock") as HTMLInputElement)
+                              .value;
+                            void saveStock(p.slug, parseInt(input, 10));
+                          }}
+                        >
+                          <input
+                            name="stock"
+                            type="number"
+                            min={0}
+                            defaultValue={p.inventory ?? 0}
+                            key={`${p.slug}-${p.inventory}`}
+                            className="w-20 border rounded px-2 py-1 text-sm"
+                          />
+                          <button
+                            type="submit"
+                            className="text-xs text-nav hover:underline whitespace-nowrap"
+                          >
+                            Save
+                          </button>
+                          {stockBadge(p.inventory ?? 0)}
+                        </form>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className="font-semibold">{getUnitsSold(p)}</span>
+                        {isFastSelling(p) && (
+                          <span className="ml-1 text-[10px] font-bold text-orange-600 uppercase">Fast</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="flex flex-col gap-1">
                         <span
-                          className={`text-xs px-2 py-0.5 rounded-full ${
+                          className={`text-xs px-2 py-0.5 rounded-full w-fit ${
                             p.published !== false ? "bg-green-100 text-green-800" : "bg-slate-100"
                           }`}
                         >
                           {p.published !== false ? "Published" : "Draft"}
                         </span>
+                        {(p.inventory ?? 0) <= 0 && p.published !== false && (
+                          <span className="text-[10px] text-slate-500">Hidden from shop (sold out)</span>
+                        )}
+                        </div>
                       </td>
                       <td className="py-3 px-4">
                         <button
