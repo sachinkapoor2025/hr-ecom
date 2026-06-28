@@ -14,8 +14,8 @@ export function metaDescription(text: string, maxLength = DEFAULT_MAX): string {
   if (!cleaned) return "";
   if (cleaned.length <= maxLength) return cleaned;
 
-  const window = cleaned.slice(0, maxLength + 1);
-  const sentenceEnd = window.search(/[.!?](?:\s|$)/);
+  const slice = cleaned.slice(0, maxLength + 1);
+  const sentenceEnd = slice.search(/[.!?](?:\s|$)/);
   if (sentenceEnd >= 50) {
     return cleaned.slice(0, sentenceEnd + 1).trim();
   }

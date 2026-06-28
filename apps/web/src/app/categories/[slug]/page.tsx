@@ -20,10 +20,12 @@ export function generateStaticParams() {
   return categoryOrder.map((slug) => ({ slug }));
 }
 
+export const revalidate = 3600;
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   try {
-    const data = await api<{ category: Category }>(`/categories/${slug}`);
+    const data = await api<{ category: Category }>(`/categories/${slug}`, { revalidate: 3600 });
     const c = data.category;
     return pageMetadata({
       title: `${c.name} — Send to USA | Free Shipping`,
@@ -50,8 +52,8 @@ export default async function CategoryPage({ params }: Props) {
 
   try {
     const [catData, prodData] = await Promise.all([
-      api<{ category: Category }>(`/categories/${slug}`),
-      api<{ products: Product[] }>(`/products?category=${slug}`),
+      api<{ category: Category }>(`/categories/${slug}`, { revalidate: 3600 }),
+      api<{ products: Product[] }>(`/products?category=${slug}`, { revalidate: 3600 }),
     ]);
     category = catData.category;
     products = prodData.products;

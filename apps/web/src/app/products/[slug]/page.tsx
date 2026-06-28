@@ -14,9 +14,12 @@ interface Props {
   params: Promise<{ slug: string }>;
 }
 
+/** Allow ISR — avoids static-to-dynamic crash on client navigation (no-store fetch). */
+export const revalidate = 3600;
+
 export async function generateStaticParams() {
   try {
-    const data = await api<{ products: Product[] }>("/products");
+    const data = await api<{ products: Product[] }>("/products", { revalidate: 3600 });
     return data.products.map((p) => ({ slug: p.slug }));
   } catch {
     return [];
@@ -26,7 +29,7 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   try {
-    const data = await api<{ product: Product }>(`/products/${slug}`);
+    const data = await api<{ product: Product }>(`/products/${slug}`, { revalidate: 3600 });
     const p = data.product;
     return productPageMetadata({
       title: p.seoTitle ?? p.name,
@@ -49,14 +52,16 @@ export default async function ProductPage({ params }: Props) {
   let relatedProducts: Product[] = [];
 
   try {
-    const data = await api<{ product: Product }>(`/products/${slug}`);
+    const data = await api<{ product: Product }>(`/products/${slug}`, { revalidate: 3600 });
     product = data.product;
   } catch {
     notFound();
   }
 
   try {
-    const related = await api<{ products: Product[] }>(`/products?category=${product.categorySlug}`);
+    const related = await api<{ products: Product[] }>(`/products?category=${product.categorySlug}`, {
+      revalidate: 3600,
+    });
     relatedProducts = related.products.filter((p) => p.slug !== product.slug).slice(0, 5);
   } catch {
     relatedProducts = [];

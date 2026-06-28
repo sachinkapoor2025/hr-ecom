@@ -1,10 +1,14 @@
 import { getApiUrl } from "@/lib/env";
 
-export async function api<T>(
-  path: string,
-  options: RequestInit & { sessionId?: string; token?: string } = {}
-): Promise<T> {
-  const { sessionId, token, ...fetchOptions } = options;
+type ApiOptions = RequestInit & {
+  sessionId?: string;
+  token?: string;
+  /** Server ISR seconds. Use `false` for no-store. Default: no-store when authed, else 300s. */
+  revalidate?: number | false;
+};
+
+export async function api<T>(path: string, options: ApiOptions = {}): Promise<T> {
+  const { sessionId, token, revalidate, ...fetchOptions } = options;
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(fetchOptions.headers as Record<string, string>),
@@ -15,10 +19,18 @@ export async function api<T>(
 
   const url = `${getApiUrl()}${path}`;
 
+  const isServer = typeof window === "undefined";
+  const needsFresh = Boolean(sessionId || token || revalidate === false);
+  const cacheOptions: Pick<RequestInit, "cache" | "next"> = isServer
+    ? needsFresh
+      ? { cache: "no-store" }
+      : { next: { revalidate: typeof revalidate === "number" ? revalidate : 300 } }
+    : { cache: "default" };
+
   const res = await fetch(url, {
     ...fetchOptions,
     headers,
-    cache: typeof window === "undefined" ? "no-store" : "default",
+    ...cacheOptions,
   });
 
   if (!res.ok) {
