@@ -5,7 +5,7 @@ import { api } from "@/lib/api";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { JsonLd } from "@/components/JsonLd";
 import { ProductDetailClient } from "./ProductDetailClient";
-import { breadcrumbJsonLd, faqJsonLd, pageMetadata, productJsonLd } from "@/lib/seo";
+import { breadcrumbJsonLd, faqJsonLd, productJsonLd, productPageMetadata } from "@/lib/seo";
 import { productPageFaqs } from "@/lib/content/product-faqs";
 import { resolveImageUrl } from "@/lib/images";
 import type { Product } from "@hr-ecom/shared";
@@ -28,10 +28,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   try {
     const data = await api<{ product: Product }>(`/products/${slug}`);
     const p = data.product;
-    return pageMetadata({
+    return productPageMetadata({
       title: p.seoTitle ?? p.name,
-      description: p.seoDescription ?? p.description.slice(0, 160),
+      seoDescription: p.seoDescription,
+      description: p.description,
       path: `/products/${slug}`,
+      price: p.price,
+      currency: p.currency,
       ogImage: resolveImageUrl(p.images?.[0]),
       keywords: [p.name, ...(p.tags ?? []), "send rakhi to USA", "UsaRakhi"].join(", "),
     });

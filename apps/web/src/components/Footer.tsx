@@ -138,7 +138,7 @@ export function Footer() {
       {/* Bottom bar */}
       <div className="border-t border-white/10 bg-primary/95">
         <div className="max-w-7xl mx-auto px-4 py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs text-white/50">
-          <p>© 2025 {site.name}.com. All rights reserved. Celebrating sibling love across every mile.</p>
+          <p>© {new Date().getFullYear()} {site.name}.com. All rights reserved. Celebrating sibling love across every mile.</p>
           <p className="flex flex-wrap gap-x-3 gap-y-1">
             <Link href="/terms" className="hover:text-white underline underline-offset-2">
               Terms

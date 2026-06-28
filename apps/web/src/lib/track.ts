@@ -138,5 +138,59 @@ export const trackCartRemove = (productSlug: string) =>
   track({ type: EVENT_TYPES.CART_REMOVE, productSlug });
 export const trackCheckoutStart = (value?: number) =>
   track({ type: EVENT_TYPES.CHECKOUT_START, value, immediate: true });
-export const trackPurchase = (value?: number, metadata?: Record<string, string>) =>
+
+declare global {
+  interface Window {
+    dataLayer?: Record<string, unknown>[];
+    gtag?: (...args: unknown[]) => void;
+    fbq?: (...args: unknown[]) => void;
+    uetq?: unknown[] & { push: (...args: unknown[]) => void };
+  }
+}
+
+/** Fire purchase to GTM, GA4, Meta Pixel, and Bing UET (when loaded). */
+function pushPurchaseToAdPixels(value: number, metadata?: Record<string, string>): void {
+  if (typeof window === "undefined") return;
+
+  const currency = metadata?.currency === "INR" ? "INR" : "USD";
+  const transactionId = metadata?.orderId;
+  const payload = { value, currency, transaction_id: transactionId };
+
+  try {
+    window.dataLayer?.push({
+      event: "purchase",
+      ecommerce: {
+        transaction_id: transactionId,
+        value,
+        currency,
+      },
+    });
+  } catch {
+    /* analytics must never break UX */
+  }
+
+  try {
+    window.gtag?.("event", "purchase", payload);
+  } catch {
+    /* ignore */
+  }
+
+  try {
+    window.fbq?.("track", "Purchase", { value, currency });
+  } catch {
+    /* ignore */
+  }
+
+  try {
+    window.uetq?.push("event", "purchase", { revenue_value: value, currency });
+  } catch {
+    /* ignore */
+  }
+}
+
+export const trackPurchase = (value?: number, metadata?: Record<string, string>) => {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    pushPurchaseToAdPixels(value, metadata);
+  }
   track({ type: EVENT_TYPES.PURCHASE, value, metadata, immediate: true });
+};

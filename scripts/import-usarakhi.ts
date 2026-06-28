@@ -10,7 +10,7 @@ import { writeFileSync, mkdirSync, readFileSync, existsSync } from "fs";
 import { join } from "path";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb";
-import { productKeys, categoryKeys, configKeys, defaultPaymentConfig } from "@hr-ecom/shared";
+import { productKeys, categoryKeys, configKeys, defaultPaymentConfig, metaDescription } from "@hr-ecom/shared";
 
 const CATALOG_PATH = join(process.cwd(), "scripts/data/usarakhi-catalog.json");
 const WC_BASE = "https://usarakhi.com/wp-json/wc/store/v1";
@@ -224,7 +224,7 @@ function toCatalogProduct(p: WcProduct, fallbackCategorySlug: string): CatalogPr
     inventory: 200,
     tags: p.tags.map((t) => t.name),
     seoTitle: decodeEntities(p.name),
-    seoDescription: plainDesc.slice(0, 160),
+    seoDescription: metaDescription(plainDesc),
   };
 }
 

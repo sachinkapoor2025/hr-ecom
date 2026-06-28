@@ -167,7 +167,11 @@ export default function CheckoutPage() {
   const openRazorpayCheckout = async (order: Order, razorpayOrderId: string, razorpayKeyId?: string) => {
     const key = razorpayKeyId || process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID;
     if (!key || razorpayOrderId.includes("_dev_")) {
-      trackPurchase(order.total, { orderId: order.orderId, provider: "razorpay_dev" });
+      trackPurchase(order.total, {
+        orderId: order.orderId,
+        provider: "razorpay_dev",
+        currency: order.currency,
+      });
       await refresh();
       router.push(`/orders/${order.orderId}?dev=1`);
       return;
@@ -208,7 +212,11 @@ export default function CheckoutPage() {
                 razorpaySignature: response.razorpay_signature,
               }),
             });
-            trackPurchase(order.total, { orderId: order.orderId, provider: "razorpay" });
+            trackPurchase(order.total, {
+              orderId: order.orderId,
+              provider: "razorpay",
+              currency: order.currency,
+            });
             await refresh();
             resolve();
             router.push(`/orders/${order.orderId}`);

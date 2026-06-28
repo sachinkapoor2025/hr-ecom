@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
+import { productMetaDescription } from "@hr-ecom/shared";
 import { site, testimonials } from "./site";
 import { siteUrl } from "./env";
 import { extendedKeywords } from "./ai-recommendation";
+
+export { metaDescription, productMetaDescription } from "@hr-ecom/shared";
 
 /** Build absolute canonical URL for a path (no query string). */
 export function canonical(path: string): string {
@@ -42,6 +45,52 @@ export function pageMetadata(opts: {
       images: [image],
     },
     robots: opts.noIndex ? { index: false, follow: false } : { index: true, follow: true },
+  };
+}
+
+/** Product pages — og:type=product for WhatsApp/Facebook link previews. */
+export function productPageMetadata(opts: {
+  title: string;
+  seoDescription?: string;
+  description: string;
+  path: string;
+  price: number;
+  currency: string;
+  keywords?: string;
+  ogImage?: string;
+}): Metadata {
+  const description = productMetaDescription(opts.seoDescription, opts.description);
+  const url = canonical(opts.path);
+  const image = opts.ogImage ?? site.logoSrc;
+  const price = opts.price.toFixed(2);
+  const currency = opts.currency === "INR" ? "INR" : "USD";
+
+  return {
+    title: opts.title,
+    description,
+    keywords: opts.keywords ?? defaultKeywords,
+    alternates: { canonical: url },
+    openGraph: {
+      title: opts.title,
+      description,
+      url,
+      siteName: site.name,
+      locale: "en_US",
+      // Facebook/WhatsApp product previews — valid OG type, omitted from Next.js union
+      type: "product" as "website",
+      images: [{ url: image, alt: opts.title }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: opts.title,
+      description,
+      images: [image],
+    },
+    other: {
+      "product:price:amount": price,
+      "product:price:currency": currency,
+    },
+    robots: { index: true, follow: true },
   };
 }
 
@@ -180,28 +229,18 @@ export function productJsonLd(product: {
   inventory: number;
   categorySlug?: string;
 }) {
-  const avgRating =
-    testimonials.reduce((sum, t) => sum + t.rating, 0) / testimonials.length;
-
   return {
     "@context": "https://schema.org",
     "@type": "Product",
     "@id": `${siteUrl}/products/${product.slug}#product`,
     name: product.name,
-    description: product.description,
+    description: productMetaDescription(undefined, product.description),
     image: product.images ?? [],
     sku: product.sku ?? product.slug,
     mpn: product.slug,
     url: canonical(`/products/${product.slug}`),
     brand: { "@type": "Brand", name: site.name },
     category: product.categorySlug?.replace(/-/g, " "),
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: avgRating.toFixed(1),
-      bestRating: "5",
-      worstRating: "1",
-      reviewCount: String(testimonials.length),
-    },
     offers: {
       "@type": "Offer",
       url: canonical(`/products/${product.slug}`),
