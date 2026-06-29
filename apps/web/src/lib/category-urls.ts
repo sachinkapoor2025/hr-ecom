@@ -7,8 +7,7 @@ export const CATEGORY_PUBLIC_SLUG: Record<string, string> = {
   "kids-rakhi": "kids-rakhi-to-usa",
   "rakhi-combo": "rakhi-combo-to-usa",
   "lumba-rakhi": "lumba-rakhi-to-usa",
-  /** Exception: no -to-usa suffix (matches live WooCommerce). */
-  "bhaiya-bhabhi-rakhi": "bhaiya-bhabhi-rakhi",
+  "bhaiya-bhabhi-rakhi": "bhaiya-bhabhi-rakhi-to-usa",
 };
 
 const PUBLIC_TO_INTERNAL = Object.fromEntries(
@@ -47,6 +46,11 @@ export function categoryRedirectRules(): { source: string; destination: string; 
     for (const prefix of ["/categories", "/product-category"]) {
       rules.push({ source: `${prefix}/${internal}`, destination: dest, permanent: true });
       rules.push({ source: `${prefix}/${internal}/`, destination: dest, permanent: true });
+    }
+    // Legacy bare slug without -to-usa (e.g. /bhaiya-bhabhi-rakhi → /bhaiya-bhabhi-rakhi-to-usa)
+    if (internal !== pub) {
+      rules.push({ source: `/${internal}`, destination: dest, permanent: true });
+      rules.push({ source: `/${internal}/`, destination: dest, permanent: true });
     }
   }
 

@@ -240,7 +240,7 @@ export const blogPosts: BlogPost[] = [
         paragraphs: [
           "UsaRakhi offers standalone Lumba Rakhis and complete Bhaiya Bhabhi sets with matching designs.",
           "Enter the US delivery address at checkout; we ship domestically in 5–7 business days.",
-          "Shop Lumba Rakhi at UsaRakhi.com/lumba-rakhi-to-usa and Bhaiya Bhabhi sets at /bhaiya-bhabhi-rakhi.",
+          "Shop Lumba Rakhi at UsaRakhi.com/lumba-rakhi-to-usa and Bhaiya Bhabhi sets at /bhaiya-bhabhi-rakhi-to-usa.",
         ],
       },
     ],
