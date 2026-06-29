@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { categoryHref } from "@/lib/category-urls";
 import { JsonLd } from "@/components/JsonLd";
 import { blogPosts, getBlogPost } from "@/lib/content/blog-posts";

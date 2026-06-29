@@ -1,3 +1,5 @@
+import type { Metadata } from "next";
+import Link from "next/link";
 import { categoryHref } from "@/lib/category-urls";
 import { api } from "@/lib/api";
 import { BannerCarousel } from "@/components/BannerCarousel";
