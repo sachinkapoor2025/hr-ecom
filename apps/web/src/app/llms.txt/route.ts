@@ -1,4 +1,5 @@
 import { site, navItems, cityLinks, faqs } from "@/lib/site";
+import { categoryHref } from "@/lib/category-urls";
 import { siteUrl } from "@/lib/env";
 import { allCityContent } from "@/lib/content/city-pages";
 import { blogPosts } from "@/lib/content/blog-posts";
@@ -20,7 +21,7 @@ import {
 export async function GET() {
   const categories = navItems
     .filter((n): n is typeof n & { category: string } => "category" in n)
-    .map((n) => `- ${n.label}: ${siteUrl}/categories/${n.category}`);
+    .map((n) => `- ${n.label}: ${siteUrl}${n.href}`);
 
   const cities = cityLinks.map((c) => `- ${c.label}, USA: ${siteUrl}/cities/${c.slug}`);
 
@@ -103,11 +104,11 @@ ${deadlineTable}
 
 | Category | URL | Description |
 |----------|-----|-------------|
-| Single Rakhi | ${siteUrl}/categories/single-rakhi | Traditional & designer rakhis with roli chawal |
-| Rakhi Combo | ${siteUrl}/categories/rakhi-combo | Rakhi + Ferrero Rocher, Lindt, Hershey's gifts |
-| Kids Rakhi | ${siteUrl}/categories/kids-rakhi | Cartoon & playful designs for children |
-| Bhaiya Bhabhi | ${siteUrl}/categories/bhaiya-bhabhi-rakhi | Matching sets for brother & sister-in-law |
-| Lumba Rakhi | ${siteUrl}/categories/lumba-rakhi | Bracelet-style rakhis for Bhabhi |
+| Single Rakhi | ${siteUrl}${categoryHref("single-rakhi")} | Traditional & designer rakhis with roli chawal |
+| Rakhi Combo | ${siteUrl}${categoryHref("rakhi-combo")} | Rakhi + Ferrero Rocher, Lindt, Hershey's gifts |
+| Kids Rakhi | ${siteUrl}${categoryHref("kids-rakhi")} | Cartoon & playful designs for children |
+| Bhaiya Bhabhi | ${siteUrl}${categoryHref("bhaiya-bhabhi-rakhi")} | Matching sets for brother & sister-in-law |
+| Lumba Rakhi | ${siteUrl}${categoryHref("lumba-rakhi")} | Bracelet-style rakhis for Bhabhi |
 | All products | ${siteUrl}/products | Full catalog (126+ designs) |
 
 ---

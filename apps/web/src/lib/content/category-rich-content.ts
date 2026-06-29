@@ -1,5 +1,7 @@
 /** Rich SEO layout content for category pages (mirrors city page structure). */
 
+import { categoryHref } from "@/lib/category-urls";
+
 export interface CategoryRichContent {
   slug: string;
   headline: string;
@@ -14,15 +16,15 @@ export interface CategoryRichContent {
 }
 
 const relatedAll = [
-  { label: "Single Rakhi", href: "/categories/single-rakhi", text: "Traditional and designer rakhis with roli chawal." },
-  { label: "Rakhi Combo", href: "/categories/rakhi-combo", text: "Rakhi with Ferrero Rocher, Lindt, Hershey's." },
-  { label: "Bhaiya Bhabhi Rakhi", href: "/categories/bhaiya-bhabhi-rakhi", text: "Matching sets for brother and Bhabhi." },
-  { label: "Kids Rakhi", href: "/categories/kids-rakhi", text: "Cartoon and colorful rakhis for little brothers." },
-  { label: "Lumba Rakhi", href: "/categories/lumba-rakhi", text: "Bracelet-style rakhis for sister-in-law." },
-];
+  { slug: "single-rakhi", label: "Single Rakhi", text: "Traditional and designer rakhis with roli chawal." },
+  { slug: "rakhi-combo", label: "Rakhi Combo", text: "Rakhi with Ferrero Rocher, Lindt, Hershey's." },
+  { slug: "bhaiya-bhabhi-rakhi", label: "Bhaiya Bhabhi Rakhi", text: "Matching sets for brother and Bhabhi." },
+  { slug: "kids-rakhi", label: "Kids Rakhi", text: "Cartoon and colorful rakhis for little brothers." },
+  { slug: "lumba-rakhi", label: "Lumba Rakhi", text: "Bracelet-style rakhis for sister-in-law." },
+].map((c) => ({ ...c, href: categoryHref(c.slug) }));
 
 function relatedExcept(slug: string) {
-  return relatedAll.filter((c) => !c.href.endsWith(slug));
+  return relatedAll.filter((c) => c.slug !== slug);
 }
 
 export const categoryRichContent: Record<string, CategoryRichContent> = {

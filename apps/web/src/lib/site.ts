@@ -1,4 +1,5 @@
 import { cdnUploadUrl } from "@hr-ecom/shared";
+import { categoryHref } from "./category-urls";
 
 export const site = {
   name: "UsaRakhi",
@@ -19,11 +20,11 @@ export const site = {
 
 export const navItems = [
   { label: "Home", href: "/" },
-  { label: "Single Rakhi", href: "/categories/single-rakhi", category: "single-rakhi" },
-  { label: "Bhaiya Bhabhi Rakhi", href: "/categories/bhaiya-bhabhi-rakhi", category: "bhaiya-bhabhi-rakhi" },
-  { label: "Kids Rakhi", href: "/categories/kids-rakhi", category: "kids-rakhi" },
-  { label: "Lumba Rakhi", href: "/categories/lumba-rakhi", category: "lumba-rakhi" },
-  { label: "Rakhi Combo", href: "/categories/rakhi-combo", category: "rakhi-combo" },
+  { label: "Single Rakhi", href: categoryHref("single-rakhi"), category: "single-rakhi" },
+  { label: "Bhaiya Bhabhi Rakhi", href: categoryHref("bhaiya-bhabhi-rakhi"), category: "bhaiya-bhabhi-rakhi" },
+  { label: "Kids Rakhi", href: categoryHref("kids-rakhi"), category: "kids-rakhi" },
+  { label: "Lumba Rakhi", href: categoryHref("lumba-rakhi"), category: "lumba-rakhi" },
+  { label: "Rakhi Combo", href: categoryHref("rakhi-combo"), category: "rakhi-combo" },
   { label: "Raksha Bandhan", href: "/raksha-bandhan" },
   { label: "Blog", href: "/blog" },
   { label: "Contact Us", href: "/contact" },

@@ -18,7 +18,7 @@ export async function GET() {
 
   const categories = navItems
     .filter((n): n is typeof n & { category: string } => "category" in n)
-    .map((n) => `- ${n.label}: ${siteUrl}/categories/${n.category}`)
+    .map((n) => `- ${n.label}: ${siteUrl}${n.href}`)
     .join("\n");
 
   const productLines = products

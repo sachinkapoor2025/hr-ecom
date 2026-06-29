@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { categoryHref } from "@/lib/category-urls";
 import { JsonLd } from "@/components/JsonLd";
 import { blogPosts, getBlogPost } from "@/lib/content/blog-posts";
 import { articleJsonLd, breadcrumbJsonLd, pageMetadata } from "@/lib/seo";
@@ -89,7 +89,7 @@ export default async function BlogPostPage({ params }: Props) {
       {post.relatedCategory && (
         <div className="mt-10 p-6 bg-slate-50 rounded-xl border min-w-0">
           <h2 className="font-semibold text-primary mb-2">Shop related Rakhis</h2>
-          <Link href={`/categories/${post.relatedCategory}`} className="text-nav font-semibold hover:underline">
+          <Link href={categoryHref(post.relatedCategory)} className="text-nav font-semibold hover:underline">
             Browse {post.relatedCategory.replace(/-/g, " ")} →
           </Link>
         </div>

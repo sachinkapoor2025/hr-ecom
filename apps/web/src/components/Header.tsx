@@ -4,6 +4,7 @@ import { useState, useEffect, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useCart } from "@/lib/cart-context";
+import { categoryHref } from "@/lib/category-urls";
 import { site, navItems, cityLinks } from "@/lib/site";
 import { SearchBar } from "@/components/SearchBar";
 import { SiteLogoLink } from "@/components/SiteLogo";
@@ -161,7 +162,7 @@ export function Header() {
     if (category) {
       return (
         (pathname === "/products" && activeCategory === category) ||
-        pathname === `/categories/${category}`
+        pathname === categoryHref(category)
       );
     }
     return pathname.startsWith(href.split("?")[0]) && href !== "/";

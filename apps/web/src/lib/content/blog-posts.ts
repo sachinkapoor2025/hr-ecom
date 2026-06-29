@@ -205,7 +205,7 @@ export const blogPosts: BlogPost[] = [
         paragraphs: [
           "Order 10–14 days before Raksha Bandhan 2026 (August 28) for stress-free delivery.",
           "Pick age-appropriate designs — toddlers love bold colors; teens may prefer subtler styles.",
-          "Browse the full Kids Rakhi collection at UsaRakhi.com/categories/kids-rakhi.",
+          "Browse the full Kids Rakhi collection at UsaRakhi.com/kids-rakhi-to-usa.",
         ],
       },
     ],
@@ -240,7 +240,7 @@ export const blogPosts: BlogPost[] = [
         paragraphs: [
           "UsaRakhi offers standalone Lumba Rakhis and complete Bhaiya Bhabhi sets with matching designs.",
           "Enter the US delivery address at checkout; we ship domestically in 5–7 business days.",
-          "Shop Lumba Rakhi at UsaRakhi.com/categories/lumba-rakhi and Bhaiya Bhabhi sets at /categories/bhaiya-bhabhi-rakhi.",
+          "Shop Lumba Rakhi at UsaRakhi.com/lumba-rakhi-to-usa and Bhaiya Bhabhi sets at /bhaiya-bhabhi-rakhi.",
         ],
       },
     ],

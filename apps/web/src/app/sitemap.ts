@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { api } from "@/lib/api";
 import type { Product } from "@hr-ecom/shared";
 import { siteUrl } from "@/lib/env";
+import { categoryHref } from "@/lib/category-urls";
 import { cityLinks, categoryOrder } from "@/lib/site";
 import { blogPosts } from "@/lib/content/blog-posts";
 
@@ -27,7 +28,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   const categoryRoutes = categoryOrder.map((slug) => ({
-    url: `${siteUrl}/categories/${slug}`,
+    url: `${siteUrl}${categoryHref(slug)}`,
     lastModified: now,
     changeFrequency: "weekly" as const,
     priority: 0.85,

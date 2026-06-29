@@ -1,7 +1,14 @@
 import type { NextConfig } from "next";
+import { categoryRedirectRules, categoryRewriteRules } from "./src/lib/category-urls";
 
 const nextConfig: NextConfig = {
   transpilePackages: ["@hr-ecom/shared"],
+  async redirects() {
+    return categoryRedirectRules();
+  },
+  async rewrites() {
+    return categoryRewriteRules();
+  },
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "**" },

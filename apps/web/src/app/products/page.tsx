@@ -8,6 +8,7 @@ import { SearchTracker } from "@/components/SearchTracker";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { pageMetadata } from "@/lib/seo";
 import type { Product, Category } from "@hr-ecom/shared";
+import { categoryHref } from "@/lib/category-urls";
 import { homeCategoryOrder, orderCategories } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
@@ -134,7 +135,7 @@ export default async function ProductsPage({ searchParams }: Props) {
           {sortedCategories.map((c) => (
             <Link
               key={c.slug}
-              href={`/categories/${c.slug}`}
+              href={categoryHref(c.slug)}
               className={`px-3 py-1 rounded-full text-sm border ${category === c.slug ? "bg-nav text-white border-nav" : "border-slate-300 hover:border-nav"}`}
             >
               {c.name}
@@ -152,7 +153,7 @@ export default async function ProductsPage({ searchParams }: Props) {
               <section key={section.slug}>
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-bold text-primary capitalize">{section.name}</h2>
-                  <Link href={`/categories/${section.slug}`} className="text-nav font-semibold text-sm hover:underline">
+                  <Link href={categoryHref(section.slug)} className="text-nav font-semibold text-sm hover:underline">
                     View All →
                   </Link>
                 </div>
