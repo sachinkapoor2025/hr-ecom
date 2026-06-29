@@ -7,6 +7,7 @@ import { breadcrumbJsonLd, faqJsonLd, productJsonLd, productPageMetadata } from 
 import { productPageFaqs } from "@/lib/content/product-faqs";
 import { resolveImageUrl } from "@/lib/images";
 import { loadProduct, loadRelatedProducts, getStaticProductSlugs } from "@/lib/product-loader";
+import { api } from "@/lib/api";
 import { categoryHref } from "@/lib/category-urls";
 import type { Product } from "@hr-ecom/shared";
 
