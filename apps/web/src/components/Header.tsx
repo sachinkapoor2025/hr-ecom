@@ -305,18 +305,6 @@ export function Header() {
               </Link>
             ))}
 
-            <Link
-              href="/wishlist"
-              onClick={closeMenu}
-              className={`block rounded-lg px-4 py-3 text-sm font-semibold ${
-                pathname === "/wishlist"
-                  ? "bg-nav text-white"
-                  : "text-primary hover:bg-blue-50 hover:text-nav"
-              }`}
-            >
-              Wish Lists
-            </Link>
-
             <div>
                 <button
                   type="button"

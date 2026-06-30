@@ -68,6 +68,7 @@ Globals:
         SMTP_USER: order@usarakhi.com
         SMTP_FROM: order@usarakhi.com
         NOTIFY_EMAIL: order@usarakhi.com
+        SUPPORT_EMAIL: support@usarakhi.com
         SMTP_PASS: !Ref SmtpPassword
         SITE_URL: https://www.usarakhi.com
 
@@ -346,12 +347,36 @@ Resources:
           ForwardedValues:
             QueryString: false
 
+  SesDomainIdentity:
+    Type: AWS::SES::EmailIdentity
+    Properties:
+      EmailIdentity: usarakhi.com
+      DkimSigningAttributes:
+        NextSigningKeyLength: RSA_2048_BIT
+
   UserPool:
     Type: AWS::Cognito::UserPool
     Properties:
       UserPoolName: !Sub hr-ecom-users-${Environment}
       AutoVerifiedAttributes: [email]
       UsernameAttributes: [email]
+      EmailConfiguration:
+        EmailSendingAccount: DEVELOPER
+        SourceArn: !Sub arn:aws:ses:${AWS::Region}:${AWS::AccountId}:identity/usarakhi.com
+        From: noreply@usarakhi.com
+        ReplyToEmailAddress: support@usarakhi.com
+      VerificationMessageTemplate:
+        DefaultEmailOption: CONFIRM_WITH_CODE
+        EmailSubject: Verify your UsaRakhi account
+        EmailMessage: |
+          Welcome to UsaRakhi!
+
+          Your verification code is {####}.
+
+          This code expires in 24 hours. If you did not create an account, you can ignore this email.
+
+          — UsaRakhi Team
+          https://www.usarakhi.com
       Policies:
         PasswordPolicy:
           MinimumLength: 8

@@ -1,10 +1,12 @@
 import nodemailer from "nodemailer";
+import crypto from "crypto";
 import type SMTPTransport from "nodemailer/lib/smtp-transport";
 import type { Order, Product, CartItem } from "@hr-ecom/shared";
 import type { LeadCaptureInput } from "@hr-ecom/shared";
 import { WELCOME_DISCOUNT_PERCENT, LOW_STOCK_ALERT_EMAIL, ABANDONED_CART_DISCOUNT_PERCENT } from "@hr-ecom/shared";
 
 const DEFAULT_NOTIFY = "order@usarakhi.com";
+const DEFAULT_SUPPORT = "support@usarakhi.com";
 const SITE_NAME = "UsaRakhi";
 
 export type EmailSendResult = {
@@ -88,6 +90,16 @@ async function createWorkingTransporter() {
 
 function notifyAddress(): string {
   return process.env.NOTIFY_EMAIL?.trim() || DEFAULT_NOTIFY;
+}
+
+function supportNotifyAddress(): string {
+  return process.env.SUPPORT_EMAIL?.trim() || DEFAULT_SUPPORT;
+}
+
+function contactNotifyAddresses(): string[] {
+  const support = supportNotifyAddress();
+  const orders = notifyAddress();
+  return support === orders ? [support] : [support, orders];
 }
 
 function fromAddress(): string {
@@ -188,6 +200,10 @@ export async function sendEmail(opts: {
       text: opts.text,
       html: opts.html ?? opts.text.replace(/\n/g, "<br>"),
       replyTo: opts.replyTo,
+      headers: {
+        "X-Entity-Ref-ID": crypto.randomUUID(),
+        "Auto-Submitted": "auto-generated",
+      },
     });
     return { ok: true };
   } catch (err) {
@@ -243,7 +259,7 @@ export async function sendContactEmails(input: ContactEmailInput): Promise<Email
     .join("\n");
 
   const admin = await sendEmail({
-    to: notifyAddress(),
+    to: contactNotifyAddresses().join(", "),
     subject: `[${SITE_NAME}] New contact enquiry from ${input.name}`,
     text: adminText,
     replyTo: input.email,
@@ -258,7 +274,7 @@ export async function sendContactEmails(input: ContactEmailInput): Promise<Email
 
 Thank you for contacting ${SITE_NAME}. We received your message and will reply as soon as possible (usually within 24 hours).
 
-For urgent order help, WhatsApp us or email order@usarakhi.com.
+For urgent order help, WhatsApp us or email ${supportNotifyAddress()}.
 
 — ${SITE_NAME} Team
 https://www.usarakhi.com`,

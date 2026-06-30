@@ -297,28 +297,6 @@ export function ProductDetailClient({
               />
             </div>
 
-            {relatedProducts.length > 0 && (
-              <div>
-                <h2 className="text-lg font-bold text-primary mb-4">You might also like</h2>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 items-stretch">
-                  {relatedProducts.map((p) => (
-                    <HomeProductCard key={p.slug} product={p} />
-                  ))}
-                </div>
-              </div>
-            )}
-
-            <div className="max-w-2xl">
-              <h3 className="text-sm font-bold text-primary mb-3">Common questions</h3>
-              <dl className="space-y-4">
-                {productPageFaqs.map((f) => (
-                  <div key={f.q}>
-                    <dt className="font-semibold text-slate-800 text-sm">{f.q}</dt>
-                    <dd className="text-sm text-slate-600 mt-1 leading-relaxed">{f.a}</dd>
-                  </div>
-                ))}
-              </dl>
-            </div>
           </div>
         ) : tab === "reviews" ? (
           <ProductReviewsPreview />
@@ -332,6 +310,29 @@ export function ProductDetailClient({
             ))}
           </dl>
         )}
+      </section>
+
+      {relatedProducts.length > 0 && (
+        <section className="mt-10 pt-8 border-t border-slate-200">
+          <h2 className="text-lg font-bold text-primary mb-4">You might also like</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 items-stretch">
+            {relatedProducts.map((p) => (
+              <HomeProductCard key={p.slug} product={p} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      <section className="mt-10 pt-8 border-t border-slate-200">
+        <h2 className="text-lg font-bold text-primary mb-4">Common questions</h2>
+        <dl className="space-y-4 max-w-2xl">
+          {productPageFaqs.map((f) => (
+            <div key={f.q}>
+              <dt className="font-semibold text-slate-800 text-sm">{f.q}</dt>
+              <dd className="text-sm text-slate-600 mt-1 leading-relaxed">{f.a}</dd>
+            </div>
+          ))}
+        </dl>
       </section>
     </div>
     <StickyAddToCartBar product={product} />
