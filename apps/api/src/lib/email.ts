@@ -96,12 +96,6 @@ function supportNotifyAddress(): string {
   return process.env.SUPPORT_EMAIL?.trim() || DEFAULT_SUPPORT;
 }
 
-function contactNotifyAddresses(): string[] {
-  const support = supportNotifyAddress();
-  const orders = notifyAddress();
-  return support === orders ? [support] : [support, orders];
-}
-
 function fromAddress(): string {
   return process.env.SMTP_FROM?.trim() || smtpUser() || notifyAddress();
 }
@@ -259,7 +253,7 @@ export async function sendContactEmails(input: ContactEmailInput): Promise<Email
     .join("\n");
 
   const admin = await sendEmail({
-    to: contactNotifyAddresses().join(", "),
+    to: supportNotifyAddress(),
     subject: `[${SITE_NAME}] New contact enquiry from ${input.name}`,
     text: adminText,
     replyTo: input.email,

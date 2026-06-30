@@ -143,7 +143,7 @@ export async function captureLead(event: APIGatewayProxyEventV2) {
   if (emailRequired && emailResult.skipped) {
     console.error("Email skipped — SMTP not configured:", leadPayload.source);
     return badRequest(
-      "Email is not configured on the server yet. Please contact us on WhatsApp or at order@usarakhi.com."
+      "Email is not configured on the server yet. Please contact us on WhatsApp or at support@usarakhi.com."
     );
   }
 
@@ -151,7 +151,7 @@ export async function captureLead(event: APIGatewayProxyEventV2) {
     console.error("Lead email failed:", leadPayload.source, emailResult.error);
     return badRequest(
       emailResult.error ??
-        "Your message was saved but email could not be sent. Please WhatsApp us or email order@usarakhi.com directly."
+        "Your message was saved but email could not be sent. Please WhatsApp us or email support@usarakhi.com directly."
     );
   }
 
