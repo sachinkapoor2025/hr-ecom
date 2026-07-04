@@ -56,10 +56,8 @@ jobs:
           sam build && sam deploy --no-confirm-changeset --no-fail-on-empty-changeset --config-env prod \
             --parameter-overrides "Environment=prod RazorpayKeyId=${RAZORPAY_KEY_ID} RazorpayKeySecret=${RAZORPAY_KEY_SECRET} SmtpPassword=${SMTP_PASSWORD} StripeSecretKey=${STRIPE_SECRET_KEY} StripeWebhookSecret=${STRIPE_WEBHOOK_SECRET}"
 
-      - name: Sync UsaRakhi catalog (merges images — preserves admin uploads)
-        run: npm run import:usarakhi
-        env:
-          ENVIRONMENT: prod
+      # Catalog import OVERWRITES product records and has wiped admin-uploaded images.
+      # Run manually only: Actions → Import UsaRakhi Catalog (workflow_dispatch).
 
   deploy-web:
     runs-on: ubuntu-latest

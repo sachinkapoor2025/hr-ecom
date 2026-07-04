@@ -19,6 +19,8 @@
     "fix:seo-descriptions": "tsx scripts/fix-seo-descriptions.ts",
     "migrate:images": "tsx scripts/migrate-images-to-s3.ts",
     "rewrite:product-images": "tsx scripts/rewrite-product-image-urls.ts",
+    "restore:product-images": "tsx scripts/restore-product-images-from-pitr.ts",
+    "reconcile:s3-images": "tsx scripts/reconcile-s3-product-images.ts",
     "migrate:multitable": "tsx scripts/migrate-to-multitable.ts",
     "setup:local": "npm run db:up && sleep 3 && npm run db:setup && npm run seed",
     "build": "npm run build -w @hr-ecom/shared && npm run build -w @hr-ecom/api && npm run build -w @hr-ecom/web",

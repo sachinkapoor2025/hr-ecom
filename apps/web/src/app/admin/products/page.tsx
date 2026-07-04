@@ -252,7 +252,7 @@ export default function AdminProductsPage() {
         const contentType = file.type || "image/jpeg";
         const presign = await apiClient<{ uploadUrl: string; publicUrl: string }>("/uploads/presign", {
           method: "POST",
-          body: JSON.stringify({ filename: file.name, contentType }),
+          body: JSON.stringify({ filename: file.name, contentType, productSlug: slug }),
         });
         await fetch(presign.uploadUrl, { method: "PUT", body: file, headers: { "Content-Type": contentType } });
         await apiClient(`/products/${slug}/images`, {
