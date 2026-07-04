@@ -2,21 +2,30 @@
 
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { flushEvents, trackPageView, ensureVisitorGeo } from "@/lib/track";
+import { flushEvents, trackPageView, trackPageLeave, ensureVisitorGeo } from "@/lib/track";
 
 /** Emits a page_view on every route change and flushes the event queue on unload. */
 export function TrackingProvider() {
   const pathname = usePathname();
 
   useEffect(() => {
-    void ensureVisitorGeo().then(() => trackPageView());
+    void ensureVisitorGeo().then(() => {
+      trackPageLeave();
+      trackPageView(pathname);
+    });
   }, [pathname]);
 
   useEffect(() => {
     const onVisibility = () => {
-      if (document.visibilityState === "hidden") flushEvents();
+      if (document.visibilityState === "hidden") {
+        trackPageLeave();
+        flushEvents();
+      }
     };
-    const onPageHide = () => flushEvents();
+    const onPageHide = () => {
+      trackPageLeave();
+      flushEvents();
+    };
 
     document.addEventListener("visibilitychange", onVisibility);
     window.addEventListener("pagehide", onPageHide);

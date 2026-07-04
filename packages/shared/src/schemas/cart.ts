@@ -12,6 +12,9 @@ export const cartItemSchema = z.object({
 export const addToCartSchema = z.object({
   productSlug: z.string(),
   quantity: z.number().int().min(1).default(1),
+  name: z.string().max(120).optional(),
+  email: z.string().max(254).optional(),
+  phone: z.string().max(40).optional(),
 });
 
 export const cartSchema = z.object({

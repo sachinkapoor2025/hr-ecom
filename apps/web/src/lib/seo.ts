@@ -21,11 +21,13 @@ export function pageMetadata(opts: {
   keywords?: string;
   ogImage?: string;
   noIndex?: boolean;
+  /** Use exact title (no layout template suffix). Required for category SEO titles. */
+  absoluteTitle?: boolean;
 }): Metadata {
   const url = canonical(opts.path);
   const image = opts.ogImage ?? site.logoSrc;
   return {
-    title: opts.title,
+    title: opts.absoluteTitle ? { absolute: opts.title } : opts.title,
     description: opts.description,
     keywords: opts.keywords ?? defaultKeywords,
     alternates: { canonical: url },

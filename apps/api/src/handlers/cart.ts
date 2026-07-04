@@ -5,6 +5,7 @@ import { docClient, CARTS_TABLE, PRODUCTS_TABLE, now, ttlInDays } from "../lib/d
 import { ok, badRequest, unauthorized } from "../lib/response";
 import { getUserOrSessionKey, getSessionId } from "../lib/auth";
 import { resolveProductImageUrl } from "../lib/images";
+import { upsertSessionProfile } from "../lib/customer-profile";
 
 /** Stale carts auto-expire after this many days (TTL). */
 const CART_TTL_DAYS = 30;
@@ -115,6 +116,16 @@ export async function addToCart(event: APIGatewayProxyEventV2) {
   }
 
   await saveCart(userKey, cart, getSessionId(event));
+
+  const sessionId = getSessionId(event);
+  if (sessionId && (parsed.data.name || parsed.data.email || parsed.data.phone)) {
+    await upsertSessionProfile(sessionId, {
+      name: parsed.data.name,
+      email: parsed.data.email,
+      phone: parsed.data.phone,
+    });
+  }
+
   return ok({ cart });
 }
 

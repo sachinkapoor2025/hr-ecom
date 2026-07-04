@@ -3,6 +3,7 @@ import type { APIGatewayProxyEventV2 } from "aws-lambda";
 import {
   eventKeys,
   customerKeys,
+  cartKeys,
   orderKeys,
   EVENT_TYPES,
   ORDER_STATUS,
@@ -11,7 +12,7 @@ import {
   getOrderPaidAt,
   type Order,
 } from "@hr-ecom/shared";
-import { docClient, EVENTS_TABLE, CUSTOMERS_TABLE, ORDERS_TABLE, dayBucket, now } from "../lib/db";
+import { docClient, EVENTS_TABLE, CUSTOMERS_TABLE, CARTS_TABLE, ORDERS_TABLE, dayBucket, now } from "../lib/db";
 import { ok, forbidden, badRequest } from "../lib/response";
 import { requireAdmin } from "../lib/auth";
 
@@ -159,6 +160,11 @@ interface SessionSummary {
   browser?: string;
   os?: string;
   purchased?: boolean;
+  checkoutStarted?: boolean;
+  cartAdds?: number;
+  hasCart?: boolean;
+  cartItems?: number;
+  activeDurationMs?: number;
   pages: string[];
   products: string[];
 }
@@ -171,7 +177,67 @@ const SESSION_EVENT_TYPES = [
   EVENT_TYPES.CHECKOUT_START,
   EVENT_TYPES.PURCHASE,
   EVENT_TYPES.SEARCH,
+  EVENT_TYPES.SESSION_PING,
 ] as const;
+
+function mergeContactFields(
+  target: SessionSummary,
+  fields: { name?: string; email?: string; phone?: string }
+) {
+  if (!target.name && fields.name?.trim()) target.name = fields.name.trim();
+  if (!target.email && fields.email?.trim()) target.email = fields.email.trim();
+  if (!target.phone && fields.phone?.trim()) target.phone = fields.phone.trim();
+}
+
+async function enrichSessionIdentity(s: SessionSummary): Promise<void> {
+  const pk = customerKeys.pk(s.sessionId);
+
+  const profileRes = await docClient.send(
+    new GetCommand({
+      TableName: CUSTOMERS_TABLE,
+      Key: { PK: pk, SK: customerKeys.profileSk() },
+    })
+  );
+  if (profileRes.Item) {
+    mergeContactFields(s, {
+      name: profileRes.Item.name as string | undefined,
+      email: profileRes.Item.email as string | undefined,
+      phone: profileRes.Item.phone as string | undefined,
+    });
+  }
+
+  if (!s.email || !s.name || !s.phone) {
+    const leadsRes = await docClient.send(
+      new QueryCommand({
+        TableName: CUSTOMERS_TABLE,
+        KeyConditionExpression: "PK = :pk AND begins_with(SK, :sk)",
+        ExpressionAttributeValues: { ":pk": pk, ":sk": "LEAD#" },
+        ScanIndexForward: false,
+        Limit: 20,
+      })
+    );
+    for (const lead of leadsRes.Items ?? []) {
+      mergeContactFields(s, {
+        name: lead.name as string | undefined,
+        email: lead.email as string | undefined,
+        phone: lead.phone as string | undefined,
+      });
+      if (s.name && s.email && s.phone) break;
+    }
+  }
+
+  const cartRes = await docClient.send(
+    new GetCommand({
+      TableName: CARTS_TABLE,
+      Key: { PK: cartKeys.pk(s.sessionId), SK: cartKeys.sk() },
+    })
+  );
+  const itemCount = Number(cartRes.Item?.itemCount ?? 0);
+  if (itemCount > 0) {
+    s.hasCart = true;
+    s.cartItems = itemCount;
+  }
+}
 
 function mergeSessionEvent(
   sessions: Map<string, SessionSummary>,
@@ -184,6 +250,45 @@ function mergeSessionEvent(
   const metadata = (raw.metadata as Record<string, string> | undefined) ?? {};
   const geo = viewerGeoFromMetadata(metadata);
   const eventType = (raw.type as string | undefined) ?? "";
+
+  if (eventType === EVENT_TYPES.SESSION_PING) {
+    const pingMs = Number(metadata.durationMs ?? 0);
+    if (pingMs > 0) {
+      const existingPing = sessions.get(sessionId);
+      if (existingPing) {
+        existingPing.activeDurationMs = (existingPing.activeDurationMs ?? 0) + pingMs;
+        existingPing.eventCount += 1;
+        if (at > existingPing.lastSeen) existingPing.lastSeen = at;
+        if (at < existingPing.firstSeen) existingPing.firstSeen = at;
+      } else {
+        sessions.set(sessionId, {
+          sessionId,
+          firstSeen: at,
+          lastSeen: at,
+          eventCount: 1,
+          activeDurationMs: pingMs,
+          country: geo.country,
+          city: geo.city,
+          region: geo.region,
+          regionName: geo.regionName,
+          timezone: metadata.timezone,
+          locale: metadata.locale,
+          referrer: (raw.referrer as string | undefined) ?? undefined,
+          deviceType: metadata.deviceType,
+          browser: metadata.browser,
+          os: metadata.os,
+          pages: [],
+          products: [],
+        });
+      }
+      mergeContactFields(sessions.get(sessionId)!, {
+        name: metadata.name,
+        email: metadata.email,
+        phone: metadata.phone,
+      });
+    }
+    return;
+  }
 
   const existing = sessions.get(sessionId);
   if (!existing) {
@@ -212,6 +317,13 @@ function mergeSessionEvent(
 
   existing.eventCount += 1;
   if (eventType === EVENT_TYPES.PURCHASE) existing.purchased = true;
+  if (eventType === EVENT_TYPES.CHECKOUT_START) existing.checkoutStarted = true;
+  if (eventType === EVENT_TYPES.CART_ADD) existing.cartAdds = (existing.cartAdds ?? 0) + 1;
+  mergeContactFields(existing, {
+    name: metadata.name,
+    email: metadata.email,
+    phone: metadata.phone,
+  });
   if (at > existing.lastSeen) {
     existing.lastSeen = at;
     existing.lastPath = path ?? existing.lastPath;
@@ -265,22 +377,8 @@ export async function listSessions(event: APIGatewayProxyEventV2) {
 
   const list = [...sessions.values()].sort((a, b) => b.lastSeen.localeCompare(a.lastSeen)).slice(0, 100);
 
-  // join identity (best effort, capped by the 100 above)
-  await Promise.all(
-    list.map(async (s) => {
-      const res = await docClient.send(
-        new GetCommand({
-          TableName: CUSTOMERS_TABLE,
-          Key: { PK: customerKeys.pk(s.sessionId), SK: customerKeys.profileSk() },
-        })
-      );
-      if (res.Item) {
-        s.name = res.Item.name as string | undefined;
-        s.email = res.Item.email as string | undefined;
-        s.phone = res.Item.phone as string | undefined;
-      }
-    })
-  );
+  // join identity, leads, and cart (best effort, capped by the 100 above)
+  await Promise.all(list.map((s) => enrichSessionIdentity(s)));
 
   return ok({ days, sessions: list });
 }

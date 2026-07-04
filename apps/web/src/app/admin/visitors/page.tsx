@@ -9,6 +9,7 @@ import {
   formatDurationMs,
   paginate,
   referrerLabel,
+  sessionDurationMs,
 } from "@/lib/admin-utils";
 import { TableControls } from "@/components/admin/TableControls";
 
@@ -32,6 +33,11 @@ interface SessionSummary {
   browser?: string;
   os?: string;
   purchased?: boolean;
+  checkoutStarted?: boolean;
+  cartAdds?: number;
+  hasCart?: boolean;
+  cartItems?: number;
+  activeDurationMs?: number;
   pages: string[];
   products: string[];
 }
@@ -63,6 +69,7 @@ const EVENT_LABELS: Record<string, string> = {
   cart_remove: "Removed from cart",
   checkout_start: "Started checkout",
   purchase: "Purchased",
+  session_ping: "Time on page",
 };
 
 const EVENT_COLOR: Record<string, string> = {
@@ -99,7 +106,17 @@ function visitorLabel(s: SessionSummary): string {
   if (s.name) return s.name;
   if (s.email) return s.email;
   if (s.phone) return s.phone;
-  return `${s.sessionId.slice(0, 8)}…`;
+  return `Visitor ${s.sessionId.slice(0, 8)}…`;
+}
+
+function activityBadges(s: SessionSummary): string[] {
+  const badges: string[] = [];
+  if (s.purchased) badges.push("Purchased");
+  else if (s.checkoutStarted) badges.push("Checkout");
+  else if (s.hasCart || (s.cartAdds ?? 0) > 0) badges.push("Cart");
+  if (s.products.length > 0) badges.push(`${s.products.length} product${s.products.length === 1 ? "" : "s"}`);
+  if (s.name || s.email) badges.push("Identified");
+  return badges;
 }
 
 export default function AdminVisitorsPage() {
@@ -159,12 +176,13 @@ export default function AdminVisitorsPage() {
           "Last activity",
           "Duration",
           "Events",
+          "Activity",
           "Purchased",
           "Landing page",
           "Exit page",
         ],
         ...filtered.map((s) => {
-          const duration = new Date(s.lastSeen).getTime() - new Date(s.firstSeen).getTime();
+          const duration = sessionDurationMs(s);
           return [
             s.sessionId,
             s.name ?? "",
@@ -179,6 +197,7 @@ export default function AdminVisitorsPage() {
             s.lastSeen,
             formatDurationMs(duration),
             String(s.eventCount),
+            activityBadges(s).join(", "),
             s.purchased ? "Yes" : "No",
             s.pages[0] ?? s.lastPath ?? "",
             s.lastPath ?? "",
@@ -207,7 +226,8 @@ export default function AdminVisitorsPage() {
         <div>
           <h1 className="text-2xl font-bold mb-1">Visitors</h1>
           <p className="text-slate-600 text-sm">
-            Session tracking — click a row for full journey timeline.
+            Session tracking with name/email when shoppers share contact, add to cart, or checkout.
+            Click a row for the full journey.
           </p>
         </div>
         <select
@@ -261,12 +281,14 @@ export default function AdminVisitorsPage() {
                 <th className="py-3 px-4">Duration</th>
                 <th className="py-3 px-4">Last activity</th>
                 <th className="py-3 px-4">Events</th>
+                <th className="py-3 px-4">Activity</th>
                 <th className="py-3 px-4">Converted</th>
               </tr>
             </thead>
             <tbody>
               {pageItems.map((s) => {
-                const duration = new Date(s.lastSeen).getTime() - new Date(s.firstSeen).getTime();
+                const duration = sessionDurationMs(s);
+                const badges = activityBadges(s);
                 return (
                 <tr
                   key={s.sessionId}
@@ -275,12 +297,12 @@ export default function AdminVisitorsPage() {
                 >
                   <td className="py-3 px-4">
                     <div className="font-medium">{visitorLabel(s)}</div>
-                    <div className="text-xs text-slate-400 font-mono">{s.sessionId.slice(0, 8)}…</div>
-                    {(s.email || s.phone) && (
-                      <div className="text-xs text-slate-400">
+                    {(s.name || s.email) && (
+                      <div className="text-xs text-slate-500">
                         {[s.email, s.phone].filter(Boolean).join(" · ")}
                       </div>
                     )}
+                    <div className="text-xs text-slate-400 font-mono">{s.sessionId.slice(0, 8)}…</div>
                   </td>
                   <td className="py-3 px-4 text-xs capitalize">{s.deviceType ?? "—"}</td>
                   <td className="py-3 px-4 text-xs text-slate-600">
@@ -294,6 +316,22 @@ export default function AdminVisitorsPage() {
                     {new Date(s.lastSeen).toLocaleString()}
                   </td>
                   <td className="py-3 px-4">{s.eventCount}</td>
+                  <td className="py-3 px-4">
+                    <div className="flex flex-wrap gap-1">
+                      {badges.length === 0 ? (
+                        <span className="text-xs text-slate-400">Browse</span>
+                      ) : (
+                        badges.map((badge) => (
+                          <span
+                            key={badge}
+                            className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-slate-100 text-slate-600"
+                          >
+                            {badge}
+                          </span>
+                        ))
+                      )}
+                    </div>
+                  </td>
                   <td className="py-3 px-4 text-xs">
                     {s.purchased ? (
                       <span className="text-green-700 font-medium">Yes</span>

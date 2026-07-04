@@ -42,6 +42,8 @@ interface AddToCartControlProps {
   className?: string;
   fullWidth?: boolean;
   variant?: "default" | "detail";
+  /** Called before add — use to save name/email immediately (not debounced). */
+  getContact?: () => { name?: string; email?: string; phone?: string };
 }
 
 export function AddToCartControl({
@@ -50,6 +52,7 @@ export function AddToCartControl({
   className = "",
   fullWidth = true,
   variant = "default",
+  getContact,
 }: AddToCartControlProps) {
   const { cart, sessionReady, addItem, updateItem, removeItem } = useCart();
   const [busy, setBusy] = useState(false);
@@ -89,7 +92,8 @@ export function AddToCartControl({
           onClick={(e) => {
             stop(e);
             void run(async () => {
-              await addItem(productSlug);
+              const contact = getContact?.();
+              await addItem(productSlug, 1, contact);
               setAddedNote(`Added! Est. delivery ${estimatedDeliveryShort()}`);
               window.setTimeout(() => setAddedNote(""), 5000);
             });
@@ -130,7 +134,7 @@ export function AddToCartControl({
         disabled={busy || disabled}
         onClick={(e) => {
           stop(e);
-          void run(() => addItem(productSlug, 1));
+          void run(() => addItem(productSlug, 1, getContact?.()));
         }}
         className={stepBtnClass}
       >
@@ -178,7 +182,7 @@ export function AddToCartControl({
             disabled={busy || disabled}
             onClick={(e) => {
               stop(e);
-              void run(() => addItem(productSlug, 1));
+              void run(() => addItem(productSlug, 1, getContact?.()));
             }}
             className={detailPillBtnClass}
           >

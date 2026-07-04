@@ -174,6 +174,189 @@ export const categoryRichContent: Record<string, CategoryRichContent> = {
     ],
     relatedCategories: relatedExcept("kids-rakhi"),
   },
+  "lumba-rakhi": {
+    slug: "lumba-rakhi",
+    headline: "Premium Lumba Rakhi for Bhabhi — USA Delivery",
+    intro: [
+      "Lumba Rakhi is tied on your Bhabhi's bangle during Raksha Bandhan — a beautiful extension of the festival bond. Our Lumba Rakhi collection features designer pearl, floral, peach, and gold styles crafted for sisters-in-law across America.",
+      "Each Lumba Rakhi ships with complimentary roli and chawal when included in the product listing, so your Bhabhi can join the tilak ceremony even when you order from India, the UK, or Canada.",
+      "Enter your Bhabhi's US address at checkout and we deliver domestically within 5–7 business days to California, New York, Texas, New Jersey, and all 50 states.",
+    ],
+    delivery: {
+      heading: "Lumba Rakhi Delivery Across the USA",
+      paragraphs: [
+        "UsaRakhi ships Lumba Rakhis to home addresses, apartments, and offices in every US state with reliable domestic carriers.",
+        "Sisters in India order most frequently in July and August ahead of Raksha Bandhan 2026 (August 28). Order early for stress-free delivery.",
+      ],
+    },
+    highlights: {
+      heading: "Popular Lumba Rakhi Styles",
+      items: [
+        "Pink pearl and floral Lumba rakhis",
+        "Peach designer Lumba rakhis with gold accents",
+        "Lumba rakhis with Lindor or Hershey's chocolates",
+        "Premium stone and bead Lumba designs",
+        "Matching Bhaiya Bhabhi sets with coordinated Lumba",
+      ],
+    },
+    whyUs: {
+      heading: "Why Order Lumba Rakhi from UsaRakhi",
+      bullets: [
+        "Domestic USA shipping from sisters worldwide",
+        "Designer Lumba styles updated every season",
+        "Roli chawal on eligible listings",
+        "Secure Stripe and Razorpay checkout",
+        "WhatsApp and email order support",
+      ],
+    },
+    howTo: {
+      heading: "How to Send Lumba Rakhi to Your Bhabhi in the USA",
+      steps: [
+        "Pick a Lumba Rakhi from the collection above.",
+        "Add to cart and enter the US shipping address.",
+        "Pay in USD or INR.",
+        "We gift-pack and ship within America.",
+        "Your Bhabhi receives her Lumba in 5–7 business days.",
+      ],
+    },
+    faqs: [
+      {
+        q: "What is a Lumba Rakhi?",
+        a: "A Lumba Rakhi is a decorative bracelet-style rakhi tied on the sister-in-law's bangle during Raksha Bandhan.",
+      },
+      {
+        q: "Can I send Lumba Rakhi from India to the USA?",
+        a: "Yes. Order on UsaRakhi.com, enter the US address, and pay in INR via Razorpay. We fulfill domestically in America.",
+      },
+      {
+        q: "Do Lumba rakhis include roli and chawal?",
+        a: "Most listings include complimentary roli and chawal. Check each product page for details.",
+      },
+    ],
+    relatedCategories: relatedExcept("lumba-rakhi"),
+  },
+  "bhaiya-bhabhi-rakhi": {
+    slug: "bhaiya-bhabhi-rakhi",
+    headline: "Bhaiya Bhabhi Rakhi Sets — Brother & Sister-in-Law USA Delivery",
+    intro: [
+      "Bhaiya Bhabhi Rakhi sets include a traditional rakhi for your brother and a matching Lumba for your Bhabhi — coordinated colors, premium threads, and festival-ready packaging.",
+      "When your brother and Bhabhi live in the United States, one order from UsaRakhi delivers both rakhis domestically in 5–7 business days — no international customs delays.",
+      "Many sets include chocolates (Ferrero Rocher, Lindt, Hershey's) and roli chawal for the complete Raksha Bandhan ceremony.",
+    ],
+    delivery: {
+      heading: "Bhaiya Bhabhi Rakhi Delivery to All 50 States",
+      paragraphs: [
+        "We deliver matching Bhaiya Bhabhi sets to California, New York, Texas, Florida, Illinois, and every other US state.",
+        "Sisters in India, the UK, and Canada order online and enter the American delivery address at checkout.",
+      ],
+    },
+    highlights: {
+      heading: "What's in Our Bhaiya Bhabhi Sets",
+      items: [
+        "Coordinated brother + Bhabhi rakhi pairs",
+        "Peach, pink, and gold designer matching sets",
+        "Sets with premium chocolates",
+        "Complete sets with roli chawal",
+        "Premium pearl and stone designs",
+      ],
+    },
+    whyUs: {
+      heading: "Why Sisters Choose UsaRakhi for Bhaiya Bhabhi Sets",
+      bullets: [
+        "One order covers both Bhaiya and Bhabhi",
+        "Domestic USA fulfillment",
+        "Gift-ready Raksha Bandhan packaging",
+        "Pay in USD or INR from anywhere",
+        "Fast 5–7 business day delivery",
+      ],
+    },
+    howTo: {
+      heading: "How to Order Bhaiya Bhabhi Rakhi to the USA",
+      steps: [
+        "Choose a matching set from the products above.",
+        "Confirm both rakhis in the product photos and description.",
+        "Enter the US delivery address at checkout.",
+        "Pay securely and track your order by email.",
+        "Your brother and Bhabhi receive the set before Raksha Bandhan.",
+      ],
+    },
+    faqs: [
+      {
+        q: "What is included in a Bhaiya Bhabhi Rakhi set?",
+        a: "Typically one rakhi for your brother and one Lumba-style rakhi for your Bhabhi, often in matching designs.",
+      },
+      {
+        q: "Can I send Bhaiya Bhabhi Rakhi from India?",
+        a: "Yes. Enter the US address at checkout and pay in INR. We ship domestically within the USA.",
+      },
+      {
+        q: "When should I order for Raksha Bandhan 2026?",
+        a: "Order by early August 2026 for delivery before August 28.",
+      },
+    ],
+    relatedCategories: relatedExcept("bhaiya-bhabhi-rakhi"),
+  },
+  "rakhi-combo": {
+    slug: "rakhi-combo",
+    headline: "Rakhi with Chocolates & Gift Combos — USA Delivery",
+    intro: [
+      "Rakhi Combo sets pair beautiful rakhis with Ferrero Rocher, Lindt Lindor, Hershey's, or assorted sweets — perfect when you want one complete Raksha Bandhan gift.",
+      "Combos are ideal for sisters sending from India to brothers in America: one package, one delivery, festival-ready presentation.",
+      "Browse multi-rakhi sets, chocolate pairings, and premium gift boxes — all delivered domestically across the USA in 5–7 business days.",
+    ],
+    delivery: {
+      heading: "Rakhi Combo Delivery Across America",
+      paragraphs: [
+        "UsaRakhi ships combo sets to all 50 US states with domestic carriers and tracking.",
+        "Order from anywhere worldwide; enter your brother's US address and we handle fulfillment inside America.",
+      ],
+    },
+    highlights: {
+      heading: "Popular Rakhi Combo Types",
+      items: [
+        "Rakhi with Ferrero Rocher gold chocolates",
+        "Rakhi with Lindt Lindor truffles",
+        "Rakhi with Hershey's minis",
+        "Multi-rakhi family combo sets",
+        "Rakhi with roli chawal and sweets",
+      ],
+    },
+    whyUs: {
+      heading: "Why Order Rakhi Combos from UsaRakhi",
+      bullets: [
+        "Complete gift in one box",
+        "Better value than separate rakhi + chocolate orders",
+        "Domestic USA shipping — no customs for your brother",
+        "Premium festival packaging",
+        "Secure online checkout",
+      ],
+    },
+    howTo: {
+      heading: "How to Send a Rakhi Combo to the USA",
+      steps: [
+        "Select a combo from the product grid above.",
+        "Add to cart and enter the US shipping address.",
+        "Pay with Stripe (USD) or Razorpay (INR).",
+        "We pack the rakhi and chocolates together.",
+        "Delivery in 5–7 business days to any US state.",
+      ],
+    },
+    faqs: [
+      {
+        q: "What chocolates come with Rakhi combos?",
+        a: "We offer Ferrero Rocher, Lindt Lindor, Hershey's, and assorted minis depending on the product.",
+      },
+      {
+        q: "Can I send Rakhi with chocolates from India to USA?",
+        a: "Yes. Order on UsaRakhi.com with the US delivery address. We ship domestically within America.",
+      },
+      {
+        q: "Are combo sets good for multiple brothers?",
+        a: "Yes. Browse multi-rakhi combo sets designed for families with more than one brother.",
+      },
+    ],
+    relatedCategories: relatedExcept("rakhi-combo"),
+  },
 };
 
 export function getCategoryRichContent(slug: string): CategoryRichContent | undefined {

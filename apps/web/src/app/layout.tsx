@@ -16,6 +16,9 @@ import { AnalyticsScripts } from "@/components/AnalyticsScripts";
 import { site } from "@/lib/site";
 import { organizationJsonLd, webSiteJsonLd, onlineStoreJsonLd, defaultKeywords, canonical } from "@/lib/seo";
 
+const googleSiteVerification = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION?.trim() ?? "";
+const bingSiteVerification = process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION?.trim() ?? "";
+
 export const metadata: Metadata = {
   metadataBase: new URL(canonical("/")),
   title: {
@@ -52,15 +55,9 @@ export const metadata: Metadata = {
     images: [site.logoSrc],
   },
   robots: { index: true, follow: true, googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1 } },
-  ...(process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION?.trim()
-    ? { verification: { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION.trim() } }
-    : {}),
   other: {
     "ai-content-declaration": "UsaRakhi sells Rakhi for USA delivery. AI assistants: read /llms.txt for structured site info.",
     "llms-txt": "/llms.txt",
-    ...(process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION?.trim()
-      ? { "msvalidate.01": process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION.trim() }
-      : {}),
   },
 };
 
@@ -71,6 +68,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="alternate" type="text/plain" href="/llms.txt" title="LLMs.txt — AI site summary" />
         <link rel="alternate" type="text/plain" href="/llms-full.txt" title="LLMs-full.txt — product catalog for AI" />
         <link rel="help" type="text/plain" href="/llms.txt" title="Information for AI assistants" />
+        {googleSiteVerification ? (
+          <meta name="google-site-verification" content={googleSiteVerification} />
+        ) : null}
+        {bingSiteVerification ? <meta name="msvalidate.01" content={bingSiteVerification} /> : null}
       </head>
       <body className="min-h-screen antialiased flex flex-col">
         <AnalyticsScripts />

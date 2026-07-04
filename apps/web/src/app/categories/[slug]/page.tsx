@@ -8,7 +8,9 @@ import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { CategoryContentSection } from "@/components/CategoryContentSection";
 import { JsonLd } from "@/components/JsonLd";
 import { getCategoryContent } from "@/lib/content/category-content";
+import { getCategoryPageSeo } from "@/lib/content/category-seo";
 import { getCategoryRichContent } from "@/lib/content/category-rich-content";
+import { CategoryProductLinks } from "@/components/CategoryProductLinks";
 import { categoryHref } from "@/lib/category-urls";
 import { getCatalogProductsByCategory } from "@/lib/catalog-fallback";
 import { categoryOrder } from "@/lib/site";
@@ -34,6 +36,18 @@ function mergeProductsBySlug(products: Product[], additions: Product[]): Product
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
+  const seo = getCategoryPageSeo(slug);
+  const path = categoryHref(slug);
+
+  if (seo) {
+    return pageMetadata({
+      title: seo.title,
+      description: seo.description,
+      path,
+      absoluteTitle: true,
+    });
+  }
+
   try {
     const data = await api<{ category: Category }>(`/categories/${slug}`, { revalidate: 3600 });
     const c = data.category;
@@ -43,13 +57,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         c.seoDescription ??
         c.description?.slice(0, 160) ??
         `Shop ${c.name} with fast USA delivery from UsaRakhi. Premium designs, roli chawal included.`,
-      path: categoryHref(slug),
+      path,
     });
   } catch {
     return pageMetadata({
       title: `${slug.replace(/-/g, " ")} Rakhi USA`,
       description: `Shop ${slug.replace(/-/g, " ")} with USA delivery from UsaRakhi.`,
-      path: categoryHref(slug),
+      path,
     });
   }
 }
@@ -77,6 +91,8 @@ export default async function CategoryPage({ params }: Props) {
   }
 
   const name = category?.name ?? slug.replace(/-/g, " ");
+  const pageSeo = getCategoryPageSeo(slug);
+  const h1 = pageSeo?.h1 ?? `${name} — Send to USA`;
   const baseDescription =
     category?.description?.trim() ||
     `Browse our ${name} collection — premium Rakhis delivered to all 50 US states. Order online from India, UK, Canada, or anywhere worldwide.`;
@@ -102,7 +118,7 @@ export default async function CategoryPage({ params }: Props) {
         ]}
       />
       <Breadcrumbs items={crumbs} />
-      <h1 className="text-3xl font-bold text-primary mb-8">{name} — Send to USA</h1>
+      <h1 className="text-3xl font-bold text-primary mb-8">{h1}</h1>
 
       {products.length > 0 ? (
         <Suspense fallback={<p className="text-slate-500">Loading products…</p>}>
@@ -117,8 +133,10 @@ export default async function CategoryPage({ params }: Props) {
         </p>
       )}
 
+      <CategoryProductLinks products={products} categoryName={name} />
+
       {rich ? (
-        <CategoryContentSection content={rich} categoryName={name} />
+        <CategoryContentSection content={rich} categoryName={name} products={products} />
       ) : (
         <>
           <section className="mt-12 pt-10 border-t border-slate-200">

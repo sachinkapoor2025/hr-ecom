@@ -10,7 +10,7 @@ import { TrustBadges } from "@/components/TrustBadges";
 import { RakshaBandhanCountdown } from "@/components/RakshaBandhanCountdown";
 import { ProductReviewsPreview } from "@/components/ProductReviewsPreview";
 import { StickyAddToCartBar } from "@/components/StickyAddToCartBar";
-import { useSessionId, useDebouncedLeadCapture } from "@/lib/session";
+import { useSessionId, useDebouncedLeadCapture, useLeadCapture } from "@/lib/session";
 import { trackProductView } from "@/lib/track";
 import { useCurrency } from "@/lib/currency-context";
 import { getDiscountPercent } from "@/lib/pricing";
@@ -76,6 +76,7 @@ export function ProductDetailClient({
 }) {
   const sessionId = useSessionId();
   const captureLead = useDebouncedLeadCapture(sessionId);
+  const captureLeadNow = useLeadCapture(sessionId);
   const { cart, itemCount } = useCart();
   const { format } = useCurrency();
   const [name, setName] = useState("");
@@ -123,6 +124,28 @@ export function ProductDetailClient({
   const lowStock = product.inventory > 0 && product.inventory <= LOW_STOCK_THRESHOLD;
   const fastSelling = isFastSelling(product);
   const unitsSold = getUnitsSold(product);
+
+  const contactFields = () => ({
+    name: name.trim() || undefined,
+    email: email.trim() || undefined,
+    phone: phone.trim() || undefined,
+  });
+
+  const captureContactNow = async () => {
+    const fields = contactFields();
+    if (!fields.name && !fields.email && !fields.phone) return;
+    await captureLeadNow({
+      ...fields,
+      page: `/products/${product.slug}`,
+      productSlug: product.slug,
+      source: "product",
+    });
+  };
+
+  const getContact = () => {
+    void captureContactNow();
+    return contactFields();
+  };
 
   return (
     <>
@@ -183,6 +206,7 @@ export function ProductDetailClient({
                   disabled={product.inventory <= 0}
                   fullWidth
                   variant="detail"
+                  getContact={getContact}
                 />
               </div>
 
@@ -199,6 +223,7 @@ export function ProductDetailClient({
                   disabled={product.inventory <= 0}
                   fullWidth
                   variant="detail"
+                  getContact={getContact}
                 />
               </div>
               <WishlistButton product={product} variant="toolbar" />
@@ -358,7 +383,7 @@ export function ProductDetailClient({
         </dl>
       </section>
     </div>
-    <StickyAddToCartBar product={product} />
+    <StickyAddToCartBar product={product} getContact={getContact} />
     </>
   );
 }

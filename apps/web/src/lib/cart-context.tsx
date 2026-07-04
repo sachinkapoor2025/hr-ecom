@@ -12,7 +12,11 @@ interface CartContextValue {
   loading: boolean;
   sessionReady: boolean;
   refresh: () => Promise<void>;
-  addItem: (productSlug: string, quantity?: number) => Promise<void>;
+  addItem: (
+    productSlug: string,
+    quantity?: number,
+    contact?: { name?: string; email?: string; phone?: string }
+  ) => Promise<void>;
   updateItem: (productSlug: string, quantity: number) => Promise<void>;
   removeItem: (productSlug: string) => Promise<void>;
   itemCount: number;
@@ -54,7 +58,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
     if (sessionId) refresh();
   }, [sessionId, refresh]);
 
-  const addItem = async (productSlug: string, quantity = 1) => {
+  const addItem = async (
+    productSlug: string,
+    quantity = 1,
+    contact?: { name?: string; email?: string; phone?: string }
+  ) => {
     const sid = resolveSessionId();
     if (!sid) throw new Error("Session not ready — please try again");
 
@@ -62,11 +70,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
       method: "POST",
       sessionId: sid,
       token,
-      body: JSON.stringify({ productSlug, quantity }),
+      body: JSON.stringify({
+        productSlug,
+        quantity,
+        ...(contact?.name ? { name: contact.name } : {}),
+        ...(contact?.email ? { email: contact.email } : {}),
+        ...(contact?.phone ? { phone: contact.phone } : {}),
+      }),
     });
     setCart(normalizeCart(data.cart));
     const added = data.cart.items.find((i) => i.productSlug === productSlug);
-    trackCartAdd(productSlug, added ? added.price * added.quantity : undefined);
+    trackCartAdd(
+      productSlug,
+      added ? added.price * added.quantity : undefined,
+      contact
+    );
   };
 
   const removeItem = async (productSlug: string) => {
