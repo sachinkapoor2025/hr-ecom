@@ -36,14 +36,14 @@ export async function POST(req: Request) {
 
     if (!res.ok) {
       return NextResponse.json(
-        { error: data.error ?? "Could not send message. Please try WhatsApp or email support@usarakhi.com." },
+        { error: data.error ?? "Could not send message. Please try WhatsApp or email order@usarakhi.com." },
         { status: res.status >= 400 && res.status < 600 ? res.status : 502 }
       );
     }
 
     if (data.emailSent === false) {
       return NextResponse.json(
-        { error: "Your message was saved but email could not be sent. Please email support@usarakhi.com directly." },
+        { error: "Your message was saved but email could not be sent. Please email order@usarakhi.com directly." },
         { status: 502 }
       );
     }

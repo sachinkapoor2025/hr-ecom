@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { categoryHref } from "@/lib/category-urls";
@@ -24,7 +23,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: post.title,
     description: post.description,
     path: `/blog/${slug}`,
-    ogImage: post.image,
+    ...(post.image ? { ogImage: post.image } : {}),
   });
 }
 
@@ -60,17 +59,16 @@ export default async function BlogPostPage({ params }: Props) {
         <p className="text-base sm:text-lg text-slate-600 break-words">{post.excerpt}</p>
       </header>
 
-      <div className="relative w-full max-h-[420px] min-h-[200px] rounded-xl overflow-hidden mb-8 bg-slate-100 flex items-center justify-center">
-        <Image
-          src={post.image}
-          alt={post.title}
-          width={1200}
-          height={675}
-          className="w-full h-auto max-h-[420px] object-contain"
-          sizes="(max-width: 768px) 100vw, 768px"
-          priority
-        />
-      </div>
+      {post.image && (
+        <div className="relative w-full max-h-[420px] min-h-[200px] rounded-xl overflow-hidden mb-8 bg-slate-100 flex items-center justify-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={post.image}
+            alt={post.title}
+            className="w-full h-auto max-h-[420px] object-contain"
+          />
+        </div>
+      )}
 
       <div className="space-y-8 min-w-0 break-words [overflow-wrap:anywhere]">
         {post.sections.map((section, i) => (

@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import Image from "next/image";
 import { blogPosts } from "@/lib/content/blog-posts";
 import { pageMetadata } from "@/lib/seo";
 
@@ -25,15 +24,16 @@ export default function BlogPage() {
             key={post.slug}
             className="border border-slate-200 rounded-xl overflow-hidden hover:shadow-md transition bg-white flex flex-col"
           >
-            <Link href={`/blog/${post.slug}`} className="block relative aspect-[16/10] bg-slate-100 flex items-center justify-center p-2">
-              <Image
-                src={post.image}
-                alt={post.title}
-                fill
-                className="object-contain p-1"
-                sizes="(max-width: 640px) 100vw, 50vw"
-              />
-            </Link>
+            {post.image && (
+              <Link href={`/blog/${post.slug}`} className="block relative aspect-[16/10] bg-slate-100 flex items-center justify-center p-2">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={post.image}
+                  alt={post.title}
+                  className="h-full w-full object-contain p-1"
+                />
+              </Link>
+            )}
             <div className="p-5 flex flex-col flex-1 min-w-0">
               <time dateTime={post.publishedAt} className="text-xs text-slate-400">
                 {new Date(post.publishedAt).toLocaleDateString("en-US", {

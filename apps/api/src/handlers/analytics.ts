@@ -167,6 +167,7 @@ const SESSION_EVENT_TYPES = [
   EVENT_TYPES.PAGE_VIEW,
   EVENT_TYPES.PRODUCT_VIEW,
   EVENT_TYPES.CART_ADD,
+  EVENT_TYPES.CART_REMOVE,
   EVENT_TYPES.CHECKOUT_START,
   EVENT_TYPES.PURCHASE,
   EVENT_TYPES.SEARCH,
@@ -238,7 +239,7 @@ function mergeSessionEvent(
 
 export async function listSessions(event: APIGatewayProxyEventV2) {
   if (!requireAdmin(event)) return forbidden();
-  const days = parseDays(event, 7, 14);
+  const days = parseDays(event, 7, 90);
 
   const sessions = new Map<string, SessionSummary>();
 

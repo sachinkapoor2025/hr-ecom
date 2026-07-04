@@ -6,7 +6,6 @@ import type { LeadCaptureInput } from "@hr-ecom/shared";
 import { WELCOME_DISCOUNT_PERCENT, LOW_STOCK_ALERT_EMAIL, ABANDONED_CART_DISCOUNT_PERCENT } from "@hr-ecom/shared";
 
 const DEFAULT_NOTIFY = "order@usarakhi.com";
-const DEFAULT_SUPPORT = "support@usarakhi.com";
 const SITE_NAME = "UsaRakhi";
 
 export type EmailSendResult = {
@@ -90,10 +89,6 @@ async function createWorkingTransporter() {
 
 function notifyAddress(): string {
   return process.env.NOTIFY_EMAIL?.trim() || DEFAULT_NOTIFY;
-}
-
-function supportNotifyAddress(): string {
-  return process.env.SUPPORT_EMAIL?.trim() || DEFAULT_SUPPORT;
 }
 
 function fromAddress(): string {
@@ -253,7 +248,7 @@ export async function sendContactEmails(input: ContactEmailInput): Promise<Email
     .join("\n");
 
   const admin = await sendEmail({
-    to: supportNotifyAddress(),
+    to: notifyAddress(),
     subject: `[${SITE_NAME}] New contact enquiry from ${input.name}`,
     text: adminText,
     replyTo: input.email,
@@ -268,7 +263,7 @@ export async function sendContactEmails(input: ContactEmailInput): Promise<Email
 
 Thank you for contacting ${SITE_NAME}. We received your message and will reply as soon as possible (usually within 24 hours).
 
-For urgent order help, WhatsApp us or email ${supportNotifyAddress()}.
+For urgent order help, WhatsApp us or email ${notifyAddress()}.
 
 — ${SITE_NAME} Team
 https://www.usarakhi.com`,
@@ -327,6 +322,7 @@ export async function notifyAdminLead(lead: LeadCaptureInput): Promise<EmailSend
     lead.phone ? `Phone: ${lead.phone}` : null,
     lead.page ? `Page: ${lead.page}` : null,
     lead.productSlug ? `Product: ${lead.productSlug}` : null,
+    isReview ? "\nReview moderation: Do not publish this review until the owner approves it and the customer gives permission." : null,
     message ? `\nMessage:\n${message}` : null,
     lead.metadata && Object.keys(lead.metadata).length > 0
       ? `\nMetadata: ${JSON.stringify(lead.metadata, null, 2)}`
@@ -338,7 +334,9 @@ export async function notifyAdminLead(lead: LeadCaptureInput): Promise<EmailSend
 
   return sendEmail({
     to: notifyAddress(),
-    subject: `[${SITE_NAME}] New ${isReview ? "review" : "enquiry"} — ${formatLeadSource(lead.source)}`,
+    subject: isReview
+      ? `[${SITE_NAME}] Review submitted for approval`
+      : `[${SITE_NAME}] New enquiry — ${formatLeadSource(lead.source)}`,
     text: lines,
     replyTo: lead.email,
   });

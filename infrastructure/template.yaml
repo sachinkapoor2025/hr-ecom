@@ -68,7 +68,6 @@ Globals:
         SMTP_USER: order@usarakhi.com
         SMTP_FROM: order@usarakhi.com
         NOTIFY_EMAIL: order@usarakhi.com
-        SUPPORT_EMAIL: support@usarakhi.com
         SMTP_PASS: !Ref SmtpPassword
         SITE_URL: https://www.usarakhi.com
 
