@@ -29,6 +29,7 @@ interface AuthContextValue {
   logout: () => void;
   token: string | undefined;
   isAdmin: boolean;
+  isSuperAdmin: boolean;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -77,6 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logout,
         token: user?.token,
         isAdmin: user?.isAdmin ?? false,
+        isSuperAdmin: user?.isSuperAdmin ?? false,
       }}
     >
       {children}

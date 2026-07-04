@@ -4,7 +4,7 @@ import type { Order } from "@hr-ecom/shared";
 import type { APIGatewayProxyEventV2 } from "aws-lambda";
 import { ok, badRequest, serverError, unauthorized } from "../../lib/response";
 import { getUserOrSessionKey } from "../../lib/auth";
-import { markOrderPaid, getOrderById } from "../orders";
+import { markOrderPaid, markOrderPaymentFailed, getOrderById } from "../orders";
 
 function getRazorpayCredentials() {
   const keyId = process.env.RAZORPAY_KEY_ID || process.env.RAZOR_KEY_ID;
@@ -129,6 +129,11 @@ export async function razorpayWebhook(event: APIGatewayProxyEventV2) {
       const orderId = payload.payload?.payment?.entity?.notes?.orderId;
       const paymentId = payload.payload?.payment?.entity?.id;
       if (orderId) await markOrderPaid(orderId, { razorpayPaymentId: paymentId });
+    }
+    if (payload.event === "payment.failed") {
+      const orderId = payload.payload?.payment?.entity?.notes?.orderId;
+      const reason = payload.payload?.payment?.entity?.error_description as string | undefined;
+      if (orderId) await markOrderPaymentFailed(orderId, reason ?? "Razorpay payment failed");
     }
     if (payload.event === "qr_code.credited") {
       const orderId = payload.payload?.qr_code?.entity?.notes?.orderId;

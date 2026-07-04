@@ -408,6 +408,13 @@ Resources:
       UserPoolId: !Ref UserPool
       Description: Admin portal access
 
+  SuperAdminGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      GroupName: super-admin
+      UserPoolId: !Ref UserPool
+      Description: Super admin — full admin access plus delete testing records
+
   ApiFunction:
     Type: AWS::Serverless::Function
     Properties:

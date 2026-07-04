@@ -4,6 +4,7 @@ export interface AuthContext {
   userId: string;
   email: string;
   isAdmin: boolean;
+  isSuperAdmin: boolean;
 }
 
 const DEV_AUTH_ENABLED =
@@ -19,20 +20,24 @@ export function getAuth(event: APIGatewayProxyEventV2): AuthContext | null {
   if (token.startsWith("dev:") && DEV_AUTH_ENABLED) {
     const [, email, role] = token.split(":");
     if (!email) return null;
+    const isSuperAdmin = role === "super-admin";
     return {
       userId: `dev-${email}`,
       email,
-      isAdmin: role === "admin",
+      isSuperAdmin,
+      isAdmin: role === "admin" || isSuperAdmin,
     };
   }
 
   try {
     const payload = JSON.parse(Buffer.from(token.split(".")[1], "base64url").toString());
     const groups: string[] = payload["cognito:groups"] ?? [];
+    const isSuperAdmin = groups.includes("super-admin");
     return {
       userId: payload.sub as string,
       email: (payload.email as string) ?? "",
-      isAdmin: groups.includes("admin"),
+      isSuperAdmin,
+      isAdmin: groups.includes("admin") || isSuperAdmin,
     };
   } catch {
     return null;
@@ -53,5 +58,11 @@ export function getUserOrSessionKey(event: APIGatewayProxyEventV2): string | nul
 export function requireAdmin(event: APIGatewayProxyEventV2): AuthContext | null {
   const auth = getAuth(event);
   if (!auth?.isAdmin) return null;
+  return auth;
+}
+
+export function requireSuperAdmin(event: APIGatewayProxyEventV2): AuthContext | null {
+  const auth = getAuth(event);
+  if (!auth?.isSuperAdmin) return null;
   return auth;
 }
