@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { JsonLd } from "@/components/JsonLd";
+import { categoryHref } from "@/lib/category-urls";
 import { site, categoryOrder, whatsappChatUrl } from "@/lib/site";
 import { aboutPageJsonLd, pageMetadata } from "@/lib/seo";
 
@@ -78,7 +79,7 @@ export default function AboutPage() {
         {categoryOrder.map((slug) => (
           <Link
             key={slug}
-            href={`/categories/${slug}`}
+            href={categoryHref(slug)}
             className="px-4 py-2 rounded-full border border-slate-200 text-sm hover:border-nav capitalize"
           >
             {slug.replace(/-/g, " ")}

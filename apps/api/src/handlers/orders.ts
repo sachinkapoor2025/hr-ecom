@@ -138,7 +138,10 @@ export async function captureLead(event: APIGatewayProxyEventV2) {
   );
 
   const emailResult = await notifyAdminLead(leadPayload);
-  const emailRequired = leadPayload.source === "contact" || leadPayload.source === "newsletter";
+  const emailRequired =
+    leadPayload.source === "contact" ||
+    leadPayload.source === "newsletter" ||
+    leadPayload.source === "review";
 
   if (emailRequired && emailResult.skipped) {
     console.error("Email skipped — SMTP not configured:", leadPayload.source);
@@ -260,7 +263,12 @@ export async function checkout(event: APIGatewayProxyEventV2) {
   await clearCartForUser(userKey);
   const emailResult = await notifyAdminOrderPlaced(order);
   if (!emailResult.ok) console.error("Order placed email failed:", emailResult.error);
-  return created({ order, razorpayOrderId: payment.razorpayOrderId, razorpayKeyId: payment.keyId });
+  return created({
+    order,
+    razorpayOrderId: payment.razorpayOrderId,
+    razorpayKeyId: payment.keyId,
+    ...(payment.qrImageUrl ? { razorpayQrImageUrl: payment.qrImageUrl } : {}),
+  });
 }
 
 export async function listOrders(event: APIGatewayProxyEventV2) {
@@ -503,6 +511,7 @@ export async function retryOrderPayment(event: APIGatewayProxyEventV2) {
     order: updated,
     razorpayOrderId: payment.razorpayOrderId,
     razorpayKeyId: payment.keyId,
+    ...(payment.qrImageUrl ? { razorpayQrImageUrl: payment.qrImageUrl } : {}),
   });
 }
 

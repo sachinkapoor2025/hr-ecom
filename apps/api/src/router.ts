@@ -75,6 +75,7 @@ const routes: Route[] = [
   { method: "PUT", pattern: /^\/config\/payments$/, handler: config.updatePaymentConfig },
   { method: "POST", pattern: /^\/uploads\/presign$/, handler: uploads.getUploadUrl },
   { method: "POST", pattern: /^\/products\/([^/]+)\/images$/, handler: uploads.attachImageToProduct, params: ["slug"] },
+  { method: "DELETE", pattern: /^\/products\/([^/]+)\/images$/, handler: uploads.deleteImageFromProduct, params: ["slug"] },
   { method: "POST", pattern: /^\/webhooks\/stripe$/, handler: stripeWebhook },
   { method: "POST", pattern: /^\/webhooks\/razorpay$/, handler: razorpayWebhook },
   { method: "POST", pattern: /^\/payments\/razorpay\/verify$/, handler: verifyRazorpayPayment },

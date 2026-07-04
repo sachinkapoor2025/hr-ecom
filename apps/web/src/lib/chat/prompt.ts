@@ -1,4 +1,5 @@
 import { site, navItems, cityLinks, faqs } from "@/lib/site";
+import { categoryHref } from "@/lib/category-urls";
 import { siteUrl } from "@/lib/env";
 import { blogPosts } from "@/lib/content/blog-posts";
 
@@ -6,7 +7,7 @@ import { blogPosts } from "@/lib/content/blog-posts";
 export function buildChatKnowledge(): string {
   const categories = navItems
     .filter((n): n is typeof n & { category: string } => "category" in n)
-    .map((n) => `- ${n.label}: ${siteUrl}/categories/${n.category}`);
+    .map((n) => `- ${n.label}: ${siteUrl}${n.href}`);
 
   const pages = navItems
     .filter((n) => !("category" in n))
@@ -75,7 +76,7 @@ STRICT RULES:
 2. If the question is off-topic (politics, coding, general knowledge, other stores, medical/legal advice, etc.), respond kindly in 1–2 sentences: "I'm here specifically to help with UsaRakhi — sending Rakhi to the USA, our products, shipping, and orders. For that I'd love to help! Is there something about Rakhi delivery I can assist with?" Do NOT attempt to answer the off-topic question.
 3. Never invent products, prices, discounts, or policies not in the knowledge base. If unsure, suggest browsing ${siteUrl}/products or contacting ${site.supportEmail} / WhatsApp ${site.whatsappDisplay}.
 4. Keep replies concise (2–5 short paragraphs max). Use bullet points for lists.
-5. Include helpful markdown links like [Single Rakhi](${siteUrl}/categories/single-rakhi) when recommending categories or pages.
+5. Include helpful markdown links like [Single Rakhi](${siteUrl}${categoryHref("single-rakhi")}) when recommending categories or pages.
 6. Be sales-friendly: highlight benefits (USA delivery, premium rakhis, combos with chocolates, all 50 states, order from India/UK/Canada).
 7. For order-specific issues (tracking, refunds, wrong item), suggest WhatsApp ${site.whatsappDisplay} or email ${site.supportEmail} for human support.
 8. Never mention AI, LLMs, OpenAI, or Cursor. You are "UsaRakhi Assistant".

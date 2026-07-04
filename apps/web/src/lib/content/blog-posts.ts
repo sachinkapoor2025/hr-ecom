@@ -1,11 +1,9 @@
-import { cdnUploadUrl } from "@hr-ecom/shared";
-
 export interface BlogPost {
   slug: string;
   title: string;
   description: string;
   excerpt: string;
-  image: string;
+  image?: string;
   publishedAt: string;
   updatedAt: string;
   /** HTML-safe markdown-ish paragraphs */
@@ -23,7 +21,6 @@ export const blogPosts: BlogPost[] = [
       "Living in India but your brother is in America? Here is everything you need to know about sending Rakhi to the USA online.",
     publishedAt: "2026-01-15",
     updatedAt: "2026-06-01",
-    image: "/banners/banner-3-india-usa.png",
     relatedCategory: "single-rakhi",
     sections: [
       {
@@ -72,7 +69,6 @@ export const blogPosts: BlogPost[] = [
       "Combine tradition with a sweet treat — our favorite Rakhi chocolate combos for brothers in the USA.",
     publishedAt: "2026-02-01",
     updatedAt: "2026-06-01",
-    image: "/banners/banner-1-usa-rakhi-delivery.png",
     relatedCategory: "rakhi-combo",
     sections: [
       {
@@ -109,7 +105,6 @@ export const blogPosts: BlogPost[] = [
       "Celebrate both your brother and sister-in-law with elegant Bhaiya Bhabhi Rakhi sets delivered across America.",
     publishedAt: "2026-02-15",
     updatedAt: "2026-06-01",
-    image: cdnUploadUrl("2026/06/Untitled-design-31-1.png"),
     relatedCategory: "bhaiya-bhabhi-rakhi",
     sections: [
       {
@@ -140,7 +135,6 @@ export const blogPosts: BlogPost[] = [
       "When is Raksha Bandhan 2026? How to plan Rakhi delivery to USA so your brother receives it on time.",
     publishedAt: "2026-03-01",
     updatedAt: "2026-06-01",
-    image: "/banners/banner-2-connecting-hearts.png",
     relatedCategory: "single-rakhi",
     sections: [
       {
@@ -183,7 +177,6 @@ export const blogPosts: BlogPost[] = [
       "Fun, safe, and festival-ready — how to pick Kids Rakhi for brothers living in the United States.",
     publishedAt: "2026-04-01",
     updatedAt: "2026-06-01",
-    image: cdnUploadUrl("2026/06/review-picture-2.png"),
     relatedCategory: "kids-rakhi",
     sections: [
       {
@@ -205,7 +198,7 @@ export const blogPosts: BlogPost[] = [
         paragraphs: [
           "Order 10–14 days before Raksha Bandhan 2026 (August 28) for stress-free delivery.",
           "Pick age-appropriate designs — toddlers love bold colors; teens may prefer subtler styles.",
-          "Browse the full Kids Rakhi collection at UsaRakhi.com/categories/kids-rakhi.",
+          "Browse the full Kids Rakhi collection at UsaRakhi.com/kids-rakhi-to-usa.",
         ],
       },
     ],
@@ -219,7 +212,6 @@ export const blogPosts: BlogPost[] = [
       "The bracelet Rakhi for Bhabhi — tradition explained and the easiest way to deliver Lumba Rakhi in America.",
     publishedAt: "2026-04-15",
     updatedAt: "2026-06-01",
-    image: cdnUploadUrl("2026/03/coustomer-3-768x1152-1.webp"),
     relatedCategory: "lumba-rakhi",
     sections: [
       {
@@ -240,7 +232,7 @@ export const blogPosts: BlogPost[] = [
         paragraphs: [
           "UsaRakhi offers standalone Lumba Rakhis and complete Bhaiya Bhabhi sets with matching designs.",
           "Enter the US delivery address at checkout; we ship domestically in 5–7 business days.",
-          "Shop Lumba Rakhi at UsaRakhi.com/categories/lumba-rakhi and Bhaiya Bhabhi sets at /categories/bhaiya-bhabhi-rakhi.",
+          "Shop Lumba Rakhi at UsaRakhi.com/lumba-rakhi-to-usa and Bhaiya Bhabhi sets at /bhaiya-bhabhi-rakhi-to-usa.",
         ],
       },
     ],
@@ -254,7 +246,6 @@ export const blogPosts: BlogPost[] = [
       "Not all Rakhi websites ship the same way. Here is what matters when sending Rakhi to brothers in America.",
     publishedAt: "2026-06-01",
     updatedAt: "2026-06-28",
-    image: "/banners/banner-1-usa-rakhi-delivery.png",
     relatedCategory: "single-rakhi",
     sections: [
       {
@@ -292,7 +283,6 @@ export const blogPosts: BlogPost[] = [
       "Your brother should not wait at customs for Rakhi. Domestic USA fulfillment explains why sisters choose UsaRakhi.",
     publishedAt: "2026-06-10",
     updatedAt: "2026-06-28",
-    image: "/banners/banner-2-connecting-hearts.png",
     relatedCategory: "rakhi-combo",
     sections: [
       {
@@ -313,7 +303,7 @@ export const blogPosts: BlogPost[] = [
         paragraphs: [
           "Browse 126+ rakhis at usarakhi.com — Single Rakhi, Combos, Kids, Bhaiya Bhabhi, and Lumba collections.",
           "Read customer stories at usarakhi.com/reviews and share your own after delivery.",
-          "Questions? WhatsApp or email support@usarakhi.com — we help before and after you order.",
+          "Questions? WhatsApp or email order@usarakhi.com — we help before and after you order.",
         ],
       },
     ],

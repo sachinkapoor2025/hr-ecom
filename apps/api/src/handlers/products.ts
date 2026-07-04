@@ -14,6 +14,39 @@ import { getAuth } from "../lib/auth";
 import { withResolvedProductImages, resolveProductImageUrl } from "../lib/images";
 import { syncInventoryAlertState } from "../lib/inventory";
 
+function isKidsComboProduct(product: Product): boolean {
+  if (product.categorySlug !== "kids-rakhi") return false;
+
+  const text = [product.name, product.description, ...(product.tags ?? [])]
+    .join(" ")
+    .toLowerCase();
+
+  return [
+    "combo",
+    "chocolate",
+    "chocolates",
+    "hershey",
+    "lindor",
+    "lindt",
+    "kitkat",
+    "dairy milk",
+    "snicker",
+    "milky way",
+  ].some((term) => text.includes(term));
+}
+
+async function queryProductsByCategory(categorySlug: string): Promise<Product[]> {
+  const result = await docClient.send(
+    new QueryCommand({
+      TableName: PRODUCTS_TABLE,
+      IndexName: "GSI1",
+      KeyConditionExpression: "GSI1PK = :pk",
+      ExpressionAttributeValues: { ":pk": productKeys.gsi1pk(categorySlug) },
+    })
+  );
+  return (result.Items ?? []) as Product[];
+}
+
 export async function listProducts(event: APIGatewayProxyEventV2) {
   const category = event.queryStringParameters?.category;
   const search = event.queryStringParameters?.search?.toLowerCase();
@@ -21,15 +54,14 @@ export async function listProducts(event: APIGatewayProxyEventV2) {
   let items: Product[] = [];
 
   if (category) {
-    const result = await docClient.send(
-      new QueryCommand({
-        TableName: PRODUCTS_TABLE,
-        IndexName: "GSI1",
-        KeyConditionExpression: "GSI1PK = :pk",
-        ExpressionAttributeValues: { ":pk": productKeys.gsi1pk(category) },
-      })
-    );
-    items = (result.Items ?? []) as Product[];
+    items = await queryProductsByCategory(category);
+
+    if (category === "rakhi-combo") {
+      const kidsComboProducts = (await queryProductsByCategory("kids-rakhi")).filter(isKidsComboProduct);
+      const bySlug = new Map(items.map((p) => [p.slug, p]));
+      for (const product of kidsComboProducts) bySlug.set(product.slug, product);
+      items = [...bySlug.values()];
+    }
   } else {
     const result = await docClient.send(
       new ScanCommand({

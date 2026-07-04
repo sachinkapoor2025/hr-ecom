@@ -15,6 +15,15 @@ export async function loadProduct(slug: string): Promise<Product | null> {
   }
 }
 
+export async function loadFeaturedProducts(limit = 10): Promise<Product[]> {
+  try {
+    const data = await api<{ products: Product[] }>("/products", { revalidate: 3600 });
+    return data.products.slice(0, limit);
+  } catch {
+    return getCatalogProducts().slice(0, limit);
+  }
+}
+
 export async function loadRelatedProducts(categorySlug: string, excludeSlug: string): Promise<Product[]> {
   try {
     const data = await api<{ products: Product[] }>(`/products?category=${categorySlug}`, {

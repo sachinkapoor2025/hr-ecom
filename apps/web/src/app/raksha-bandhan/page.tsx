@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import { categoryHref } from "@/lib/category-urls";
 import { site, categoryOrder, homeBanners, cityLinks } from "@/lib/site";
 import {
   rakshaBandhanShowcase,
@@ -203,7 +204,7 @@ export default function RakshaBandhanPage() {
           {categoryOrder.map((slug) => (
             <Link
               key={slug}
-              href={`/categories/${slug}`}
+              href={categoryHref(slug)}
               className="p-5 border rounded-xl hover:border-nav hover:shadow-md transition capitalize font-medium text-primary flex items-center justify-between group"
             >
               {slug.replace(/-/g, " ")}

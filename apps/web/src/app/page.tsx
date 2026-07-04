@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { categoryHref } from "@/lib/category-urls";
 import { api } from "@/lib/api";
 import { BannerCarousel } from "@/components/BannerCarousel";
 import { CustomerReviews } from "@/components/CustomerReviews";
@@ -80,7 +81,7 @@ export default async function HomePage() {
           <section key={section.slug} className="max-w-7xl mx-auto px-4 py-8">
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-xl md:text-2xl font-bold text-primary capitalize">{section.name}</h2>
-              <Link href={`/categories/${section.slug}`} className="text-nav font-semibold text-sm hover:underline">
+              <Link href={categoryHref(section.slug)} className="text-nav font-semibold text-sm hover:underline">
                 View All →
               </Link>
             </div>

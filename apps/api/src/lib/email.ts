@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import crypto from "crypto";
 import type SMTPTransport from "nodemailer/lib/smtp-transport";
 import type { Order, Product, CartItem } from "@hr-ecom/shared";
 import type { LeadCaptureInput } from "@hr-ecom/shared";
@@ -188,6 +189,10 @@ export async function sendEmail(opts: {
       text: opts.text,
       html: opts.html ?? opts.text.replace(/\n/g, "<br>"),
       replyTo: opts.replyTo,
+      headers: {
+        "X-Entity-Ref-ID": crypto.randomUUID(),
+        "Auto-Submitted": "auto-generated",
+      },
     });
     return { ok: true };
   } catch (err) {
@@ -258,7 +263,7 @@ export async function sendContactEmails(input: ContactEmailInput): Promise<Email
 
 Thank you for contacting ${SITE_NAME}. We received your message and will reply as soon as possible (usually within 24 hours).
 
-For urgent order help, WhatsApp us or email order@usarakhi.com.
+For urgent order help, WhatsApp us or email ${notifyAddress()}.
 
 — ${SITE_NAME} Team
 https://www.usarakhi.com`,
@@ -317,6 +322,7 @@ export async function notifyAdminLead(lead: LeadCaptureInput): Promise<EmailSend
     lead.phone ? `Phone: ${lead.phone}` : null,
     lead.page ? `Page: ${lead.page}` : null,
     lead.productSlug ? `Product: ${lead.productSlug}` : null,
+    isReview ? "\nReview moderation: Do not publish this review until the owner approves it and the customer gives permission." : null,
     message ? `\nMessage:\n${message}` : null,
     lead.metadata && Object.keys(lead.metadata).length > 0
       ? `\nMetadata: ${JSON.stringify(lead.metadata, null, 2)}`
@@ -328,7 +334,9 @@ export async function notifyAdminLead(lead: LeadCaptureInput): Promise<EmailSend
 
   return sendEmail({
     to: notifyAddress(),
-    subject: `[${SITE_NAME}] New ${isReview ? "review" : "enquiry"} — ${formatLeadSource(lead.source)}`,
+    subject: isReview
+      ? `[${SITE_NAME}] Review submitted for approval`
+      : `[${SITE_NAME}] New enquiry — ${formatLeadSource(lead.source)}`,
     text: lines,
     replyTo: lead.email,
   });
@@ -490,7 +498,7 @@ Thank you for choosing ${SITE_NAME}.
 
 — Team ${SITE_NAME}
 ${siteUrl()}
-WhatsApp / support: support@usarakhi.com`;
+WhatsApp / support: ${notifyAddress()}`;
 
   return sendEmail({
     to: customerEmail,

@@ -1,3 +1,5 @@
+import { categoryHref } from "@/lib/category-urls";
+
 /** SEO-rich homepage copy — Rakhi / USA delivery keywords, internal link targets. */
 export const homeSeoContent = {
   intro: {
@@ -15,27 +17,27 @@ export const homeSeoContent = {
     links: [
       {
         label: "Single Rakhi",
-        href: "/categories/single-rakhi",
+        href: categoryHref("single-rakhi"),
         text: "Classic thread, Om, pearl, and designer rakhis for your brother.",
       },
       {
         label: "Bhaiya Bhabhi Rakhi",
-        href: "/categories/bhaiya-bhabhi-rakhi",
+        href: categoryHref("bhaiya-bhabhi-rakhi"),
         text: "Matching sets with Lumba rakhis for bhabhi and rakhis for bhaiya.",
       },
       {
         label: "Kids Rakhi",
-        href: "/categories/kids-rakhi",
+        href: categoryHref("kids-rakhi"),
         text: "Cartoon and colorful rakhis made for little brothers.",
       },
       {
         label: "Lumba Rakhi",
-        href: "/categories/lumba-rakhi",
+        href: categoryHref("lumba-rakhi"),
         text: "Elegant bracelet-style Lumba rakhis for your sister-in-law.",
       },
       {
         label: "Rakhi Combo",
-        href: "/categories/rakhi-combo",
+        href: categoryHref("rakhi-combo"),
         text: "Rakhi with Ferrero Rocher, Lindt, Hershey's, and multi-rakhi gift sets.",
       },
     ],

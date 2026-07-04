@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { categoryHref } from "@/lib/category-urls";
 import { JsonLd } from "@/components/JsonLd";
 import { blogPosts, getBlogPost } from "@/lib/content/blog-posts";
 import { articleJsonLd, breadcrumbJsonLd, pageMetadata } from "@/lib/seo";
@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: post.title,
     description: post.description,
     path: `/blog/${slug}`,
-    ogImage: post.image,
+    ...(post.image ? { ogImage: post.image } : {}),
   });
 }
 
@@ -59,16 +59,21 @@ export default async function BlogPostPage({ params }: Props) {
         <p className="text-base sm:text-lg text-slate-600 break-words">{post.excerpt}</p>
       </header>
 
-      <div className="relative w-full max-h-[420px] min-h-[200px] rounded-xl overflow-hidden mb-8 bg-slate-100 flex items-center justify-center">
-        <Image
-          src={post.image}
-          alt={post.title}
-          width={1200}
-          height={675}
-          className="w-full h-auto max-h-[420px] object-contain"
-          sizes="(max-width: 768px) 100vw, 768px"
-          priority
-        />
+      <div className="relative w-full max-h-[420px] min-h-[200px] rounded-xl overflow-hidden mb-8 bg-slate-100 flex items-center justify-center p-3">
+        {post.image ? (
+          <>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={post.image}
+            alt={post.title}
+            className="w-full h-auto max-h-[420px] object-contain"
+          />
+          </>
+        ) : (
+          <div className="flex min-h-[200px] w-full items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50 text-center text-sm font-semibold uppercase tracking-wide text-slate-400">
+            Blog image placeholder
+          </div>
+        )}
       </div>
 
       <div className="space-y-8 min-w-0 break-words [overflow-wrap:anywhere]">
@@ -89,7 +94,7 @@ export default async function BlogPostPage({ params }: Props) {
       {post.relatedCategory && (
         <div className="mt-10 p-6 bg-slate-50 rounded-xl border min-w-0">
           <h2 className="font-semibold text-primary mb-2">Shop related Rakhis</h2>
-          <Link href={`/categories/${post.relatedCategory}`} className="text-nav font-semibold hover:underline">
+          <Link href={categoryHref(post.relatedCategory)} className="text-nav font-semibold hover:underline">
             Browse {post.relatedCategory.replace(/-/g, " ")} →
           </Link>
         </div>

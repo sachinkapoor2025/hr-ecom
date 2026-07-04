@@ -10,6 +10,7 @@ import {
 } from "react";
 import {
   type AuthUser,
+  type RegisterResult,
   loadStoredAuth,
   login as cognitoLogin,
   logout as cognitoLogout,
@@ -22,7 +23,7 @@ interface AuthContextValue {
   user: AuthUser | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<AuthUser>;
-  register: (email: string, password: string, name?: string) => Promise<{ userConfirmed: boolean }>;
+  register: (email: string, password: string, name?: string) => Promise<RegisterResult>;
   confirmSignUp: (email: string, code: string) => Promise<void>;
   resendConfirmationCode: (email: string) => Promise<void>;
   logout: () => void;

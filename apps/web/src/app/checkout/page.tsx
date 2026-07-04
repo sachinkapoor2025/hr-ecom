@@ -17,6 +17,7 @@ import { CheckoutLegalNotice } from "@/components/CheckoutLegalNotice";
 import { TrustBadges } from "@/components/TrustBadges";
 import { CouponInput } from "@/components/CouponInput";
 import { StripePaymentForm } from "@/components/StripePaymentForm";
+import { RazorpayQrPanel } from "@/components/RazorpayQrPanel";
 import { EstimatedDeliveryNote } from "@/components/EstimatedDeliveryNote";
 import { loadWelcomeCoupon } from "@/lib/welcome-coupon";
 import {
@@ -63,6 +64,14 @@ function CheckoutPageInner() {
   const [stripeCheckout, setStripeCheckout] = useState<{ clientSecret: string; orderId: string } | null>(
     null
   );
+  const [razorpayPayment, setRazorpayPayment] = useState<{
+    order: Order;
+    razorpayOrderId: string;
+    razorpayKeyId?: string;
+    qrImageUrl?: string;
+  } | null>(null);
+  const [razorpayReady, setRazorpayReady] = useState(false);
+  const [openingRazorpay, setOpeningRazorpay] = useState(false);
   const [retryOrder, setRetryOrder] = useState<Order | null>(null);
   const [retryLoading, setRetryLoading] = useState(Boolean(retryOrderId));
   const [address, setAddress] = useState<ShippingAddress>(emptyShippingAddress);
@@ -75,6 +84,7 @@ function CheckoutPageInner() {
     if (displayCurrency === "INR") setPaymentMethod("razorpay");
     else if (displayCurrency === "USD") setPaymentMethod("stripe");
     setStripeCheckout(null);
+    setRazorpayPayment(null);
   }, [displayCurrency]);
 
   useEffect(() => {
@@ -219,60 +229,89 @@ function CheckoutPageInner() {
       throw new Error("Razorpay checkout failed to load. Please refresh and try again.");
     }
 
-    await new Promise<void>((resolve, reject) => {
-      const rzp = new window.Razorpay({
-        key,
-        amount: Math.round(order.total * 100),
-        currency: order.currency,
-        name: "UsaRakhi",
-        description: `Order ${order.orderId.slice(0, 8)}`,
-        order_id: razorpayOrderId,
-        prefill: {
-          name: address.name,
-          email: address.email,
-          contact: address.phone || undefined,
-        },
-        theme: { color: "#183a68" },
-        handler: async (response: {
-          razorpay_order_id: string;
-          razorpay_payment_id: string;
-          razorpay_signature: string;
-        }) => {
-          try {
-            await api("/payments/razorpay/verify", {
-              method: "POST",
-              sessionId,
-              token,
-              body: JSON.stringify({
+    setOpeningRazorpay(true);
+    try {
+      await new Promise<void>((resolve, reject) => {
+        const rzp = new window.Razorpay({
+          key,
+          amount: Math.round(order.total * 100),
+          currency: order.currency,
+          name: "UsaRakhi",
+          description: `Order ${order.orderId.slice(0, 8)}`,
+          order_id: razorpayOrderId,
+          prefill: {
+            name: address.name,
+            email: address.email,
+            contact: address.phone || undefined,
+          },
+          theme: { color: "#183a68" },
+          config: {
+            display: {
+              preferences: { show_default_blocks: true },
+            },
+          },
+          method: {
+            upi: true,
+            card: true,
+            netbanking: true,
+            wallet: true,
+          },
+          handler: async (response: {
+            razorpay_order_id: string;
+            razorpay_payment_id: string;
+            razorpay_signature: string;
+          }) => {
+            try {
+              await api("/payments/razorpay/verify", {
+                method: "POST",
+                sessionId,
+                token,
+                body: JSON.stringify({
+                  orderId: order.orderId,
+                  razorpayOrderId: response.razorpay_order_id,
+                  razorpayPaymentId: response.razorpay_payment_id,
+                  razorpaySignature: response.razorpay_signature,
+                }),
+              });
+              trackPurchase(order.total, {
                 orderId: order.orderId,
-                razorpayOrderId: response.razorpay_order_id,
-                razorpayPaymentId: response.razorpay_payment_id,
-                razorpaySignature: response.razorpay_signature,
-              }),
-            });
-            trackPurchase(order.total, {
-              orderId: order.orderId,
-              provider: "razorpay",
-              currency: order.currency,
-            });
-            await refresh();
-            resolve();
-            router.push(`/orders/${order.orderId}`);
-          } catch (verifyErr) {
-            reject(verifyErr);
-          }
-        },
-        modal: {
-          ondismiss: () => reject(new Error("Payment cancelled")),
-        },
-      });
+                provider: "razorpay",
+                currency: order.currency,
+              });
+              await refresh();
+              resolve();
+              router.push(`/orders/${order.orderId}`);
+            } catch (verifyErr) {
+              reject(verifyErr);
+            }
+          },
+          modal: {
+            ondismiss: () => reject(new Error("Payment cancelled")),
+          },
+        });
 
-      rzp.on("payment.failed", (response) => {
-        reject(new Error(response.error?.description ?? "Payment failed"));
-      });
+        rzp.on("payment.failed", (response) => {
+          reject(new Error(response.error?.description ?? "Payment failed"));
+        });
 
-      rzp.open();
-    });
+        rzp.open();
+      });
+    } finally {
+      setOpeningRazorpay(false);
+    }
+  };
+
+  const startRazorpayPayment = async (
+    order: Order,
+    razorpayOrderId: string,
+    razorpayKeyId?: string,
+    qrImageUrl?: string
+  ) => {
+    if (qrImageUrl && order.currency === "INR") {
+      setRazorpayPayment({ order, razorpayOrderId, razorpayKeyId, qrImageUrl });
+      return;
+    }
+    await openRazorpayCheckout(order, razorpayOrderId, razorpayKeyId);
   };
 
   const persistAddressIfNeeded = async () => {
@@ -322,6 +361,7 @@ function CheckoutPageInner() {
           clientSecret?: string;
           razorpayOrderId?: string;
           razorpayKeyId?: string;
+          razorpayQrImageUrl?: string;
         }>(`/orders/${retryOrder.orderId}/retry-payment`, {
           method: "POST",
           sessionId,
@@ -341,7 +381,12 @@ function CheckoutPageInner() {
         }
 
         if (!data.razorpayOrderId) throw new Error("Razorpay could not be started.");
-        await openRazorpayCheckout(data.order, data.razorpayOrderId, data.razorpayKeyId);
+        await startRazorpayPayment(
+          data.order,
+          data.razorpayOrderId,
+          data.razorpayKeyId,
+          data.razorpayQrImageUrl
+        );
         return;
       }
 
@@ -365,6 +410,7 @@ function CheckoutPageInner() {
         clientSecret?: string;
         razorpayOrderId?: string;
         razorpayKeyId?: string;
+        razorpayQrImageUrl?: string;
       }>("/checkout", {
         method: "POST",
         sessionId,
@@ -398,7 +444,12 @@ function CheckoutPageInner() {
         throw new Error("Razorpay could not be started. Check payment configuration and try again.");
       }
 
-      await openRazorpayCheckout(data.order, data.razorpayOrderId, data.razorpayKeyId);
+      await startRazorpayPayment(
+        data.order,
+        data.razorpayOrderId,
+        data.razorpayKeyId,
+        data.razorpayQrImageUrl
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Checkout failed");
     } finally {
@@ -439,7 +490,11 @@ function CheckoutPageInner() {
 
   return (
     <>
-      <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
+      <Script
+        src="https://checkout.razorpay.com/v1/checkout.js"
+        strategy="afterInteractive"
+        onLoad={() => setRazorpayReady(true)}
+      />
       <div className="max-w-6xl mx-auto px-4 py-8 sm:py-10">
         <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">Checkout</h1>
         {isRetry && (
@@ -530,10 +585,26 @@ function CheckoutPageInner() {
                 onChange={(method) => {
                   setPaymentMethod(method);
                   setStripeCheckout(null);
+                  setRazorpayPayment(null);
                 }}
                 checkoutCurrency={displayCurrency}
               />
             </div>
+
+            {razorpayPayment?.qrImageUrl && paymentMethod === "razorpay" && (
+              <RazorpayQrPanel
+                qrImageUrl={razorpayPayment.qrImageUrl}
+                amountLabel={format(razorpayPayment.order.total, displayCurrency)}
+                openingCheckout={openingRazorpay}
+                onOpenCheckout={() =>
+                  void openRazorpayCheckout(
+                    razorpayPayment.order,
+                    razorpayPayment.razorpayOrderId,
+                    razorpayPayment.razorpayKeyId
+                  ).catch((err) => setError(err instanceof Error ? err.message : "Payment failed"))
+                }
+              />
+            )}
 
             {error && <p className="text-red-500 text-sm">{error}</p>}
 
@@ -546,14 +617,16 @@ function CheckoutPageInner() {
               />
             )}
 
-            {!stripeCheckout && (
+            {!stripeCheckout && !razorpayPayment && (
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || (paymentMethod === "razorpay" && !razorpayReady)}
               className="w-full rounded-md bg-primary text-white font-bold text-sm uppercase tracking-wide py-3.5 hover:bg-primary/90 transition disabled:opacity-50"
             >
               {loading
                 ? "Processing..."
+                : paymentMethod === "razorpay" && !razorpayReady
+                  ? "Loading payment…"
                 : paymentMethod === "razorpay"
                   ? "Pay with Razorpay"
                   : "Continue to Stripe payment"}

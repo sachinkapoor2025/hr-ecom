@@ -27,6 +27,8 @@ export async function createRazorpayOrder(order: Order) {
     return {
       razorpayOrderId: `order_dev_${order.orderId}`,
       keyId: publishableKeyId,
+      qrImageUrl: undefined as string | undefined,
+      qrId: undefined as string | undefined,
     };
   }
 
@@ -37,9 +39,32 @@ export async function createRazorpayOrder(order: Order) {
     notes: { orderId: order.orderId },
   });
 
+  let qrImageUrl: string | undefined;
+  let qrId: string | undefined;
+
+  if (order.currency === "INR") {
+    try {
+      const qr = await razorpay.qrCode.create({
+        type: "upi_qr",
+        name: `UsaRakhi ${order.orderId.slice(0, 8)}`,
+        usage: "single_use",
+        fixed_amount: true,
+        payment_amount: Math.round(order.total * 100),
+        description: `Order ${order.orderId.slice(0, 8)}`,
+        notes: { orderId: order.orderId },
+      });
+      qrImageUrl = qr.image_url;
+      qrId = qr.id;
+    } catch (err) {
+      console.error("Razorpay QR create failed:", err);
+    }
+  }
+
   return {
     razorpayOrderId: rpOrder.id,
     keyId: publishableKeyId,
+    qrImageUrl,
+    qrId,
   };
 }
 
@@ -102,6 +127,11 @@ export async function razorpayWebhook(event: APIGatewayProxyEventV2) {
     const payload = JSON.parse(event.body ?? "{}");
     if (payload.event === "payment.captured") {
       const orderId = payload.payload?.payment?.entity?.notes?.orderId;
+      const paymentId = payload.payload?.payment?.entity?.id;
+      if (orderId) await markOrderPaid(orderId, { razorpayPaymentId: paymentId });
+    }
+    if (payload.event === "qr_code.credited") {
+      const orderId = payload.payload?.qr_code?.entity?.notes?.orderId;
       const paymentId = payload.payload?.payment?.entity?.id;
       if (orderId) await markOrderPaid(orderId, { razorpayPaymentId: paymentId });
     }

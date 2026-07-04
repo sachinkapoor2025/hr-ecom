@@ -64,7 +64,7 @@ export function ShippingAddressForm({
       city: address.city,
       state: address.state,
       postalCode: address.postalCode,
-      country: address.country,
+      country: "US",
       phone: address.phone,
       email: address.email,
     });
@@ -242,12 +242,14 @@ export function ShippingAddressForm({
             />
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Country</label>
-              <input
-                type="text"
-                value="United States"
-                readOnly
-                className="w-full border border-slate-200 rounded-lg px-3 py-2 bg-slate-50 text-slate-600"
-              />
+              <select
+                value="US"
+                disabled
+                aria-label="Country"
+                className="w-full border border-slate-200 rounded-lg px-3 py-2 bg-slate-50 text-slate-600 cursor-not-allowed"
+              >
+                <option value="US">United States</option>
+              </select>
             </div>
           </div>
 

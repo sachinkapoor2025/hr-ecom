@@ -8,6 +8,7 @@ import { productPageFaqs } from "@/lib/content/product-faqs";
 import { resolveImageUrl } from "@/lib/images";
 import { loadProduct, loadRelatedProducts, getStaticProductSlugs } from "@/lib/product-loader";
 import { api } from "@/lib/api";
+import { categoryHref } from "@/lib/category-urls";
 import type { Product } from "@hr-ecom/shared";
 
 interface Props {
@@ -58,7 +59,7 @@ export default async function ProductPage({ params }: Props) {
   const crumbs = [
     { label: "Home", href: "/" },
     { label: "Shop", href: "/products" },
-    { label: categoryLabel, href: `/categories/${product.categorySlug}` },
+    { label: categoryLabel, href: categoryHref(product.categorySlug) },
     { label: product.name },
   ];
 

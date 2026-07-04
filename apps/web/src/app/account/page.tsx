@@ -58,14 +58,16 @@ function AccountLoginForm() {
         return;
       }
 
-      const { userConfirmed } = await register(email, password, name);
+      const { userConfirmed, deliveryDestination, deliveryMedium } = await register(email, password, name);
       if (userConfirmed) {
         setMessage("Account created! Signing you in...");
         await finishLogin();
       } else {
         setMode("confirm");
         setConfirmCode("");
-        setMessage(`We sent a verification code to ${email}. Enter it below to activate your account. Check your spam or junk folder if you don't see it within a few minutes.`);
+        const destination = deliveryDestination ? ` to ${deliveryDestination}` : ` for ${email}`;
+        const channel = deliveryMedium ? ` by ${deliveryMedium.toLowerCase()}` : "";
+        setMessage(`Verification code sent${channel}${destination}. Enter the code below to activate your account. Check your inbox and spam/junk folder if it does not arrive within a few minutes.`);
       }
     } catch (err) {
       if (mode === "login" && isUnconfirmedError(err)) {
@@ -91,7 +93,7 @@ function AccountLoginForm() {
     setResending(true);
     try {
       await resendConfirmationCode(email);
-      setMessage(`A new verification code was sent to ${email}.`);
+      setMessage(`Verification code requested for ${email}. Check your inbox and spam/junk folder if it does not arrive within a few minutes.`);
     } catch (err) {
       setError(formatAuthError(err));
     } finally {

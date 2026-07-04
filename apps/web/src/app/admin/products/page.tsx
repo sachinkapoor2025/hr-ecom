@@ -33,7 +33,8 @@ export default function AdminProductsPage() {
   const [csv, setCsv] = useState("");
   const [message, setMessage] = useState("");
   const [lastSlug, setLastSlug] = useState("");
-  const [uploading, setUploading] = useState(false);
+  const [uploadingSlug, setUploadingSlug] = useState<string | null>(null);
+  const [deletingImage, setDeletingImage] = useState<string | null>(null);
   const [tab, setTab] = useState<"list" | "create">("list");
 
   const load = useCallback(() => {
@@ -221,24 +222,50 @@ export default function AdminProductsPage() {
     }
   };
 
-  const uploadImage = async (file: File, slug: string) => {
-    setUploading(true);
+  const uploadImages = async (files: File[] | FileList, slug: string) => {
+    const selectedFiles = Array.from(files).filter((file) => file.type.startsWith("image/"));
+    if (selectedFiles.length === 0) {
+      setMessage("Select one or more image files.");
+      return;
+    }
+
+    setUploadingSlug(slug);
     try {
-      const presign = await apiClient<{ uploadUrl: string; publicUrl: string }>("/uploads/presign", {
-        method: "POST",
-        body: JSON.stringify({ filename: file.name, contentType: file.type }),
-      });
-      await fetch(presign.uploadUrl, { method: "PUT", body: file, headers: { "Content-Type": file.type } });
-      await apiClient(`/products/${slug}/images`, {
-        method: "POST",
-        body: JSON.stringify({ imageUrl: presign.publicUrl }),
-      });
-      setMessage(`Image uploaded for "${slug}"`);
+      for (const file of selectedFiles) {
+        const contentType = file.type || "image/jpeg";
+        const presign = await apiClient<{ uploadUrl: string; publicUrl: string }>("/uploads/presign", {
+          method: "POST",
+          body: JSON.stringify({ filename: file.name, contentType }),
+        });
+        await fetch(presign.uploadUrl, { method: "PUT", body: file, headers: { "Content-Type": contentType } });
+        await apiClient(`/products/${slug}/images`, {
+          method: "POST",
+          body: JSON.stringify({ imageUrl: presign.publicUrl }),
+        });
+      }
+      setMessage(`${selectedFiles.length} image${selectedFiles.length === 1 ? "" : "s"} uploaded for "${slug}".`);
       load();
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "Upload failed");
     } finally {
-      setUploading(false);
+      setUploadingSlug(null);
+    }
+  };
+
+  const deleteProductImage = async (slug: string, imageUrl: string, imageNumber: number) => {
+    if (!confirm(`Delete image ${imageNumber} from this product?`)) return;
+    setDeletingImage(`${slug}:${imageUrl}`);
+    try {
+      await apiClient(`/products/${slug}/images`, {
+        method: "DELETE",
+        body: JSON.stringify({ imageUrl }),
+      });
+      setMessage(`Image ${imageNumber} deleted from "${slug}".`);
+      load();
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : "Image delete failed");
+    } finally {
+      setDeletingImage(null);
     }
   };
 
@@ -408,6 +435,47 @@ export default function AdminProductsPage() {
                       <td className="py-3 px-4">
                         <div className="font-medium">{p.name}</div>
                         <div className="text-xs text-slate-400">{p.slug}</div>
+                        <div className="mt-3 space-y-2">
+                          <div className="flex items-center gap-2 text-xs text-slate-500">
+                            <span>{p.images?.length ?? 0} image{(p.images?.length ?? 0) === 1 ? "" : "s"}</span>
+                            {uploadingSlug === p.slug && <span className="text-nav">Uploading...</span>}
+                          </div>
+                          {p.images?.length ? (
+                            <div className="flex flex-wrap gap-2">
+                              {p.images.map((imageUrl, index) => {
+                                const deleteKey = `${p.slug}:${imageUrl}`;
+                                return (
+                                  <div
+                                    key={`${imageUrl}-${index}`}
+                                    className="relative w-16 rounded-lg border bg-slate-50 p-1"
+                                  >
+                                    <span className="mb-1 block text-[10px] font-semibold text-slate-500">
+                                      Image {index + 1}
+                                    </span>
+                                    <div className="h-12 w-full overflow-hidden rounded bg-white">
+                                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                                      <img
+                                        src={imageUrl}
+                                        alt={`${p.name} image ${index + 1}`}
+                                        className="h-full w-full object-cover"
+                                      />
+                                    </div>
+                                    <button
+                                      type="button"
+                                      onClick={() => deleteProductImage(p.slug, imageUrl, index + 1)}
+                                      disabled={deletingImage === deleteKey}
+                                      className="mt-1 w-full text-[10px] text-red-600 hover:underline disabled:opacity-50"
+                                    >
+                                      {deletingImage === deleteKey ? "Deleting" : "Delete"}
+                                    </button>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <p className="text-xs text-slate-400">No product images yet.</p>
+                          )}
+                        </div>
                       </td>
                       <td className="py-3 px-4 text-xs">{p.sku ?? "—"}</td>
                       <td className="py-3 px-4">{p.categorySlug}</td>
@@ -478,13 +546,19 @@ export default function AdminProductsPage() {
                           View
                         </Link>
                         <label className="text-xs text-nav hover:underline cursor-pointer mr-2">
-                          Image
+                          {uploadingSlug === p.slug ? "Uploading..." : "Add images"}
                           <input
                             type="file"
                             accept="image/*"
+                            multiple
                             className="hidden"
-                            disabled={uploading}
-                            onChange={(e) => e.target.files?.[0] && uploadImage(e.target.files[0], p.slug)}
+                            disabled={uploadingSlug !== null}
+                            onChange={(e) => {
+                              if (e.currentTarget.files?.length) {
+                                void uploadImages(e.currentTarget.files, p.slug);
+                                e.currentTarget.value = "";
+                              }
+                            }}
                           />
                         </label>
                         <button
@@ -513,13 +587,19 @@ export default function AdminProductsPage() {
           {!editing && lastSlug && (
             <div className="p-4 border rounded-lg bg-white">
               <p className="text-sm mb-2">
-                Upload image for <code>{lastSlug}</code>
+                Upload images for <code>{lastSlug}</code>
               </p>
               <input
                 type="file"
                 accept="image/*"
-                disabled={uploading}
-                onChange={(e) => e.target.files?.[0] && uploadImage(e.target.files[0], lastSlug)}
+                multiple
+                disabled={uploadingSlug !== null}
+                onChange={(e) => {
+                  if (e.currentTarget.files?.length) {
+                    void uploadImages(e.currentTarget.files, lastSlug);
+                    e.currentTarget.value = "";
+                  }
+                }}
               />
             </div>
           )}

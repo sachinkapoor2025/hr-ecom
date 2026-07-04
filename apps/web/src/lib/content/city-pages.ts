@@ -1,5 +1,7 @@
 /** SEO + LLM-friendly copy for USA city/state Rakhi delivery landing pages. */
 
+import { categoryHref } from "@/lib/category-urls";
+
 export interface CityPageContent {
   slug: string;
   label: string;
@@ -19,22 +21,22 @@ export interface CityPageContent {
 const sharedCategories = [
   {
     label: "Single Rakhi",
-    href: "/categories/single-rakhi",
+    href: categoryHref("single-rakhi"),
     text: "Traditional thread, Om, pearl, and designer rakhis with roli chawal.",
   },
   {
     label: "Rakhi Combo",
-    href: "/categories/rakhi-combo",
+    href: categoryHref("rakhi-combo"),
     text: "Rakhi with Ferrero Rocher, Lindt, Hershey's, and gift sets.",
   },
   {
     label: "Bhaiya Bhabhi Rakhi",
-    href: "/categories/bhaiya-bhabhi-rakhi",
+    href: categoryHref("bhaiya-bhabhi-rakhi"),
     text: "Matching sets for brother and sister-in-law including Lumba.",
   },
   {
     label: "Kids Rakhi",
-    href: "/categories/kids-rakhi",
+    href: categoryHref("kids-rakhi"),
     text: "Cartoon and colorful designs for younger brothers.",
   },
 ] as const;

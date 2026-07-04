@@ -9,6 +9,8 @@ import { CategoryContentSection } from "@/components/CategoryContentSection";
 import { JsonLd } from "@/components/JsonLd";
 import { getCategoryContent } from "@/lib/content/category-content";
 import { getCategoryRichContent } from "@/lib/content/category-rich-content";
+import { categoryHref } from "@/lib/category-urls";
+import { getCatalogProductsByCategory } from "@/lib/catalog-fallback";
 import { categoryOrder } from "@/lib/site";
 import { breadcrumbJsonLd, faqJsonLd, itemListJsonLd, pageMetadata } from "@/lib/seo";
 import type { Product, Category } from "@hr-ecom/shared";
@@ -23,6 +25,12 @@ export function generateStaticParams() {
 
 export const revalidate = 3600;
 
+function mergeProductsBySlug(products: Product[], additions: Product[]): Product[] {
+  const bySlug = new Map(products.map((product) => [product.slug, product]));
+  for (const product of additions) bySlug.set(product.slug, product);
+  return [...bySlug.values()];
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   try {
@@ -34,13 +42,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         c.seoDescription ??
         c.description?.slice(0, 160) ??
         `Shop ${c.name} with fast USA delivery from UsaRakhi. Premium designs, roli chawal included.`,
-      path: `/categories/${slug}`,
+      path: categoryHref(slug),
     });
   } catch {
     return pageMetadata({
       title: `${slug.replace(/-/g, " ")} Rakhi USA`,
       description: `Shop ${slug.replace(/-/g, " ")} with USA delivery from UsaRakhi.`,
-      path: `/categories/${slug}`,
+      path: categoryHref(slug),
     });
   }
 }
@@ -60,6 +68,11 @@ export default async function CategoryPage({ params }: Props) {
     products = prodData.products;
   } catch {
     if (!categoryOrder.includes(slug as (typeof categoryOrder)[number])) notFound();
+    products = getCatalogProductsByCategory(slug);
+  }
+
+  if (slug === "rakhi-combo") {
+    products = mergeProductsBySlug(products, getCatalogProductsByCategory("rakhi-combo"));
   }
 
   const name = category?.name ?? slug.replace(/-/g, " ");
@@ -79,7 +92,7 @@ export default async function CategoryPage({ params }: Props) {
     <div className="max-w-7xl mx-auto px-4 py-10">
       <JsonLd
         data={[
-          breadcrumbJsonLd(crumbs.map((c) => ({ name: c.label, path: c.href ?? `/categories/${slug}` }))),
+          breadcrumbJsonLd(crumbs.map((c) => ({ name: c.label, path: c.href ?? categoryHref(slug) }))),
           itemListJsonLd(
             `${name} — UsaRakhi USA`,
             products.map((p) => ({ name: p.name, path: `/products/${p.slug}` }))
