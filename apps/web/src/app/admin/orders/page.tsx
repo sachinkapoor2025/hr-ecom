@@ -8,6 +8,7 @@ import { statusLabel, badgeClass } from "@/lib/order-status";
 import {
   downloadCsv,
   formatMoney,
+  matchesOrderStatusTab,
   matchesPaymentFilter,
   paginate,
   paymentStatusClass,
@@ -74,12 +75,11 @@ export default function AdminOrdersPage() {
 
   const loadOrders = useCallback(() => {
     setLoading(true);
-    const qs = tab !== "all" ? `?status=${encodeURIComponent(tab)}` : "";
-    apiClient<{ orders: Order[] }>(`/admin/orders${qs}`)
+    apiClient<{ orders: Order[] }>("/admin/orders")
       .then((d) => setOrders(d.orders))
       .catch(() => setOrders([]))
       .finally(() => setLoading(false));
-  }, [apiClient, tab]);
+  }, [apiClient]);
 
   useEffect(() => {
     loadOrders();
@@ -92,6 +92,7 @@ export default function AdminOrdersPage() {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     let list = orders.filter((o) => {
+      if (!matchesOrderStatusTab(o.status, tab)) return false;
       if (!matchesPaymentFilter(o.status, paymentFilter)) return false;
       if (paymentMethod !== "all" && o.paymentProvider !== paymentMethod) return false;
       if (dateFrom && o.createdAt.slice(0, 10) < dateFrom) return false;
@@ -116,7 +117,7 @@ export default function AdminOrdersPage() {
 
     list = sortItems(list, sorter, sortDir);
     return list;
-  }, [orders, paymentFilter, paymentMethod, search, dateFrom, dateTo, sortKey, sortDir]);
+  }, [orders, tab, paymentFilter, paymentMethod, search, dateFrom, dateTo, sortKey, sortDir]);
 
   const { items: pageItems, totalPages, total } = paginate(filtered, page, pageSize);
 

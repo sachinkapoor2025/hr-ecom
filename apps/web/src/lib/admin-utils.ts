@@ -73,6 +73,23 @@ export function matchesPaymentFilter(status: string, filter: string): boolean {
   return paymentFilterCategory(status) === filter;
 }
 
+const FULFILLMENT_ACTIVE_STATUSES: readonly string[] = [
+  ORDER_STATUS.PAID,
+  ORDER_STATUS.ACCEPTED,
+  ORDER_STATUS.PROCESSING,
+];
+
+/** Status tab filter — "Paid" means payment received, not literal order status `paid`. */
+export function matchesOrderStatusTab(status: string, tab: string): boolean {
+  if (tab === "all") return true;
+  if (tab === ORDER_STATUS.PAID) return matchesPaymentFilter(status, "paid");
+  if (tab === ORDER_STATUS.PROCESSING) return FULFILLMENT_ACTIVE_STATUSES.includes(status);
+  if (tab === ORDER_STATUS.DELIVERED) {
+    return status === ORDER_STATUS.DELIVERED || status === ORDER_STATUS.COMPLETE;
+  }
+  return status === tab;
+}
+
 export function paymentStatusLabel(status: string): string {
   if (status === ORDER_STATUS.PENDING_PAYMENT) return "Pending";
   if (status === ORDER_STATUS.REFUNDED) return "Refunded";

@@ -1,10 +1,11 @@
 import type { NextConfig } from "next";
 import { categoryRedirectRules, categoryRewriteRules } from "./src/lib/category-urls";
+import { legacyRedirectRules } from "./src/lib/legacy-urls";
 
 const nextConfig: NextConfig = {
   transpilePackages: ["@hr-ecom/shared"],
   async redirects() {
-    return categoryRedirectRules();
+    return [...categoryRedirectRules(), ...legacyRedirectRules()];
   },
   async rewrites() {
     return categoryRewriteRules();
