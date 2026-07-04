@@ -360,10 +360,7 @@ Resources:
       AutoVerifiedAttributes: [email]
       UsernameAttributes: [email]
       EmailConfiguration:
-        EmailSendingAccount: DEVELOPER
-        SourceArn: !Sub arn:aws:ses:${AWS::Region}:${AWS::AccountId}:identity/usarakhi.com
-        From: noreply@usarakhi.com
-        ReplyToEmailAddress: order@usarakhi.com
+        EmailSendingAccount: COGNITO_DEFAULT
       VerificationMessageTemplate:
         DefaultEmailOption: CONFIRM_WITH_CODE
         EmailSubject: Verify your UsaRakhi account

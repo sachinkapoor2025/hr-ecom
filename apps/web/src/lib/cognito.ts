@@ -23,6 +23,12 @@ export interface AuthUser {
   isAdmin: boolean;
 }
 
+export interface RegisterResult {
+  userConfirmed: boolean;
+  deliveryDestination?: string;
+  deliveryMedium?: string;
+}
+
 const STORAGE_KEY = "hr_ecom_auth";
 
 export function loadStoredAuth(): AuthUser | null {
@@ -83,7 +89,7 @@ export function register(
   email: string,
   password: string,
   name?: string
-): Promise<{ userConfirmed: boolean }> {
+): Promise<RegisterResult> {
   if (!userPool && devAuth) {
     return Promise.resolve({ userConfirmed: true });
   }
@@ -100,7 +106,14 @@ export function register(
   return new Promise((resolve, reject) => {
     userPool.signUp(email, password, attrs, [], (err, result) => {
       if (err) reject(err);
-      else resolve({ userConfirmed: result?.userConfirmed ?? false });
+      else {
+        const delivery = result?.codeDeliveryDetails;
+        resolve({
+          userConfirmed: result?.userConfirmed ?? false,
+          deliveryDestination: delivery?.Destination,
+          deliveryMedium: delivery?.DeliveryMedium,
+        });
+      }
     });
   });
 }
@@ -130,9 +143,27 @@ export function isUnconfirmedError(err: unknown): boolean {
   );
 }
 
+function getAuthErrorCode(err: unknown): string | undefined {
+  if (!err || typeof err !== "object") return undefined;
+  return (err as { code?: string; name?: string }).code ?? (err as { name?: string }).name;
+}
+
 export function formatAuthError(err: unknown): string {
+  const code = getAuthErrorCode(err);
   if (isUnconfirmedError(err)) {
     return "Your email is not verified yet. Enter the code we sent you below.";
+  }
+  if (code === "CodeDeliveryFailureException") {
+    return "Cognito could not send the verification email. Please try resend; if it still fails, contact support.";
+  }
+  if (code === "LimitExceededException") {
+    return "Too many verification attempts. Please wait a few minutes, then try resend.";
+  }
+  if (code === "UsernameExistsException") {
+    return "An account already exists for this email. Log in, or use resend verification code if it is not verified yet.";
+  }
+  if (code === "InvalidPasswordException") {
+    return "Password must be at least 8 characters and include uppercase, lowercase, and a number.";
   }
   if (err instanceof Error && err.message) return err.message;
   return "Authentication failed";

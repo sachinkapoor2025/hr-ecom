@@ -58,14 +58,16 @@ function AccountLoginForm() {
         return;
       }
 
-      const { userConfirmed } = await register(email, password, name);
+      const { userConfirmed, deliveryDestination, deliveryMedium } = await register(email, password, name);
       if (userConfirmed) {
         setMessage("Account created! Signing you in...");
         await finishLogin();
       } else {
         setMode("confirm");
         setConfirmCode("");
-        setMessage(`Verification code requested for ${email}. Enter the code below to activate your account. Check your inbox and spam/junk folder if it does not arrive within a few minutes.`);
+        const destination = deliveryDestination ? ` to ${deliveryDestination}` : ` for ${email}`;
+        const channel = deliveryMedium ? ` by ${deliveryMedium.toLowerCase()}` : "";
+        setMessage(`Verification code sent${channel}${destination}. Enter the code below to activate your account. Check your inbox and spam/junk folder if it does not arrive within a few minutes.`);
       }
     } catch (err) {
       if (mode === "login" && isUnconfirmedError(err)) {

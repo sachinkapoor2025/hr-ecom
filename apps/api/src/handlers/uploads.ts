@@ -1,4 +1,4 @@
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import type { APIGatewayProxyEventV2 } from "aws-lambda";
 import { v4 as uuidv4 } from "uuid";
@@ -23,6 +23,43 @@ function publicUrl(key: string): string {
     return `${base}/uploads/${key}`;
   }
   return `https://${BUCKET}.s3.amazonaws.com/${key}`;
+}
+
+function keyFromPublicUrl(imageUrl: string): string | null {
+  try {
+    const parsed = new URL(imageUrl);
+    const hostname = parsed.hostname.toLowerCase();
+    const cdnHost = CDN_DOMAIN?.replace(/^https?:\/\//, "").replace(/\/$/, "").toLowerCase();
+    const s3Host = BUCKET ? `${BUCKET}.s3.amazonaws.com`.toLowerCase() : "";
+    const localApi = process.env.LOCAL_API_URL ?? "http://localhost:3001";
+    const localHost = new URL(localApi).host.toLowerCase();
+
+    if (cdnHost && hostname === cdnHost) return decodeURIComponent(parsed.pathname.replace(/^\/+/, ""));
+    if (s3Host && hostname === s3Host) return decodeURIComponent(parsed.pathname.replace(/^\/+/, ""));
+    if (process.env.USE_LOCAL_UPLOADS === "true" && parsed.host.toLowerCase() === localHost) {
+      const match = parsed.pathname.match(/^\/uploads\/(.+)$/);
+      return match ? decodeURIComponent(match[1]) : null;
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+async function deleteStoredImage(imageUrl: string): Promise<boolean> {
+  const key = keyFromPublicUrl(imageUrl);
+  if (!key) return false;
+
+  if (process.env.USE_LOCAL_UPLOADS === "true") {
+    const filePath = path.join(LOCAL_UPLOAD_DIR, key.replace(/\//g, "_"));
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    return true;
+  }
+
+  const s3 = getS3();
+  if (!s3 || !BUCKET) return false;
+  await s3.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: key }));
+  return true;
 }
 
 export async function getUploadUrl(event: APIGatewayProxyEventV2) {
@@ -81,11 +118,52 @@ export async function attachImageToProduct(event: APIGatewayProxyEventV2) {
   );
   if (!existing.Item) return badRequest("Product not found");
 
-  const images = [...((existing.Item.images as string[]) ?? []), imageUrl];
+  const currentImages = (existing.Item.images as string[]) ?? [];
+  const images = currentImages.includes(imageUrl) ? currentImages : [...currentImages, imageUrl];
   const updated = { ...existing.Item, images, updatedAt: now() };
 
   await docClient.send(new PutCommand({ TableName: PRODUCTS_TABLE, Item: updated }));
   return ok({ product: updated });
+}
+
+export async function deleteImageFromProduct(event: APIGatewayProxyEventV2) {
+  const auth = getAuth(event);
+  if (!auth?.isAdmin) return forbidden();
+
+  const slug = event.pathParameters?.slug;
+  if (!slug) return badRequest("Slug required");
+
+  const body = JSON.parse(event.body ?? "{}");
+  const imageUrl = body.imageUrl as string;
+  if (!imageUrl) return badRequest("imageUrl required");
+
+  const { GetCommand, PutCommand } = await import("@aws-sdk/lib-dynamodb");
+  const { docClient, PRODUCTS_TABLE, now } = await import("../lib/db");
+  const { productKeys } = await import("@hr-ecom/shared");
+
+  const existing = await docClient.send(
+    new GetCommand({
+      TableName: PRODUCTS_TABLE,
+      Key: { PK: productKeys.pk(slug), SK: productKeys.sk() },
+    })
+  );
+  if (!existing.Item) return badRequest("Product not found");
+
+  const currentImages = (existing.Item.images as string[]) ?? [];
+  if (!currentImages.includes(imageUrl)) return badRequest("Image not found on product");
+
+  const images = currentImages.filter((image) => image !== imageUrl);
+  const updated = { ...existing.Item, images, updatedAt: now() };
+  await docClient.send(new PutCommand({ TableName: PRODUCTS_TABLE, Item: updated }));
+
+  let storageDeleted = false;
+  try {
+    storageDeleted = await deleteStoredImage(imageUrl);
+  } catch {
+    storageDeleted = false;
+  }
+
+  return ok({ product: updated, deleted: true, storageDeleted });
 }
 
 /** Local dev: save uploaded file to disk */
