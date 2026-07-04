@@ -8,7 +8,7 @@ import {
 
 export async function loadProduct(slug: string): Promise<Product | null> {
   try {
-    const data = await api<{ product: Product }>(`/products/${slug}`, { revalidate: 3600 });
+    const data = await api<{ product: Product }>(`/products/${slug}`, { revalidate: false });
     return data.product;
   } catch {
     return getCatalogProduct(slug) ?? null;
