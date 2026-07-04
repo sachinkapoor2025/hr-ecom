@@ -108,7 +108,7 @@ export async function attachImageToProduct(event: APIGatewayProxyEventV2) {
 
   const { GetCommand, PutCommand } = await import("@aws-sdk/lib-dynamodb");
   const { docClient, PRODUCTS_TABLE, now } = await import("../lib/db");
-  const { productKeys } = await import("@hr-ecom/shared");
+  const { productKeys, mergeProductImages } = await import("@hr-ecom/shared");
 
   const existing = await docClient.send(
     new GetCommand({
@@ -119,7 +119,7 @@ export async function attachImageToProduct(event: APIGatewayProxyEventV2) {
   if (!existing.Item) return badRequest("Product not found");
 
   const currentImages = (existing.Item.images as string[]) ?? [];
-  const images = currentImages.includes(imageUrl) ? currentImages : [...currentImages, imageUrl];
+  const images = mergeProductImages(currentImages, [imageUrl]);
   const updated = { ...existing.Item, images, updatedAt: now() };
 
   await docClient.send(new PutCommand({ TableName: PRODUCTS_TABLE, Item: updated }));

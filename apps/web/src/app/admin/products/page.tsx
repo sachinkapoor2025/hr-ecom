@@ -260,7 +260,9 @@ export default function AdminProductsPage() {
           body: JSON.stringify({ imageUrl: presign.publicUrl }),
         });
       }
-      setMessage(`${selectedFiles.length} image${selectedFiles.length === 1 ? "" : "s"} uploaded for "${slug}".`);
+      setMessage(
+        `${selectedFiles.length} image${selectedFiles.length === 1 ? "" : "s"} uploaded for "${slug}". Visible on the website immediately after cache refresh.`
+      );
       await revalidateStorefrontProduct(slug);
       load();
     } catch (err) {

@@ -12,6 +12,7 @@ export * from "./schemas/contact";
 export * from "./schemas/coupon";
 export * from "./lib/currency-display";
 export * from "./lib/image-url";
+export * from "./lib/product-images";
 export * from "./lib/product-sales";
 export * from "./lib/sales-report";
 export * from "./lib/review-email";

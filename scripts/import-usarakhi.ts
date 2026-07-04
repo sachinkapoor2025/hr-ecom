@@ -9,8 +9,15 @@
 import { writeFileSync, mkdirSync, readFileSync, existsSync } from "fs";
 import { join } from "path";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb";
-import { productKeys, categoryKeys, configKeys, defaultPaymentConfig, metaDescription } from "@hr-ecom/shared";
+import { DynamoDBDocumentClient, GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
+import {
+  productKeys,
+  categoryKeys,
+  configKeys,
+  defaultPaymentConfig,
+  metaDescription,
+  mergeProductImages,
+} from "@hr-ecom/shared";
 
 const CATALOG_PATH = join(process.cwd(), "scripts/data/usarakhi-catalog.json");
 const WC_BASE = "https://usarakhi.com/wp-json/wc/store/v1";
@@ -297,18 +304,35 @@ async function importToDb(catalog: { categories: CatalogCategory[]; products: Ca
     );
   }
 
+  let mergedImageCount = 0;
+
   for (const p of catalog.products) {
+    const existing = await docClient.send(
+      new GetCommand({
+        TableName: PRODUCTS_TABLE,
+        Key: { PK: productKeys.pk(p.slug), SK: productKeys.sk() },
+      })
+    );
+    const prev = existing.Item as Record<string, unknown> | undefined;
+    const previousImages = (prev?.images as string[] | undefined) ?? [];
+    const mergedImages = mergeProductImages(p.images ?? [], previousImages);
+    if (mergedImages.length > previousImages.length) mergedImageCount++;
+
     await docClient.send(
       new PutCommand({
         TableName: PRODUCTS_TABLE,
         Item: {
           ...p,
-          published: true,
+          images: mergedImages,
+          inventory: typeof prev?.inventory === "number" ? prev.inventory : p.inventory,
+          published: typeof prev?.published === "boolean" ? prev.published : true,
+          unitsSold: prev?.unitsSold,
+          lowStockAlertSentAt: prev?.lowStockAlertSentAt,
           PK: productKeys.pk(p.slug),
           SK: productKeys.sk(),
           GSI1PK: productKeys.gsi1pk(p.categorySlug),
           GSI1SK: productKeys.gsi1sk(p.slug),
-          createdAt: timestamp,
+          createdAt: (prev?.createdAt as string | undefined) ?? timestamp,
           updatedAt: timestamp,
         },
       })
@@ -327,7 +351,9 @@ async function importToDb(catalog: { categories: CatalogCategory[]; products: Ca
     })
   );
 
-  console.log(`Imported ${catalog.categories.length} categories, ${catalog.products.length} products → ${PRODUCTS_TABLE}`);
+  console.log(
+    `Imported ${catalog.categories.length} categories, ${catalog.products.length} products → ${PRODUCTS_TABLE} (merged extra images for ${mergedImageCount} products)`
+  );
 }
 
 async function main() {
