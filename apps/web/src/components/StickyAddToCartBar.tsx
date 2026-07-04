@@ -6,7 +6,13 @@ import { useCurrency } from "@/lib/currency-context";
 import type { Product } from "@hr-ecom/shared";
 
 /** Fixed bottom bar on mobile so Add to Cart stays visible while scrolling. */
-export function StickyAddToCartBar({ product }: { product: Product }) {
+export function StickyAddToCartBar({
+  product,
+  getContact,
+}: {
+  product: Product;
+  getContact?: () => { name?: string; email?: string; phone?: string };
+}) {
   const { format } = useCurrency();
   const [visible, setVisible] = useState(false);
 
@@ -29,7 +35,7 @@ export function StickyAddToCartBar({ product }: { product: Product }) {
           <p className="font-bold text-primary">{format(product.price, product.currency)}</p>
         </div>
         <div className="w-[9.5rem] shrink-0">
-          <AddToCartControl productSlug={product.slug} disabled={false} fullWidth variant="detail" />
+          <AddToCartControl productSlug={product.slug} disabled={false} fullWidth variant="detail" getContact={getContact} />
         </div>
       </div>
     </div>

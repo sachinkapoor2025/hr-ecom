@@ -1,13 +1,15 @@
 import Link from "next/link";
 import type { CategoryRichContent } from "@/lib/content/category-rich-content";
+import type { Product } from "@hr-ecom/shared";
 import { site, whatsappChatUrl } from "@/lib/site";
 
 interface Props {
   content: CategoryRichContent;
   categoryName: string;
+  products?: Product[];
 }
 
-export function CategoryContentSection({ content, categoryName }: Props) {
+export function CategoryContentSection({ content, categoryName, products = [] }: Props) {
   return (
     <div className="mt-12 pt-10 border-t border-slate-200">
       <div className="grid lg:grid-cols-2 gap-10 xl:gap-14">
@@ -91,6 +93,26 @@ export function CategoryContentSection({ content, categoryName }: Props) {
               ))}
             </ul>
           </section>
+
+          {products.length > 0 && (
+            <section className="bg-white border border-slate-200 rounded-xl p-6">
+              <h3 className="text-lg font-semibold text-primary mb-4">Popular products</h3>
+              <ul className="space-y-2 text-sm">
+                {products.slice(0, 8).map((product) => (
+                  <li key={product.slug}>
+                    <Link href={`/products/${product.slug}`} className="font-medium text-nav hover:underline">
+                      {product.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+              {products.length > 8 && (
+                <p className="text-xs text-slate-500 mt-3">
+                  +{products.length - 8} more in the product list above
+                </p>
+              )}
+            </section>
+          )}
 
           <section className="bg-nav text-white rounded-xl p-6">
             <h3 className="text-lg font-semibold mb-2">Need help choosing {categoryName}?</h3>

@@ -81,11 +81,24 @@ export function shippingStatusLabel(status: string): string {
 }
 
 export function formatDurationMs(ms: number): string {
-  if (!Number.isFinite(ms) || ms <= 0) return "0s";
+  if (!Number.isFinite(ms) || ms <= 0) return "<1s";
+  if (ms < 1000) return "<1s";
   if (ms < 60_000) return `${Math.round(ms / 1000)}s`;
   if (ms < 3_600_000) return `${Math.round(ms / 60_000)}m`;
   if (ms < 86_400_000) return `${Math.round(ms / 3_600_000)}h`;
   return `${Math.round(ms / 86_400_000)}d`;
+}
+
+/** Prefer measured active time (page pings) over first/last event gap. */
+export function sessionDurationMs(session: {
+  firstSeen: string;
+  lastSeen: string;
+  activeDurationMs?: number;
+}): number {
+  if (session.activeDurationMs && session.activeDurationMs > 0) {
+    return session.activeDurationMs;
+  }
+  return new Date(session.lastSeen).getTime() - new Date(session.firstSeen).getTime();
 }
 
 export function referrerLabel(referrer?: string): string {

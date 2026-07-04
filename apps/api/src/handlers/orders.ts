@@ -24,6 +24,7 @@ import { notifyAdminLead, notifyAdminOrderPaid, notifyAdminOrderPlaced } from ".
 import { decrementInventoryForOrder, validateOrderInventory } from "../lib/inventory";
 import { applyDeliveryReviewSchedule } from "./review-emails";
 import { markCartConverted } from "./abandoned-cart-emails";
+import { upsertSessionProfile } from "../lib/customer-profile";
 import {
   applyPercentDiscount,
   issueWelcomeCoupon,
@@ -60,12 +61,6 @@ function normalizeEmail(email?: string): string | undefined {
   const trimmed = email?.trim();
   if (!trimmed || !trimmed.includes("@")) return undefined;
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed) ? trimmed : undefined;
-}
-
-function pickContactField(incoming?: string, existing?: string): string | undefined {
-  const next = incoming?.trim();
-  if (next) return next;
-  return existing;
 }
 
 export async function captureLead(event: APIGatewayProxyEventV2) {
@@ -114,31 +109,11 @@ export async function captureLead(event: APIGatewayProxyEventV2) {
     })
   );
 
-  const existing = await docClient.send(
-    new GetCommand({
-      TableName: CUSTOMERS_TABLE,
-      Key: { PK: customerKeys.pk(sessionId), SK: customerKeys.profileSk() },
-    })
-  );
-  const prev = existing.Item ?? {};
-
-  // session identity rollup — merge so partial field updates don't wipe other fields
-  await docClient.send(
-    new PutCommand({
-      TableName: CUSTOMERS_TABLE,
-      Item: {
-        sessionId,
-        PK: customerKeys.pk(sessionId),
-        SK: customerKeys.profileSk(),
-        createdAt: (prev.createdAt as string) ?? timestamp,
-        lastSeenAt: timestamp,
-        updatedAt: timestamp,
-        name: pickContactField(leadPayload.name, prev.name as string | undefined),
-        email: email ?? (prev.email as string | undefined),
-        phone: pickContactField(leadPayload.phone, prev.phone as string | undefined),
-      },
-    })
-  );
+  await upsertSessionProfile(sessionId, {
+    name: leadPayload.name,
+    email: leadPayload.email,
+    phone: leadPayload.phone,
+  });
 
   const emailResult = await notifyAdminLead(leadPayload);
   const emailRequired =
@@ -225,11 +200,20 @@ export async function checkout(event: APIGatewayProxyEventV2) {
   const orderId = uuidv4();
   const timestamp = now();
   const auth = getAuth(event);
+  const sessionId = getSessionId(event);
+
+  if (sessionId) {
+    await upsertSessionProfile(sessionId, {
+      name: parsed.data.shippingAddress.name,
+      email: parsed.data.shippingAddress.email,
+      phone: parsed.data.shippingAddress.phone,
+    });
+  }
 
   const order: Order = {
     orderId,
     userId: auth?.userId,
-    sessionId: getSessionId(event),
+    sessionId,
     items: orderItems,
     subtotal,
     discount,

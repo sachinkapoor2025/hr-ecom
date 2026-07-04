@@ -9,6 +9,7 @@ export const eventTypeEnum = z.enum([
   EVENT_TYPES.CART_REMOVE,
   EVENT_TYPES.CHECKOUT_START,
   EVENT_TYPES.PURCHASE,
+  EVENT_TYPES.SESSION_PING,
 ]);
 
 export const trackEventSchema = z.object({
