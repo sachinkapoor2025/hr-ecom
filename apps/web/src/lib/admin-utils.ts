@@ -58,6 +58,21 @@ export function formatMoney(amount: number, currency: string) {
   return new Intl.NumberFormat(undefined, { style: "currency", currency }).format(amount);
 }
 
+export type PaymentFilterCategory = "pending" | "paid" | "failed" | "refunded";
+
+/** Maps order status to the payment filter dropdown category. */
+export function paymentFilterCategory(status: string): PaymentFilterCategory {
+  if (status === ORDER_STATUS.PENDING_PAYMENT) return "pending";
+  if (status === ORDER_STATUS.REFUNDED) return "refunded";
+  if (status === ORDER_STATUS.CANCELLED) return "failed";
+  return "paid";
+}
+
+export function matchesPaymentFilter(status: string, filter: string): boolean {
+  if (filter === "all") return true;
+  return paymentFilterCategory(status) === filter;
+}
+
 export function paymentStatusLabel(status: string): string {
   if (status === ORDER_STATUS.PENDING_PAYMENT) return "Pending";
   if (status === ORDER_STATUS.REFUNDED) return "Refunded";

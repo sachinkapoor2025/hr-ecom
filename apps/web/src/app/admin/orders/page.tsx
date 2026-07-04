@@ -2,12 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useApiClient } from "@/lib/auth-context";
+import { useApiClient, useAuth } from "@/lib/auth-context";
 import { ORDER_STATUS } from "@hr-ecom/shared";
 import { statusLabel, badgeClass } from "@/lib/order-status";
 import {
   downloadCsv,
   formatMoney,
+  matchesPaymentFilter,
   paginate,
   paymentStatusClass,
   paymentStatusLabel,
@@ -54,6 +55,7 @@ const PAYMENT_FILTERS = [
 
 export default function AdminOrdersPage() {
   const apiClient = useApiClient();
+  const { isSuperAdmin } = useAuth();
   const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -68,6 +70,7 @@ export default function AdminOrdersPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [deleting, setDeleting] = useState(false);
 
   const loadOrders = useCallback(() => {
     setLoading(true);
@@ -89,15 +92,7 @@ export default function AdminOrdersPage() {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     let list = orders.filter((o) => {
-      if (paymentFilter === "pending" && o.status !== ORDER_STATUS.PENDING_PAYMENT) return false;
-      if (paymentFilter === "paid" && o.status === ORDER_STATUS.PENDING_PAYMENT) return false;
-      if (
-        paymentFilter === "failed" &&
-        o.status !== ORDER_STATUS.CANCELLED &&
-        o.status !== ORDER_STATUS.PENDING_PAYMENT
-      )
-        return false;
-      if (paymentFilter === "refunded" && o.status !== ORDER_STATUS.REFUNDED) return false;
+      if (!matchesPaymentFilter(o.status, paymentFilter)) return false;
       if (paymentMethod !== "all" && o.paymentProvider !== paymentMethod) return false;
       if (dateFrom && o.createdAt.slice(0, 10) < dateFrom) return false;
       if (dateTo && o.createdAt.slice(0, 10) > dateTo) return false;
@@ -197,6 +192,37 @@ export default function AdminOrdersPage() {
     downloadCsv(`orders-selected-${new Date().toISOString().slice(0, 10)}.csv`, rows);
   };
 
+  const deleteOrders = async (orderIds: string[]) => {
+    if (!orderIds.length) return;
+    const label =
+      orderIds.length === 1
+        ? `Delete order ${orderIds[0].slice(0, 8)}…? This cannot be undone.`
+        : `Delete ${orderIds.length} selected orders? This cannot be undone.`;
+    if (!window.confirm(label)) return;
+
+    setDeleting(true);
+    try {
+      if (orderIds.length === 1) {
+        await apiClient(`/admin/orders/${orderIds[0]}`, { method: "DELETE" });
+      } else {
+        await apiClient("/admin/orders/bulk-delete", {
+          method: "POST",
+          body: JSON.stringify({ orderIds }),
+        });
+      }
+      setSelected((prev) => {
+        const next = new Set(prev);
+        orderIds.forEach((id) => next.delete(id));
+        return next;
+      });
+      loadOrders();
+    } catch (err) {
+      window.alert(err instanceof Error ? err.message : "Delete failed.");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const sortLabels: Record<SortKey, string> = {
     date: "Date",
     amount: "Amount",
@@ -222,7 +248,10 @@ export default function AdminOrdersPage() {
           <button
             key={t.id}
             type="button"
-            onClick={() => setTab(t.id)}
+            onClick={() => {
+              setTab(t.id);
+              setPaymentFilter("all");
+            }}
             className={`px-3 py-1.5 rounded-full text-sm border ${
               tab === t.id
                 ? "bg-nav text-white border-nav"
@@ -296,13 +325,25 @@ export default function AdminOrdersPage() {
         onExport={exportOrders}
       >
         {selected.size > 0 && (
-          <button
-            type="button"
-            onClick={bulkExport}
-            className="text-sm bg-slate-800 text-white px-3 py-1.5 rounded-lg"
-          >
-            Export {selected.size} selected
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={bulkExport}
+              className="text-sm bg-slate-800 text-white px-3 py-1.5 rounded-lg"
+            >
+              Export {selected.size} selected
+            </button>
+            {isSuperAdmin && (
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={() => deleteOrders([...selected])}
+                className="text-sm bg-red-600 text-white px-3 py-1.5 rounded-lg disabled:opacity-50"
+              >
+                Delete {selected.size} selected
+              </button>
+            )}
+          </>
         )}
       </TableControls>
 
@@ -338,6 +379,7 @@ export default function AdminOrdersPage() {
                 <th className="py-3 px-3">Shipping</th>
                 <th className="py-3 px-3">Total</th>
                 <th className="py-3 px-3">Updated</th>
+                {isSuperAdmin && <th className="py-3 px-3 w-20">Actions</th>}
               </tr>
             </thead>
             <tbody>
@@ -401,6 +443,18 @@ export default function AdminOrdersPage() {
                   <td className="py-3 px-3 text-xs text-slate-400 whitespace-nowrap">
                     {new Date(o.updatedAt).toLocaleString()}
                   </td>
+                  {isSuperAdmin && (
+                    <td className="py-3 px-3" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        type="button"
+                        disabled={deleting}
+                        onClick={() => deleteOrders([o.orderId])}
+                        className="text-xs text-red-600 hover:text-red-800 disabled:opacity-50"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

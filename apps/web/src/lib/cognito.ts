@@ -21,6 +21,7 @@ export interface AuthUser {
   name?: string;
   token: string;
   isAdmin: boolean;
+  isSuperAdmin: boolean;
 }
 
 export interface RegisterResult {
@@ -48,11 +49,14 @@ export function storeAuth(user: AuthUser | null) {
 
 export function login(email: string, password: string): Promise<AuthUser> {
   if (!userPool && devAuth) {
-    const isAdmin = email.includes("admin");
+    const isSuperAdmin = email.toLowerCase().includes("superadmin");
+    const isAdmin = isSuperAdmin || email.toLowerCase().includes("admin");
+    const role = isSuperAdmin ? "super-admin" : isAdmin ? "admin" : "customer";
     const user: AuthUser = {
       email,
-      token: `dev:${email}:${isAdmin ? "admin" : "customer"}`,
+      token: `dev:${email}:${role}`,
       isAdmin,
+      isSuperAdmin,
     };
     storeAuth(user);
     return Promise.resolve(user);
@@ -71,11 +75,13 @@ export function login(email: string, password: string): Promise<AuthUser> {
         const token = session.getIdToken().getJwtToken();
         const payload = session.getIdToken().decodePayload();
         const groups: string[] = payload["cognito:groups"] ?? [];
+        const isSuperAdmin = groups.includes("super-admin");
         const authUser: AuthUser = {
           email,
           name: payload.name as string | undefined,
           token,
-          isAdmin: groups.includes("admin"),
+          isSuperAdmin,
+          isAdmin: groups.includes("admin") || isSuperAdmin,
         };
         storeAuth(authUser);
         resolve(authUser);

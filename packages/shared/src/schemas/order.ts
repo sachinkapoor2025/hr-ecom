@@ -73,6 +73,11 @@ export const orderSchema = z.object({
   reviewEmailSentAt: z.string().optional(),
 });
 
+/** Super-admin bulk delete (testing cleanup). */
+export const bulkDeleteOrdersSchema = z.object({
+  orderIds: z.array(z.string().min(1)).min(1).max(100),
+});
+
 /** Admin order status update payload. */
 export const orderStatusUpdateSchema = z.object({
   status: orderStatusEnum.optional(),
