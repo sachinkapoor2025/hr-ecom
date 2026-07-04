@@ -59,16 +59,14 @@ export default async function BlogPostPage({ params }: Props) {
         <p className="text-base sm:text-lg text-slate-600 break-words">{post.excerpt}</p>
       </header>
 
-      <div className="relative w-full max-h-[420px] min-h-[200px] rounded-xl overflow-hidden mb-8 bg-slate-100 flex items-center justify-center p-3">
+      <div className="relative w-full aspect-[16/10] max-h-[420px] rounded-xl overflow-hidden mb-8 bg-slate-100">
         {post.image ? (
-          <>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
+          // eslint-disable-next-line @next/next/no-img-element
           <img
             src={post.image}
             alt={post.title}
-            className="w-full h-auto max-h-[420px] object-contain"
+            className="h-full w-full object-cover"
           />
-          </>
         ) : (
           <div className="flex min-h-[200px] w-full items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50 text-center text-sm font-semibold uppercase tracking-wide text-slate-400">
             Blog image placeholder

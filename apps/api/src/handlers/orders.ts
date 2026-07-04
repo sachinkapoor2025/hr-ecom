@@ -21,7 +21,7 @@ import { docClient, ORDERS_TABLE, CUSTOMERS_TABLE, now } from "../lib/db";
 import { ok, created, badRequest, unauthorized, forbidden, notFound } from "../lib/response";
 import { getAuth, getSessionId, getUserOrSessionKey, requireAdmin, requireSuperAdmin } from "../lib/auth";
 import { getCartHandler, clearCartForUser } from "./cart";
-import { notifyAdminLead, notifyAdminOrderPaid, notifyAdminOrderPlaced } from "../lib/email";
+import { notifyAdminLead, notifyAdminOrderPaid, notifyAdminOrderPlaced, notifyAdminOrderPaymentFailed } from "../lib/email";
 import { decrementInventoryForOrder, validateOrderInventory } from "../lib/inventory";
 import { applyDeliveryReviewSchedule } from "./review-emails";
 import { markCartConverted } from "./abandoned-cart-emails";
@@ -402,6 +402,13 @@ export async function updateOrderStatus(event: APIGatewayProxyEventV2) {
   };
 
   await docClient.send(new PutCommand({ TableName: ORDERS_TABLE, Item: updated }));
+  if (
+    order.status === ORDER_STATUS.PENDING_PAYMENT &&
+    nextStatus === ORDER_STATUS.CANCELLED
+  ) {
+    const emailResult = await notifyAdminOrderPaymentFailed(updated);
+    if (!emailResult.ok) console.error("Order payment failed email failed:", emailResult.error);
+  }
   return ok({ order: updated });
 }
 
@@ -481,6 +488,38 @@ export async function markOrderPaid(
   await decrementInventoryForOrder(updated);
   const emailResult = await notifyAdminOrderPaid(updated);
   if (!emailResult.ok) console.error("Order paid email failed:", emailResult.error);
+}
+
+/** Mark checkout cancelled after failed or abandoned payment. */
+export async function markOrderPaymentFailed(
+  orderId: string | undefined,
+  note?: string
+): Promise<void> {
+  if (!orderId) return;
+  const order = await fetchOrder(orderId);
+  if (!order) return;
+  if (order.status !== ORDER_STATUS.PENDING_PAYMENT) return;
+
+  const timestamp = now();
+  const updated: StoredOrder = {
+    ...order,
+    status: ORDER_STATUS.CANCELLED,
+    statusHistory: [
+      ...(order.statusHistory ?? []),
+      {
+        status: ORDER_STATUS.CANCELLED,
+        at: timestamp,
+        note: note ?? "Payment failed or cancelled",
+      },
+    ],
+    updatedAt: timestamp,
+    GSI3PK: orderKeys.gsi3pk(ORDER_STATUS.CANCELLED),
+    GSI3SK: orderKeys.gsi3sk(order.createdAt),
+  };
+
+  await docClient.send(new PutCommand({ TableName: ORDERS_TABLE, Item: updated }));
+  const emailResult = await notifyAdminOrderPaymentFailed(updated);
+  if (!emailResult.ok) console.error("Order payment failed email failed:", emailResult.error);
 }
 
 /** Lookup an order by id (used by Razorpay verify for ownership/amount checks). */

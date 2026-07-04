@@ -364,6 +364,10 @@ function formatAddress(order: Order): string {
     .join("\n");
 }
 
+function adminOrderSubject(label: string, order: Order): string {
+  return `[${SITE_NAME}] ${label} — ${order.orderId.slice(0, 8)} (${order.currency} ${order.total.toFixed(2)})`;
+}
+
 function buildOrderAdminBody(order: Order, headline: string): string {
   return [
     headline,
@@ -386,10 +390,10 @@ function buildOrderAdminBody(order: Order, headline: string): string {
 export async function notifyAdminOrderPlaced(order: Order): Promise<EmailSendResult> {
   return sendEmail({
     to: notifyAddress(),
-    subject: `[${SITE_NAME}] New order placed — ${order.orderId.slice(0, 8)} (${order.currency} ${order.total.toFixed(2)})`,
+    subject: adminOrderSubject("Order added in cart - payment pending", order),
     text: buildOrderAdminBody(
       order,
-      `A customer placed a new order on ${SITE_NAME}. Payment may still be processing.`
+      `A customer started checkout on ${SITE_NAME}. Payment is still pending — not a confirmed order yet.`
     ),
     replyTo: order.shippingAddress?.email,
   });
@@ -398,8 +402,8 @@ export async function notifyAdminOrderPlaced(order: Order): Promise<EmailSendRes
 export async function notifyAdminOrderPaid(order: Order): Promise<EmailSendResult> {
   const admin = await sendEmail({
     to: notifyAddress(),
-    subject: `[${SITE_NAME}] ✅ Payment received — Order ${order.orderId.slice(0, 8)} (${order.currency} ${order.total.toFixed(2)})`,
-    text: buildOrderAdminBody(order, `Payment confirmed — new order on ${SITE_NAME}`),
+    subject: adminOrderSubject("New order - paid", order),
+    text: buildOrderAdminBody(order, `Payment confirmed — new paid order on ${SITE_NAME}.`),
     replyTo: order.shippingAddress?.email,
   });
 
@@ -426,6 +430,18 @@ Questions? Reply to this email or WhatsApp us.
   }
 
   return { ok: true };
+}
+
+export async function notifyAdminOrderPaymentFailed(order: Order): Promise<EmailSendResult> {
+  return sendEmail({
+    to: notifyAddress(),
+    subject: adminOrderSubject("New order - payment failed", order),
+    text: buildOrderAdminBody(
+      order,
+      `Checkout on ${SITE_NAME} was cancelled or payment failed. No payment was received.`
+    ),
+    replyTo: order.shippingAddress?.email,
+  });
 }
 
 export async function notifyLowStock(product: Product, inventory: number): Promise<EmailSendResult> {
