@@ -69,6 +69,7 @@ export async function getUploadUrl(event: APIGatewayProxyEventV2) {
   const body = JSON.parse(event.body ?? "{}");
   const filename = body.filename as string;
   const contentType = (body.contentType as string) ?? "image/jpeg";
+  const productSlug = (body.productSlug as string | undefined)?.trim();
 
   if (!filename) return badRequest("filename required");
 
@@ -89,10 +90,31 @@ export async function getUploadUrl(event: APIGatewayProxyEventV2) {
     Bucket: BUCKET,
     Key: key,
     ContentType: contentType,
+    ...(productSlug ? { Metadata: { "product-slug": productSlug } } : {}),
   });
 
   const uploadUrl = await getSignedUrl(s3, command, { expiresIn: 300 });
   return ok({ mode: "s3", key, uploadUrl, publicUrl: publicUrl(key) });
+}
+
+async function recordUploadRegistry(slug: string, imageUrl: string, storageKey: string | null) {
+  if (!storageKey) return;
+  const { PutCommand } = await import("@aws-sdk/lib-dynamodb");
+  const { docClient, CONFIG_TABLE, now } = await import("../lib/db");
+  const { uploadRegistryKeys } = await import("@hr-ecom/shared");
+  await docClient.send(
+    new PutCommand({
+      TableName: CONFIG_TABLE,
+      Item: {
+        PK: uploadRegistryKeys.pk(storageKey),
+        SK: uploadRegistryKeys.sk(),
+        productSlug: slug,
+        imageUrl,
+        storageKey,
+        createdAt: now(),
+      },
+    })
+  );
 }
 
 export async function attachImageToProduct(event: APIGatewayProxyEventV2) {
@@ -108,7 +130,7 @@ export async function attachImageToProduct(event: APIGatewayProxyEventV2) {
 
   const { GetCommand, PutCommand } = await import("@aws-sdk/lib-dynamodb");
   const { docClient, PRODUCTS_TABLE, now } = await import("../lib/db");
-  const { productKeys } = await import("@hr-ecom/shared");
+  const { productKeys, mergeProductImages } = await import("@hr-ecom/shared");
 
   const existing = await docClient.send(
     new GetCommand({
@@ -119,11 +141,13 @@ export async function attachImageToProduct(event: APIGatewayProxyEventV2) {
   if (!existing.Item) return badRequest("Product not found");
 
   const currentImages = (existing.Item.images as string[]) ?? [];
-  const images = currentImages.includes(imageUrl) ? currentImages : [...currentImages, imageUrl];
+  const images = mergeProductImages(currentImages, [imageUrl]);
   const updated = { ...existing.Item, images, updatedAt: now() };
 
   await docClient.send(new PutCommand({ TableName: PRODUCTS_TABLE, Item: updated }));
-  return ok({ product: updated });
+  await recordUploadRegistry(slug, imageUrl, keyFromPublicUrl(imageUrl));
+  const { withResolvedProductImages } = await import("../lib/images");
+  return ok({ product: withResolvedProductImages(updated) });
 }
 
 export async function deleteImageFromProduct(event: APIGatewayProxyEventV2) {

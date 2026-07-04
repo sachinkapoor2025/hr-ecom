@@ -28,7 +28,7 @@ export default async function HomePage() {
 
   try {
     const [productsData, categoriesData] = await Promise.all([
-      api<{ products: Product[] }>("/products"),
+      api<{ products: Product[] }>("/products", { revalidate: false }),
       api<{ categories: Category[] }>("/categories"),
     ]);
     products = productsData.products;

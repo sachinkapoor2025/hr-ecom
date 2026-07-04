@@ -38,11 +38,11 @@ export async function api<T>(path: string, options: ApiOptions = {}): Promise<T>
 
   const isServer = typeof window === "undefined";
   const needsFresh = Boolean(sessionId || token || revalidate === false);
-  const cacheOptions: Pick<RequestInit, "cache" | "next"> = isServer
-    ? needsFresh
-      ? { cache: "no-store" }
-      : { next: { revalidate: typeof revalidate === "number" ? revalidate : 300 } }
-    : { cache: "default" };
+  const cacheOptions: Pick<RequestInit, "cache" | "next"> = needsFresh
+    ? { cache: "no-store" }
+    : isServer
+      ? { next: { revalidate: typeof revalidate === "number" ? revalidate : 300 } }
+      : { cache: "default" };
 
   const res = await fetchWithRetry(url, {
     ...fetchOptions,

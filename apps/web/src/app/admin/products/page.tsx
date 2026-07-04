@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useApiClient } from "@/lib/auth-context";
+import { useApiClient, useAuth } from "@/lib/auth-context";
 import type { Product } from "@hr-ecom/shared";
 import { DEFAULT_PRODUCT_INVENTORY, LOW_STOCK_THRESHOLD } from "@hr-ecom/shared";
 import { getUnitsSold, isFastSelling } from "@hr-ecom/shared";
@@ -11,6 +11,7 @@ import { TableControls } from "@/components/admin/TableControls";
 
 export default function AdminProductsPage() {
   const apiClient = useApiClient();
+  const { token } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<{ slug: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
@@ -198,6 +199,22 @@ export default function AdminProductsPage() {
     return null;
   };
 
+  const revalidateStorefrontProduct = async (slug: string) => {
+    if (!token) return;
+    try {
+      await fetch("/api/revalidate/product", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ slug }),
+      });
+    } catch {
+      /* non-blocking */
+    }
+  };
+
   const bulkUpload = async () => {
     const lines = csv.trim().split("\n");
     if (lines.length < 2) {
@@ -235,7 +252,7 @@ export default function AdminProductsPage() {
         const contentType = file.type || "image/jpeg";
         const presign = await apiClient<{ uploadUrl: string; publicUrl: string }>("/uploads/presign", {
           method: "POST",
-          body: JSON.stringify({ filename: file.name, contentType }),
+          body: JSON.stringify({ filename: file.name, contentType, productSlug: slug }),
         });
         await fetch(presign.uploadUrl, { method: "PUT", body: file, headers: { "Content-Type": contentType } });
         await apiClient(`/products/${slug}/images`, {
@@ -243,7 +260,10 @@ export default function AdminProductsPage() {
           body: JSON.stringify({ imageUrl: presign.publicUrl }),
         });
       }
-      setMessage(`${selectedFiles.length} image${selectedFiles.length === 1 ? "" : "s"} uploaded for "${slug}".`);
+      setMessage(
+        `${selectedFiles.length} image${selectedFiles.length === 1 ? "" : "s"} uploaded for "${slug}". Visible on the website immediately after cache refresh.`
+      );
+      await revalidateStorefrontProduct(slug);
       load();
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "Upload failed");
@@ -261,6 +281,7 @@ export default function AdminProductsPage() {
         body: JSON.stringify({ imageUrl }),
       });
       setMessage(`Image ${imageNumber} deleted from "${slug}".`);
+      await revalidateStorefrontProduct(slug);
       load();
     } catch (err) {
       setMessage(err instanceof Error ? err.message : "Image delete failed");

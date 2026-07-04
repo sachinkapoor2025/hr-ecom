@@ -9,13 +9,22 @@ import { saveWelcomeCoupon, formatCouponExpiry } from "@/lib/welcome-coupon";
 
 const STORAGE_KEY = "usarakhi_exit_intent_shown";
 
+function isValidEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+}
+
 export function ExitIntentPopup() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "done">("idle");
   const [error, setError] = useState("");
-  const [coupon, setCoupon] = useState<{ code: string; expiresAt: string; discountPercent: number } | null>(null);
+  const [coupon, setCoupon] = useState<{
+    code: string;
+    expiresAt: string;
+    discountPercent: number;
+    reused?: boolean;
+  } | null>(null);
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -46,20 +55,25 @@ export function ExitIntentPopup() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim() || status !== "idle") return;
+    const trimmedEmail = email.trim();
+    if (status !== "idle") return;
+    if (!isValidEmail(trimmedEmail)) {
+      setError("Enter a valid email address to get your coupon.");
+      return;
+    }
     setStatus("sending");
     setError("");
     const sessionId = getOrCreateSessionId();
     try {
       const res = await api<{
         ok: boolean;
-        coupon?: { code: string; expiresAt: string; discountPercent: number };
+        coupon?: { code: string; expiresAt: string; discountPercent: number; reused?: boolean };
       }>("/leads", {
         method: "POST",
         sessionId,
         body: JSON.stringify({
           sessionId,
-          email: email.trim(),
+          email: trimmedEmail,
           page: pathname,
           source: "newsletter",
           metadata: { offer: "first_order_10_percent", trigger: "exit_intent" },
@@ -67,7 +81,7 @@ export function ExitIntentPopup() {
       });
       if (res.coupon) {
         setCoupon(res.coupon);
-        saveWelcomeCoupon({ ...res.coupon, email: email.trim() });
+        saveWelcomeCoupon({ ...res.coupon, email: trimmedEmail });
       }
       setStatus("done");
     } catch (err) {
@@ -98,7 +112,9 @@ export function ExitIntentPopup() {
             {coupon ? (
               <>
                 <p className="text-sm text-slate-600 mb-3">
-                  Your {coupon.discountPercent}% off code (valid 4 hours):
+                  {coupon.reused
+                    ? `You already have an active ${coupon.discountPercent}% off code:`
+                    : `Your ${coupon.discountPercent}% off code (valid 4 hours):`}
                 </p>
                 <div className="rounded-lg border-2 border-dashed border-nav bg-slate-50 px-4 py-3 mb-3">
                   <div className="flex items-center justify-center gap-2">

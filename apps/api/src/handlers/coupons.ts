@@ -1,4 +1,4 @@
-import { GetCommand, PutCommand, ScanCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import { GetCommand, PutCommand, ScanCommand, TransactWriteCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import type { APIGatewayProxyEventV2 } from "aws-lambda";
 import { randomBytes } from "crypto";
 import {
@@ -30,6 +30,42 @@ function welcomeExpiresAt(from = new Date()): string {
 
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
+}
+
+type WelcomeCouponIssueResult = {
+  code: string;
+  expiresAt: string;
+  discountPercent: number;
+  reused: boolean;
+};
+
+async function getWelcomeEmailCode(email: string): Promise<string | undefined> {
+  const existing = await docClient.send(
+    new GetCommand({
+      TableName: CONFIG_TABLE,
+      Key: { PK: couponKeys.welcomeEmailPk(email), SK: couponKeys.welcomeEmailSk() },
+    })
+  );
+
+  return existing.Item?.code as string | undefined;
+}
+
+async function getActiveWelcomeCouponForEmail(
+  email: string,
+  code = ""
+): Promise<WelcomeCouponIssueResult | null> {
+  const activeCode = code || (await getWelcomeEmailCode(email));
+  if (!activeCode) return null;
+
+  const active = await validateCouponRecord(activeCode, email);
+  if (!active.valid) return null;
+
+  return {
+    code: active.code!,
+    expiresAt: active.expiresAt!,
+    discountPercent: active.discountPercent!,
+    reused: true,
+  };
 }
 
 export async function validateCouponRecord(
@@ -74,29 +110,14 @@ export async function validateCouponRecord(
 export async function issueWelcomeCoupon(input: {
   email: string;
   sessionId?: string;
-}): Promise<{ code: string; expiresAt: string; discountPercent: number }> {
+}): Promise<WelcomeCouponIssueResult> {
   const email = normalizeEmail(input.email);
   const timestamp = now();
   const expiresAt = welcomeExpiresAt();
 
-  const existing = await docClient.send(
-    new GetCommand({
-      TableName: CONFIG_TABLE,
-      Key: { PK: couponKeys.welcomeEmailPk(email), SK: couponKeys.welcomeEmailSk() },
-    })
-  );
-
-  const activeCode = existing.Item?.code as string | undefined;
-  if (activeCode) {
-    const active = await validateCouponRecord(activeCode, email);
-    if (active.valid) {
-      return {
-        code: active.code!,
-        expiresAt: active.expiresAt!,
-        discountPercent: active.discountPercent!,
-      };
-    }
-  }
+  const existingCode = await getWelcomeEmailCode(email);
+  const existingActiveCoupon = await getActiveWelcomeCouponForEmail(email, existingCode);
+  if (existingActiveCoupon) return existingActiveCoupon;
 
   const code = generateCode();
   const coupon: WelcomeCoupon & { PK: string; SK: string } = {
@@ -111,28 +132,48 @@ export async function issueWelcomeCoupon(input: {
     source: "welcome",
   };
 
-  await docClient.send(
-    new PutCommand({
-      TableName: CONFIG_TABLE,
-      Item: coupon,
-    })
-  );
+  try {
+    await docClient.send(
+      new TransactWriteCommand({
+        TransactItems: [
+          {
+            Put: {
+              TableName: CONFIG_TABLE,
+              Item: coupon,
+              ConditionExpression: "attribute_not_exists(PK)",
+            },
+          },
+          {
+            Put: {
+              TableName: CONFIG_TABLE,
+              Item: {
+                PK: couponKeys.welcomeEmailPk(email),
+                SK: couponKeys.welcomeEmailSk(),
+                code,
+                expiresAt,
+                createdAt: timestamp,
+                email,
+              },
+              ConditionExpression: "attribute_not_exists(PK) OR #code = :replaceableCode OR expiresAt < :now",
+              ExpressionAttributeNames: {
+                "#code": "code",
+              },
+              ExpressionAttributeValues: {
+                ":now": timestamp,
+                ":replaceableCode": existingCode ?? "",
+              },
+            },
+          },
+        ],
+      })
+    );
+  } catch (err) {
+    const activeCoupon = await getActiveWelcomeCouponForEmail(email);
+    if (activeCoupon) return activeCoupon;
+    throw err;
+  }
 
-  await docClient.send(
-    new PutCommand({
-      TableName: CONFIG_TABLE,
-      Item: {
-        PK: couponKeys.welcomeEmailPk(email),
-        SK: couponKeys.welcomeEmailSk(),
-        code,
-        expiresAt,
-        createdAt: timestamp,
-        email,
-      },
-    })
-  );
-
-  return { code, expiresAt, discountPercent: WELCOME_DISCOUNT_PERCENT };
+  return { code, expiresAt, discountPercent: WELCOME_DISCOUNT_PERCENT, reused: false };
 }
 
 export async function issueAbandonedCartCoupon(input: {

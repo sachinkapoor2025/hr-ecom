@@ -23,7 +23,8 @@ export function generateStaticParams() {
   return categoryOrder.map((slug) => ({ slug }));
 }
 
-export const revalidate = 3600;
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 function mergeProductsBySlug(products: Product[], additions: Product[]): Product[] {
   const bySlug = new Map(products.map((product) => [product.slug, product]));
@@ -62,7 +63,7 @@ export default async function CategoryPage({ params }: Props) {
   try {
     const [catData, prodData] = await Promise.all([
       api<{ category: Category }>(`/categories/${slug}`, { revalidate: 3600 }),
-      api<{ products: Product[] }>(`/products?category=${slug}`, { revalidate: 3600 }),
+      api<{ products: Product[] }>(`/products?category=${slug}`, { revalidate: false }),
     ]);
     category = catData.category;
     products = prodData.products;

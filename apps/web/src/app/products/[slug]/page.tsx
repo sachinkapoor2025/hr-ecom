@@ -15,8 +15,9 @@ interface Props {
   params: Promise<{ slug: string }>;
 }
 
-/** Allow ISR — avoids static-to-dynamic crash on client navigation (no-store fetch). */
-export const revalidate = 3600;
+/** Product images can be changed from admin and should appear on the storefront immediately. */
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export async function generateStaticParams() {
   const slugs = getStaticProductSlugs();

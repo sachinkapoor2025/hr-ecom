@@ -76,6 +76,12 @@ export const configKeys = {
   payments: { pk: "CONFIG#PAYMENTS", sk: "META" as const },
 };
 
+/** Tracks admin S3 uploads → product slug for recovery if DB is reset. */
+export const uploadRegistryKeys = {
+  pk: (storageKey: string) => `UPLOAD#${storageKey.replace(/^\/+/, "")}`,
+  sk: () => "META" as const,
+};
+
 export const couponKeys = {
   pk: (code: string) => `COUPON#${code.trim().toUpperCase()}`,
   sk: () => "META" as const,

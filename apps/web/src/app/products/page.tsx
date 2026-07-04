@@ -80,7 +80,7 @@ export default async function ProductsPage({ searchParams }: Props) {
     const qs = query.toString() ? `?${query.toString()}` : "";
 
     const [productsData, categoriesData] = await Promise.all([
-      api<{ products: Product[] }>(`/products${qs}`),
+      api<{ products: Product[] }>(`/products${qs}`, { revalidate: false }),
       api<{ categories: Category[] }>("/categories"),
     ]);
     products = productsData.products;

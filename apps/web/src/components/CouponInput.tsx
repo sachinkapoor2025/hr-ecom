@@ -87,6 +87,7 @@ export function CouponInput({
   return (
     <div className="border border-slate-200 rounded-lg p-4 bg-slate-50 space-y-3">
       <p className="text-sm font-semibold text-slate-900">Coupon code</p>
+      <p className="text-xs text-slate-500">One coupon can be applied per order.</p>
       {applied ? (
         <div className="text-sm space-y-1">
           <p className="text-green-700 font-medium">
