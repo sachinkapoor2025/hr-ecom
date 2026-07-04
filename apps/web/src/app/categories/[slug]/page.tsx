@@ -10,6 +10,7 @@ import { JsonLd } from "@/components/JsonLd";
 import { getCategoryContent } from "@/lib/content/category-content";
 import { getCategoryRichContent } from "@/lib/content/category-rich-content";
 import { categoryHref } from "@/lib/category-urls";
+import { getCatalogProductsByCategory } from "@/lib/catalog-fallback";
 import { categoryOrder } from "@/lib/site";
 import { breadcrumbJsonLd, faqJsonLd, itemListJsonLd, pageMetadata } from "@/lib/seo";
 import type { Product, Category } from "@hr-ecom/shared";
@@ -23,6 +24,12 @@ export function generateStaticParams() {
 }
 
 export const revalidate = 3600;
+
+function mergeProductsBySlug(products: Product[], additions: Product[]): Product[] {
+  const bySlug = new Map(products.map((product) => [product.slug, product]));
+  for (const product of additions) bySlug.set(product.slug, product);
+  return [...bySlug.values()];
+}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
@@ -61,6 +68,11 @@ export default async function CategoryPage({ params }: Props) {
     products = prodData.products;
   } catch {
     if (!categoryOrder.includes(slug as (typeof categoryOrder)[number])) notFound();
+    products = getCatalogProductsByCategory(slug);
+  }
+
+  if (slug === "rakhi-combo") {
+    products = mergeProductsBySlug(products, getCatalogProductsByCategory("rakhi-combo"));
   }
 
   const name = category?.name ?? slug.replace(/-/g, " ");

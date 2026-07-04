@@ -303,7 +303,7 @@ export const blogPosts: BlogPost[] = [
         paragraphs: [
           "Browse 126+ rakhis at usarakhi.com — Single Rakhi, Combos, Kids, Bhaiya Bhabhi, and Lumba collections.",
           "Read customer stories at usarakhi.com/reviews and share your own after delivery.",
-          "Questions? WhatsApp or email support@usarakhi.com — we help before and after you order.",
+          "Questions? WhatsApp or email order@usarakhi.com — we help before and after you order.",
         ],
       },
     ],

@@ -363,7 +363,7 @@ Resources:
         EmailSendingAccount: DEVELOPER
         SourceArn: !Sub arn:aws:ses:${AWS::Region}:${AWS::AccountId}:identity/usarakhi.com
         From: noreply@usarakhi.com
-        ReplyToEmailAddress: support@usarakhi.com
+        ReplyToEmailAddress: order@usarakhi.com
       VerificationMessageTemplate:
         DefaultEmailOption: CONFIRM_WITH_CODE
         EmailSubject: Verify your UsaRakhi account

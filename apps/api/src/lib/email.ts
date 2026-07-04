@@ -498,7 +498,7 @@ Thank you for choosing ${SITE_NAME}.
 
 — Team ${SITE_NAME}
 ${siteUrl()}
-WhatsApp / support: support@usarakhi.com`;
+WhatsApp / support: ${notifyAddress()}`;
 
   return sendEmail({
     to: customerEmail,

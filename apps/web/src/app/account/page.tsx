@@ -65,7 +65,7 @@ function AccountLoginForm() {
       } else {
         setMode("confirm");
         setConfirmCode("");
-        setMessage(`We sent a verification code to ${email}. Enter it below to activate your account. Check your spam or junk folder if you don't see it within a few minutes.`);
+        setMessage(`Verification code requested for ${email}. Enter the code below to activate your account. Check your inbox and spam/junk folder if it does not arrive within a few minutes.`);
       }
     } catch (err) {
       if (mode === "login" && isUnconfirmedError(err)) {
@@ -91,7 +91,7 @@ function AccountLoginForm() {
     setResending(true);
     try {
       await resendConfirmationCode(email);
-      setMessage(`A new verification code was sent to ${email}.`);
+      setMessage(`Verification code requested for ${email}. Check your inbox and spam/junk folder if it does not arrive within a few minutes.`);
     } catch (err) {
       setError(formatAuthError(err));
     } finally {

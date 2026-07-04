@@ -7,7 +7,7 @@ export const site = {
   tagline: "Send Rakhi to USA — Ships From Within America | 2–3 Day Express",
   description:
     "UsaRakhi.com — top-rated online Rakhi store for USA delivery. Ships domestically within the US (no customs delays). 2–3 day express to major cities, 5–7 days nationwide. Gift combos with chocolates, designer rakhis, Bhaiya Bhabhi sets. Order from India, UK, Canada worldwide.",
-  supportEmail: "support@usarakhi.com",
+  supportEmail: "order@usarakhi.com",
   phone: "+91 96504 57697",
   /** WhatsApp support — digits only with country code (no +). */
   whatsapp: "919650457697",

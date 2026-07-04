@@ -24,16 +24,22 @@ export default function BlogPage() {
             key={post.slug}
             className="border border-slate-200 rounded-xl overflow-hidden hover:shadow-md transition bg-white flex flex-col"
           >
-            {post.image && (
-              <Link href={`/blog/${post.slug}`} className="block relative aspect-[16/10] bg-slate-100 flex items-center justify-center p-2">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={post.image}
-                  alt={post.title}
-                  className="h-full w-full object-contain p-1"
-                />
-              </Link>
-            )}
+            <Link href={`/blog/${post.slug}`} className="block relative aspect-[16/10] bg-slate-100 flex items-center justify-center p-2">
+              {post.image ? (
+                <>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={post.image}
+                    alt={post.title}
+                    className="h-full w-full object-contain p-1"
+                  />
+                </>
+              ) : (
+                <div className="flex h-full w-full items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50 text-center text-xs font-semibold uppercase tracking-wide text-slate-400">
+                  Blog image placeholder
+                </div>
+              )}
+            </Link>
             <div className="p-5 flex flex-col flex-1 min-w-0">
               <time dateTime={post.publishedAt} className="text-xs text-slate-400">
                 {new Date(post.publishedAt).toLocaleDateString("en-US", {

@@ -59,16 +59,22 @@ export default async function BlogPostPage({ params }: Props) {
         <p className="text-base sm:text-lg text-slate-600 break-words">{post.excerpt}</p>
       </header>
 
-      {post.image && (
-        <div className="relative w-full max-h-[420px] min-h-[200px] rounded-xl overflow-hidden mb-8 bg-slate-100 flex items-center justify-center">
+      <div className="relative w-full max-h-[420px] min-h-[200px] rounded-xl overflow-hidden mb-8 bg-slate-100 flex items-center justify-center p-3">
+        {post.image ? (
+          <>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={post.image}
             alt={post.title}
             className="w-full h-auto max-h-[420px] object-contain"
           />
-        </div>
-      )}
+          </>
+        ) : (
+          <div className="flex min-h-[200px] w-full items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50 text-center text-sm font-semibold uppercase tracking-wide text-slate-400">
+            Blog image placeholder
+          </div>
+        )}
+      </div>
 
       <div className="space-y-8 min-w-0 break-words [overflow-wrap:anywhere]">
         {post.sections.map((section, i) => (
