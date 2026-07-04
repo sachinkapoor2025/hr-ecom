@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { api } from "@/lib/api";
 import { AddToCartControl } from "@/components/AddToCartControl";
 import { ProductImageGallery } from "@/components/ProductImageGallery";
 import { WishlistButton } from "@/components/WishlistButton";
@@ -82,10 +83,32 @@ export function ProductDetailClient({
   const [phone, setPhone] = useState("");
   const [tab, setTab] = useState<Tab>("description");
   const [productUrl, setProductUrl] = useState("");
+  const [galleryImages, setGalleryImages] = useState(product.images ?? []);
+
+  useEffect(() => {
+    setGalleryImages(product.images ?? []);
+  }, [product.slug, product.images]);
 
   useEffect(() => {
     trackProductView(product.slug);
     setProductUrl(window.location.href);
+  }, [product.slug]);
+
+  /** SSR/ISR can serve stale image lists — always sync gallery from live API on the client. */
+  useEffect(() => {
+    let cancelled = false;
+    void api<{ product: Product }>(`/products/${product.slug}`, { revalidate: false })
+      .then((data) => {
+        if (cancelled) return;
+        const fresh = data.product.images ?? [];
+        if (fresh.length > 0) setGalleryImages(fresh);
+      })
+      .catch(() => {
+        /* keep SSR images */
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [product.slug]);
 
   const price = format(product.price, product.currency);
@@ -106,7 +129,7 @@ export function ProductDetailClient({
     <div className="max-w-6xl mx-auto px-4 py-6 pb-24 md:pb-12">
       <div className="grid md:grid-cols-2 gap-8 lg:gap-10 items-start">
         <div>
-          <ProductImageGallery images={product.images ?? []} alt={product.name} />
+          <ProductImageGallery images={galleryImages} alt={product.name} />
         </div>
 
         <div>

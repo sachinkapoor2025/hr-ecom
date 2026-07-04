@@ -123,7 +123,8 @@ export async function attachImageToProduct(event: APIGatewayProxyEventV2) {
   const updated = { ...existing.Item, images, updatedAt: now() };
 
   await docClient.send(new PutCommand({ TableName: PRODUCTS_TABLE, Item: updated }));
-  return ok({ product: updated });
+  const { withResolvedProductImages } = await import("../lib/images");
+  return ok({ product: withResolvedProductImages(updated) });
 }
 
 export async function deleteImageFromProduct(event: APIGatewayProxyEventV2) {
