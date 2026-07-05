@@ -53,11 +53,12 @@ export default async function HomePage() {
     <div>
       <JsonLd data={[faqJsonLd(faqs), howToSendRakhiJsonLd()]} />
       <BannerCarousel banners={homeBanners} />
+      <HomeRakshaBandhan2026Section />
       <TrustStrip />
 
       <section className="max-w-4xl mx-auto px-4 py-10 text-center">
         <h1 className="text-2xl md:text-3xl font-bold text-primary mb-4">
-          Send Rakhi to USA Free Shipping — Premium Online Rakhi Delivery
+          Send Rakhi to USA — Free Shipping | Premium Online Rakhi Delivery
         </h1>
         <p className="text-slate-600 leading-relaxed mb-4">
           {site.name} helps sisters in India, UK, Canada, Australia, and worldwide send rakhi to USA with
@@ -104,8 +105,6 @@ export default async function HomePage() {
           <code className="bg-slate-100 px-1 rounded">NEXT_PUBLIC_API_URL</code> is set and redeploy.
         </p>
       )}
-
-      <HomeRakshaBandhan2026Section />
 
       <WhyTrustUsSection />
 
