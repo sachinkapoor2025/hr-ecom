@@ -7,6 +7,7 @@ import { CustomerReviews } from "@/components/CustomerReviews";
 import { HomeProductCard } from "@/components/HomeProductCard";
 import { FastSellingSection } from "@/components/FastSellingSection";
 import { HomeSeoSection } from "@/components/HomeSeoSection";
+import { HomeRakshaBandhan2026Section } from "@/components/HomeRakshaBandhan2026Section";
 import { TrustStrip } from "@/components/TrustStrip";
 import { WhyTrustUsSection } from "@/components/WhyTrustUsSection";
 import { JsonLd } from "@/components/JsonLd";
@@ -15,9 +16,12 @@ import { faqJsonLd, howToSendRakhiJsonLd, pageMetadata } from "@/lib/seo";
 import type { Product, Category } from "@hr-ecom/shared";
 
 export const metadata: Metadata = pageMetadata({
-  title: "Send Rakhi to USA Online | Free Shipping",
-  description: site.description,
+  title: "Send Rakhi to USA Online | Rakhi Delivery USA | UsaRakhi",
+  description:
+    "Send rakhi to USA with domestic delivery — buy rakhi online USA, order from India worldwide. Rakhi store USA: designer rakhis, combos, 5–7 day nationwide shipping. California warehouse for fast local delivery.",
   path: "/",
+  keywords:
+    "send rakhi to usa, rakhi delivery usa, buy rakhi online usa, send rakhi to usa from india, rakhi store usa, usa rakhi shop online, rakhi gifts to usa, nationwide rakhi delivery usa",
 });
 
 export const dynamic = "force-dynamic";
@@ -53,13 +57,13 @@ export default async function HomePage() {
 
       <section className="max-w-4xl mx-auto px-4 py-10 text-center">
         <h1 className="text-2xl md:text-3xl font-bold text-primary mb-4">
-          Send Rakhi to USA — Premium Online Rakhi Delivery
+          Send Rakhi to USA Free Shipping — Premium Online Rakhi Delivery
         </h1>
         <p className="text-slate-600 leading-relaxed mb-4">
-          {site.name} helps sisters in India, UK, Canada, Australia, and worldwide send Rakhi to brothers
-          across all 50 United States. Shop 126+ designer rakhis — Single Rakhi, Combos with chocolates,
-          Kids Rakhi, Bhaiya Bhabhi sets, and Lumba Rakhi — delivered in 5–7 business days with roli chawal
-          included.
+          {site.name} helps sisters in India, UK, Canada, Australia, and worldwide send rakhi to USA with
+          reliable rakhi delivery USA across all 50 states. Shop 126+ designer rakhis — Single Rakhi, Combos with
+          chocolates, Kids Rakhi, Bhaiya Bhabhi sets, and Lumba Rakhi — delivered in 5–7 business days with roli
+          chawal included. Order rakhi to USA from India in minutes at our online rakhi store USA.
         </p>
         <div className="flex flex-wrap justify-center gap-3 text-sm">
           <Link href="/raksha-bandhan" className="text-nav font-semibold hover:underline">
@@ -100,6 +104,8 @@ export default async function HomePage() {
           <code className="bg-slate-100 px-1 rounded">NEXT_PUBLIC_API_URL</code> is set and redeploy.
         </p>
       )}
+
+      <HomeRakshaBandhan2026Section />
 
       <WhyTrustUsSection />
 

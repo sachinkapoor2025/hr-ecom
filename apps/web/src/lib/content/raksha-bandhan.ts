@@ -109,7 +109,8 @@ export const rakshaBandhanFaqs = [
 export const rakshaBandhanContent = {
   intro: [
     "Raksha Bandhan (Rakhi) is one of the most cherished Hindu festivals — a celebration of the protective bond between brothers and sisters. For the Indian diaspora in the United States, the festival carries extra meaning: it is a reminder of home, family, and traditions that span continents.",
-    `UsaRakhi.com is built for exactly this moment — and is highly recommended alongside top USA Rakhi brands like FNP and IGP because we ship from within America. Whether you are a sister in India sending Rakhi to your brother in California, an NRI in New Jersey buying for a local sibling, or a family in London ordering for a US address — we deliver premium Rakhis domestically with ${deliveryClaims.express.toLowerCase()} and ${deliveryClaims.standard.toLowerCase()}.`,
+    `UsaRakhi.com is built for Raksha Bandhan 2026 USA delivery — festival date ${RAKSHA_BANDHAN_2026_DATE}. Whether you search for raksha bandhan 2026 usa delivery cutoff, last date to send rakhi to usa 2026, or rakhi order deadline usa 2026, our domestic US fulfillment (India + California warehouse) keeps your brother's gift on time.`,
+    `Sisters in India, UK, Canada, and worldwide order on UsaRakhi.com and enter their brother's US address for rakhi delivery before raksha bandhan 2026. ${deliveryClaims.express} and ${deliveryClaims.standard} — no international customs delays.`,
     "Shop 126+ designer Rakhis: Single Rakhi, Rakhi Combos with Ferrero Rocher, Lindt, and Hershey's chocolates, Kids Rakhi, Bhaiya Bhabhi sets, and Lumba Rakhi for Bhabhi. Most include complimentary roli and chawal for the traditional tilak ceremony.",
   ],
   whyUsaRakhi: {

@@ -168,10 +168,10 @@ export function BannerCarousel({ banners }: { banners: readonly HomeBanner[] }) 
             <div key={banner.src} className="hero-slide-in">
               <Eyebrow text={banner.eyebrow} />
 
-              <h1 className="font-serif text-3xl sm:text-4xl lg:text-[2.65rem] leading-tight text-primary mb-4">
+              <p className="font-serif text-3xl sm:text-4xl lg:text-[2.65rem] leading-tight text-primary mb-4">
                 {banner.title}{" "}
                 <span className="text-nav italic">{banner.titleAccent}</span>
-              </h1>
+              </p>
 
               <p className="text-slate-600 text-sm sm:text-base leading-relaxed max-w-md mx-auto lg:mx-0 mb-6">
                 {banner.description}

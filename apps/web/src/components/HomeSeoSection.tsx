@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { cityLinks, whatsappChatUrl } from "@/lib/site";
-import { homeSeoContent } from "@/lib/content/home-seo";
+import { whatsappChatUrl } from "@/lib/site";
+import { homeCityLinks, homeSeoContent } from "@/lib/content/home-seo";
 
 export function HomeSeoSection() {
   const { intro, categories, delivery, howItWorks, tradition, whyUs, faqs } = homeSeoContent;
@@ -39,13 +39,13 @@ export function HomeSeoSection() {
                 </p>
               ))}
               <div className="flex flex-wrap gap-2 mt-2">
-                {cityLinks.map((city) => (
+                {homeCityLinks.map((city) => (
                   <Link
                     key={city.slug}
-                    href={`/cities/${city.slug}`}
+                    href={city.href}
                     className="text-xs sm:text-sm px-2.5 py-1 rounded-full border border-slate-200 bg-white text-slate-600 hover:border-nav hover:text-nav transition"
                   >
-                    Rakhi to {city.label}
+                    Send rakhi to {city.label}
                   </Link>
                 ))}
               </div>
