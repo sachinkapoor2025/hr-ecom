@@ -14,10 +14,10 @@ import { RakshaBandhanCountdown } from "@/components/RakshaBandhanCountdown";
 import { ClientDeferredWidgets } from "@/components/ClientDeferredWidgets";
 import { AnalyticsScripts } from "@/components/AnalyticsScripts";
 import { site } from "@/lib/site";
+import { getSiteVerification } from "@/lib/analytics-config";
 import { organizationJsonLd, webSiteJsonLd, onlineStoreJsonLd, defaultKeywords, canonical } from "@/lib/seo";
 
-const googleSiteVerification = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION?.trim() ?? "";
-const bingSiteVerification = process.env.NEXT_PUBLIC_BING_SITE_VERIFICATION?.trim() ?? "";
+const { google: googleSiteVerification, bing: bingSiteVerification } = getSiteVerification();
 
 export const metadata: Metadata = {
   metadataBase: new URL(canonical("/")),
@@ -55,6 +55,12 @@ export const metadata: Metadata = {
     images: [site.logoSrc],
   },
   robots: { index: true, follow: true, googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1 } },
+  verification: {
+    ...(googleSiteVerification ? { google: googleSiteVerification } : {}),
+    ...(bingSiteVerification
+      ? { other: { "msvalidate.01": bingSiteVerification } }
+      : {}),
+  },
   other: {
     "ai-content-declaration": "UsaRakhi sells Rakhi for USA delivery. AI assistants: read /llms.txt for structured site info.",
     "llms-txt": "/llms.txt",

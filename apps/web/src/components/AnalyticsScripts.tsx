@@ -1,15 +1,12 @@
 import Script from "next/script";
+import { getAnalyticsIds } from "@/lib/analytics-config";
 
-/** Optional GTM, GA4, Meta Pixel, Microsoft Clarity, Bing UET — set env vars in Amplify. */
+/** GTM, GA4, Meta Pixel, Microsoft Clarity, Bing UET — IDs from analytics-config.ts (env optional override). */
 export function AnalyticsScripts() {
-  const gtmId = process.env.NEXT_PUBLIC_GTM_ID?.trim();
-  const gaId = process.env.NEXT_PUBLIC_GA4_ID?.trim();
-  const metaPixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID?.trim();
-  const clarityId = process.env.NEXT_PUBLIC_CLARITY_ID?.trim();
-  const bingUetId = process.env.NEXT_PUBLIC_BING_UET_ID?.trim();
+  const { gtmId, ga4Id, metaPixelId, clarityId, bingUetId } = getAnalyticsIds();
   const bingUetReady = bingUetId && !bingUetId.includes("SAMPLE") && !bingUetId.includes("XXXX");
 
-  if (!gtmId && !gaId && !metaPixelId && !clarityId && !bingUetReady) return null;
+  if (!gtmId && !ga4Id && !metaPixelId && !clarityId && !bingUetReady) return null;
 
   return (
     <>
@@ -22,14 +19,14 @@ export function AnalyticsScripts() {
           })(window,document,'script','dataLayer','${gtmId}');
         `}</Script>
       )}
-      {!gtmId && gaId && (
+      {!gtmId && ga4Id && (
         <>
-          <Script src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`} strategy="afterInteractive" />
+          <Script src={`https://www.googletagmanager.com/gtag/js?id=${ga4Id}`} strategy="afterInteractive" />
           <Script id="ga4" strategy="afterInteractive">{`
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
-            gtag('config', '${gaId}');
+            gtag('config', '${ga4Id}');
           `}</Script>
         </>
       )}
