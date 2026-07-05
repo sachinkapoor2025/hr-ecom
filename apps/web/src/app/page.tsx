@@ -53,7 +53,6 @@ export default async function HomePage() {
     <div>
       <JsonLd data={[faqJsonLd(faqs), howToSendRakhiJsonLd()]} />
       <BannerCarousel banners={homeBanners} />
-      <HomeRakshaBandhan2026Section />
       <TrustStrip />
 
       <section className="max-w-4xl mx-auto px-4 py-10 text-center">
@@ -105,6 +104,8 @@ export default async function HomePage() {
           <code className="bg-slate-100 px-1 rounded">NEXT_PUBLIC_API_URL</code> is set and redeploy.
         </p>
       )}
+
+      <HomeRakshaBandhan2026Section />
 
       <WhyTrustUsSection />
 
