@@ -1,4 +1,5 @@
 import { cdnUploadUrl } from "@hr-ecom/shared";
+import { allSeoBlogSlugs, seoBlogPostToBlogPost } from "./seo-blog";
 
 export interface BlogPost {
   slug: string;
@@ -330,5 +331,16 @@ export const blogPosts: BlogPost[] = [
 ];
 
 export function getBlogPost(slug: string): BlogPost | undefined {
-  return blogPosts.find((p) => p.slug === slug);
+  const hand = blogPosts.find((p) => p.slug === slug);
+  if (hand) return hand;
+  return seoBlogPostToBlogPost(slug);
+}
+
+export function listAllBlogPosts(): BlogPost[] {
+  const handSlugs = new Set(blogPosts.map((p) => p.slug));
+  const seoOnly = allSeoBlogSlugs()
+    .filter((s) => !handSlugs.has(s))
+    .map((s) => seoBlogPostToBlogPost(s))
+    .filter((p): p is BlogPost => !!p);
+  return [...blogPosts, ...seoOnly];
 }

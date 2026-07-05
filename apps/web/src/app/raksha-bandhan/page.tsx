@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { categoryHref } from "@/lib/category-urls";
-import { site, categoryOrder, homeBanners, cityLinks } from "@/lib/site";
+import { site, categoryOrder, homeBanners } from "@/lib/site";
+import { homeCityLinks } from "@/lib/content/home-seo";
 import {
   rakshaBandhanShowcase,
   rakshaBandhanSteps,
@@ -185,13 +186,13 @@ export default function RakshaBandhanPage() {
         <h2 className="text-2xl font-bold text-primary mb-4">{content.cities.heading}</h2>
         <p className="text-slate-700 leading-relaxed mb-6">{content.cities.text}</p>
         <div className="flex flex-wrap gap-2">
-          {cityLinks.map((c) => (
+          {homeCityLinks.map((c) => (
             <Link
               key={c.slug}
-              href={`/cities/${c.slug}`}
+              href={c.href}
               className="px-3 py-1.5 rounded-full border border-slate-200 text-sm text-primary hover:border-nav hover:text-nav"
             >
-              {c.label}
+              Send rakhi to {c.label}
             </Link>
           ))}
         </div>

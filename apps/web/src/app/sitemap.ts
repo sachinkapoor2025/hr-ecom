@@ -3,8 +3,9 @@ import { api } from "@/lib/api";
 import type { Product } from "@hr-ecom/shared";
 import { siteUrl } from "@/lib/env";
 import { categoryHref } from "@/lib/category-urls";
-import { cityLinks, categoryOrder } from "@/lib/site";
-import { blogPosts } from "@/lib/content/blog-posts";
+import { categoryOrder } from "@/lib/site";
+import { listAllBlogPosts } from "@/lib/content/blog-posts";
+import { allSeoLocationSlugs, locationPublicPath } from "@/lib/content/seo-data";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
@@ -34,14 +35,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.85,
   }));
 
-  const cityRoutes = cityLinks.map((c) => ({
-    url: `${siteUrl}/cities/${c.slug}`,
+  const locationRoutes = allSeoLocationSlugs().map((slug) => ({
+    url: `${siteUrl}${locationPublicPath(slug)}`,
     lastModified: now,
     changeFrequency: "weekly" as const,
-    priority: 0.75,
+    priority: slug.includes("los-angeles") || slug.includes("san-") ? 0.8 : 0.72,
   }));
 
-  const blogRoutes = blogPosts.map((p) => ({
+  const blogRoutes = listAllBlogPosts().map((p) => ({
     url: `${siteUrl}/blog/${p.slug}`,
     lastModified: new Date(p.updatedAt),
     changeFrequency: "monthly" as const,
@@ -57,8 +58,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     }));
 
-    return [...staticRoutes, ...categoryRoutes, ...cityRoutes, ...blogRoutes, ...productRoutes];
+    return [...staticRoutes, ...categoryRoutes, ...locationRoutes, ...blogRoutes, ...productRoutes];
   } catch {
-    return [...staticRoutes, ...categoryRoutes, ...cityRoutes, ...blogRoutes];
+    return [...staticRoutes, ...categoryRoutes, ...locationRoutes, ...blogRoutes];
   }
 }

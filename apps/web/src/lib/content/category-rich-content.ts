@@ -1,6 +1,7 @@
 /** Rich SEO layout content for category pages (mirrors city page structure). */
 
 import { categoryHref } from "@/lib/category-urls";
+import { extractProductStyleLabels, productKeywordsForCategory } from "@/lib/content/seo-data";
 
 export interface CategoryRichContent {
   slug: string;
@@ -359,6 +360,41 @@ export const categoryRichContent: Record<string, CategoryRichContent> = {
   },
 };
 
+function enrichWithProductKeywords(base: CategoryRichContent, slug: string): CategoryRichContent {
+  const keywords = productKeywordsForCategory(slug);
+  if (keywords.length === 0) return base;
+
+  const styles = extractProductStyleLabels(keywords);
+  if (styles.length === 0) return base;
+
+  const styleList = styles.slice(0, 8).join(", ").toLowerCase();
+  const sampleKw = keywords.find((k) => /designer|silver|kundan|combo|cartoon|lumba/i.test(k)) ?? keywords[0];
+
+  return {
+    ...base,
+    intro: [
+      ...base.intro,
+      `Looking to buy rakhi online USA or order specialty styles? This collection covers ${styleList} — popular searches include "${sampleKw}" and similar phrases sisters use when sending rakhi to USA from India.`,
+    ],
+    highlights: {
+      ...base.highlights,
+      items: [
+        ...base.highlights.items,
+        ...styles.slice(0, 10).map((s) => `${s} rakhi — buy online with USA domestic delivery`),
+      ],
+    },
+    faqs: [
+      ...base.faqs,
+      {
+        q: `Can I order ${styles[0]?.toLowerCase() ?? "designer"} rakhis for USA delivery?`,
+        a: `Yes. UsaRakhi ships ${styleList} and more domestically across all 50 states. Order from India or worldwide — enter your brother's US address at checkout for reliable rakhi delivery USA.`,
+      },
+    ],
+  };
+}
+
 export function getCategoryRichContent(slug: string): CategoryRichContent | undefined {
-  return categoryRichContent[slug];
+  const base = categoryRichContent[slug];
+  if (!base) return undefined;
+  return enrichWithProductKeywords(base, slug);
 }

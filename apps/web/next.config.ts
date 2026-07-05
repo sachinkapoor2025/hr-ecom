@@ -5,10 +5,17 @@ import { legacyRedirectRules } from "./src/lib/legacy-urls";
 const nextConfig: NextConfig = {
   transpilePackages: ["@hr-ecom/shared"],
   async redirects() {
-    return [...categoryRedirectRules(), ...legacyRedirectRules()];
+    return [
+      ...categoryRedirectRules(),
+      ...legacyRedirectRules(),
+      { source: "/cities/:slug", destination: "/send-rakhi-to-:slug", permanent: true },
+    ];
   },
   async rewrites() {
-    return categoryRewriteRules();
+    return [
+      ...categoryRewriteRules(),
+      { source: "/send-rakhi-to-:slug", destination: "/locations/:slug" },
+    ];
   },
   images: {
     remotePatterns: [

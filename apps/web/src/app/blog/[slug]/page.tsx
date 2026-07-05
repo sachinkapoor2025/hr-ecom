@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { categoryHref } from "@/lib/category-urls";
 import { JsonLd } from "@/components/JsonLd";
-import { blogPosts, getBlogPost } from "@/lib/content/blog-posts";
+import { getBlogPost, listAllBlogPosts } from "@/lib/content/blog-posts";
 import { articleJsonLd, breadcrumbJsonLd, pageMetadata } from "@/lib/seo";
 
 interface Props {
@@ -12,7 +12,7 @@ interface Props {
 }
 
 export function generateStaticParams() {
-  return blogPosts.map((p) => ({ slug: p.slug }));
+  return listAllBlogPosts().map((p) => ({ slug: p.slug }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -68,8 +68,8 @@ export default async function BlogPostPage({ params }: Props) {
             className="h-full w-full object-cover"
           />
         ) : (
-          <div className="flex min-h-[200px] w-full items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50 text-center text-sm font-semibold uppercase tracking-wide text-slate-400">
-            Blog image placeholder
+          <div className="flex min-h-[200px] w-full items-center justify-center bg-gradient-to-br from-nav/10 to-slate-100 text-center px-6">
+            <p className="text-sm text-slate-600">UsaRakhi — send Rakhi to USA with domestic delivery</p>
           </div>
         )}
       </div>
@@ -98,8 +98,14 @@ export default async function BlogPostPage({ params }: Props) {
         </div>
       )}
 
-      <div className="mt-8 pt-6 border-t">
-        <Link href="/blog" className="text-nav hover:underline text-sm">
+      <div className="mt-8 pt-6 border-t flex flex-wrap gap-4 text-sm">
+        <Link href="/" className="text-nav hover:underline">
+          Shop UsaRakhi home →
+        </Link>
+        <Link href="/raksha-bandhan" className="text-nav hover:underline">
+          Raksha Bandhan 2026 guide →
+        </Link>
+        <Link href="/blog" className="text-nav hover:underline">
           ← All articles
         </Link>
       </div>
