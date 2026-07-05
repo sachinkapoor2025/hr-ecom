@@ -30,9 +30,9 @@ export function legacyRedirectRules(): {
   toHome("/author/:path*");
   toHome("/page/:path*");
   toHome("/comments/:path*");
-  toHome("/checkout/:path*");
-  toHome("/cart/:path*");
   toHome("/my-account/:path*");
+
+  // Do not redirect /cart or /checkout — those are live app routes.
 
   // Old shop index
   rules.push({ source: "/shop", destination: "/products", permanent: true });
