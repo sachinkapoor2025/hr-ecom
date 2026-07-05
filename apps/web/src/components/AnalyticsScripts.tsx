@@ -1,12 +1,37 @@
 import Script from "next/script";
 import { getAnalyticsIds } from "@/lib/analytics-config";
 
-/** GTM, GA4, Meta Pixel, Microsoft Clarity, Bing UET — IDs from analytics-config.ts (env optional override). */
+/**
+ * Google Analytics 4 (gtag.js) — always loaded when ga4Id is set.
+ * Placed in <head> per Google install instructions (independent of GTM).
+ */
+export function GoogleAnalytics() {
+  const { ga4Id } = getAnalyticsIds();
+  if (!ga4Id) return null;
+
+  return (
+    <>
+      <Script
+        id="ga4-loader"
+        src={`https://www.googletagmanager.com/gtag/js?id=${ga4Id}`}
+        strategy="beforeInteractive"
+      />
+      <Script id="ga4-config" strategy="beforeInteractive">{`
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', '${ga4Id}');
+      `}</Script>
+    </>
+  );
+}
+
+/** GTM, Meta Pixel, Microsoft Clarity, Bing UET. */
 export function AnalyticsScripts() {
-  const { gtmId, ga4Id, metaPixelId, clarityId, bingUetId } = getAnalyticsIds();
+  const { gtmId, metaPixelId, clarityId, bingUetId } = getAnalyticsIds();
   const bingUetReady = bingUetId && !bingUetId.includes("SAMPLE") && !bingUetId.includes("XXXX");
 
-  if (!gtmId && !ga4Id && !metaPixelId && !clarityId && !bingUetReady) return null;
+  if (!gtmId && !metaPixelId && !clarityId && !bingUetReady) return null;
 
   return (
     <>
@@ -18,17 +43,6 @@ export function AnalyticsScripts() {
           'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
           })(window,document,'script','dataLayer','${gtmId}');
         `}</Script>
-      )}
-      {!gtmId && ga4Id && (
-        <>
-          <Script src={`https://www.googletagmanager.com/gtag/js?id=${ga4Id}`} strategy="afterInteractive" />
-          <Script id="ga4" strategy="afterInteractive">{`
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', '${ga4Id}');
-          `}</Script>
-        </>
       )}
       {metaPixelId && (
         <>

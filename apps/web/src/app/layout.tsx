@@ -12,7 +12,7 @@ import { TrackingProvider } from "@/components/TrackingProvider";
 import { JsonLd } from "@/components/JsonLd";
 import { RakshaBandhanCountdown } from "@/components/RakshaBandhanCountdown";
 import { ClientDeferredWidgets } from "@/components/ClientDeferredWidgets";
-import { AnalyticsScripts } from "@/components/AnalyticsScripts";
+import { AnalyticsScripts, GoogleAnalytics } from "@/components/AnalyticsScripts";
 import { site } from "@/lib/site";
 import { getSiteVerification } from "@/lib/analytics-config";
 import { organizationJsonLd, webSiteJsonLd, onlineStoreJsonLd, defaultKeywords, canonical } from "@/lib/seo";
@@ -78,6 +78,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <meta name="google-site-verification" content={googleSiteVerification} />
         ) : null}
         {bingSiteVerification ? <meta name="msvalidate.01" content={bingSiteVerification} /> : null}
+        <GoogleAnalytics />
       </head>
       <body className="min-h-screen antialiased flex flex-col">
         <AnalyticsScripts />
