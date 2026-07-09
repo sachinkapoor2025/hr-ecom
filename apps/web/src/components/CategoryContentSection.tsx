@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { CategoryRichContent } from "@/lib/content/category-rich-content";
+import { categoryPageInlineLinks } from "@/lib/content/page-inline-links";
 import type { Product } from "@hr-ecom/shared";
+import { applyInlineLinks } from "@/lib/inline-links";
 import { whatsappChatUrl } from "@/lib/site";
 
 interface Props {
@@ -10,6 +12,8 @@ interface Props {
 }
 
 export function CategoryContentSection({ content, categoryName, products = [] }: Props) {
+  const inlineLinks = categoryPageInlineLinks[content.slug] ?? [];
+
   return (
     <div className="mt-12 pt-10 border-t border-slate-200">
       <div className="grid lg:grid-cols-3 gap-10 xl:gap-12 items-start">
@@ -18,7 +22,7 @@ export function CategoryContentSection({ content, categoryName, products = [] }:
             <h2 className="text-2xl font-bold text-primary mb-4">{content.headline}</h2>
             {content.intro.map((p, i) => (
               <p key={i} className="mb-4">
-                {p}
+                {applyInlineLinks(p, inlineLinks)}
               </p>
             ))}
           </header>

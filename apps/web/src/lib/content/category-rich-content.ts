@@ -35,6 +35,7 @@ export const categoryRichContent: Record<string, CategoryRichContent> = {
     intro: [
       "Our Single Rakhi collection is curated for sisters who want one beautiful rakhi for their brother — whether he lives in California, New York, Texas, or any US state. Each design reflects the purity and love of Raksha Bandhan, crafted with premium threads, beads, and motifs.",
       "Every single rakhi includes complimentary roli (kumkum) and chawal (rice) so your brother can perform the traditional tilak ceremony on festival day — even when you are celebrating from India, the UK, Canada, or across the world.",
+      "Whether you want to buy designer rakhi online usa or a classic Om thread, browse pearl, evil eye, and stone styles above — each ships domestically across America in 5–7 business days.",
       "Order online, enter your brother's US address at checkout, and we deliver domestically within America in 5–7 business days. No international customs delays for your brother's doorstep delivery.",
     ],
     delivery: {
@@ -241,7 +242,7 @@ export const categoryRichContent: Record<string, CategoryRichContent> = {
     headline: "Bhaiya Bhabhi Rakhi Sets — Brother & Sister-in-Law USA Delivery",
     intro: [
       "Bhaiya Bhabhi Rakhi sets include a traditional rakhi for your brother and a matching Lumba for your Bhabhi — coordinated colors, premium threads, and festival-ready packaging.",
-      "When your brother and Bhabhi live in the United States, one order from UsaRakhi delivers both rakhis domestically in 5–7 business days — no international customs delays.",
+      "When your brother and Bhabhi live in the United States, one order from UsaRakhi lets you send rakhi to USA — both rakhis delivered domestically in 5–7 business days with no international customs delays.",
       "Many sets include chocolates (Ferrero Rocher, Lindt, Hershey's) and roli chawal for the complete Raksha Bandhan ceremony.",
     ],
     delivery: {

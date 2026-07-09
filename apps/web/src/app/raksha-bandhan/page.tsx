@@ -4,6 +4,8 @@ import Link from "next/link";
 import { categoryHref } from "@/lib/category-urls";
 import { site, categoryOrder, homeBanners } from "@/lib/site";
 import { homeCityLinks } from "@/lib/content/home-seo";
+import { rakshaBandhanInlineLinks } from "@/lib/content/page-inline-links";
+import { applyInlineLinks } from "@/lib/inline-links";
 import {
   rakshaBandhanShowcase,
   rakshaBandhanSteps,
@@ -145,7 +147,7 @@ export default function RakshaBandhanPage() {
         <h2 className="text-2xl font-bold text-primary mb-6">{content.tradition.heading}</h2>
         <div className="space-y-4 text-slate-700 leading-relaxed">
           {content.tradition.paragraphs.map((para, i) => (
-            <p key={i}>{para}</p>
+            <p key={i}>{applyInlineLinks(para, rakshaBandhanInlineLinks)}</p>
           ))}
         </div>
       </section>
