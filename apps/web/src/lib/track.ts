@@ -189,6 +189,7 @@ declare global {
   interface Window {
     dataLayer?: Record<string, unknown>[];
     gtag?: (...args: unknown[]) => void;
+    gtagSendEvent?: (url: string) => boolean;
     fbq?: (...args: unknown[]) => void;
     uetq?: unknown[] & { push: (...args: unknown[]) => void };
   }
@@ -217,6 +218,12 @@ function pushPurchaseToAdPixels(value: number, metadata?: Record<string, string>
 
   try {
     window.gtag?.("event", "purchase", payload);
+  } catch {
+    /* ignore */
+  }
+
+  try {
+    window.gtag?.("event", "conversion_event_purchase_2", payload);
   } catch {
     /* ignore */
   }

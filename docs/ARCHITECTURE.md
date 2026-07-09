@@ -108,6 +108,8 @@ When admin sets order status to **Delivered** or **Complete**, the API sets `rev
 | GET | `/admin/carts/abandoned` | Admin: abandoned carts (CSV in UI) |
 | GET | `/admin/leads` | Admin: captured leads |
 | GET | `/config/payments` | Public payment region config |
+| GET | `/blog-images` | Public blog hero image map (slug → URL) |
+| PUT | `/admin/blog-images` | Admin: update blog hero images |
 
 ## Payment Flow
 

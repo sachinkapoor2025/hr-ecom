@@ -75,6 +75,8 @@ const routes: Route[] = [
   { method: "GET", pattern: /^\/config\/payments$/, handler: config.getPaymentConfig },
   { method: "GET", pattern: /^\/config\/usd-inr-rate$/, handler: config.getUsdInrRate },
   { method: "PUT", pattern: /^\/config\/payments$/, handler: config.updatePaymentConfig },
+  { method: "GET", pattern: /^\/blog-images$/, handler: config.getBlogImages },
+  { method: "PUT", pattern: /^\/admin\/blog-images$/, handler: config.updateBlogImages },
   { method: "POST", pattern: /^\/uploads\/presign$/, handler: uploads.getUploadUrl },
   { method: "POST", pattern: /^\/products\/([^/]+)\/images$/, handler: uploads.attachImageToProduct, params: ["slug"] },
   { method: "DELETE", pattern: /^\/products\/([^/]+)\/images$/, handler: uploads.deleteImageFromProduct, params: ["slug"] },

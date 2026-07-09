@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { listAllBlogPosts } from "@/lib/content/blog-posts";
+import { loadBlogPostsWithImages } from "@/lib/blog-images";
 import { pageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = pageMetadata({
@@ -10,7 +10,8 @@ export const metadata: Metadata = pageMetadata({
   path: "/blog",
 });
 
-export default function BlogPage() {
+export default async function BlogPage() {
+  const posts = await loadBlogPostsWithImages();
   return (
     <div className="max-w-5xl mx-auto px-4 py-12 overflow-x-hidden">
       <h1 className="text-3xl font-bold text-primary mb-2">Rakhi Guides & Blog</h1>
@@ -19,7 +20,7 @@ export default function BlogPage() {
         brother.
       </p>
       <div className="grid gap-6 sm:grid-cols-2">
-        {listAllBlogPosts().map((post) => (
+        {posts.map((post) => (
           <article
             key={post.slug}
             className="border border-slate-200 rounded-xl overflow-hidden hover:shadow-md transition bg-white flex flex-col"
