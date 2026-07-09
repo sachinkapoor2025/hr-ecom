@@ -1,6 +1,24 @@
 import Link from "next/link";
+import { categoryHref } from "@/lib/category-urls";
 import { whatsappChatUrl } from "@/lib/site";
 import { homeCityLinks, homeSeoContent } from "@/lib/content/home-seo";
+
+const BHAIYA_BHABHI_LINK_TEXT = "buy rakhi online USA from India";
+
+function linkPhraseInText(text: string, phrase: string, href: string) {
+  const index = text.indexOf(phrase);
+  if (index === -1) return text;
+
+  return (
+    <>
+      {text.slice(0, index)}
+      <Link href={href} className="text-inherit no-underline hover:text-inherit">
+        {phrase}
+      </Link>
+      {text.slice(index + phrase.length)}
+    </>
+  );
+}
 
 export function HomeSeoSection() {
   const { intro, categories, delivery, howItWorks, tradition, whyUs, faqs } = homeSeoContent;
@@ -17,7 +35,9 @@ export function HomeSeoSection() {
               </h2>
               {intro.paragraphs.map((para, i) => (
                 <p key={i} className="mb-4">
-                  {para}
+                  {i === 1
+                    ? linkPhraseInText(para, BHAIYA_BHABHI_LINK_TEXT, categoryHref("bhaiya-bhabhi-rakhi"))
+                    : para}
                 </p>
               ))}
             </header>
