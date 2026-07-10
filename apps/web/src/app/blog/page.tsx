@@ -3,6 +3,9 @@ import Link from "next/link";
 import { loadBlogPostsWithImages } from "@/lib/blog-images";
 import { pageMetadata } from "@/lib/seo";
 
+/** Keep blog list fresh when admin updates hero images. */
+export const revalidate = 60;
+
 export const metadata: Metadata = pageMetadata({
   title: "Rakhi Blog — Guides, Tips & Raksha Bandhan USA",
   description:

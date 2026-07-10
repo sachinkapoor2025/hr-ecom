@@ -1,17 +1,24 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useApiClient } from "@/lib/auth-context";
-import { listAllBlogPosts } from "@/lib/content/blog-posts";
+import { useApiClient, useAuth } from "@/lib/auth-context";
+import { blogPosts } from "@/lib/content/blog-posts";
 
 export default function AdminBlogImagesPage() {
   const apiClient = useApiClient();
-  const posts = listAllBlogPosts();
+  const { token } = useAuth();
+  const posts = blogPosts;
   const [images, setImages] = useState<Record<string, string>>({});
+  const imagesRef = useRef(images);
   const [message, setMessage] = useState("");
   const [uploading, setUploading] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    imagesRef.current = images;
+  }, [images]);
 
   useEffect(() => {
     apiClient<{ images: Record<string, string> }>("/blog-images")
@@ -20,15 +27,52 @@ export default function AdminBlogImagesPage() {
       .finally(() => setLoading(false));
   }, [apiClient]);
 
+  const revalidateStorefrontBlog = useCallback(
+    async (slug?: string) => {
+      if (!token) return;
+      try {
+        await fetch("/api/revalidate/blog", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(slug ? { slug } : {}),
+        });
+      } catch {
+        // Cache bust is best-effort; DynamoDB save is the source of truth.
+      }
+    },
+    [token]
+  );
+
+  const persistImages = useCallback(
+    async (next: Record<string, string>, successMessage: string, slug?: string) => {
+      setSaving(true);
+      setMessage("");
+      try {
+        await apiClient("/admin/blog-images", {
+          method: "PUT",
+          body: JSON.stringify({ images: next }),
+        });
+        setImages(next);
+        await revalidateStorefrontBlog(slug);
+        setMessage(successMessage);
+      } catch (err) {
+        setMessage(err instanceof Error ? err.message : "Save failed");
+        throw err;
+      } finally {
+        setSaving(false);
+      }
+    },
+    [apiClient, revalidateStorefrontBlog]
+  );
+
   const save = async () => {
     try {
-      await apiClient("/admin/blog-images", {
-        method: "PUT",
-        body: JSON.stringify({ images }),
-      });
-      setMessage("Blog images saved.");
-    } catch (err) {
-      setMessage(err instanceof Error ? err.message : "Save failed");
+      await persistImages(imagesRef.current, "Blog images saved. Storefront will refresh shortly.");
+    } catch {
+      // Message already set in persistImages
     }
   };
 
@@ -37,37 +81,46 @@ export default function AdminBlogImagesPage() {
       setUploading(slug);
       setMessage("");
       try {
+        const contentType = file.type || "image/jpeg";
         const presign = await apiClient<{ uploadUrl: string; publicUrl: string }>("/uploads/presign", {
           method: "POST",
           body: JSON.stringify({
             filename: file.name,
-            contentType: file.type || "image/jpeg",
+            contentType,
             folder: "blog",
           }),
         });
-        await fetch(presign.uploadUrl, {
+        const uploadRes = await fetch(presign.uploadUrl, {
           method: "PUT",
           body: file,
-          headers: { "Content-Type": file.type || "image/jpeg" },
+          headers: { "Content-Type": contentType },
         });
-        setImages((prev) => ({ ...prev, [slug]: presign.publicUrl }));
-        setMessage(`Uploaded image for "${slug}". Click Save to publish.`);
+        if (!uploadRes.ok) {
+          throw new Error(`Upload failed (${uploadRes.status})`);
+        }
+        const next = { ...imagesRef.current, [slug]: presign.publicUrl };
+        await persistImages(
+          next,
+          `Image saved for "${slug}". Visible on the website after cache refresh.`,
+          slug
+        );
       } catch (err) {
         setMessage(err instanceof Error ? err.message : "Upload failed");
       } finally {
         setUploading(null);
       }
     },
-    [apiClient]
+    [apiClient, persistImages]
   );
 
-  const clearImage = (slug: string) => {
-    setImages((prev) => {
-      const next = { ...prev };
-      delete next[slug];
-      return next;
-    });
-    setMessage(`Cleared image for "${slug}". Click Save to publish.`);
+  const clearImage = async (slug: string) => {
+    const next = { ...imagesRef.current };
+    delete next[slug];
+    try {
+      await persistImages(next, `Cleared image for "${slug}".`, slug);
+    } catch {
+      // Message already set
+    }
   };
 
   if (loading) return <div className="p-10">Loading...</div>;
@@ -81,8 +134,8 @@ export default function AdminBlogImagesPage() {
       </div>
       <h1 className="text-2xl font-bold mb-2">Blog Images</h1>
       <p className="text-slate-600 text-sm mb-6">
-        Upload a dedicated hero image for each blog post. Posts without an image show a placeholder on
-        the blog list and article pages.
+        Upload a dedicated hero image for each blog post. Images save automatically after upload — same as
+        product images. Posts without an image show a placeholder on the blog list and article pages.
       </p>
 
       {message && (
@@ -91,7 +144,10 @@ export default function AdminBlogImagesPage() {
 
       <div className="space-y-4">
         {posts.map((post) => (
-          <div key={post.slug} className="border border-slate-200 rounded-xl p-4 bg-white flex flex-col sm:flex-row gap-4">
+          <div
+            key={post.slug}
+            className="border border-slate-200 rounded-xl p-4 bg-white flex flex-col sm:flex-row gap-4"
+          >
             <div className="relative aspect-[16/10] w-full sm:w-48 shrink-0 rounded-lg overflow-hidden bg-slate-100 border border-dashed border-slate-300">
               {images[post.slug] ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -107,12 +163,12 @@ export default function AdminBlogImagesPage() {
               <p className="text-xs text-slate-500 mt-1 font-mono break-all">{post.slug}</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <label className="inline-flex cursor-pointer items-center rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium hover:bg-slate-50">
-                  {uploading === post.slug ? "Uploading…" : "Upload image"}
+                  {uploading === post.slug ? "Uploading…" : saving ? "Saving…" : "Upload image"}
                   <input
                     type="file"
                     accept="image/*"
                     className="sr-only"
-                    disabled={uploading === post.slug}
+                    disabled={uploading === post.slug || saving}
                     onChange={(e) => {
                       const file = e.target.files?.[0];
                       if (file) void uploadImage(post.slug, file);
@@ -123,8 +179,9 @@ export default function AdminBlogImagesPage() {
                 {images[post.slug] && (
                   <button
                     type="button"
-                    onClick={() => clearImage(post.slug)}
-                    className="rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-50"
+                    onClick={() => void clearImage(post.slug)}
+                    disabled={saving || uploading === post.slug}
+                    className="rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-50"
                   >
                     Remove
                   </button>
@@ -138,9 +195,10 @@ export default function AdminBlogImagesPage() {
       <button
         type="button"
         onClick={() => void save()}
-        className="mt-6 rounded-lg bg-primary px-6 py-3 font-semibold text-white hover:bg-primary/90"
+        disabled={saving || uploading !== null}
+        className="mt-6 rounded-lg bg-primary px-6 py-3 font-semibold text-white hover:bg-primary/90 disabled:opacity-50"
       >
-        Save all
+        {saving ? "Saving…" : "Save all & refresh site"}
       </button>
     </div>
   );

@@ -12,6 +12,9 @@ interface Props {
   params: Promise<{ slug: string }>;
 }
 
+/** Keep article pages fresh when admin updates hero images. */
+export const revalidate = 60;
+
 export function generateStaticParams() {
   return listAllBlogPosts().map((p) => ({ slug: p.slug }));
 }
