@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { PaymentMethodIcons } from "@/components/PaymentMethodIcons";
 
 type Variant = "compact" | "full";
 
@@ -39,39 +38,33 @@ export function TrustBadges({ variant = "full", className = "" }: { variant?: Va
   }
 
   return (
-    <div className={`space-y-3 ${className}`}>
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4" aria-label="Trust and security badges">
-        {items.map((item) => {
-          const inner = (
-            <>
-              <span className="text-lg" aria-hidden>
-                {item.icon}
-              </span>
-              <span className="text-[11px] font-semibold text-slate-700 leading-tight">{item.label}</span>
-            </>
-          );
-          return "href" in item && item.href ? (
-            <Link
-              key={item.label}
-              href={item.href}
-              className="flex flex-col items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-3 text-center hover:border-nav transition"
-            >
-              {inner}
-            </Link>
-          ) : (
-            <div
-              key={item.label}
-              className="flex flex-col items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-3 text-center"
-            >
-              {inner}
-            </div>
-          );
-        })}
-      </div>
-      <div>
-        <p className="text-[10px] uppercase tracking-wide text-slate-500 mb-1.5">Secure payments</p>
-        <PaymentMethodIcons />
-      </div>
+    <div className={`grid grid-cols-2 gap-2 sm:grid-cols-4 ${className}`} aria-label="Trust and security badges">
+      {items.map((item) => {
+        const inner = (
+          <>
+            <span className="text-lg" aria-hidden>
+              {item.icon}
+            </span>
+            <span className="text-[11px] font-semibold text-slate-700 leading-tight">{item.label}</span>
+          </>
+        );
+        return "href" in item && item.href ? (
+          <Link
+            key={item.label}
+            href={item.href}
+            className="flex flex-col items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-3 text-center hover:border-nav transition"
+          >
+            {inner}
+          </Link>
+        ) : (
+          <div
+            key={item.label}
+            className="flex flex-col items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-3 text-center"
+          >
+            {inner}
+          </div>
+        );
+      })}
     </div>
   );
 }

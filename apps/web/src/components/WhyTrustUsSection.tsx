@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { trustFacts, trustHighlights } from "@/lib/trust";
 import { TrustBadges } from "@/components/TrustBadges";
 
@@ -48,20 +47,6 @@ export function WhyTrustUsSection() {
 
         <div className="max-w-3xl mx-auto">
           <TrustBadges />
-          <p className="text-center text-xs text-slate-500 mt-4">
-            Operated by {trustFacts.operator}.{" "}
-            <Link href="/about" className="text-nav hover:underline">
-              About our team
-            </Link>
-            {" · "}
-            <Link href="/reviews" className="text-nav hover:underline">
-              Share your review
-            </Link>
-            {" · "}
-            <Link href="/returns" className="text-nav hover:underline">
-              Satisfaction guarantee
-            </Link>
-          </p>
         </div>
       </div>
     </section>
