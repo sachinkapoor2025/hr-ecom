@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense } from "react";
+import { usePathname } from "next/navigation";
 import { Header } from "./Header";
 
 function HeaderFallback() {
@@ -14,6 +15,9 @@ function HeaderFallback() {
 }
 
 export function HeaderShell() {
+  const pathname = usePathname();
+  if (pathname.startsWith("/admin")) return null;
+
   return (
     <Suspense fallback={<HeaderFallback />}>
       <Header />

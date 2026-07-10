@@ -1,12 +1,6 @@
 import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
-import { customerKeys } from "@hr-ecom/shared";
+import { customerKeys, normalizeEmail, normalizeName, normalizePhone } from "@hr-ecom/shared";
 import { docClient, CUSTOMERS_TABLE, now } from "./db";
-
-function normalizeEmail(email?: string): string | undefined {
-  const trimmed = email?.trim();
-  if (!trimmed || !trimmed.includes("@")) return undefined;
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed) ? trimmed : undefined;
-}
 
 function pickContactField(incoming?: string, existing?: string): string | undefined {
   const next = incoming?.trim();
@@ -21,6 +15,9 @@ export async function upsertSessionProfile(
 ): Promise<void> {
   const timestamp = now();
   const email = normalizeEmail(fields.email);
+  const name = normalizeName(fields.name);
+  const phoneRaw = fields.phone?.trim();
+  const phone = phoneRaw && normalizePhone(phoneRaw) ? phoneRaw : undefined;
 
   const existing = await docClient.send(
     new GetCommand({
@@ -40,9 +37,9 @@ export async function upsertSessionProfile(
         createdAt: (prev.createdAt as string) ?? timestamp,
         lastSeenAt: timestamp,
         updatedAt: timestamp,
-        name: pickContactField(fields.name, prev.name as string | undefined),
+        name: name ?? pickContactField(undefined, prev.name as string | undefined),
         email: email ?? (prev.email as string | undefined),
-        phone: pickContactField(fields.phone, prev.phone as string | undefined),
+        phone: phone ?? pickContactField(undefined, prev.phone as string | undefined),
       },
     })
   );

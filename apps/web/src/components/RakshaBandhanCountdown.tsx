@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 const FESTIVAL_DATE = new Date("2026-08-28T00:00:00");
 /** Order-by date for guaranteed pre-festival delivery */
@@ -16,6 +17,7 @@ function daysUntil(target: Date): number {
 type Variant = "banner" | "inline";
 
 export function RakshaBandhanCountdown({ variant = "banner" }: { variant?: Variant }) {
+  const pathname = usePathname();
   const [daysToFestival, setDaysToFestival] = useState<number | null>(null);
   const [daysToOrder, setDaysToOrder] = useState<number | null>(null);
 
@@ -24,6 +26,7 @@ export function RakshaBandhanCountdown({ variant = "banner" }: { variant?: Varia
     setDaysToOrder(daysUntil(ORDER_DEADLINE));
   }, []);
 
+  if (variant === "banner" && pathname.startsWith("/admin")) return null;
   if (daysToFestival === null) return null;
   if (daysToFestival === 0 && daysToOrder === 0) return null;
 
