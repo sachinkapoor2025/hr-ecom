@@ -150,6 +150,7 @@ export default function AdminDashboard() {
           { href: "/admin/leads", title: "Customer Leads", desc: "Partial captures" },
           { href: "/admin/welcome-leads", title: "Welcome Email Leads", desc: "10% coupon signups" },
           { href: "/admin/payments", title: "Payment Config", desc: "Stripe / Razorpay" },
+          { href: "/admin/blog-images", title: "Blog Images", desc: "Hero images per article" },
         ].map((item) => (
           <Link
             key={item.href}

@@ -1,4 +1,3 @@
-import { cdnUploadUrl } from "@hr-ecom/shared";
 import { allSeoBlogSlugs, seoBlogPostToBlogPost } from "./seo-blog";
 
 export interface BlogPost {
@@ -14,15 +13,6 @@ export interface BlogPost {
   relatedCategory?: string;
 }
 
-/** Temporary blog hero images — swap for dedicated artwork per post later. */
-const blogImages = {
-  indiaUsa: "/banners/banner-3-india-usa.png",
-  delivery: "/banners/banner-1-usa-rakhi-delivery.png",
-  hearts: "/banners/banner-2-connecting-hearts.png",
-  customers: cdnUploadUrl("2026/03/coustomer-3-768x1152-1.webp"),
-  reviews: cdnUploadUrl("2026/06/review-picture-2.png"),
-} as const;
-
 export const blogPosts: BlogPost[] = [
   {
     slug: "send-rakhi-to-usa-from-india",
@@ -33,7 +23,6 @@ export const blogPosts: BlogPost[] = [
       "Living in India but your brother is in America? Here is everything you need to know about sending Rakhi to the USA online.",
     publishedAt: "2026-01-15",
     updatedAt: "2026-06-01",
-    image: blogImages.indiaUsa,
     relatedCategory: "single-rakhi",
     sections: [
       {
@@ -82,7 +71,6 @@ export const blogPosts: BlogPost[] = [
       "Combine tradition with a sweet treat — our favorite Rakhi chocolate combos for brothers in the USA.",
     publishedAt: "2026-02-01",
     updatedAt: "2026-06-01",
-    image: blogImages.delivery,
     relatedCategory: "rakhi-combo",
     sections: [
       {
@@ -119,7 +107,6 @@ export const blogPosts: BlogPost[] = [
       "Celebrate both your brother and sister-in-law with elegant Bhaiya Bhabhi Rakhi sets delivered across America.",
     publishedAt: "2026-02-15",
     updatedAt: "2026-06-01",
-    image: blogImages.hearts,
     relatedCategory: "bhaiya-bhabhi-rakhi",
     sections: [
       {
@@ -150,7 +137,6 @@ export const blogPosts: BlogPost[] = [
       "When is Raksha Bandhan 2026? How to plan Rakhi delivery to USA so your brother receives it on time.",
     publishedAt: "2026-03-01",
     updatedAt: "2026-06-01",
-    image: blogImages.reviews,
     relatedCategory: "single-rakhi",
     sections: [
       {
@@ -193,7 +179,6 @@ export const blogPosts: BlogPost[] = [
       "Fun, safe, and festival-ready — how to pick Kids Rakhi for brothers living in the United States.",
     publishedAt: "2026-04-01",
     updatedAt: "2026-06-01",
-    image: blogImages.customers,
     relatedCategory: "kids-rakhi",
     sections: [
       {
@@ -229,7 +214,6 @@ export const blogPosts: BlogPost[] = [
       "The bracelet Rakhi for Bhabhi — tradition explained and the easiest way to deliver Lumba Rakhi in America.",
     publishedAt: "2026-04-15",
     updatedAt: "2026-06-01",
-    image: blogImages.hearts,
     relatedCategory: "lumba-rakhi",
     sections: [
       {
@@ -264,7 +248,6 @@ export const blogPosts: BlogPost[] = [
       "Not all Rakhi websites ship the same way. Here is what matters when sending Rakhi to brothers in America.",
     publishedAt: "2026-06-01",
     updatedAt: "2026-06-28",
-    image: blogImages.delivery,
     relatedCategory: "single-rakhi",
     sections: [
       {
@@ -302,7 +285,6 @@ export const blogPosts: BlogPost[] = [
       "Your brother should not wait at customs for Rakhi. Domestic USA fulfillment explains why sisters choose UsaRakhi.",
     publishedAt: "2026-06-10",
     updatedAt: "2026-06-28",
-    image: blogImages.indiaUsa,
     relatedCategory: "rakhi-combo",
     sections: [
       {

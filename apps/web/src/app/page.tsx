@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { categoryHref } from "@/lib/category-urls";
 import { api } from "@/lib/api";
+import { linkPhraseInText } from "@/lib/inline-links";
+import { homepageInlineLinks } from "@/lib/content/page-inline-links";
 import { BannerCarousel } from "@/components/BannerCarousel";
 import { CustomerReviews } from "@/components/CustomerReviews";
 import { HomeProductCard } from "@/components/HomeProductCard";
@@ -53,7 +55,6 @@ export default async function HomePage() {
     <div>
       <JsonLd data={[faqJsonLd(faqs), howToSendRakhiJsonLd()]} />
       <BannerCarousel banners={homeBanners} />
-      <HomeRakshaBandhan2026Section />
       <TrustStrip />
 
       <section className="max-w-4xl mx-auto px-4 py-10 text-center">
@@ -61,10 +62,11 @@ export default async function HomePage() {
           Send Rakhi to USA — Free Shipping | Premium Online Rakhi Delivery
         </h1>
         <p className="text-slate-600 leading-relaxed mb-4">
-          {site.name} helps sisters in India, UK, Canada, Australia, and worldwide send rakhi to USA with
-          reliable rakhi delivery USA across all 50 states. Shop 126+ designer rakhis — Single Rakhi, Combos with
-          chocolates, Kids Rakhi, Bhaiya Bhabhi sets, and Lumba Rakhi — delivered in 5–7 business days with roli
-          chawal included. Order rakhi to USA from India in minutes at our online rakhi store USA.
+          {linkPhraseInText(
+            `${site.name} helps sisters in India, UK, Canada, Australia, and worldwide send rakhi to USA with reliable rakhi delivery USA across all 50 states. Shop 126+ designer rakhis — Single Rakhi, Combos with chocolates, Kids Rakhi, Bhaiya Bhabhi sets, and Lumba Rakhi — delivered in 5–7 business days with roli chawal included. Order rakhi to USA from India in minutes at our online rakhi store USA.`,
+            homepageInlineLinks[0].phrase,
+            homepageInlineLinks[0].href
+          )}
         </p>
         <div className="flex flex-wrap justify-center gap-3 text-sm">
           <Link href="/raksha-bandhan" className="text-nav font-semibold hover:underline">
@@ -105,6 +107,8 @@ export default async function HomePage() {
           <code className="bg-slate-100 px-1 rounded">NEXT_PUBLIC_API_URL</code> is set and redeploy.
         </p>
       )}
+
+      <HomeRakshaBandhan2026Section />
 
       <WhyTrustUsSection />
 

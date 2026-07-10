@@ -4,12 +4,16 @@ import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { categoryHref } from "@/lib/category-urls";
 import { JsonLd } from "@/components/JsonLd";
-import { getBlogPost, listAllBlogPosts } from "@/lib/content/blog-posts";
+import { loadBlogPostWithImage } from "@/lib/blog-images";
+import { listAllBlogPosts } from "@/lib/content/blog-posts";
 import { articleJsonLd, breadcrumbJsonLd, pageMetadata } from "@/lib/seo";
 
 interface Props {
   params: Promise<{ slug: string }>;
 }
+
+/** Keep article pages fresh when admin updates hero images. */
+export const revalidate = 60;
 
 export function generateStaticParams() {
   return listAllBlogPosts().map((p) => ({ slug: p.slug }));
@@ -17,7 +21,7 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const post = getBlogPost(slug);
+  const post = await loadBlogPostWithImage(slug);
   if (!post) return { title: "Article" };
   return pageMetadata({
     title: post.title,
@@ -29,7 +33,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function BlogPostPage({ params }: Props) {
   const { slug } = await params;
-  const post = getBlogPost(slug);
+  const post = await loadBlogPostWithImage(slug);
   if (!post) notFound();
 
   const crumbs = [
@@ -68,8 +72,8 @@ export default async function BlogPostPage({ params }: Props) {
             className="h-full w-full object-cover"
           />
         ) : (
-          <div className="flex min-h-[200px] w-full items-center justify-center bg-gradient-to-br from-nav/10 to-slate-100 text-center px-6">
-            <p className="text-sm text-slate-600">UsaRakhi — send Rakhi to USA with domestic delivery</p>
+          <div className="flex min-h-[200px] w-full items-center justify-center border border-dashed border-slate-300 bg-slate-50 text-center px-6">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Blog image placeholder</p>
           </div>
         )}
       </div>

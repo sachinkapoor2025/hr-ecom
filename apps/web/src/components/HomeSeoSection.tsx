@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { applyInlineLinks } from "@/lib/inline-links";
+import { homepageInlineLinks } from "@/lib/content/page-inline-links";
 import { whatsappChatUrl } from "@/lib/site";
 import { homeCityLinks, homeSeoContent } from "@/lib/content/home-seo";
 
@@ -17,7 +19,7 @@ export function HomeSeoSection() {
               </h2>
               {intro.paragraphs.map((para, i) => (
                 <p key={i} className="mb-4">
-                  {para}
+                  {applyInlineLinks(para, homepageInlineLinks)}
                 </p>
               ))}
             </header>

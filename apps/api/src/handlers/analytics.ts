@@ -10,6 +10,9 @@ import {
   viewerGeoFromMetadata,
   isRevenueOrder,
   getOrderPaidAt,
+  applyContactFields,
+  backfillContactsByIdentity,
+  isKnownContact,
   type Order,
 } from "@hr-ecom/shared";
 import { docClient, EVENTS_TABLE, CUSTOMERS_TABLE, CARTS_TABLE, ORDERS_TABLE, dayBucket, now } from "../lib/db";
@@ -184,9 +187,7 @@ function mergeContactFields(
   target: SessionSummary,
   fields: { name?: string; email?: string; phone?: string }
 ) {
-  if (!target.name && fields.name?.trim()) target.name = fields.name.trim();
-  if (!target.email && fields.email?.trim()) target.email = fields.email.trim();
-  if (!target.phone && fields.phone?.trim()) target.phone = fields.phone.trim();
+  applyContactFields(target, fields);
 }
 
 async function enrichSessionIdentity(s: SessionSummary): Promise<void> {
@@ -232,11 +233,48 @@ async function enrichSessionIdentity(s: SessionSummary): Promise<void> {
       Key: { PK: cartKeys.pk(s.sessionId), SK: cartKeys.sk() },
     })
   );
-  const itemCount = Number(cartRes.Item?.itemCount ?? 0);
-  if (itemCount > 0) {
-    s.hasCart = true;
-    s.cartItems = itemCount;
+  if (cartRes.Item) {
+    const itemCount = Number(cartRes.Item.itemCount ?? 0);
+    if (itemCount > 0) {
+      s.hasCart = true;
+      s.cartItems = itemCount;
+    }
+    mergeContactFields(s, {
+      name: cartRes.Item.name as string | undefined,
+      email: cartRes.Item.email as string | undefined,
+      phone: cartRes.Item.phone as string | undefined,
+    });
   }
+}
+
+/** Recent leads keyed by session so we can join identity across silos. */
+async function loadIdentityIndex(): Promise<Map<string, { name?: string; email?: string; phone?: string }>> {
+  const bySession = new Map<string, { name?: string; email?: string; phone?: string }>();
+
+  const leadsRes = await docClient.send(
+    new QueryCommand({
+      TableName: CUSTOMERS_TABLE,
+      IndexName: "GSI1",
+      KeyConditionExpression: "GSI1PK = :pk",
+      ExpressionAttributeValues: { ":pk": customerKeys.gsi1pk() },
+      ScanIndexForward: false,
+      Limit: 400,
+    })
+  );
+  for (const lead of leadsRes.Items ?? []) {
+    const sessionId =
+      (lead.sessionId as string | undefined) ?? String(lead.PK ?? "").replace(/^SESSION#/, "");
+    if (!sessionId) continue;
+    const prev = bySession.get(sessionId) ?? {};
+    applyContactFields(prev, {
+      name: lead.name as string | undefined,
+      email: lead.email as string | undefined,
+      phone: lead.phone as string | undefined,
+    });
+    bySession.set(sessionId, prev);
+  }
+
+  return bySession;
 }
 
 function mergeSessionEvent(
@@ -352,6 +390,7 @@ function mergeSessionEvent(
 export async function listSessions(event: APIGatewayProxyEventV2) {
   if (!requireAdmin(event)) return forbidden();
   const days = parseDays(event, 7, 90);
+  const identityFilter = (event.queryStringParameters?.identity ?? "all").toLowerCase();
 
   const sessions = new Map<string, SessionSummary>();
 
@@ -375,12 +414,34 @@ export async function listSessions(event: APIGatewayProxyEventV2) {
     }
   }
 
-  const list = [...sessions.values()].sort((a, b) => b.lastSeen.localeCompare(a.lastSeen)).slice(0, 100);
+  let list = [...sessions.values()].sort((a, b) => b.lastSeen.localeCompare(a.lastSeen)).slice(0, 100);
 
-  // join identity, leads, and cart (best effort, capped by the 100 above)
-  await Promise.all(list.map((s) => enrichSessionIdentity(s)));
+  const [identityIndex] = await Promise.all([
+    loadIdentityIndex(),
+    Promise.all(list.map((s) => enrichSessionIdentity(s))),
+  ]);
 
-  return ok({ days, sessions: list });
+  for (const s of list) {
+    const fromLeads = identityIndex.get(s.sessionId);
+    if (fromLeads) mergeContactFields(s, fromLeads);
+  }
+
+  list = backfillContactsByIdentity(list);
+
+  const knownCount = list.filter((s) => isKnownContact(s)).length;
+  const anonymousCount = list.length - knownCount;
+
+  if (identityFilter === "known") {
+    list = list.filter((s) => isKnownContact(s));
+  } else if (identityFilter === "anonymous") {
+    list = list.filter((s) => !isKnownContact(s));
+  }
+
+  return ok({
+    days,
+    sessions: list,
+    identity: { known: knownCount, anonymous: anonymousCount },
+  });
 }
 
 export async function getSessionTimeline(event: APIGatewayProxyEventV2) {

@@ -70,11 +70,14 @@ export async function getUploadUrl(event: APIGatewayProxyEventV2) {
   const filename = body.filename as string;
   const contentType = (body.contentType as string) ?? "image/jpeg";
   const productSlug = (body.productSlug as string | undefined)?.trim();
+  const folder = (body.folder as string | undefined)?.trim();
 
   if (!filename) return badRequest("filename required");
 
   const ext = path.extname(filename) || ".jpg";
-  const key = `products/${uuidv4()}${ext}`;
+  const prefix =
+    folder === "blog" ? "blog" : productSlug ? `products/${productSlug}` : "products";
+  const key = `${prefix}/${uuidv4()}${ext}`;
 
   const s3 = getS3();
   if (!s3) {

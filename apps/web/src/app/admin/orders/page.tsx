@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useApiClient, useAuth } from "@/lib/auth-context";
 import { ORDER_STATUS } from "@hr-ecom/shared";
@@ -380,12 +381,24 @@ export default function AdminOrdersPage() {
                 <th className="py-3 px-3">Shipping</th>
                 <th className="py-3 px-3">Total</th>
                 <th className="py-3 px-3">Updated</th>
+                <th className="py-3 px-3">Age</th>
                 {isSuperAdmin && <th className="py-3 px-3 w-20">Actions</th>}
               </tr>
             </thead>
             <tbody>
-              {pageItems.map((o) => (
-                <tr key={o.orderId} className="border-t hover:bg-blue-50/40 align-top">
+              {pageItems.map((o) => {
+                const hoursSinceUpdate =
+                  (Date.now() - new Date(o.updatedAt || o.createdAt).getTime()) / (1000 * 60 * 60);
+                const isStale =
+                  hoursSinceUpdate >= 48 &&
+                  (o.status === ORDER_STATUS.PENDING_PAYMENT || o.status === ORDER_STATUS.PROCESSING);
+                return (
+                <tr
+                  key={o.orderId}
+                  className={`border-t hover:bg-blue-50/40 align-top ${
+                    isStale ? "bg-amber-50/80" : ""
+                  }`}
+                >
                   <td className="py-3 px-3" onClick={(e) => e.stopPropagation()}>
                     <input
                       type="checkbox"
@@ -410,7 +423,19 @@ export default function AdminOrdersPage() {
                     onClick={() => router.push(`/admin/orders/${o.orderId}`)}
                   >
                     <div className="font-medium">{o.shippingAddress?.name ?? "—"}</div>
-                    <div className="text-xs text-slate-400">{o.shippingAddress?.email ?? ""}</div>
+                    <div className="text-xs text-slate-400">
+                      {o.shippingAddress?.email ? (
+                        <Link
+                          href={`/admin/customers/${encodeURIComponent(o.shippingAddress.email)}`}
+                          className="text-nav hover:underline"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {o.shippingAddress.email}
+                        </Link>
+                      ) : (
+                        ""
+                      )}
+                    </div>
                     {o.shippingAddress?.phone && (
                       <div className="text-xs text-slate-400">{o.shippingAddress.phone}</div>
                     )}
@@ -444,6 +469,15 @@ export default function AdminOrdersPage() {
                   <td className="py-3 px-3 text-xs text-slate-400 whitespace-nowrap">
                     {new Date(o.updatedAt).toLocaleString()}
                   </td>
+                  <td className="py-3 px-3 text-xs whitespace-nowrap">
+                    {isStale ? (
+                      <span className="text-amber-700 font-medium" title="No update in 48+ hours">
+                        {Math.floor(hoursSinceUpdate / 24)}d stale
+                      </span>
+                    ) : (
+                      <span className="text-slate-400">{Math.floor(hoursSinceUpdate / 24)}d</span>
+                    )}
+                  </td>
                   {isSuperAdmin && (
                     <td className="py-3 px-3" onClick={(e) => e.stopPropagation()}>
                       <button
@@ -457,7 +491,8 @@ export default function AdminOrdersPage() {
                     </td>
                   )}
                 </tr>
-              ))}
+              );
+              })}
             </tbody>
           </table>
         </div>
