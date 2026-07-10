@@ -103,8 +103,10 @@ When admin sets order status to **Delivered** or **Complete**, the API sets `rev
 | GET | `/admin/analytics/overview` | Admin: traffic + funnel (`?days=`) |
 | GET | `/admin/analytics/products` | Admin: most-viewed products |
 | GET | `/admin/analytics/searches` | Admin: top + zero-result searches |
-| GET | `/admin/sessions` | Admin: recent visitor sessions |
+| GET | `/admin/sessions` | Admin: recent visitor sessions (`?days=&identity=all|known|anonymous`) |
 | GET | `/admin/sessions/{sessionId}` | Admin: full visitor journey |
+| GET | `/admin/customers/{email}` | Admin: unified customer profile (orders, leads, carts, sessions) |
+| GET | `/admin/search` | Admin: global search by name/email/phone (`?q=`) |
 | GET | `/admin/carts/abandoned` | Admin: abandoned carts (CSV in UI) |
 | GET | `/admin/leads` | Admin: captured leads |
 | GET | `/config/payments` | Public payment region config |

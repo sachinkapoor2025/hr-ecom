@@ -10,6 +10,7 @@ import * as events from "./handlers/events";
 import * as analytics from "./handlers/analytics";
 import * as salesReport from "./handlers/sales-report";
 import * as adminCarts from "./handlers/admin-carts";
+import * as adminCustomers from "./handlers/admin-customers";
 import * as account from "./handlers/account";
 import * as coupons from "./handlers/coupons";
 import { stripeWebhook } from "./handlers/payments/stripe";
@@ -68,6 +69,8 @@ const routes: Route[] = [
   { method: "GET", pattern: /^\/admin\/sessions$/, handler: analytics.listSessions },
   { method: "GET", pattern: /^\/admin\/sessions\/([^/]+)$/, handler: analytics.getSessionTimeline, params: ["sessionId"] },
   { method: "GET", pattern: /^\/admin\/carts\/abandoned$/, handler: adminCarts.getAbandonedCarts },
+  { method: "GET", pattern: /^\/admin\/customers\/([^/]+)$/, handler: adminCustomers.getCustomerProfile, params: ["email"] },
+  { method: "GET", pattern: /^\/admin\/search$/, handler: adminCustomers.adminSearch },
   { method: "POST", pattern: /^\/coupons\/validate$/, handler: coupons.validateCouponHandler },
   { method: "GET", pattern: /^\/admin\/welcome-coupons$/, handler: coupons.listWelcomeCoupons },
   { method: "POST", pattern: /^\/leads$/, handler: orders.captureLead },

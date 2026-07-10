@@ -5,7 +5,7 @@ import { CartProvider } from "@/lib/cart-context";
 import { WishlistProvider } from "@/lib/wishlist-context";
 import { CurrencyProvider } from "@/lib/currency-context";
 import { HeaderShell } from "@/components/HeaderShell";
-import { Footer } from "@/components/Footer";
+import { FooterShell } from "@/components/FooterShell";
 import { CurrencySwitcher } from "@/components/CurrencySwitcher";
 import { WhatsAppFloat } from "@/components/WhatsAppFloat";
 import { TrackingProvider } from "@/components/TrackingProvider";
@@ -91,7 +91,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <RakshaBandhanCountdown />
             <HeaderShell />
             <main className="flex-1">{children}</main>
-            <Footer />
+            <FooterShell />
             <CurrencySwitcher />
             <ClientDeferredWidgets />
             <WhatsAppFloat />
