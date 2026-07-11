@@ -14,6 +14,7 @@ import { getOrCreateSessionId } from "@/lib/session";
 import { api } from "@/lib/api";
 import { saveWelcomeCoupon, formatCouponExpiry } from "@/lib/welcome-coupon";
 import { trackSessionHeartbeat } from "@/lib/track";
+import { ConfettiBurst } from "@/components/ConfettiBurst";
 
 const STORAGE_KEY = "usarakhi_daily_deal_shown";
 const SHOW_AFTER_MS = 10_000;
@@ -43,8 +44,8 @@ function segmentIndexForPercent(percent: number): number {
 
 function rotationForSegment(index: number, extraSpins = 6): number {
   const slice = 360 / SEGMENTS.length;
-  const centerOfSlice = index * slice + slice / 2;
-  return extraSpins * 360 + (360 - centerOfSlice);
+  const centerOfSlice = index * slice;
+  return extraSpins * 360 + ((360 - centerOfSlice) % 360);
 }
 
 type CouponResult = {
@@ -59,12 +60,16 @@ export function ExitIntentPopup() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
-  const [phase, setPhase] = useState<"idle" | "spinning" | "done" | "blocked">("idle");
+  const [phase, setPhase] = useState<
+    "idle" | "spinning" | "celebrating" | "done" | "blocked"
+  >("idle");
   const [error, setError] = useState("");
   const [coupon, setCoupon] = useState<CouponResult | null>(null);
   const [copied, setCopied] = useState(false);
   const [rotation, setRotation] = useState(0);
   const [animateSpin, setAnimateSpin] = useState(false);
+  const [wonPercent, setWonPercent] = useState<number | null>(null);
+  const [burstKey, setBurstKey] = useState(0);
 
   const wheelGradient = useMemo(() => {
     const slice = 100 / SEGMENTS.length;
@@ -122,40 +127,53 @@ export function ExitIntentPopup() {
     }
 
     setError("");
+    setCoupon(null);
     setPhase("spinning");
 
-    // Pick result + start wheel immediately (no waiting on network)
-    const wonPercent = pickDailyDealDiscount();
-    const idx = segmentIndexForPercent(wonPercent);
+    const won = pickDailyDealDiscount();
+    setWonPercent(won);
+    const idx = segmentIndexForPercent(won);
     setAnimateSpin(true);
     setRotation((prev) => prev + rotationForSegment(idx, 7));
 
     const sessionId = getOrCreateSessionId();
+    const spinStartedAt = Date.now();
+
+    // Token generation runs in parallel with the spin animation
+    const couponPromise = api<{
+      ok: boolean;
+      coupon?: CouponResult;
+    }>("/leads", {
+      method: "POST",
+      sessionId,
+      body: JSON.stringify({
+        sessionId,
+        email: trimmedEmail,
+        page: pathname,
+        source: "newsletter",
+        metadata: {
+          offer: "discount_of_the_day",
+          trigger: "daily_deal_wheel",
+          discountPercent: String(won),
+        },
+      }),
+    });
 
     void (async () => {
       try {
-        const res = await api<{
-          ok: boolean;
-          coupon?: CouponResult;
-        }>("/leads", {
-          method: "POST",
-          sessionId,
-          body: JSON.stringify({
-            sessionId,
-            email: trimmedEmail,
-            page: pathname,
-            source: "newsletter",
-            metadata: {
-              offer: "discount_of_the_day",
-              trigger: "daily_deal_wheel",
-              discountPercent: String(wonPercent),
-            },
-          }),
-        });
+        const remainingSpin = Math.max(0, SPIN_MS - (Date.now() - spinStartedAt));
+        await new Promise((r) => window.setTimeout(r, remainingSpin));
+        setAnimateSpin(false);
+
+        // Cracker burst + "You won" while coupon finishes generating
+        setBurstKey((k) => k + 1);
+        setPhase("celebrating");
+
+        const res = await couponPromise;
 
         if (!res.coupon) {
-          setAnimateSpin(false);
           setPhase("idle");
+          setWonPercent(null);
           setError("Could not save your discount. Please try again.");
           return;
         }
@@ -164,26 +182,31 @@ export function ExitIntentPopup() {
         const expired = new Date(result.expiresAt).getTime() < Date.now();
 
         if (result.alreadyClaimedToday && expired) {
-          setAnimateSpin(false);
           setCoupon(result);
+          setWonPercent(null);
           setPhase("blocked");
           return;
         }
 
-        // If server returned a different % (reuse), nudge wheel to that segment
-        if (result.discountPercent !== wonPercent) {
+        if (result.discountPercent !== won) {
+          setWonPercent(result.discountPercent);
+          setAnimateSpin(true);
           const reuseIdx = segmentIndexForPercent(result.discountPercent);
           setRotation((prev) => prev + rotationForSegment(reuseIdx, 2));
+          await new Promise((r) => window.setTimeout(r, 1600));
+          setAnimateSpin(false);
+          setBurstKey((k) => k + 1);
         }
 
         setCoupon(result);
         saveWelcomeCoupon({ ...result, email: trimmedEmail });
-        window.setTimeout(() => {
-          setAnimateSpin(false);
-          setPhase("done");
-        }, SPIN_MS);
+
+        // Brief beat so celebration is visible, then reveal code
+        await new Promise((r) => window.setTimeout(r, 900));
+        setPhase("done");
       } catch (err) {
         setAnimateSpin(false);
+        setWonPercent(null);
         setPhase("idle");
         setError(
           err instanceof Error
@@ -196,6 +219,9 @@ export function ExitIntentPopup() {
 
   if (!open) return null;
 
+  const showWheel = phase === "idle" || phase === "spinning" || phase === "celebrating";
+  const celebrating = phase === "celebrating";
+
   return (
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/65 backdrop-blur-[2px]"
@@ -203,7 +229,8 @@ export function ExitIntentPopup() {
       aria-label="Discount of the Day"
     >
       <div className="relative w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/5">
-        {/* Rakhi hero strip */}
+        <ConfettiBurst active={celebrating} burstKey={burstKey} />
+
         <div className="relative h-28 sm:h-32 overflow-hidden">
           <Image
             src="/banners/banner-2-connecting-hearts.png"
@@ -233,7 +260,7 @@ export function ExitIntentPopup() {
           </div>
         </div>
 
-        <div className="px-5 py-5">
+        <div className="relative px-5 py-5">
           {phase === "blocked" ? (
             <div className="text-center py-2">
               <p className="text-lg font-bold text-primary mb-2">You already spun today</p>
@@ -250,16 +277,7 @@ export function ExitIntentPopup() {
             </div>
           ) : phase === "done" && coupon ? (
             <div className="text-center py-2">
-              <div className="mx-auto mb-3 h-16 w-16 overflow-hidden rounded-full border-2 border-amber-400 shadow">
-                <Image
-                  src="/banners/banner-2-connecting-hearts.png"
-                  alt=""
-                  width={64}
-                  height={64}
-                  className="h-full w-full object-cover"
-                />
-              </div>
-              <p className="text-sm uppercase tracking-wide text-nav font-semibold mb-1">You won</p>
+              <p className="text-sm uppercase tracking-wide text-accent font-bold mb-1">You won!</p>
               <p className="text-4xl font-bold text-primary mb-2">{coupon.discountPercent}% off</p>
               <p className="text-sm text-slate-600 mb-3">
                 {coupon.reused
@@ -288,10 +306,9 @@ export function ExitIntentPopup() {
                 Shop Rakhi with my discount
               </Link>
             </div>
-          ) : (
+          ) : showWheel ? (
             <>
-              <div className="relative mx-auto mb-5 w-[260px] h-[260px] sm:w-[300px] sm:h-[300px]">
-                {/* Outer decorative ring */}
+              <div className="relative mx-auto mb-4 w-[260px] h-[260px] sm:w-[300px] sm:h-[300px]">
                 <div
                   className="absolute -inset-1 rounded-full opacity-90"
                   style={{
@@ -302,12 +319,10 @@ export function ExitIntentPopup() {
                 />
                 <div className="absolute inset-0 rounded-full bg-white" aria-hidden />
 
-                {/* Pointer */}
                 <div className="absolute left-1/2 -top-0.5 z-30 -translate-x-1/2 drop-shadow-md" aria-hidden>
                   <div className="h-0 w-0 border-l-[12px] border-r-[12px] border-t-[22px] border-l-transparent border-r-transparent border-t-accent" />
                 </div>
 
-                {/* Wheel */}
                 <div
                   className="absolute inset-[6px] rounded-full shadow-[inset_0_0_24px_rgba(0,0,0,0.25)] border-[3px] border-amber-200/80"
                   style={{
@@ -321,25 +336,27 @@ export function ExitIntentPopup() {
                 >
                   {SEGMENTS.map((pct, i) => {
                     const slice = 360 / SEGMENTS.length;
-                    const angle = i * slice + slice / 2;
-                    const radius = 78;
+                    const angle = i * slice;
                     return (
-                      <span
+                      <div
                         key={`${pct}-${i}`}
-                        className="absolute left-1/2 top-1/2 text-[12px] sm:text-sm font-extrabold text-white"
-                        style={{
-                          transform: `rotate(${angle}deg) translateY(-${radius}px) rotate(${-angle}deg)`,
-                          transformOrigin: "center",
-                          textShadow: "0 1px 2px rgba(0,0,0,0.45)",
-                        }}
+                        className="absolute inset-0 pointer-events-none"
+                        style={{ transform: `rotate(${angle}deg)` }}
                       >
-                        {pct}%
-                      </span>
+                        <span
+                          className="absolute left-1/2 top-[16%] whitespace-nowrap text-[11px] sm:text-xs font-extrabold text-white"
+                          style={{
+                            transform: `translateX(-50%) rotate(${-angle}deg)`,
+                            textShadow: "0 1px 2px rgba(0,0,0,0.5)",
+                          }}
+                        >
+                          {pct}%
+                        </span>
+                      </div>
                     );
                   })}
                 </div>
 
-                {/* Center logo hub */}
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
                   <div className="flex h-[72px] w-[72px] sm:h-20 sm:w-20 items-center justify-center rounded-full bg-white border-[3px] border-primary shadow-lg ring-2 ring-amber-300/70 overflow-hidden p-1.5">
                     <Image
@@ -353,35 +370,51 @@ export function ExitIntentPopup() {
                 </div>
               </div>
 
-              <form onSubmit={spin} className="space-y-3">
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@email.com"
-                  disabled={phase === "spinning"}
-                  className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-nav disabled:opacity-60"
-                />
-                <button
-                  type="submit"
-                  disabled={phase === "spinning"}
-                  className="w-full rounded-lg bg-accent text-white font-bold text-sm py-3.5 hover:opacity-90 disabled:opacity-70 shadow-md shadow-accent/25"
-                >
-                  {phase === "spinning" ? "Spinning…" : "Spin the wheel"}
-                </button>
-                {error && <p className="text-red-500 text-xs text-center">{error}</p>}
-              </form>
+              {celebrating && wonPercent != null ? (
+                <div className="text-center space-y-3 mb-1">
+                  <p className="text-lg sm:text-xl font-bold text-primary animate-bounce">
+                    You won {wonPercent}% discount!
+                  </p>
+                  <p className="text-sm text-slate-600">
+                    Generating your discount coupon…
+                  </p>
+                  <div className="mx-auto h-1.5 w-40 overflow-hidden rounded-full bg-slate-100">
+                    <div className="h-full w-1/2 animate-pulse rounded-full bg-accent" />
+                  </div>
+                </div>
+              ) : (
+                <form onSubmit={spin} className="space-y-3">
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="you@email.com"
+                    disabled={phase === "spinning"}
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-nav disabled:opacity-60"
+                  />
+                  <button
+                    type="submit"
+                    disabled={phase === "spinning"}
+                    className="w-full rounded-lg bg-accent text-white font-bold text-sm py-3.5 hover:opacity-90 disabled:opacity-70 shadow-md shadow-accent/25"
+                  >
+                    {phase === "spinning" ? "Spinning…" : "Spin the wheel"}
+                  </button>
+                  {error && <p className="text-red-500 text-xs text-center">{error}</p>}
+                </form>
+              )}
 
-              <button
-                type="button"
-                onClick={close}
-                className="mt-3 w-full text-center text-xs text-slate-500 hover:text-slate-700 underline underline-offset-2"
-              >
-                No thanks — continue without a discount
-              </button>
+              {phase === "idle" && (
+                <button
+                  type="button"
+                  onClick={close}
+                  className="mt-3 w-full text-center text-xs text-slate-500 hover:text-slate-700 underline underline-offset-2"
+                >
+                  No thanks — continue without a discount
+                </button>
+              )}
             </>
-          )}
+          ) : null}
         </div>
       </div>
     </div>
