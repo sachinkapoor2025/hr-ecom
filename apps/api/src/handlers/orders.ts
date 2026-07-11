@@ -75,12 +75,23 @@ export async function captureLead(event: APIGatewayProxyEventV2) {
   const email = normalizeEmail(parsed.data.email);
 
   let welcomeCoupon:
-    | { code: string; expiresAt: string; discountPercent: number; reused?: boolean }
+    | {
+        code: string;
+        expiresAt: string;
+        discountPercent: number;
+        reused?: boolean;
+        alreadyClaimedToday?: boolean;
+      }
     | undefined;
   let leadPayload = parsed.data;
   if (parsed.data.source === "newsletter") {
     if (!email) return badRequest("Enter a valid email address to generate a coupon");
-    welcomeCoupon = await issueWelcomeCoupon({ email, sessionId });
+    const requested = Number(parsed.data.metadata?.discountPercent);
+    welcomeCoupon = await issueWelcomeCoupon({
+      email,
+      sessionId,
+      discountPercent: Number.isFinite(requested) ? requested : undefined,
+    });
     leadPayload = {
       ...parsed.data,
       metadata: {
@@ -88,6 +99,8 @@ export async function captureLead(event: APIGatewayProxyEventV2) {
         couponCode: welcomeCoupon.code,
         couponExpiresAt: welcomeCoupon.expiresAt,
         discountPercent: String(welcomeCoupon.discountPercent),
+        alreadyClaimedToday: welcomeCoupon.alreadyClaimedToday ? "true" : "false",
+        offer: "discount_of_the_day",
       },
     };
   }

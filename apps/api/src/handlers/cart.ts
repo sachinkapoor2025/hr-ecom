@@ -1,6 +1,13 @@
 import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import type { APIGatewayProxyEventV2 } from "aws-lambda";
-import { addToCartSchema, cartKeys, productKeys, type Cart, type CartItem } from "@hr-ecom/shared";
+import {
+  addToCartSchema,
+  cartKeys,
+  productKeys,
+  applyCompetitivePriceReduction,
+  type Cart,
+  type CartItem,
+} from "@hr-ecom/shared";
 import { docClient, CARTS_TABLE, PRODUCTS_TABLE, now, ttlInDays } from "../lib/db";
 import { ok, badRequest, unauthorized } from "../lib/response";
 import { getUserOrSessionKey, getSessionId } from "../lib/auth";
@@ -101,7 +108,7 @@ export async function addToCart(event: APIGatewayProxyEventV2) {
   const item: CartItem = {
     productSlug: product.slug,
     name: product.name,
-    price: product.price,
+    price: applyCompetitivePriceReduction(product.price, product.currency),
     currency: product.currency,
     quantity: parsed.data.quantity,
     image: resolveProductImageUrl(product.images?.[0]),
@@ -111,6 +118,7 @@ export async function addToCart(event: APIGatewayProxyEventV2) {
     const newQty = cart.items[existingIdx].quantity + parsed.data.quantity;
     if (newQty > product.inventory) return badRequest("Insufficient inventory");
     cart.items[existingIdx].quantity = newQty;
+    cart.items[existingIdx].price = item.price;
   } else {
     cart.items.push(item);
   }

@@ -5,12 +5,15 @@ import {
   couponValidateSchema,
   couponKeys,
   WELCOME_COUPON_HOURS,
-  WELCOME_DISCOUNT_PERCENT,
   ABANDONED_CART_COUPON_HOURS,
   ABANDONED_CART_DISCOUNT_PERCENT,
+  pickDailyDealDiscount,
+  dailyDealDayKey,
+  isValidDailyDealPercent,
   type CouponValidationResult,
   type WelcomeCoupon,
   type StoreCoupon,
+  type DailyDealPercent,
 } from "@hr-ecom/shared";
 import { docClient, CONFIG_TABLE, now } from "../lib/db";
 import { ok, badRequest, forbidden } from "../lib/response";
@@ -37,24 +40,25 @@ type WelcomeCouponIssueResult = {
   expiresAt: string;
   discountPercent: number;
   reused: boolean;
+  /** True when this email already claimed a spin for today's calendar day. */
+  alreadyClaimedToday?: boolean;
 };
 
-async function getWelcomeEmailCode(email: string): Promise<string | undefined> {
+async function getWelcomeEmailRecord(email: string): Promise<Record<string, unknown> | undefined> {
   const existing = await docClient.send(
     new GetCommand({
       TableName: CONFIG_TABLE,
       Key: { PK: couponKeys.welcomeEmailPk(email), SK: couponKeys.welcomeEmailSk() },
     })
   );
-
-  return existing.Item?.code as string | undefined;
+  return existing.Item as Record<string, unknown> | undefined;
 }
 
 async function getActiveWelcomeCouponForEmail(
   email: string,
   code = ""
 ): Promise<WelcomeCouponIssueResult | null> {
-  const activeCode = code || (await getWelcomeEmailCode(email));
+  const activeCode = code || ((await getWelcomeEmailRecord(email))?.code as string | undefined);
   if (!activeCode) return null;
 
   const active = await validateCouponRecord(activeCode, email);
@@ -107,29 +111,58 @@ export async function validateCouponRecord(
   };
 }
 
+/**
+ * Discount of the Day — spin result.
+ * One coupon per email per calendar day (America/New_York); valid for WELCOME_COUPON_HOURS.
+ */
 export async function issueWelcomeCoupon(input: {
   email: string;
   sessionId?: string;
+  /** Client spin result — accepted only if 5|10|15|20 so animation can start instantly. */
+  discountPercent?: number;
 }): Promise<WelcomeCouponIssueResult> {
   const email = normalizeEmail(input.email);
   const timestamp = now();
+  const dayKey = dailyDealDayKey();
+  const existing = await getWelcomeEmailRecord(email);
+  const existingCode = existing?.code as string | undefined;
+  const existingDayKey = existing?.dayKey as string | undefined;
+
+  if (existingDayKey === dayKey && existingCode) {
+    const active = await getActiveWelcomeCouponForEmail(email, existingCode);
+    if (active) {
+      return { ...active, alreadyClaimedToday: true };
+    }
+    return {
+      code: existingCode,
+      expiresAt: (existing?.expiresAt as string) ?? timestamp,
+      discountPercent: Number(existing?.discountPercent ?? 0),
+      reused: true,
+      alreadyClaimedToday: true,
+    };
+  }
+
+  const existingActive = await getActiveWelcomeCouponForEmail(email, existingCode);
+  if (existingActive) {
+    return { ...existingActive, alreadyClaimedToday: false };
+  }
+
+  const discountPercent: DailyDealPercent = isValidDailyDealPercent(input.discountPercent)
+    ? input.discountPercent
+    : pickDailyDealDiscount();
   const expiresAt = welcomeExpiresAt();
-
-  const existingCode = await getWelcomeEmailCode(email);
-  const existingActiveCoupon = await getActiveWelcomeCouponForEmail(email, existingCode);
-  if (existingActiveCoupon) return existingActiveCoupon;
-
   const code = generateCode();
   const coupon: WelcomeCoupon & { PK: string; SK: string } = {
     PK: couponKeys.pk(code),
     SK: couponKeys.sk(),
     code,
     email,
-    discountPercent: WELCOME_DISCOUNT_PERCENT,
+    discountPercent,
     expiresAt,
     createdAt: timestamp,
     sessionId: input.sessionId,
     source: "welcome",
+    dayKey,
   };
 
   try {
@@ -153,27 +186,37 @@ export async function issueWelcomeCoupon(input: {
                 expiresAt,
                 createdAt: timestamp,
                 email,
+                dayKey,
+                discountPercent,
               },
-              ConditionExpression: "attribute_not_exists(PK) OR #code = :replaceableCode OR expiresAt < :now",
-              ExpressionAttributeNames: {
-                "#code": "code",
-              },
+              ConditionExpression:
+                "attribute_not_exists(PK) OR attribute_not_exists(dayKey) OR dayKey <> :today OR expiresAt < :now",
               ExpressionAttributeValues: {
+                ":today": dayKey,
                 ":now": timestamp,
-                ":replaceableCode": existingCode ?? "",
               },
             },
           },
         ],
       })
     );
-  } catch (err) {
+  } catch {
     const activeCoupon = await getActiveWelcomeCouponForEmail(email);
-    if (activeCoupon) return activeCoupon;
-    throw err;
+    if (activeCoupon) return { ...activeCoupon, alreadyClaimedToday: true };
+    const again = await getWelcomeEmailRecord(email);
+    if (again?.dayKey === dayKey && again.code) {
+      return {
+        code: again.code as string,
+        expiresAt: (again.expiresAt as string) ?? timestamp,
+        discountPercent: Number(again.discountPercent ?? 0),
+        reused: true,
+        alreadyClaimedToday: true,
+      };
+    }
+    throw new Error("Could not issue discount coupon");
   }
 
-  return { code, expiresAt, discountPercent: WELCOME_DISCOUNT_PERCENT, reused: false };
+  return { code, expiresAt, discountPercent, reused: false, alreadyClaimedToday: false };
 }
 
 export async function issueAbandonedCartCoupon(input: {

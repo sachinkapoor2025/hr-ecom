@@ -3,9 +3,9 @@
 import Link from "next/link";
 import type { Product } from "@hr-ecom/shared";
 import { WishlistButton } from "@/components/WishlistButton";
+import { ProductImageRotator } from "@/components/ProductImageRotator";
 import { useCurrency } from "@/lib/currency-context";
 import { getDiscountPercent } from "@/lib/pricing";
-import { resolveImageUrl } from "@/lib/images";
 
 export function ProductCard({ product }: { product: Product }) {
   const { format } = useCurrency();
@@ -20,13 +20,13 @@ export function ProductCard({ product }: { product: Product }) {
       )}
       <div className="relative aspect-square bg-slate-50 flex items-center justify-center text-slate-400">
         <WishlistButton product={product} />
-        <Link href={`/products/${product.slug}`} className="block w-full h-full">
-          {product.images?.[0] ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={resolveImageUrl(product.images[0])} alt={product.name} className="w-full h-full object-cover" />
-          ) : (
-            <span>No image</span>
-          )}
+        <Link href={`/products/${product.slug}`} className="absolute inset-0 block">
+          <ProductImageRotator
+            images={product.images ?? []}
+            alt={product.name}
+            staggerKey={product.slug}
+            className="absolute inset-0 h-full w-full"
+          />
         </Link>
       </div>
       <Link href={`/products/${product.slug}`} className="block p-4">

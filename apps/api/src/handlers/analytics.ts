@@ -293,8 +293,11 @@ function mergeSessionEvent(
     const pingMs = Number(metadata.durationMs ?? 0);
     if (pingMs > 0) {
       const existingPing = sessions.get(sessionId);
+      const useFloor = metadata.durationMode === "floor" || metadata.reason === "daily_deal_shown";
       if (existingPing) {
-        existingPing.activeDurationMs = (existingPing.activeDurationMs ?? 0) + pingMs;
+        existingPing.activeDurationMs = useFloor
+          ? Math.max(existingPing.activeDurationMs ?? 0, pingMs)
+          : (existingPing.activeDurationMs ?? 0) + pingMs;
         existingPing.eventCount += 1;
         if (at > existingPing.lastSeen) existingPing.lastSeen = at;
         if (at < existingPing.firstSeen) existingPing.firstSeen = at;

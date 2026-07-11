@@ -6,6 +6,7 @@ import {
   bulkProductRowSchema,
   productKeys,
   DEFAULT_PRODUCT_INVENTORY,
+  withCompetitiveStorefrontPricing,
   type Product,
 } from "@hr-ecom/shared";
 import { docClient, PRODUCTS_TABLE, now, slugify } from "../lib/db";
@@ -13,6 +14,10 @@ import { ok, created, badRequest, notFound, forbidden } from "../lib/response";
 import { getAuth } from "../lib/auth";
 import { withResolvedProductImages, resolveProductImageUrl } from "../lib/images";
 import { syncInventoryAlertState } from "../lib/inventory";
+
+function forStorefront(product: Product): Product {
+  return withCompetitiveStorefrontPricing(withResolvedProductImages(product));
+}
 
 function isKidsComboProduct(product: Product): boolean {
   if (product.categorySlug !== "kids-rakhi") return false;
@@ -83,7 +88,7 @@ export async function listProducts(event: APIGatewayProxyEventV2) {
     );
   }
 
-  return ok({ products: items.map(withResolvedProductImages) });
+  return ok({ products: items.map(forStorefront) });
 }
 
 export async function getProduct(event: APIGatewayProxyEventV2) {
@@ -100,7 +105,7 @@ export async function getProduct(event: APIGatewayProxyEventV2) {
   if (!result.Item) return notFound("Product not found");
   const product = result.Item as { published?: boolean };
   if (product.published === false) return notFound("Product not found");
-  return ok({ product: withResolvedProductImages(result.Item as Product) });
+  return ok({ product: forStorefront(result.Item as Product) });
 }
 
 export async function createProduct(event: APIGatewayProxyEventV2) {
