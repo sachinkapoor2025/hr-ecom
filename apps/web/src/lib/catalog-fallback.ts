@@ -1,6 +1,6 @@
 import { readFileSync, existsSync } from "fs";
 import { join } from "path";
-import type { Product } from "@hr-ecom/shared";
+import { withCompetitiveStorefrontPricing, type Product } from "@hr-ecom/shared";
 
 interface CatalogFile {
   products: Product[];
@@ -26,7 +26,7 @@ export function getCatalogProducts(): Product[] {
     return cached;
   }
   const data = JSON.parse(readFileSync(path, "utf-8")) as CatalogFile;
-  cached = data.products ?? [];
+  cached = (data.products ?? []).map((p) => withCompetitiveStorefrontPricing(p));
   return cached;
 }
 
