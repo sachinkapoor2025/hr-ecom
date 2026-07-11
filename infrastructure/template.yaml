@@ -359,6 +359,10 @@ Resources:
       UserPoolName: !Sub hr-ecom-users-${Environment}
       AutoVerifiedAttributes: [email]
       UsernameAttributes: [email]
+      AccountRecoverySetting:
+        RecoveryMechanisms:
+          - Name: verified_email
+            Priority: 1
       EmailConfiguration:
         EmailSendingAccount: COGNITO_DEFAULT
       VerificationMessageTemplate:

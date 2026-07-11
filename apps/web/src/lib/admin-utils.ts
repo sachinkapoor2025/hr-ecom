@@ -73,17 +73,14 @@ export function matchesPaymentFilter(status: string, filter: string): boolean {
   return paymentFilterCategory(status) === filter;
 }
 
-const FULFILLMENT_ACTIVE_STATUSES: readonly string[] = [
-  ORDER_STATUS.PAID,
-  ORDER_STATUS.ACCEPTED,
-  ORDER_STATUS.PROCESSING,
-];
-
-/** Status tab filter — "Paid" means payment received, not literal order status `paid`. */
+/** Status tab filter — "Paid" means payment received (any post-payment status). */
 export function matchesOrderStatusTab(status: string, tab: string): boolean {
   if (tab === "all") return true;
   if (tab === ORDER_STATUS.PAID) return matchesPaymentFilter(status, "paid");
-  if (tab === ORDER_STATUS.PROCESSING) return FULFILLMENT_ACTIVE_STATUSES.includes(status);
+  // Processing tab = literally processing (and accepted if used); never include paid-only orders
+  if (tab === ORDER_STATUS.PROCESSING) {
+    return status === ORDER_STATUS.PROCESSING || status === ORDER_STATUS.ACCEPTED;
+  }
   if (tab === ORDER_STATUS.DELIVERED) {
     return status === ORDER_STATUS.DELIVERED || status === ORDER_STATUS.COMPLETE;
   }
