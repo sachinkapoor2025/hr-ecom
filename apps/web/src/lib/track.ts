@@ -149,6 +149,33 @@ export function trackPageLeave(path?: string): void {
   });
 }
 
+/**
+ * Heartbeat for engagement milestones (e.g. Discount of the Day shown after 10s).
+ * Ensures admin visitor duration is at least `minDurationMs` when the event fires.
+ */
+export function trackSessionHeartbeat(
+  reason: string,
+  minDurationMs = 0,
+  path?: string
+): void {
+  if (typeof window === "undefined") return;
+  const elapsed = pageEnteredAt ? Date.now() - pageEnteredAt : minDurationMs;
+  const durationMs = Math.max(elapsed, minDurationMs);
+  if (durationMs < 500) return;
+
+  track({
+    type: EVENT_TYPES.SESSION_PING,
+    path: path ?? currentPath ?? window.location.pathname,
+    metadata: {
+      durationMs: String(durationMs),
+      reason,
+      // Floor mode: admin duration should be at least this, not summed on top of leave pings
+      durationMode: reason === "daily_deal_shown" ? "floor" : "add",
+    },
+    immediate: true,
+  });
+}
+
 export function beginPageTiming(path?: string): void {
   if (typeof window === "undefined") return;
   currentPath = path ?? window.location.pathname + window.location.search;

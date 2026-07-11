@@ -3,18 +3,38 @@ import { z } from "zod";
 /** Discount-of-the-day coupon validity window. */
 export const WELCOME_COUPON_HOURS = 1;
 
-/** @deprecated Prefer spin segments; kept as fallback average. */
+/** @deprecated Prefer weighted spin; kept as fallback average. */
 export const WELCOME_DISCOUNT_PERCENT = 10;
 
-/** Wheel segments (percent off). Duplicates weight the odds. */
+/** Visual wheel segments (labels on the wheel). */
 export const DAILY_DEAL_SEGMENTS = [5, 10, 15, 20, 5, 10, 15, 20] as const;
 
-export type DailyDealPercent = (typeof DAILY_DEAL_SEGMENTS)[number];
+export type DailyDealPercent = 5 | 10 | 15 | 20;
 
-/** Pick a random discount from the wheel segments (server-side). */
+/**
+ * Spin odds:
+ * 35% → 5% off, 45% → 10% off, 15% → 15% off, 5% → 20% off
+ */
+export const DAILY_DEAL_WEIGHTS: ReadonlyArray<{ percent: DailyDealPercent; weight: number }> = [
+  { percent: 5, weight: 35 },
+  { percent: 10, weight: 45 },
+  { percent: 15, weight: 15 },
+  { percent: 20, weight: 5 },
+];
+
+export function isValidDailyDealPercent(n: unknown): n is DailyDealPercent {
+  return n === 5 || n === 10 || n === 15 || n === 20;
+}
+
+/** Pick a random discount using configured weights. */
 export function pickDailyDealDiscount(): DailyDealPercent {
-  const idx = Math.floor(Math.random() * DAILY_DEAL_SEGMENTS.length);
-  return DAILY_DEAL_SEGMENTS[idx]!;
+  const total = DAILY_DEAL_WEIGHTS.reduce((sum, row) => sum + row.weight, 0);
+  let roll = Math.random() * total;
+  for (const row of DAILY_DEAL_WEIGHTS) {
+    roll -= row.weight;
+    if (roll <= 0) return row.percent;
+  }
+  return 10;
 }
 
 /** Calendar day key in America/New_York for one-spin-per-email-per-day. */

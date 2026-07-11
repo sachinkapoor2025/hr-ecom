@@ -9,9 +9,11 @@ import {
   ABANDONED_CART_DISCOUNT_PERCENT,
   pickDailyDealDiscount,
   dailyDealDayKey,
+  isValidDailyDealPercent,
   type CouponValidationResult,
   type WelcomeCoupon,
   type StoreCoupon,
+  type DailyDealPercent,
 } from "@hr-ecom/shared";
 import { docClient, CONFIG_TABLE, now } from "../lib/db";
 import { ok, badRequest, forbidden } from "../lib/response";
@@ -116,6 +118,8 @@ export async function validateCouponRecord(
 export async function issueWelcomeCoupon(input: {
   email: string;
   sessionId?: string;
+  /** Client spin result — accepted only if 5|10|15|20 so animation can start instantly. */
+  discountPercent?: number;
 }): Promise<WelcomeCouponIssueResult> {
   const email = normalizeEmail(input.email);
   const timestamp = now();
@@ -143,7 +147,9 @@ export async function issueWelcomeCoupon(input: {
     return { ...existingActive, alreadyClaimedToday: false };
   }
 
-  const discountPercent = pickDailyDealDiscount();
+  const discountPercent: DailyDealPercent = isValidDailyDealPercent(input.discountPercent)
+    ? input.discountPercent
+    : pickDailyDealDiscount();
   const expiresAt = welcomeExpiresAt();
   const code = generateCode();
   const coupon: WelcomeCoupon & { PK: string; SK: string } = {

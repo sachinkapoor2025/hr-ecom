@@ -6,9 +6,9 @@ import { isFastSelling } from "@hr-ecom/shared";
 import { AddToCartControl } from "@/components/AddToCartControl";
 import { WishlistButton } from "@/components/WishlistButton";
 import { FastSellingBadge } from "@/components/FastSellingBadge";
+import { ProductImageRotator } from "@/components/ProductImageRotator";
 import { useCurrency } from "@/lib/currency-context";
 import { getDiscountPercent } from "@/lib/pricing";
-import { resolveImageUrl } from "@/lib/images";
 
 export function HomeProductCard({
   product,
@@ -36,16 +36,12 @@ export function HomeProductCard({
       <div className="relative aspect-square w-full shrink-0 overflow-hidden bg-slate-50">
         <WishlistButton product={product} />
         <Link href={`/products/${product.slug}`} className="absolute inset-0 block">
-          {product.images?.[0] ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={resolveImageUrl(product.images[0])}
-              alt={product.name}
-              className="absolute inset-0 h-full w-full object-cover object-center"
-            />
-          ) : (
-            <div className="absolute inset-0 flex items-center justify-center text-slate-400 text-sm">No image</div>
-          )}
+          <ProductImageRotator
+            images={product.images ?? []}
+            alt={product.name}
+            staggerKey={product.slug}
+            className="absolute inset-0 h-full w-full"
+          />
         </Link>
       </div>
       <Link href={`/products/${product.slug}`} className="block flex-1">

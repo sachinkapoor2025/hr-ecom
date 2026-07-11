@@ -86,7 +86,12 @@ export async function captureLead(event: APIGatewayProxyEventV2) {
   let leadPayload = parsed.data;
   if (parsed.data.source === "newsletter") {
     if (!email) return badRequest("Enter a valid email address to generate a coupon");
-    welcomeCoupon = await issueWelcomeCoupon({ email, sessionId });
+    const requested = Number(parsed.data.metadata?.discountPercent);
+    welcomeCoupon = await issueWelcomeCoupon({
+      email,
+      sessionId,
+      discountPercent: Number.isFinite(requested) ? requested : undefined,
+    });
     leadPayload = {
       ...parsed.data,
       metadata: {
