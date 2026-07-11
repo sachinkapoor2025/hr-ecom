@@ -77,9 +77,9 @@ export function matchesPaymentFilter(status: string, filter: string): boolean {
 export function matchesOrderStatusTab(status: string, tab: string): boolean {
   if (tab === "all") return true;
   if (tab === ORDER_STATUS.PAID) return matchesPaymentFilter(status, "paid");
-  // Processing tab = literally processing (and accepted if used); never include paid-only orders
+  // Processing tab = orders awaiting payment / still being processed for payment
   if (tab === ORDER_STATUS.PROCESSING) {
-    return status === ORDER_STATUS.PROCESSING || status === ORDER_STATUS.ACCEPTED;
+    return status === ORDER_STATUS.PENDING_PAYMENT;
   }
   if (tab === ORDER_STATUS.DELIVERED) {
     return status === ORDER_STATUS.DELIVERED || status === ORDER_STATUS.COMPLETE;

@@ -148,7 +148,7 @@ export default function AdminDashboard() {
           { href: "/admin/products", title: "Products", desc: "Add, edit, bulk upload" },
           { href: "/admin/categories", title: "Categories", desc: "Organize catalog" },
           { href: "/admin/leads", title: "Customer Leads", desc: "Partial captures" },
-          { href: "/admin/welcome-leads", title: "Welcome Email Leads", desc: "10% coupon signups" },
+          { href: "/admin/welcome-leads", title: "Discount of the Day", desc: "Spin-wheel coupon signups" },
           { href: "/admin/payments", title: "Payment Config", desc: "Stripe / Razorpay" },
           { href: "/admin/blog-images", title: "Blog Images", desc: "Hero images per article" },
         ].map((item) => (
