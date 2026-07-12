@@ -1,6 +1,5 @@
 import type { Order } from "@hr-ecom/shared";
 import { site } from "@/lib/site";
-import { formatMoney } from "@/lib/admin-utils";
 import { code128Svg } from "@/lib/barcode-code128";
 
 const LABEL_ELIGIBLE = new Set([
@@ -24,7 +23,7 @@ function escapeHtml(value: string): string {
     .replace(/"/g, "&quot;");
 }
 
-/** Build a single-page courier shipping label HTML (Amazon/Flipkart style). */
+/** Build a single-page courier shipping label HTML (no prices — gift-friendly). */
 export function buildShippingLabelHtml(order: Order): string {
   const addr = order.shippingAddress;
   const barcode = code128Svg(order.orderId, { height: 52, moduleWidth: 1.5 });
@@ -34,7 +33,6 @@ export function buildShippingLabelHtml(order: Order): string {
         `<tr>
           <td>${escapeHtml(item.name)}</td>
           <td style="text-align:center">${item.quantity}</td>
-          <td style="text-align:right">${escapeHtml(formatMoney(item.price * item.quantity, order.currency))}</td>
         </tr>`
     )
     .join("");
@@ -113,13 +111,7 @@ export function buildShippingLabelHtml(order: Order): string {
     }
     td { padding: 5px 0; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
     tr:last-child td { border-bottom: none; }
-    .footer {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      font-size: 12px;
-    }
-    .total { font-size: 16px; font-weight: 800; }
+    .footer { font-size: 12px; }
     .hint { text-align: center; font-size: 10px; color: #94a3b8; margin-top: 10px; }
     @media print {
       body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -174,7 +166,6 @@ export function buildShippingLabelHtml(order: Order): string {
             <tr>
               <th>Product</th>
               <th style="text-align:center;width:48px">Qty</th>
-              <th style="text-align:right;width:72px">Amount</th>
             </tr>
           </thead>
           <tbody>${items}</tbody>
@@ -185,18 +176,12 @@ export function buildShippingLabelHtml(order: Order): string {
     <div class="row">
       <div class="cell" style="flex:1">
         <div class="footer">
-          <div>
-            <div class="muted">Payment</div>
-            <div><strong>${escapeHtml(payment)}</strong></div>
-            <div class="muted" style="margin-top:4px">
-              Placed ${escapeHtml(new Date(order.createdAt).toLocaleDateString())}
-              ${order.carrier ? ` · ${escapeHtml(order.carrier)}` : ""}
-              ${order.trackingNumber ? ` · ${escapeHtml(order.trackingNumber)}` : ""}
-            </div>
-          </div>
-          <div style="text-align:right">
-            <div class="muted">Order value</div>
-            <div class="total">${escapeHtml(formatMoney(order.total, order.currency))}</div>
+          <div class="muted">Payment</div>
+          <div><strong>${escapeHtml(payment)}</strong></div>
+          <div class="muted" style="margin-top:4px">
+            Placed ${escapeHtml(new Date(order.createdAt).toLocaleDateString())}
+            ${order.carrier ? ` · ${escapeHtml(order.carrier)}` : ""}
+            ${order.trackingNumber ? ` · ${escapeHtml(order.trackingNumber)}` : ""}
           </div>
         </div>
       </div>
