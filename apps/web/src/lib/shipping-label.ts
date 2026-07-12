@@ -164,6 +164,17 @@ export function buildShippingLabelHtml(order: Order): string {
       </div>
     </div>
 
+    ${
+      addr.senderMessage
+        ? `<div class="row">
+      <div class="cell" style="flex:1">
+        <p class="section-title">Message from ${escapeHtml(addr.senderName || "sender")}</p>
+        <p class="addr" style="font-style:italic;line-height:1.45;white-space:pre-wrap">${escapeHtml(addr.senderMessage)}</p>
+      </div>
+    </div>`
+        : ""
+    }
+
     <div class="barcode-wrap">
       <p class="section-title" style="margin-bottom:6px">Order barcode</p>
       ${barcode}

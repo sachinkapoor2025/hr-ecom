@@ -26,7 +26,7 @@ import {
   saveShippingAddress,
 } from "@/lib/shipping-address";
 import { fetchAccount, createAccountAddress } from "@/lib/account";
-import { ORDER_STATUS, isValidShippingPhone, type Order, type ShippingAddress } from "@hr-ecom/shared";
+import { ORDER_STATUS, isValidShippingPhone, DEFAULT_SENDER_MESSAGE, type Order, type ShippingAddress } from "@hr-ecom/shared";
 
 declare global {
   interface Window {
@@ -105,7 +105,15 @@ function CheckoutPageInner() {
           return;
         }
         setRetryOrder(data.order);
-        if (data.order.shippingAddress) setAddress(data.order.shippingAddress);
+        if (data.order.shippingAddress) {
+          const sa = data.order.shippingAddress;
+          setAddress({
+            ...sa,
+            phone: sa.phone ?? "",
+            senderName: sa.senderName ?? "",
+            senderMessage: sa.senderMessage?.trim() || DEFAULT_SENDER_MESSAGE,
+          });
+        }
         if (data.order.paymentProvider === "razorpay") setPaymentMethod("razorpay");
         else if (data.order.paymentProvider === "stripe") setPaymentMethod("stripe");
         if (data.order.discount > 0) {
@@ -152,6 +160,7 @@ function CheckoutPageInner() {
               phone: defaultAddress.phone ?? "",
               email: defaultAddress.email || user?.email || "",
               senderName: defaultAddress.senderName ?? "",
+              senderMessage: defaultAddress.senderMessage?.trim() || DEFAULT_SENDER_MESSAGE,
             });
             addressPrefilled.current = true;
             return;
@@ -175,6 +184,7 @@ function CheckoutPageInner() {
           phone: latest.phone ?? "",
           email: latest.email || user?.email || "",
           senderName: latest.senderName ?? "",
+          senderMessage: latest.senderMessage?.trim() || DEFAULT_SENDER_MESSAGE,
         });
         addressPrefilled.current = true;
         return;
@@ -185,7 +195,13 @@ function CheckoutPageInner() {
           const data = await api<{ orders: Order[] }>("/orders", { sessionId, token });
           const latest = data.orders[0];
           if (latest?.shippingAddress) {
-            setAddress(latest.shippingAddress);
+            const sa = latest.shippingAddress;
+            setAddress({
+              ...sa,
+              phone: sa.phone ?? "",
+              senderName: sa.senderName ?? "",
+              senderMessage: sa.senderMessage?.trim() || DEFAULT_SENDER_MESSAGE,
+            });
             addressPrefilled.current = true;
             return;
           }
@@ -326,6 +342,7 @@ function CheckoutPageInner() {
       isDefault: true,
       phone: address.phone.trim(),
       senderName: address.senderName?.trim() || undefined,
+      senderMessage: address.senderMessage?.trim() || undefined,
       ...(address.line2?.trim() ? { line2: address.line2.trim() } : { line2: undefined }),
     };
 
@@ -394,9 +411,13 @@ function CheckoutPageInner() {
       }
 
       const senderName = address.senderName?.trim() ?? "";
+      const senderMessage = address.senderMessage?.trim() ?? "";
       const phone = address.phone?.trim() ?? "";
       if (!senderName) {
         throw new Error("Please enter your name (sender) so your brother knows who sent the Rakhi.");
+      }
+      if (senderMessage.length < 10) {
+        throw new Error("Please write a short message for your brother (it will appear on the shipping label).");
       }
       if (!isValidShippingPhone(phone)) {
         throw new Error(
@@ -409,6 +430,7 @@ function CheckoutPageInner() {
         country: "US",
         phone,
         senderName,
+        senderMessage,
         ...(address.line2?.trim() ? { line2: address.line2.trim() } : { line2: undefined }),
       };
 

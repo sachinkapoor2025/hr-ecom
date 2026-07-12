@@ -31,7 +31,12 @@ export const shippingAddressSchema = z.object({
   email: z.string().email(),
   /** Sister / buyer name — shown on shipping label so brother knows who sent the Rakhi. */
   senderName: z.string().trim().max(80).optional(),
+  /** Personal note from sister — printed on the shipping label. */
+  senderMessage: z.string().trim().max(500).optional(),
 });
+
+export const DEFAULT_SENDER_MESSAGE =
+  "Although we are far away from each other, this distance will not affect the strong bond of our relation. Happy Raksha Bandhan! This package is filled with Rakhi as well as overloaded with our emotions. Please accept this bundle of love and emotions.";
 
 export const checkoutShippingAddressSchema = shippingAddressSchema.extend({
   senderName: z
@@ -39,6 +44,11 @@ export const checkoutShippingAddressSchema = shippingAddressSchema.extend({
     .trim()
     .min(1, "Sender name is required")
     .max(80, "Sender name is too long"),
+  senderMessage: z
+    .string()
+    .trim()
+    .min(10, "Please write a short message for your brother")
+    .max(500, "Message is too long (max 500 characters)"),
 });
 
 export const checkoutSchema = z.object({

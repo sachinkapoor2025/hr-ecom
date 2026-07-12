@@ -1,4 +1,5 @@
 import type { ShippingAddress } from "@hr-ecom/shared";
+import { DEFAULT_SENDER_MESSAGE } from "@hr-ecom/shared";
 
 const STORAGE_KEY = "hr_ecom_saved_addresses";
 
@@ -74,6 +75,7 @@ export function emptyShippingAddress(): ShippingAddress {
     phone: "",
     email: "",
     senderName: "",
+    senderMessage: DEFAULT_SENDER_MESSAGE,
   };
 }
 
