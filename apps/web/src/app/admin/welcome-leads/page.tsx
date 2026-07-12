@@ -103,7 +103,7 @@ export default function AdminWelcomeLeadsPage() {
         <div>
           <h1 className="text-2xl font-bold text-primary">Discount of the Day</h1>
           <p className="text-sm text-slate-600 mt-1">
-            Spin-the-wheel signups (5–20% off, 1-hour validity, one spin per email per day).
+            Spin-the-wheel signups (6–10% off, 1-hour validity, one spin per email per day).
           </p>
         </div>
         <button

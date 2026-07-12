@@ -118,7 +118,7 @@ export async function validateCouponRecord(
 export async function issueWelcomeCoupon(input: {
   email: string;
   sessionId?: string;
-  /** Client spin result — accepted only if 5|10|15|20 so animation can start instantly. */
+  /** Client spin result — accepted only if 6|7|8|10 so animation can start instantly. */
   discountPercent?: number;
 }): Promise<WelcomeCouponIssueResult> {
   const email = normalizeEmail(input.email);

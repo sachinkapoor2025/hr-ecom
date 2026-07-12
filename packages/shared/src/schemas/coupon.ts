@@ -7,23 +7,23 @@ export const WELCOME_COUPON_HOURS = 1;
 export const WELCOME_DISCOUNT_PERCENT = 10;
 
 /** Visual wheel segments (labels on the wheel). */
-export const DAILY_DEAL_SEGMENTS = [5, 10, 15, 20, 5, 10, 15, 20] as const;
+export const DAILY_DEAL_SEGMENTS = [6, 7, 8, 10, 6, 7, 8, 10] as const;
 
-export type DailyDealPercent = 5 | 10 | 15 | 20;
+export type DailyDealPercent = 6 | 7 | 8 | 10;
 
 /**
  * Spin odds:
- * 35% → 5% off, 45% → 10% off, 15% → 15% off, 5% → 20% off
+ * 20% → 6% off, 40% → 7% off, 20% → 8% off, 20% → 10% off
  */
 export const DAILY_DEAL_WEIGHTS: ReadonlyArray<{ percent: DailyDealPercent; weight: number }> = [
-  { percent: 5, weight: 35 },
-  { percent: 10, weight: 45 },
-  { percent: 15, weight: 15 },
-  { percent: 20, weight: 5 },
+  { percent: 6, weight: 20 },
+  { percent: 7, weight: 40 },
+  { percent: 8, weight: 20 },
+  { percent: 10, weight: 20 },
 ];
 
 export function isValidDailyDealPercent(n: unknown): n is DailyDealPercent {
-  return n === 5 || n === 10 || n === 15 || n === 20;
+  return n === 6 || n === 7 || n === 8 || n === 10;
 }
 
 /** Pick a random discount using configured weights. */
@@ -34,7 +34,7 @@ export function pickDailyDealDiscount(): DailyDealPercent {
     roll -= row.weight;
     if (roll <= 0) return row.percent;
   }
-  return 10;
+  return 7;
 }
 
 /** Calendar day key in America/New_York for one-spin-per-email-per-day. */
