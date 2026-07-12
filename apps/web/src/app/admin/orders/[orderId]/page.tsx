@@ -18,6 +18,7 @@ import {
   paymentStatusLabel,
   shippingStatusLabel,
 } from "@/lib/admin-utils";
+import { canDownloadShippingLabel, printShippingLabel } from "@/lib/shipping-label";
 
 type AdminOrder = Order & {
   adminNotes?: string;
@@ -74,15 +75,25 @@ export default function AdminOrderDetailPage() {
     setMessage("");
     setError("");
     try {
+      const shippingFieldsRelevant =
+        newStatus === ORDER_STATUS.PROCESSING ||
+        newStatus === ORDER_STATUS.SHIPPED ||
+        order?.status === ORDER_STATUS.PROCESSING ||
+        order?.status === ORDER_STATUS.SHIPPED;
+
       const payload: Record<string, string | undefined> = {
-        trackingNumber: trackingNumber || undefined,
-        carrier: carrier || undefined,
         note: note || undefined,
         adminNotes,
-        estimatedDeliveryAt: estimatedDeliveryAt
-          ? new Date(estimatedDeliveryAt).toISOString()
-          : undefined,
       };
+
+      if (shippingFieldsRelevant) {
+        payload.trackingNumber = trackingNumber || undefined;
+        payload.carrier = carrier || undefined;
+        payload.estimatedDeliveryAt = estimatedDeliveryAt
+          ? new Date(estimatedDeliveryAt).toISOString()
+          : undefined;
+      }
+
       const allowed = order ? nextStatuses(order.status) : [];
       if (allowed.length > 0 && newStatus) {
         payload.status = newStatus;
@@ -149,6 +160,12 @@ export default function AdminOrderDetailPage() {
   const currentStepIndex = FULFILLMENT_STEPS.indexOf(order.status as (typeof FULFILLMENT_STEPS)[number]);
   const transitions = nextStatuses(order.status);
   const addr = order.shippingAddress;
+  const showShippingFields =
+    newStatus === ORDER_STATUS.PROCESSING ||
+    newStatus === ORDER_STATUS.SHIPPED ||
+    (transitions.length === 0 &&
+      (order.status === ORDER_STATUS.PROCESSING || order.status === ORDER_STATUS.SHIPPED));
+  const isAcceptOnly = newStatus === ORDER_STATUS.ACCEPTED;
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
@@ -180,6 +197,15 @@ export default function AdminOrderDetailPage() {
           >
             Download invoice
           </button>
+          {canDownloadShippingLabel(order.status) && (
+            <button
+              type="button"
+              onClick={() => printShippingLabel(order)}
+              className="text-sm border border-nav text-nav rounded-lg px-3 py-1.5 hover:bg-blue-50 print:hidden font-medium"
+            >
+              Download shipping label
+            </button>
+          )}
           {order.status === ORDER_STATUS.PENDING_PAYMENT && (
             <Link
               href={`/checkout?orderId=${order.orderId}`}
@@ -243,15 +269,46 @@ export default function AdminOrderDetailPage() {
             <ul className="divide-y">
               {order.items.map((item) => (
                 <li key={item.productSlug} className="flex items-center gap-3 py-3">
-                  {item.image && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={item.image} alt={item.name} className="w-12 h-12 rounded object-cover" />
+                  {item.image ? (
+                    <Link
+                      href={`/products/${item.productSlug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="relative z-0 hover:z-30 shrink-0 group"
+                      title={`View ${item.name} on storefront`}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="w-12 h-12 rounded object-cover border border-slate-200 bg-slate-50 transition-transform duration-200 ease-out group-hover:scale-[3.2] group-hover:shadow-xl group-hover:border-nav origin-left"
+                      />
+                    </Link>
+                  ) : (
+                    <Link
+                      href={`/products/${item.productSlug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-12 h-12 rounded border border-dashed border-slate-200 bg-slate-50 shrink-0 flex items-center justify-center text-[10px] text-slate-400"
+                      title={`View ${item.name} on storefront`}
+                    >
+                      View
+                    </Link>
                   )}
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">{item.name}</p>
+                  <div className="flex-1 min-w-0">
+                    <Link
+                      href={`/products/${item.productSlug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm font-medium text-nav hover:underline"
+                    >
+                      {item.name}
+                    </Link>
                     <p className="text-xs text-slate-500">Qty {item.quantity}</p>
                   </div>
-                  <span className="text-sm">{formatMoney(item.price * item.quantity, order.currency)}</span>
+                  <span className="text-sm shrink-0">
+                    {formatMoney(item.price * item.quantity, order.currency)}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -378,7 +435,12 @@ export default function AdminOrderDetailPage() {
               </div>
             )}
             {transitions.length === 0 ? (
-              <p className="text-sm text-slate-500">This order is in a final state. You can still update tracking and notes.</p>
+              <p className="text-sm text-slate-500">
+                This order is in a final state.
+                {showShippingFields
+                  ? " You can still update tracking and notes."
+                  : " You can still update notes."}
+              </p>
             ) : null}
             <form onSubmit={handleUpdate} className="space-y-3">
               {transitions.length > 0 && (
@@ -398,35 +460,45 @@ export default function AdminOrderDetailPage() {
                 </label>
               )}
 
-              <label className="block text-xs font-medium text-slate-500">
-                Expected delivery date
-                <input
-                  type="date"
-                  value={estimatedDeliveryAt}
-                  onChange={(e) => setEstimatedDeliveryAt(e.target.value)}
-                  className="mt-1 w-full border border-slate-300 rounded-lg px-2 py-2 text-sm"
-                />
-              </label>
+              {isAcceptOnly && (
+                <p className="text-xs text-slate-500">
+                  Accept confirms the order for fulfillment. Add tracking when you move it to Processing or Shipped.
+                </p>
+              )}
 
-              <label className="block text-xs font-medium text-slate-500">
-                Tracking number
-                <input
-                  value={trackingNumber}
-                  onChange={(e) => setTrackingNumber(e.target.value)}
-                  className="mt-1 w-full border border-slate-300 rounded-lg px-2 py-2 text-sm"
-                  placeholder="e.g. 1Z999…"
-                />
-              </label>
+              {showShippingFields && (
+                <>
+                  <label className="block text-xs font-medium text-slate-500">
+                    Expected delivery date
+                    <input
+                      type="date"
+                      value={estimatedDeliveryAt}
+                      onChange={(e) => setEstimatedDeliveryAt(e.target.value)}
+                      className="mt-1 w-full border border-slate-300 rounded-lg px-2 py-2 text-sm"
+                    />
+                  </label>
 
-              <label className="block text-xs font-medium text-slate-500">
-                Carrier
-                <input
-                  value={carrier}
-                  onChange={(e) => setCarrier(e.target.value)}
-                  className="mt-1 w-full border border-slate-300 rounded-lg px-2 py-2 text-sm"
-                  placeholder="e.g. FedEx, DHL"
-                />
-              </label>
+                  <label className="block text-xs font-medium text-slate-500">
+                    Tracking number
+                    <input
+                      value={trackingNumber}
+                      onChange={(e) => setTrackingNumber(e.target.value)}
+                      className="mt-1 w-full border border-slate-300 rounded-lg px-2 py-2 text-sm"
+                      placeholder="e.g. 1Z999…"
+                    />
+                  </label>
+
+                  <label className="block text-xs font-medium text-slate-500">
+                    Carrier
+                    <input
+                      value={carrier}
+                      onChange={(e) => setCarrier(e.target.value)}
+                      className="mt-1 w-full border border-slate-300 rounded-lg px-2 py-2 text-sm"
+                      placeholder="e.g. FedEx, DHL"
+                    />
+                  </label>
+                </>
+              )}
 
               <label className="block text-xs font-medium text-slate-500">
                 Status note (optional)
@@ -443,7 +515,11 @@ export default function AdminOrderDetailPage() {
                 disabled={saving}
                 className="w-full bg-nav text-white py-2 rounded-lg text-sm font-medium disabled:opacity-50"
               >
-                {saving ? "Saving…" : "Save update"}
+                {saving
+                  ? "Saving…"
+                  : isAcceptOnly
+                    ? "Accept order"
+                    : "Save update"}
               </button>
             </form>
             {message && <p className="text-green-600 text-xs mt-2">{message}</p>}

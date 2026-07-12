@@ -49,6 +49,42 @@ async function getRollup(day: string): Promise<RollupItem[]> {
   return (res.Items ?? []) as RollupItem[];
 }
 
+/** Paginate GSI1 so we collect every event for a type/day (not just the first page). */
+async function querySessionEventsForDay(
+  type: string,
+  day: string
+): Promise<Record<string, unknown>[]> {
+  const items: Record<string, unknown>[] = [];
+  let lastKey: Record<string, unknown> | undefined;
+  do {
+    const res = await docClient.send(
+      new QueryCommand({
+        TableName: EVENTS_TABLE,
+        IndexName: "GSI1",
+        KeyConditionExpression: "GSI1PK = :pk",
+        ExpressionAttributeValues: { ":pk": eventKeys.gsi1pk(type, day) },
+        ScanIndexForward: false,
+        ExclusiveStartKey: lastKey,
+      })
+    );
+    for (const item of (res.Items ?? []) as Record<string, unknown>[]) {
+      items.push(item);
+    }
+    lastKey = res.LastEvaluatedKey as Record<string, unknown> | undefined;
+  } while (lastKey);
+  return items;
+}
+
+async function mapInBatches<T>(
+  items: T[],
+  batchSize: number,
+  fn: (item: T) => Promise<void>
+): Promise<void> {
+  for (let i = 0; i < items.length; i += batchSize) {
+    await Promise.all(items.slice(i, i + batchSize).map(fn));
+  }
+}
+
 const FUNNEL_TYPES = [
   EVENT_TYPES.PAGE_VIEW,
   EVENT_TYPES.PRODUCT_VIEW,
@@ -247,32 +283,36 @@ async function enrichSessionIdentity(s: SessionSummary): Promise<void> {
   }
 }
 
-/** Recent leads keyed by session so we can join identity across silos. */
+/** Leads keyed by session so we can join identity across silos. */
 async function loadIdentityIndex(): Promise<Map<string, { name?: string; email?: string; phone?: string }>> {
   const bySession = new Map<string, { name?: string; email?: string; phone?: string }>();
 
-  const leadsRes = await docClient.send(
-    new QueryCommand({
-      TableName: CUSTOMERS_TABLE,
-      IndexName: "GSI1",
-      KeyConditionExpression: "GSI1PK = :pk",
-      ExpressionAttributeValues: { ":pk": customerKeys.gsi1pk() },
-      ScanIndexForward: false,
-      Limit: 400,
-    })
-  );
-  for (const lead of leadsRes.Items ?? []) {
-    const sessionId =
-      (lead.sessionId as string | undefined) ?? String(lead.PK ?? "").replace(/^SESSION#/, "");
-    if (!sessionId) continue;
-    const prev = bySession.get(sessionId) ?? {};
-    applyContactFields(prev, {
-      name: lead.name as string | undefined,
-      email: lead.email as string | undefined,
-      phone: lead.phone as string | undefined,
-    });
-    bySession.set(sessionId, prev);
-  }
+  let lastKey: Record<string, unknown> | undefined;
+  do {
+    const leadsRes = await docClient.send(
+      new QueryCommand({
+        TableName: CUSTOMERS_TABLE,
+        IndexName: "GSI1",
+        KeyConditionExpression: "GSI1PK = :pk",
+        ExpressionAttributeValues: { ":pk": customerKeys.gsi1pk() },
+        ScanIndexForward: false,
+        ExclusiveStartKey: lastKey,
+      })
+    );
+    for (const lead of leadsRes.Items ?? []) {
+      const sessionId =
+        (lead.sessionId as string | undefined) ?? String(lead.PK ?? "").replace(/^SESSION#/, "");
+      if (!sessionId) continue;
+      const prev = bySession.get(sessionId) ?? {};
+      applyContactFields(prev, {
+        name: lead.name as string | undefined,
+        email: lead.email as string | undefined,
+        phone: lead.phone as string | undefined,
+      });
+      bySession.set(sessionId, prev);
+    }
+    lastKey = leadsRes.LastEvaluatedKey as Record<string, unknown> | undefined;
+  } while (lastKey);
 
   return bySession;
 }
@@ -399,17 +439,8 @@ export async function listSessions(event: APIGatewayProxyEventV2) {
 
   for (const day of rangeDays(days)) {
     for (const type of SESSION_EVENT_TYPES) {
-      const res = await docClient.send(
-        new QueryCommand({
-          TableName: EVENTS_TABLE,
-          IndexName: "GSI1",
-          KeyConditionExpression: "GSI1PK = :pk",
-          ExpressionAttributeValues: { ":pk": eventKeys.gsi1pk(type, day) },
-          ScanIndexForward: false,
-          Limit: 500,
-        })
-      );
-      for (const raw of (res.Items ?? []) as Record<string, unknown>[]) {
+      const items = await querySessionEventsForDay(type, day);
+      for (const raw of items) {
         const sessionId = raw.sessionId as string;
         if (!sessionId) continue;
         mergeSessionEvent(sessions, raw, sessionId);
@@ -417,17 +448,25 @@ export async function listSessions(event: APIGatewayProxyEventV2) {
     }
   }
 
-  let list = [...sessions.values()].sort((a, b) => b.lastSeen.localeCompare(a.lastSeen)).slice(0, 100);
+  let list = [...sessions.values()].sort((a, b) => b.lastSeen.localeCompare(a.lastSeen));
 
-  const [identityIndex] = await Promise.all([
-    loadIdentityIndex(),
-    Promise.all(list.map((s) => enrichSessionIdentity(s))),
-  ]);
-
+  const identityIndex = await loadIdentityIndex();
   for (const s of list) {
     const fromLeads = identityIndex.get(s.sessionId);
     if (fromLeads) mergeContactFields(s, fromLeads);
   }
+
+  // Full profile/cart lookup for identified or commerce-active sessions only.
+  // Anonymous browsers already have list fields from events — skipping them keeps
+  // large date ranges under the API Gateway Lambda timeout.
+  const needsEnrich = list.filter(
+    (s) =>
+      isKnownContact(s) ||
+      (s.cartAdds ?? 0) > 0 ||
+      Boolean(s.checkoutStarted) ||
+      Boolean(s.purchased)
+  );
+  await mapInBatches(needsEnrich, 25, (s) => enrichSessionIdentity(s));
 
   list = backfillContactsByIdentity(list);
 
@@ -444,6 +483,7 @@ export async function listSessions(event: APIGatewayProxyEventV2) {
     days,
     sessions: list,
     identity: { known: knownCount, anonymous: anonymousCount },
+    total: list.length,
   });
 }
 
@@ -500,17 +540,8 @@ async function collectSessions(days: number): Promise<Map<string, SessionSummary
   const sessions = new Map<string, SessionSummary>();
   for (const day of rangeDays(days)) {
     for (const type of SESSION_EVENT_TYPES) {
-      const res = await docClient.send(
-        new QueryCommand({
-          TableName: EVENTS_TABLE,
-          IndexName: "GSI1",
-          KeyConditionExpression: "GSI1PK = :pk",
-          ExpressionAttributeValues: { ":pk": eventKeys.gsi1pk(type, day) },
-          ScanIndexForward: false,
-          Limit: 500,
-        })
-      );
-      for (const raw of (res.Items ?? []) as Record<string, unknown>[]) {
+      const items = await querySessionEventsForDay(type, day);
+      for (const raw of items) {
         const sessionId = raw.sessionId as string;
         if (!sessionId) continue;
         mergeSessionEvent(sessions, raw, sessionId);
