@@ -3,18 +3,20 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useApiClient, useAuth } from "@/lib/auth-context";
-import { blogPosts } from "@/lib/content/blog-posts";
+import { listAllBlogPosts } from "@/lib/content/blog-posts";
 
 export default function AdminBlogImagesPage() {
   const apiClient = useApiClient();
   const { token } = useAuth();
-  const posts = blogPosts;
+  const posts = listAllBlogPosts();
   const [images, setImages] = useState<Record<string, string>>({});
   const imagesRef = useRef(images);
   const [message, setMessage] = useState("");
   const [uploading, setUploading] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState("");
+  const [missingOnly, setMissingOnly] = useState(false);
 
   useEffect(() => {
     imagesRef.current = images;
@@ -125,6 +127,14 @@ export default function AdminBlogImagesPage() {
 
   if (loading) return <div className="p-10">Loading...</div>;
 
+  const q = query.trim().toLowerCase();
+  const filtered = posts.filter((post) => {
+    if (missingOnly && images[post.slug]) return false;
+    if (!q) return true;
+    return post.title.toLowerCase().includes(q) || post.slug.toLowerCase().includes(q);
+  });
+  const withImages = posts.filter((p) => images[p.slug]).length;
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
       <div className="mb-6">
@@ -133,17 +143,43 @@ export default function AdminBlogImagesPage() {
         </Link>
       </div>
       <h1 className="text-2xl font-bold mb-2">Blog Images</h1>
-      <p className="text-slate-600 text-sm mb-6">
+      <p className="text-slate-600 text-sm mb-4">
         Upload a dedicated hero image for each blog post. Images save automatically after upload — same as
         product images. Posts without an image show a placeholder on the blog list and article pages.
       </p>
+      <p className="text-sm text-slate-500 mb-4">
+        {withImages} of {posts.length} posts have images
+        {filtered.length !== posts.length ? ` · showing ${filtered.length}` : ""}
+      </p>
+
+      <div className="mb-6 flex flex-col sm:flex-row gap-3">
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search by title or slug…"
+          className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm"
+        />
+        <label className="inline-flex items-center gap-2 text-sm text-slate-600 shrink-0">
+          <input
+            type="checkbox"
+            checked={missingOnly}
+            onChange={(e) => setMissingOnly(e.target.checked)}
+            className="rounded border-slate-300"
+          />
+          Missing image only
+        </label>
+      </div>
 
       {message && (
         <p className="mb-4 text-sm rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">{message}</p>
       )}
 
       <div className="space-y-4">
-        {posts.map((post) => (
+        {filtered.length === 0 ? (
+          <p className="text-sm text-slate-500 py-8 text-center">No posts match your filters.</p>
+        ) : (
+          filtered.map((post) => (
           <div
             key={post.slug}
             className="border border-slate-200 rounded-xl p-4 bg-white flex flex-col sm:flex-row gap-4"
@@ -189,7 +225,8 @@ export default function AdminBlogImagesPage() {
               </div>
             </div>
           </div>
-        ))}
+          ))
+        )}
       </div>
 
       <button

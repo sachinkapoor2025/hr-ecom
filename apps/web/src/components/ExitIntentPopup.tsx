@@ -255,7 +255,7 @@ export function ExitIntentPopup() {
             <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-amber-200">Rakhi offer · Today only</p>
             <h2 className="text-2xl font-bold leading-tight mt-0.5">Discount of the Day</h2>
             <p className="text-xs sm:text-sm text-white/90 mt-1">
-              Spin for 5–20% off your Rakhi · 1 spin / email / day · valid {WELCOME_COUPON_HOURS}h
+              Spin for 6–10% off your Rakhi · 1 spin / email / day · valid {WELCOME_COUPON_HOURS}h
             </p>
           </div>
         </div>
