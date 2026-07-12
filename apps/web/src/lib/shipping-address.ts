@@ -73,6 +73,7 @@ export function emptyShippingAddress(): ShippingAddress {
     country: "US",
     phone: "",
     email: "",
+    senderName: "",
   };
 }
 

@@ -134,7 +134,12 @@ export function buildShippingLabelHtml(order: Order): string {
     <div class="row">
       <div class="cell" style="flex:1">
         <p class="section-title">From</p>
-        <p class="addr" style="font-weight:700;margin:0">${escapeHtml(site.name)}</p>
+        ${
+          addr.senderName
+            ? `<p class="addr" style="font-weight:700;margin:0">${escapeHtml(addr.senderName)}</p>
+        <p class="addr muted">via ${escapeHtml(site.name)}</p>`
+            : `<p class="addr" style="font-weight:700;margin:0">${escapeHtml(site.name)}</p>`
+        }
         <p class="addr muted">${escapeHtml(site.supportEmail)}</p>
         <p class="addr muted">${escapeHtml(site.phone)}</p>
       </div>
@@ -149,6 +154,13 @@ export function buildShippingLabelHtml(order: Order): string {
           <strong>Mobile:</strong> ${escapeHtml(addr.phone || "—")}<br/>
           <strong>Email:</strong> ${escapeHtml(addr.email)}
         </p>
+        ${
+          addr.senderName
+            ? `<p class="addr" style="margin-top:8px;padding-top:6px;border-top:1px dashed #cbd5e1">
+          <strong>Gift from:</strong> ${escapeHtml(addr.senderName)}
+        </p>`
+            : ""
+        }
       </div>
     </div>
 

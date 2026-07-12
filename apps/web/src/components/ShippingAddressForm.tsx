@@ -67,12 +67,19 @@ export function ShippingAddressForm({
       country: "US",
       phone: address.phone,
       email: address.email,
+      // Keep sister/sender name across address picks
+      senderName: value.senderName || address.senderName,
     });
   };
 
   const startNewAddress = () => {
     setSelectedId(null);
-    onChange({ ...emptyShippingAddress(), email: value.email, phone: value.phone });
+    onChange({
+      ...emptyShippingAddress(),
+      email: value.email,
+      phone: value.phone,
+      senderName: value.senderName,
+    });
   };
 
   const handleDeleteSaved = (id: string) => {
@@ -168,6 +175,14 @@ export function ShippingAddressForm({
         )}
 
         <LeadCaptureInput
+            label="Sender name (your name)"
+            value={value.senderName ?? ""}
+            onChange={(e) => update("senderName", e.target.value)}
+            placeholder="So your brother knows who sent this Rakhi"
+            required
+            autoComplete="nickname"
+          />
+          <LeadCaptureInput
             label="Recipient name"
             value={value.name}
             onChange={(e) => update("name", e.target.value)}
@@ -184,12 +199,14 @@ export function ShippingAddressForm({
             autoComplete="email"
           />
           <LeadCaptureInput
-            label="Phone (optional)"
+            label="Phone"
             type="tel"
             value={value.phone ?? ""}
             onChange={(e) => update("phone", e.target.value)}
-            placeholder="For delivery updates"
+            placeholder="+1 408 555 0100 or +91 98765 43210"
+            required
             autoComplete="tel"
+            inputMode="tel"
           />
           <LeadCaptureInput
             label="Street address"

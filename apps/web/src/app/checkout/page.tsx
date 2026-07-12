@@ -26,7 +26,7 @@ import {
   saveShippingAddress,
 } from "@/lib/shipping-address";
 import { fetchAccount, createAccountAddress } from "@/lib/account";
-import { ORDER_STATUS, type Order, type ShippingAddress } from "@hr-ecom/shared";
+import { ORDER_STATUS, isValidShippingPhone, type Order, type ShippingAddress } from "@hr-ecom/shared";
 
 declare global {
   interface Window {
@@ -149,8 +149,9 @@ function CheckoutPageInner() {
               state: defaultAddress.state,
               postalCode: defaultAddress.postalCode,
               country: defaultAddress.country,
-              phone: defaultAddress.phone,
+              phone: defaultAddress.phone ?? "",
               email: defaultAddress.email || user?.email || "",
+              senderName: defaultAddress.senderName ?? "",
             });
             addressPrefilled.current = true;
             return;
@@ -171,8 +172,9 @@ function CheckoutPageInner() {
           state: latest.state,
           postalCode: latest.postalCode,
           country: latest.country,
-          phone: latest.phone,
+          phone: latest.phone ?? "",
           email: latest.email || user?.email || "",
+          senderName: latest.senderName ?? "",
         });
         addressPrefilled.current = true;
         return;
@@ -322,7 +324,8 @@ function CheckoutPageInner() {
       country: "US" as const,
       label: address.name,
       isDefault: true,
-      ...(address.phone?.trim() ? { phone: address.phone.trim() } : {}),
+      phone: address.phone.trim(),
+      senderName: address.senderName?.trim() || undefined,
       ...(address.line2?.trim() ? { line2: address.line2.trim() } : { line2: undefined }),
     };
 
@@ -390,10 +393,22 @@ function CheckoutPageInner() {
         return;
       }
 
+      const senderName = address.senderName?.trim() ?? "";
+      const phone = address.phone?.trim() ?? "";
+      if (!senderName) {
+        throw new Error("Please enter your name (sender) so your brother knows who sent the Rakhi.");
+      }
+      if (!isValidShippingPhone(phone)) {
+        throw new Error(
+          "Please enter a valid phone number with country code (e.g. +1 408 555 0100 or +91 98765 43210)."
+        );
+      }
+
       const payload: ShippingAddress = {
         ...address,
         country: "US",
-        ...(address.phone?.trim() ? { phone: address.phone.trim() } : {}),
+        phone,
+        senderName,
         ...(address.line2?.trim() ? { line2: address.line2.trim() } : { line2: undefined }),
       };
 
