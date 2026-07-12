@@ -269,15 +269,46 @@ export default function AdminOrderDetailPage() {
             <ul className="divide-y">
               {order.items.map((item) => (
                 <li key={item.productSlug} className="flex items-center gap-3 py-3">
-                  {item.image && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={item.image} alt={item.name} className="w-12 h-12 rounded object-cover" />
+                  {item.image ? (
+                    <Link
+                      href={`/products/${item.productSlug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="relative z-0 hover:z-30 shrink-0 group"
+                      title={`View ${item.name} on storefront`}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="w-12 h-12 rounded object-cover border border-slate-200 bg-slate-50 transition-transform duration-200 ease-out group-hover:scale-[3.2] group-hover:shadow-xl group-hover:border-nav origin-left"
+                      />
+                    </Link>
+                  ) : (
+                    <Link
+                      href={`/products/${item.productSlug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-12 h-12 rounded border border-dashed border-slate-200 bg-slate-50 shrink-0 flex items-center justify-center text-[10px] text-slate-400"
+                      title={`View ${item.name} on storefront`}
+                    >
+                      View
+                    </Link>
                   )}
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">{item.name}</p>
+                  <div className="flex-1 min-w-0">
+                    <Link
+                      href={`/products/${item.productSlug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm font-medium text-nav hover:underline"
+                    >
+                      {item.name}
+                    </Link>
                     <p className="text-xs text-slate-500">Qty {item.quantity}</p>
                   </div>
-                  <span className="text-sm">{formatMoney(item.price * item.quantity, order.currency)}</span>
+                  <span className="text-sm shrink-0">
+                    {formatMoney(item.price * item.quantity, order.currency)}
+                  </span>
                 </li>
               ))}
             </ul>
