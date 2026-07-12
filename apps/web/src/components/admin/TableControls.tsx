@@ -50,7 +50,7 @@ export function TableControls({
             onChange={(e) => onPageSizeChange(Number(e.target.value))}
             className="text-sm border border-slate-200 rounded-lg px-2 py-1.5"
           >
-            {[10, 25, 50, 100].map((n) => (
+            {[10, 25, 50, 100, 250, 500].map((n) => (
               <option key={n} value={n}>
                 {n} / page
               </option>

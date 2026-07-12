@@ -18,6 +18,7 @@ import {
   paymentStatusLabel,
   shippingStatusLabel,
 } from "@/lib/admin-utils";
+import { canDownloadShippingLabel, printShippingLabel } from "@/lib/shipping-label";
 
 type AdminOrder = Order & {
   adminNotes?: string;
@@ -74,15 +75,25 @@ export default function AdminOrderDetailPage() {
     setMessage("");
     setError("");
     try {
+      const shippingFieldsRelevant =
+        newStatus === ORDER_STATUS.PROCESSING ||
+        newStatus === ORDER_STATUS.SHIPPED ||
+        order?.status === ORDER_STATUS.PROCESSING ||
+        order?.status === ORDER_STATUS.SHIPPED;
+
       const payload: Record<string, string | undefined> = {
-        trackingNumber: trackingNumber || undefined,
-        carrier: carrier || undefined,
         note: note || undefined,
         adminNotes,
-        estimatedDeliveryAt: estimatedDeliveryAt
-          ? new Date(estimatedDeliveryAt).toISOString()
-          : undefined,
       };
+
+      if (shippingFieldsRelevant) {
+        payload.trackingNumber = trackingNumber || undefined;
+        payload.carrier = carrier || undefined;
+        payload.estimatedDeliveryAt = estimatedDeliveryAt
+          ? new Date(estimatedDeliveryAt).toISOString()
+          : undefined;
+      }
+
       const allowed = order ? nextStatuses(order.status) : [];
       if (allowed.length > 0 && newStatus) {
         payload.status = newStatus;
@@ -149,6 +160,12 @@ export default function AdminOrderDetailPage() {
   const currentStepIndex = FULFILLMENT_STEPS.indexOf(order.status as (typeof FULFILLMENT_STEPS)[number]);
   const transitions = nextStatuses(order.status);
   const addr = order.shippingAddress;
+  const showShippingFields =
+    newStatus === ORDER_STATUS.PROCESSING ||
+    newStatus === ORDER_STATUS.SHIPPED ||
+    (transitions.length === 0 &&
+      (order.status === ORDER_STATUS.PROCESSING || order.status === ORDER_STATUS.SHIPPED));
+  const isAcceptOnly = newStatus === ORDER_STATUS.ACCEPTED;
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
@@ -180,6 +197,15 @@ export default function AdminOrderDetailPage() {
           >
             Download invoice
           </button>
+          {canDownloadShippingLabel(order.status) && (
+            <button
+              type="button"
+              onClick={() => printShippingLabel(order)}
+              className="text-sm border border-nav text-nav rounded-lg px-3 py-1.5 hover:bg-blue-50 print:hidden font-medium"
+            >
+              Download shipping label
+            </button>
+          )}
           {order.status === ORDER_STATUS.PENDING_PAYMENT && (
             <Link
               href={`/checkout?orderId=${order.orderId}`}
@@ -378,7 +404,12 @@ export default function AdminOrderDetailPage() {
               </div>
             )}
             {transitions.length === 0 ? (
-              <p className="text-sm text-slate-500">This order is in a final state. You can still update tracking and notes.</p>
+              <p className="text-sm text-slate-500">
+                This order is in a final state.
+                {showShippingFields
+                  ? " You can still update tracking and notes."
+                  : " You can still update notes."}
+              </p>
             ) : null}
             <form onSubmit={handleUpdate} className="space-y-3">
               {transitions.length > 0 && (
@@ -398,35 +429,45 @@ export default function AdminOrderDetailPage() {
                 </label>
               )}
 
-              <label className="block text-xs font-medium text-slate-500">
-                Expected delivery date
-                <input
-                  type="date"
-                  value={estimatedDeliveryAt}
-                  onChange={(e) => setEstimatedDeliveryAt(e.target.value)}
-                  className="mt-1 w-full border border-slate-300 rounded-lg px-2 py-2 text-sm"
-                />
-              </label>
+              {isAcceptOnly && (
+                <p className="text-xs text-slate-500">
+                  Accept confirms the order for fulfillment. Add tracking when you move it to Processing or Shipped.
+                </p>
+              )}
 
-              <label className="block text-xs font-medium text-slate-500">
-                Tracking number
-                <input
-                  value={trackingNumber}
-                  onChange={(e) => setTrackingNumber(e.target.value)}
-                  className="mt-1 w-full border border-slate-300 rounded-lg px-2 py-2 text-sm"
-                  placeholder="e.g. 1Z999…"
-                />
-              </label>
+              {showShippingFields && (
+                <>
+                  <label className="block text-xs font-medium text-slate-500">
+                    Expected delivery date
+                    <input
+                      type="date"
+                      value={estimatedDeliveryAt}
+                      onChange={(e) => setEstimatedDeliveryAt(e.target.value)}
+                      className="mt-1 w-full border border-slate-300 rounded-lg px-2 py-2 text-sm"
+                    />
+                  </label>
 
-              <label className="block text-xs font-medium text-slate-500">
-                Carrier
-                <input
-                  value={carrier}
-                  onChange={(e) => setCarrier(e.target.value)}
-                  className="mt-1 w-full border border-slate-300 rounded-lg px-2 py-2 text-sm"
-                  placeholder="e.g. FedEx, DHL"
-                />
-              </label>
+                  <label className="block text-xs font-medium text-slate-500">
+                    Tracking number
+                    <input
+                      value={trackingNumber}
+                      onChange={(e) => setTrackingNumber(e.target.value)}
+                      className="mt-1 w-full border border-slate-300 rounded-lg px-2 py-2 text-sm"
+                      placeholder="e.g. 1Z999…"
+                    />
+                  </label>
+
+                  <label className="block text-xs font-medium text-slate-500">
+                    Carrier
+                    <input
+                      value={carrier}
+                      onChange={(e) => setCarrier(e.target.value)}
+                      className="mt-1 w-full border border-slate-300 rounded-lg px-2 py-2 text-sm"
+                      placeholder="e.g. FedEx, DHL"
+                    />
+                  </label>
+                </>
+              )}
 
               <label className="block text-xs font-medium text-slate-500">
                 Status note (optional)
@@ -443,7 +484,11 @@ export default function AdminOrderDetailPage() {
                 disabled={saving}
                 className="w-full bg-nav text-white py-2 rounded-lg text-sm font-medium disabled:opacity-50"
               >
-                {saving ? "Saving…" : "Save update"}
+                {saving
+                  ? "Saving…"
+                  : isAcceptOnly
+                    ? "Accept order"
+                    : "Save update"}
               </button>
             </form>
             {message && <p className="text-green-600 text-xs mt-2">{message}</p>}
