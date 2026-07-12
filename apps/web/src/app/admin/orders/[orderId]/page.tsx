@@ -352,6 +352,16 @@ export default function AdminOrderDetailPage() {
         <div className="space-y-6">
           <section className="bg-white border rounded-xl p-5 text-sm">
             <h2 className="font-semibold mb-3">Customer</h2>
+            {addr.senderName && (
+              <p className="text-xs text-slate-500 mb-1">
+                Gift from: <span className="font-semibold text-slate-800">{addr.senderName}</span>
+              </p>
+            )}
+            {addr.senderMessage && (
+              <p className="text-xs text-slate-600 italic mb-2 border-l-2 border-amber-300 pl-2 leading-relaxed">
+                “{addr.senderMessage}”
+              </p>
+            )}
             <p className="font-medium">{addr.name}</p>
             <p className="text-slate-500">{addr.email}</p>
             {addr.phone && <p className="text-slate-500">{addr.phone}</p>}

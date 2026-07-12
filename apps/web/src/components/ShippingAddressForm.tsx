@@ -67,12 +67,21 @@ export function ShippingAddressForm({
       country: "US",
       phone: address.phone,
       email: address.email,
+      // Keep sister/sender details across address picks
+      senderName: value.senderName || address.senderName,
+      senderMessage: value.senderMessage || address.senderMessage,
     });
   };
 
   const startNewAddress = () => {
     setSelectedId(null);
-    onChange({ ...emptyShippingAddress(), email: value.email, phone: value.phone });
+    onChange({
+      ...emptyShippingAddress(),
+      email: value.email,
+      phone: value.phone,
+      senderName: value.senderName,
+      senderMessage: value.senderMessage,
+    });
   };
 
   const handleDeleteSaved = (id: string) => {
@@ -168,6 +177,31 @@ export function ShippingAddressForm({
         )}
 
         <LeadCaptureInput
+            label="Sender name (your name)"
+            value={value.senderName ?? ""}
+            onChange={(e) => update("senderName", e.target.value)}
+            placeholder="So your brother knows who sent this Rakhi"
+            required
+            autoComplete="nickname"
+          />
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">
+              Message for your brother
+            </label>
+            <textarea
+              value={value.senderMessage ?? ""}
+              onChange={(e) => update("senderMessage", e.target.value)}
+              required
+              rows={4}
+              maxLength={500}
+              placeholder="Write a Raksha Bandhan note — it will appear on the shipping label"
+              className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent text-sm leading-relaxed"
+            />
+            <p className="text-xs text-slate-500 mt-1">
+              Printed on the shipping label · {(value.senderMessage ?? "").length}/500
+            </p>
+          </div>
+          <LeadCaptureInput
             label="Recipient name"
             value={value.name}
             onChange={(e) => update("name", e.target.value)}
@@ -184,12 +218,14 @@ export function ShippingAddressForm({
             autoComplete="email"
           />
           <LeadCaptureInput
-            label="Phone (optional)"
+            label="Phone"
             type="tel"
             value={value.phone ?? ""}
             onChange={(e) => update("phone", e.target.value)}
-            placeholder="For delivery updates"
+            placeholder="+1 408 555 0100 or +91 98765 43210"
+            required
             autoComplete="tel"
+            inputMode="tel"
           />
           <LeadCaptureInput
             label="Street address"

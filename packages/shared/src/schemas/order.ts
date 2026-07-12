@@ -2,6 +2,23 @@ import { z } from "zod";
 import { cartItemSchema } from "./cart";
 import { ORDER_STATUS } from "../constants";
 
+/** International phone: 10–15 digits; allows +, spaces, dashes, parentheses. */
+export function isValidShippingPhone(phone: string): boolean {
+  const trimmed = phone.trim();
+  if (!trimmed) return false;
+  if (!/^\+?[\d\s().-]{10,22}$/.test(trimmed)) return false;
+  const digits = trimmed.replace(/\D/g, "");
+  return digits.length >= 10 && digits.length <= 15;
+}
+
+const phoneSchema = z
+  .string()
+  .trim()
+  .min(1, "Phone number is required")
+  .refine(isValidShippingPhone, {
+    message: "Enter a valid phone number with country code (e.g. +1 408 555 0100 or +91 98765 43210)",
+  });
+
 export const shippingAddressSchema = z.object({
   name: z.string().min(1),
   line1: z.string().min(1),
@@ -10,12 +27,32 @@ export const shippingAddressSchema = z.object({
   state: z.string().min(1),
   postalCode: z.string().min(1),
   country: z.string().min(2).max(2),
-  phone: z.string().optional(),
+  phone: phoneSchema,
   email: z.string().email(),
+  /** Sister / buyer name — shown on shipping label so brother knows who sent the Rakhi. */
+  senderName: z.string().trim().max(80).optional(),
+  /** Personal note from sister — printed on the shipping label. */
+  senderMessage: z.string().trim().max(500).optional(),
+});
+
+export const DEFAULT_SENDER_MESSAGE =
+  "Although we are far away from each other, this distance will not affect the strong bond of our relation. Happy Raksha Bandhan! This package is filled with Rakhi as well as overloaded with our emotions. Please accept this bundle of love and emotions.";
+
+export const checkoutShippingAddressSchema = shippingAddressSchema.extend({
+  senderName: z
+    .string()
+    .trim()
+    .min(1, "Sender name is required")
+    .max(80, "Sender name is too long"),
+  senderMessage: z
+    .string()
+    .trim()
+    .min(10, "Please write a short message for your brother")
+    .max(500, "Message is too long (max 500 characters)"),
 });
 
 export const checkoutSchema = z.object({
-  shippingAddress: shippingAddressSchema,
+  shippingAddress: checkoutShippingAddressSchema,
   paymentMethod: z.enum(["stripe", "razorpay"]),
   /** Customer-selected display/checkout currency (from currency switcher). */
   checkoutCurrency: z.enum(["USD", "INR"]).optional(),
