@@ -92,6 +92,42 @@ export const couponKeys = {
   abandonedEmailSk: () => "ACTIVE" as const,
 };
 
+// ---- email campaigns table (SES bulk marketing) ----
+export const sesEmailKeys = {
+  campaignPk: (campaignId: string) => `CAMPAIGN#${campaignId}`,
+  campaignSk: () => "META" as const,
+  recipientSk: (email: string) => `RECIPIENT#${email.trim().toLowerCase()}`,
+  queueSk: (email: string) => `QUEUE#${email.trim().toLowerCase()}`,
+  /** GSI1: list campaigns by createdAt */
+  entityCampaignPk: () => "ENTITY#CAMPAIGN" as const,
+  entityCampaignSk: (createdAt: string) => createdAt,
+  /** GSI2: find due/scheduled campaigns */
+  statusPk: (status: string) => `STATUS#${status}`,
+  statusSk: (at: string) => at,
+  /** Pending queue scan for worker */
+  pendingQueuePk: () => "QUEUE#PENDING" as const,
+  pendingQueueSk: (campaignId: string, email: string) => `${campaignId}#${email.trim().toLowerCase()}`,
+  templatePk: (templateId: string) => `TEMPLATE#${templateId}`,
+  templateSk: () => "META" as const,
+  entityTemplatePk: () => "ENTITY#TEMPLATE" as const,
+  entityTemplateSk: (createdAt: string) => createdAt,
+  suppressPk: (email: string) => `SUPPRESS#${email.trim().toLowerCase()}`,
+  suppressSk: () => "META" as const,
+  entitySuppressPk: () => "ENTITY#SUPPRESS" as const,
+  entitySuppressSk: (createdAt: string) => createdAt,
+  settingsPk: () => "SETTINGS#SES" as const,
+  settingsSk: () => "META" as const,
+  trackOpenPk: (token: string) => `TRACKOPEN#${token}`,
+  trackClickPk: (token: string) => `TRACKCLICK#${token}`,
+  trackSk: () => "META" as const,
+  notifyPk: (id: string) => `NOTIFY#${id}`,
+  notifySk: () => "META" as const,
+  entityNotifyPk: () => "ENTITY#NOTIFY" as const,
+  entityNotifySk: (createdAt: string) => createdAt,
+  dailyCounterPk: (day: string) => `DAILY#${day}`,
+  dailyCounterSk: () => "META" as const,
+};
+
 /**
  * Legacy single-table helpers — retained only for the one-time migration script
  * that reads the old `hr-ecom-{env}` table. Do not use in handlers.

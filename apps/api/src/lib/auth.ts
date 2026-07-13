@@ -5,6 +5,8 @@ export interface AuthContext {
   email: string;
   isAdmin: boolean;
   isSuperAdmin: boolean;
+  /** Cognito `email` group — SES bulk campaign module access. */
+  isEmailMarketer: boolean;
 }
 
 const DEV_AUTH_ENABLED =
@@ -21,11 +23,14 @@ export function getAuth(event: APIGatewayProxyEventV2): AuthContext | null {
     const [, email, role] = token.split(":");
     if (!email) return null;
     const isSuperAdmin = role === "super-admin";
+    const isEmailMarketer =
+      role === "email" || isSuperAdmin || email.toLowerCase().includes("email");
     return {
       userId: `dev-${email}`,
       email,
       isSuperAdmin,
       isAdmin: role === "admin" || isSuperAdmin,
+      isEmailMarketer,
     };
   }
 
@@ -33,11 +38,13 @@ export function getAuth(event: APIGatewayProxyEventV2): AuthContext | null {
     const payload = JSON.parse(Buffer.from(token.split(".")[1], "base64url").toString());
     const groups: string[] = payload["cognito:groups"] ?? [];
     const isSuperAdmin = groups.includes("super-admin");
+    const isEmailMarketer = groups.includes("email") || isSuperAdmin;
     return {
       userId: payload.sub as string,
       email: (payload.email as string) ?? "",
       isSuperAdmin,
       isAdmin: groups.includes("admin") || isSuperAdmin,
+      isEmailMarketer,
     };
   } catch {
     return null;
@@ -64,5 +71,12 @@ export function requireAdmin(event: APIGatewayProxyEventV2): AuthContext | null 
 export function requireSuperAdmin(event: APIGatewayProxyEventV2): AuthContext | null {
   const auth = getAuth(event);
   if (!auth?.isSuperAdmin) return null;
+  return auth;
+}
+
+/** Cognito `email` group (or super-admin) for /ses-email module. */
+export function requireEmailAccess(event: APIGatewayProxyEventV2): AuthContext | null {
+  const auth = getAuth(event);
+  if (!auth?.isEmailMarketer) return null;
   return auth;
 }

@@ -22,6 +22,8 @@ export interface AuthUser {
   token: string;
   isAdmin: boolean;
   isSuperAdmin: boolean;
+  /** Cognito `email` group — /ses-email module */
+  isEmailMarketer: boolean;
 }
 
 export interface RegisterResult {
@@ -36,7 +38,12 @@ export function loadStoredAuth(): AuthUser | null {
   if (typeof window === "undefined") return null;
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as AuthUser) : null;
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as AuthUser;
+    return {
+      ...parsed,
+      isEmailMarketer: Boolean(parsed.isEmailMarketer ?? parsed.isSuperAdmin),
+    };
   } catch {
     return null;
   }
@@ -51,12 +58,21 @@ export function login(email: string, password: string): Promise<AuthUser> {
   if (!userPool && devAuth) {
     const isSuperAdmin = email.toLowerCase().includes("superadmin");
     const isAdmin = isSuperAdmin || email.toLowerCase().includes("admin");
-    const role = isSuperAdmin ? "super-admin" : isAdmin ? "admin" : "customer";
+    const isEmailMarketer =
+      isSuperAdmin || email.toLowerCase().includes("email") || email.toLowerCase().includes("ses");
+    const role = isSuperAdmin
+      ? "super-admin"
+      : isEmailMarketer && !isAdmin
+        ? "email"
+        : isAdmin
+          ? "admin"
+          : "customer";
     const user: AuthUser = {
       email,
       token: `dev:${email}:${role}`,
       isAdmin,
       isSuperAdmin,
+      isEmailMarketer,
     };
     storeAuth(user);
     return Promise.resolve(user);
@@ -82,6 +98,7 @@ export function login(email: string, password: string): Promise<AuthUser> {
           token,
           isSuperAdmin,
           isAdmin: groups.includes("admin") || isSuperAdmin,
+          isEmailMarketer: groups.includes("email") || isSuperAdmin,
         };
         storeAuth(authUser);
         resolve(authUser);

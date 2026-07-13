@@ -81,7 +81,7 @@ export function ExitIntentPopup() {
   }, []);
 
   useEffect(() => {
-    if (pathname.startsWith("/admin") || pathname.startsWith("/checkout")) return;
+    if (pathname.startsWith("/admin") || pathname.startsWith("/ses-email") || pathname.startsWith("/checkout")) return;
     if (sessionStorage.getItem(STORAGE_KEY)) return;
 
     const TIMER_START_KEY = "usarakhi_daily_deal_timer_start";
@@ -95,7 +95,7 @@ export function ExitIntentPopup() {
     const timer = window.setTimeout(() => {
       if (sessionStorage.getItem(STORAGE_KEY)) return;
       const path = window.location.pathname;
-      if (path.startsWith("/admin") || path.startsWith("/checkout")) return;
+      if (path.startsWith("/admin") || path.startsWith("/ses-email") || path.startsWith("/checkout")) return;
       sessionStorage.setItem(STORAGE_KEY, "1");
       setOpen(true);
       trackSessionHeartbeat("daily_deal_shown", SHOW_AFTER_MS, path);

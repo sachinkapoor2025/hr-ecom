@@ -175,7 +175,7 @@ export function ChatWidget() {
     sessionStorage.removeItem(STORAGE_KEY);
   };
 
-  if (pathname.startsWith("/admin")) return null;
+  if (pathname.startsWith("/admin") || pathname.startsWith("/ses-email")) return null;
 
   return (
     <>

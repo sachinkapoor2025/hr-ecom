@@ -14,7 +14,7 @@ function WhatsAppIcon({ className = "w-6 h-6" }: { className?: string }) {
 export function WhatsAppFloat() {
   const pathname = usePathname();
 
-  if (pathname.startsWith("/admin")) return null;
+  if (pathname.startsWith("/admin") || pathname.startsWith("/ses-email")) return null;
 
   return (
     <a

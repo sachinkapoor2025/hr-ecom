@@ -109,6 +109,10 @@ When admin sets order status to **Delivered** or **Complete**, the API sets `rev
 | GET | `/admin/search` | Admin: global search by name/email/phone (`?q=`) |
 | GET | `/admin/carts/abandoned` | Admin: abandoned carts (CSV in UI) |
 | GET | `/admin/leads` | Admin: captured leads |
+| GET/POST | `/ses-email/*` | SES bulk campaigns (Cognito `email` group): dashboard, campaigns, recipients, templates, queue, analytics, suppression, settings |
+| GET | `/email/open/{token}` | Open tracking pixel |
+| GET | `/email/click/{token}` | Click tracking redirect |
+| GET | `/email/unsubscribe/{token}` | Unsubscribe → suppression list |
 | GET | `/config/payments` | Public payment region config |
 | GET | `/blog-images` | Public blog hero image map (slug → URL) |
 | PUT | `/admin/blog-images` | Admin: update blog hero images |
