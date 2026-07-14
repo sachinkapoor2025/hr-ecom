@@ -8,7 +8,7 @@ import { WELCOME_DISCOUNT_PERCENT, LOW_STOCK_ALERT_EMAIL, ABANDONED_CART_DISCOUN
 const DEFAULT_NOTIFY = "order@usarakhi.com";
 /** Admin inbox for new orders + contact form (comma-separated). */
 const DEFAULT_ADMIN_NOTIFY =
-  "order@usarakhi.com,dgv@mydgv.com,priya.yadav@mydgv.com";
+  "order@usarakhi.com,priya.yadav@mydgv.com";
 const SITE_NAME = "UsaRakhi";
 
 export type EmailSendResult = {
