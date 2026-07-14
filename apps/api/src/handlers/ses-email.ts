@@ -26,7 +26,7 @@ import {
 } from "@hr-ecom/shared";
 import { docClient, now, dayBucket } from "../lib/db";
 import { ok, created, badRequest, notFound, forbidden, unauthorized } from "../lib/response";
-import { requireEmailAccess, getAuth } from "../lib/auth";
+import { requireAdmin, getAuth } from "../lib/auth";
 import { sendViaSes, htmlToText } from "../lib/ses";
 
 const TABLE = process.env.EMAIL_CAMPAIGNS_TABLE ?? `hr-ecom-email-campaigns-${process.env.ENVIRONMENT ?? "dev"}`;
@@ -153,7 +153,7 @@ async function saveCampaign(campaign: SesCampaign) {
 }
 
 export async function getDashboard(event: APIGatewayProxyEventV2) {
-  if (!requireEmailAccess(event)) return unauthorized("Email group access required");
+  if (!requireAdmin(event)) return unauthorized("Admin access required");
   const list = await listCampaignItems();
   const today = dayBucket();
   const scheduledToday = list.filter(
@@ -210,12 +210,12 @@ async function listCampaignItems(): Promise<SesCampaign[]> {
 }
 
 export async function listCampaigns(event: APIGatewayProxyEventV2) {
-  if (!requireEmailAccess(event)) return unauthorized("Email group access required");
+  if (!requireAdmin(event)) return unauthorized("Admin access required");
   return ok({ campaigns: await listCampaignItems() });
 }
 
 export async function getCampaignHandler(event: APIGatewayProxyEventV2) {
-  if (!requireEmailAccess(event)) return unauthorized("Email group access required");
+  if (!requireAdmin(event)) return unauthorized("Admin access required");
   const id = event.pathParameters?.campaignId;
   if (!id) return badRequest("campaignId required");
   const campaign = await getCampaign(id);
@@ -245,8 +245,8 @@ export async function getCampaignHandler(event: APIGatewayProxyEventV2) {
 }
 
 export async function createCampaign(event: APIGatewayProxyEventV2) {
-  const auth = requireEmailAccess(event);
-  if (!auth) return unauthorized("Email group access required");
+  const auth = requireAdmin(event);
+  if (!auth) return unauthorized("Admin access required");
   const body = JSON.parse(event.body ?? "{}");
   const parsed = createSesCampaignSchema.safeParse(body);
   if (!parsed.success) return badRequest(parsed.error.message);
@@ -289,8 +289,8 @@ export async function createCampaign(event: APIGatewayProxyEventV2) {
 }
 
 export async function updateCampaign(event: APIGatewayProxyEventV2) {
-  const auth = requireEmailAccess(event);
-  if (!auth) return unauthorized("Email group access required");
+  const auth = requireAdmin(event);
+  if (!auth) return unauthorized("Admin access required");
   const id = event.pathParameters?.campaignId;
   if (!id) return badRequest("campaignId required");
   const existing = await getCampaign(id);
@@ -381,7 +381,7 @@ export async function updateCampaign(event: APIGatewayProxyEventV2) {
 }
 
 export async function uploadRecipients(event: APIGatewayProxyEventV2) {
-  if (!requireEmailAccess(event)) return unauthorized("Email group access required");
+  if (!requireAdmin(event)) return unauthorized("Admin access required");
   const body = JSON.parse(event.body ?? "{}");
   const parsed = uploadSesRecipientsSchema.safeParse(body);
   if (!parsed.success) return badRequest(parsed.error.message);
@@ -448,7 +448,7 @@ export async function uploadRecipients(event: APIGatewayProxyEventV2) {
 }
 
 export async function listTemplates(event: APIGatewayProxyEventV2) {
-  if (!requireEmailAccess(event)) return unauthorized("Email group access required");
+  if (!requireAdmin(event)) return unauthorized("Admin access required");
   const res = await docClient.send(
     new QueryCommand({
       TableName: TABLE,
@@ -463,7 +463,7 @@ export async function listTemplates(event: APIGatewayProxyEventV2) {
 }
 
 export async function createTemplate(event: APIGatewayProxyEventV2) {
-  if (!requireEmailAccess(event)) return unauthorized("Email group access required");
+  if (!requireAdmin(event)) return unauthorized("Admin access required");
   const body = JSON.parse(event.body ?? "{}");
   const parsed = createSesTemplateSchema.safeParse(body);
   if (!parsed.success) return badRequest(parsed.error.message);
@@ -484,12 +484,12 @@ export async function createTemplate(event: APIGatewayProxyEventV2) {
 }
 
 export async function getSettings(event: APIGatewayProxyEventV2) {
-  if (!requireEmailAccess(event)) return unauthorized("Email group access required");
+  if (!requireAdmin(event)) return unauthorized("Admin access required");
   return ok({ settings: await loadSettings() });
 }
 
 export async function updateSettings(event: APIGatewayProxyEventV2) {
-  if (!requireEmailAccess(event)) return unauthorized("Email group access required");
+  if (!requireAdmin(event)) return unauthorized("Admin access required");
   const body = JSON.parse(event.body ?? "{}");
   const parsed = sesSettingsSchema.safeParse({ ...(await loadSettings()), ...body });
   if (!parsed.success) return badRequest(parsed.error.message);
@@ -508,7 +508,7 @@ export async function updateSettings(event: APIGatewayProxyEventV2) {
 }
 
 export async function listSuppression(event: APIGatewayProxyEventV2) {
-  if (!requireEmailAccess(event)) return unauthorized("Email group access required");
+  if (!requireAdmin(event)) return unauthorized("Admin access required");
   const res = await docClient.send(
     new QueryCommand({
       TableName: TABLE,
@@ -523,7 +523,7 @@ export async function listSuppression(event: APIGatewayProxyEventV2) {
 }
 
 export async function addSuppression(event: APIGatewayProxyEventV2) {
-  if (!requireEmailAccess(event)) return unauthorized("Email group access required");
+  if (!requireAdmin(event)) return unauthorized("Admin access required");
   const body = JSON.parse(event.body ?? "{}");
   const parsed = suppressEmailSchema.safeParse(body);
   if (!parsed.success) return badRequest(parsed.error.message);
@@ -547,7 +547,7 @@ export async function addSuppression(event: APIGatewayProxyEventV2) {
 }
 
 export async function removeSuppression(event: APIGatewayProxyEventV2) {
-  if (!requireEmailAccess(event)) return unauthorized("Email group access required");
+  if (!requireAdmin(event)) return unauthorized("Admin access required");
   const email = decodeURIComponent(event.pathParameters?.email ?? "").trim().toLowerCase();
   if (!email) return badRequest("email required");
   await docClient.send(
@@ -560,7 +560,7 @@ export async function removeSuppression(event: APIGatewayProxyEventV2) {
 }
 
 export async function listQueue(event: APIGatewayProxyEventV2) {
-  if (!requireEmailAccess(event)) return unauthorized("Email group access required");
+  if (!requireAdmin(event)) return unauthorized("Admin access required");
   const res = await docClient.send(
     new QueryCommand({
       TableName: TABLE,
@@ -578,7 +578,7 @@ export async function listQueue(event: APIGatewayProxyEventV2) {
 }
 
 export async function getAnalytics(event: APIGatewayProxyEventV2) {
-  if (!requireEmailAccess(event)) return unauthorized("Email group access required");
+  if (!requireAdmin(event)) return unauthorized("Admin access required");
   const campaigns = await listCampaignItems();
   const totals = campaigns.reduce(
     (acc, c) => {
@@ -605,7 +605,7 @@ export async function getAnalytics(event: APIGatewayProxyEventV2) {
 }
 
 export async function listNotifications(event: APIGatewayProxyEventV2) {
-  if (!requireEmailAccess(event)) return unauthorized("Email group access required");
+  if (!requireAdmin(event)) return unauthorized("Admin access required");
   const res = await docClient.send(
     new QueryCommand({
       TableName: TABLE,
@@ -620,7 +620,7 @@ export async function listNotifications(event: APIGatewayProxyEventV2) {
 }
 
 export async function sendTest(event: APIGatewayProxyEventV2) {
-  if (!requireEmailAccess(event)) return unauthorized("Email group access required");
+  if (!requireAdmin(event)) return unauthorized("Admin access required");
   const body = JSON.parse(event.body ?? "{}");
   const parsed = sendTestEmailSchema.safeParse(body);
   if (!parsed.success) return badRequest(parsed.error.message);

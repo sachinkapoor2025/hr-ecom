@@ -31,7 +31,7 @@ export default function CampaignsPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center gap-3">
         <h1 className="text-2xl font-bold text-primary">Campaigns</h1>
-        <Link href="/ses-email/compose" className="text-sm bg-nav text-white rounded-lg px-3 py-2">
+        <Link href="/admin/email/compose" className="text-sm bg-nav text-white rounded-lg px-3 py-2">
           New campaign
         </Link>
       </div>
@@ -52,7 +52,7 @@ export default function CampaignsPage() {
             {campaigns.map((c) => (
               <tr key={c.campaignId} className="border-t">
                 <td className="px-3 py-2">
-                  <Link href={`/ses-email/campaigns/${c.campaignId}`} className="text-nav hover:underline font-medium">
+                  <Link href={`/admin/email/campaigns/${c.campaignId}`} className="text-nav hover:underline font-medium">
                     {c.name}
                   </Link>
                 </td>
@@ -66,7 +66,7 @@ export default function CampaignsPage() {
                 </td>
                 <td className="px-3 py-2 space-x-2 whitespace-nowrap">
                   {(c.status === "draft" || c.status === "scheduled") && (
-                    <Link href={`/ses-email/compose?id=${c.campaignId}`} className="text-nav hover:underline">
+                    <Link href={`/admin/email/compose?id=${c.campaignId}`} className="text-nav hover:underline">
                       Edit
                     </Link>
                   )}

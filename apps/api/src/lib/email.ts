@@ -6,6 +6,9 @@ import type { LeadCaptureInput } from "@hr-ecom/shared";
 import { WELCOME_DISCOUNT_PERCENT, LOW_STOCK_ALERT_EMAIL, ABANDONED_CART_DISCOUNT_PERCENT } from "@hr-ecom/shared";
 
 const DEFAULT_NOTIFY = "order@usarakhi.com";
+/** Admin inbox for new orders + contact form (comma-separated). */
+const DEFAULT_ADMIN_NOTIFY =
+  "order@usarakhi.com,dgv@mydgv.com,priya.yadav@mydgv.com";
 const SITE_NAME = "UsaRakhi";
 
 export type EmailSendResult = {
@@ -87,8 +90,15 @@ async function createWorkingTransporter() {
   throw lastError instanceof Error ? lastError : new Error("SMTP connection failed");
 }
 
+/** Public support address shown to customers (single inbox). */
 function notifyAddress(): string {
-  return process.env.NOTIFY_EMAIL?.trim() || DEFAULT_NOTIFY;
+  const raw = process.env.NOTIFY_EMAIL?.trim() || DEFAULT_ADMIN_NOTIFY;
+  return raw.split(",")[0]?.trim() || DEFAULT_NOTIFY;
+}
+
+/** All admin recipients for order/contact alerts (comma-separated OK for nodemailer). */
+function adminNotifyAddresses(): string {
+  return process.env.NOTIFY_EMAIL?.trim() || DEFAULT_ADMIN_NOTIFY;
 }
 
 function fromAddress(): string {
@@ -138,7 +148,7 @@ export async function sendNewsletterEmails(input: {
     .join("\n");
 
   const admin = await sendEmail({
-    to: notifyAddress(),
+    to: adminNotifyAddresses(),
     subject: `[${SITE_NAME}] Discount of the Day — ${input.email} (${pct}% off)`,
     text: adminText,
     replyTo: input.email,
@@ -259,7 +269,7 @@ export async function sendContactEmails(input: ContactEmailInput): Promise<Email
     .join("\n");
 
   const admin = await sendEmail({
-    to: notifyAddress(),
+    to: adminNotifyAddresses(),
     subject: `[${SITE_NAME}] New contact enquiry from ${input.name}`,
     text: adminText,
     replyTo: input.email,
@@ -344,7 +354,7 @@ export async function notifyAdminLead(lead: LeadCaptureInput): Promise<EmailSend
     .join("\n");
 
   return sendEmail({
-    to: notifyAddress(),
+    to: adminNotifyAddresses(),
     subject: isReview
       ? `[${SITE_NAME}] Review submitted for approval`
       : `[${SITE_NAME}] New enquiry — ${formatLeadSource(lead.source)}`,
@@ -400,7 +410,7 @@ function buildOrderAdminBody(order: Order, headline: string): string {
 
 export async function notifyAdminOrderPlaced(order: Order): Promise<EmailSendResult> {
   return sendEmail({
-    to: notifyAddress(),
+    to: adminNotifyAddresses(),
     subject: adminOrderSubject("Order added in cart - payment pending", order),
     text: buildOrderAdminBody(
       order,
@@ -412,7 +422,7 @@ export async function notifyAdminOrderPlaced(order: Order): Promise<EmailSendRes
 
 export async function notifyAdminOrderPaid(order: Order): Promise<EmailSendResult> {
   const admin = await sendEmail({
-    to: notifyAddress(),
+    to: adminNotifyAddresses(),
     subject: adminOrderSubject("New order - paid", order),
     text: buildOrderAdminBody(order, `Payment confirmed — new paid order on ${SITE_NAME}.`),
     replyTo: order.shippingAddress?.email,
@@ -445,7 +455,7 @@ Questions? Reply to this email or WhatsApp us.
 
 export async function notifyAdminOrderPaymentFailed(order: Order): Promise<EmailSendResult> {
   return sendEmail({
-    to: notifyAddress(),
+    to: adminNotifyAddresses(),
     subject: adminOrderSubject("New order - payment failed", order),
     text: buildOrderAdminBody(
       order,

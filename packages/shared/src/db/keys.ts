@@ -75,6 +75,7 @@ export const eventKeys = {
 export const configKeys = {
   payments: { pk: "CONFIG#PAYMENTS", sk: "META" as const },
   blogImages: { pk: "CONFIG#BLOG_IMAGES", sk: "META" as const },
+  shipping: { pk: "CONFIG#SHIPPING", sk: "META" as const },
 };
 
 /** Tracks admin S3 uploads → product slug for recovery if DB is reset. */

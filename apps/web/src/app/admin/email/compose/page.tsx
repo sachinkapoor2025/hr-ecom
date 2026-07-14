@@ -109,7 +109,7 @@ function ComposeInner() {
       } else {
         setMessage("Draft saved. Upload recipients next.");
       }
-      router.push(`/ses-email/campaigns/${id}`);
+      router.push(`/admin/email/campaigns/${id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Save failed");
     } finally {

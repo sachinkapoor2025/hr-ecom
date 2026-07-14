@@ -12,6 +12,7 @@ export * from "./schemas/contact";
 export * from "./schemas/coupon";
 export * from "./schemas/ses-email";
 export * from "./schemas/blog";
+export * from "./schemas/shipping";
 export * from "./lib/currency-display";
 export * from "./lib/competitive-pricing";
 export * from "./lib/image-url";

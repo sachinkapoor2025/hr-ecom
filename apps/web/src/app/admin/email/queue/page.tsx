@@ -36,7 +36,7 @@ export default function QueuePage() {
             return (
               <li key={c.campaignId} className="py-3">
                 <div className="flex justify-between gap-2">
-                  <Link href={`/ses-email/campaigns/${c.campaignId}`} className="text-nav hover:underline font-medium">
+                  <Link href={`/admin/email/campaigns/${c.campaignId}`} className="text-nav hover:underline font-medium">
                     {c.name}
                   </Link>
                   <span className="capitalize text-slate-500">{c.status}</span>

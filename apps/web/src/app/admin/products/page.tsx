@@ -4,8 +4,13 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useApiClient, useAuth } from "@/lib/auth-context";
 import type { Product } from "@hr-ecom/shared";
-import { DEFAULT_PRODUCT_INVENTORY, LOW_STOCK_THRESHOLD } from "@hr-ecom/shared";
-import { getUnitsSold, isFastSelling } from "@hr-ecom/shared";
+import {
+  DEFAULT_PRODUCT_INVENTORY,
+  LOW_STOCK_THRESHOLD,
+  getUnitsSold,
+  isFastSelling,
+  productHasShippingDims,
+} from "@hr-ecom/shared";
 import { formatMoney, paginate, downloadCsv } from "@/lib/admin-utils";
 import { TableControls } from "@/components/admin/TableControls";
 
@@ -30,6 +35,10 @@ export default function AdminProductsPage() {
     compareAtPrice: "",
     tags: "",
     published: true,
+    weightOz: "",
+    lengthIn: "",
+    widthIn: "",
+    heightIn: "",
   });
   const [csv, setCsv] = useState("");
   const [message, setMessage] = useState("");
@@ -37,6 +46,7 @@ export default function AdminProductsPage() {
   const [uploadingSlug, setUploadingSlug] = useState<string | null>(null);
   const [deletingImage, setDeletingImage] = useState<string | null>(null);
   const [tab, setTab] = useState<"list" | "create">("list");
+  const [missingDimsCount, setMissingDimsCount] = useState(0);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -55,6 +65,12 @@ export default function AdminProductsPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    apiClient<{ count: number }>("/admin/shipping/products-missing-dims")
+      .then((d) => setMissingDimsCount(d.count))
+      .catch(() => setMissingDimsCount(0));
+  }, [apiClient, products]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -81,12 +97,39 @@ export default function AdminProductsPage() {
       compareAtPrice: "",
       tags: "",
       published: true,
+      weightOz: "",
+      lengthIn: "",
+      widthIn: "",
+      heightIn: "",
     });
     setEditing(null);
   };
 
+  const parseDim = (value: string, label: string): number | null => {
+    const n = parseFloat(value);
+    if (!Number.isFinite(n) || n <= 0) {
+      setMessage(`${label} is required and must be greater than 0.`);
+      return null;
+    }
+    return n;
+  };
+
+  const shippingDimsPayload = () => {
+    const weightOz = parseDim(form.weightOz, "Weight (oz)");
+    if (weightOz == null) return null;
+    const lengthIn = parseDim(form.lengthIn, "Length (in)");
+    if (lengthIn == null) return null;
+    const widthIn = parseDim(form.widthIn, "Width (in)");
+    if (widthIn == null) return null;
+    const heightIn = parseDim(form.heightIn, "Height (in)");
+    if (heightIn == null) return null;
+    return { weightOz, lengthIn, widthIn, heightIn };
+  };
+
   const createProduct = async (e: React.FormEvent) => {
     e.preventDefault();
+    const dims = shippingDimsPayload();
+    if (!dims) return;
     try {
       const result = await apiClient<{ product: { slug: string } }>("/products", {
         method: "POST",
@@ -101,6 +144,7 @@ export default function AdminProductsPage() {
           sku: form.sku || undefined,
           tags: form.tags ? form.tags.split(",").map((t) => t.trim()).filter(Boolean) : [],
           published: form.published,
+          ...dims,
         }),
       });
       setLastSlug(result.product.slug);
@@ -116,6 +160,8 @@ export default function AdminProductsPage() {
   const saveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editing) return;
+    const dims = shippingDimsPayload();
+    if (!dims) return;
     try {
       await apiClient(`/products/${editing.slug}`, {
         method: "PUT",
@@ -130,6 +176,7 @@ export default function AdminProductsPage() {
           sku: form.sku || undefined,
           tags: form.tags ? form.tags.split(",").map((t) => t.trim()).filter(Boolean) : [],
           published: form.published,
+          ...dims,
         }),
       });
       setMessage(`Product "${form.name}" updated.`);
@@ -154,6 +201,10 @@ export default function AdminProductsPage() {
       compareAtPrice: p.compareAtPrice ? String(p.compareAtPrice) : "",
       tags: p.tags?.join(", ") ?? "",
       published: p.published !== false,
+      weightOz: p.weightOz != null ? String(p.weightOz) : "",
+      lengthIn: p.lengthIn != null ? String(p.lengthIn) : "",
+      widthIn: p.widthIn != null ? String(p.widthIn) : "",
+      heightIn: p.heightIn != null ? String(p.heightIn) : "",
     });
     setTab("create");
   };
@@ -359,6 +410,52 @@ export default function AdminProductsPage() {
           <option value="INR">INR</option>
         </select>
       </div>
+      <div>
+        <p className="text-sm font-medium text-slate-700 mb-2">Shipping dimensions (required)</p>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <input
+            placeholder="Weight (oz) *"
+            type="number"
+            step="0.1"
+            min="0.1"
+            value={form.weightOz}
+            onChange={(e) => setForm({ ...form, weightOz: e.target.value })}
+            className="border rounded-lg px-3 py-2"
+            required
+          />
+          <input
+            placeholder="Length (in) *"
+            type="number"
+            step="0.1"
+            min="0.1"
+            value={form.lengthIn}
+            onChange={(e) => setForm({ ...form, lengthIn: e.target.value })}
+            className="border rounded-lg px-3 py-2"
+            required
+          />
+          <input
+            placeholder="Width (in) *"
+            type="number"
+            step="0.1"
+            min="0.1"
+            value={form.widthIn}
+            onChange={(e) => setForm({ ...form, widthIn: e.target.value })}
+            className="border rounded-lg px-3 py-2"
+            required
+          />
+          <input
+            placeholder="Height (in) *"
+            type="number"
+            step="0.1"
+            min="0.1"
+            value={form.heightIn}
+            onChange={(e) => setForm({ ...form, heightIn: e.target.value })}
+            className="border rounded-lg px-3 py-2"
+            required
+          />
+        </div>
+        <p className="text-xs text-slate-500 mt-1">Used for USPS rate quotes and label purchase.</p>
+      </div>
       <input
         placeholder="Tags (comma-separated)"
         value={form.tags}
@@ -414,6 +511,17 @@ export default function AdminProductsPage() {
         </div>
       </div>
 
+      {missingDimsCount > 0 && (
+        <div className="text-sm bg-amber-50 border border-amber-200 text-amber-900 p-3 rounded-lg flex flex-wrap items-center gap-2">
+          <span>
+            {missingDimsCount} product{missingDimsCount === 1 ? "" : "s"} missing shipping dimensions
+          </span>
+          <Link href="/admin/shipping" className="text-nav font-medium hover:underline">
+            Review in Shipping settings →
+          </Link>
+        </div>
+      )}
+
       {message && <p className="text-sm bg-slate-50 border p-3 rounded-lg">{message}</p>}
 
       {tab === "list" && (
@@ -454,7 +562,17 @@ export default function AdminProductsPage() {
                   {pageItems.map((p) => (
                     <tr key={p.slug} className="border-t align-top">
                       <td className="py-3 px-4">
-                        <div className="font-medium">{p.name}</div>
+                        <div className="font-medium flex items-center gap-1.5 flex-wrap">
+                          {p.name}
+                          {!productHasShippingDims(p) && (
+                            <span
+                              className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-amber-100 text-amber-900"
+                              title="Missing shipping dimensions"
+                            >
+                              No dims
+                            </span>
+                          )}
+                        </div>
                         <div className="text-xs text-slate-400">{p.slug}</div>
                         <div className="mt-3 space-y-2">
                           <div className="flex items-center gap-2 text-xs text-slate-500">

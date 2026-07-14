@@ -57,6 +57,7 @@ the Lambda via env vars (`PRODUCTS_TABLE`, `ORDERS_TABLE`, `CARTS_TABLE`,
 | customers | `SESSION#<sessionId>` | `PROFILE` / `LEAD#<ts>` | GSI1 lead feed (`ENTITY#LEAD`) |
 | events | `SESSION#<sessionId>` | `<ts>#<eventId>` | GSI1 byTypeDay (`<type>#<yyyy-mm-dd>`); TTL `expiresAt` (90d). Rollups: PK `ROLLUP#<yyyy-mm-dd>` |
 | config | `CONFIG#PAYMENTS` | `META` | Stripe/Razorpay settings |
+| config | `CONFIG#SHIPPING` | `META` | USPS rate-shopping, origin address, festival mode |
 
 Order status lifecycle: `pending_payment → paid → processing → shipped → delivered`
 (plus `cancelled` / `refunded`), with a `statusHistory[]` audit trail and tracking number.
@@ -88,6 +89,12 @@ When admin sets order status to **Delivered** or **Complete**, the API sets `rev
 | POST | `/cart/items` | Add to cart |
 | DELETE | `/cart/items/{id}` | Remove item |
 | POST | `/checkout` | Create order + payment intent |
+| GET | `/shipping/rates` | Session: USPS rate quotes for cart + destination address |
+| GET | `/admin/shipping/settings` | Admin: shipping config (origin, festival mode, services) |
+| PUT | `/admin/shipping/settings` | Admin: update shipping config |
+| POST | `/admin/orders/{orderId}/buy-label` | Admin: purchase USPS label for order |
+| POST | `/admin/orders/{orderId}/rates` | Admin: re-fetch rates for order (service override) |
+| GET | `/admin/shipping/products-missing-dims` | Admin: products without weight/dimensions |
 | POST | `/webhooks/stripe` | Stripe webhook |
 | POST | `/webhooks/razorpay` | Razorpay webhook |
 | POST | `/leads` | Save partial customer info |
@@ -109,7 +116,7 @@ When admin sets order status to **Delivered** or **Complete**, the API sets `rev
 | GET | `/admin/search` | Admin: global search by name/email/phone (`?q=`) |
 | GET | `/admin/carts/abandoned` | Admin: abandoned carts (CSV in UI) |
 | GET | `/admin/leads` | Admin: captured leads |
-| GET/POST | `/ses-email/*` | SES bulk campaigns (Cognito `email` group): dashboard, campaigns, recipients, templates, queue, analytics, suppression, settings |
+| GET/POST | `/ses-email/*` | SES bulk campaigns (admin auth): dashboard, campaigns, recipients, templates, queue, analytics, suppression, settings. UI at `/admin/email` |
 | GET | `/email/open/{token}` | Open tracking pixel |
 | GET | `/email/click/{token}` | Click tracking redirect |
 | GET | `/email/unsubscribe/{token}` | Unsubscribe → suppression list |

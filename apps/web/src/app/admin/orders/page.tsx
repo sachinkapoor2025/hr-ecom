@@ -32,6 +32,15 @@ interface Order {
   shippingAddress: { name: string; email: string; phone?: string };
   estimatedDeliveryAt?: string;
   deliveredAt?: string;
+  labelStatus?: "none" | "queued" | "purchased" | "failed";
+  shippingServiceName?: string;
+}
+
+function abbreviateServiceName(name?: string): string | null {
+  if (!name) return null;
+  const trimmed = name.replace(/^USPS\s+/i, "").trim();
+  if (trimmed.length <= 18) return trimmed;
+  return `${trimmed.slice(0, 16)}…`;
 }
 
 type SortKey = "date" | "amount" | "status" | "customer";
@@ -457,6 +466,16 @@ export default function AdminOrdersPage() {
                   </td>
                   <td className="py-3 px-3 text-xs text-slate-600">
                     <div>{shippingStatusLabel(o.status)}</div>
+                    {o.labelStatus === "failed" && (
+                      <span className="inline-block mt-1 text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-red-100 text-red-800">
+                        Label failed
+                      </span>
+                    )}
+                    {abbreviateServiceName(o.shippingServiceName) && (
+                      <div className="text-slate-400 truncate max-w-[120px]" title={o.shippingServiceName}>
+                        {abbreviateServiceName(o.shippingServiceName)}
+                      </div>
+                    )}
                     {o.trackingNumber && (
                       <div className="text-slate-400 truncate max-w-[100px]" title={o.trackingNumber}>
                         {o.trackingNumber}

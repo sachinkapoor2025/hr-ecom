@@ -15,6 +15,7 @@ import {
   cartSubtotal,
   type Order,
   type OrderStatusHistoryEntry,
+  type CartItem,
 } from "@hr-ecom/shared";
 import { resolveCheckoutUsdInrRate } from "../lib/exchange-rate";
 import { docClient, ORDERS_TABLE, CUSTOMERS_TABLE, now } from "../lib/db";
@@ -32,6 +33,8 @@ import {
   markCouponUsed,
   validateCouponRecord,
 } from "./coupons";
+import { resolveShippingForCheckout, purchaseLabelForOrder } from "../lib/shipping/checkout-shipping";
+import { loadShippingSettings } from "../lib/shipping";
 
 type StoredOrder = Order & {
   PK: string;
@@ -193,7 +196,26 @@ export async function checkout(event: APIGatewayProxyEventV2) {
   if (stockError) return badRequest(stockError);
 
   const subtotal = cartSubtotal(orderItems);
-  const shipping = 0;
+
+  const shippingResult = await resolveShippingForCheckout({
+    destination: {
+      line1: parsed.data.shippingAddress.line1,
+      line2: parsed.data.shippingAddress.line2,
+      city: parsed.data.shippingAddress.city,
+      state: parsed.data.shippingAddress.state,
+      postalCode: parsed.data.shippingAddress.postalCode,
+      country: parsed.data.shippingAddress.country,
+    },
+    cartItems: orderItems.map((i: CartItem) => ({ productSlug: i.productSlug, quantity: i.quantity })),
+    shippingServiceCode: parsed.data.shippingServiceCode,
+    shippingRateId: parsed.data.shippingRateId,
+  });
+
+  if (shippingResult.warning) {
+    console.warn("Checkout shipping rate lookup:", shippingResult.warning);
+  }
+
+  const shipping = shippingResult.customerShippingCharge;
   const tax = 0;
 
   let discount = 0;
@@ -239,6 +261,17 @@ export async function checkout(event: APIGatewayProxyEventV2) {
     status: ORDER_STATUS.PENDING_PAYMENT,
     statusHistory: [{ status: ORDER_STATUS.PENDING_PAYMENT, at: timestamp }],
     shippingAddress: parsed.data.shippingAddress,
+    ...(shippingResult.selected && {
+      shippingServiceCode: shippingResult.selected.mailClass,
+      shippingServiceName: shippingResult.selected.serviceName,
+      shippingRateId: shippingResult.selected.rateId,
+      estimatedLabelCost: shippingResult.estimatedLabelCost,
+    }),
+    ...(shippingResult.labelStatus && { labelStatus: shippingResult.labelStatus }),
+    ...(shippingResult.warning &&
+      !shippingResult.selected && {
+        labelStatus: "queued" as const,
+      }),
     createdAt: timestamp,
     updatedAt: timestamp,
   };
@@ -405,6 +438,20 @@ export async function updateOrderStatus(event: APIGatewayProxyEventV2) {
     ...(parsed.data.estimatedDeliveryAt !== undefined && {
       estimatedDeliveryAt: parsed.data.estimatedDeliveryAt,
     }),
+    ...(parsed.data.shippingServiceCode !== undefined && {
+      shippingServiceCode: parsed.data.shippingServiceCode,
+    }),
+    ...(parsed.data.shippingServiceName !== undefined && {
+      shippingServiceName: parsed.data.shippingServiceName,
+    }),
+    ...(parsed.data.shippingRateId !== undefined && {
+      shippingRateId: parsed.data.shippingRateId,
+    }),
+    ...(parsed.data.estimatedLabelCost !== undefined && {
+      estimatedLabelCost: parsed.data.estimatedLabelCost,
+    }),
+    ...(parsed.data.labelStatus !== undefined && { labelStatus: parsed.data.labelStatus }),
+    ...(parsed.data.labelError !== undefined && { labelError: parsed.data.labelError }),
     ...applyDeliveryReviewSchedule(order, nextStatus, timestamp),
     updatedAt: timestamp,
     ...(parsed.data.status &&
@@ -499,6 +546,45 @@ export async function markOrderPaid(
   }
   await markCartConverted(order.sessionId, order.orderId);
   await decrementInventoryForOrder(updated);
+
+  const settings = await loadShippingSettings();
+  if (
+    settings.autoPurchaseOnPayment &&
+    updated.shippingServiceCode &&
+    updated.labelStatus !== "purchased"
+  ) {
+    try {
+      const label = await purchaseLabelForOrder({
+        orderId: updated.orderId,
+        shippingAddress: updated.shippingAddress,
+        items: updated.items,
+        shippingRateId: updated.shippingRateId,
+        shippingServiceCode: updated.shippingServiceCode,
+      });
+      const labeled: StoredOrder = {
+        ...updated,
+        trackingNumber: label.trackingNumber,
+        carrier: "USPS",
+        labelPdfUrl: label.labelPdfUrl,
+        labelCost: label.labelCost,
+        labelStatus: "purchased",
+        shippingServiceName: label.shippingServiceName ?? updated.shippingServiceName,
+        updatedAt: now(),
+      };
+      await docClient.send(new PutCommand({ TableName: ORDERS_TABLE, Item: labeled }));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Auto label purchase failed";
+      console.error("Auto label purchase failed:", orderId, message);
+      const failed: StoredOrder = {
+        ...updated,
+        labelStatus: "failed",
+        labelError: message,
+        updatedAt: now(),
+      };
+      await docClient.send(new PutCommand({ TableName: ORDERS_TABLE, Item: failed }));
+    }
+  }
+
   const emailResult = await notifyAdminOrderPaid(updated);
   if (!emailResult.ok) console.error("Order paid email failed:", emailResult.error);
 }

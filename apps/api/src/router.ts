@@ -14,6 +14,7 @@ import * as adminCustomers from "./handlers/admin-customers";
 import * as account from "./handlers/account";
 import * as coupons from "./handlers/coupons";
 import * as sesEmail from "./handlers/ses-email";
+import * as shipping from "./handlers/shipping";
 import { stripeWebhook } from "./handlers/payments/stripe";
 import { razorpayWebhook, verifyRazorpayPayment } from "./handlers/payments/razorpay";
 
@@ -46,6 +47,12 @@ const routes: Route[] = [
   { method: "DELETE", pattern: /^\/cart\/items\/([^/]+)$/, handler: cart.removeFromCart, params: ["productSlug"] },
   { method: "DELETE", pattern: /^\/cart$/, handler: cart.clearCart },
   { method: "POST", pattern: /^\/checkout$/, handler: orders.checkout },
+  { method: "GET", pattern: /^\/shipping\/rates$/, handler: shipping.getShippingRates },
+  { method: "GET", pattern: /^\/admin\/shipping\/settings$/, handler: shipping.getAdminShippingSettings },
+  { method: "PUT", pattern: /^\/admin\/shipping\/settings$/, handler: shipping.updateAdminShippingSettings },
+  { method: "POST", pattern: /^\/admin\/orders\/([^/]+)\/buy-label$/, handler: shipping.buyLabelForOrder, params: ["orderId"] },
+  { method: "POST", pattern: /^\/admin\/orders\/([^/]+)\/rates$/, handler: shipping.getOrderShippingRates, params: ["orderId"] },
+  { method: "GET", pattern: /^\/admin\/shipping\/products-missing-dims$/, handler: shipping.listProductsMissingDims },
   { method: "GET", pattern: /^\/orders$/, handler: orders.listOrders },
   { method: "GET", pattern: /^\/orders\/([^/]+)$/, handler: orders.getOrder, params: ["orderId"] },
   { method: "POST", pattern: /^\/orders\/([^/]+)\/retry-payment$/, handler: orders.retryOrderPayment, params: ["orderId"] },
@@ -88,7 +95,7 @@ const routes: Route[] = [
   { method: "POST", pattern: /^\/webhooks\/razorpay$/, handler: razorpayWebhook },
   { method: "POST", pattern: /^\/payments\/razorpay\/verify$/, handler: verifyRazorpayPayment },
 
-  // SES bulk email campaigns (Cognito `email` group)
+  // SES bulk email campaigns (admin)
   { method: "GET", pattern: /^\/ses-email\/dashboard$/, handler: sesEmail.getDashboard },
   { method: "GET", pattern: /^\/ses-email\/campaigns$/, handler: sesEmail.listCampaigns },
   { method: "POST", pattern: /^\/ses-email\/campaigns$/, handler: sesEmail.createCampaign },

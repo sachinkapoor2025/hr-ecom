@@ -62,7 +62,7 @@ export default function SesEmailDashboardPage() {
           </p>
         </div>
         <Link
-          href="/ses-email/compose"
+          href="/admin/email/compose"
           className="rounded-lg bg-accent text-white text-sm font-semibold px-4 py-2.5 hover:opacity-90"
         >
           Compose campaign
@@ -87,7 +87,7 @@ export default function SesEmailDashboardPage() {
             <ul className="divide-y text-sm">
               {data.upcoming.map((c) => (
                 <li key={c.campaignId} className="py-2 flex justify-between gap-2">
-                  <Link href={`/ses-email/campaigns/${c.campaignId}`} className="text-nav hover:underline">
+                  <Link href={`/admin/email/campaigns/${c.campaignId}`} className="text-nav hover:underline">
                     {c.name}
                   </Link>
                   <span className="text-slate-500 shrink-0">
@@ -106,7 +106,7 @@ export default function SesEmailDashboardPage() {
             <ul className="divide-y text-sm">
               {data.recent.map((c) => (
                 <li key={c.campaignId} className="py-2 flex justify-between gap-2">
-                  <Link href={`/ses-email/campaigns/${c.campaignId}`} className="text-nav hover:underline">
+                  <Link href={`/admin/email/campaigns/${c.campaignId}`} className="text-nav hover:underline">
                     {c.name}
                   </Link>
                   <span className="text-slate-500">

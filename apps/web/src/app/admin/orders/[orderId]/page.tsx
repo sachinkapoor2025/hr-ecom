@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useApiClient, useAuth } from "@/lib/auth-context";
-import type { Order } from "@hr-ecom/shared";
+import type { Order, RateQuote } from "@hr-ecom/shared";
 import { ORDER_STATUS } from "@hr-ecom/shared";
 import {
   statusLabel,
@@ -46,6 +46,11 @@ export default function AdminOrderDetailPage() {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [message, setMessage] = useState("");
+  const [buyingLabel, setBuyingLabel] = useState(false);
+  const [loadingRates, setLoadingRates] = useState(false);
+  const [savingService, setSavingService] = useState(false);
+  const [rateOptions, setRateOptions] = useState<RateQuote[]>([]);
+  const [selectedRateId, setSelectedRateId] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -56,6 +61,7 @@ export default function AdminOrderDetailPage() {
       setCarrier(data.order.carrier ?? "");
       setAdminNotes(data.order.adminNotes ?? "");
       setEstimatedDeliveryAt(data.order.estimatedDeliveryAt?.slice(0, 10) ?? "");
+      setSelectedRateId(data.order.shippingRateId ?? "");
       const next = nextStatuses(data.order.status);
       setNewStatus(next[0] ?? data.order.status);
     } catch {
@@ -133,8 +139,6 @@ export default function AdminOrderDetailPage() {
     }
   };
 
-  const printInvoice = () => window.print();
-
   const handleDelete = async () => {
     if (
       !window.confirm(
@@ -154,6 +158,88 @@ export default function AdminOrderDetailPage() {
     }
   };
 
+  const printInvoice = () => window.print();
+
+  const loadRates = async () => {
+    setLoadingRates(true);
+    setError("");
+    try {
+      const data = await apiClient<{ rates: RateQuote[] }>(`/admin/orders/${orderId}/rates`, {
+        method: "POST",
+      });
+      setRateOptions(data.rates);
+      if (data.rates.length) {
+        const current = order?.shippingRateId;
+        const match = current ? data.rates.find((r) => r.rateId === current) : undefined;
+        setSelectedRateId(match?.rateId ?? data.rates[0].rateId);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not load rates.");
+    } finally {
+      setLoadingRates(false);
+    }
+  };
+
+  const saveShippingService = async () => {
+    const rate = rateOptions.find((r) => r.rateId === selectedRateId);
+    if (!rate) {
+      setError("Select a shipping service.");
+      return;
+    }
+    setSavingService(true);
+    setError("");
+    try {
+      const data = await apiClient<{ order: AdminOrder }>(`/admin/orders/${orderId}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          shippingServiceCode: rate.mailClass,
+          shippingServiceName: rate.serviceName,
+          shippingRateId: rate.rateId,
+          estimatedLabelCost: rate.price,
+        }),
+      });
+      setOrder(data.order);
+      setMessage("Shipping service updated.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not save shipping service.");
+    } finally {
+      setSavingService(false);
+    }
+  };
+
+  const buyUspsLabel = async () => {
+    setBuyingLabel(true);
+    setError("");
+    setMessage("");
+    try {
+      const data = await apiClient<{ order: AdminOrder }>(`/admin/orders/${orderId}/buy-label`, {
+        method: "POST",
+      });
+      setOrder(data.order);
+      setTrackingNumber(data.order.trackingNumber ?? "");
+      setCarrier(data.order.carrier ?? "");
+      setMessage("USPS label purchased.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Label purchase failed.");
+      await load();
+    } finally {
+      setBuyingLabel(false);
+    }
+  };
+
+  const labelStatusLabel = (status?: string) => {
+    switch (status) {
+      case "purchased":
+        return "Purchased";
+      case "failed":
+        return "Failed";
+      case "queued":
+        return "Queued";
+      default:
+        return "None";
+    }
+  };
+
   if (loading) return <div className="max-w-4xl mx-auto px-4 py-10 text-slate-500">Loading…</div>;
   if (!order) return <div className="max-w-4xl mx-auto px-4 py-10 text-red-600">{error || "Order not found."}</div>;
 
@@ -166,6 +252,13 @@ export default function AdminOrderDetailPage() {
     (transitions.length === 0 &&
       (order.status === ORDER_STATUS.PROCESSING || order.status === ORDER_STATUS.SHIPPED));
   const isAcceptOnly = newStatus === ORDER_STATUS.ACCEPTED;
+  const canBuyLabel =
+    (order.status === ORDER_STATUS.PAID ||
+      order.status === ORDER_STATUS.ACCEPTED ||
+      order.status === ORDER_STATUS.PROCESSING) &&
+    order.labelStatus !== "purchased";
+  const labelMargin =
+    order.labelCost != null ? order.shipping - order.labelCost : null;
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
@@ -379,6 +472,77 @@ export default function AdminOrderDetailPage() {
             <h2 className="font-semibold mb-3">Payment & shipping</h2>
             <p className="text-slate-600 capitalize">Method: {order.paymentProvider ?? "—"}</p>
             <p className="text-slate-600 mt-1">Shipping: {shippingStatusLabel(order.status)}</p>
+            {(order.shippingServiceName || order.shippingServiceCode) && (
+              <p className="text-slate-600 mt-1">
+                USPS service: {order.shippingServiceName ?? order.shippingServiceCode}
+                {order.shippingServiceCode && order.shippingServiceName ? (
+                  <span className="text-slate-400"> ({order.shippingServiceCode})</span>
+                ) : null}
+              </p>
+            )}
+            {order.estimatedLabelCost != null && (
+              <p className="text-slate-600 mt-1">
+                Est. label cost: {formatMoney(order.estimatedLabelCost, order.currency)}
+              </p>
+            )}
+            {order.labelCost != null && (
+              <p className="text-slate-600 mt-1">
+                Label cost: {formatMoney(order.labelCost, order.currency)}
+              </p>
+            )}
+            {order.labelStatus && (
+              <p className="text-slate-600 mt-1">
+                Label status:{" "}
+                <span
+                  className={
+                    order.labelStatus === "failed"
+                      ? "text-red-700 font-medium"
+                      : order.labelStatus === "purchased"
+                        ? "text-green-700 font-medium"
+                        : ""
+                  }
+                >
+                  {labelStatusLabel(order.labelStatus)}
+                </span>
+              </p>
+            )}
+            {order.labelError && (
+              <p className="text-red-600 text-xs mt-1">Label error: {order.labelError}</p>
+            )}
+            {labelMargin != null && (
+              <p className="text-xs text-slate-500 mt-2 border-t pt-2">
+                Customer shipping charged {formatMoney(order.shipping, order.currency)} vs label{" "}
+                {formatMoney(order.labelCost!, order.currency)}
+                {labelMargin >= 0 ? (
+                  <span className="text-green-700"> · margin {formatMoney(labelMargin, order.currency)}</span>
+                ) : (
+                  <span className="text-red-700">
+                    {" "}
+                    · loss {formatMoney(Math.abs(labelMargin), order.currency)}
+                  </span>
+                )}
+              </p>
+            )}
+            {order.labelPdfUrl && (
+              <a
+                href={order.labelPdfUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block mt-2 text-nav hover:underline text-sm font-medium"
+              >
+                View USPS label PDF
+              </a>
+            )}
+            {canBuyLabel && (
+              <button
+                type="button"
+                disabled={buyingLabel}
+                onClick={() => void buyUspsLabel()}
+                className="mt-3 w-full bg-nav text-white py-2 rounded-lg text-sm font-medium disabled:opacity-50"
+              >
+                {buyingLabel ? "Purchasing label…" : "Buy USPS label"}
+              </button>
+            )}
             {order.trackingNumber && (
               <p className="text-slate-600 mt-1">
                 Tracking: {order.trackingNumber}
@@ -404,6 +568,46 @@ export default function AdminOrderDetailPage() {
             {order.paymentIntentId && (
               <p className="text-xs text-slate-400 break-all mt-1">PI: {order.paymentIntentId}</p>
             )}
+
+            <div className="mt-4 pt-4 border-t border-slate-100">
+              <p className="text-xs font-medium text-slate-500 mb-2">USPS service override</p>
+              <div className="flex flex-wrap gap-2 mb-2">
+                <button
+                  type="button"
+                  disabled={loadingRates}
+                  onClick={() => void loadRates()}
+                  className="text-xs border border-slate-200 rounded-lg px-2 py-1 hover:bg-slate-50 disabled:opacity-50"
+                >
+                  {loadingRates ? "Loading rates…" : "Load rates"}
+                </button>
+              </div>
+              {rateOptions.length > 0 && (
+                <>
+                  <select
+                    value={selectedRateId}
+                    onChange={(e) => setSelectedRateId(e.target.value)}
+                    className="w-full border border-slate-300 rounded-lg px-2 py-2 text-sm mb-2"
+                  >
+                    {rateOptions.map((r) => (
+                      <option key={r.rateId} value={r.rateId}>
+                        {r.serviceName} — {formatMoney(r.price, order.currency)}
+                        {r.estimatedDeliveryDate
+                          ? ` · by ${new Date(r.estimatedDeliveryDate).toLocaleDateString()}`
+                          : ""}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    disabled={savingService || !selectedRateId}
+                    onClick={() => void saveShippingService()}
+                    className="w-full border border-nav text-nav py-1.5 rounded-lg text-xs font-medium hover:bg-blue-50 disabled:opacity-50"
+                  >
+                    {savingService ? "Saving…" : "Save shipping service"}
+                  </button>
+                </>
+              )}
+            </div>
           </section>
 
           <section className="bg-white border rounded-xl p-5">

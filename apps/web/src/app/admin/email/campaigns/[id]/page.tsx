@@ -37,14 +37,14 @@ export default function CampaignDetailPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap justify-between gap-3">
         <div>
-          <Link href="/ses-email/campaigns" className="text-sm text-nav hover:underline">
+          <Link href="/admin/email/campaigns" className="text-sm text-nav hover:underline">
             ← Campaigns
           </Link>
           <h1 className="text-2xl font-bold text-primary mt-1">{campaign.name}</h1>
           <p className="text-sm text-slate-500 capitalize">Status: {campaign.status}</p>
         </div>
         {(campaign.status === "draft" || campaign.status === "scheduled") && (
-          <Link href={`/ses-email/compose?id=${campaign.campaignId}`} className="text-sm border rounded-lg px-3 py-2">
+          <Link href={`/admin/email/compose?id=${campaign.campaignId}`} className="text-sm border rounded-lg px-3 py-2">
             Edit
           </Link>
         )}
@@ -96,7 +96,7 @@ export default function CampaignDetailPage() {
           ))}
         </ul>
         {preview.length === 0 && <p className="text-slate-500 text-sm">No recipients yet — upload a list.</p>}
-        <Link href="/ses-email/upload" className="inline-block mt-3 text-sm text-nav hover:underline">
+        <Link href="/admin/email/upload" className="inline-block mt-3 text-sm text-nav hover:underline">
           Upload recipients →
         </Link>
       </section>
