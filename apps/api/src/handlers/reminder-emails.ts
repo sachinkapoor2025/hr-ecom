@@ -31,7 +31,7 @@ import {
   REMINDER_EMAILS_TABLE,
   now,
 } from "../lib/db";
-import { ok, badRequest, unauthorized } from "../lib/response";
+import { ok, badRequest, unauthorized, serverError } from "../lib/response";
 import { requireAdmin } from "../lib/auth";
 import { htmlToText, sendViaSes } from "../lib/ses";
 
@@ -207,8 +207,8 @@ async function collectWelcomeCouponEmails(map: Map<string, Candidate>) {
       ":p": "COUPON#",
       ":sk": couponKeys.sk(),
     },
-    ProjectionExpression: "email, #s, source",
-    ExpressionAttributeNames: { "#s": "source" },
+    ProjectionExpression: "email, #src",
+    ExpressionAttributeNames: { "#src": "source" },
   });
   for (const item of items) {
     if (item.source !== "welcome" && item.source !== "abandoned") continue;
@@ -426,14 +426,24 @@ async function markReminderSent(email: string) {
 
 export async function listReminderEmailsHandler(event: APIGatewayProxyEventV2) {
   if (!requireAdmin(event)) return unauthorized("Admin access required");
-  const items = await listShowReminderEmails();
-  return ok({ items, count: items.length });
+  try {
+    const items = await listShowReminderEmails();
+    return ok({ items, count: items.length });
+  } catch (err) {
+    console.error("listReminderEmails failed:", err);
+    return serverError(err instanceof Error ? err.message : "Failed to list reminder emails");
+  }
 }
 
 export async function collectReminderEmailsHandler(event: APIGatewayProxyEventV2) {
   if (!requireAdmin(event)) return unauthorized("Admin access required");
-  const result = await collectReminderEmails();
-  return ok(result);
+  try {
+    const result = await collectReminderEmails();
+    return ok(result);
+  } catch (err) {
+    console.error("collectReminderEmails failed:", err);
+    return serverError(err instanceof Error ? err.message : "Failed to fetch reminder emails");
+  }
 }
 
 export async function deleteReminderEmailHandler(event: APIGatewayProxyEventV2) {
@@ -459,60 +469,65 @@ export async function bulkDeleteReminderEmailsHandler(event: APIGatewayProxyEven
 
 export async function sendReminderEmailsHandler(event: APIGatewayProxyEventV2) {
   if (!requireAdmin(event)) return unauthorized("Admin access required");
-  const parsed = sendReminderEmailsSchema.safeParse(JSON.parse(event.body ?? "{}"));
-  if (!parsed.success) return badRequest(parsed.error.message);
+  try {
+    const parsed = sendReminderEmailsSchema.safeParse(JSON.parse(event.body ?? "{}"));
+    if (!parsed.success) return badRequest(parsed.error.message);
 
-  const paid = await collectPaidOrderEmails();
-  const sender = await loadSesSender();
-  const siteUrl = process.env.SITE_URL || "https://www.usarakhi.com";
-  const subject = parsed.data.subject?.trim() || DEFAULT_CHECKOUT_NUDGE_SUBJECT;
+    const paid = await collectPaidOrderEmails();
+    const sender = await loadSesSender();
+    const siteUrl = process.env.SITE_URL || "https://www.usarakhi.com";
+    const subject = parsed.data.subject?.trim() || DEFAULT_CHECKOUT_NUDGE_SUBJECT;
 
-  let sent = 0;
-  let skipped = 0;
-  const errors: string[] = [];
+    let sent = 0;
+    let skipped = 0;
+    const errors: string[] = [];
 
-  for (const raw of parsed.data.emails) {
-    const email = normalizeEmail(raw);
-    if (!email) {
-      skipped += 1;
-      continue;
+    for (const raw of parsed.data.emails) {
+      const email = normalizeEmail(raw);
+      if (!email) {
+        skipped += 1;
+        continue;
+      }
+      if (paid.has(email) || (await isSuppressed(email))) {
+        skipped += 1;
+        continue;
+      }
+
+      const row = await docClient.send(
+        new GetCommand({
+          TableName: REMINDER_EMAILS_TABLE,
+          Key: { PK: reminderEmailKeys.pk(email), SK: reminderEmailKeys.sk() },
+        })
+      );
+      if (!row.Item || row.Item.status !== "show") {
+        skipped += 1;
+        continue;
+      }
+
+      const name = typeof row.Item.name === "string" ? row.Item.name : undefined;
+      const html = defaultCheckoutNudgeHtml({ name, siteUrl });
+      try {
+        await sendViaSes({
+          to: email,
+          subject,
+          html,
+          text: htmlToText(html),
+          fromName: sender.fromName,
+          fromEmail: sender.fromEmail,
+          replyTo: sender.replyTo,
+        });
+        await markReminderSent(email);
+        sent += 1;
+      } catch (err) {
+        errors.push(`${email}: ${err instanceof Error ? err.message : "send failed"}`);
+      }
     }
-    if (paid.has(email) || (await isSuppressed(email))) {
-      skipped += 1;
-      continue;
-    }
 
-    const row = await docClient.send(
-      new GetCommand({
-        TableName: REMINDER_EMAILS_TABLE,
-        Key: { PK: reminderEmailKeys.pk(email), SK: reminderEmailKeys.sk() },
-      })
-    );
-    if (!row.Item || row.Item.status !== "show") {
-      skipped += 1;
-      continue;
-    }
-
-    const name = typeof row.Item.name === "string" ? row.Item.name : undefined;
-    const html = defaultCheckoutNudgeHtml({ name, siteUrl });
-    try {
-      await sendViaSes({
-        to: email,
-        subject,
-        html,
-        text: htmlToText(html),
-        fromName: sender.fromName,
-        fromEmail: sender.fromEmail,
-        replyTo: sender.replyTo,
-      });
-      await markReminderSent(email);
-      sent += 1;
-    } catch (err) {
-      errors.push(`${email}: ${err instanceof Error ? err.message : "send failed"}`);
-    }
+    return ok({ sent, skipped, errors });
+  } catch (err) {
+    console.error("sendReminderEmails failed:", err);
+    return serverError(err instanceof Error ? err.message : "Failed to send reminder emails");
   }
-
-  return ok({ sent, skipped, errors });
 }
 
 /** Used by markOrderPaid — hide buyer from nudge list going forward. */
