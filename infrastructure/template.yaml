@@ -98,7 +98,7 @@ Globals:
         SMTP_SECURE: "true"
         SMTP_USER: order@usarakhi.com
         SMTP_FROM: order@usarakhi.com
-        NOTIFY_EMAIL: order@usarakhi.com,dgv@mydgv.com,priya.yadav@mydgv.com
+        NOTIFY_EMAIL: order@usarakhi.com,priya.yadav@mydgv.com
         SMTP_PASS: !Ref SmtpPassword
         SITE_URL: https://www.usarakhi.com
         SES_AWS_REGION: us-east-1

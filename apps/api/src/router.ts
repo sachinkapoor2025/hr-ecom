@@ -82,6 +82,8 @@ const routes: Route[] = [
   { method: "GET", pattern: /^\/admin\/search$/, handler: adminCustomers.adminSearch },
   { method: "POST", pattern: /^\/coupons\/validate$/, handler: coupons.validateCouponHandler },
   { method: "GET", pattern: /^\/admin\/welcome-coupons$/, handler: coupons.listWelcomeCoupons },
+  { method: "POST", pattern: /^\/admin\/coupons\/abandoned$/, handler: coupons.createAdminAbandonedCoupon },
+  { method: "GET", pattern: /^\/admin\/coupons\/abandoned$/, handler: coupons.listAdminCoupons },
   { method: "POST", pattern: /^\/leads$/, handler: orders.captureLead },
   { method: "POST", pattern: /^\/events$/, handler: events.recordEvent },
   { method: "GET", pattern: /^\/config\/payments$/, handler: config.getPaymentConfig },
