@@ -3,10 +3,12 @@ import type { APIGatewayProxyEventV2 } from "aws-lambda";
 import { randomBytes } from "crypto";
 import {
   couponValidateSchema,
+  createAdminCouponSchema,
   couponKeys,
   WELCOME_COUPON_HOURS,
   ABANDONED_CART_COUPON_HOURS,
   ABANDONED_CART_DISCOUNT_PERCENT,
+  ADMIN_MANUAL_COUPON_HOURS,
   pickDailyDealDiscount,
   dailyDealDayKey,
   isValidDailyDealPercent,
@@ -16,8 +18,13 @@ import {
   type DailyDealPercent,
 } from "@hr-ecom/shared";
 import { docClient, CONFIG_TABLE, now } from "../lib/db";
-import { ok, badRequest, forbidden } from "../lib/response";
+import { ok, badRequest, forbidden, unauthorized, serverError } from "../lib/response";
 import { requireAdmin } from "../lib/auth";
+import { sendAdminAbandonedCouponEmails } from "../lib/email";
+import {
+  abandonedCouponWhatsAppMessage,
+  sendWhatsAppMessage,
+} from "../lib/whatsapp";
 
 function generateCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -331,6 +338,123 @@ export async function listWelcomeCoupons(event: APIGatewayProxyEventV2) {
   );
 
   const coupons = ((result.Items ?? []) as WelcomeCoupon[]).sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+
+  return ok({ coupons });
+}
+
+/** Admin: generate 1-hour email-bound coupon for WhatsApp abandoned-cart outreach. */
+export async function createAdminAbandonedCoupon(event: APIGatewayProxyEventV2) {
+  const auth = requireAdmin(event);
+  if (!auth) return unauthorized("Admin access required");
+
+  let body: unknown;
+  try {
+    body = JSON.parse(event.body ?? "{}");
+  } catch {
+    return badRequest("Invalid JSON");
+  }
+
+  const parsed = createAdminCouponSchema.safeParse(body);
+  if (!parsed.success) return badRequest(parsed.error.message);
+
+  const email = normalizeEmail(parsed.data.email);
+  const phone = parsed.data.phone.trim();
+  const discountPercent = parsed.data.discountPercent;
+  const timestamp = now();
+  const expiresAt = new Date(
+    Date.now() + ADMIN_MANUAL_COUPON_HOURS * 60 * 60 * 1000
+  ).toISOString();
+  const code = generateCode();
+
+  const coupon: StoreCoupon & { PK: string; SK: string } = {
+    PK: couponKeys.pk(code),
+    SK: couponKeys.sk(),
+    code,
+    email,
+    phone,
+    discountPercent,
+    expiresAt,
+    createdAt: timestamp,
+    source: "admin",
+    createdBy: auth.email,
+  };
+
+  try {
+    await docClient.send(
+      new PutCommand({
+        TableName: CONFIG_TABLE,
+        Item: coupon,
+        ConditionExpression: "attribute_not_exists(PK)",
+      })
+    );
+  } catch (err) {
+    console.error("createAdminAbandonedCoupon put failed:", err);
+    return serverError("Could not create coupon — please try again");
+  }
+
+  const waMessage = abandonedCouponWhatsAppMessage({
+    code,
+    discountPercent,
+    expiresAt,
+  });
+  const whatsapp = await sendWhatsAppMessage({ phone, message: waMessage });
+
+  const emails = await sendAdminAbandonedCouponEmails({
+    customerEmail: email,
+    phone,
+    code,
+    discountPercent,
+    expiresAt,
+    createdByAdminEmail: auth.email,
+    whatsappDeepLink: whatsapp.deepLink,
+  });
+
+  return ok({
+    coupon: {
+      code,
+      email,
+      phone,
+      discountPercent,
+      expiresAt,
+      createdAt: timestamp,
+      createdBy: auth.email,
+      source: "admin" as const,
+    },
+    emails: {
+      customerOk: emails.customer.ok,
+      notifyOk: emails.notify.ok,
+      customerError: emails.customer.error,
+      notifyError: emails.notify.error,
+    },
+    whatsapp: {
+      sent: whatsapp.ok,
+      skipped: Boolean(whatsapp.skipped),
+      provider: whatsapp.provider,
+      deepLink: whatsapp.deepLink,
+      error: whatsapp.error,
+    },
+  });
+}
+
+export async function listAdminCoupons(event: APIGatewayProxyEventV2) {
+  if (!requireAdmin(event)) return forbidden();
+
+  const result = await docClient.send(
+    new ScanCommand({
+      TableName: CONFIG_TABLE,
+      FilterExpression: "begins_with(PK, :prefix) AND SK = :sk AND #src = :src",
+      ExpressionAttributeNames: { "#src": "source" },
+      ExpressionAttributeValues: {
+        ":prefix": "COUPON#",
+        ":sk": "META",
+        ":src": "admin",
+      },
+    })
+  );
+
+  const coupons = ((result.Items ?? []) as StoreCoupon[]).sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
 

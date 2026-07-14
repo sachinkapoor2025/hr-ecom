@@ -13,6 +13,7 @@ const links = [
   { href: "/admin/welcome-leads", label: "Welcome Leads" },
   { href: "/admin/visitors", label: "Visitors" },
   { href: "/admin/carts", label: "Abandoned Carts" },
+  { href: "/admin/coupons", label: "Coupons" },
   { href: "/admin/products", label: "Products" },
   { href: "/admin/categories", label: "Categories" },
   { href: "/admin/shipping", label: "Shipping" },

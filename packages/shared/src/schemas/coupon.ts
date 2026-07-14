@@ -47,8 +47,35 @@ export function dailyDealDayKey(date = new Date()): string {
   }).format(date);
 }
 
-export const couponSourceSchema = z.enum(["welcome", "abandoned"]);
+export const couponSourceSchema = z.enum(["welcome", "abandoned", "admin"]);
 export type CouponSource = z.infer<typeof couponSourceSchema>;
+
+/** Admin manual abandoned-cart coupons (WhatsApp / phone outreach). */
+export const ADMIN_MANUAL_COUPON_HOURS = 1;
+export const ADMIN_COUPON_DISCOUNT_OPTIONS = [7, 8, 9, 10, 11, 12, 13, 14, 15] as const;
+export type AdminCouponDiscountPercent = (typeof ADMIN_COUPON_DISCOUNT_OPTIONS)[number];
+
+export const createAdminCouponSchema = z.object({
+  email: z.string().email().max(254),
+  phone: z
+    .string()
+    .trim()
+    .min(7, "Phone number is required")
+    .max(22)
+    .refine((v) => v.replace(/\D/g, "").length >= 7, {
+      message: "Enter a valid phone number with country code",
+    }),
+  discountPercent: z
+    .number()
+    .int()
+    .refine(
+      (n): n is AdminCouponDiscountPercent =>
+        (ADMIN_COUPON_DISCOUNT_OPTIONS as readonly number[]).includes(n),
+      { message: "Discount must be between 7% and 15%" }
+    ),
+});
+
+export type CreateAdminCouponInput = z.infer<typeof createAdminCouponSchema>;
 
 export const couponSchema = z.object({
   code: z.string(),
@@ -61,6 +88,10 @@ export const couponSchema = z.object({
   orderId: z.string().optional(),
   source: couponSourceSchema,
   dayKey: z.string().optional(),
+  /** Customer phone (admin-generated abandoned outreach). */
+  phone: z.string().optional(),
+  /** Cognito email of admin who created the coupon. */
+  createdBy: z.string().email().optional(),
 });
 
 export type StoreCoupon = z.infer<typeof couponSchema>;
