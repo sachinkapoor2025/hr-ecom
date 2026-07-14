@@ -1,4 +1,4 @@
-.PHONY: build-ApiFunction build-ReviewEmailsCronFunction api-deps api-bundle
+.PHONY: build-ApiFunction build-ReviewEmailsCronFunction build-SesEmailCronFunction api-deps api-bundle
 
 api-deps:
 	npm ci
@@ -25,7 +25,19 @@ api-bundle: api-deps
 		--external:@aws-sdk/lib-dynamodb \
 		--external:@aws-sdk/client-s3 \
 		--external:@aws-sdk/s3-request-presigner
+	npx esbuild apps/api/src/ses-scheduled.ts \
+		--bundle \
+		--platform=node \
+		--target=es2022 \
+		--minify \
+		--outfile=$(ARTIFACTS_DIR)/ses-scheduled.js \
+		--external:@aws-sdk/client-dynamodb \
+		--external:@aws-sdk/lib-dynamodb \
+		--external:@aws-sdk/client-s3 \
+		--external:@aws-sdk/s3-request-presigner
 
 build-ApiFunction: api-bundle
 
 build-ReviewEmailsCronFunction: api-bundle
+
+build-SesEmailCronFunction: api-bundle

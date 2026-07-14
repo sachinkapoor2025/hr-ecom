@@ -20,6 +20,12 @@ export const productSchema = z.object({
   lowStockAlertSentAt: z.string().optional(),
   /** Lifetime units sold (incremented when order is paid). */
   unitsSold: z.number().int().min(0).optional(),
+  /** Shipping weight in ounces (recommended for accurate USPS rates). */
+  weightOz: z.number().positive().optional(),
+  /** Package dimensions in inches (recommended for accurate USPS rates). */
+  lengthIn: z.number().positive().optional(),
+  widthIn: z.number().positive().optional(),
+  heightIn: z.number().positive().optional(),
 });
 
 export const createProductSchema = productSchema.omit({ slug: true }).extend({
@@ -41,6 +47,10 @@ export const bulkProductRowSchema = z.object({
   seoTitle: z.string().optional(),
   seoDescription: z.string().optional(),
   published: z.coerce.boolean().default(true),
+  weightOz: z.coerce.number().positive().optional(),
+  lengthIn: z.coerce.number().positive().optional(),
+  widthIn: z.coerce.number().positive().optional(),
+  heightIn: z.coerce.number().positive().optional(),
 });
 
 export type Product = z.infer<typeof productSchema> & {

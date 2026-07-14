@@ -35,6 +35,7 @@ interface AuthContextValue {
   token: string | undefined;
   isAdmin: boolean;
   isSuperAdmin: boolean;
+  isEmailMarketer: boolean;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -97,6 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         token: user?.token,
         isAdmin: user?.isAdmin ?? false,
         isSuperAdmin: user?.isSuperAdmin ?? false,
+        isEmailMarketer: user?.isEmailMarketer ?? false,
       }}
     >
       {children}

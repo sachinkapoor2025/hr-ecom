@@ -15,6 +15,8 @@ const links = [
   { href: "/admin/carts", label: "Abandoned Carts" },
   { href: "/admin/products", label: "Products" },
   { href: "/admin/categories", label: "Categories" },
+  { href: "/admin/shipping", label: "Shipping" },
+  { href: "/admin/email", label: "Marketing Email" },
   { href: "/admin/leads", label: "Leads" },
   { href: "/admin/payments", label: "Payments" },
 ];

@@ -75,6 +75,7 @@ export const eventKeys = {
 export const configKeys = {
   payments: { pk: "CONFIG#PAYMENTS", sk: "META" as const },
   blogImages: { pk: "CONFIG#BLOG_IMAGES", sk: "META" as const },
+  shipping: { pk: "CONFIG#SHIPPING", sk: "META" as const },
 };
 
 /** Tracks admin S3 uploads → product slug for recovery if DB is reset. */
@@ -90,6 +91,51 @@ export const couponKeys = {
   welcomeEmailSk: () => "ACTIVE" as const,
   abandonedEmailPk: (email: string) => `ABANDONED#${email.trim().toLowerCase()}`,
   abandonedEmailSk: () => "ACTIVE" as const,
+};
+
+// ---- email campaigns table (SES bulk marketing) ----
+export const sesEmailKeys = {
+  campaignPk: (campaignId: string) => `CAMPAIGN#${campaignId}`,
+  campaignSk: () => "META" as const,
+  recipientSk: (email: string) => `RECIPIENT#${email.trim().toLowerCase()}`,
+  queueSk: (email: string) => `QUEUE#${email.trim().toLowerCase()}`,
+  /** GSI1: list campaigns by createdAt */
+  entityCampaignPk: () => "ENTITY#CAMPAIGN" as const,
+  entityCampaignSk: (createdAt: string) => createdAt,
+  /** GSI2: find due/scheduled campaigns */
+  statusPk: (status: string) => `STATUS#${status}`,
+  statusSk: (at: string) => at,
+  /** Pending queue scan for worker */
+  pendingQueuePk: () => "QUEUE#PENDING" as const,
+  pendingQueueSk: (campaignId: string, email: string) => `${campaignId}#${email.trim().toLowerCase()}`,
+  templatePk: (templateId: string) => `TEMPLATE#${templateId}`,
+  templateSk: () => "META" as const,
+  entityTemplatePk: () => "ENTITY#TEMPLATE" as const,
+  entityTemplateSk: (createdAt: string) => createdAt,
+  suppressPk: (email: string) => `SUPPRESS#${email.trim().toLowerCase()}`,
+  suppressSk: () => "META" as const,
+  entitySuppressPk: () => "ENTITY#SUPPRESS" as const,
+  entitySuppressSk: (createdAt: string) => createdAt,
+  settingsPk: () => "SETTINGS#SES" as const,
+  settingsSk: () => "META" as const,
+  trackOpenPk: (token: string) => `TRACKOPEN#${token}`,
+  trackClickPk: (token: string) => `TRACKCLICK#${token}`,
+  trackSk: () => "META" as const,
+  notifyPk: (id: string) => `NOTIFY#${id}`,
+  notifySk: () => "META" as const,
+  entityNotifyPk: () => "ENTITY#NOTIFY" as const,
+  entityNotifySk: (createdAt: string) => createdAt,
+  dailyCounterPk: (day: string) => `DAILY#${day}`,
+  dailyCounterSk: () => "META" as const,
+};
+
+// ---- reminder emails table (checkout nudges for non-buyers) ----
+export const reminderEmailKeys = {
+  pk: (email: string) => `EMAIL#${email.trim().toLowerCase()}`,
+  sk: () => "META" as const,
+  /** GSI1: list by status (show | deleted) */
+  statusPk: (status: "show" | "deleted") => `STATUS#${status}`,
+  statusSk: (createdAt: string, email: string) => `${createdAt}#${email.trim().toLowerCase()}`,
 };
 
 /**

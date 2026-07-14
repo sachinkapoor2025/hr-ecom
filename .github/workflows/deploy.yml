@@ -52,9 +52,33 @@ jobs:
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
           STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+          USPS_CLIENT_ID: ${{ secrets.USPS_CLIENT_ID }}
+          USPS_CLIENT_SECRET: ${{ secrets.USPS_CLIENT_SECRET }}
+          USPS_SECRET_ARN: ${{ secrets.USPS_SECRET_ARN }}
+          USPS_BASE_URL: ${{ secrets.USPS_BASE_URL }}
+          USPS_CRID: ${{ secrets.USPS_CRID }}
+          USPS_MID: ${{ secrets.USPS_MID }}
+          USPS_EPS_ACCOUNT_NUMBER: ${{ secrets.USPS_EPS_ACCOUNT_NUMBER }}
+          USPS_PAYMENT_AUTHORIZATION_TOKEN: ${{ secrets.USPS_PAYMENT_AUTHORIZATION_TOKEN }}
         run: |
+          # Empty secrets become empty SAM params (safe defaults in template.yaml).
+          BASE_URL="${USPS_BASE_URL:-https://apis.usps.com}"
           sam build && sam deploy --no-confirm-changeset --no-fail-on-empty-changeset --config-env prod \
-            --parameter-overrides "Environment=prod RazorpayKeyId=${RAZORPAY_KEY_ID} RazorpayKeySecret=${RAZORPAY_KEY_SECRET} SmtpPassword=${SMTP_PASSWORD} StripeSecretKey=${STRIPE_SECRET_KEY} StripeWebhookSecret=${STRIPE_WEBHOOK_SECRET}"
+            --parameter-overrides "\
+          Environment=prod \
+          RazorpayKeyId=${RAZORPAY_KEY_ID} \
+          RazorpayKeySecret=${RAZORPAY_KEY_SECRET} \
+          SmtpPassword=${SMTP_PASSWORD} \
+          StripeSecretKey=${STRIPE_SECRET_KEY} \
+          StripeWebhookSecret=${STRIPE_WEBHOOK_SECRET} \
+          UspsClientId=${USPS_CLIENT_ID} \
+          UspsClientSecret=${USPS_CLIENT_SECRET} \
+          UspsSecretArn=${USPS_SECRET_ARN} \
+          UspsBaseUrl=${BASE_URL} \
+          UspsCrid=${USPS_CRID} \
+          UspsMid=${USPS_MID} \
+          UspsEpsAccountNumber=${USPS_EPS_ACCOUNT_NUMBER} \
+          UspsPaymentAuthorizationToken=${USPS_PAYMENT_AUTHORIZATION_TOKEN}"
 
       # Catalog import OVERWRITES product records and has wiped admin-uploaded images.
       # Run manually only: Actions → Import UsaRakhi Catalog (workflow_dispatch).

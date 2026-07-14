@@ -35,6 +35,10 @@ export const CARTS_TABLE = process.env.CARTS_TABLE ?? `hr-ecom-carts-${ENV}`;
 export const CUSTOMERS_TABLE = process.env.CUSTOMERS_TABLE ?? `hr-ecom-customers-${ENV}`;
 export const EVENTS_TABLE = process.env.EVENTS_TABLE ?? `hr-ecom-events-${ENV}`;
 export const CONFIG_TABLE = process.env.CONFIG_TABLE ?? `hr-ecom-config-${ENV}`;
+export const EMAIL_CAMPAIGNS_TABLE =
+  process.env.EMAIL_CAMPAIGNS_TABLE ?? `hr-ecom-email-campaigns-${ENV}`;
+export const REMINDER_EMAILS_TABLE =
+  process.env.REMINDER_EMAILS_TABLE ?? `hr-ecom-reminder-emails-${ENV}`;
 
 /** All table names, useful for setup/migration scripts. */
 export const ALL_TABLES = {
@@ -44,6 +48,8 @@ export const ALL_TABLES = {
   customers: CUSTOMERS_TABLE,
   events: EVENTS_TABLE,
   config: CONFIG_TABLE,
+  emailCampaigns: EMAIL_CAMPAIGNS_TABLE,
+  reminderEmails: REMINDER_EMAILS_TABLE,
 };
 
 export function now(): string {

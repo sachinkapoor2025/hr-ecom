@@ -37,6 +37,35 @@ Parameters:
     Default: ""
     NoEcho: true
     Description: SMTP password for order@usarakhi.com (contact & order emails)
+  UspsClientId:
+    Type: String
+    Default: ""
+    NoEcho: true
+  UspsClientSecret:
+    Type: String
+    Default: ""
+    NoEcho: true
+  UspsSecretArn:
+    Type: String
+    Default: ""
+    Description: Optional Secrets Manager ARN with { clientId, clientSecret, ... }
+  UspsBaseUrl:
+    Type: String
+    Default: "https://apis.usps.com"
+  UspsCrid:
+    Type: String
+    Default: ""
+  UspsMid:
+    Type: String
+    Default: ""
+  UspsEpsAccountNumber:
+    Type: String
+    Default: ""
+    NoEcho: true
+  UspsPaymentAuthorizationToken:
+    Type: String
+    Default: ""
+    NoEcho: true
 
 Globals:
   Function:
@@ -52,6 +81,8 @@ Globals:
         CUSTOMERS_TABLE: !Ref CustomersTable
         EVENTS_TABLE: !Ref EventsTable
         CONFIG_TABLE: !Ref ConfigTable
+        EMAIL_CAMPAIGNS_TABLE: !Ref EmailCampaignsTable
+        REMINDER_EMAILS_TABLE: !Ref ReminderEmailsTable
         UPLOAD_BUCKET: !Ref UploadBucket
         USER_POOL_ID: !Ref UserPool
         USER_POOL_CLIENT_ID: !Ref UserPoolClient
@@ -67,9 +98,20 @@ Globals:
         SMTP_SECURE: "true"
         SMTP_USER: order@usarakhi.com
         SMTP_FROM: order@usarakhi.com
-        NOTIFY_EMAIL: order@usarakhi.com
+        NOTIFY_EMAIL: order@usarakhi.com,dgv@mydgv.com,priya.yadav@mydgv.com
         SMTP_PASS: !Ref SmtpPassword
         SITE_URL: https://www.usarakhi.com
+        SES_AWS_REGION: us-east-1
+        SES_FROM_EMAIL: order@usarakhi.com
+        SES_REPLY_TO: order@usarakhi.com
+        USPS_CLIENT_ID: !Ref UspsClientId
+        USPS_CLIENT_SECRET: !Ref UspsClientSecret
+        USPS_SECRET_ARN: !Ref UspsSecretArn
+        USPS_BASE_URL: !Ref UspsBaseUrl
+        USPS_CRID: !Ref UspsCrid
+        USPS_MID: !Ref UspsMid
+        USPS_EPS_ACCOUNT_NUMBER: !Ref UspsEpsAccountNumber
+        USPS_PAYMENT_AUTHORIZATION_TOKEN: !Ref UspsPaymentAuthorizationToken
 
 Resources:
   ProductsTable:
@@ -281,6 +323,80 @@ Resources:
       SSESpecification:
         SSEEnabled: true
 
+  EmailCampaignsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub hr-ecom-email-campaigns-${Environment}
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: PK
+          AttributeType: S
+        - AttributeName: SK
+          AttributeType: S
+        - AttributeName: GSI1PK
+          AttributeType: S
+        - AttributeName: GSI1SK
+          AttributeType: S
+        - AttributeName: GSI2PK
+          AttributeType: S
+        - AttributeName: GSI2SK
+          AttributeType: S
+      KeySchema:
+        - AttributeName: PK
+          KeyType: HASH
+        - AttributeName: SK
+          KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: GSI1
+          KeySchema:
+            - AttributeName: GSI1PK
+              KeyType: HASH
+            - AttributeName: GSI1SK
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+        - IndexName: GSI2
+          KeySchema:
+            - AttributeName: GSI2PK
+              KeyType: HASH
+            - AttributeName: GSI2SK
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      SSESpecification:
+        SSEEnabled: true
+
+  ReminderEmailsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub hr-ecom-reminder-emails-${Environment}
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: PK
+          AttributeType: S
+        - AttributeName: SK
+          AttributeType: S
+        - AttributeName: GSI1PK
+          AttributeType: S
+        - AttributeName: GSI1SK
+          AttributeType: S
+      KeySchema:
+        - AttributeName: PK
+          KeyType: HASH
+        - AttributeName: SK
+          KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: GSI1
+          KeySchema:
+            - AttributeName: GSI1PK
+              KeyType: HASH
+            - AttributeName: GSI1SK
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      SSESpecification:
+        SSEEnabled: true
+
   UploadBucket:
     Type: AWS::S3::Bucket
     Properties:
@@ -419,6 +535,13 @@ Resources:
       UserPoolId: !Ref UserPool
       Description: Super admin — full admin access plus delete testing records
 
+  EmailGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      GroupName: email
+      UserPoolId: !Ref UserPool
+      Description: Legacy email group — marketing email is now under /admin/email for all admins
+
   ApiFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -438,6 +561,10 @@ Resources:
             TableName: !Ref EventsTable
         - DynamoDBCrudPolicy:
             TableName: !Ref ConfigTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref EmailCampaignsTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ReminderEmailsTable
         - S3CrudPolicy:
             BucketName: !Ref UploadBucket
         - Statement:
@@ -445,6 +572,19 @@ Resources:
               Action:
                 - secretsmanager:GetSecretValue
                 - ssm:GetParameter
+              Resource: "*"
+            - Effect: Allow
+              Action:
+                - ses:SendEmail
+                - ses:SendRawEmail
+                - ses:SendTemplatedEmail
+                - ses:SendBulkEmail
+                - ses:SendBulkTemplatedEmail
+                - sesv2:SendEmail
+                - sesv2:SendBulkEmail
+                - ses:GetAccountSendingEnabled
+                - sesv2:GetAccount
+                - sesv2:GetEmailIdentity
               Resource: "*"
       Events:
         ApiRoot:
@@ -484,6 +624,47 @@ Resources:
           Properties:
             Schedule: rate(15 minutes)
             Description: Review request emails + abandoned cart recovery (15 min / 4 hr)
+            Enabled: true
+    Metadata:
+      BuildMethod: makefile
+
+  SesEmailCronFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub hr-ecom-ses-email-${Environment}
+      Handler: ses-scheduled.handler
+      Timeout: 120
+      MemorySize: 512
+      CodeUri: ..
+      Environment:
+        Variables:
+          EMAIL_CAMPAIGNS_TABLE: !Ref EmailCampaignsTable
+          CONFIG_TABLE: !Ref ConfigTable
+          ENVIRONMENT: !Ref Environment
+          SITE_URL: https://www.usarakhi.com
+          SES_AWS_REGION: us-east-1
+          SES_FROM_EMAIL: order@usarakhi.com
+          SES_REPLY_TO: order@usarakhi.com
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref EmailCampaignsTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ConfigTable
+        - Statement:
+            - Effect: Allow
+              Action:
+                - ses:SendEmail
+                - ses:SendRawEmail
+                - sesv2:SendEmail
+                - sesv2:SendBulkEmail
+                - sesv2:GetAccount
+              Resource: "*"
+      Events:
+        EveryMinuteSesQueue:
+          Type: Schedule
+          Properties:
+            Schedule: rate(1 minute)
+            Description: SES campaign scheduler + queue sender (respects daily/rate limits)
             Enabled: true
     Metadata:
       BuildMethod: makefile

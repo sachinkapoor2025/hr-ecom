@@ -33,7 +33,7 @@ export function CurrencySwitcher() {
   const pathname = usePathname();
   const { displayCurrency, setDisplayCurrency } = useCurrency();
 
-  if (pathname.startsWith("/admin")) return null;
+  if (pathname.startsWith("/admin") || pathname.startsWith("/ses-email")) return null;
 
   return (
     <div

@@ -60,6 +60,9 @@ export const checkoutSchema = z.object({
   usdInrRate: z.number().positive().max(200).optional(),
   /** Welcome or promo coupon (e.g. RAKHI-ABC123). */
   couponCode: z.string().min(4).max(32).optional(),
+  /** Customer override — must match a returned rate. */
+  shippingServiceCode: z.string().optional(),
+  shippingRateId: z.string().optional(),
 });
 
 const orderStatusEnum = z.enum([
@@ -108,6 +111,16 @@ export const orderSchema = z.object({
   reviewEmailDueAt: z.string().optional(),
   /** Set after review request email is sent (idempotency). */
   reviewEmailSentAt: z.string().optional(),
+  /** USPS rate-shopping metadata (customer may still pay $0 when mode is free). */
+  shippingServiceCode: z.string().optional(),
+  shippingServiceName: z.string().optional(),
+  shippingRateId: z.string().optional(),
+  estimatedLabelCost: z.number().optional(),
+  labelCost: z.number().optional(),
+  labelPdfUrl: z.string().optional(),
+  labelStatus: z.enum(["none", "queued", "purchased", "failed"]).optional(),
+  labelError: z.string().optional(),
+  addressValidated: z.boolean().optional(),
 });
 
 /** Super-admin bulk delete (testing cleanup). */
@@ -123,6 +136,12 @@ export const orderStatusUpdateSchema = z.object({
   note: z.string().max(500).optional(),
   adminNotes: z.string().max(2000).optional(),
   estimatedDeliveryAt: z.string().optional(),
+  shippingServiceCode: z.string().optional(),
+  shippingServiceName: z.string().optional(),
+  shippingRateId: z.string().optional(),
+  estimatedLabelCost: z.number().optional(),
+  labelStatus: z.enum(["none", "queued", "purchased", "failed"]).optional(),
+  labelError: z.string().optional(),
 });
 
 export type ShippingAddress = z.infer<typeof shippingAddressSchema>;

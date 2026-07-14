@@ -1,11 +1,11 @@
 "use client";
 
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { api } from "@/lib/api";
 import { useCart } from "@/lib/cart-context";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth, useApiClient } from "@/lib/auth-context";
 import { useCurrency, type DisplayCurrency } from "@/lib/currency-context";
 import { useSessionId, useDebouncedLeadCapture, useLeadCapture } from "@/lib/session";
 import { trackCheckoutStart, trackPurchase } from "@/lib/track";
@@ -26,7 +26,7 @@ import {
   saveShippingAddress,
 } from "@/lib/shipping-address";
 import { fetchAccount, createAccountAddress } from "@/lib/account";
-import { ORDER_STATUS, isValidShippingPhone, DEFAULT_SENDER_MESSAGE, type Order, type ShippingAddress } from "@hr-ecom/shared";
+import { ORDER_STATUS, isValidShippingPhone, DEFAULT_SENDER_MESSAGE, type Order, type RateQuote, type ShippingAddress } from "@hr-ecom/shared";
 
 declare global {
   interface Window {
@@ -55,6 +55,7 @@ function CheckoutPageInner() {
   const sessionId = useSessionId();
   const captureLeadDebounced = useDebouncedLeadCapture(sessionId);
   const captureLeadNow = useLeadCapture(sessionId);
+  const apiClient = useApiClient();
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("razorpay");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -79,6 +80,82 @@ function CheckoutPageInner() {
   const addressPrefilled = useRef(false);
   const addressRef = useRef(address);
   addressRef.current = address;
+
+  type ShippingQuoteState = {
+    selected?: RateQuote;
+    settingsMode: "free" | "pass_through";
+    customerCharge: number;
+  };
+  const [shippingQuote, setShippingQuote] = useState<ShippingQuoteState>({
+    settingsMode: "free",
+    customerCharge: 0,
+  });
+  const ratesTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const isAddressReadyForRates = useCallback((a: ShippingAddress) => {
+    return Boolean(
+      a.line1.trim() &&
+        a.city.trim() &&
+        a.state.trim() &&
+        a.postalCode.trim() &&
+        a.country.trim().length >= 2
+    );
+  }, []);
+
+  useEffect(() => {
+    if (retryOrder || !sessionId || cartLoading || !cart?.items.length) return;
+
+    if (!isAddressReadyForRates(address)) {
+      setShippingQuote({ settingsMode: "free", customerCharge: 0 });
+      return;
+    }
+
+    if (ratesTimerRef.current) clearTimeout(ratesTimerRef.current);
+    ratesTimerRef.current = setTimeout(() => {
+      const a = addressRef.current;
+      const params = new URLSearchParams({
+        line1: a.line1.trim(),
+        city: a.city.trim(),
+        state: a.state.trim(),
+        postalCode: a.postalCode.trim(),
+        country: (a.country || "US").trim(),
+      });
+      if (a.line2?.trim()) params.set("line2", a.line2.trim());
+
+      void apiClient<{
+        rates: RateQuote[];
+        selected?: RateQuote;
+        settingsSnapshot?: { mode: "free" | "pass_through" };
+      }>(`/shipping/rates?${params.toString()}`)
+        .then((data) => {
+          const mode = data.settingsSnapshot?.mode ?? "free";
+          const selected = data.selected;
+          const customerCharge =
+            mode === "pass_through" && selected ? selected.price : 0;
+          setShippingQuote({ selected, settingsMode: mode, customerCharge });
+        })
+        .catch(() => {
+          setShippingQuote({ settingsMode: "free", customerCharge: 0 });
+        });
+    }, 600);
+
+    return () => {
+      if (ratesTimerRef.current) clearTimeout(ratesTimerRef.current);
+    };
+  }, [
+    address.line1,
+    address.city,
+    address.state,
+    address.postalCode,
+    address.country,
+    address.line2,
+    sessionId,
+    cartLoading,
+    cart?.items.length,
+    retryOrder,
+    apiClient,
+    isAddressReadyForRates,
+  ]);
 
   useEffect(() => {
     if (displayCurrency === "INR") setPaymentMethod("razorpay");
@@ -458,6 +535,12 @@ function CheckoutPageInner() {
           ...(displayCurrency === "INR" ? { usdInrRate } : {}),
           shippingAddress: payload,
           ...(appliedCouponCode ? { couponCode: appliedCouponCode } : {}),
+          ...(shippingQuote.selected
+            ? {
+                shippingServiceCode: shippingQuote.selected.mailClass,
+                shippingRateId: shippingQuote.selected.rateId,
+              }
+            : {}),
         }),
       });
 
@@ -523,7 +606,24 @@ function CheckoutPageInner() {
   const itemCount = checkoutItems.reduce((sum, i) => sum + i.quantity, 0);
   const orderTotal = isRetry
     ? retryOrder!.total
-    : Math.max(0, displaySubtotal - discount);
+    : Math.max(0, displaySubtotal - discount + shippingQuote.customerCharge);
+
+  const shippingDetailLine = isRetry
+    ? null
+    : (() => {
+        const selected = shippingQuote.selected;
+        const serviceName = selected?.serviceName ?? "Standard shipping";
+        const deliveryHint = selected?.estimatedDeliveryDate
+          ? ` · arrives by ${new Date(selected.estimatedDeliveryDate).toLocaleDateString(undefined, {
+              month: "short",
+              day: "numeric",
+            })}`
+          : "";
+        if (shippingQuote.settingsMode === "free" || shippingQuote.customerCharge <= 0) {
+          return `${serviceName}${deliveryHint} (FREE)`;
+        }
+        return `${serviceName}${deliveryHint}`;
+      })();
 
   return (
     <>
@@ -586,8 +686,25 @@ function CheckoutPageInner() {
                 </div>
               )}
               <div className="flex justify-between gap-4">
-                <span className="text-slate-700">Shipping</span>
-                <span className="font-bold text-accent">FREE</span>
+                <span className="text-slate-700">
+                  Shipping
+                  {shippingDetailLine && (
+                    <span className="block text-xs text-slate-500 font-normal mt-0.5">
+                      {shippingDetailLine}
+                    </span>
+                  )}
+                </span>
+                <span
+                  className={
+                    !isRetry && shippingQuote.customerCharge > 0
+                      ? "font-medium text-slate-900"
+                      : "font-bold text-accent"
+                  }
+                >
+                  {!isRetry && shippingQuote.customerCharge > 0
+                    ? format(shippingQuote.customerCharge, displayCurrency)
+                    : "FREE"}
+                </span>
               </div>
               <div className="flex justify-between gap-4 pt-2 border-t border-slate-200">
                 <span className="font-bold text-slate-900">Total</span>

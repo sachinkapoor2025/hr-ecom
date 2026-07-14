@@ -2,7 +2,7 @@ import type { ScheduledEvent, Context } from "aws-lambda";
 import { processDueReviewEmails } from "./handlers/review-emails";
 import { processAbandonedCartEmails } from "./handlers/abandoned-cart-emails";
 
-/** EventBridge Schedule — review emails (hourly check) + abandoned cart recovery (every 15 min). */
+/** EventBridge Schedule — review emails + abandoned cart recovery. */
 export async function handler(_event: ScheduledEvent, _context: Context) {
   const results: Record<string, unknown> = {};
 

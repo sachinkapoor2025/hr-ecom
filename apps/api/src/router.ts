@@ -13,6 +13,9 @@ import * as adminCarts from "./handlers/admin-carts";
 import * as adminCustomers from "./handlers/admin-customers";
 import * as account from "./handlers/account";
 import * as coupons from "./handlers/coupons";
+import * as sesEmail from "./handlers/ses-email";
+import * as reminderEmails from "./handlers/reminder-emails";
+import * as shipping from "./handlers/shipping";
 import { stripeWebhook } from "./handlers/payments/stripe";
 import { razorpayWebhook, verifyRazorpayPayment } from "./handlers/payments/razorpay";
 
@@ -45,6 +48,12 @@ const routes: Route[] = [
   { method: "DELETE", pattern: /^\/cart\/items\/([^/]+)$/, handler: cart.removeFromCart, params: ["productSlug"] },
   { method: "DELETE", pattern: /^\/cart$/, handler: cart.clearCart },
   { method: "POST", pattern: /^\/checkout$/, handler: orders.checkout },
+  { method: "GET", pattern: /^\/shipping\/rates$/, handler: shipping.getShippingRates },
+  { method: "GET", pattern: /^\/admin\/shipping\/settings$/, handler: shipping.getAdminShippingSettings },
+  { method: "PUT", pattern: /^\/admin\/shipping\/settings$/, handler: shipping.updateAdminShippingSettings },
+  { method: "POST", pattern: /^\/admin\/orders\/([^/]+)\/buy-label$/, handler: shipping.buyLabelForOrder, params: ["orderId"] },
+  { method: "POST", pattern: /^\/admin\/orders\/([^/]+)\/rates$/, handler: shipping.getOrderShippingRates, params: ["orderId"] },
+  { method: "GET", pattern: /^\/admin\/shipping\/products-missing-dims$/, handler: shipping.listProductsMissingDims },
   { method: "GET", pattern: /^\/orders$/, handler: orders.listOrders },
   { method: "GET", pattern: /^\/orders\/([^/]+)$/, handler: orders.getOrder, params: ["orderId"] },
   { method: "POST", pattern: /^\/orders\/([^/]+)\/retry-payment$/, handler: orders.retryOrderPayment, params: ["orderId"] },
@@ -86,6 +95,33 @@ const routes: Route[] = [
   { method: "POST", pattern: /^\/webhooks\/stripe$/, handler: stripeWebhook },
   { method: "POST", pattern: /^\/webhooks\/razorpay$/, handler: razorpayWebhook },
   { method: "POST", pattern: /^\/payments\/razorpay\/verify$/, handler: verifyRazorpayPayment },
+
+  // SES bulk email campaigns (admin)
+  { method: "GET", pattern: /^\/ses-email\/dashboard$/, handler: sesEmail.getDashboard },
+  { method: "GET", pattern: /^\/ses-email\/campaigns$/, handler: sesEmail.listCampaigns },
+  { method: "POST", pattern: /^\/ses-email\/campaigns$/, handler: sesEmail.createCampaign },
+  { method: "GET", pattern: /^\/ses-email\/campaigns\/([^/]+)$/, handler: sesEmail.getCampaignHandler, params: ["campaignId"] },
+  { method: "PUT", pattern: /^\/ses-email\/campaigns\/([^/]+)$/, handler: sesEmail.updateCampaign, params: ["campaignId"] },
+  { method: "POST", pattern: /^\/ses-email\/recipients$/, handler: sesEmail.uploadRecipients },
+  { method: "GET", pattern: /^\/ses-email\/templates$/, handler: sesEmail.listTemplates },
+  { method: "POST", pattern: /^\/ses-email\/templates$/, handler: sesEmail.createTemplate },
+  { method: "GET", pattern: /^\/ses-email\/settings$/, handler: sesEmail.getSettings },
+  { method: "PUT", pattern: /^\/ses-email\/settings$/, handler: sesEmail.updateSettings },
+  { method: "GET", pattern: /^\/ses-email\/suppression$/, handler: sesEmail.listSuppression },
+  { method: "POST", pattern: /^\/ses-email\/suppression$/, handler: sesEmail.addSuppression },
+  { method: "DELETE", pattern: /^\/ses-email\/suppression\/([^/]+)$/, handler: sesEmail.removeSuppression, params: ["email"] },
+  { method: "GET", pattern: /^\/ses-email\/queue$/, handler: sesEmail.listQueue },
+  { method: "GET", pattern: /^\/ses-email\/analytics$/, handler: sesEmail.getAnalytics },
+  { method: "GET", pattern: /^\/ses-email\/notifications$/, handler: sesEmail.listNotifications },
+  { method: "POST", pattern: /^\/ses-email\/test$/, handler: sesEmail.sendTest },
+  { method: "GET", pattern: /^\/ses-email\/reminders$/, handler: reminderEmails.listReminderEmailsHandler },
+  { method: "POST", pattern: /^\/ses-email\/reminders\/collect$/, handler: reminderEmails.collectReminderEmailsHandler },
+  { method: "POST", pattern: /^\/ses-email\/reminders\/send$/, handler: reminderEmails.sendReminderEmailsHandler },
+  { method: "POST", pattern: /^\/ses-email\/reminders\/delete$/, handler: reminderEmails.bulkDeleteReminderEmailsHandler },
+  { method: "DELETE", pattern: /^\/ses-email\/reminders\/([^/]+)$/, handler: reminderEmails.deleteReminderEmailHandler, params: ["email"] },
+  { method: "GET", pattern: /^\/email\/open\/([^/]+)$/, handler: sesEmail.trackOpen, params: ["token"] },
+  { method: "GET", pattern: /^\/email\/click\/([^/]+)$/, handler: sesEmail.trackClick, params: ["token"] },
+  { method: "GET", pattern: /^\/email\/unsubscribe\/([^/]+)$/, handler: sesEmail.unsubscribe, params: ["token"] },
 ];
 
 export async function route(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyResultV2> {
