@@ -82,6 +82,7 @@ Globals:
         EVENTS_TABLE: !Ref EventsTable
         CONFIG_TABLE: !Ref ConfigTable
         EMAIL_CAMPAIGNS_TABLE: !Ref EmailCampaignsTable
+        REMINDER_EMAILS_TABLE: !Ref ReminderEmailsTable
         UPLOAD_BUCKET: !Ref UploadBucket
         USER_POOL_ID: !Ref UserPool
         USER_POOL_CLIENT_ID: !Ref UserPoolClient
@@ -365,6 +366,37 @@ Resources:
       SSESpecification:
         SSEEnabled: true
 
+  ReminderEmailsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub hr-ecom-reminder-emails-${Environment}
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: PK
+          AttributeType: S
+        - AttributeName: SK
+          AttributeType: S
+        - AttributeName: GSI1PK
+          AttributeType: S
+        - AttributeName: GSI1SK
+          AttributeType: S
+      KeySchema:
+        - AttributeName: PK
+          KeyType: HASH
+        - AttributeName: SK
+          KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: GSI1
+          KeySchema:
+            - AttributeName: GSI1PK
+              KeyType: HASH
+            - AttributeName: GSI1SK
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
+      SSESpecification:
+        SSEEnabled: true
+
   UploadBucket:
     Type: AWS::S3::Bucket
     Properties:
@@ -531,6 +563,8 @@ Resources:
             TableName: !Ref ConfigTable
         - DynamoDBCrudPolicy:
             TableName: !Ref EmailCampaignsTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref ReminderEmailsTable
         - S3CrudPolicy:
             BucketName: !Ref UploadBucket
         - Statement:

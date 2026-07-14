@@ -129,6 +129,15 @@ export const sesEmailKeys = {
   dailyCounterSk: () => "META" as const,
 };
 
+// ---- reminder emails table (checkout nudges for non-buyers) ----
+export const reminderEmailKeys = {
+  pk: (email: string) => `EMAIL#${email.trim().toLowerCase()}`,
+  sk: () => "META" as const,
+  /** GSI1: list by status (show | deleted) */
+  statusPk: (status: "show" | "deleted") => `STATUS#${status}`,
+  statusSk: (createdAt: string, email: string) => `${createdAt}#${email.trim().toLowerCase()}`,
+};
+
 /**
  * Legacy single-table helpers — retained only for the one-time migration script
  * that reads the old `hr-ecom-{env}` table. Do not use in handlers.

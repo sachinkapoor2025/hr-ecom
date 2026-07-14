@@ -116,6 +116,7 @@ When admin sets order status to **Delivered** or **Complete**, the API sets `rev
 | GET | `/admin/search` | Admin: global search by name/email/phone (`?q=`) |
 | GET | `/admin/carts/abandoned` | Admin: abandoned carts (CSV in UI) |
 | GET | `/admin/leads` | Admin: captured leads |
+| GET/POST | `/ses-email/reminders*` | Admin: checkout-nudge audience (manual fetch, send, soft-delete). UI: `/admin/email/nudges` |
 | GET/POST | `/ses-email/*` | SES bulk campaigns (admin auth): dashboard, campaigns, recipients, templates, queue, analytics, suppression, settings. UI at `/admin/email` |
 | GET | `/email/open/{token}` | Open tracking pixel |
 | GET | `/email/click/{token}` | Click tracking redirect |

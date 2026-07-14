@@ -587,6 +587,9 @@ export async function markOrderPaid(
 
   const emailResult = await notifyAdminOrderPaid(updated);
   if (!emailResult.ok) console.error("Order paid email failed:", emailResult.error);
+
+  const { markReminderEmailConverted } = await import("./reminder-emails");
+  await markReminderEmailConverted(updated.shippingAddress?.email);
 }
 
 /** Mark checkout cancelled after failed or abandoned payment. */

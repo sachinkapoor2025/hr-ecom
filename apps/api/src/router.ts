@@ -14,6 +14,7 @@ import * as adminCustomers from "./handlers/admin-customers";
 import * as account from "./handlers/account";
 import * as coupons from "./handlers/coupons";
 import * as sesEmail from "./handlers/ses-email";
+import * as reminderEmails from "./handlers/reminder-emails";
 import * as shipping from "./handlers/shipping";
 import { stripeWebhook } from "./handlers/payments/stripe";
 import { razorpayWebhook, verifyRazorpayPayment } from "./handlers/payments/razorpay";
@@ -113,6 +114,11 @@ const routes: Route[] = [
   { method: "GET", pattern: /^\/ses-email\/analytics$/, handler: sesEmail.getAnalytics },
   { method: "GET", pattern: /^\/ses-email\/notifications$/, handler: sesEmail.listNotifications },
   { method: "POST", pattern: /^\/ses-email\/test$/, handler: sesEmail.sendTest },
+  { method: "GET", pattern: /^\/ses-email\/reminders$/, handler: reminderEmails.listReminderEmailsHandler },
+  { method: "POST", pattern: /^\/ses-email\/reminders\/collect$/, handler: reminderEmails.collectReminderEmailsHandler },
+  { method: "POST", pattern: /^\/ses-email\/reminders\/send$/, handler: reminderEmails.sendReminderEmailsHandler },
+  { method: "POST", pattern: /^\/ses-email\/reminders\/delete$/, handler: reminderEmails.bulkDeleteReminderEmailsHandler },
+  { method: "DELETE", pattern: /^\/ses-email\/reminders\/([^/]+)$/, handler: reminderEmails.deleteReminderEmailHandler, params: ["email"] },
   { method: "GET", pattern: /^\/email\/open\/([^/]+)$/, handler: sesEmail.trackOpen, params: ["token"] },
   { method: "GET", pattern: /^\/email\/click\/([^/]+)$/, handler: sesEmail.trackClick, params: ["token"] },
   { method: "GET", pattern: /^\/email\/unsubscribe\/([^/]+)$/, handler: sesEmail.unsubscribe, params: ["token"] },

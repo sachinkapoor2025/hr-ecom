@@ -11,6 +11,7 @@ export * from "./schemas/chat";
 export * from "./schemas/contact";
 export * from "./schemas/coupon";
 export * from "./schemas/ses-email";
+export * from "./schemas/reminder-email";
 export * from "./schemas/blog";
 export * from "./schemas/shipping";
 export * from "./lib/currency-display";

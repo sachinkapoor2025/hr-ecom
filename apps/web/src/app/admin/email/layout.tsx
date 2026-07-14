@@ -6,6 +6,7 @@ import { useState } from "react";
 
 const links = [
   { href: "/admin/email", label: "Dashboard", exact: true },
+  { href: "/admin/email/nudges", label: "Checkout nudges" },
   { href: "/admin/email/compose", label: "Compose Email" },
   { href: "/admin/email/upload", label: "Upload Recipients" },
   { href: "/admin/email/campaigns", label: "Campaigns" },
