@@ -196,6 +196,11 @@ export async function sendEmail(opts: {
   html?: string;
   replyTo?: string;
 }): Promise<EmailSendResult> {
+  const { isLoadTestMode } = await import("./load-test");
+  if (isLoadTestMode()) {
+    return { ok: true, skipped: true };
+  }
+
   if (!smtpConfigured()) {
     console.warn("Email skipped: SMTP not configured");
     return { ok: false, skipped: true, error: "SMTP not configured on server" };

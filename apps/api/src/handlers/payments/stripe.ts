@@ -3,6 +3,7 @@ import type { Order } from "@hr-ecom/shared";
 import type { APIGatewayProxyEventV2 } from "aws-lambda";
 import { ok, badRequest, serverError } from "../../lib/response";
 import { markOrderPaid, markOrderPaymentFailed } from "../orders";
+import { isLoadTestMode } from "../../lib/load-test";
 
 function getStripe(): Stripe | null {
   const key = process.env.STRIPE_SECRET_KEY?.trim();
@@ -23,6 +24,13 @@ function getHeader(event: APIGatewayProxyEventV2, name: string): string | undefi
 }
 
 export async function createStripePaymentIntent(order: Order) {
+  if (isLoadTestMode()) {
+    return {
+      paymentIntentId: `pi_loadtest_${order.orderId}`,
+      clientSecret: `pi_loadtest_${order.orderId}_secret`,
+    };
+  }
+
   const stripe = getStripe();
   if (!stripe) {
     return {

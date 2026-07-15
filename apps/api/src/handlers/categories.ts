@@ -5,21 +5,36 @@ import { docClient, PRODUCTS_TABLE, now, slugify } from "../lib/db";
 import { ok, created, badRequest, notFound, forbidden } from "../lib/response";
 import { getAuth } from "../lib/auth";
 
+const CATEGORY_CACHE_TTL_MS = 60_000;
+let categoryCache: { at: number; items: Category[] } | null = null;
+
+function invalidateCategoryCache() {
+  categoryCache = null;
+}
+
 export async function listCategories(event: APIGatewayProxyEventV2) {
   const auth = getAuth(event);
-  const result = await docClient.send(
-    new ScanCommand({
-      TableName: PRODUCTS_TABLE,
-      FilterExpression: "begins_with(PK, :prefix) AND SK = :sk",
-      ExpressionAttributeValues: { ":prefix": "CATEGORY#", ":sk": "META" },
-    })
-  );
+  const nowMs = Date.now();
+  let items: Category[];
+  if (categoryCache && nowMs - categoryCache.at < CATEGORY_CACHE_TTL_MS) {
+    items = categoryCache.items;
+  } else {
+    const result = await docClient.send(
+      new ScanCommand({
+        TableName: PRODUCTS_TABLE,
+        FilterExpression: "begins_with(PK, :prefix) AND SK = :sk",
+        ExpressionAttributeValues: { ":prefix": "CATEGORY#", ":sk": "META" },
+      })
+    );
+    items = (result.Items ?? []) as Category[];
+    categoryCache = { at: nowMs, items };
+  }
 
-  let categories = (result.Items ?? []) as Category[];
+  let categories = items;
   if (!auth?.isAdmin) {
     categories = categories.filter((c) => c.published !== false);
   }
-  categories.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+  categories = [...categories].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
   return ok({ categories });
 }
 
@@ -43,6 +58,7 @@ export async function createCategory(event: APIGatewayProxyEventV2) {
   };
 
   await docClient.send(new PutCommand({ TableName: PRODUCTS_TABLE, Item: item }));
+  invalidateCategoryCache();
   return created({ category: item });
 }
 
@@ -59,6 +75,7 @@ export async function deleteCategory(event: APIGatewayProxyEventV2) {
       Key: { PK: categoryKeys.pk(slug), SK: categoryKeys.sk() },
     })
   );
+  invalidateCategoryCache();
   return ok({ deleted: true });
 }
 
@@ -103,5 +120,6 @@ export async function updateCategory(event: APIGatewayProxyEventV2) {
   };
 
   await docClient.send(new PutCommand({ TableName: PRODUCTS_TABLE, Item: updated }));
+  invalidateCategoryCache();
   return ok({ category: updated as Category });
 }

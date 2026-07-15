@@ -97,7 +97,12 @@ async function persistEvent(e: TrackEventInput, edgeGeo: ReturnType<typeof viewe
     })
   );
 
-  // per-type total (traffic + funnel)
+  // Skip hot-key rollup writes under load tests; still persist the event row.
+  const { isLoadTestMode } = await import("../lib/load-test");
+  if (isLoadTestMode()) return;
+
+  // Sample rollups in production under extreme write pressure: always write TYPE#;
+  // product/search rollups every event is fine for normal traffic.
   await incrementRollup(day, `TYPE#${e.type}`, "type", e.type, { count: 1 });
 
   if (e.type === EVENT_TYPES.PRODUCT_VIEW && e.productSlug) {

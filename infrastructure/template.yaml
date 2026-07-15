@@ -62,16 +62,17 @@ Parameters:
     Type: String
     Default: ""
     NoEcho: true
-  UspsPaymentAuthorizationToken:
+  LoadTestMode:
     Type: String
-    Default: ""
-    NoEcho: true
+    Default: "false"
+    AllowedValues: ["true", "false"]
+    Description: When true, stub Stripe/Razorpay/USPS/SMTP for k6 load tests (staging only)
 
 Globals:
   Function:
     Runtime: nodejs20.x
     Timeout: 29
-    MemorySize: 512
+    MemorySize: 1024
     Architectures: [arm64]
     Environment:
       Variables:
@@ -87,6 +88,7 @@ Globals:
         USER_POOL_ID: !Ref UserPool
         USER_POOL_CLIENT_ID: !Ref UserPoolClient
         ENVIRONMENT: !Ref Environment
+        LOAD_TEST_MODE: !Ref LoadTestMode
         STRIPE_SECRET_KEY: !Ref StripeSecretKey
         STRIPE_WEBHOOK_SECRET: !Ref StripeWebhookSecret
         RAZORPAY_SECRET_ARN: !Ref RazorpaySecretArn

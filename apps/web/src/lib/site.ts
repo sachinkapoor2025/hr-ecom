@@ -9,9 +9,15 @@ export const site = {
     "UsaRakhi.com — top-rated online Rakhi store for USA delivery. Ships domestically within the US (no customs delays). 2–3 day express to major cities, 5–7 days nationwide. Gift combos with chocolates, designer rakhis, Bhaiya Bhabhi sets. Order from India, UK, Canada worldwide.",
   supportEmail: "order@usarakhi.com",
   phone: "+91 96504 57697",
-  /** WhatsApp support — digits only with country code (no +). */
+  /** WhatsApp support — digits only with country code (no +). Used when no group invite is set. */
   whatsapp: "919650457697",
   whatsappDisplay: "+91 96504 57697",
+  /**
+   * Optional WhatsApp group invite link (https://chat.whatsapp.com/...).
+   * When set, all site WhatsApp buttons open this group so both team members see enquiries.
+   * Leave empty to use the personal number above.
+   */
+  whatsappGroupInviteUrl: "",
   logoSrc: "/logo.png",
   primaryColor: "#183a68",
   navBlue: "#4876e8",
@@ -110,6 +116,8 @@ export function orderCategories<T extends { slug: string }>(categories: readonly
 }
 
 export function whatsappChatUrl(message = "Hi UsaRakhi, I need help with my order."): string {
+  const groupUrl = site.whatsappGroupInviteUrl?.trim();
+  if (groupUrl) return groupUrl;
   return `https://wa.me/${site.whatsapp}?text=${encodeURIComponent(message)}`;
 }
 

@@ -95,6 +95,8 @@ When admin sets order status to **Delivered** or **Complete**, the API sets `rev
 | POST | `/admin/orders/{orderId}/buy-label` | Admin: purchase USPS label for order |
 | POST | `/admin/orders/{orderId}/rates` | Admin: re-fetch rates for order (service override) |
 | GET | `/admin/shipping/products-missing-dims` | Admin: products without weight/dimensions |
+| GET | `/admin/load-test` | Super admin: load-test presets + LOAD_TEST_MODE status |
+| POST | `/admin/load-test/run` | Super admin: run bounded concurrent smoke (`{ preset: smoke\|browse\|spike }`). UI: `/admin/load-test` |
 | POST | `/webhooks/stripe` | Stripe webhook |
 | POST | `/webhooks/razorpay` | Razorpay webhook |
 | POST | `/leads` | Save partial customer info |

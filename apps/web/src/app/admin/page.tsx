@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useApiClient } from "@/lib/auth-context";
+import { useApiClient, useAuth } from "@/lib/auth-context";
 import { BarChart, AreaChart, ChartLegend } from "@/components/admin/Charts";
 import { SalesReportPanel } from "@/components/admin/SalesReportPanel";
 
@@ -34,6 +34,7 @@ function KpiCard({ label, value, sub }: { label: string; value: string; sub?: st
 
 export default function AdminDashboard() {
   const apiClient = useApiClient();
+  const { isSuperAdmin } = useAuth();
   const [data, setData] = useState<Overview | null>(null);
   const [days, setDays] = useState(30);
   const [loading, setLoading] = useState(true);
@@ -62,15 +63,25 @@ export default function AdminDashboard() {
     <div className="max-w-6xl mx-auto px-4 py-10">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold">Dashboard</h1>
-        <select
-          value={days}
-          onChange={(e) => setDays(Number(e.target.value))}
-          className="border border-slate-300 rounded-lg px-3 py-1.5 text-sm"
-        >
-          <option value={7}>Last 7 days</option>
-          <option value={30}>Last 30 days</option>
-          <option value={90}>Last 90 days</option>
-        </select>
+        <div className="flex items-center gap-3">
+          {isSuperAdmin && (
+            <Link
+              href="/admin/load-test"
+              className="rounded-lg bg-nav px-4 py-1.5 text-sm font-semibold text-white hover:opacity-90"
+            >
+              Run load test
+            </Link>
+          )}
+          <select
+            value={days}
+            onChange={(e) => setDays(Number(e.target.value))}
+            className="border border-slate-300 rounded-lg px-3 py-1.5 text-sm"
+          >
+            <option value={7}>Last 7 days</option>
+            <option value={30}>Last 30 days</option>
+            <option value={90}>Last 90 days</option>
+          </select>
+        </div>
       </div>
 
       {loading ? (

@@ -11,7 +11,7 @@ import type { Product, Category } from "@hr-ecom/shared";
 import { categoryHref } from "@/lib/category-urls";
 import { homeCategoryOrder, orderCategories } from "@/lib/site";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 interface Props {
   searchParams: Promise<{ search?: string; category?: string }>;
@@ -80,7 +80,7 @@ export default async function ProductsPage({ searchParams }: Props) {
     const qs = query.toString() ? `?${query.toString()}` : "";
 
     const [productsData, categoriesData] = await Promise.all([
-      api<{ products: Product[] }>(`/products${qs}`, { revalidate: false }),
+      api<{ products: Product[] }>(`/products${qs}`, { revalidate: 60 }),
       api<{ categories: Category[] }>("/categories"),
     ]);
     products = productsData.products;

@@ -52,6 +52,40 @@ async function queryProductsByCategory(categorySlug: string): Promise<Product[]>
   return (result.Items ?? []) as Product[];
 }
 
+/** Warm-instance cache — avoids full table Scan on every uncategorized /products request. */
+const PRODUCT_LIST_CACHE_TTL_MS = 60_000;
+let productListCache: { at: number; items: Product[] } | null = null;
+
+async function scanAllProducts(): Promise<Product[]> {
+  const nowMs = Date.now();
+  if (productListCache && nowMs - productListCache.at < PRODUCT_LIST_CACHE_TTL_MS) {
+    return productListCache.items;
+  }
+
+  const items: Product[] = [];
+  let ExclusiveStartKey: Record<string, unknown> | undefined;
+  do {
+    const result = await docClient.send(
+      new ScanCommand({
+        TableName: PRODUCTS_TABLE,
+        FilterExpression: "begins_with(PK, :prefix) AND SK = :sk",
+        ExpressionAttributeValues: { ":prefix": "PRODUCT#", ":sk": "META" },
+        ExclusiveStartKey,
+      })
+    );
+    if (result.Items?.length) items.push(...(result.Items as Product[]));
+    ExclusiveStartKey = result.LastEvaluatedKey as Record<string, unknown> | undefined;
+  } while (ExclusiveStartKey);
+
+  productListCache = { at: nowMs, items };
+  return items;
+}
+
+/** Call after product create/update/delete so storefront list stays fresh. */
+export function invalidateProductListCache() {
+  productListCache = null;
+}
+
 export async function listProducts(event: APIGatewayProxyEventV2) {
   const category = event.queryStringParameters?.category;
   const search = event.queryStringParameters?.search?.toLowerCase();
@@ -68,14 +102,7 @@ export async function listProducts(event: APIGatewayProxyEventV2) {
       items = [...bySlug.values()];
     }
   } else {
-    const result = await docClient.send(
-      new ScanCommand({
-        TableName: PRODUCTS_TABLE,
-        FilterExpression: "begins_with(PK, :prefix) AND SK = :sk",
-        ExpressionAttributeValues: { ":prefix": "PRODUCT#", ":sk": "META" },
-      })
-    );
-    items = (result.Items ?? []) as Product[];
+    items = await scanAllProducts();
   }
 
   items = items.filter((p) => p.published !== false && (p.inventory ?? 0) > 0);
@@ -132,6 +159,7 @@ export async function createProduct(event: APIGatewayProxyEventV2) {
   };
 
   await docClient.send(new PutCommand({ TableName: PRODUCTS_TABLE, Item: item }));
+  invalidateProductListCache();
   return created({ product: item });
 }
 
@@ -167,6 +195,7 @@ export async function updateProduct(event: APIGatewayProxyEventV2) {
   }
 
   await docClient.send(new PutCommand({ TableName: PRODUCTS_TABLE, Item: updated }));
+  invalidateProductListCache();
 
   if (parsed.data.inventory !== undefined) {
     await syncInventoryAlertState(slug, previous, parsed.data.inventory);
@@ -207,6 +236,7 @@ export async function deleteProduct(event: APIGatewayProxyEventV2) {
       Key: { PK: productKeys.pk(slug), SK: productKeys.sk() },
     })
   );
+  invalidateProductListCache();
   return ok({ deleted: true });
 }
 
@@ -251,5 +281,6 @@ export async function bulkUploadProducts(event: APIGatewayProxyEventV2) {
     createdProducts.push(item as Product);
   }
 
+  invalidateProductListCache();
   return ok({ created: createdProducts.length, errors, products: createdProducts });
 }
