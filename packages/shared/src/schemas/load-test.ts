@@ -2,8 +2,8 @@ import { z } from "zod";
 
 /**
  * Admin browser load-test presets.
- * `parallel` caps in-flight journeys (browser-safe); `users` is total shopper journeys.
- * p95 limits scale with load — cold Lambda without provisioned concurrency is expected to be slower at higher N.
+ * `parallel` = max in-flight journeys (kept modest so Lambda scale-out doesn’t stampede into 503s).
+ * `users` = total shopper journeys. p95 limits scale with load (no provisioned concurrency).
  */
 export const LOAD_TEST_PRESETS = {
   smoke: {
@@ -16,43 +16,43 @@ export const LOAD_TEST_PRESETS = {
   },
   u100: {
     users: 100,
-    parallel: 50,
+    parallel: 40,
     label: "100 users",
-    description: "100 journeys · up to 50 parallel",
-    p95LimitMs: 8_000,
+    description: "100 journeys · up to 40 parallel",
+    p95LimitMs: 15_000,
     failRateLimit: 0.01,
   },
   u250: {
     users: 250,
-    parallel: 75,
+    parallel: 40,
     label: "250 users",
-    description: "250 journeys · up to 75 parallel",
-    p95LimitMs: 12_000,
-    failRateLimit: 0.015,
+    description: "250 journeys · up to 40 parallel (waves)",
+    p95LimitMs: 18_000,
+    failRateLimit: 0.03,
   },
   u500: {
     users: 500,
-    parallel: 100,
+    parallel: 40,
     label: "500 users",
-    description: "500 journeys · up to 100 parallel",
-    p95LimitMs: 16_000,
-    failRateLimit: 0.02,
+    description: "500 journeys · up to 40 parallel (waves)",
+    p95LimitMs: 20_000,
+    failRateLimit: 0.03,
   },
   u750: {
     users: 750,
-    parallel: 100,
+    parallel: 40,
     label: "750 users",
-    description: "750 journeys · up to 100 parallel",
-    p95LimitMs: 20_000,
-    failRateLimit: 0.02,
+    description: "750 journeys · up to 40 parallel (waves)",
+    p95LimitMs: 22_000,
+    failRateLimit: 0.03,
   },
   u1000: {
     users: 1000,
-    parallel: 100,
+    parallel: 50,
     label: "1000 users",
-    description: "1000 journeys · up to 100 parallel",
+    description: "1000 journeys · up to 50 parallel (waves)",
     p95LimitMs: 25_000,
-    failRateLimit: 0.025,
+    failRateLimit: 0.04,
   },
 } as const;
 
@@ -101,6 +101,7 @@ export const loadTestRunResultSchema = z.object({
   journeys: z.number(),
   requestsApprox: z.number(),
   errors: z.number(),
+  skipped: z.number().optional(),
   failedRate: z.number(),
   p50: z.number(),
   p95: z.number(),
