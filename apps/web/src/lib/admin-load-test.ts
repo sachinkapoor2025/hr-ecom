@@ -1,39 +1,15 @@
-import type { APIGatewayProxyEventV2 } from "aws-lambda";
 import {
   LOAD_TEST_PRESETS,
-  loadTestRunRequestSchema,
+  type LoadTestPreset,
   type LoadTestRunResult,
 } from "@hr-ecom/shared";
-import { requireSuperAdmin } from "../lib/auth";
-import { isLoadTestMode } from "../lib/load-test";
-import { badRequest, forbidden, ok } from "../lib/response";
+import { getApiUrl } from "@/lib/env";
 
-/** Leave headroom under API Gateway's ~29s integration timeout. */
-const MAX_WALL_MS = 22_000;
 const FAIL_RATE_LIMIT = 0.01;
 const P95_LIMIT_MS = 2000;
+const MAX_WALL_MS = 55_000;
 
 type StepTiming = { name: string; ms: number; status: number };
-
-function resolveApiBase(event: APIGatewayProxyEventV2): string {
-  const fromEnv = process.env.API_PUBLIC_URL?.trim() || process.env.API_BASE_URL?.trim();
-  if (fromEnv) return fromEnv.replace(/\/$/, "");
-
-  const domain = event.requestContext?.domainName;
-  const stage = event.requestContext?.stage;
-  if (domain) {
-    const proto =
-      event.headers?.["x-forwarded-proto"] ||
-      event.headers?.["X-Forwarded-Proto"] ||
-      "https";
-    if (stage && stage !== "$default") {
-      return `${proto}://${domain}/${stage}`;
-    }
-    return `${proto}://${domain}`;
-  }
-
-  return "http://127.0.0.1:3001";
-}
 
 function percentile(sorted: number[], p: number): number {
   if (!sorted.length) return 0;
@@ -46,10 +22,9 @@ async function runJourney(
   session: string,
   categorySlug: string
 ): Promise<StepTiming[]> {
-  const headers = {
+  const headers: Record<string, string> = {
     "X-Session-Id": session,
     "Content-Type": "application/json",
-    "X-Load-Test": "1",
   };
   const times: StepTiming[] = [];
 
@@ -101,37 +76,19 @@ async function runJourney(
 }
 
 /**
- * Super-admin only: legacy server-side runner.
- * Prefer the browser runner in /admin/load-test — calling this API from the same
- * Lambda that serves traffic causes concurrency starvation (503s).
+ * Runs the smoke from the browser against the public API.
+ * Avoids Lambda self-invocation (API calling itself), which causes 503s under concurrency.
  */
-export async function runLoadTest(event: APIGatewayProxyEventV2) {
-  if (!requireSuperAdmin(event)) return forbidden("Super admin required");
-
-  // Soft-block heavy self-invocation; keep endpoint for debugging with tiny concurrency.
-  let body: unknown = {};
-  try {
-    body = JSON.parse(event.body ?? "{}");
-  } catch {
-    return badRequest("Invalid JSON body");
-  }
-
-  const parsed = loadTestRunRequestSchema.safeParse({
-    ...(typeof body === "object" && body ? body : {}),
-    // Cap hard when orchestrating from inside the API Lambda.
-    concurrency: 2,
-    loops: 1,
-  });
-  if (!parsed.success) return badRequest(parsed.error.message);
-
-  const preset = parsed.data.preset;
-  // Always tiny when running inside the same Lambda that serves the API.
-  const concurrency = Math.min(2, parsed.data.concurrency ?? 2);
-  const loops = 1;
-  const categorySlug = parsed.data.categorySlug?.trim() || "single-rakhi";
-  const apiBase = resolveApiBase(event);
-  const loadTestMode = isLoadTestMode();
-
+export async function runBrowserLoadTest(options: {
+  preset: LoadTestPreset;
+  categorySlug?: string;
+}): Promise<LoadTestRunResult> {
+  const preset = options.preset;
+  const defaults = LOAD_TEST_PRESETS[preset];
+  const concurrency = defaults.concurrency;
+  const loops = defaults.loops;
+  const categorySlug = options.categorySlug?.trim() || "single-rakhi";
+  const apiBase = getApiUrl().replace(/\/$/, "");
   const started = Date.now();
   const allMs: number[] = [];
   let errors = 0;
@@ -139,16 +96,9 @@ export async function runLoadTest(event: APIGatewayProxyEventV2) {
   let truncated = false;
   const sampleErrors: string[] = [];
 
-  // Quick reachability check
-  try {
-    const health = await fetch(`${apiBase}/health`, { signal: AbortSignal.timeout(5000) });
-    if (!health.ok) {
-      return badRequest(`API health check failed at ${apiBase} (${health.status})`);
-    }
-  } catch (err) {
-    return badRequest(
-      `API not reachable at ${apiBase}: ${err instanceof Error ? err.message : String(err)}`
-    );
+  const health = await fetch(`${apiBase}/health`).catch(() => null);
+  if (!health?.ok) {
+    throw new Error(`API health check failed at ${apiBase}`);
   }
 
   for (let loop = 0; loop < loops; loop++) {
@@ -158,7 +108,7 @@ export async function runLoadTest(event: APIGatewayProxyEventV2) {
     }
 
     const batch = Array.from({ length: concurrency }, (_, i) => {
-      const session = `admin-lt-${preset}-${loop}-${i}-${started}`;
+      const session = `browser-lt-${preset}-${loop}-${i}-${started}`;
       return runJourney(apiBase, session, categorySlug)
         .then((times) => {
           journeys += 1;
@@ -182,16 +132,14 @@ export async function runLoadTest(event: APIGatewayProxyEventV2) {
   const p50 = percentile(allMs, 50);
   const p95 = percentile(allMs, 95);
   const p99 = percentile(allMs, 99);
-  const durationMs = Date.now() - started;
-  const pass = !truncated && failedRate < FAIL_RATE_LIMIT && p95 < P95_LIMIT_MS;
 
-  const result: LoadTestRunResult = {
+  return {
     preset,
     concurrency,
     loops,
     apiBase,
-    loadTestMode,
-    durationMs,
+    loadTestMode: false,
+    durationMs: Date.now() - started,
     journeys,
     requestsApprox: allMs.length,
     errors,
@@ -199,21 +147,8 @@ export async function runLoadTest(event: APIGatewayProxyEventV2) {
     p50,
     p95,
     p99,
-    pass,
+    pass: !truncated && failedRate < FAIL_RATE_LIMIT && p95 < P95_LIMIT_MS,
     truncated: truncated || undefined,
     sampleErrors: sampleErrors.length ? sampleErrors : undefined,
   };
-
-  return ok({ result });
-}
-
-/** Super-admin: report whether payment/email stubs are active. */
-export async function getLoadTestInfo(_event: APIGatewayProxyEventV2) {
-  if (!requireSuperAdmin(_event)) return forbidden("Super admin required");
-  return ok({
-    loadTestMode: isLoadTestMode(),
-    presets: LOAD_TEST_PRESETS,
-    limits: { maxConcurrency: 50, maxLoops: 3, maxWallMs: MAX_WALL_MS },
-    note: "Admin UI runs the smoke from your browser (not from Lambda) to avoid self-throttle 503s. For ~1000 VU use scripts/load with k6 against staging.",
-  });
 }

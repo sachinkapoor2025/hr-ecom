@@ -8,6 +8,7 @@ import {
   type LoadTestRunResult,
 } from "@hr-ecom/shared";
 import { useAuth, useApiClient } from "@/lib/auth-context";
+import { runBrowserLoadTest } from "@/lib/admin-load-test";
 
 interface LoadTestInfo {
   loadTestMode: boolean;
@@ -29,8 +30,9 @@ export default function AdminLoadTestPage() {
     try {
       const data = await api<LoadTestInfo>("/admin/load-test");
       setInfo(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load load-test info");
+    } catch {
+      // Info is optional — browser runner does not need the API orchestrator.
+      setInfo(null);
     }
   }, [api]);
 
@@ -43,11 +45,11 @@ export default function AdminLoadTestPage() {
     setError("");
     setResult(null);
     try {
-      const data = await api<{ result: LoadTestRunResult }>("/admin/load-test/run", {
-        method: "POST",
-        body: JSON.stringify({ preset }),
-      });
-      setResult(data.result);
+      // Run from the browser so we do not occupy the API Lambda while also calling it
+      // (that pattern caused 503s / Fail under concurrent smoke).
+      const next = await runBrowserLoadTest({ preset });
+      if (info) next.loadTestMode = info.loadTestMode;
+      setResult(next);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Load test failed");
     } finally {
@@ -79,9 +81,9 @@ export default function AdminLoadTestPage() {
     <div className="max-w-2xl mx-auto px-4 py-10">
       <h1 className="text-2xl font-bold mb-2">Manual load test</h1>
       <p className="text-slate-600 text-sm mb-6">
-        Runs a bounded concurrent shopper smoke against the live API (health → catalog → PDP → cart →
-        events). For a full ~1000 VU k6 run, use <code className="text-xs">scripts/load</code> on
-        staging.
+        Runs a bounded concurrent shopper smoke from your browser against the live API (health →
+        catalog → PDP → cart → events). For a full ~1000 VU k6 run, use{" "}
+        <code className="text-xs">scripts/load</code> on staging.
       </p>
 
       {info && (
@@ -137,7 +139,7 @@ export default function AdminLoadTestPage() {
 
         <p className="text-sm text-slate-600">
           Selected: <span className="font-medium text-slate-800">{selected.label}</span> —{" "}
-          {selected.description}. Typically finishes in under 20 seconds.
+          {selected.description}. Keep this tab open while it runs.
         </p>
 
         <button
@@ -162,9 +164,7 @@ export default function AdminLoadTestPage() {
             <h2 className="text-lg font-semibold">Results</h2>
             <span
               className={`text-xs font-semibold uppercase tracking-wide px-2.5 py-1 rounded-full ${
-                result.pass
-                  ? "bg-emerald-100 text-emerald-800"
-                  : "bg-red-100 text-red-800"
+                result.pass ? "bg-emerald-100 text-emerald-800" : "bg-red-100 text-red-800"
               }`}
             >
               {result.pass ? "Pass" : "Fail"}
@@ -184,7 +184,7 @@ export default function AdminLoadTestPage() {
 
           {result.truncated && (
             <p className="mt-4 text-xs text-amber-700">
-              Run truncated early to stay under the API Gateway timeout. Results may be incomplete.
+              Run truncated early. Results may be incomplete — try Smoke again.
             </p>
           )}
 
