@@ -24,10 +24,16 @@
 
 ## Hotspot fixes shipped with this work
 - Product list 60s in-memory cache (avoids Scan storm)
+- Category list via GSI1 `ENTITY#CATEGORY` (no Scan) + lazy backfill
+- Category product Query cache + PDP Get cache (30–60s per warm instance)
+- `Cache-Control` on public catalog GETs
+- Cart add: parallel Gets + single Put
+- Event `page_view` rollups sampled (~20%) to protect Dynamo hot partition
 - SSR revalidate=60 on home/products/categories/PDP
 - LOAD_TEST_MODE stubs: Stripe, Razorpay, USPS, SMTP
 - Event rollups skipped in LOAD_TEST_MODE
-- Lambda memory raised to 1024MB
+- Lambda memory 1024MB (no provisioned concurrency — optional later for cold-start p95)
+- Admin load presets: Smoke, 100, 250, 500, 750, 1000 with tiered p95 gates
 
 ## Staging 1000 VU commands
 ```bash

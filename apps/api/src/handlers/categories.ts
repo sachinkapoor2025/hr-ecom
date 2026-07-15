@@ -1,8 +1,8 @@
-import { PutCommand, GetCommand, ScanCommand, DeleteCommand } from "@aws-sdk/lib-dynamodb";
+import { PutCommand, GetCommand, QueryCommand, ScanCommand, DeleteCommand } from "@aws-sdk/lib-dynamodb";
 import type { APIGatewayProxyEventV2 } from "aws-lambda";
 import { createCategorySchema, updateCategorySchema, categoryKeys, type Category } from "@hr-ecom/shared";
 import { docClient, PRODUCTS_TABLE, now, slugify } from "../lib/db";
-import { ok, created, badRequest, notFound, forbidden } from "../lib/response";
+import { ok, okCached, created, badRequest, notFound, forbidden } from "../lib/response";
 import { getAuth } from "../lib/auth";
 
 const CATEGORY_CACHE_TTL_MS = 60_000;
@@ -12,30 +12,85 @@ function invalidateCategoryCache() {
   categoryCache = null;
 }
 
-export async function listCategories(event: APIGatewayProxyEventV2) {
-  const auth = getAuth(event);
-  const nowMs = Date.now();
-  let items: Category[];
-  if (categoryCache && nowMs - categoryCache.at < CATEGORY_CACHE_TTL_MS) {
-    items = categoryCache.items;
-  } else {
+function withCategoryIndex(item: Category & Record<string, unknown>) {
+  const sortOrder = typeof item.sortOrder === "number" ? item.sortOrder : 0;
+  const slug = String(item.slug ?? "");
+  return {
+    ...item,
+    GSI1PK: categoryKeys.gsi1pk(),
+    GSI1SK: categoryKeys.gsi1sk(sortOrder, slug),
+  };
+}
+
+async function queryAllCategories(): Promise<Category[]> {
+  const items: Category[] = [];
+  let ExclusiveStartKey: Record<string, unknown> | undefined;
+  do {
     const result = await docClient.send(
-      new ScanCommand({
+      new QueryCommand({
         TableName: PRODUCTS_TABLE,
-        FilterExpression: "begins_with(PK, :prefix) AND SK = :sk",
-        ExpressionAttributeValues: { ":prefix": "CATEGORY#", ":sk": "META" },
+        IndexName: "GSI1",
+        KeyConditionExpression: "GSI1PK = :pk",
+        ExpressionAttributeValues: { ":pk": categoryKeys.gsi1pk() },
+        ExclusiveStartKey,
       })
     );
-    items = (result.Items ?? []) as Category[];
-    categoryCache = { at: nowMs, items };
+    if (result.Items?.length) items.push(...(result.Items as Category[]));
+    ExclusiveStartKey = result.LastEvaluatedKey as Record<string, unknown> | undefined;
+  } while (ExclusiveStartKey);
+  return items;
+}
+
+/** One-time / sparse backfill for categories created before GSI1 indexing. */
+async function scanAndBackfillCategories(): Promise<Category[]> {
+  const result = await docClient.send(
+    new ScanCommand({
+      TableName: PRODUCTS_TABLE,
+      FilterExpression: "begins_with(PK, :prefix) AND SK = :sk",
+      ExpressionAttributeValues: { ":prefix": "CATEGORY#", ":sk": "META" },
+    })
+  );
+  const items = (result.Items ?? []) as Array<Category & Record<string, unknown>>;
+  await Promise.all(
+    items
+      .filter((item) => item.GSI1PK !== categoryKeys.gsi1pk())
+      .map((item) =>
+        docClient.send(
+          new PutCommand({
+            TableName: PRODUCTS_TABLE,
+            Item: withCategoryIndex(item),
+          })
+        )
+      )
+  );
+  return items.map((item) => withCategoryIndex(item) as Category);
+}
+
+async function loadCategories(): Promise<Category[]> {
+  const nowMs = Date.now();
+  if (categoryCache && nowMs - categoryCache.at < CATEGORY_CACHE_TTL_MS) {
+    return categoryCache.items;
   }
 
-  let categories = items;
+  let items = await queryAllCategories();
+  if (items.length === 0) {
+    items = await scanAndBackfillCategories();
+  }
+
+  categoryCache = { at: nowMs, items };
+  return items;
+}
+
+export async function listCategories(event: APIGatewayProxyEventV2) {
+  const auth = getAuth(event);
+  let categories = await loadCategories();
   if (!auth?.isAdmin) {
     categories = categories.filter((c) => c.published !== false);
   }
   categories = [...categories].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
-  return ok({ categories });
+  // Admins need fresh data after edits; storefront can use short browser/CDN cache.
+  if (auth?.isAdmin) return ok({ categories });
+  return okCached({ categories }, 30);
 }
 
 export async function createCategory(event: APIGatewayProxyEventV2) {
@@ -48,14 +103,14 @@ export async function createCategory(event: APIGatewayProxyEventV2) {
 
   const slug = slugify(parsed.data.name);
   const timestamp = now();
-  const item = {
+  const item = withCategoryIndex({
     ...parsed.data,
     slug,
     PK: categoryKeys.pk(slug),
     SK: categoryKeys.sk(),
     createdAt: timestamp,
     updatedAt: timestamp,
-  };
+  });
 
   await docClient.send(new PutCommand({ TableName: PRODUCTS_TABLE, Item: item }));
   invalidateCategoryCache();
@@ -91,7 +146,7 @@ export async function getCategory(event: APIGatewayProxyEventV2) {
   );
 
   if (!result.Item) return notFound("Category not found");
-  return ok({ category: result.Item });
+  return okCached({ category: result.Item }, 30);
 }
 
 export async function updateCategory(event: APIGatewayProxyEventV2) {
@@ -113,11 +168,14 @@ export async function updateCategory(event: APIGatewayProxyEventV2) {
   const parsed = updateCategorySchema.safeParse(body);
   if (!parsed.success) return badRequest(parsed.error.message);
 
-  const updated = {
-    ...existing.Item,
+  const updated = withCategoryIndex({
+    ...(existing.Item as Category & Record<string, unknown>),
     ...parsed.data,
+    slug,
+    PK: categoryKeys.pk(slug),
+    SK: categoryKeys.sk(),
     updatedAt: now(),
-  };
+  } as Category & Record<string, unknown>);
 
   await docClient.send(new PutCommand({ TableName: PRODUCTS_TABLE, Item: updated }));
   invalidateCategoryCache();

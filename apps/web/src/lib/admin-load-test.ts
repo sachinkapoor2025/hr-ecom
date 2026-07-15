@@ -1,13 +1,10 @@
 import {
   LOAD_TEST_PRESETS,
+  loadTestLimits,
   type LoadTestPreset,
   type LoadTestRunResult,
 } from "@hr-ecom/shared";
 import { getApiUrl } from "@/lib/env";
-
-const FAIL_RATE_LIMIT = 0.01;
-const P95_LIMIT_MS = 2000;
-const MAX_WALL_MS = 55_000;
 
 type StepTiming = { name: string; ms: number; status: number };
 
@@ -75,21 +72,39 @@ async function runJourney(
   return times;
 }
 
+/** Run `total` tasks with at most `parallel` in flight. */
+async function runPool<T>(total: number, parallel: number, worker: (index: number) => Promise<T>) {
+  const results: T[] = new Array(total);
+  let next = 0;
+
+  async function runOne() {
+    while (next < total) {
+      const i = next++;
+      results[i] = await worker(i);
+    }
+  }
+
+  const runners = Array.from({ length: Math.min(parallel, total) }, () => runOne());
+  await Promise.all(runners);
+  return results;
+}
+
 /**
- * Runs the smoke from the browser against the public API.
- * Avoids Lambda self-invocation (API calling itself), which causes 503s under concurrency.
+ * Runs load from the browser against the public API.
+ * High user counts use a parallel pool (not 1000 tabs) so the browser stays usable.
  */
 export async function runBrowserLoadTest(options: {
   preset: LoadTestPreset;
   categorySlug?: string;
 }): Promise<LoadTestRunResult> {
   const preset = options.preset;
-  const defaults = LOAD_TEST_PRESETS[preset];
-  const concurrency = defaults.concurrency;
-  const loops = defaults.loops;
+  const limits = loadTestLimits(preset);
+  const { users, parallel, p95LimitMs, failRateLimit } = limits;
   const categorySlug = options.categorySlug?.trim() || "single-rakhi";
   const apiBase = getApiUrl().replace(/\/$/, "");
   const started = Date.now();
+  // Allow larger presets enough wall time (waves of parallel journeys).
+  const maxWallMs = Math.min(180_000, 20_000 + users * 80);
   const allMs: number[] = [];
   let errors = 0;
   let journeys = 0;
@@ -101,42 +116,52 @@ export async function runBrowserLoadTest(options: {
     throw new Error(`API health check failed at ${apiBase}`);
   }
 
-  for (let loop = 0; loop < loops; loop++) {
-    if (Date.now() - started > MAX_WALL_MS) {
+  await runPool(users, parallel, async (i) => {
+    if (Date.now() - started > maxWallMs) {
       truncated = true;
-      break;
+      errors += 1;
+      if (sampleErrors.length < 5) sampleErrors.push("truncated: wall-clock limit");
+      return;
     }
-
-    const batch = Array.from({ length: concurrency }, (_, i) => {
-      const session = `browser-lt-${preset}-${loop}-${i}-${started}`;
-      return runJourney(apiBase, session, categorySlug)
-        .then((times) => {
-          journeys += 1;
-          for (const t of times) allMs.push(t.ms);
-          return times;
-        })
-        .catch((err: unknown) => {
-          errors += 1;
-          const msg = err instanceof Error ? err.message : String(err);
-          if (sampleErrors.length < 5) sampleErrors.push(msg);
-          return [] as StepTiming[];
-        });
-    });
-
-    await Promise.all(batch);
-  }
+    const session = `browser-lt-${preset}-${i}-${started}`;
+    try {
+      const times = await runJourney(apiBase, session, categorySlug);
+      journeys += 1;
+      for (const t of times) allMs.push(t.ms);
+    } catch (err: unknown) {
+      errors += 1;
+      const msg = err instanceof Error ? err.message : String(err);
+      if (sampleErrors.length < 5) sampleErrors.push(msg);
+    }
+  });
 
   allMs.sort((a, b) => a - b);
-  const planned = concurrency * loops;
+  const planned = users;
   const failedRate = planned > 0 ? errors / planned : 1;
   const p50 = percentile(allMs, 50);
   const p95 = percentile(allMs, 95);
   const p99 = percentile(allMs, 99);
+  const reliabilityPass = !truncated && failedRate <= failRateLimit;
+  const latencyPass = p95 > 0 && p95 <= p95LimitMs;
+  const reasons: string[] = [];
+  if (truncated) reasons.push("Run truncated before all journeys finished — try a smaller preset");
+  if (failedRate > failRateLimit) {
+    reasons.push(
+      `Error rate ${(failedRate * 100).toFixed(2)}% exceeds ${(failRateLimit * 100).toFixed(1)}% for this preset`
+    );
+  }
+  if (!latencyPass) {
+    reasons.push(
+      `p95 ${p95} ms exceeds ${p95LimitMs} ms limit for ${LOAD_TEST_PRESETS[preset].label}`
+    );
+  }
 
   return {
     preset,
-    concurrency,
-    loops,
+    concurrency: parallel,
+    loops: 1,
+    users,
+    parallel,
     apiBase,
     loadTestMode: false,
     durationMs: Date.now() - started,
@@ -147,7 +172,12 @@ export async function runBrowserLoadTest(options: {
     p50,
     p95,
     p99,
-    pass: !truncated && failedRate < FAIL_RATE_LIMIT && p95 < P95_LIMIT_MS,
+    pass: reliabilityPass && latencyPass,
+    reliabilityPass,
+    latencyPass,
+    p95LimitMs,
+    failRateLimit,
+    reasons: reasons.length ? reasons : undefined,
     truncated: truncated || undefined,
     sampleErrors: sampleErrors.length ? sampleErrors : undefined,
   };

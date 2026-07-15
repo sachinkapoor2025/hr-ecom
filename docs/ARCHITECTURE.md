@@ -96,8 +96,17 @@ When admin sets order status to **Delivered** or **Complete**, the API sets `rev
 | POST | `/admin/orders/{orderId}/rates` | Admin: re-fetch rates for order (service override) |
 | GET | `/admin/shipping/products-missing-dims` | Admin: products without weight/dimensions |
 | GET | `/admin/load-test` | Super admin: load-test presets + LOAD_TEST_MODE status |
-| POST | `/admin/load-test/run` | Super admin: run bounded concurrent smoke (`{ preset: smoke\|browse\|spike }`). UI: `/admin/load-test` |
+| POST | `/admin/load-test/run` | Super admin: prefer UI browser runner (`smoke` / `u100`…`u1000`). UI: `/admin/load-test` |
 | POST | `/webhooks/stripe` | Stripe webhook |
+
+### Scale notes (catalog / concurrency)
+
+- DynamoDB stays on-demand (scales with traffic; no always-on fee).
+- Catalog: categories via GSI1 (no Scan); short in-memory + `Cache-Control` on public GETs.
+- Events: `page_view` rollups sampled to protect hot partitions.
+- Cart: parallel Gets + single Put.
+- Optional later: Lambda provisioned concurrency if cold-start p95 must drop (adds fixed monthly cost).
+
 | POST | `/webhooks/razorpay` | Razorpay webhook |
 | POST | `/leads` | Save partial customer info |
 | POST | `/events` | First-party analytics events (batched, public) |

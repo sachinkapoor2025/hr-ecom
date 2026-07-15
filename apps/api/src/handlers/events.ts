@@ -101,25 +101,38 @@ async function persistEvent(e: TrackEventInput, edgeGeo: ReturnType<typeof viewe
   const { isLoadTestMode } = await import("../lib/load-test");
   if (isLoadTestMode()) return;
 
-  // Sample rollups in production under extreme write pressure: always write TYPE#;
-  // product/search rollups every event is fine for normal traffic.
-  await incrementRollup(day, `TYPE#${e.type}`, "type", e.type, { count: 1 });
+  // page_view dominates traffic — sample TYPE rollups to protect ROLLUP#day partition under spikes.
+  // Raw events remain complete for session timelines / rebuilds.
+  const isPageView = e.type === EVENT_TYPES.PAGE_VIEW;
+  if (isPageView && Math.random() > 0.2) return;
+
+  const rollups: Promise<void>[] = [
+    incrementRollup(day, `TYPE#${e.type}`, "type", e.type, { count: 1 }),
+  ];
 
   if (e.type === EVENT_TYPES.PRODUCT_VIEW && e.productSlug) {
-    await incrementRollup(day, `PRODUCT#${e.productSlug}`, "product", e.productSlug, { views: 1 });
+    rollups.push(
+      incrementRollup(day, `PRODUCT#${e.productSlug}`, "product", e.productSlug, { views: 1 })
+    );
   }
   if (e.type === EVENT_TYPES.CART_ADD && e.productSlug) {
-    await incrementRollup(day, `PRODUCT#${e.productSlug}`, "product", e.productSlug, { adds: 1 });
+    rollups.push(
+      incrementRollup(day, `PRODUCT#${e.productSlug}`, "product", e.productSlug, { adds: 1 })
+    );
   }
   if (e.type === EVENT_TYPES.SEARCH && e.query) {
     const term = e.query.trim().toLowerCase().slice(0, 80);
     if (term) {
-      await incrementRollup(day, `SEARCH#${term}`, "search", term, {
-        count: 1,
-        ...(e.resultCount === 0 ? { zero: 1 } : {}),
-      });
+      rollups.push(
+        incrementRollup(day, `SEARCH#${term}`, "search", term, {
+          count: 1,
+          ...(e.resultCount === 0 ? { zero: 1 } : {}),
+        })
+      );
     }
   }
+
+  await Promise.all(rollups);
 }
 
 /** Reject oversized public payloads before parsing (abuse / cost guard). */

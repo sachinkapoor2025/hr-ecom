@@ -14,6 +14,10 @@ export const productKeys = {
 export const categoryKeys = {
   pk: (slug: string) => `CATEGORY#${slug}`,
   sk: () => "META" as const,
+  /** GSI1: list all categories without table Scan */
+  gsi1pk: () => "ENTITY#CATEGORY" as const,
+  gsi1sk: (sortOrder: number, slug: string) =>
+    `${String(Math.max(0, sortOrder || 0)).padStart(6, "0")}#${slug}`,
 };
 
 // ---- orders table ----
