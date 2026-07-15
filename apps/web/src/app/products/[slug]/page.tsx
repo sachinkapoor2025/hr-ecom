@@ -15,9 +15,8 @@ interface Props {
   params: Promise<{ slug: string }>;
 }
 
-/** Product images can be changed from admin and should appear on the storefront immediately. */
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+/** Cached 60s; admin image/price updates use /api/revalidate/product. */
+export const revalidate = 60;
 
 export async function generateStaticParams() {
   const slugs = getStaticProductSlugs();

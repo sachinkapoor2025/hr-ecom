@@ -14,6 +14,7 @@ export * from "./schemas/ses-email";
 export * from "./schemas/reminder-email";
 export * from "./schemas/blog";
 export * from "./schemas/shipping";
+export * from "./schemas/load-test";
 export * from "./lib/currency-display";
 export * from "./lib/competitive-pricing";
 export * from "./lib/image-url";

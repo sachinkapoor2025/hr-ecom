@@ -9,6 +9,7 @@ import {
 import { productKeys, type Product } from "@hr-ecom/shared";
 import { docClient, PRODUCTS_TABLE } from "../db";
 import { getShippingProvider, loadShippingSettings } from "./index";
+import { isLoadTestMode } from "../load-test";
 
 export interface ShippingQuoteResult {
   rates: RateQuote[];
@@ -82,6 +83,31 @@ export async function resolveShippingForCheckout(
 ): Promise<ShippingQuoteResult> {
   const settings = input.settings ?? (await loadShippingSettings());
   const origin = settings.originAddress;
+  const pkg = await estimatePackageForCartItems(input.cartItems);
+
+  if (isLoadTestMode()) {
+    const fake: RateQuote = {
+      rateId: "LOADTEST|USPS_GROUND_ADVANTAGE|0.00|",
+      mailClass: "USPS_GROUND_ADVANTAGE",
+      serviceName: "USPS Ground Advantage (load-test)",
+      price: 0,
+      currency: "USD",
+      estimatedDeliveryDate: new Date(Date.now() + 5 * 86400000).toISOString().slice(0, 10),
+    };
+    return {
+      rates: [fake],
+      selected: fake,
+      customerShippingCharge: 0,
+      estimatedLabelCost: 0,
+      settingsSnapshot: {
+        mode: settings.customerShippingMode,
+        festivalActive: activeFestivalName(settings),
+      },
+      packageDetails: pkg,
+      labelStatus: "queued",
+      warning: "LOAD_TEST_MODE: USPS skipped",
+    };
+  }
 
   if (!origin.line1 || !origin.postalCode) {
     return {
@@ -94,7 +120,6 @@ export async function resolveShippingForCheckout(
     };
   }
 
-  const pkg = await estimatePackageForCartItems(input.cartItems);
   const destination = {
     name: "Customer",
     ...input.destination,

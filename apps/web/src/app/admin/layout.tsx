@@ -5,8 +5,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AdminGuard } from "@/components/AdminGuard";
 import { AdminSearch } from "@/components/admin/AdminSearch";
+import { useAuth } from "@/lib/auth-context";
 
-const links = [
+type AdminNavLink = { href: string; label: string; exact?: boolean };
+
+const links: AdminNavLink[] = [
   { href: "/admin", label: "Dashboard", exact: true },
   { href: "/admin/orders", label: "Orders" },
   { href: "/admin/analytics", label: "Analytics" },
@@ -22,6 +25,8 @@ const links = [
   { href: "/admin/payments", label: "Payments" },
 ];
 
+const superAdminLinks: AdminNavLink[] = [{ href: "/admin/load-test", label: "Load Test" }];
+
 function isActive(pathname: string, href: string, exact?: boolean) {
   return exact ? pathname === href : pathname.startsWith(href);
 }
@@ -29,13 +34,16 @@ function isActive(pathname: string, href: string, exact?: boolean) {
 function NavButtons({
   pathname,
   onNavigate,
+  isSuperAdmin,
 }: {
   pathname: string;
   onNavigate?: () => void;
+  isSuperAdmin: boolean;
 }) {
+  const allLinks = isSuperAdmin ? [...links, ...superAdminLinks] : links;
   return (
     <nav className="flex flex-col gap-1.5" aria-label="Admin">
-      {links.map((l) => {
+      {allLinks.map((l) => {
         const active = isActive(pathname, l.href, l.exact);
         return (
           <Link
@@ -58,6 +66,7 @@ function NavButtons({
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { isSuperAdmin } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -89,7 +98,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <AdminSearch />
             </div>
             <div className="flex-1 overflow-y-auto">
-              <NavButtons pathname={pathname} />
+              <NavButtons pathname={pathname} isSuperAdmin={isSuperAdmin} />
             </div>
             <Link
               href="/"
@@ -160,7 +169,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 </button>
               </div>
               <div className="flex-1 overflow-y-auto px-3 py-4">
-                <NavButtons pathname={pathname} onNavigate={() => setMenuOpen(false)} />
+                <NavButtons
+                  pathname={pathname}
+                  onNavigate={() => setMenuOpen(false)}
+                  isSuperAdmin={isSuperAdmin}
+                />
               </div>
               <div className="border-t border-slate-200 px-3 py-3">
                 <Link

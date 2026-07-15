@@ -5,6 +5,7 @@ import type { APIGatewayProxyEventV2 } from "aws-lambda";
 import { ok, badRequest, serverError, unauthorized } from "../../lib/response";
 import { getUserOrSessionKey } from "../../lib/auth";
 import { markOrderPaid, markOrderPaymentFailed, getOrderById } from "../orders";
+import { isLoadTestMode } from "../../lib/load-test";
 
 function getRazorpayCredentials() {
   const keyId = process.env.RAZORPAY_KEY_ID || process.env.RAZOR_KEY_ID;
@@ -19,10 +20,19 @@ function getRazorpay(): Razorpay | null {
 }
 
 export async function createRazorpayOrder(order: Order) {
-  const razorpay = getRazorpay();
   const { keyId } = getRazorpayCredentials();
   const publishableKeyId = keyId ?? "rzp_dev_key";
 
+  if (isLoadTestMode()) {
+    return {
+      razorpayOrderId: `order_loadtest_${order.orderId}`,
+      keyId: publishableKeyId,
+      qrImageUrl: undefined as string | undefined,
+      qrId: undefined as string | undefined,
+    };
+  }
+
+  const razorpay = getRazorpay();
   if (!razorpay) {
     return {
       razorpayOrderId: `order_dev_${order.orderId}`,

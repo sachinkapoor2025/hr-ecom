@@ -26,7 +26,8 @@ export const metadata: Metadata = pageMetadata({
     "send rakhi to usa, rakhi delivery usa, buy rakhi online usa, send rakhi to usa from india, rakhi store usa, usa rakhi shop online, rakhi gifts to usa, nationwide rakhi delivery usa",
 });
 
-export const dynamic = "force-dynamic";
+export const dynamic = "force-static";
+export const revalidate = 60;
 
 export default async function HomePage() {
   let products: Product[] = [];
@@ -34,8 +35,8 @@ export default async function HomePage() {
 
   try {
     const [productsData, categoriesData] = await Promise.all([
-      api<{ products: Product[] }>("/products", { revalidate: false }),
-      api<{ categories: Category[] }>("/categories"),
+      api<{ products: Product[] }>("/products", { revalidate: 60 }),
+      api<{ categories: Category[] }>("/categories", { revalidate: 60 }),
     ]);
     products = productsData.products;
     categories = categoriesData.categories;

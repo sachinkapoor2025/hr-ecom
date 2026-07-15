@@ -26,6 +26,13 @@
     "build": "npm run build -w @hr-ecom/shared && npm run build -w @hr-ecom/api && npm run build -w @hr-ecom/web",
     "lint": "npm run lint -w @hr-ecom/web && npm run lint -w @hr-ecom/api",
     "typecheck": "npm run typecheck -w @hr-ecom/shared && npm run typecheck -w @hr-ecom/api && npm run typecheck -w @hr-ecom/web",
+    "load:warmup": "k6 run scripts/load/warmup.js",
+    "load:browse": "k6 run scripts/load/browse.js",
+    "load:mixed": "k6 run scripts/load/mixed.js",
+    "load:spike": "k6 run scripts/load/spike.js",
+    "load:ssr": "k6 run scripts/load/ssr.js",
+    "load:local": "node scripts/load/run-local.mjs",
+    "load:smoke": "bash scripts/load/smoke.sh",
     "test": "npm run test -w @hr-ecom/shared"
   },
   "devDependencies": {
