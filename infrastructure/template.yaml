@@ -62,6 +62,11 @@ Parameters:
     Type: String
     Default: ""
     NoEcho: true
+  UspsPaymentAuthorizationToken:
+    Type: String
+    Default: ""
+    NoEcho: true
+    Description: Optional USPS payment authorization token for label purchase (leave empty if unused)
   LoadTestMode:
     Type: String
     Default: "false"
