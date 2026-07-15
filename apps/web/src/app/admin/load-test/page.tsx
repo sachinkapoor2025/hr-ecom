@@ -204,9 +204,12 @@ export default function AdminLoadTestPage() {
             <Stat label="Parallel cap" value={String(result.parallel ?? result.concurrency)} />
             <Stat label="Requests" value={String(result.requestsApprox)} />
             <Stat label="Errors" value={String(result.errors)} />
+            {result.skipped != null && result.skipped > 0 ? (
+              <Stat label="Skipped (time)" value={String(result.skipped)} />
+            ) : null}
             <Stat
               label="Fail rate"
-              value={`${(result.failedRate * 100).toFixed(2)}% (max ${((result.failRateLimit ?? 0.01) * 100).toFixed(1)}%)`}
+              value={`${(result.failedRate * 100).toFixed(2)}% of attempted (max ${((result.failRateLimit ?? 0.01) * 100).toFixed(1)}%)`}
             />
             <Stat label="p50" value={`${result.p50} ms`} />
             <Stat label="p95" value={`${result.p95} ms (limit ${result.p95LimitMs})`} />

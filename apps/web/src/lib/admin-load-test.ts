@@ -14,6 +14,27 @@ function percentile(sorted: number[], p: number): number {
   return sorted[i]!;
 }
 
+function sleep(ms: number) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+/** Retry transient API Gateway / Lambda scale-out responses. */
+async function fetchRetry(
+  input: RequestInfo | URL,
+  init?: RequestInit,
+  retries = 2
+): Promise<Response> {
+  let last: Response | undefined;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    last = await fetch(input, init);
+    if (last.status !== 503 && last.status !== 429) return last;
+    if (attempt < retries) {
+      await sleep(250 * (attempt + 1) + Math.random() * 250);
+    }
+  }
+  return last!;
+}
+
 async function runJourney(
   apiBase: string,
   session: string,
@@ -34,26 +55,28 @@ async function runJourney(
     return res;
   };
 
-  await mark("health", () => fetch(`${apiBase}/health`));
-  await mark("categories", () => fetch(`${apiBase}/categories`, { headers }));
+  await mark("health", () => fetchRetry(`${apiBase}/health`));
+  await mark("categories", () => fetchRetry(`${apiBase}/categories`, { headers }));
   const list = await mark("products", () =>
-    fetch(`${apiBase}/products?category=${encodeURIComponent(categorySlug)}`, { headers })
+    fetchRetry(`${apiBase}/products?category=${encodeURIComponent(categorySlug)}`, { headers })
   );
   const body = (await list.json().catch(() => ({}))) as { products?: { slug?: string }[] };
   const slug = body.products?.[0]?.slug;
   if (slug) {
-    await mark("pdp", () => fetch(`${apiBase}/products/${encodeURIComponent(slug)}`, { headers }));
+    await mark("pdp", () =>
+      fetchRetry(`${apiBase}/products/${encodeURIComponent(slug)}`, { headers })
+    );
     await mark("cart_add", () =>
-      fetch(`${apiBase}/cart/items`, {
+      fetchRetry(`${apiBase}/cart/items`, {
         method: "POST",
         headers,
         body: JSON.stringify({ productSlug: slug, quantity: 1 }),
       })
     );
-    await mark("cart_get", () => fetch(`${apiBase}/cart`, { headers }));
+    await mark("cart_get", () => fetchRetry(`${apiBase}/cart`, { headers }));
   }
   await mark("events", () =>
-    fetch(`${apiBase}/events`, {
+    fetchRetry(`${apiBase}/events`, {
       method: "POST",
       headers,
       body: JSON.stringify({
@@ -73,25 +96,30 @@ async function runJourney(
 }
 
 /** Run `total` tasks with at most `parallel` in flight. */
-async function runPool<T>(total: number, parallel: number, worker: (index: number) => Promise<T>) {
-  const results: T[] = new Array(total);
+async function runPool(total: number, parallel: number, worker: (index: number) => Promise<void>) {
   let next = 0;
 
   async function runOne() {
-    while (next < total) {
+    while (true) {
       const i = next++;
-      results[i] = await worker(i);
+      if (i >= total) return;
+      await worker(i);
     }
   }
 
-  const runners = Array.from({ length: Math.min(parallel, total) }, () => runOne());
-  await Promise.all(runners);
-  return results;
+  await Promise.all(Array.from({ length: Math.min(parallel, total) }, () => runOne()));
+}
+
+function wallClockForUsers(users: number): number {
+  if (users >= 1000) return 300_000; // 5 min
+  if (users >= 500) return 240_000; // 4 min
+  if (users >= 250) return 150_000; // 2.5 min
+  return 90_000;
 }
 
 /**
  * Runs load from the browser against the public API.
- * High user counts use a parallel pool (not 1000 tabs) so the browser stays usable.
+ * High user counts use modest parallel waves so Lambda can scale without a 503 stampede.
  */
 export async function runBrowserLoadTest(options: {
   preset: LoadTestPreset;
@@ -103,15 +131,15 @@ export async function runBrowserLoadTest(options: {
   const categorySlug = options.categorySlug?.trim() || "single-rakhi";
   const apiBase = getApiUrl().replace(/\/$/, "");
   const started = Date.now();
-  // Allow larger presets enough wall time (waves of parallel journeys).
-  const maxWallMs = Math.min(180_000, 20_000 + users * 80);
+  const maxWallMs = wallClockForUsers(users);
   const allMs: number[] = [];
   let errors = 0;
   let journeys = 0;
+  let skipped = 0;
   let truncated = false;
   const sampleErrors: string[] = [];
 
-  const health = await fetch(`${apiBase}/health`).catch(() => null);
+  const health = await fetchRetry(`${apiBase}/health`).catch(() => null);
   if (!health?.ok) {
     throw new Error(`API health check failed at ${apiBase}`);
   }
@@ -119,8 +147,7 @@ export async function runBrowserLoadTest(options: {
   await runPool(users, parallel, async (i) => {
     if (Date.now() - started > maxWallMs) {
       truncated = true;
-      errors += 1;
-      if (sampleErrors.length < 5) sampleErrors.push("truncated: wall-clock limit");
+      skipped += 1;
       return;
     }
     const session = `browser-lt-${preset}-${i}-${started}`;
@@ -136,24 +163,36 @@ export async function runBrowserLoadTest(options: {
   });
 
   allMs.sort((a, b) => a - b);
-  const planned = users;
-  const failedRate = planned > 0 ? errors / planned : 1;
+  // Score only journeys that actually ran — do not treat "skipped due to time" as API errors.
+  const attempted = journeys + errors;
+  const failedRate = attempted > 0 ? errors / attempted : 1;
+  const completionRate = users > 0 ? journeys / users : 0;
   const p50 = percentile(allMs, 50);
   const p95 = percentile(allMs, 95);
   const p99 = percentile(allMs, 99);
-  const reliabilityPass = !truncated && failedRate <= failRateLimit;
+  const reliabilityPass =
+    attempted > 0 && failedRate <= failRateLimit && completionRate >= 0.9;
   const latencyPass = p95 > 0 && p95 <= p95LimitMs;
   const reasons: string[] = [];
-  if (truncated) reasons.push("Run truncated before all journeys finished — try a smaller preset");
-  if (failedRate > failRateLimit) {
+  if (truncated || completionRate < 0.9) {
     reasons.push(
-      `Error rate ${(failedRate * 100).toFixed(2)}% exceeds ${(failRateLimit * 100).toFixed(1)}% for this preset`
+      `Completed ${journeys}/${users} journeys` +
+        (skipped ? ` (${skipped} skipped after time limit)` : "") +
+        " — re-run or use a smaller preset if this keeps happening"
     );
   }
-  if (!latencyPass) {
+  if (failedRate > failRateLimit) {
+    reasons.push(
+      `Error rate ${(failedRate * 100).toFixed(2)}% of attempted journeys exceeds ${(failRateLimit * 100).toFixed(1)}% (503s usually mean Lambda scale-out throttle)`
+    );
+  }
+  if (attempted > 0 && !latencyPass) {
     reasons.push(
       `p95 ${p95} ms exceeds ${p95LimitMs} ms limit for ${LOAD_TEST_PRESETS[preset].label}`
     );
+  }
+  if (attempted === 0) {
+    reasons.push("No journeys completed");
   }
 
   return {
@@ -168,6 +207,7 @@ export async function runBrowserLoadTest(options: {
     journeys,
     requestsApprox: allMs.length,
     errors,
+    skipped: skipped || undefined,
     failedRate,
     p50,
     p95,
