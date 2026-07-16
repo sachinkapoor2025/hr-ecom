@@ -24,18 +24,19 @@ import { EstimatedDeliveryNote } from "@/components/EstimatedDeliveryNote";
 import type { Product } from "@hr-ecom/shared";
 import { FastSellingBanner } from "@/components/FastSellingBadge";
 import { looksLikeHtml, shortPlainDescription } from "@/lib/html-text";
+import { getProductIncludes } from "@/lib/product-includes";
 
 type Tab = "description" | "reviews" | "faq";
 
-/** Pull "What's included" list items into a readable preview under the title. */
-function HamperIncludesPreview({ html }: { html: string }) {
-  const items = [...html.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)]
-    .map((m) => m[1]!.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim())
-    .filter(Boolean);
+/** "What's included" checklist under the title — hampers, single, combo, kids, etc. */
+function ProductIncludesPreview({ product }: { product: Product }) {
+  const items = getProductIncludes(product);
   if (items.length === 0) return null;
+  const heading =
+    product.categorySlug === "rakhi-hampers" ? "What's included in this hamper" : "What's included";
   return (
     <div className="mb-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
-      <p className="text-sm font-semibold text-primary mb-2">What&apos;s included in this hamper</p>
+      <p className="text-sm font-semibold text-primary mb-2">{heading}</p>
       <ul className="grid sm:grid-cols-2 gap-x-4 gap-y-1.5 text-sm text-slate-700">
         {items.map((item) => (
           <li key={item} className="flex gap-2">
@@ -185,9 +186,7 @@ export function ProductDetailClient({
           </div>
 
           <p className="text-slate-600 text-sm sm:text-base mb-3 leading-relaxed">{summary}</p>
-          {product.categorySlug === "rakhi-hampers" && descriptionIsHtml && (
-            <HamperIncludesPreview html={product.description} />
-          )}
+          <ProductIncludesPreview product={product} />
 
           <div className="mb-3">
             <RakshaBandhanCountdown variant="inline" />

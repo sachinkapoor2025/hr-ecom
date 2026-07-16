@@ -30,11 +30,15 @@ export function normalizeInclusionLine(raw: string): string {
     .replace(/\bAlmonds\b/g, "almonds")
     .replace(/\bsingle Rakhi\b/gi, "1 designer Single Rakhi")
     .replace(/\bset of 2 Rakhi\b/gi, "Set of 2 designer Rakhis")
-    .replace(/\bRoli\s*[-–]?\s*Chawal Designer Tikka\b/gi, "Roli & chawal designer tikka set")
-    .replace(/\bRoli\s*[-–]?\s*Chawal Dibbi\b/gi, "Roli & chawal dibbi")
-    .replace(/\bRoli Chawal Dibbi\b/gi, "Roli & chawal dibbi");
+    // Avoid "&" — it becomes &amp; in HTML and shows literally in plain-text previews.
+    .replace(/\bRoli\s*[-–]?\s*Chawal\s+Designer\s+Tikka(?:\s+Set)?\b/gi, "Roli Chawal Designer Tikka Set")
+    .replace(/\bRoli\s*[-–]?\s*Chawal\s+Dibbi\b/gi, "Roli Chawal Dibbi")
+    .replace(/\bRoli\s*[-–]?\s*Chawal\s+Tikka(?:\s+Set)?\b/gi, "Roli Chawal Designer Tikka Set")
+    .replace(/\bRoli\s*&\s*chawal\s+designer\s+tikka\s+set\b/gi, "Roli Chawal Designer Tikka Set")
+    .replace(/\bRoli\s*&\s*chawal\s+dibbi\b/gi, "Roli Chawal Dibbi")
+    .replace(/\bRoli\s*&\s*chawal\b/gi, "Roli Chawal");
 
-  // Capitalize first letter
+  // Sentence-style capital (first letter); proper nouns already normalized above.
   return line.charAt(0).toUpperCase() + line.slice(1);
 }
 
