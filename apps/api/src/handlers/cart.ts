@@ -13,6 +13,7 @@ import { ok, badRequest, unauthorized } from "../lib/response";
 import { getUserOrSessionKey, getSessionId } from "../lib/auth";
 import { resolveProductImageUrl } from "../lib/images";
 import { upsertSessionProfile } from "../lib/customer-profile";
+import { ensureOrangeCountyProductInDb } from "../lib/orange-county-catalog";
 
 /** Stale carts auto-expire after this many days (TTL). */
 const CART_TTL_DAYS = 30;
@@ -89,9 +90,22 @@ export async function addToCart(event: APIGatewayProxyEventV2) {
     ),
     getCart(userKey),
   ]);
-  if (!productResult.Item) return badRequest("Product not found");
 
-  const product = productResult.Item as {
+  // Storefront may show Orange County catalog before DynamoDB import — upsert on first add.
+  let productItem = productResult.Item as Record<string, unknown> | undefined;
+  if (!productItem) {
+    productItem =
+      (await ensureOrangeCountyProductInDb(parsed.data.productSlug)) ?? undefined;
+  } else if (
+    productItem.vendorSlug === "orange-county" ||
+    productItem.categorySlug === "rakhi-hampers"
+  ) {
+    productItem =
+      (await ensureOrangeCountyProductInDb(parsed.data.productSlug)) ?? productItem;
+  }
+  if (!productItem) return badRequest("Product not found");
+
+  const product = productItem as {
     slug: string;
     name: string;
     price: number;
@@ -175,13 +189,23 @@ export async function updateCartItem(event: APIGatewayProxyEventV2) {
   const item = cart.items.find((i) => i.productSlug === productSlug);
   if (!item) return badRequest("Item not in cart");
 
-  const productResult = await docClient.send(
-    new GetCommand({
-      TableName: PRODUCTS_TABLE,
-      Key: { PK: productKeys.pk(productSlug), SK: productKeys.sk() },
-    })
-  );
-  const product = productResult.Item as { inventory: number } | undefined;
+  let product = (
+    await docClient.send(
+      new GetCommand({
+        TableName: PRODUCTS_TABLE,
+        Key: { PK: productKeys.pk(productSlug), SK: productKeys.sk() },
+      })
+    )
+  ).Item as { inventory: number; vendorSlug?: string; categorySlug?: string } | undefined;
+
+  if (!product || product.vendorSlug === "orange-county" || product.categorySlug === "rakhi-hampers") {
+    product =
+      ((await ensureOrangeCountyProductInDb(productSlug)) as {
+        inventory: number;
+        vendorSlug?: string;
+        categorySlug?: string;
+      } | null) ?? product;
+  }
   if (!product) return badRequest("Product not found");
   if (quantity > product.inventory) return badRequest("Insufficient inventory");
 

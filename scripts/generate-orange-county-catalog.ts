@@ -13,15 +13,17 @@ import * as XLSX from "xlsx";
 import {
   VENDOR_ORANGE_COUNTY,
   ORANGE_COUNTY_CATEGORY_SLUG,
+  ORANGE_COUNTY_PRODUCT_INVENTORY,
   pricingFromVendorCost,
   metaDescription,
-  DEFAULT_PRODUCT_INVENTORY,
 } from "@hr-ecom/shared";
 import { buildHamperHtmlDescription, buildHamperSeoDescription } from "./lib/hamper-description";
 import { inferAdditionalCategorySlugs } from "./lib/hamper-category";
 
 const ROOT = resolve(process.cwd());
 const OUT = join(ROOT, "scripts/data/orange-county-hampers.json");
+/** Bundled into Lambda so cart can upsert missing OC products. */
+const API_OUT = join(ROOT, "apps/api/src/data/orange-county-hampers.json");
 const PUBLIC_IMG = join(ROOT, "apps/web/public/uploads/orange-county");
 const COPY_IMAGES = process.env.COPY_IMAGES === "1" || process.env.COPY_IMAGES === "true";
 
@@ -220,7 +222,7 @@ for (const row of rows) {
     additionalCategorySlugs: additionalCategorySlugs.length ? additionalCategorySlugs : undefined,
     images: imageUrls,
     sku: row.sku,
-    inventory: DEFAULT_PRODUCT_INVENTORY,
+    inventory: ORANGE_COUNTY_PRODUCT_INVENTORY,
     tags: ["rakhi-hamper", "gift-hamper", "raksha-bandhan", "dry-fruits", "send-rakhi-to-usa"],
     vendorSlug: VENDOR_ORANGE_COUNTY,
     vendorCost: pricing.vendorCost,
@@ -237,8 +239,12 @@ for (const row of rows) {
 }
 
 mkdirSync(join(ROOT, "scripts/data"), { recursive: true });
-writeFileSync(OUT, JSON.stringify({ products }, null, 2));
+mkdirSync(join(ROOT, "apps/api/src/data"), { recursive: true });
+const payload = JSON.stringify({ products }, null, 2);
+writeFileSync(OUT, payload);
+writeFileSync(API_OUT, payload);
 console.log(`\nWrote ${products.length} unique hampers → ${OUT}`);
+console.log(`Wrote Lambda bundle copy → ${API_OUT}`);
 if (skipped.length) {
   console.log(`Skipped ${skipped.length} duplicates:\n  - ${skipped.join("\n  - ")}`);
 }

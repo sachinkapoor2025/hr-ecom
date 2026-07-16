@@ -259,6 +259,9 @@ export default function AdminOrderDetailPage() {
     order.labelStatus !== "purchased";
   const labelMargin =
     order.labelCost != null ? order.shipping - order.labelCost : null;
+  const isOrangeCounty =
+    order.vendorSlugs?.includes("orange-county") ||
+    order.items?.some((i) => i.vendorSlug === "orange-county");
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
@@ -275,6 +278,11 @@ export default function AdminOrderDetailPage() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          {isOrangeCounty && (
+            <span className="px-3 py-1 rounded-full text-sm font-semibold bg-orange-100 text-orange-800">
+              Orange County
+            </span>
+          )}
           <span className={`px-3 py-1 rounded-full text-sm font-medium ${badgeClass(order.status)}`}>
             {statusLabel(order.status)}
           </span>
@@ -389,15 +397,25 @@ export default function AdminOrderDetailPage() {
                     </Link>
                   )}
                   <div className="flex-1 min-w-0">
-                    <Link
-                      href={`/products/${item.productSlug}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm font-medium text-nav hover:underline"
-                    >
-                      {item.name}
-                    </Link>
-                    <p className="text-xs text-slate-500">Qty {item.quantity}</p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Link
+                        href={`/products/${item.productSlug}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm font-medium text-nav hover:underline"
+                      >
+                        {item.name}
+                      </Link>
+                      {item.vendorSlug === "orange-county" && (
+                        <span className="rounded-full bg-orange-100 text-orange-800 px-2 py-0.5 text-[10px] font-semibold">
+                          Orange County
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-500">
+                      Qty {item.quantity}
+                      {item.sku ? ` · SKU ${item.sku}` : ""}
+                    </p>
                   </div>
                   <span className="text-sm shrink-0">
                     {formatMoney(item.price * item.quantity, order.currency)}
