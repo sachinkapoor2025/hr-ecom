@@ -1,6 +1,10 @@
 import { readFileSync, existsSync } from "fs";
 import { join } from "path";
-import { withCompetitiveStorefrontPricing, type Product } from "@hr-ecom/shared";
+import {
+  stripVendorPrivateFields,
+  withCompetitiveStorefrontPricing,
+  type Product,
+} from "@hr-ecom/shared";
 
 interface CatalogFile {
   products: Product[];
@@ -32,7 +36,9 @@ export function getCatalogProducts(): Product[] {
     ...loadCatalogFile("usarakhi-catalog.json"),
     ...loadCatalogFile("orange-county-hampers.json"),
   ]) {
-    bySlug.set(product.slug, withCompetitiveStorefrontPricing(product));
+    // Never expose vendorCost / vendorSlug to the browser via SSR props.
+    const publicProduct = stripVendorPrivateFields(product) as Product;
+    bySlug.set(product.slug, withCompetitiveStorefrontPricing(publicProduct));
   }
   cached = [...bySlug.values()];
   return cached;
@@ -63,13 +69,20 @@ function isKidsComboProduct(product: Product): boolean {
   ].some((term) => text.includes(term));
 }
 
-export function getCatalogProductsByCategory(categorySlug: string): Product[] {
-  const products = getCatalogProducts().filter((p) => p.categorySlug === categorySlug);
-  if (categorySlug !== "rakhi-combo") return products;
+function productInCategory(product: Product, categorySlug: string): boolean {
+  if (product.categorySlug === categorySlug) return true;
+  return product.additionalCategorySlugs?.includes(categorySlug) ?? false;
+}
 
-  const bySlug = new Map(products.map((p) => [p.slug, p]));
-  for (const product of getCatalogProducts().filter(isKidsComboProduct)) {
-    bySlug.set(product.slug, product);
+export function getCatalogProductsByCategory(categorySlug: string): Product[] {
+  const bySlug = new Map<string, Product>();
+  for (const product of getCatalogProducts()) {
+    if (productInCategory(product, categorySlug)) bySlug.set(product.slug, product);
+  }
+  if (categorySlug === "rakhi-combo") {
+    for (const product of getCatalogProducts().filter(isKidsComboProduct)) {
+      bySlug.set(product.slug, product);
+    }
   }
   return [...bySlug.values()];
 }

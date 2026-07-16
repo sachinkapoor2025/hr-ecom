@@ -85,12 +85,8 @@ export default async function CategoryPage({ params }: Props) {
     products = getCatalogProductsByCategory(slug);
   }
 
-  if (slug === "rakhi-combo") {
-    products = mergeProductsBySlug(products, getCatalogProductsByCategory("rakhi-combo"));
-  }
-  if (slug === "rakhi-hampers") {
-    products = mergeProductsBySlug(products, getCatalogProductsByCategory("rakhi-hampers"));
-  }
+  // Merge bundled catalog (includes Orange County hampers listed in additional categories).
+  products = mergeProductsBySlug(products, getCatalogProductsByCategory(slug));
 
   const name =
     category?.name ??

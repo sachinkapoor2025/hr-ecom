@@ -1,41 +1,31 @@
 /**
- * Import Orange County Rakhi Hampers from the vendor Excel + local image folder.
+ * Import Orange County Rakhi Hampers from scripts/data/orange-county-hampers.json
+ * (generate first: COPY_IMAGES=1 npm run generate:orange-county-catalog).
  *
- * Pricing (vendor Excel = cost):
- *   compareAtPrice = cost × 1.80  (80% markup / "was" price)
- *   price          = cost × 1.40  (sale price — ~40% over cost)
- *
- * Images → S3 under uploads/orange-county/<sku>/...
- * Products tagged vendorSlug=orange-county, category=rakhi-hampers
+ * Pricing already applied in the catalog JSON (sale = cost × 2.0, list = cost × 2.5).
+ * Products tagged vendorSlug=orange-county, category=rakhi-hampers (+ additionalCategorySlugs).
  *
  * Usage:
  *   ENVIRONMENT=prod \
- *   UPLOAD_BUCKET=hr-ecom-upload-prod-xxxxx \
- *   CLOUDFRONT_DOMAIN=dxxxx.cloudfront.net \
+ *   UPLOAD_BUCKET=... \
+ *   CLOUDFRONT_DOMAIN=... \
  *   npm run import:orange-county
  *
- * Dry run (no writes):
  *   DRY_RUN=1 npm run import:orange-county
- *
- * Local API only (skip S3, use file:// or leave images empty until upload):
  *   SKIP_S3=1 ENVIRONMENT=local npm run import:orange-county
  */
-import { readdirSync, readFileSync, existsSync } from "fs";
+import { readFileSync, existsSync } from "fs";
 import { join, extname, basename, resolve } from "path";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, PutCommand, GetCommand, DeleteCommand } from "@aws-sdk/lib-dynamodb";
 import { S3Client, PutObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
-import * as XLSX from "xlsx";
 import {
   VENDOR_ORANGE_COUNTY,
   ORANGE_COUNTY_CATEGORY_SLUG,
   categoryKeys,
   productKeys,
-  pricingFromVendorCost,
   metaDescription,
-  DEFAULT_PRODUCT_INVENTORY,
 } from "@hr-ecom/shared";
-import { buildHamperHtmlDescription, buildHamperSeoDescription } from "./lib/hamper-description";
 
 const ENV = process.env.ENVIRONMENT ?? "prod";
 const PRODUCTS_TABLE = process.env.PRODUCTS_TABLE ?? `hr-ecom-products-${ENV}`;
@@ -43,12 +33,9 @@ const BUCKET = process.env.UPLOAD_BUCKET;
 const CDN = process.env.CLOUDFRONT_DOMAIN?.replace(/^https?:\/\//, "").replace(/\/$/, "");
 const DRY_RUN = process.env.DRY_RUN === "1" || process.env.DRY_RUN === "true";
 const SKIP_S3 = process.env.SKIP_S3 === "1" || process.env.SKIP_S3 === "true";
-
-const CATALOG_DIR = resolve(
-  process.env.ORANGE_COUNTY_CATALOG_DIR ??
-    join(process.cwd(), "USA Rakhi Images Catalouge  2026i")
-);
-const EXCEL_NAME = "USA Rakhi Catalouge sheet  2026.xlsx";
+const ROOT = resolve(process.cwd());
+const CATALOG_PATH = join(ROOT, "scripts/data/orange-county-hampers.json");
+const PUBLIC_ROOT = join(ROOT, "apps/web/public");
 
 const MIME: Record<string, string> = {
   ".jpg": "image/jpeg",
@@ -56,6 +43,10 @@ const MIME: Record<string, string> = {
   ".png": "image/png",
   ".webp": "image/webp",
 };
+
+function nowIso() {
+  return new Date().toISOString();
+}
 
 function slugify(text: string): string {
   return text
@@ -66,76 +57,29 @@ function slugify(text: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
-function nowIso() {
-  return new Date().toISOString();
-}
-
-function escapeRe(s: string) {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-/** Match TFUSRH2026-3.jpg / TFUSRH2026-3a.jpg but not TFUSRH2026-31.jpg */
-function imagesForSku(sku: string, files: string[]): string[] {
-  const base = sku.toLowerCase();
-  const suffixRe = new RegExp(`^${escapeRe(base)}[a-z]$`, "i");
-  return files
-    .filter((f) => {
-      const stem = f.replace(/\.[^.]+$/, "").toLowerCase().replace(/[`']/g, "");
-      if (stem === base) return true;
-      // letter suffix only (a, b, c…) — not digit continuation (e.g. -31)
-      return suffixRe.test(stem);
-    })
-    .sort((a, b) => {
-      const sa = a.replace(/\.[^.]+$/, "").toLowerCase().replace(/[`']/g, "");
-      const sb = b.replace(/\.[^.]+$/, "").toLowerCase().replace(/[`']/g, "");
-      if (sa === base) return -1;
-      if (sb === base) return 1;
-      return sa.localeCompare(sb);
-    });
-}
-
-function parseExcel(path: string) {
-  const wb = XLSX.readFile(path);
-  const sheet = wb.Sheets[wb.SheetNames[0]!];
-  const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: "" });
-  const products: {
-    sno: number;
-    sku: string;
-    name: string;
-    description: string;
-    vendorCost: number;
-  }[] = [];
-
-  for (const r of rows) {
-    const sku = String(r.__EMPTY_2 ?? "").trim();
-    const name = String(r.__EMPTY_3 ?? "").trim();
-    if (!sku || !name || sku.toLowerCase() === "sku code") continue;
-    const vendorCost = Number(r.__EMPTY_5);
-    if (!Number.isFinite(vendorCost) || vendorCost <= 0) {
-      console.warn(`Skip ${sku}: invalid price`, r.__EMPTY_5);
-      continue;
-    }
-    products.push({
-      sno: Number(r.__EMPTY) || products.length + 1,
-      sku,
-      name,
-      description: String(r.__EMPTY_4 ?? "").trim(),
-      vendorCost,
-    });
-  }
-  return products;
-}
-
-function seoFor(
-  name: string,
-  salePrice: number,
-  rawInclusions: string
-): { seoTitle: string; seoDescription: string } {
-  return {
-    seoTitle: `Send ${name} to USA | Free Shipping | Rakhi Hamper`,
-    seoDescription: metaDescription(buildHamperSeoDescription(name, rawInclusions, salePrice)),
-  };
-}
+type CatalogProduct = {
+  name: string;
+  slug: string;
+  description: string;
+  price: number;
+  compareAtPrice?: number;
+  currency: "USD" | "INR";
+  categorySlug: string;
+  additionalCategorySlugs?: string[];
+  images: string[];
+  sku?: string;
+  inventory: number;
+  tags?: string[];
+  vendorSlug?: string;
+  vendorCost?: number;
+  seoTitle?: string;
+  seoDescription?: string;
+  published?: boolean;
+  weightOz?: number;
+  lengthIn?: number;
+  widthIn?: number;
+  heightIn?: number;
+};
 
 async function ensureS3Image(
   s3: S3Client,
@@ -180,17 +124,13 @@ async function ensureS3Image(
 }
 
 async function main() {
-  const excelPath = join(CATALOG_DIR, EXCEL_NAME);
-  if (!existsSync(excelPath)) {
-    throw new Error(`Excel not found: ${excelPath}`);
-  }
-  if (!existsSync(CATALOG_DIR)) {
-    throw new Error(`Catalog dir not found: ${CATALOG_DIR}`);
+  if (!existsSync(CATALOG_PATH)) {
+    throw new Error(`Catalog not found: ${CATALOG_PATH}. Run: COPY_IMAGES=1 npm run generate:orange-county-catalog`);
   }
 
-  const imageFiles = readdirSync(CATALOG_DIR).filter((f) => /\.(jpe?g|png|webp)$/i.test(f));
-  const rows = parseExcel(excelPath);
-  console.log(`Orange County import: ${rows.length} products, ${imageFiles.length} images in folder`);
+  const catalog = JSON.parse(readFileSync(CATALOG_PATH, "utf-8")) as { products: CatalogProduct[] };
+  const rows = catalog.products ?? [];
+  console.log(`Orange County import: ${rows.length} products from catalog`);
   console.log(`Table=${PRODUCTS_TABLE} DRY_RUN=${DRY_RUN} SKIP_S3=${SKIP_S3}`);
 
   if (!SKIP_S3 && (!BUCKET || !CDN) && !DRY_RUN) {
@@ -204,15 +144,14 @@ async function main() {
   const s3 = new S3Client({ region: process.env.AWS_REGION ?? "us-east-1" });
   const uploadCache = new Map<string, string>();
   const ts = nowIso();
-
-  // Category
   const categorySlug = ORANGE_COUNTY_CATEGORY_SLUG;
+
   const categoryItem = {
     name: "Rakhi Hamper",
     slug: categorySlug,
     description:
       "Premium Rakhi gift hampers for USA delivery — festive boxes with designer rakhis, sweets, dry fruits, and chocolates.",
-    seoTitle: "Send Rakhi Hamper to USA | Gift Boxes | UsaRakhi",
+    seoTitle: "Send Rakhi Hamper to USA | Free Shipping | USA Rakhi",
     seoDescription: metaDescription(
       "Shop Rakhi hamper gift boxes for USA delivery. Combos with rakhi, kaju katli, dry fruits, and Ferrero. Fast domestic shipping across America."
     ),
@@ -235,67 +174,65 @@ async function main() {
 
   let imported = 0;
   for (const row of rows) {
-    const pricing = pricingFromVendorCost(row.vendorCost, "USD");
-    // Public URL = product name only (SKU stays on the product record, not in the path).
-    const slug = slugify(row.name);
-    const localImages = imagesForSku(row.sku, imageFiles);
+    const slug = row.slug || slugify(row.name);
     const imageUrls: string[] = [];
 
     if (!SKIP_S3) {
-      for (const file of localImages) {
-        const safeName = basename(file).replace(/[`']/g, "").replace(/\s+/g, "-");
-        const key = `uploads/orange-county/${row.sku}/${safeName}`;
-        const url = await ensureS3Image(s3, join(CATALOG_DIR, file), key, uploadCache);
+      for (const img of row.images ?? []) {
+        if (img.startsWith("http")) {
+          imageUrls.push(img);
+          continue;
+        }
+        const rel = img.startsWith("/") ? img.slice(1) : img;
+        const localPath = join(PUBLIC_ROOT, rel);
+        if (!existsSync(localPath)) {
+          console.warn(`  missing local image ${localPath}`);
+          continue;
+        }
+        const key = rel.startsWith("uploads/") ? rel : `uploads/orange-county/${basename(localPath)}`;
+        const url = await ensureS3Image(s3, localPath, key, uploadCache);
         if (url) imageUrls.push(url);
       }
+    } else {
+      imageUrls.push(...(row.images ?? []));
     }
-
-    const { seoTitle, seoDescription } = seoFor(row.name, pricing.price, row.description);
-    const description = buildHamperHtmlDescription(row.name, row.description, row.sku);
 
     const item = {
       name: row.name,
       slug,
-      description,
-      price: pricing.price,
-      compareAtPrice: pricing.compareAtPrice,
-      currency: "USD" as const,
-      categorySlug,
+      description: row.description,
+      price: row.price,
+      compareAtPrice: row.compareAtPrice,
+      currency: row.currency ?? "USD",
+      categorySlug: row.categorySlug || categorySlug,
+      additionalCategorySlugs: row.additionalCategorySlugs,
       images: imageUrls,
       sku: row.sku,
-      inventory: DEFAULT_PRODUCT_INVENTORY,
-      // Public SEO tags only — vendor identity stays on vendorSlug (backend / order API).
-      tags: [
-        "rakhi-hamper",
-        "gift-hamper",
-        "raksha-bandhan",
-        "dry-fruits",
-        "send-rakhi-to-usa",
-      ],
-      vendorSlug: VENDOR_ORANGE_COUNTY,
-      vendorCost: pricing.vendorCost,
-      seoTitle,
-      seoDescription,
-      published: true,
-      weightOz: 32,
-      lengthIn: 10,
-      widthIn: 8,
-      heightIn: 4,
+      inventory: row.inventory,
+      tags: row.tags ?? ["rakhi-hamper", "gift-hamper", "raksha-bandhan", "dry-fruits", "send-rakhi-to-usa"],
+      vendorSlug: row.vendorSlug ?? VENDOR_ORANGE_COUNTY,
+      vendorCost: row.vendorCost,
+      seoTitle: row.seoTitle,
+      seoDescription: row.seoDescription,
+      published: row.published !== false,
+      weightOz: row.weightOz ?? 32,
+      lengthIn: row.lengthIn ?? 10,
+      widthIn: row.widthIn ?? 8,
+      heightIn: row.heightIn ?? 4,
       PK: productKeys.pk(slug),
       SK: productKeys.sk(),
-      GSI1PK: productKeys.gsi1pk(categorySlug),
+      GSI1PK: productKeys.gsi1pk(row.categorySlug || categorySlug),
       GSI1SK: productKeys.gsi1sk(slug),
       createdAt: ts,
       updatedAt: ts,
     };
 
     console.log(
-      `• ${row.sku} → $${pricing.price} (was $${pricing.compareAtPrice}, cost $${pricing.vendorCost}) images=${imageUrls.length}/${localImages.length}`
+      `• ${row.sku} → $${row.price} slug=${slug} extras=[${(row.additionalCategorySlugs ?? []).join(",")}] images=${imageUrls.length}`
     );
 
     if (DRY_RUN) continue;
 
-    // Preserve inventory / unitsSold if product already exists
     const existing = await ddb.send(
       new GetCommand({
         TableName: PRODUCTS_TABLE,
@@ -308,7 +245,6 @@ async function main() {
       if (existing.Item.unitsSold != null) {
         (item as { unitsSold?: number }).unitsSold = existing.Item.unitsSold as number;
       }
-      // Keep admin-added images if import found none
       if (!imageUrls.length && Array.isArray(existing.Item.images)) {
         item.images = existing.Item.images as string[];
       }
@@ -316,15 +252,16 @@ async function main() {
 
     await ddb.send(new PutCommand({ TableName: PRODUCTS_TABLE, Item: item }));
 
-    // Remove legacy name-sku URL records if they still exist in DynamoDB.
-    const legacySlug = slugify(`${row.name}-${row.sku}`);
-    if (legacySlug !== slug) {
-      await ddb.send(
-        new DeleteCommand({
-          TableName: PRODUCTS_TABLE,
-          Key: { PK: productKeys.pk(legacySlug), SK: productKeys.sk() },
-        })
-      );
+    if (row.sku) {
+      const legacySlug = slugify(`${row.name}-${row.sku}`);
+      if (legacySlug !== slug) {
+        await ddb.send(
+          new DeleteCommand({
+            TableName: PRODUCTS_TABLE,
+            Key: { PK: productKeys.pk(legacySlug), SK: productKeys.sk() },
+          })
+        );
+      }
     }
 
     imported += 1;

@@ -52,8 +52,10 @@ export default async function HomePage() {
     categories = [];
   }
 
-  // Hampers may not be in API yet — merge bundled catalog so home + category stay populated.
-  products = mergeProductsBySlug(products, getCatalogProductsByCategory("rakhi-hampers"));
+  // Orange County hampers (and other catalog fallbacks) may not be in API yet.
+  for (const slug of homeCategoryOrder) {
+    products = mergeProductsBySlug(products, getCatalogProductsByCategory(slug));
+  }
   if (!categories.some((c) => c.slug === "rakhi-hampers")) {
     const now = new Date().toISOString();
     categories = [
@@ -74,7 +76,9 @@ export default async function HomePage() {
   const productsByCategory = homeCategoryOrder.map((slug) => ({
     slug,
     name: categoryMap.get(slug)?.name ?? slug.replace(/-/g, " "),
-    products: products.filter((p) => p.categorySlug === slug),
+    products: products.filter(
+      (p) => p.categorySlug === slug || p.additionalCategorySlugs?.includes(slug)
+    ),
   }));
 
   return (

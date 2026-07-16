@@ -9,6 +9,11 @@ export const productSchema = z.object({
   compareAtPrice: z.number().positive().optional(),
   currency: z.enum(["USD", "INR"]).default("USD"),
   categorySlug: z.string().min(1),
+  /**
+   * Extra storefront categories (e.g. hamper also listed under single-rakhi / kids-rakhi).
+   * Primary GSI remains categorySlug; list APIs merge these in.
+   */
+  additionalCategorySlugs: z.array(z.string().min(1)).optional(),
   images: z.array(z.string().url()).default([]),
   sku: z.string().optional(),
   inventory: z.number().int().min(0).default(DEFAULT_PRODUCT_INVENTORY),
