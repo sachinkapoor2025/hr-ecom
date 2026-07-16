@@ -15,6 +15,7 @@
     "seed": "tsx scripts/seed.ts",
     "import:usarakhi": "tsx scripts/import-usarakhi.ts",
     "import:usarakhi:fetch": "tsx scripts/import-usarakhi.ts --fetch-only",
+    "import:orange-county": "tsx scripts/import-orange-county.ts",
     "seed:inventory": "tsx scripts/seed-inventory.ts",
     "fix:seo-descriptions": "tsx scripts/fix-seo-descriptions.ts",
     "migrate:images": "tsx scripts/migrate-images-to-s3.ts",
@@ -41,7 +42,8 @@
     "@aws-sdk/lib-dynamodb": "^3.716.0",
     "concurrently": "^9.1.2",
     "tsx": "^4.19.2",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "xlsx": "^0.18.5"
   },
   "engines": {
     "node": ">=22"

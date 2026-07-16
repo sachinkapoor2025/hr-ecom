@@ -13,6 +13,10 @@ export const productSchema = z.object({
   sku: z.string().optional(),
   inventory: z.number().int().min(0).default(DEFAULT_PRODUCT_INVENTORY),
   tags: z.array(z.string()).default([]),
+  /** Supplier / marketplace vendor key (e.g. orange-county). */
+  vendorSlug: z.string().min(1).max(80).optional(),
+  /** Wholesale cost from vendor — never expose on public storefront APIs. */
+  vendorCost: z.number().positive().optional(),
   seoTitle: z.string().optional(),
   seoDescription: z.string().optional(),
   published: z.boolean().default(true),
@@ -44,6 +48,8 @@ export const bulkProductRowSchema = z.object({
   sku: z.string().optional(),
   inventory: z.coerce.number().int().min(0).default(DEFAULT_PRODUCT_INVENTORY),
   tags: z.string().optional(),
+  vendorSlug: z.string().min(1).max(80).optional(),
+  vendorCost: z.coerce.number().positive().optional(),
   seoTitle: z.string().optional(),
   seoDescription: z.string().optional(),
   published: z.coerce.boolean().default(true),

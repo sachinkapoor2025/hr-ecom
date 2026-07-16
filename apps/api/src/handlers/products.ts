@@ -7,6 +7,7 @@ import {
   productKeys,
   DEFAULT_PRODUCT_INVENTORY,
   withCompetitiveStorefrontPricing,
+  stripVendorPrivateFields,
   type Product,
 } from "@hr-ecom/shared";
 import { docClient, PRODUCTS_TABLE, now, slugify } from "../lib/db";
@@ -16,7 +17,9 @@ import { withResolvedProductImages, resolveProductImageUrl } from "../lib/images
 import { syncInventoryAlertState } from "../lib/inventory";
 
 function forStorefront(product: Product): Product {
-  return withCompetitiveStorefrontPricing(withResolvedProductImages(product));
+  return stripVendorPrivateFields(
+    withCompetitiveStorefrontPricing(withResolvedProductImages(product))
+  ) as Product;
 }
 
 function isKidsComboProduct(product: Product): boolean {

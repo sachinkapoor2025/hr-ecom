@@ -83,6 +83,26 @@ export const PAYMENT_PROVIDERS = {
 /** Default stock when creating products or seeding catalog. */
 export const DEFAULT_PRODUCT_INVENTORY = 200;
 
+/**
+ * Backend-only vendor key for hamper fulfillment API / order tagging.
+ * Never show this name on the storefront — customers only see "Rakhi Hamper".
+ */
+export const VENDOR_ORANGE_COUNTY = "orange-county" as const;
+
+/** Public category slug (display name: "Rakhi Hamper"). */
+export const ORANGE_COUNTY_CATEGORY_SLUG = "rakhi-hampers" as const;
+
+/**
+ * Hamper pricing from vendor cost (Excel). Uses retail margin on selling price:
+ *   sale price = cost × 2.0  → 50% margin before coupons  ((P−C)/P)
+ *   list/compare-at = cost × 2.5 → sale badge (~20% off list)
+ *
+ * After spin-the-wheel 6–10% off sale price, net margin stays ~44–47%
+ * (≈40–44%+ band at the higher discount end).
+ */
+export const ORANGE_COUNTY_LIST_MARKUP = 2.5;
+export const ORANGE_COUNTY_SALE_MARKUP = 2.0;
+
 /** Email restock alert when inventory drops to this level or below. */
 export const LOW_STOCK_THRESHOLD = 10;
 

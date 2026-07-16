@@ -31,6 +31,7 @@ export const navItems = [
   { label: "Kids Rakhi", href: categoryHref("kids-rakhi"), category: "kids-rakhi" },
   { label: "Lumba Rakhi", href: categoryHref("lumba-rakhi"), category: "lumba-rakhi" },
   { label: "Rakhi Combo", href: categoryHref("rakhi-combo"), category: "rakhi-combo" },
+  { label: "Rakhi Hamper", href: categoryHref("rakhi-hampers"), category: "rakhi-hampers" },
   { label: "Raksha Bandhan", href: "/raksha-bandhan" },
   { label: "Blog", href: "/blog" },
   { label: "Contact Us", href: "/contact" },
@@ -105,6 +106,7 @@ export const homeCategoryOrder = [
   "kids-rakhi",
   "lumba-rakhi",
   "rakhi-combo",
+  "rakhi-hampers",
 ] as const;
 
 export const categoryOrder = homeCategoryOrder;

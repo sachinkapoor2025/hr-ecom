@@ -72,6 +72,11 @@ Parameters:
     Default: "false"
     AllowedValues: ["true", "false"]
     Description: When true, stub Stripe/Razorpay/USPS/SMTP for k6 load tests (staging only)
+  OrangeCountyVendorApiKey:
+    Type: String
+    Default: ""
+    NoEcho: true
+    Description: API key for Orange County vendor order feed (X-Vendor-Api-Key)
 
 Globals:
   Function:
@@ -119,6 +124,7 @@ Globals:
         USPS_MID: !Ref UspsMid
         USPS_EPS_ACCOUNT_NUMBER: !Ref UspsEpsAccountNumber
         USPS_PAYMENT_AUTHORIZATION_TOKEN: !Ref UspsPaymentAuthorizationToken
+        ORANGE_COUNTY_VENDOR_API_KEY: !Ref OrangeCountyVendorApiKey
 
 Resources:
   ProductsTable:
@@ -682,7 +688,7 @@ Resources:
       StageName: !Ref Environment
       CorsConfiguration:
         AllowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
-        AllowHeaders: ["Content-Type", "Authorization", "X-Session-Id"]
+        AllowHeaders: ["Content-Type", "Authorization", "X-Session-Id", "X-Vendor-Api-Key"]
         AllowOrigins: ["*"]
 
 Outputs:

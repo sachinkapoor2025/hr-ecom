@@ -33,6 +33,17 @@ describe("applyCompetitivePriceReduction", () => {
 });
 
 describe("withCompetitiveStorefrontPricing", () => {
+  it("skips competitive cuts for vendor-priced products", () => {
+    const result = withCompetitiveStorefrontPricing({
+      price: 41.93,
+      compareAtPrice: 53.91,
+      currency: "USD" as const,
+      vendorSlug: "orange-county",
+    });
+    assert.equal(result.price, 41.93);
+    assert.equal(result.compareAtPrice, 53.91);
+  });
+
   it("lowers price and preserves original as compare-at", () => {
     const result = withCompetitiveStorefrontPricing({
       price: 20,
