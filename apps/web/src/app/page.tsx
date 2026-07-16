@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { categoryHref } from "@/lib/category-urls";
 import { api } from "@/lib/api";
-import { linkPhraseInText } from "@/lib/inline-links";
+import { applyInlineLinks } from "@/lib/inline-links";
 import { homepageInlineLinks } from "@/lib/content/page-inline-links";
 import { BannerCarousel } from "@/components/BannerCarousel";
 import { CustomerReviews } from "@/components/CustomerReviews";
@@ -14,8 +14,15 @@ import { TrustStrip } from "@/components/TrustStrip";
 import { WhyTrustUsSection } from "@/components/WhyTrustUsSection";
 import { JsonLd } from "@/components/JsonLd";
 import { site, homeBanners, homeCategoryOrder, faqs } from "@/lib/site";
+import { getCatalogProductsByCategory } from "@/lib/catalog-fallback";
 import { faqJsonLd, howToSendRakhiJsonLd, pageMetadata } from "@/lib/seo";
 import type { Product, Category } from "@hr-ecom/shared";
+
+function mergeProductsBySlug(products: Product[], additions: Product[]): Product[] {
+  const bySlug = new Map(products.map((product) => [product.slug, product]));
+  for (const product of additions) bySlug.set(product.slug, product);
+  return [...bySlug.values()];
+}
 
 export const metadata: Metadata = pageMetadata({
   title: "Send Rakhi to USA Online | Rakhi Delivery USA | UsaRakhi",
@@ -45,11 +52,33 @@ export default async function HomePage() {
     categories = [];
   }
 
+  // Orange County hampers (and other catalog fallbacks) may not be in API yet.
+  for (const slug of homeCategoryOrder) {
+    products = mergeProductsBySlug(products, getCatalogProductsByCategory(slug));
+  }
+  if (!categories.some((c) => c.slug === "rakhi-hampers")) {
+    const now = new Date().toISOString();
+    categories = [
+      ...categories,
+      {
+        name: "Rakhi Hamper",
+        slug: "rakhi-hampers",
+        description: "Premium Rakhi gift hampers for USA delivery.",
+        published: true,
+        sortOrder: 15,
+        createdAt: now,
+        updatedAt: now,
+      },
+    ];
+  }
+
   const categoryMap = new Map(categories.map((c) => [c.slug, c]));
   const productsByCategory = homeCategoryOrder.map((slug) => ({
     slug,
     name: categoryMap.get(slug)?.name ?? slug.replace(/-/g, " "),
-    products: products.filter((p) => p.categorySlug === slug),
+    products: products.filter(
+      (p) => p.categorySlug === slug || p.additionalCategorySlugs?.includes(slug)
+    ),
   }));
 
   return (
@@ -63,10 +92,9 @@ export default async function HomePage() {
           Send Rakhi to USA — Free Shipping | Premium Online Rakhi Delivery
         </h1>
         <p className="text-slate-600 leading-relaxed mb-4">
-          {linkPhraseInText(
-            `${site.name} helps sisters in India, UK, Canada, Australia, and worldwide send rakhi to USA with reliable rakhi delivery USA across all 50 states. Shop 126+ designer rakhis — Single Rakhi, Combos with chocolates, Kids Rakhi, Bhaiya Bhabhi sets, and Lumba Rakhi — delivered in 5–7 business days with roli chawal included. Order rakhi to USA from India in minutes at our online rakhi store USA.`,
-            homepageInlineLinks[0].phrase,
-            homepageInlineLinks[0].href
+          {applyInlineLinks(
+            `${site.name} helps sisters in India, UK, Canada, Australia, and worldwide send rakhi to USA with reliable rakhi delivery USA across all 50 states. Shop 140+ designer rakhis — Single Rakhi, Combos with chocolates, rakhi gift hamper boxes with sweets and dry fruits, Kids Rakhi, Bhaiya Bhabhi sets, and Lumba Rakhi — delivered in 5–7 business days with roli chawal included. Order rakhi to USA from India in minutes at our online rakhi store USA.`,
+            homepageInlineLinks
           )}
         </p>
         <div className="flex flex-wrap justify-center gap-3 text-sm">
@@ -75,6 +103,9 @@ export default async function HomePage() {
           </Link>
           <Link href="/blog/send-rakhi-to-usa-from-india" className="text-nav font-semibold hover:underline">
             Send from India guide →
+          </Link>
+          <Link href={categoryHref("rakhi-hampers")} className="text-nav font-semibold hover:underline">
+            Rakhi Hampers →
           </Link>
           <Link href="/shipping" className="text-nav font-semibold hover:underline">
             Shipping info →

@@ -246,6 +246,14 @@ export async function checkout(event: APIGatewayProxyEventV2) {
     });
   }
 
+  const vendorSlugs = [
+    ...new Set(
+      (orderItems as CartItem[])
+        .map((i) => i.vendorSlug)
+        .filter((v): v is string => Boolean(v))
+    ),
+  ];
+
   const order: Order = {
     orderId,
     userId: auth?.userId,
@@ -258,6 +266,7 @@ export async function checkout(event: APIGatewayProxyEventV2) {
     tax,
     total,
     currency,
+    ...(vendorSlugs.length ? { vendorSlugs } : {}),
     status: ORDER_STATUS.PENDING_PAYMENT,
     statusHistory: [{ status: ORDER_STATUS.PENDING_PAYMENT, at: timestamp }],
     shippingAddress: parsed.data.shippingAddress,

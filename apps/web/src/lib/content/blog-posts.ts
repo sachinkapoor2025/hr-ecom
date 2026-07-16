@@ -34,7 +34,7 @@ export const blogPosts: BlogPost[] = [
       {
         heading: "Step-by-step: Send Rakhi to USA from India",
         paragraphs: [
-          "1. Visit UsaRakhi.com and browse Single Rakhi, Rakhi Combo, Kids Rakhi, Bhaiya Bhabhi, or Lumba Rakhi collections.",
+          "1. Visit UsaRakhi.com and browse Single Rakhi, Rakhi Combo, Rakhi Hamper, Kids Rakhi, Bhaiya Bhabhi, or Lumba Rakhi collections.",
           "2. Add your chosen Rakhi to cart. Most rakhis include complimentary roli (kumkum) and chawal (rice) for the ritual.",
           "3. At checkout, enter your brother's full US delivery address — apartment, city, state, and ZIP code.",
           "4. Pay securely with Razorpay (INR) or Stripe (USD). Orders from India are welcome.",
@@ -235,6 +235,52 @@ export const blogPosts: BlogPost[] = [
           "UsaRakhi offers standalone Lumba Rakhis and complete Bhaiya Bhabhi sets with matching designs.",
           "Enter the US delivery address at checkout; we ship domestically in 5–7 business days.",
           "Shop Lumba Rakhi at UsaRakhi.com/lumba-rakhi-to-usa and Bhaiya Bhabhi sets at /bhaiya-bhabhi-rakhi-to-usa.",
+        ],
+      },
+    ],
+  },
+  {
+    slug: "rakhi-hamper-gift-box-usa",
+    title: "Rakhi Hamper Gift Box USA — Sweets, Dry Fruits & Designer Rakhi Guide",
+    description:
+      "How to choose a Rakhi hamper gift box for USA delivery: kaju katli, dry fruits, chocolates, and designer rakhis. Domestic shipping from UsaRakhi for Raksha Bandhan.",
+    excerpt:
+      "Want more than a single thread? Here's how to pick the perfect Rakhi hamper with sweets and dry fruits for brothers in America.",
+    publishedAt: "2026-06-20",
+    updatedAt: "2026-07-16",
+    relatedCategory: "rakhi-hampers",
+    sections: [
+      {
+        paragraphs: [
+          "A Rakhi hamper gift box is the easiest way to send a complete Raksha Bandhan celebration to your brother in the USA — designer rakhi, Indian sweets, dry fruits, and often roli chawal — packed together and delivered domestically within America.",
+          "Sisters searching for “rakhi gift hamper USA”, “rakhi with dry fruits”, or “kaju katli rakhi box” want one thoughtfully curated gift, not three separate orders. UsaRakhi’s Rakhi Hamper collection is built for that: clear what’s-included lists, sale pricing, and 5–7 business day USA delivery.",
+        ],
+      },
+      {
+        heading: "What’s usually inside a Rakhi hamper",
+        paragraphs: [
+          "Designer Single Rakhi or a set of two rakhis for brothers who share the festival with family.",
+          "Indian sweets such as kaju katli, besan laddoo, or soan papdi — with gram weights listed on each product page.",
+          "Dry fruits: cashews, almonds, and pistachios in measured packs.",
+          "Ferrero Rocher or other chocolates on selected hampers.",
+          "Roli Chawal Designer Tikka Set or dibbi for the traditional tilak ceremony.",
+        ],
+      },
+      {
+        heading: "How to choose the right hamper for USA delivery",
+        paragraphs: [
+          "Check the what’s-included box on every product page — UsaRakhi lists quantities so you know exactly what arrives.",
+          "Pick a duo or multi-rakhi hamper if more than one brother (or cousin) will celebrate together.",
+          "Order 10–14 days before Raksha Bandhan 2026 (August 28) for stress-free nationwide delivery; earlier is better for remote ZIP codes.",
+          "Browse the full collection at UsaRakhi.com/rakhi-hampers-to-usa. Prefer chocolates only? See Rakhi Combos at /rakhi-combo-to-usa.",
+        ],
+      },
+      {
+        heading: "Why order a hamper from UsaRakhi",
+        paragraphs: [
+          "Domestic US fulfillment — your brother receives a US package, not an international customs delay.",
+          "Pay in INR (Razorpay) or USD (Stripe) from India, UK, Canada, Australia, or anywhere worldwide.",
+          "Internal links from every hamper page to Single Rakhi, Kids Rakhi, Bhaiya Bhabhi, and Combos help you explore more gifts if needed.",
         ],
       },
     ],

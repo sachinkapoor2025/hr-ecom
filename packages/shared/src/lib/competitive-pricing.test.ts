@@ -33,6 +33,28 @@ describe("applyCompetitivePriceReduction", () => {
 });
 
 describe("withCompetitiveStorefrontPricing", () => {
+  it("skips competitive cuts for vendor-priced products", () => {
+    const result = withCompetitiveStorefrontPricing({
+      price: 41.93,
+      compareAtPrice: 53.91,
+      currency: "USD" as const,
+      vendorSlug: "orange-county",
+    });
+    assert.equal(result.price, 41.93);
+    assert.equal(result.compareAtPrice, 53.91);
+  });
+
+  it("skips competitive cuts for rakhi-hampers category (catalog fallback)", () => {
+    const result = withCompetitiveStorefrontPricing({
+      price: 59.9,
+      compareAtPrice: 74.88,
+      currency: "USD" as const,
+      categorySlug: "rakhi-hampers",
+    });
+    assert.equal(result.price, 59.9);
+    assert.equal(result.compareAtPrice, 74.88);
+  });
+
   it("lowers price and preserves original as compare-at", () => {
     const result = withCompetitiveStorefrontPricing({
       price: 20,

@@ -33,6 +33,12 @@ export const categoryPageSeo: Record<
       "Order Rakhi with chocolates to USA with chocolates, sweets, dry fruits, and premium Rakhi sets. Fast USA delivery and secure online shopping.",
     h1: "Send Rakhi with Chocolates to USA",
   },
+  "rakhi-hampers": {
+    title: "Send Rakhi Hamper to USA | Free Shipping | USA Rakhi",
+    description:
+      "Order Rakhi hamper gift boxes to USA with designer rakhis, kaju katli, dry fruits, and festive sweets. Fast domestic USA delivery, clear what's-included lists, and secure online shopping.",
+    h1: "Send Rakhi Hamper to USA",
+  },
 };
 
 export function getCategoryPageSeo(slug: string) {

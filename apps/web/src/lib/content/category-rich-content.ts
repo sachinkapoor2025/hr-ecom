@@ -19,6 +19,7 @@ export interface CategoryRichContent {
 const relatedAll = [
   { slug: "single-rakhi", label: "Single Rakhi", text: "Traditional and designer rakhis with roli chawal." },
   { slug: "rakhi-combo", label: "Rakhi Combo", text: "Rakhi with Ferrero Rocher, Lindt, Hershey's." },
+  { slug: "rakhi-hampers", label: "Rakhi Hamper", text: "Festive gift boxes with sweets and dry fruits." },
   { slug: "bhaiya-bhabhi-rakhi", label: "Bhaiya Bhabhi Rakhi", text: "Matching sets for brother and Bhabhi." },
   { slug: "kids-rakhi", label: "Kids Rakhi", text: "Cartoon and colorful rakhis for little brothers." },
   { slug: "lumba-rakhi", label: "Lumba Rakhi", text: "Bracelet-style rakhis for sister-in-law." },
@@ -358,6 +359,79 @@ export const categoryRichContent: Record<string, CategoryRichContent> = {
       },
     ],
     relatedCategories: relatedExcept("rakhi-combo"),
+  },
+  "rakhi-hampers": {
+    slug: "rakhi-hampers",
+    headline: "Rakhi Hamper Gift Boxes — Premium USA Delivery",
+    intro: [
+      "Our Rakhi Hamper collection brings complete festive gift boxes to brothers across America — designer rakhis paired with kaju katli, besan laddoo, soan papdi, dry fruits, and chocolates. Search “send rakhi gift hamper to USA” or “rakhi with dry fruits” and you will find ready-to-gift boxes with transparent what’s-included lists.",
+      "These hampers are curated for sisters who want one beautifully packed gift instead of shopping separately for rakhi and sweets. Ideal for Raksha Bandhan 2026 when you are ordering from India, the UK, Canada, or anywhere worldwide.",
+      "Every hamper ships domestically within the USA for reliable 5–7 business day delivery — no international customs delays at your brother's doorstep. Prefer chocolates only? Browse Rakhi Combos; want a simple thread? Start with Single Rakhi or Kids Rakhi.",
+    ],
+    delivery: {
+      heading: "Rakhi Hamper Delivery Across the USA",
+      paragraphs: [
+        "UsaRakhi fulfills Rakhi hamper gift boxes to all 50 US states with domestic carriers and tracking.",
+        "Order early in July–August for Raksha Bandhan so your brother receives his gift box before festival day.",
+      ],
+    },
+    highlights: {
+      heading: "What's Inside a Popular Rakhi Hamper",
+      items: [
+        "Single, duo, trio, and multi-rakhi festive sets",
+        "Kaju katli, besan laddoo, and soan papdi sweet boxes",
+        "Cashews, almonds, and pistachios dry-fruit packs",
+        "Ferrero Rocher chocolate pairings",
+        "Roli–chawal / designer tilak for the ceremony",
+        "Gift-ready packaging for brothers in every US state",
+      ],
+    },
+    tradition: {
+      heading: "Why a Hamper Makes Raksha Bandhan Special",
+      paragraphs: [
+        "A rakhi hamper turns the sacred thread into a full celebration — sweets and dry fruits for the family, chocolates for joy, and roli chawal for the tilak ritual, all in one gift.",
+      ],
+    },
+    whyUs: {
+      heading: "Why Order a Rakhi Hamper from UsaRakhi",
+      bullets: [
+        "Complete gift boxes with transparent what's-included lists",
+        "Sale pricing with clear compare-at savings",
+        "Domestic USA shipping — order from anywhere in the world",
+        "Premium festive packaging",
+        "Secure checkout in USD or INR",
+        "WhatsApp and email support",
+      ],
+    },
+    howTo: {
+      heading: "How to Send a Rakhi Hamper to the USA",
+      steps: [
+        "Choose a hamper from the grid above and review what's included.",
+        "Add to cart and enter your brother's full US address.",
+        "Pay securely with Stripe (USD) or Razorpay (INR).",
+        "We pack the rakhi, sweets, and dry fruits together.",
+        "Delivery typically in 5–7 business days across America.",
+      ],
+    },
+    faqs: [
+      {
+        q: "What is included in a Rakhi hamper?",
+        a: "Each product page lists exact contents — typically designer rakhi(s), Indian sweets, dry fruits, and often roli chawal or chocolates.",
+      },
+      {
+        q: "Can I send a Rakhi gift box from India to USA?",
+        a: "Yes. Order on UsaRakhi.com with the US delivery address. We ship domestically within America.",
+      },
+      {
+        q: "Are these hampers on sale?",
+        a: "Yes. Each Rakhi hamper shows a higher list price and a sale price so you see the savings while we keep premium packaging and USA delivery.",
+      },
+      {
+        q: "Where can I learn more about choosing a Rakhi hamper?",
+        a: "Read our guide: Rakhi Hamper Gift Box USA — sweets, dry fruits, and designer rakhi tips at /blog/rakhi-hamper-gift-box-usa.",
+      },
+    ],
+    relatedCategories: relatedExcept("rakhi-hampers"),
   },
 };
 

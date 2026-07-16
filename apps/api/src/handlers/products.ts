@@ -7,6 +7,7 @@ import {
   productKeys,
   DEFAULT_PRODUCT_INVENTORY,
   withCompetitiveStorefrontPricing,
+  stripVendorPrivateFields,
   type Product,
 } from "@hr-ecom/shared";
 import { docClient, PRODUCTS_TABLE, now, slugify } from "../lib/db";
@@ -16,7 +17,9 @@ import { withResolvedProductImages, resolveProductImageUrl } from "../lib/images
 import { syncInventoryAlertState } from "../lib/inventory";
 
 function forStorefront(product: Product): Product {
-  return withCompetitiveStorefrontPricing(withResolvedProductImages(product));
+  return stripVendorPrivateFields(
+    withCompetitiveStorefrontPricing(withResolvedProductImages(product))
+  ) as Product;
 }
 
 function isKidsComboProduct(product: Product): boolean {
@@ -113,16 +116,29 @@ export async function listProducts(event: APIGatewayProxyEventV2) {
 
   if (category) {
     if (category === "rakhi-combo") {
-      const [combo, kids] = await Promise.all([
+      const [combo, kids, hampers] = await Promise.all([
         queryProductsByCategory("rakhi-combo"),
         queryProductsByCategory("kids-rakhi"),
+        queryProductsByCategory("rakhi-hampers"),
       ]);
-      const kidsComboProducts = kids.filter(isKidsComboProduct);
       const bySlug = new Map(combo.map((p) => [p.slug, p]));
-      for (const product of kidsComboProducts) bySlug.set(product.slug, product);
+      for (const product of kids.filter(isKidsComboProduct)) bySlug.set(product.slug, product);
+      for (const product of hampers) {
+        if (product.additionalCategorySlugs?.includes("rakhi-combo")) bySlug.set(product.slug, product);
+      }
       items = [...bySlug.values()];
-    } else {
+    } else if (category === "rakhi-hampers") {
       items = await queryProductsByCategory(category);
+    } else {
+      const [primary, hampers] = await Promise.all([
+        queryProductsByCategory(category),
+        queryProductsByCategory("rakhi-hampers"),
+      ]);
+      const bySlug = new Map(primary.map((p) => [p.slug, p]));
+      for (const product of hampers) {
+        if (product.additionalCategorySlugs?.includes(category)) bySlug.set(product.slug, product);
+      }
+      items = [...bySlug.values()];
     }
   } else {
     items = await scanAllProducts();

@@ -36,7 +36,17 @@ type Priced = {
  * so the original catalog price still shows as strikethrough.
  * Does not mutate DynamoDB — admin continues to see stored prices.
  */
-export function withCompetitiveStorefrontPricing<T extends Priced>(product: T): T {
+type VendorPriced = Priced & { vendorSlug?: string; categorySlug?: string };
+
+/**
+ * Storefront view of a product: lower selling price + keep/raise compare-at
+ * so the original catalog price still shows as strikethrough.
+ * Vendor-priced products (e.g. Orange County hampers) keep their sale/list prices as stored.
+ */
+export function withCompetitiveStorefrontPricing<T extends VendorPriced>(product: T): T {
+  // Already has intentional list vs sale pricing from the vendor catalog.
+  if (product.vendorSlug || product.categorySlug === "rakhi-hampers") return product;
+
   const currency = product.currency ?? "USD";
   const original = product.price;
   const reduced = applyCompetitivePriceReduction(original, currency);

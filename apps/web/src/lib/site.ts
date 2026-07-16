@@ -31,8 +31,8 @@ export const navItems = [
   { label: "Kids Rakhi", href: categoryHref("kids-rakhi"), category: "kids-rakhi" },
   { label: "Lumba Rakhi", href: categoryHref("lumba-rakhi"), category: "lumba-rakhi" },
   { label: "Rakhi Combo", href: categoryHref("rakhi-combo"), category: "rakhi-combo" },
+  { label: "Rakhi Hamper", href: categoryHref("rakhi-hampers"), category: "rakhi-hampers" },
   { label: "Raksha Bandhan", href: "/raksha-bandhan" },
-  { label: "Blog", href: "/blog" },
   { label: "Contact Us", href: "/contact" },
 ] as const;
 
@@ -105,6 +105,7 @@ export const homeCategoryOrder = [
   "kids-rakhi",
   "lumba-rakhi",
   "rakhi-combo",
+  "rakhi-hampers",
 ] as const;
 
 export const categoryOrder = homeCategoryOrder;
@@ -176,6 +177,10 @@ export const faqs = [
   {
     q: "Can I send Rakhi with chocolates and gift combos to the USA?",
     a: "Yes. We offer Rakhi combos with Ferrero Rocher, Lindt, Hershey's chocolates, designer rakhis, and traditional sets with roli chawal — beautifully packed and delivered together.",
+  },
+  {
+    q: "Do you sell Rakhi hampers with sweets and dry fruits for USA delivery?",
+    a: "Yes. Our Rakhi Hamper collection includes complete gift boxes with designer rakhis, kaju katli, besan laddoo, soan papdi, cashews, almonds, pistachios, and festive packaging — shipped domestically across all 50 US states.",
   },
   {
     q: "Do you offer Bhaiya Bhabhi Rakhi sets?",

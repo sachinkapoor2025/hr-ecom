@@ -1,6 +1,8 @@
 import { api } from "@/lib/api";
 import { site, navItems, faqs } from "@/lib/site";
 import { siteUrl } from "@/lib/env";
+import { getCatalogProducts } from "@/lib/catalog-fallback";
+import { stripHtml } from "@/lib/html-text";
 import type { Product } from "@hr-ecom/shared";
 
 /**
@@ -16,6 +18,12 @@ export async function GET() {
     products = [];
   }
 
+  const bySlug = new Map(products.map((p) => [p.slug, p]));
+  for (const p of getCatalogProducts()) {
+    if (!bySlug.has(p.slug)) bySlug.set(p.slug, p);
+  }
+  products = [...bySlug.values()];
+
   const categories = navItems
     .filter((n): n is typeof n & { category: string } => "category" in n)
     .map((n) => `- ${n.label}: ${siteUrl}${n.href}`)
@@ -23,7 +31,7 @@ export async function GET() {
 
   const productLines = products
     .map((p) => {
-      const desc = p.description.replace(/\s+/g, " ").slice(0, 200);
+      const desc = stripHtml(p.description).replace(/\s+/g, " ").slice(0, 220);
       const tags = p.tags?.length ? ` | Tags: ${p.tags.join(", ")}` : "";
       return `- **${p.name}** | ${p.currency} ${p.price} | ${p.categorySlug} | ${siteUrl}/products/${p.slug}\n  ${desc}${tags}`;
     })

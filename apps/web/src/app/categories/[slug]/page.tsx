@@ -85,11 +85,12 @@ export default async function CategoryPage({ params }: Props) {
     products = getCatalogProductsByCategory(slug);
   }
 
-  if (slug === "rakhi-combo") {
-    products = mergeProductsBySlug(products, getCatalogProductsByCategory("rakhi-combo"));
-  }
+  // Merge bundled catalog (includes Orange County hampers listed in additional categories).
+  products = mergeProductsBySlug(products, getCatalogProductsByCategory(slug));
 
-  const name = category?.name ?? slug.replace(/-/g, " ");
+  const name =
+    category?.name ??
+    (slug === "rakhi-hampers" ? "Rakhi Hamper" : slug.replace(/-/g, " "));
   const pageSeo = getCategoryPageSeo(slug);
   const h1 = pageSeo?.h1 ?? `${name} — Send to USA`;
   const baseDescription =

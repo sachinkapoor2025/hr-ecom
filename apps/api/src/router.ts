@@ -17,6 +17,7 @@ import * as sesEmail from "./handlers/ses-email";
 import * as reminderEmails from "./handlers/reminder-emails";
 import * as shipping from "./handlers/shipping";
 import * as loadTest from "./handlers/load-test";
+import * as vendorOrders from "./handlers/vendor-orders";
 import { stripeWebhook } from "./handlers/payments/stripe";
 import { razorpayWebhook, verifyRazorpayPayment } from "./handlers/payments/razorpay";
 
@@ -57,6 +58,14 @@ const routes: Route[] = [
   { method: "GET", pattern: /^\/admin\/shipping\/products-missing-dims$/, handler: shipping.listProductsMissingDims },
   { method: "GET", pattern: /^\/admin\/load-test$/, handler: loadTest.getLoadTestInfo },
   { method: "POST", pattern: /^\/admin\/load-test\/run$/, handler: loadTest.runLoadTest },
+  // Orange County vendor fulfillment feed (API key auth)
+  { method: "GET", pattern: /^\/vendors\/orange-county\/orders$/, handler: vendorOrders.listOrangeCountyOrders },
+  {
+    method: "GET",
+    pattern: /^\/vendors\/orange-county\/orders\/([^/]+)$/,
+    handler: vendorOrders.getOrangeCountyOrder,
+    params: ["orderId"],
+  },
   { method: "GET", pattern: /^\/orders$/, handler: orders.listOrders },
   { method: "GET", pattern: /^\/orders\/([^/]+)$/, handler: orders.getOrder, params: ["orderId"] },
   { method: "POST", pattern: /^\/orders\/([^/]+)\/retry-payment$/, handler: orders.retryOrderPayment, params: ["orderId"] },

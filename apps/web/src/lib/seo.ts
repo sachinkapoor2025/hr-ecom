@@ -223,6 +223,7 @@ export function productJsonLd(product: {
   slug: string;
   name: string;
   description: string;
+  seoDescription?: string;
   images?: string[];
   sku?: string;
   price: number;
@@ -235,7 +236,7 @@ export function productJsonLd(product: {
     "@type": "Product",
     "@id": `${siteUrl}/products/${product.slug}#product`,
     name: product.name,
-    description: productMetaDescription(undefined, product.description),
+    description: productMetaDescription(product.seoDescription, product.description),
     image: product.images ?? [],
     sku: product.sku ?? product.slug,
     mpn: product.slug,

@@ -8,6 +8,7 @@ export const CATEGORY_PUBLIC_SLUG: Record<string, string> = {
   "rakhi-combo": "rakhi-combo-to-usa",
   "lumba-rakhi": "lumba-rakhi-to-usa",
   "bhaiya-bhabhi-rakhi": "bhaiya-bhabhi-rakhi-to-usa",
+  "rakhi-hampers": "rakhi-hampers-to-usa",
 };
 
 const PUBLIC_TO_INTERNAL = Object.fromEntries(

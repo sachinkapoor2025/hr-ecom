@@ -98,6 +98,8 @@ export async function addToCart(event: APIGatewayProxyEventV2) {
     currency: "USD" | "INR";
     images?: string[];
     inventory: number;
+    vendorSlug?: string;
+    sku?: string;
   };
 
   if (product.inventory < parsed.data.quantity) {
@@ -106,13 +108,20 @@ export async function addToCart(event: APIGatewayProxyEventV2) {
 
   const existingIdx = cart.items.findIndex((i) => i.productSlug === parsed.data.productSlug);
 
+  // Vendor catalogs already include sale pricing — do not apply site-wide competitive cuts.
+  const unitPrice = product.vendorSlug
+    ? product.price
+    : applyCompetitivePriceReduction(product.price, product.currency);
+
   const item: CartItem = {
     productSlug: product.slug,
     name: product.name,
-    price: applyCompetitivePriceReduction(product.price, product.currency),
+    price: unitPrice,
     currency: product.currency,
     quantity: parsed.data.quantity,
     image: resolveProductImageUrl(product.images?.[0]),
+    ...(product.vendorSlug ? { vendorSlug: product.vendorSlug } : {}),
+    ...(product.sku ? { sku: product.sku } : {}),
   };
 
   if (existingIdx >= 0) {

@@ -57,6 +57,12 @@ export function HomeRakshaBandhan2026Section() {
           >
             Rakhi gift combos USA
           </Link>
+          <Link
+            href={categoryHref("rakhi-hampers")}
+            className="px-5 py-2.5 border border-white/50 rounded-lg hover:bg-white/10"
+          >
+            Rakhi hampers USA
+          </Link>
         </div>
 
         <div className="border-t border-white/20 pt-6">

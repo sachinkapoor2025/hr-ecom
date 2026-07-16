@@ -11,8 +11,9 @@ export async function loadProduct(slug: string): Promise<Product | null> {
     const data = await api<{ product: Product }>(`/products/${slug}`, { revalidate: false });
     return data.product;
   } catch {
-    return getCatalogProduct(slug) ?? null;
+    // Fall through to bundled catalog (e.g. hampers before DynamoDB import).
   }
+  return getCatalogProduct(slug) ?? null;
 }
 
 export async function loadFeaturedProducts(limit = 10): Promise<Product[]> {
@@ -24,17 +25,26 @@ export async function loadFeaturedProducts(limit = 10): Promise<Product[]> {
   }
 }
 
+function mergeBySlug(a: Product[], b: Product[]): Product[] {
+  const map = new Map(a.map((p) => [p.slug, p]));
+  for (const p of b) map.set(p.slug, p);
+  return [...map.values()];
+}
+
 export async function loadRelatedProducts(categorySlug: string, excludeSlug: string): Promise<Product[]> {
+  let products: Product[] = [];
   try {
     const data = await api<{ products: Product[] }>(`/products?category=${categorySlug}`, {
       revalidate: 3600,
     });
-    return data.products.filter((p) => p.slug !== excludeSlug).slice(0, 5);
+    products = data.products;
   } catch {
-    return getCatalogProductsByCategory(categorySlug)
-      .filter((p) => p.slug !== excludeSlug)
-      .slice(0, 5);
+    products = [];
   }
+  if (categorySlug === "rakhi-hampers" || products.length === 0) {
+    products = mergeBySlug(products, getCatalogProductsByCategory(categorySlug));
+  }
+  return products.filter((p) => p.slug !== excludeSlug).slice(0, 5);
 }
 
 /** Prefer catalog slugs at build time — avoids CI/API rate-limit prerender failures. */

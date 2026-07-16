@@ -95,6 +95,8 @@ export const orderSchema = z.object({
   tax: z.number().default(0),
   total: z.number(),
   currency: z.enum(["USD", "INR"]),
+  /** Distinct vendorSlug values present on line items (for vendor order APIs). */
+  vendorSlugs: z.array(z.string()).optional(),
   status: orderStatusEnum,
   statusHistory: z.array(orderStatusHistoryEntrySchema).optional(),
   shippingAddress: shippingAddressSchema,
