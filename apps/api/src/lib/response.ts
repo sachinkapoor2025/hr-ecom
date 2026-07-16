@@ -6,12 +6,17 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Session-Id",
 };
 
-export function json(statusCode: number, body: unknown): APIGatewayProxyResultV2 {
+export function json(
+  statusCode: number,
+  body: unknown,
+  extraHeaders?: Record<string, string>
+): APIGatewayProxyResultV2 {
   return {
     statusCode,
     headers: {
       "Content-Type": "application/json",
       ...CORS_HEADERS,
+      ...extraHeaders,
     },
     body: JSON.stringify(body),
   };
@@ -26,8 +31,15 @@ export function corsPreflight(): APIGatewayProxyResultV2 {
   };
 }
 
-export function ok(body: unknown) {
-  return json(200, body);
+export function ok(body: unknown, extraHeaders?: Record<string, string>) {
+  return json(200, body, extraHeaders);
+}
+
+/** Cacheable catalog responses (browser / CDN). Keep short so admin edits show up soon. */
+export function okCached(body: unknown, maxAgeSeconds = 30) {
+  return ok(body, {
+    "Cache-Control": `public, max-age=${maxAgeSeconds}, s-maxage=${maxAgeSeconds}, stale-while-revalidate=60`,
+  });
 }
 
 export function created(body: unknown) {

@@ -16,6 +16,7 @@ import * as coupons from "./handlers/coupons";
 import * as sesEmail from "./handlers/ses-email";
 import * as reminderEmails from "./handlers/reminder-emails";
 import * as shipping from "./handlers/shipping";
+import * as loadTest from "./handlers/load-test";
 import { stripeWebhook } from "./handlers/payments/stripe";
 import { razorpayWebhook, verifyRazorpayPayment } from "./handlers/payments/razorpay";
 
@@ -54,6 +55,8 @@ const routes: Route[] = [
   { method: "POST", pattern: /^\/admin\/orders\/([^/]+)\/buy-label$/, handler: shipping.buyLabelForOrder, params: ["orderId"] },
   { method: "POST", pattern: /^\/admin\/orders\/([^/]+)\/rates$/, handler: shipping.getOrderShippingRates, params: ["orderId"] },
   { method: "GET", pattern: /^\/admin\/shipping\/products-missing-dims$/, handler: shipping.listProductsMissingDims },
+  { method: "GET", pattern: /^\/admin\/load-test$/, handler: loadTest.getLoadTestInfo },
+  { method: "POST", pattern: /^\/admin\/load-test\/run$/, handler: loadTest.runLoadTest },
   { method: "GET", pattern: /^\/orders$/, handler: orders.listOrders },
   { method: "GET", pattern: /^\/orders\/([^/]+)$/, handler: orders.getOrder, params: ["orderId"] },
   { method: "POST", pattern: /^\/orders\/([^/]+)\/retry-payment$/, handler: orders.retryOrderPayment, params: ["orderId"] },

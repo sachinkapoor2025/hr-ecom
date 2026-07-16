@@ -15,7 +15,7 @@ resolve_s3 = true
 s3_prefix = "hr-ecom"
 region = "us-east-1"
 capabilities = "CAPABILITY_IAM"
-parameter_overrides = "Environment=staging"
+parameter_overrides = "Environment=staging LoadTestMode=true"
 
 [prod.deploy.parameters]
 stack_name = "hr-ecom-prod"

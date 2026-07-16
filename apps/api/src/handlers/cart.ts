@@ -27,15 +27,14 @@ async function getCart(userKey: string): Promise<Cart & { createdAt?: string }> 
   return (result.Item as Cart & { createdAt?: string }) ?? { items: [], updatedAt: now() };
 }
 
-async function saveCart(userKey: string, cart: Cart, sessionId?: string) {
+/** Single Put — avoids a second Get on every cart write. */
+async function saveCart(
+  userKey: string,
+  cart: Cart & { createdAt?: string },
+  sessionId?: string
+) {
   const timestamp = now();
-  const existing = await docClient.send(
-    new GetCommand({
-      TableName: CARTS_TABLE,
-      Key: { PK: cartKeys.pk(userKey), SK: cartKeys.sk() },
-    })
-  );
-  const createdAt = (existing.Item?.createdAt as string | undefined) ?? timestamp;
+  const createdAt = cart.createdAt ?? timestamp;
   const itemCount = cart.items.reduce((sum, i) => sum + i.quantity, 0);
   const value = cart.items.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
@@ -45,7 +44,7 @@ async function saveCart(userKey: string, cart: Cart, sessionId?: string) {
       Item: {
         PK: cartKeys.pk(userKey),
         SK: cartKeys.sk(),
-        ...cart,
+        items: cart.items,
         userKey,
         sessionId,
         createdAt,
@@ -81,12 +80,15 @@ export async function addToCart(event: APIGatewayProxyEventV2) {
   const parsed = addToCartSchema.safeParse(body);
   if (!parsed.success) return badRequest(parsed.error.message);
 
-  const productResult = await docClient.send(
-    new GetCommand({
-      TableName: PRODUCTS_TABLE,
-      Key: { PK: productKeys.pk(parsed.data.productSlug), SK: productKeys.sk() },
-    })
-  );
+  const [productResult, cart] = await Promise.all([
+    docClient.send(
+      new GetCommand({
+        TableName: PRODUCTS_TABLE,
+        Key: { PK: productKeys.pk(parsed.data.productSlug), SK: productKeys.sk() },
+      })
+    ),
+    getCart(userKey),
+  ]);
   if (!productResult.Item) return badRequest("Product not found");
 
   const product = productResult.Item as {
@@ -102,7 +104,6 @@ export async function addToCart(event: APIGatewayProxyEventV2) {
     return badRequest("Insufficient inventory");
   }
 
-  const cart = await getCart(userKey);
   const existingIdx = cart.items.findIndex((i) => i.productSlug === parsed.data.productSlug);
 
   const item: CartItem = {
