@@ -14,8 +14,15 @@ import { TrustStrip } from "@/components/TrustStrip";
 import { WhyTrustUsSection } from "@/components/WhyTrustUsSection";
 import { JsonLd } from "@/components/JsonLd";
 import { site, homeBanners, homeCategoryOrder, faqs } from "@/lib/site";
+import { getCatalogProductsByCategory } from "@/lib/catalog-fallback";
 import { faqJsonLd, howToSendRakhiJsonLd, pageMetadata } from "@/lib/seo";
 import type { Product, Category } from "@hr-ecom/shared";
+
+function mergeProductsBySlug(products: Product[], additions: Product[]): Product[] {
+  const bySlug = new Map(products.map((product) => [product.slug, product]));
+  for (const product of additions) bySlug.set(product.slug, product);
+  return [...bySlug.values()];
+}
 
 export const metadata: Metadata = pageMetadata({
   title: "Send Rakhi to USA Online | Rakhi Delivery USA | UsaRakhi",
@@ -43,6 +50,24 @@ export default async function HomePage() {
   } catch {
     products = [];
     categories = [];
+  }
+
+  // Hampers may not be in API yet — merge bundled catalog so home + category stay populated.
+  products = mergeProductsBySlug(products, getCatalogProductsByCategory("rakhi-hampers"));
+  if (!categories.some((c) => c.slug === "rakhi-hampers")) {
+    const now = new Date().toISOString();
+    categories = [
+      ...categories,
+      {
+        name: "Rakhi Hamper",
+        slug: "rakhi-hampers",
+        description: "Premium Rakhi gift hampers for USA delivery.",
+        published: true,
+        sortOrder: 15,
+        createdAt: now,
+        updatedAt: now,
+      },
+    ];
   }
 
   const categoryMap = new Map(categories.map((c) => [c.slug, c]));

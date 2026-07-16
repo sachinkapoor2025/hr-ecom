@@ -88,8 +88,13 @@ export default async function CategoryPage({ params }: Props) {
   if (slug === "rakhi-combo") {
     products = mergeProductsBySlug(products, getCatalogProductsByCategory("rakhi-combo"));
   }
+  if (slug === "rakhi-hampers") {
+    products = mergeProductsBySlug(products, getCatalogProductsByCategory("rakhi-hampers"));
+  }
 
-  const name = category?.name ?? slug.replace(/-/g, " ");
+  const name =
+    category?.name ??
+    (slug === "rakhi-hampers" ? "Rakhi Hamper" : slug.replace(/-/g, " "));
   const pageSeo = getCategoryPageSeo(slug);
   const h1 = pageSeo?.h1 ?? `${name} — Send to USA`;
   const baseDescription =

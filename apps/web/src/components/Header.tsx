@@ -247,15 +247,15 @@ export function Header() {
         </div>
       </div>
 
-      {/* Desktop nav */}
+      {/* Desktop nav — single row (nowrap + compact pills) */}
       <nav className="hidden md:block border-t border-slate-100 bg-white overflow-visible">
-        <div className="max-w-7xl mx-auto px-4 py-2.5">
-          <div className="flex flex-wrap items-center gap-2">
+        <div className="max-w-7xl mx-auto px-3 lg:px-4 py-2">
+          <div className="flex flex-nowrap items-center justify-between gap-1 lg:gap-1.5 overflow-x-auto scrollbar-none">
             {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`btn-nav ${isActive(item.href, "category" in item ? item.category : undefined) ? "btn-nav-active" : ""}`}
+                className={`btn-nav shrink-0 ${isActive(item.href, "category" in item ? item.category : undefined) ? "btn-nav-active" : ""}`}
               >
                 {item.label}
               </Link>

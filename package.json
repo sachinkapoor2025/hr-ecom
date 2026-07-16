@@ -16,6 +16,7 @@
     "import:usarakhi": "tsx scripts/import-usarakhi.ts",
     "import:usarakhi:fetch": "tsx scripts/import-usarakhi.ts --fetch-only",
     "import:orange-county": "tsx scripts/import-orange-county.ts",
+    "generate:orange-county-catalog": "tsx scripts/generate-orange-county-catalog.ts",
     "seed:inventory": "tsx scripts/seed-inventory.ts",
     "fix:seo-descriptions": "tsx scripts/fix-seo-descriptions.ts",
     "migrate:images": "tsx scripts/migrate-images-to-s3.ts",
