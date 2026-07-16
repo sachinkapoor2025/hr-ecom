@@ -364,9 +364,9 @@ export const categoryRichContent: Record<string, CategoryRichContent> = {
     slug: "rakhi-hampers",
     headline: "Rakhi Hamper Gift Boxes — Premium USA Delivery",
     intro: [
-      "Our Rakhi Hamper collection brings complete festive gift boxes to brothers across America — designer rakhis paired with kaju katli, besan laddoo, soan papdi, dry fruits, and chocolates.",
-      "These hampers are curated for sisters who want one beautifully packed gift instead of shopping separately for rakhi and sweets. Ideal for Raksha Bandhan when you are ordering from India, the UK, Canada, or anywhere worldwide.",
-      "Every hamper ships domestically within the USA for reliable 5–7 business day delivery — no international customs delays at your brother's doorstep.",
+      "Our Rakhi Hamper collection brings complete festive gift boxes to brothers across America — designer rakhis paired with kaju katli, besan laddoo, soan papdi, dry fruits, and chocolates. Search “send rakhi gift hamper to USA” or “rakhi with dry fruits” and you will find ready-to-gift boxes with transparent what’s-included lists.",
+      "These hampers are curated for sisters who want one beautifully packed gift instead of shopping separately for rakhi and sweets. Ideal for Raksha Bandhan 2026 when you are ordering from India, the UK, Canada, or anywhere worldwide.",
+      "Every hamper ships domestically within the USA for reliable 5–7 business day delivery — no international customs delays at your brother's doorstep. Prefer chocolates only? Browse Rakhi Combos; want a simple thread? Start with Single Rakhi or Kids Rakhi.",
     ],
     delivery: {
       heading: "Rakhi Hamper Delivery Across the USA",
@@ -425,6 +425,10 @@ export const categoryRichContent: Record<string, CategoryRichContent> = {
       {
         q: "Are these hampers on sale?",
         a: "Yes. Each Rakhi hamper shows a higher list price and a sale price so you see the savings while we keep premium packaging and USA delivery.",
+      },
+      {
+        q: "Where can I learn more about choosing a Rakhi hamper?",
+        a: "Read our guide: Rakhi Hamper Gift Box USA — sweets, dry fruits, and designer rakhi tips at /blog/rakhi-hamper-gift-box-usa.",
       },
     ],
     relatedCategories: relatedExcept("rakhi-hampers"),

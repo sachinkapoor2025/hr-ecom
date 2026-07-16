@@ -1,4 +1,6 @@
 import { getApiUrl, getSiteUrl, getCdnUrl } from "@/lib/env";
+import { getCatalogProducts } from "@/lib/catalog-fallback";
+import { stripHtml } from "@/lib/html-text";
 
 type FeedProduct = {
   slug: string;
@@ -9,6 +11,7 @@ type FeedProduct = {
   images?: string[];
   sku?: string;
   inventory?: number;
+  categorySlug?: string;
 };
 
 function escapeXml(value: string): string {
@@ -41,15 +44,34 @@ export async function GET() {
     products = [];
   }
 
+  const bySlug = new Map(products.map((p) => [p.slug, p]));
+  for (const p of getCatalogProducts()) {
+    if (!bySlug.has(p.slug)) {
+      bySlug.set(p.slug, {
+        slug: p.slug,
+        name: p.name,
+        description: p.description,
+        price: p.price,
+        currency: p.currency,
+        images: p.images,
+        sku: p.sku,
+        inventory: p.inventory,
+        categorySlug: p.categorySlug,
+      });
+    }
+  }
+  products = [...bySlug.values()];
+
   const items = products
     .map((p) => {
       const currency = p.currency === "INR" ? "INR" : "USD";
       const price = p.price.toFixed(2);
       const availability = (p.inventory ?? 1) > 0 ? "in stock" : "out of stock";
+      const description = stripHtml(p.description ?? p.name).slice(0, 5000);
       return `<item>
   <g:id>${escapeXml(p.sku ?? p.slug)}</g:id>
   <g:title>${escapeXml(p.name)}</g:title>
-  <g:description>${escapeXml((p.description ?? p.name).slice(0, 5000))}</g:description>
+  <g:description>${escapeXml(description)}</g:description>
   <g:link>${escapeXml(`${site}/products/${p.slug}`)}</g:link>
   <g:image_link>${escapeXml(productImage(p))}</g:image_link>
   <g:price>${price} ${currency}</g:price>

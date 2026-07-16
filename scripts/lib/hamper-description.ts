@@ -38,7 +38,6 @@ export function normalizeInclusionLine(raw: string): string {
     .replace(/\bRoli\s*&\s*chawal\s+dibbi\b/gi, "Roli Chawal Dibbi")
     .replace(/\bRoli\s*&\s*chawal\b/gi, "Roli Chawal");
 
-  // Sentence-style capital (first letter); proper nouns already normalized above.
   return line.charAt(0).toUpperCase() + line.slice(1);
 }
 
@@ -47,6 +46,20 @@ export function parseInclusionLines(raw: string): string[] {
     .split(/\r?\n/)
     .map(normalizeInclusionLine)
     .filter(Boolean);
+}
+
+/** Unique SEO meta from inclusions + name (no HTML). */
+export function buildHamperSeoDescription(
+  name: string,
+  rawInclusions: string,
+  salePrice: number
+): string {
+  const items = parseInclusionLines(rawInclusions);
+  const highlights =
+    items.length > 0
+      ? items.slice(0, 4).join(", ")
+      : "designer rakhi, Indian sweets, and dry fruits";
+  return `Send ${name} to USA — Rakhi hamper gift box with ${highlights}. Sale $${salePrice.toFixed(2)}. Domestic USA delivery for Raksha Bandhan. Order online from India worldwide.`;
 }
 
 export function buildHamperHtmlDescription(name: string, rawInclusions: string, sku: string): string {
@@ -58,15 +71,18 @@ export function buildHamperHtmlDescription(name: string, rawInclusions: string, 
 
   const qtyNote =
     items.length > 0
-      ? `<p>Every item above ships together in one gift hamper — quantities are as listed (grams / pieces).</p>`
+      ? `<p>Every item above ships together in one gift hamper — quantities are as listed (grams / pieces). Perfect when you want to <strong>send a Rakhi gift hamper to USA</strong> without buying sweets separately.</p>`
       : "";
 
   return [
-    `<p><strong>${escapeHtml(name)}</strong> is a premium Rakhi gift hamper for USA delivery. It is curated with festive sweets, dry fruits, and designer rakhis, and ships domestically within America for Raksha Bandhan and year-round brother–sister celebrations.</p>`,
+    `<p><strong>${escapeHtml(name)}</strong> is a premium <strong>Rakhi hamper</strong> for USA delivery. Sisters in India, the UK, Canada, and worldwide order this festive gift box so brothers across America receive designer rakhis with traditional sweets and dry fruits — shipped domestically within the United States for reliable Raksha Bandhan delivery.</p>`,
+    `<p>Unlike a simple thread-only gift, this hamper turns Raksha Bandhan into a full celebration: sweets for the family, dry fruits for sharing, and roli chawal or tilak essentials where listed. Ideal if you searched for a <strong>rakhi gift hamper</strong>, <strong>rakhi with dry fruits</strong>, or a ready-to-gift <strong>Rakhi mithai box USA</strong>.</p>`,
     `<p><strong>What's included in this hamper:</strong></p>`,
     list,
     qtyNote,
-    `<p>Looking for more options? Browse our <a href="/rakhi-combo-to-usa">Rakhi Combos</a>, <a href="/single-rakhi-to-usa">Single Rakhi</a> collection, or shop all <a href="/rakhi-hampers-to-usa">Rakhi Hampers</a>. Perfect for sending love across the USA.</p>`,
+    `<p><strong>Why sisters choose this hamper for USA delivery:</strong></p>`,
+    `<ul><li>Clear what's-included list with quantities</li><li>Domestic USA shipping — no international customs delay for your brother</li><li>Festive packaging ready for Raksha Bandhan 2026</li><li>Secure checkout in USD (Stripe) or INR (Razorpay)</li></ul>`,
+    `<p>Looking for more options? Browse our <a href="/rakhi-combo-to-usa">Rakhi Combos</a> with chocolates, <a href="/single-rakhi-to-usa">Single Rakhi</a> designs, <a href="/kids-rakhi-to-usa">Kids Rakhi</a>, <a href="/bhaiya-bhabhi-rakhi-to-usa">Bhaiya Bhabhi sets</a>, or shop all <a href="/rakhi-hampers-to-usa">Rakhi Hampers</a> for USA delivery. Read our guide: <a href="/blog/rakhi-hamper-gift-box-usa">How to choose a Rakhi hamper gift box for USA</a>.</p>`,
     `<p>SKU: ${escapeHtml(sku)}</p>`,
   ].join("\n");
 }

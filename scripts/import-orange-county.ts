@@ -23,7 +23,7 @@
 import { readdirSync, readFileSync, existsSync } from "fs";
 import { join, extname, basename, resolve } from "path";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, PutCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient, PutCommand, GetCommand, DeleteCommand } from "@aws-sdk/lib-dynamodb";
 import { S3Client, PutObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s3";
 import * as XLSX from "xlsx";
 import {
@@ -35,7 +35,7 @@ import {
   metaDescription,
   DEFAULT_PRODUCT_INVENTORY,
 } from "@hr-ecom/shared";
-import { buildHamperHtmlDescription } from "./lib/hamper-description";
+import { buildHamperHtmlDescription, buildHamperSeoDescription } from "./lib/hamper-description";
 
 const ENV = process.env.ENVIRONMENT ?? "prod";
 const PRODUCTS_TABLE = process.env.PRODUCTS_TABLE ?? `hr-ecom-products-${ENV}`;
@@ -128,14 +128,13 @@ function parseExcel(path: string) {
 
 function seoFor(
   name: string,
-  listPrice: number,
-  salePrice: number
+  salePrice: number,
+  rawInclusions: string
 ): { seoTitle: string; seoDescription: string } {
-  const seoTitle = `Send ${name} to USA | Rakhi Hamper | UsaRakhi`;
-  const seoDescription = metaDescription(
-    `Buy ${name} Rakhi hamper for USA delivery. Festive gift box with rakhi, sweets & dry fruits. Sale price $${salePrice.toFixed(2)} (was $${listPrice.toFixed(2)}). Fast domestic shipping.`
-  );
-  return { seoTitle, seoDescription };
+  return {
+    seoTitle: `Send ${name} to USA | Free Shipping | Rakhi Hamper`,
+    seoDescription: metaDescription(buildHamperSeoDescription(name, rawInclusions, salePrice)),
+  };
 }
 
 async function ensureS3Image(
@@ -237,7 +236,8 @@ async function main() {
   let imported = 0;
   for (const row of rows) {
     const pricing = pricingFromVendorCost(row.vendorCost, "USD");
-    const slug = slugify(`${row.name}-${row.sku}`);
+    // Public URL = product name only (SKU stays on the product record, not in the path).
+    const slug = slugify(row.name);
     const localImages = imagesForSku(row.sku, imageFiles);
     const imageUrls: string[] = [];
 
@@ -250,7 +250,7 @@ async function main() {
       }
     }
 
-    const { seoTitle, seoDescription } = seoFor(row.name, pricing.compareAtPrice, pricing.price);
+    const { seoTitle, seoDescription } = seoFor(row.name, pricing.price, row.description);
     const description = buildHamperHtmlDescription(row.name, row.description, row.sku);
 
     const item = {
@@ -315,6 +315,18 @@ async function main() {
     }
 
     await ddb.send(new PutCommand({ TableName: PRODUCTS_TABLE, Item: item }));
+
+    // Remove legacy name-sku URL records if they still exist in DynamoDB.
+    const legacySlug = slugify(`${row.name}-${row.sku}`);
+    if (legacySlug !== slug) {
+      await ddb.send(
+        new DeleteCommand({
+          TableName: PRODUCTS_TABLE,
+          Key: { PK: productKeys.pk(legacySlug), SK: productKeys.sk() },
+        })
+      );
+    }
+
     imported += 1;
   }
 

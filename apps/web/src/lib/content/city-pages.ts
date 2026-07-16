@@ -30,6 +30,11 @@ const sharedCategories = [
     text: "Rakhi with Ferrero Rocher, Lindt, Hershey's, and gift sets.",
   },
   {
+    label: "Rakhi Hamper",
+    href: categoryHref("rakhi-hampers"),
+    text: "Gift boxes with rakhi, sweets, dry fruits, and festive packaging.",
+  },
+  {
     label: "Bhaiya Bhabhi Rakhi",
     href: categoryHref("bhaiya-bhabhi-rakhi"),
     text: "Matching sets for brother and sister-in-law including Lumba.",

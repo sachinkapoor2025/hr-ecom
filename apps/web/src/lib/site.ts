@@ -179,6 +179,10 @@ export const faqs = [
     a: "Yes. We offer Rakhi combos with Ferrero Rocher, Lindt, Hershey's chocolates, designer rakhis, and traditional sets with roli chawal — beautifully packed and delivered together.",
   },
   {
+    q: "Do you sell Rakhi hampers with sweets and dry fruits for USA delivery?",
+    a: "Yes. Our Rakhi Hamper collection includes complete gift boxes with designer rakhis, kaju katli, besan laddoo, soan papdi, cashews, almonds, pistachios, and festive packaging — shipped domestically across all 50 US states.",
+  },
+  {
     q: "Do you offer Bhaiya Bhabhi Rakhi sets?",
     a: "Yes. Our Bhaiya Bhabhi collection features elegant matching sets for brothers and sisters-in-law, including Lumba rakhis.",
   },

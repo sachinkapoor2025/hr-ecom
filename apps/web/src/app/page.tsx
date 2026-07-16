@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { categoryHref } from "@/lib/category-urls";
 import { api } from "@/lib/api";
-import { linkPhraseInText } from "@/lib/inline-links";
+import { applyInlineLinks } from "@/lib/inline-links";
 import { homepageInlineLinks } from "@/lib/content/page-inline-links";
 import { BannerCarousel } from "@/components/BannerCarousel";
 import { CustomerReviews } from "@/components/CustomerReviews";
@@ -88,10 +88,9 @@ export default async function HomePage() {
           Send Rakhi to USA — Free Shipping | Premium Online Rakhi Delivery
         </h1>
         <p className="text-slate-600 leading-relaxed mb-4">
-          {linkPhraseInText(
-            `${site.name} helps sisters in India, UK, Canada, Australia, and worldwide send rakhi to USA with reliable rakhi delivery USA across all 50 states. Shop 126+ designer rakhis — Single Rakhi, Combos with chocolates, Kids Rakhi, Bhaiya Bhabhi sets, and Lumba Rakhi — delivered in 5–7 business days with roli chawal included. Order rakhi to USA from India in minutes at our online rakhi store USA.`,
-            homepageInlineLinks[0].phrase,
-            homepageInlineLinks[0].href
+          {applyInlineLinks(
+            `${site.name} helps sisters in India, UK, Canada, Australia, and worldwide send rakhi to USA with reliable rakhi delivery USA across all 50 states. Shop 140+ designer rakhis — Single Rakhi, Combos with chocolates, rakhi gift hamper boxes with sweets and dry fruits, Kids Rakhi, Bhaiya Bhabhi sets, and Lumba Rakhi — delivered in 5–7 business days with roli chawal included. Order rakhi to USA from India in minutes at our online rakhi store USA.`,
+            homepageInlineLinks
           )}
         </p>
         <div className="flex flex-wrap justify-center gap-3 text-sm">
@@ -100,6 +99,9 @@ export default async function HomePage() {
           </Link>
           <Link href="/blog/send-rakhi-to-usa-from-india" className="text-nav font-semibold hover:underline">
             Send from India guide →
+          </Link>
+          <Link href={categoryHref("rakhi-hampers")} className="text-nav font-semibold hover:underline">
+            Rakhi Hampers →
           </Link>
           <Link href="/shipping" className="text-nav font-semibold hover:underline">
             Shipping info →

@@ -58,6 +58,7 @@ export const categoryPathToSlug: Record<string, string> = {
   "/kids-rakhi-to-usa": "kids-rakhi",
   "/lumba-rakhi-to-usa": "lumba-rakhi",
   "/rakhi-combo-to-usa": "rakhi-combo",
+  "/rakhi-hampers-to-usa": "rakhi-hampers",
 };
 
 export function productKeywordsForCategory(slug: string): string[] {

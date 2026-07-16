@@ -14,7 +14,7 @@ import {
   metaDescription,
   DEFAULT_PRODUCT_INVENTORY,
 } from "@hr-ecom/shared";
-import { buildHamperHtmlDescription } from "./lib/hamper-description";
+import { buildHamperHtmlDescription, buildHamperSeoDescription } from "./lib/hamper-description";
 
 const ROOT = resolve(process.cwd());
 const CATALOG_DIR = resolve(
@@ -89,7 +89,8 @@ if (COPY_IMAGES) mkdirSync(PUBLIC_IMG, { recursive: true });
 
 const products = rows.map((row) => {
   const pricing = pricingFromVendorCost(row.vendorCost, "USD");
-  const slug = slugify(`${row.name}-${row.sku}`);
+  // Public URL = product name only (SKU stays on the product record, not in the path).
+  const slug = slugify(row.name);
   const localImages = imagesForSku(row.sku, imageFiles);
   const imageUrls: string[] = [];
 
@@ -116,10 +117,8 @@ const products = rows.map((row) => {
     sku: row.sku,
     inventory: DEFAULT_PRODUCT_INVENTORY,
     tags: ["rakhi-hamper", "gift-hamper", "raksha-bandhan", "dry-fruits", "send-rakhi-to-usa"],
-    seoTitle: `Send ${row.name} to USA | Rakhi Hamper | UsaRakhi`,
-    seoDescription: metaDescription(
-      `Buy ${row.name} Rakhi hamper for USA delivery. Festive gift box with rakhi, sweets & dry fruits. Sale price $${pricing.price.toFixed(2)}.`
-    ),
+    seoTitle: `Send ${row.name} to USA | Free Shipping | Rakhi Hamper`,
+    seoDescription: metaDescription(buildHamperSeoDescription(row.name, row.description, pricing.price)),
     published: true,
     createdAt: ts,
     updatedAt: ts,

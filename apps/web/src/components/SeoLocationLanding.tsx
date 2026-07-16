@@ -7,6 +7,7 @@ import { site, whatsappChatUrl } from "@/lib/site";
 const sharedCategories = [
   { label: "Single Rakhi", slug: "single-rakhi", text: "Designer, Om, pearl, and traditional rakhis with roli chawal." },
   { label: "Rakhi Combo", slug: "rakhi-combo", text: "Rakhi with Ferrero Rocher, Lindt, Hershey's chocolates." },
+  { label: "Rakhi Hamper", slug: "rakhi-hampers", text: "Gift boxes with rakhi, kaju katli, dry fruits, and sweets." },
   { label: "Bhaiya Bhabhi Rakhi", slug: "bhaiya-bhabhi-rakhi", text: "Matching sets for brother and sister-in-law." },
   { label: "Kids Rakhi", slug: "kids-rakhi", text: "Cartoon and colorful rakhis for younger brothers." },
   { label: "Lumba Rakhi", slug: "lumba-rakhi", text: "Bracelet-style Lumba rakhis for Bhabhi." },

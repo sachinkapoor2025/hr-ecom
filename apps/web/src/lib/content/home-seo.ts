@@ -8,13 +8,13 @@ export const homeSeoContent = {
     paragraphs: [
       "Raksha Bandhan celebrates the lifelong bond between brothers and sisters. When your brother lives in America, tying a rakhi in person is not always possible — but the emotion behind the festival does not have to wait. UsaRakhi is a dedicated rakhi store USA sisters trust to send rakhi to USA with premium designs, reliable domestic delivery, and thoughtful packaging that honors Indian tradition.",
       "Whether you buy rakhi online USA from India, the United Kingdom, Canada, Australia, or anywhere else, we ship inside the United States to your brother's doorstep. Order rakhi to USA from India in minutes — sisters worldwide use our online rakhi store for fast rakhi delivery USA in 5–7 business days, with complimentary roli and chawal included on most rakhis for the tilak ceremony.",
-      "Shop 126+ designer rakhis across Single Rakhi, Rakhi Combo, Kids Rakhi, Bhaiya Bhabhi sets, and Lumba Rakhi — your one-stop rakhi shop USA for sending rakhi gifts to USA before Raksha Bandhan 2026 (August 28).",
+      "Shop 140+ designer rakhis across Single Rakhi, Rakhi Combo, rakhi gift hamper boxes with sweets and dry fruits, Kids Rakhi, Bhaiya Bhabhi sets, and Lumba Rakhi — your one-stop rakhi shop USA for sending rakhi gifts to USA before Raksha Bandhan 2026 (August 28).",
     ],
   },
   categories: {
     heading: "Shop Rakhi by Category — Buy Rakhi Online USA",
     intro:
-      "Browse curated collections for every sibling — from traditional single rakhis to complete gift combos with chocolates. Nationwide rakhi delivery USA on every order.",
+      "Browse curated collections for every sibling — from traditional single rakhis to chocolate combos and full Rakhi hamper gift boxes with sweets and dry fruits. Nationwide rakhi delivery USA on every order.",
     links: [
       {
         label: "Single Rakhi",
@@ -40,6 +40,11 @@ export const homeSeoContent = {
         label: "Rakhi Combo",
         href: categoryHref("rakhi-combo"),
         text: "Send rakhi with chocolates — Ferrero Rocher, Lindt, Hershey's gift sets.",
+      },
+      {
+        label: "Rakhi Hamper",
+        href: categoryHref("rakhi-hampers"),
+        text: "Premium gift boxes with rakhi, kaju katli, dry fruits, and festive sweets.",
       },
     ],
   },
@@ -71,7 +76,7 @@ export const homeSeoContent = {
     heading: "Why Sisters Choose UsaRakhi — USA Rakhi Shop Online",
     bullets: [
       "Domestic USA shipping — rakhi India to USA delivery without customs hassle for your brother",
-      "126+ premium rakhis across all major categories",
+      "140+ premium rakhis across all major categories including gift hampers",
       "Roli and chawal included on most orders",
       "Pay in USD (Stripe) or INR (Razorpay) from anywhere",
       "5–7 business day rakhi delivery USA to all 50 states",
@@ -95,6 +100,10 @@ export const homeSeoContent = {
     {
       q: "Do rakhis include roli and chawal?",
       a: "Most single rakhis and many combos include complimentary roli and chawal for the tilak ceremony.",
+    },
+    {
+      q: "Do you sell Rakhi hampers with sweets and dry fruits?",
+      a: "Yes. Shop our Rakhi Hamper collection for complete gift boxes with designer rakhis, kaju katli, dry fruits, and festive sweets — delivered domestically across the USA.",
     },
     {
       q: "What is the best rakhi to send to USA?",
