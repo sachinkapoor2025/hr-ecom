@@ -27,14 +27,13 @@ export const site = {
 export const navItems = [
   { label: "Home", href: "/" },
   { label: "Single Rakhi", href: categoryHref("single-rakhi"), category: "single-rakhi" },
-  { label: "Bhaiya Bhabhi", href: categoryHref("bhaiya-bhabhi-rakhi"), category: "bhaiya-bhabhi-rakhi" },
+  { label: "Bhaiya Bhabhi Rakhi", href: categoryHref("bhaiya-bhabhi-rakhi"), category: "bhaiya-bhabhi-rakhi" },
   { label: "Kids Rakhi", href: categoryHref("kids-rakhi"), category: "kids-rakhi" },
   { label: "Lumba Rakhi", href: categoryHref("lumba-rakhi"), category: "lumba-rakhi" },
   { label: "Rakhi Combo", href: categoryHref("rakhi-combo"), category: "rakhi-combo" },
-  { label: "Hampers", href: categoryHref("rakhi-hampers"), category: "rakhi-hampers" },
+  { label: "Rakhi Hamper", href: categoryHref("rakhi-hampers"), category: "rakhi-hampers" },
   { label: "Raksha Bandhan", href: "/raksha-bandhan" },
-  { label: "Blog", href: "/blog" },
-  { label: "Contact", href: "/contact" },
+  { label: "Contact Us", href: "/contact" },
 ] as const;
 
 export const cityLinks = [

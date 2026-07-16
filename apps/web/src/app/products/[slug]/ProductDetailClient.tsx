@@ -23,12 +23,29 @@ import { LOW_STOCK_THRESHOLD, isFastSelling, getUnitsSold, estimatedDeliveryLabe
 import { EstimatedDeliveryNote } from "@/components/EstimatedDeliveryNote";
 import type { Product } from "@hr-ecom/shared";
 import { FastSellingBanner } from "@/components/FastSellingBadge";
+import { looksLikeHtml, shortPlainDescription } from "@/lib/html-text";
 
 type Tab = "description" | "reviews" | "faq";
 
-function shortDescription(description: string): string {
-  const first = description.split(/(?<=\.)\s+/)[0]?.trim();
-  return first && first.length < description.length ? first : description.slice(0, 140).trim();
+/** Pull "What's included" list items into a readable preview under the title. */
+function HamperIncludesPreview({ html }: { html: string }) {
+  const items = [...html.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)]
+    .map((m) => m[1]!.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim())
+    .filter(Boolean);
+  if (items.length === 0) return null;
+  return (
+    <div className="mb-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+      <p className="text-sm font-semibold text-primary mb-2">What&apos;s included in this hamper</p>
+      <ul className="grid sm:grid-cols-2 gap-x-4 gap-y-1.5 text-sm text-slate-700">
+        {items.map((item) => (
+          <li key={item} className="flex gap-2">
+            <span className="text-nav shrink-0">✓</span>
+            <span>{item}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 }
 
 function ShareButton({ title, url }: { title: string; url: string }) {
@@ -118,7 +135,8 @@ export function ProductDetailClient({
       ? format(product.compareAtPrice, product.currency)
       : null;
   const discount = getDiscountPercent(product.price, product.compareAtPrice);
-  const summary = shortDescription(product.description);
+  const summary = shortPlainDescription(product.description);
+  const descriptionIsHtml = looksLikeHtml(product.description);
   const cartQuantity = cart?.items.find((i) => i.productSlug === product.slug)?.quantity ?? 0;
   const inCart = cartQuantity > 0;
   const lowStock = product.inventory > 0 && product.inventory <= LOW_STOCK_THRESHOLD;
@@ -167,6 +185,9 @@ export function ProductDetailClient({
           </div>
 
           <p className="text-slate-600 text-sm sm:text-base mb-3 leading-relaxed">{summary}</p>
+          {product.categorySlug === "rakhi-hampers" && descriptionIsHtml && (
+            <HamperIncludesPreview html={product.description} />
+          )}
 
           <div className="mb-3">
             <RakshaBandhanCountdown variant="inline" />
@@ -273,11 +294,18 @@ export function ProductDetailClient({
 
         {tab === "description" ? (
           <div className="space-y-8">
-            <article className="text-slate-700 leading-relaxed space-y-4 max-w-4xl">
-              {product.description.split(/(?<=\.)\s+/).map((para, i) => (
-                <p key={i}>{para}</p>
-              ))}
-            </article>
+            {descriptionIsHtml ? (
+              <article
+                className="product-html-description text-slate-700 leading-relaxed max-w-4xl prose prose-slate prose-a:text-nav prose-strong:text-primary prose-ul:my-3 prose-li:my-0.5"
+                dangerouslySetInnerHTML={{ __html: product.description }}
+              />
+            ) : (
+              <article className="text-slate-700 leading-relaxed space-y-4 max-w-4xl">
+                {product.description.split(/(?<=\.)\s+/).map((para, i) => (
+                  <p key={i}>{para}</p>
+                ))}
+              </article>
+            )}
 
             {product.tags && product.tags.length > 0 && (
               <div>

@@ -35,6 +35,7 @@ import {
   metaDescription,
   DEFAULT_PRODUCT_INVENTORY,
 } from "@hr-ecom/shared";
+import { buildHamperHtmlDescription } from "./lib/hamper-description";
 
 const ENV = process.env.ENVIRONMENT ?? "prod";
 const PRODUCTS_TABLE = process.env.PRODUCTS_TABLE ?? `hr-ecom-products-${ENV}`;
@@ -123,34 +124,6 @@ function parseExcel(path: string) {
     });
   }
   return products;
-}
-
-function buildHtmlDescription(name: string, raw: string, slug: string): string {
-  const lines = raw
-    .split(/\r?\n/)
-    .map((l) => l.replace(/^\s*\d+\s*[-.)]?\s*/, "").trim())
-    .filter(Boolean);
-
-  const items =
-    lines.length > 0
-      ? `<ul>${lines.map((l) => `<li>${escapeHtml(l)}</li>`).join("")}</ul>`
-      : `<p>${escapeHtml(raw)}</p>`;
-
-  return [
-    `<p><strong>${escapeHtml(name)}</strong> — a premium Rakhi gift hamper for USA delivery, curated with festive sweets, dry fruits, and designer rakhis. Ships domestically within America.</p>`,
-    `<p><strong>What's included:</strong></p>`,
-    items,
-    `<p>Looking for more options? Browse our <a href="/rakhi-combo-to-usa">Rakhi Combos</a>, <a href="/single-rakhi-to-usa">Single Rakhi</a> collection, or shop all <a href="/rakhi-hampers-to-usa">Rakhi Hampers</a>. Perfect for Raksha Bandhan — order online and send love across the USA.</p>`,
-    `<p>SKU: ${escapeHtml(slug)}</p>`,
-  ].join("\n");
-}
-
-function escapeHtml(s: string) {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
 }
 
 function seoFor(
@@ -278,7 +251,7 @@ async function main() {
     }
 
     const { seoTitle, seoDescription } = seoFor(row.name, pricing.compareAtPrice, pricing.price);
-    const description = buildHtmlDescription(row.name, row.description, row.sku);
+    const description = buildHamperHtmlDescription(row.name, row.description, row.sku);
 
     const item = {
       name: row.name,

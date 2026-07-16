@@ -1,8 +1,18 @@
 const DEFAULT_MAX = 155;
 
-/** Collapse whitespace for meta tag text. */
+/** Strip HTML tags and collapse whitespace for meta tag text. */
 function clean(text: string): string {
-  return text.replace(/\s+/g, " ").trim();
+  return text
+    .replace(/<br\s*\/?>/gi, " ")
+    .replace(/<\/(p|div|li|h[1-6])>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 /**

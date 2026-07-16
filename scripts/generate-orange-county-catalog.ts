@@ -14,6 +14,7 @@ import {
   metaDescription,
   DEFAULT_PRODUCT_INVENTORY,
 } from "@hr-ecom/shared";
+import { buildHamperHtmlDescription } from "./lib/hamper-description";
 
 const ROOT = resolve(process.cwd());
 const CATALOG_DIR = resolve(
@@ -53,28 +54,6 @@ function imagesForSku(sku: string, files: string[]): string[] {
       if (sb === base) return 1;
       return sa.localeCompare(sb);
     });
-}
-
-function escapeHtml(s: string) {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-}
-
-function buildHtmlDescription(name: string, raw: string, sku: string): string {
-  const lines = raw
-    .split(/\r?\n/)
-    .map((l) => l.replace(/^\s*\d+\s*[-.)]?\s*/, "").trim())
-    .filter(Boolean);
-  const items =
-    lines.length > 0
-      ? `<ul>${lines.map((l) => `<li>${escapeHtml(l)}</li>`).join("")}</ul>`
-      : `<p>${escapeHtml(raw)}</p>`;
-  return [
-    `<p><strong>${escapeHtml(name)}</strong> — a premium Rakhi gift hamper for USA delivery, curated with festive sweets, dry fruits, and designer rakhis. Ships domestically within America.</p>`,
-    `<p><strong>What's included:</strong></p>`,
-    items,
-    `<p>Looking for more options? Browse our <a href="/rakhi-combo-to-usa">Rakhi Combos</a>, <a href="/single-rakhi-to-usa">Single Rakhi</a> collection, or shop all <a href="/rakhi-hampers-to-usa">Rakhi Hampers</a>.</p>`,
-    `<p>SKU: ${escapeHtml(sku)}</p>`,
-  ].join("\n");
 }
 
 function parseExcel(path: string) {
@@ -128,7 +107,7 @@ const products = rows.map((row) => {
   return {
     name: row.name,
     slug,
-    description: buildHtmlDescription(row.name, row.description, row.sku),
+    description: buildHamperHtmlDescription(row.name, row.description, row.sku),
     price: pricing.price,
     compareAtPrice: pricing.compareAtPrice,
     currency: "USD",
