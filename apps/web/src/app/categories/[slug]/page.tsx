@@ -12,7 +12,10 @@ import { getCategoryPageSeo } from "@/lib/content/category-seo";
 import { getCategoryRichContent } from "@/lib/content/category-rich-content";
 import { CategoryProductLinks } from "@/components/CategoryProductLinks";
 import { categoryHref } from "@/lib/category-urls";
-import { getCatalogProductsByCategory } from "@/lib/catalog-fallback";
+import {
+  getCatalogProductsByCategory,
+  mergeProductsPreferExisting,
+} from "@/lib/catalog-fallback";
 import { categoryOrder } from "@/lib/site";
 import { breadcrumbJsonLd, faqJsonLd, itemListJsonLd, pageMetadata } from "@/lib/seo";
 import type { Product, Category } from "@hr-ecom/shared";
@@ -26,12 +29,6 @@ export function generateStaticParams() {
 }
 
 export const revalidate = 60;
-
-function mergeProductsBySlug(products: Product[], additions: Product[]): Product[] {
-  const bySlug = new Map(products.map((product) => [product.slug, product]));
-  for (const product of additions) bySlug.set(product.slug, product);
-  return [...bySlug.values()];
-}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
@@ -86,7 +83,8 @@ export default async function CategoryPage({ params }: Props) {
   }
 
   // Merge bundled catalog (includes Orange County hampers listed in additional categories).
-  products = mergeProductsBySlug(products, getCatalogProductsByCategory(slug));
+  // Prefer live API prices — catalog JSON can be stale for shared slugs.
+  products = mergeProductsPreferExisting(products, getCatalogProductsByCategory(slug));
 
   const name =
     category?.name ??

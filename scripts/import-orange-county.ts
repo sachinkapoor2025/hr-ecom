@@ -22,6 +22,7 @@ import { S3Client, PutObjectCommand, HeadObjectCommand } from "@aws-sdk/client-s
 import {
   VENDOR_ORANGE_COUNTY,
   ORANGE_COUNTY_CATEGORY_SLUG,
+  ORANGE_COUNTY_PRODUCT_INVENTORY,
   categoryKeys,
   productKeys,
   metaDescription,
@@ -208,7 +209,7 @@ async function main() {
       additionalCategorySlugs: row.additionalCategorySlugs,
       images: imageUrls,
       sku: row.sku,
-      inventory: row.inventory,
+      inventory: ORANGE_COUNTY_PRODUCT_INVENTORY,
       tags: row.tags ?? ["rakhi-hamper", "gift-hamper", "raksha-bandhan", "dry-fruits", "send-rakhi-to-usa"],
       vendorSlug: row.vendorSlug ?? VENDOR_ORANGE_COUNTY,
       vendorCost: row.vendorCost,
@@ -240,7 +241,8 @@ async function main() {
       })
     );
     if (existing.Item) {
-      item.inventory = (existing.Item.inventory as number) ?? item.inventory;
+      // Always refresh OC stock to the catalog default (500) so cart never blocks on 0.
+      item.inventory = ORANGE_COUNTY_PRODUCT_INVENTORY;
       item.createdAt = (existing.Item.createdAt as string) ?? ts;
       if (existing.Item.unitsSold != null) {
         (item as { unitsSold?: number }).unitsSold = existing.Item.unitsSold as number;

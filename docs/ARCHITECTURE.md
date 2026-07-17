@@ -97,7 +97,7 @@ When admin sets order status to **Delivered** or **Complete**, the API sets `rev
 | GET | `/admin/shipping/products-missing-dims` | Admin: products without weight/dimensions |
 | GET | `/admin/load-test` | Super admin: load-test presets + LOAD_TEST_MODE status |
 | POST | `/admin/load-test/run` | Super admin: prefer UI browser runner (`smoke` / `u100`…`u1000`). UI: `/admin/load-test` |
-| GET | `/vendors/orange-county/orders` | Backend vendor feed (`X-Vendor-Api-Key`): orders with `vendorSlug=orange-county` hamper lines only (name not shown on storefront) |
+| GET | `/vendors/orange-county/orders` | Backend vendor feed (`X-Vendor-Api-Key`): orders with `vendorSlug=orange-county` hamper lines only (name not shown on storefront). See `docs/VENDOR_ORANGE_COUNTY_API.md` |
 | GET | `/vendors/orange-county/orders/{orderId}` | Same auth: single order, vendor line items only |
 | POST | `/webhooks/stripe` | Stripe webhook |
 

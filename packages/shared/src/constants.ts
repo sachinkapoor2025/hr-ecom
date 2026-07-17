@@ -83,6 +83,9 @@ export const PAYMENT_PROVIDERS = {
 /** Default stock when creating products or seeding catalog. */
 export const DEFAULT_PRODUCT_INVENTORY = 200;
 
+/** Stock for Orange County hamper imports (keep cart-ready). */
+export const ORANGE_COUNTY_PRODUCT_INVENTORY = 500;
+
 /**
  * Backend-only vendor key for hamper fulfillment API / order tagging.
  * Never show this name on the storefront — customers only see "Rakhi Hamper".

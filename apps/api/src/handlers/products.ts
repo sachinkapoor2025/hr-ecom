@@ -15,6 +15,7 @@ import { ok, okCached, created, badRequest, notFound, forbidden } from "../lib/r
 import { getAuth } from "../lib/auth";
 import { withResolvedProductImages, resolveProductImageUrl } from "../lib/images";
 import { syncInventoryAlertState } from "../lib/inventory";
+import { ensureOrangeCountyProductInDb } from "../lib/orange-county-catalog";
 
 function forStorefront(product: Product): Product {
   return stripVendorPrivateFields(
@@ -176,8 +177,14 @@ export async function getProduct(event: APIGatewayProxyEventV2) {
     })
   );
 
-  if (!result.Item) return notFound("Product not found");
-  const product = result.Item as Product & { published?: boolean };
+  let item = result.Item as (Product & { published?: boolean }) | undefined;
+  if (!item) {
+    const upserted = await ensureOrangeCountyProductInDb(slug);
+    if (upserted) item = upserted as Product & { published?: boolean };
+  }
+
+  if (!item) return notFound("Product not found");
+  const product = item;
   if (product.published === false) return notFound("Product not found");
   productGetCache.set(slug, { at: nowMs, product });
   return okCached({ product: forStorefront(product) }, 30);

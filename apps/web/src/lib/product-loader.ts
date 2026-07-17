@@ -4,6 +4,7 @@ import {
   getCatalogProduct,
   getCatalogProducts,
   getCatalogProductsByCategory,
+  mergeProductsPreferExisting,
 } from "./catalog-fallback";
 
 export async function loadProduct(slug: string): Promise<Product | null> {
@@ -25,12 +26,6 @@ export async function loadFeaturedProducts(limit = 10): Promise<Product[]> {
   }
 }
 
-function mergeBySlug(a: Product[], b: Product[]): Product[] {
-  const map = new Map(a.map((p) => [p.slug, p]));
-  for (const p of b) map.set(p.slug, p);
-  return [...map.values()];
-}
-
 export async function loadRelatedProducts(categorySlug: string, excludeSlug: string): Promise<Product[]> {
   let products: Product[] = [];
   try {
@@ -42,7 +37,7 @@ export async function loadRelatedProducts(categorySlug: string, excludeSlug: str
     products = [];
   }
   if (categorySlug === "rakhi-hampers" || products.length === 0) {
-    products = mergeBySlug(products, getCatalogProductsByCategory(categorySlug));
+    products = mergeProductsPreferExisting(products, getCatalogProductsByCategory(categorySlug));
   }
   return products.filter((p) => p.slug !== excludeSlug).slice(0, 5);
 }

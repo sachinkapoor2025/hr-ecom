@@ -34,6 +34,14 @@ interface Order {
   deliveredAt?: string;
   labelStatus?: "none" | "queued" | "purchased" | "failed";
   shippingServiceName?: string;
+  /** Set at checkout when cart has vendor-sourced lines (e.g. orange-county). */
+  vendorSlugs?: string[];
+  items?: { vendorSlug?: string; sku?: string; name?: string }[];
+}
+
+function orderHasVendor(o: Order, vendor: string): boolean {
+  if (o.vendorSlugs?.includes(vendor)) return true;
+  return o.items?.some((i) => i.vendorSlug === vendor) ?? false;
 }
 
 function abbreviateServiceName(name?: string): string | null {
@@ -73,6 +81,7 @@ export default function AdminOrdersPage() {
   const [tab, setTab] = useState("all");
   const [paymentFilter, setPaymentFilter] = useState("all");
   const [paymentMethod, setPaymentMethod] = useState("all");
+  const [vendorFilter, setVendorFilter] = useState<"all" | "orange-county" | "usarakhi">("all");
   const [search, setSearch] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -97,7 +106,7 @@ export default function AdminOrdersPage() {
 
   useEffect(() => {
     setPage(1);
-  }, [tab, paymentFilter, paymentMethod, search, dateFrom, dateTo, sortKey, sortDir]);
+  }, [tab, paymentFilter, paymentMethod, vendorFilter, search, dateFrom, dateTo, sortKey, sortDir]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -105,6 +114,8 @@ export default function AdminOrdersPage() {
       if (!matchesOrderStatusTab(o.status, tab)) return false;
       if (!matchesPaymentFilter(o.status, paymentFilter)) return false;
       if (paymentMethod !== "all" && o.paymentProvider !== paymentMethod) return false;
+      if (vendorFilter === "orange-county" && !orderHasVendor(o, "orange-county")) return false;
+      if (vendorFilter === "usarakhi" && orderHasVendor(o, "orange-county")) return false;
       if (dateFrom && o.createdAt.slice(0, 10) < dateFrom) return false;
       if (dateTo && o.createdAt.slice(0, 10) > dateTo) return false;
       if (!q) return true;
@@ -127,7 +138,7 @@ export default function AdminOrdersPage() {
 
     list = sortItems(list, sorter, sortDir);
     return list;
-  }, [orders, tab, paymentFilter, paymentMethod, search, dateFrom, dateTo, sortKey, sortDir]);
+  }, [orders, tab, paymentFilter, paymentMethod, vendorFilter, search, dateFrom, dateTo, sortKey, sortDir]);
 
   const { items: pageItems, totalPages, total } = paginate(filtered, page, pageSize);
 
@@ -156,6 +167,7 @@ export default function AdminOrdersPage() {
         "Total",
         "Currency",
         "Tracking",
+        "Vendor",
         "Last Updated",
       ],
       ...filtered.map((o) => [
@@ -171,6 +183,7 @@ export default function AdminOrdersPage() {
         String(o.total),
         o.currency,
         o.trackingNumber ?? "",
+        orderHasVendor(o, "orange-county") ? "orange-county" : "usarakhi",
         o.updatedAt,
       ]),
     ];
@@ -274,7 +287,7 @@ export default function AdminOrdersPage() {
         ))}
       </div>
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
         <input
           type="search"
           placeholder="Search order ID, name, email, phone…"
@@ -301,6 +314,16 @@ export default function AdminOrdersPage() {
           <option value="all">All payment methods</option>
           <option value="stripe">Stripe</option>
           <option value="razorpay">Razorpay</option>
+        </select>
+        <select
+          value={vendorFilter}
+          onChange={(e) => setVendorFilter(e.target.value as typeof vendorFilter)}
+          className="border border-slate-300 rounded-lg px-3 py-2 text-sm"
+          title="Filter by fulfillment vendor"
+        >
+          <option value="all">All vendors</option>
+          <option value="orange-county">Orange County only</option>
+          <option value="usarakhi">UsaRakhi only (no OC)</option>
         </select>
         <div className="flex gap-2">
           <input
@@ -383,6 +406,7 @@ export default function AdminOrdersPage() {
                   />
                 </th>
                 <th className="py-3 px-3">Order ID</th>
+                <th className="py-3 px-3">Vendor</th>
                 <th className="py-3 px-3">Date & time</th>
                 <th className="py-3 px-3">Customer</th>
                 <th className="py-3 px-3">Payment</th>
@@ -401,6 +425,7 @@ export default function AdminOrdersPage() {
                 const isStale =
                   hoursSinceUpdate >= 48 &&
                   (o.status === ORDER_STATUS.PENDING_PAYMENT || o.status === ORDER_STATUS.PROCESSING);
+                const isOrangeCounty = orderHasVendor(o, "orange-county");
                 return (
                 <tr
                   key={o.orderId}
@@ -420,6 +445,18 @@ export default function AdminOrdersPage() {
                     onClick={() => router.push(`/admin/orders/${o.orderId}`)}
                   >
                     {o.orderId.slice(0, 8)}…
+                  </td>
+                  <td
+                    className="py-3 px-3 cursor-pointer"
+                    onClick={() => router.push(`/admin/orders/${o.orderId}`)}
+                  >
+                    {isOrangeCounty ? (
+                      <span className="inline-flex items-center rounded-full bg-orange-100 text-orange-800 px-2 py-0.5 text-[11px] font-semibold">
+                        Orange County
+                      </span>
+                    ) : (
+                      <span className="text-[11px] text-slate-400">UsaRakhi</span>
+                    )}
                   </td>
                   <td
                     className="py-3 px-3 text-slate-500 whitespace-nowrap cursor-pointer"
