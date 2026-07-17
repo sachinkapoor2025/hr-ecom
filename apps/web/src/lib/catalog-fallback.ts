@@ -86,3 +86,18 @@ export function getCatalogProductsByCategory(categorySlug: string): Product[] {
   }
   return [...bySlug.values()];
 }
+
+/**
+ * Merge catalog fallback into API results. API prices always win for shared slugs —
+ * catalog JSON can be stale (e.g. Om Single Rakhi at $1.50 vs live $14.72).
+ */
+export function mergeProductsPreferExisting(
+  existing: Product[],
+  additions: Product[]
+): Product[] {
+  const bySlug = new Map(existing.map((product) => [product.slug, product]));
+  for (const product of additions) {
+    if (!bySlug.has(product.slug)) bySlug.set(product.slug, product);
+  }
+  return [...bySlug.values()];
+}

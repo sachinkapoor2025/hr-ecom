@@ -14,15 +14,12 @@ import { TrustStrip } from "@/components/TrustStrip";
 import { WhyTrustUsSection } from "@/components/WhyTrustUsSection";
 import { JsonLd } from "@/components/JsonLd";
 import { site, homeBanners, homeCategoryOrder, faqs } from "@/lib/site";
-import { getCatalogProductsByCategory } from "@/lib/catalog-fallback";
+import {
+  getCatalogProductsByCategory,
+  mergeProductsPreferExisting,
+} from "@/lib/catalog-fallback";
 import { faqJsonLd, howToSendRakhiJsonLd, pageMetadata } from "@/lib/seo";
 import type { Product, Category } from "@hr-ecom/shared";
-
-function mergeProductsBySlug(products: Product[], additions: Product[]): Product[] {
-  const bySlug = new Map(products.map((product) => [product.slug, product]));
-  for (const product of additions) bySlug.set(product.slug, product);
-  return [...bySlug.values()];
-}
 
 export const metadata: Metadata = pageMetadata({
   title: "Send Rakhi to USA Online | Rakhi Delivery USA | UsaRakhi",
@@ -53,8 +50,9 @@ export default async function HomePage() {
   }
 
   // Orange County hampers (and other catalog fallbacks) may not be in API yet.
+  // Prefer live API prices — catalog JSON can be stale for shared slugs.
   for (const slug of homeCategoryOrder) {
-    products = mergeProductsBySlug(products, getCatalogProductsByCategory(slug));
+    products = mergeProductsPreferExisting(products, getCatalogProductsByCategory(slug));
   }
   if (!categories.some((c) => c.slug === "rakhi-hampers")) {
     const now = new Date().toISOString();
