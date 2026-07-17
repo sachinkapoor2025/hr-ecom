@@ -1,11 +1,29 @@
 import type { MetadataRoute } from "next";
 import { siteUrl } from "@/lib/env";
 
+/**
+ * Next.js storefront robots — no WordPress/WooCommerce paths.
+ * sitemap.rss is not generated; only /sitemap.xml is advertised.
+ */
 export default function robots(): MetadataRoute.Robots {
+  const host = siteUrl.replace(/^https?:\/\//, "");
+
   return {
     rules: [
-      { userAgent: "*", allow: "/", disallow: ["/admin/", "/checkout", "/account", "/cart", "/orders/"] },
-      // AI / LLM crawlers — explicitly allowed for discoverability in ChatGPT, Claude, Perplexity, etc.
+      {
+        userAgent: "*",
+        allow: "/",
+        disallow: [
+          "/admin/",
+          "/api/",
+          "/checkout",
+          "/account",
+          "/cart",
+          "/orders/",
+          "/email/",
+        ],
+      },
+      // AI / LLM crawlers — explicitly allowed for discoverability
       { userAgent: "GPTBot", allow: "/" },
       { userAgent: "ChatGPT-User", allow: "/" },
       { userAgent: "OAI-SearchBot", allow: "/" },
@@ -24,6 +42,6 @@ export default function robots(): MetadataRoute.Robots {
       { userAgent: "Meta-ExternalAgent", allow: "/" },
     ],
     sitemap: `${siteUrl}/sitemap.xml`,
-    host: siteUrl,
+    host,
   };
 }

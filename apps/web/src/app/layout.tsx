@@ -15,7 +15,14 @@ import { ClientDeferredWidgets } from "@/components/ClientDeferredWidgets";
 import { AnalyticsScripts, GoogleAnalytics } from "@/components/AnalyticsScripts";
 import { site } from "@/lib/site";
 import { getSiteVerification } from "@/lib/analytics-config";
-import { organizationJsonLd, webSiteJsonLd, onlineStoreJsonLd, defaultKeywords, canonical } from "@/lib/seo";
+import {
+  organizationJsonLd,
+  webSiteJsonLd,
+  onlineStoreJsonLd,
+  californiaWarehouseJsonLd,
+  defaultKeywords,
+  canonical,
+} from "@/lib/seo";
 
 const { google: googleSiteVerification, bing: bingSiteVerification } = getSiteVerification();
 
@@ -46,7 +53,7 @@ export const metadata: Metadata = {
     url: canonical("/"),
     title: "UsaRakhi — Send Rakhi to USA Online | Free Shipping",
     description: site.description,
-    images: [{ url: site.logoSrc, alt: site.name }],
+    images: [{ url: site.logoSrc, alt: site.name, width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
@@ -82,7 +89,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="min-h-screen antialiased flex flex-col">
         <AnalyticsScripts />
-        <JsonLd data={[organizationJsonLd(), webSiteJsonLd(), onlineStoreJsonLd()]} />
+        <JsonLd
+          data={[organizationJsonLd(), webSiteJsonLd(), onlineStoreJsonLd(), californiaWarehouseJsonLd()]}
+        />
         <AuthProvider>
           <CartProvider>
             <WishlistProvider>

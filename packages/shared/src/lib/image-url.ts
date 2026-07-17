@@ -16,13 +16,13 @@ export function getProductCdnBase(cdnBase?: string): string {
   return DEFAULT_PRODUCT_CDN;
 }
 
-/** Build a CDN URL from a path under wp-content/uploads (e.g. 2026/03/photo.jpg). */
+/** Build a CDN URL from a path under uploads/ (e.g. 2026/03/photo.jpg). */
 export function cdnUploadUrl(relativePath: string, cdnBase?: string): string {
   const clean = relativePath.replace(/^\/+/, "");
   return `${getProductCdnBase(cdnBase)}/uploads/${clean}`;
 }
 
-/** Rewrite legacy WordPress media URLs to the CDN mirror. */
+/** Rewrite legacy /wp-content/uploads media URLs to the CDN mirror. */
 export function resolveProductImageUrl(url: string | undefined | null, cdnBase?: string): string {
   if (!url) return "";
   const trimmed = url.trim();

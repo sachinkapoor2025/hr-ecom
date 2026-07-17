@@ -18,6 +18,7 @@ import * as reminderEmails from "./handlers/reminder-emails";
 import * as shipping from "./handlers/shipping";
 import * as loadTest from "./handlers/load-test";
 import * as vendorOrders from "./handlers/vendor-orders";
+import * as reviews from "./handlers/reviews";
 import { stripeWebhook } from "./handlers/payments/stripe";
 import { razorpayWebhook, verifyRazorpayPayment } from "./handlers/payments/razorpay";
 
@@ -34,6 +35,18 @@ const routes: Route[] = [
   { method: "GET", pattern: /^\/health$/, handler: async () => ok({ status: "ok" }) },
   { method: "GET", pattern: /^\/products$/, handler: products.listProducts },
   { method: "GET", pattern: /^\/products\/([^/]+)$/, handler: products.getProduct, params: ["slug"] },
+  {
+    method: "GET",
+    pattern: /^\/products\/([^/]+)\/reviews$/,
+    handler: reviews.listProductReviews,
+    params: ["slug"],
+  },
+  {
+    method: "POST",
+    pattern: /^\/products\/([^/]+)\/reviews$/,
+    handler: reviews.createProductReview,
+    params: ["slug"],
+  },
   { method: "POST", pattern: /^\/products$/, handler: products.createProduct },
   { method: "PUT", pattern: /^\/products\/([^/]+)$/, handler: products.updateProduct, params: ["slug"] },
   { method: "DELETE", pattern: /^\/products\/([^/]+)$/, handler: products.deleteProduct, params: ["slug"] },

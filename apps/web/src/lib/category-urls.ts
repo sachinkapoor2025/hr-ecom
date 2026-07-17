@@ -38,20 +38,24 @@ export function categoriesMissingToUsaSuffix(): string[] {
     .map(([internal, pub]) => `${internal} → /${pub}/`);
 }
 
-/** Next.js permanent redirects from legacy paths to SEO URLs. */
-export function categoryRedirectRules(): { source: string; destination: string; permanent: true }[] {
-  const rules: { source: string; destination: string; permanent: true }[] = [];
+/** Next.js 301 redirects from legacy paths to SEO URLs (statusCode 301, not 308). */
+export function categoryRedirectRules(): {
+  source: string;
+  destination: string;
+  statusCode: 301;
+}[] {
+  const rules: { source: string; destination: string; statusCode: 301 }[] = [];
 
   for (const [internal, pub] of Object.entries(CATEGORY_PUBLIC_SLUG)) {
     const dest = `/${pub}`;
     for (const prefix of ["/categories", "/product-category"]) {
-      rules.push({ source: `${prefix}/${internal}`, destination: dest, permanent: true });
-      rules.push({ source: `${prefix}/${internal}/`, destination: dest, permanent: true });
+      rules.push({ source: `${prefix}/${internal}`, destination: dest, statusCode: 301 });
+      rules.push({ source: `${prefix}/${internal}/`, destination: dest, statusCode: 301 });
     }
     // Legacy bare slug without -to-usa (e.g. /bhaiya-bhabhi-rakhi → /bhaiya-bhabhi-rakhi-to-usa)
     if (internal !== pub) {
-      rules.push({ source: `/${internal}`, destination: dest, permanent: true });
-      rules.push({ source: `/${internal}/`, destination: dest, permanent: true });
+      rules.push({ source: `/${internal}`, destination: dest, statusCode: 301 });
+      rules.push({ source: `/${internal}/`, destination: dest, statusCode: 301 });
     }
   }
 

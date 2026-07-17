@@ -1,27 +1,25 @@
 /**
- * Redirects from the old WordPress / WooCommerce site so inbound links are not lost.
+ * Permanent redirects from retired CMS URL shapes so inbound links are not lost.
  * See also categoryRedirectRules() for category slug migrations.
  */
 export function legacyRedirectRules(): {
   source: string;
   destination: string;
-  permanent: true;
+  statusCode: 301;
 }[] {
   const home = "/";
-  const rules: { source: string; destination: string; permanent: true }[] = [];
+  const rules: { source: string; destination: string; statusCode: 301 }[] = [];
 
-  const toHome = (source: string) => rules.push({ source, destination: home, permanent: true });
+  const toHome = (source: string) => rules.push({ source, destination: home, statusCode: 301 });
 
-  // WooCommerce tags (e.g. /product-tag/online-rakhi-india)
+  // Retired catalog tag paths
   toHome("/product-tag/:path*");
-
-  // Generic WP tags
   toHome("/tag/:path*");
 
-  // Old single-segment product URLs → new /products/:slug (slug may still 404 → home)
-  rules.push({ source: "/product/:slug", destination: "/products/:slug", permanent: true });
+  // Old single-segment product URLs → /products/:slug
+  rules.push({ source: "/product/:slug", destination: "/products/:slug", statusCode: 301 });
 
-  // WP core / misc paths
+  // Retired CMS / account paths (no longer served)
   toHome("/wp-admin/:path*");
   toHome("/wp-content/:path*");
   toHome("/wp-includes/:path*");
@@ -34,16 +32,15 @@ export function legacyRedirectRules(): {
 
   // Do not redirect /cart or /checkout — those are live app routes.
 
-  // Old shop index
-  rules.push({ source: "/shop", destination: "/products", permanent: true });
-  rules.push({ source: "/shop/:path*", destination: "/products", permanent: true });
+  rules.push({ source: "/shop", destination: "/products", statusCode: 301 });
+  rules.push({ source: "/shop/:path*", destination: "/products", statusCode: 301 });
 
   // Hamper URLs previously appended SKU (e.g. …-tfusrh2026-16) — redirect to name-only slug.
   for (const [from, to] of HAMPER_SKU_SLUG_REDIRECTS) {
     rules.push({
       source: `/products/${from}`,
       destination: `/products/${to}`,
-      permanent: true,
+      statusCode: 301,
     });
   }
 

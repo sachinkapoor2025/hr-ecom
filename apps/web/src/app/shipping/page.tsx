@@ -78,7 +78,7 @@ export default function ShippingPage() {
         <ul className="flex flex-wrap gap-2">
           {cityLinks.map((c) => (
             <li key={c.slug}>
-              <Link href={`/cities/${c.slug}`} className="text-nav hover:underline text-sm">
+              <Link href={`/send-rakhi-to-${c.slug}`} className="text-nav hover:underline text-sm">
                 {c.label}
               </Link>
             </li>

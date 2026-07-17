@@ -43,9 +43,17 @@ export const cityLinks = [
   { label: "Florida", slug: "florida" },
   { label: "New Jersey", slug: "new-jersey" },
   { label: "Los Angeles", slug: "los-angeles" },
+  { label: "San Francisco", slug: "san-francisco" },
   { label: "Chicago", slug: "chicago" },
   { label: "Houston", slug: "houston" },
-  { label: "San Francisco", slug: "san-francisco" },
+  { label: "Dallas", slug: "dallas" },
+  { label: "Austin", slug: "austin" },
+  { label: "Atlanta", slug: "atlanta" },
+  { label: "Seattle", slug: "seattle" },
+  { label: "Edison, NJ", slug: "edison-nj" },
+  { label: "Jersey City", slug: "jersey-city" },
+  { label: "Washington DC", slug: "washington-dc" },
+  { label: "Fairfax, VA", slug: "fairfax-virginia" },
 ] as const;
 
 export const homeBanners = [

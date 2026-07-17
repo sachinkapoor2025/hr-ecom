@@ -23,10 +23,10 @@ export async function GET() {
     .filter((n): n is typeof n & { category: string } => "category" in n)
     .map((n) => `- ${n.label}: ${siteUrl}${n.href}`);
 
-  const cities = cityLinks.map((c) => `- ${c.label}, USA: ${siteUrl}/cities/${c.slug}`);
+  const cities = cityLinks.map((c) => `- ${c.label}, USA: ${siteUrl}/send-rakhi-to-${c.slug}`);
 
   const citySummaries = allCityContent()
-    .map((c) => `- ${c.label}: ${c.metaExtra} → ${siteUrl}/cities/${c.slug}`)
+    .map((c) => `- ${c.label}: ${c.metaExtra} → ${siteUrl}/send-rakhi-to-${c.slug}`)
     .join("\n");
 
   const blogList = blogPosts

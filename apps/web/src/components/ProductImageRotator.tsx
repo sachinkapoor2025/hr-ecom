@@ -15,11 +15,14 @@ export function ProductImageRotator({
   className = "",
   /** Stable seed so neighboring cards don't all flip at the same time. */
   staggerKey = "",
+  /** First image eager only for above-the-fold cards; listing grids should stay lazy. */
+  priority = false,
 }: {
   images: string[];
   alt: string;
   className?: string;
   staggerKey?: string;
+  priority?: boolean;
 }) {
   const urls = images.map(resolveImageUrl).filter(Boolean);
   const [index, setIndex] = useState(0);
@@ -75,8 +78,10 @@ export function ProductImageRotator({
           className={`absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-700 ease-out ${
             i === index ? "opacity-100" : "opacity-0"
           }`}
-          loading={i === 0 ? "eager" : "lazy"}
+          loading={priority && i === 0 ? "eager" : "lazy"}
           decoding="async"
+          width={600}
+          height={600}
         />
       ))}
       {urls.length > 1 && (

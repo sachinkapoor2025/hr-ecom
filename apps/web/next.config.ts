@@ -8,7 +8,10 @@ const nextConfig: NextConfig = {
     return [
       ...categoryRedirectRules(),
       ...legacyRedirectRules(),
-      { source: "/cities/:slug", destination: "/send-rakhi-to-:slug", permanent: true },
+      // Prefer 301 over Next's default 308 for permanent:true so crawlers treat these as classic permanent moves.
+      { source: "/cities/:slug", destination: "/send-rakhi-to-:slug", statusCode: 301 },
+      { source: "/cities/:slug/", destination: "/send-rakhi-to-:slug", statusCode: 301 },
+      { source: "/sitemap.rss", destination: "/sitemap.xml", statusCode: 301 },
     ];
   },
   async rewrites() {

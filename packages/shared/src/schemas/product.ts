@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { DEFAULT_PRODUCT_INVENTORY } from "../constants";
+import { productRatingAggregateSchema } from "./review";
 
 export const productSchema = z.object({
   slug: z.string().min(1),
@@ -29,6 +30,11 @@ export const productSchema = z.object({
   lowStockAlertSentAt: z.string().optional(),
   /** Lifetime units sold (incremented when order is paid). */
   unitsSold: z.number().int().min(0).optional(),
+  /**
+   * Denormalized star rating for Product JSON-LD / widgets.
+   * Kept in sync when reviews are published under PRODUCT#slug / REVIEW#id.
+   */
+  ratingAggregate: productRatingAggregateSchema.optional(),
   /** Shipping weight in ounces (recommended for accurate USPS rates). */
   weightOz: z.number().positive().optional(),
   /** Package dimensions in inches (recommended for accurate USPS rates). */

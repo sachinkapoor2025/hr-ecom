@@ -115,7 +115,7 @@ export function Footer() {
             <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-1 gap-x-4 gap-y-2 text-white/80">
               {cityLinks.map((c) => (
                 <li key={c.slug}>
-                  <Link href={`/cities/${c.slug}`} className="hover:text-white hover:underline">
+                  <Link href={`/send-rakhi-to-${c.slug}`} className="hover:text-white hover:underline">
                     {c.label}
                   </Link>
                 </li>
