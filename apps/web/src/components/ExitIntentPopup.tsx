@@ -15,7 +15,9 @@ import { getOrCreateSessionId } from "@/lib/session";
 import { api } from "@/lib/api";
 import { saveWelcomeCoupon, formatCouponExpiry } from "@/lib/welcome-coupon";
 import { trackSessionHeartbeat } from "@/lib/track";
+import { DEFAULT_COUNTRY_ISO } from "@/lib/country-codes";
 import { ConfettiBurst } from "@/components/ConfettiBurst";
+import { PhoneInput, buildPhoneValue } from "@/components/PhoneInput";
 
 const STORAGE_KEY = "usarakhi_daily_deal_shown";
 const SHOW_AFTER_MS = 10_000;
@@ -66,7 +68,8 @@ type CouponResult = {
 export function ExitIntentPopup() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const [phone, setPhone] = useState("");
+  const [countryIso, setCountryIso] = useState(DEFAULT_COUNTRY_ISO);
+  const [localNumber, setLocalNumber] = useState("");
   const [email, setEmail] = useState("");
   const [phase, setPhase] = useState<
     "idle" | "spinning" | "celebrating" | "done" | "blocked"
@@ -127,10 +130,10 @@ export function ExitIntentPopup() {
 
   const spin = (e: React.FormEvent) => {
     e.preventDefault();
-    const trimmedPhone = phone.trim();
+    const fullPhone = buildPhoneValue(countryIso, localNumber);
     const trimmedEmail = email.trim();
     if (phase !== "idle") return;
-    if (!isValidPhone(trimmedPhone)) {
+    if (!isValidPhone(fullPhone)) {
       setError("Enter a valid mobile number to spin for today’s discount.");
       return;
     }
@@ -160,7 +163,7 @@ export function ExitIntentPopup() {
       sessionId,
       body: JSON.stringify({
         sessionId,
-        phone: trimmedPhone,
+        phone: fullPhone,
         ...(trimmedEmail ? { email: trimmedEmail } : {}),
         page: pathname,
         source: "newsletter",
@@ -214,7 +217,7 @@ export function ExitIntentPopup() {
         setCoupon(result);
         saveWelcomeCoupon({
           ...result,
-          phone: trimmedPhone,
+          phone: fullPhone,
           ...(trimmedEmail ? { email: trimmedEmail } : {}),
         });
 
@@ -402,16 +405,17 @@ export function ExitIntentPopup() {
                 </div>
               ) : (
                 <form onSubmit={spin} className="space-y-3">
-                  <input
-                    type="tel"
+                  <PhoneInput
+                    label=""
+                    countryIso={countryIso}
+                    localNumber={localNumber}
+                    onCountryChange={setCountryIso}
+                    onLocalNumberChange={setLocalNumber}
                     required
-                    inputMode="tel"
-                    autoComplete="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="Mobile number (with country code)"
                     disabled={phase === "spinning"}
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-nav disabled:opacity-60"
+                    placeholder="Mobile number"
+                    selectClassName="border-slate-200 py-2.5 focus:outline-none focus:ring-2 focus:ring-nav"
+                    inputClassName="border-slate-200 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-nav"
                   />
                   <input
                     type="email"

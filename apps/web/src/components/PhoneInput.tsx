@@ -14,8 +14,11 @@ interface PhoneInputProps {
   onCountryChange: (iso: string) => void;
   onLocalNumberChange: (value: string) => void;
   required?: boolean;
+  disabled?: boolean;
   placeholder?: string;
   className?: string;
+  selectClassName?: string;
+  inputClassName?: string;
 }
 
 export function PhoneInput({
@@ -25,20 +28,24 @@ export function PhoneInput({
   onCountryChange,
   onLocalNumberChange,
   required = false,
+  disabled = false,
   placeholder = "Phone number",
   className = "",
+  selectClassName = "",
+  inputClassName = "",
 }: PhoneInputProps) {
   const selected = COUNTRIES.find((c) => c.iso === countryIso) ?? COUNTRIES[0];
 
   return (
     <div className={className}>
-      <label className="block text-sm font-medium mb-1">{label}</label>
+      {label ? <label className="block text-sm font-medium mb-1">{label}</label> : null}
       <div className="flex gap-2">
         <select
           value={selected.iso}
           onChange={(e) => onCountryChange(e.target.value)}
           aria-label="Country code"
-          className="w-[min(100%,11rem)] shrink-0 border border-slate-300 rounded-lg px-2 py-2 text-sm bg-white"
+          disabled={disabled}
+          className={`w-[min(100%,11rem)] shrink-0 border border-slate-300 rounded-lg px-2 py-2 text-sm bg-white disabled:opacity-60 ${selectClassName}`}
         >
           {COUNTRIES.map((c) => (
             <option key={c.iso} value={c.iso}>
@@ -54,7 +61,8 @@ export function PhoneInput({
           onChange={(e) => onLocalNumberChange(e.target.value)}
           placeholder={placeholder}
           required={required}
-          className="flex-1 min-w-0 border border-slate-300 rounded-lg px-3 py-2"
+          disabled={disabled}
+          className={`flex-1 min-w-0 border border-slate-300 rounded-lg px-3 py-2 disabled:opacity-60 ${inputClassName}`}
         />
       </div>
     </div>
