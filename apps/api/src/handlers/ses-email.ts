@@ -134,10 +134,30 @@ function finalizeEmailHtml(html: string, settings: SesSettings, unsubUrl: string
   return appendToHtml(html, buildFooter(settings, unsubUrl));
 }
 
+/** External social / app links should open directly (not via click-tracking redirect). */
+function shouldSkipClickTracking(url: string): boolean {
+  if (url.includes("/email/click/") || url.includes("/email/unsubscribe/")) return true;
+  try {
+    const host = new URL(url).hostname.toLowerCase().replace(/^www\./, "");
+    return (
+      host === "facebook.com" ||
+      host.endsWith(".facebook.com") ||
+      host === "fb.com" ||
+      host.endsWith(".fb.com") ||
+      host === "instagram.com" ||
+      host.endsWith(".instagram.com") ||
+      host === "wa.me" ||
+      host === "api.whatsapp.com"
+    );
+  } catch {
+    return false;
+  }
+}
+
 function injectTracking(html: string, openToken: string, linkMap: Map<string, string>): string {
   let out = html;
   out = out.replace(/href=(["'])(https?:\/\/[^"']+)\1/gi, (_m, q, url) => {
-    if (url.includes("/email/click/") || url.includes("/email/unsubscribe/")) {
+    if (shouldSkipClickTracking(url)) {
       return `href=${q}${url}${q}`;
     }
     const token = randomUUID().replace(/-/g, "").slice(0, 24);
@@ -148,6 +168,28 @@ function injectTracking(html: string, openToken: string, linkMap: Map<string, st
   if (/<\/body>/i.test(out)) out = out.replace(/<\/body>/i, `${pixel}</body>`);
   else out += pixel;
   return out;
+}
+
+async function persistClickTokens(
+  linkMap: Map<string, string>,
+  meta: { campaignId?: string; email?: string }
+) {
+  for (const [token, targetUrl] of linkMap) {
+    await docClient.send(
+      new PutCommand({
+        TableName: TABLE,
+        Item: {
+          PK: sesEmailKeys.trackClickPk(token),
+          SK: sesEmailKeys.trackSk(),
+          campaignId: meta.campaignId,
+          email: meta.email,
+          targetUrl,
+          clickCount: 0,
+          createdAt: now(),
+        },
+      })
+    );
+  }
 }
 
 async function getCampaign(campaignId: string): Promise<SesCampaign | null> {
@@ -796,6 +838,10 @@ export async function sendTest(event: APIGatewayProxyEventV2) {
   });
   html = injectTracking(html, openToken, linkMap);
   html = finalizeEmailHtml(html, settings, `${SITE_URL}/email/unsubscribe/${unsubToken}`);
+  await persistClickTokens(linkMap, {
+    campaignId: campaign.campaignId,
+    email: parsed.data.to,
+  });
 
   await sendViaSes({
     to: parsed.data.to,
@@ -1220,22 +1266,7 @@ async function sendQueuedEmail(
     })
   );
 
-  for (const [token, targetUrl] of linkMap) {
-    await docClient.send(
-      new PutCommand({
-        TableName: TABLE,
-        Item: {
-          PK: sesEmailKeys.trackClickPk(token),
-          SK: sesEmailKeys.trackSk(),
-          campaignId: campaign.campaignId,
-          email,
-          targetUrl,
-          clickCount: 0,
-          createdAt: now(),
-        },
-      })
-    );
-  }
+  await persistClickTokens(linkMap, { campaignId: campaign.campaignId, email });
 
   await sendViaSes({
     to: email,
