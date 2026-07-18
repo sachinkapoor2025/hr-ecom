@@ -120,12 +120,16 @@ function appendToHtml(html: string, fragment: string): string {
 /**
  * Finalize campaign HTML for send/test:
  * - replace {{unsubscribe}} when present
- * - otherwise append the standard compliance footer
+ * - full HTML templates keep their own footer (no extra unsubscribe block)
+ * - simple HTML snippets still get the standard compliance footer
  */
 function finalizeEmailHtml(html: string, settings: SesSettings, unsubUrl: string): string {
   const unsubLink = `<a href="${unsubUrl}" target="_blank" style="color:#c41e3a;text-decoration:underline">Unsubscribe</a>`;
   if (/\{\{\s*unsubscribe\s*\}\}/i.test(html)) {
     return html.replace(/\{\{\s*unsubscribe\s*\}\}/gi, unsubLink);
+  }
+  if (/<!DOCTYPE\s+html/i.test(html) || /<\/html>/i.test(html)) {
+    return html;
   }
   return appendToHtml(html, buildFooter(settings, unsubUrl));
 }
