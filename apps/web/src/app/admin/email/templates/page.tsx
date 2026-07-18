@@ -25,10 +25,12 @@ export default function TemplatesPage() {
   const isEditing = Boolean(selectedId);
 
   const load = useCallback(async () => {
-    const { templates: list, installed } = await ensureStarterEmailTemplates(api);
+    const { templates: list, installed, updated } = await ensureStarterEmailTemplates(api);
     setTemplates(list);
     if (installed.includes(RAKSHA_BANDHAN_TEMPLATE_ID)) {
       setMessage("Raksha Bandhan USA template installed and ready to use.");
+    } else if (updated.includes(RAKSHA_BANDHAN_TEMPLATE_ID)) {
+      setMessage("Raksha Bandhan USA template updated with banner and product images.");
     }
     return list;
   }, [api]);

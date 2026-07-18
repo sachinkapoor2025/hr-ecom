@@ -22,16 +22,15 @@
   </style>
   <![endif]-->
   <style type="text/css">
-    /* Mobile-friendly adjustments (supported in most modern clients) */
     @media only screen and (max-width: 620px) {
       .email-container { width: 100% !important; max-width: 100% !important; }
       .fluid { width: 100% !important; max-width: 100% !important; height: auto !important; }
       .stack-column { display: block !important; width: 100% !important; max-width: 100% !important; }
       .stack-column-pad { padding-left: 0 !important; padding-right: 0 !important; padding-bottom: 16px !important; }
       .mobile-pad { padding-left: 20px !important; padding-right: 20px !important; }
-      .mobile-center { text-align: center !important; }
       .hero-heading { font-size: 28px !important; line-height: 36px !important; }
       .section-heading { font-size: 24px !important; line-height: 32px !important; }
+      .category-img { width: 100% !important; max-width: 100% !important; height: auto !important; }
     }
   </style>
 </head>
@@ -47,9 +46,42 @@
         <!-- Outer wrapper -->
         <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" class="email-container" style="border-collapse:collapse; width:600px; max-width:600px; background-color:#ffffff;">
 
+          <!-- Banner -->
+          <tr>
+            <td align="center" bgcolor="#ffffff" style="padding:0; background-color:#ffffff;">
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
+                <tr>
+                  <td align="center" bgcolor="#fff8f8" style="padding:20px 24px 16px 24px; background-color:#fff8f8;">
+                    <a href="https://www.usarakhi.com" target="_blank" style="text-decoration:none;">
+                      <img
+                        src="https://www.usarakhi.com/logo.png"
+                        width="180"
+                        alt="UsaRakhi — Connecting Hearts Across Borders"
+                        style="display:block; width:180px; max-width:70%; height:auto; border:0; margin:0 auto;"
+                      />
+                    </a>
+                  </td>
+                </tr>
+                <tr>
+                  <td align="center" style="padding:0; line-height:0; font-size:0;">
+                    <a href="https://www.usarakhi.com" target="_blank" style="text-decoration:none;">
+                      <img
+                        class="fluid"
+                        src="https://www.usarakhi.com/banners/banner-1-usa-rakhi-delivery.png"
+                        width="600"
+                        alt="UsaRakhi — Premium Rakhi delivery across the USA"
+                        style="display:block; width:100%; max-width:600px; height:auto; border:0;"
+                      />
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
           <!-- Hero -->
           <tr>
-            <td class="mobile-pad" style="padding:48px 40px 40px 40px; background-color:#ffffff; text-align:center;">
+            <td class="mobile-pad" style="padding:36px 40px 40px 40px; background-color:#ffffff; text-align:center;">
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
                 <tr>
                   <td align="center" style="padding:0 0 12px 0; font-family:Arial, Helvetica, sans-serif; font-size:13px; line-height:18px; letter-spacing:2px; text-transform:uppercase; color:#c41e3a;">
@@ -58,7 +90,7 @@
                 </tr>
                 <tr>
                   <td align="center" class="hero-heading" style="padding:0 0 16px 0; font-family:Arial, Helvetica, sans-serif; font-size:32px; line-height:40px; font-weight:bold; color:#1a1a1a;">
-                    Celebrate Raksha Bandhan Across Miles &#10084;&#65039;
+                    Celebrate Raksha Bandhan Across Miles
                   </td>
                 </tr>
                 <tr>
@@ -69,7 +101,7 @@
                 <tr>
                   <td align="center" style="padding:0;">
                     <!--[if mso]>
-                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="https://usarakhi.com" style="height:48px; v-text-anchor:middle; width:180px;" arcsize="17%" stroke="f" fillcolor="#c41e3a">
+                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="https://www.usarakhi.com" style="height:48px; v-text-anchor:middle; width:180px;" arcsize="17%" stroke="f" fillcolor="#c41e3a">
                       <w:anchorlock/>
                       <center style="color:#ffffff; font-family:Arial, Helvetica, sans-serif; font-size:16px; font-weight:bold;">Shop Now</center>
                     </v:roundrect>
@@ -78,7 +110,7 @@
                     <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse; margin:0 auto;">
                       <tr>
                         <td align="center" bgcolor="#c41e3a" style="background-color:#c41e3a; border-radius:8px;">
-                          <a href="https://usarakhi.com" target="_blank" style="display:inline-block; padding:14px 36px; font-family:Arial, Helvetica, sans-serif; font-size:16px; line-height:20px; font-weight:bold; color:#ffffff; text-decoration:none; border-radius:8px;">
+                          <a href="https://www.usarakhi.com" target="_blank" style="display:inline-block; padding:14px 36px; font-family:Arial, Helvetica, sans-serif; font-size:16px; line-height:20px; font-weight:bold; color:#ffffff; text-decoration:none; border-radius:8px;">
                             Shop Now
                           </a>
                         </td>
@@ -118,16 +150,28 @@
                 </tr>
               </table>
 
-              <!-- Category row 1 -->
+              <!-- Category row 1: Single + Bhaiya Bhabhi -->
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
                 <tr>
                   <td class="stack-column stack-column-pad" width="50%" valign="top" style="width:50%; padding:0 8px 16px 0;">
                     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse; background-color:#fafafa; border:1px solid #eeeeee; border-radius:8px;">
                       <tr>
-                        <td align="center" style="padding:24px 16px;">
-                          <div style="font-size:28px; line-height:36px; padding-bottom:10px;">&#127891;</div>
+                        <td align="center" style="padding:0; line-height:0; font-size:0;">
+                          <a href="https://www.usarakhi.com/single-rakhi-to-usa" target="_blank" style="text-decoration:none;">
+                            <img
+                              class="category-img fluid"
+                              src="https://d301af4ndyn9qx.cloudfront.net/uploads/2026/05/pink-multi-stone-rakhi-to-usa.jpeg"
+                              width="252"
+                              alt="Single Rakhi — premium designer Rakhi for brother"
+                              style="display:block; width:100%; max-width:252px; height:auto; border:0; border-radius:8px 8px 0 0;"
+                            />
+                          </a>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td align="center" style="padding:16px 14px 20px 14px;">
                           <div style="font-family:Arial, Helvetica, sans-serif; font-size:16px; line-height:22px; font-weight:bold; color:#1a1a1a; padding-bottom:8px;">Single Rakhi</div>
-                          <div style="font-family:Arial, Helvetica, sans-serif; font-size:13px; line-height:20px; color:#666666; padding-bottom:16px;">Elegant Rakhis crafted for your brother.</div>
+                          <div style="font-family:Arial, Helvetica, sans-serif; font-size:13px; line-height:20px; color:#666666; padding-bottom:14px;">Elegant Rakhis crafted for your brother.</div>
                           <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
                             <tr>
                               <td align="center" bgcolor="#1a1a1a" style="background-color:#1a1a1a; border-radius:6px;">
@@ -142,10 +186,22 @@
                   <td class="stack-column stack-column-pad" width="50%" valign="top" style="width:50%; padding:0 0 16px 8px;">
                     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse; background-color:#fafafa; border:1px solid #eeeeee; border-radius:8px;">
                       <tr>
-                        <td align="center" style="padding:24px 16px;">
-                          <div style="font-size:28px; line-height:36px; padding-bottom:10px;">&#128144;</div>
+                        <td align="center" style="padding:0; line-height:0; font-size:0;">
+                          <a href="https://www.usarakhi.com/bhaiya-bhabhi-rakhi-to-usa" target="_blank" style="text-decoration:none;">
+                            <img
+                              class="category-img fluid"
+                              src="https://d301af4ndyn9qx.cloudfront.net/uploads/2026/05/bhaiya-bhabhi-rakhi-to-usa-e1779468666580.jpeg"
+                              width="252"
+                              alt="Bhaiya Bhabhi Rakhi set"
+                              style="display:block; width:100%; max-width:252px; height:auto; border:0; border-radius:8px 8px 0 0;"
+                            />
+                          </a>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td align="center" style="padding:16px 14px 20px 14px;">
                           <div style="font-family:Arial, Helvetica, sans-serif; font-size:16px; line-height:22px; font-weight:bold; color:#1a1a1a; padding-bottom:8px;">Bhaiya Bhabhi Rakhi</div>
-                          <div style="font-family:Arial, Helvetica, sans-serif; font-size:13px; line-height:20px; color:#666666; padding-bottom:16px;">Beautiful sets for brother and bhabhi.</div>
+                          <div style="font-family:Arial, Helvetica, sans-serif; font-size:13px; line-height:20px; color:#666666; padding-bottom:14px;">Beautiful sets for brother and bhabhi.</div>
                           <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
                             <tr>
                               <td align="center" bgcolor="#1a1a1a" style="background-color:#1a1a1a; border-radius:6px;">
@@ -160,16 +216,28 @@
                 </tr>
               </table>
 
-              <!-- Category row 2 -->
+              <!-- Category row 2: Kids + Lumba -->
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
                 <tr>
                   <td class="stack-column stack-column-pad" width="50%" valign="top" style="width:50%; padding:0 8px 16px 0;">
                     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse; background-color:#fafafa; border:1px solid #eeeeee; border-radius:8px;">
                       <tr>
-                        <td align="center" style="padding:24px 16px;">
-                          <div style="font-size:28px; line-height:36px; padding-bottom:10px;">&#129395;</div>
+                        <td align="center" style="padding:0; line-height:0; font-size:0;">
+                          <a href="https://www.usarakhi.com/kids-rakhi-to-usa" target="_blank" style="text-decoration:none;">
+                            <img
+                              class="category-img fluid"
+                              src="https://d301af4ndyn9qx.cloudfront.net/uploads/2026/04/BRO-Kids-Rakhi-e1775564401163.jpg"
+                              width="252"
+                              alt="Kids Rakhi — fun designs for little brothers"
+                              style="display:block; width:100%; max-width:252px; height:auto; border:0; border-radius:8px 8px 0 0;"
+                            />
+                          </a>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td align="center" style="padding:16px 14px 20px 14px;">
                           <div style="font-family:Arial, Helvetica, sans-serif; font-size:16px; line-height:22px; font-weight:bold; color:#1a1a1a; padding-bottom:8px;">Kids Rakhi</div>
-                          <div style="font-family:Arial, Helvetica, sans-serif; font-size:13px; line-height:20px; color:#666666; padding-bottom:16px;">Playful designs little brothers adore.</div>
+                          <div style="font-family:Arial, Helvetica, sans-serif; font-size:13px; line-height:20px; color:#666666; padding-bottom:14px;">Playful designs little brothers adore.</div>
                           <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
                             <tr>
                               <td align="center" bgcolor="#1a1a1a" style="background-color:#1a1a1a; border-radius:6px;">
@@ -184,10 +252,22 @@
                   <td class="stack-column stack-column-pad" width="50%" valign="top" style="width:50%; padding:0 0 16px 8px;">
                     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse; background-color:#fafafa; border:1px solid #eeeeee; border-radius:8px;">
                       <tr>
-                        <td align="center" style="padding:24px 16px;">
-                          <div style="font-size:28px; line-height:36px; padding-bottom:10px;">&#10024;</div>
+                        <td align="center" style="padding:0; line-height:0; font-size:0;">
+                          <a href="https://www.usarakhi.com/lumba-rakhi-to-usa" target="_blank" style="text-decoration:none;">
+                            <img
+                              class="category-img fluid"
+                              src="https://d301af4ndyn9qx.cloudfront.net/uploads/2026/04/Unique-pink-Lumba-Rakhi-e1779468035922.jpg"
+                              width="252"
+                              alt="Lumba Rakhi for bhabhi"
+                              style="display:block; width:100%; max-width:252px; height:auto; border:0; border-radius:8px 8px 0 0;"
+                            />
+                          </a>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td align="center" style="padding:16px 14px 20px 14px;">
                           <div style="font-family:Arial, Helvetica, sans-serif; font-size:16px; line-height:22px; font-weight:bold; color:#1a1a1a; padding-bottom:8px;">Lumba Rakhi</div>
-                          <div style="font-family:Arial, Helvetica, sans-serif; font-size:13px; line-height:20px; color:#666666; padding-bottom:16px;">Graceful Lumba Rakhis for bhabhi.</div>
+                          <div style="font-family:Arial, Helvetica, sans-serif; font-size:13px; line-height:20px; color:#666666; padding-bottom:14px;">Graceful Lumba Rakhis for bhabhi.</div>
                           <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
                             <tr>
                               <td align="center" bgcolor="#1a1a1a" style="background-color:#1a1a1a; border-radius:6px;">
@@ -202,20 +282,62 @@
                 </tr>
               </table>
 
-              <!-- Category row 3 (full width) -->
+              <!-- Category row 3: Combo + Hampers -->
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
                 <tr>
-                  <td valign="top" style="padding:0 0 8px 0;">
+                  <td class="stack-column stack-column-pad" width="50%" valign="top" style="width:50%; padding:0 8px 8px 0;">
                     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse; background-color:#fff8f8; border:1px solid #f0d6d6; border-radius:8px;">
                       <tr>
-                        <td align="center" style="padding:28px 20px;">
-                          <div style="font-size:28px; line-height:36px; padding-bottom:10px;">&#127873;</div>
-                          <div style="font-family:Arial, Helvetica, sans-serif; font-size:16px; line-height:22px; font-weight:bold; color:#1a1a1a; padding-bottom:8px;">Rakhi Hampers</div>
-                          <div style="font-family:Arial, Helvetica, sans-serif; font-size:13px; line-height:20px; color:#666666; padding-bottom:16px;">Curated gift hampers ready to delight the whole family.</div>
+                        <td align="center" style="padding:0; line-height:0; font-size:0;">
+                          <a href="https://www.usarakhi.com/rakhi-combo-to-usa" target="_blank" style="text-decoration:none;">
+                            <img
+                              class="category-img fluid"
+                              src="https://d301af4ndyn9qx.cloudfront.net/uploads/2026/05/fercho.png"
+                              width="252"
+                              alt="Rakhi Combo with chocolates"
+                              style="display:block; width:100%; max-width:252px; height:auto; border:0; border-radius:8px 8px 0 0;"
+                            />
+                          </a>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td align="center" style="padding:16px 14px 20px 14px;">
+                          <div style="font-family:Arial, Helvetica, sans-serif; font-size:16px; line-height:22px; font-weight:bold; color:#1a1a1a; padding-bottom:8px;">Rakhi Combo</div>
+                          <div style="font-family:Arial, Helvetica, sans-serif; font-size:13px; line-height:20px; color:#666666; padding-bottom:14px;">Rakhi paired with Ferrero, Lindt &amp; more.</div>
                           <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
                             <tr>
                               <td align="center" bgcolor="#c41e3a" style="background-color:#c41e3a; border-radius:6px;">
-                                <a href="https://www.usarakhi.com/rakhi-hampers-to-usa" target="_blank" style="display:inline-block; padding:10px 22px; font-family:Arial, Helvetica, sans-serif; font-size:13px; line-height:16px; font-weight:bold; color:#ffffff; text-decoration:none; border-radius:6px;">Shop Hampers</a>
+                                <a href="https://www.usarakhi.com/rakhi-combo-to-usa" target="_blank" style="display:inline-block; padding:10px 18px; font-family:Arial, Helvetica, sans-serif; font-size:13px; line-height:16px; font-weight:bold; color:#ffffff; text-decoration:none; border-radius:6px;">Shop Combos</a>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                  <td class="stack-column" width="50%" valign="top" style="width:50%; padding:0 0 8px 8px;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse; background-color:#fff8f8; border:1px solid #f0d6d6; border-radius:8px;">
+                      <tr>
+                        <td align="center" style="padding:0; line-height:0; font-size:0;">
+                          <a href="https://www.usarakhi.com/rakhi-hampers-to-usa" target="_blank" style="text-decoration:none;">
+                            <img
+                              class="category-img fluid"
+                              src="https://www.usarakhi.com/uploads/orange-county/TFUSRH2026-3/TFUSRH2026-3.jpg"
+                              width="252"
+                              alt="Rakhi Hampers — festive gift boxes"
+                              style="display:block; width:100%; max-width:252px; height:auto; border:0; border-radius:8px 8px 0 0;"
+                            />
+                          </a>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td align="center" style="padding:16px 14px 20px 14px;">
+                          <div style="font-family:Arial, Helvetica, sans-serif; font-size:16px; line-height:22px; font-weight:bold; color:#1a1a1a; padding-bottom:8px;">Rakhi Hampers</div>
+                          <div style="font-family:Arial, Helvetica, sans-serif; font-size:13px; line-height:20px; color:#666666; padding-bottom:14px;">Curated gift hampers for the whole family.</div>
+                          <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
+                            <tr>
+                              <td align="center" bgcolor="#c41e3a" style="background-color:#c41e3a; border-radius:6px;">
+                                <a href="https://www.usarakhi.com/rakhi-hampers-to-usa" target="_blank" style="display:inline-block; padding:10px 18px; font-family:Arial, Helvetica, sans-serif; font-size:13px; line-height:16px; font-weight:bold; color:#ffffff; text-decoration:none; border-radius:6px;">Shop Hampers</a>
                               </td>
                             </tr>
                           </table>
@@ -245,7 +367,7 @@
                     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse; background-color:#fafafa; border-radius:8px;">
                       <tr>
                         <td style="padding:18px 16px; font-family:Arial, Helvetica, sans-serif; font-size:14px; line-height:22px; color:#333333;">
-                          &#128666; Fast Delivery Across USA
+                          Fast Delivery Across USA
                         </td>
                       </tr>
                     </table>
@@ -254,7 +376,7 @@
                     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse; background-color:#fafafa; border-radius:8px;">
                       <tr>
                         <td style="padding:18px 16px; font-family:Arial, Helvetica, sans-serif; font-size:14px; line-height:22px; color:#333333;">
-                          &#127873; Premium Rakhi Collections
+                          Premium Rakhi Collections
                         </td>
                       </tr>
                     </table>
@@ -265,7 +387,7 @@
                     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse; background-color:#fafafa; border-radius:8px;">
                       <tr>
                         <td style="padding:18px 16px; font-family:Arial, Helvetica, sans-serif; font-size:14px; line-height:22px; color:#333333;">
-                          &#128157; Beautiful Gift Packaging
+                          Beautiful Gift Packaging
                         </td>
                       </tr>
                     </table>
@@ -274,7 +396,7 @@
                     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse; background-color:#fafafa; border-radius:8px;">
                       <tr>
                         <td style="padding:18px 16px; font-family:Arial, Helvetica, sans-serif; font-size:14px; line-height:22px; color:#333333;">
-                          &#128274; Secure Payments
+                          Secure Payments
                         </td>
                       </tr>
                     </table>
@@ -285,7 +407,7 @@
                     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse; background-color:#fafafa; border-radius:8px;">
                       <tr>
                         <td style="padding:18px 16px; font-family:Arial, Helvetica, sans-serif; font-size:14px; line-height:22px; color:#333333;">
-                          &#10084;&#65039; Trusted by Families
+                          Trusted by Families
                         </td>
                       </tr>
                     </table>
@@ -294,7 +416,7 @@
                     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse; background-color:#fafafa; border-radius:8px;">
                       <tr>
                         <td style="padding:18px 16px; font-family:Arial, Helvetica, sans-serif; font-size:14px; line-height:22px; color:#333333;">
-                          &#11088; Excellent Customer Experience
+                          Excellent Customer Experience
                         </td>
                       </tr>
                     </table>
@@ -339,7 +461,6 @@
                     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse; border:1px solid #eeeeee; border-radius:8px;">
                       <tr>
                         <td align="center" style="padding:22px 12px;">
-                          <div style="font-size:22px; line-height:28px; padding-bottom:10px;">&#10024;</div>
                           <div style="font-family:Arial, Helvetica, sans-serif; font-size:14px; line-height:20px; font-weight:bold; color:#1a1a1a;">Premium Quality</div>
                         </td>
                       </tr>
@@ -349,7 +470,6 @@
                     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse; border:1px solid #eeeeee; border-radius:8px;">
                       <tr>
                         <td align="center" style="padding:22px 12px;">
-                          <div style="font-size:22px; line-height:28px; padding-bottom:10px;">&#128274;</div>
                           <div style="font-family:Arial, Helvetica, sans-serif; font-size:14px; line-height:20px; font-weight:bold; color:#1a1a1a;">Secure Checkout</div>
                         </td>
                       </tr>
@@ -359,7 +479,6 @@
                     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse; border:1px solid #eeeeee; border-radius:8px;">
                       <tr>
                         <td align="center" style="padding:22px 12px;">
-                          <div style="font-size:22px; line-height:28px; padding-bottom:10px;">&#128666;</div>
                           <div style="font-family:Arial, Helvetica, sans-serif; font-size:14px; line-height:20px; font-weight:bold; color:#1a1a1a;">Fast Shipping</div>
                         </td>
                       </tr>
@@ -383,7 +502,7 @@
                       Explore our exclusive Rakhi collection and send love across the USA.
                     </div>
                     <!--[if mso]>
-                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="https://usarakhi.com" style="height:52px; v-text-anchor:middle; width:220px;" arcsize="15%" stroke="f" fillcolor="#c41e3a">
+                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" href="https://www.usarakhi.com" style="height:52px; v-text-anchor:middle; width:220px;" arcsize="15%" stroke="f" fillcolor="#c41e3a">
                       <w:anchorlock/>
                       <center style="color:#ffffff; font-family:Arial, Helvetica, sans-serif; font-size:17px; font-weight:bold;">Shop Collection</center>
                     </v:roundrect>
@@ -392,7 +511,7 @@
                     <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse; margin:0 auto;">
                       <tr>
                         <td align="center" bgcolor="#c41e3a" style="background-color:#c41e3a; border-radius:8px;">
-                          <a href="https://usarakhi.com" target="_blank" style="display:inline-block; padding:16px 40px; font-family:Arial, Helvetica, sans-serif; font-size:17px; line-height:22px; font-weight:bold; color:#ffffff; text-decoration:none; border-radius:8px;">
+                          <a href="https://www.usarakhi.com" target="_blank" style="display:inline-block; padding:16px 40px; font-family:Arial, Helvetica, sans-serif; font-size:17px; line-height:22px; font-weight:bold; color:#ffffff; text-decoration:none; border-radius:8px;">
                             Shop Collection
                           </a>
                         </td>
@@ -410,8 +529,15 @@
             <td class="mobile-pad" style="padding:32px 40px 40px 40px; background-color:#f8f8f8; border-top:1px solid #eeeeee; text-align:center;">
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
                 <tr>
-                  <td align="center" style="padding:0 0 8px 0; font-family:Arial, Helvetica, sans-serif; font-size:18px; line-height:24px; font-weight:bold; color:#1a1a1a;">
-                    UsaRakhi
+                  <td align="center" style="padding:0 0 12px 0;">
+                    <a href="https://www.usarakhi.com" target="_blank" style="text-decoration:none;">
+                      <img
+                        src="https://www.usarakhi.com/logo.png"
+                        width="140"
+                        alt="UsaRakhi"
+                        style="display:block; width:140px; max-width:50%; height:auto; border:0; margin:0 auto;"
+                      />
+                    </a>
                   </td>
                 </tr>
                 <tr>
@@ -422,7 +548,7 @@
                 <tr>
                   <td align="center" style="padding:0 0 8px 0; font-family:Arial, Helvetica, sans-serif; font-size:13px; line-height:20px; color:#555555;">
                     Website:
-                    <a href="https://usarakhi.com" target="_blank" style="color:#c41e3a; text-decoration:none;">https://usarakhi.com</a>
+                    <a href="https://www.usarakhi.com" target="_blank" style="color:#c41e3a; text-decoration:none;">https://www.usarakhi.com</a>
                   </td>
                 </tr>
                 <tr>
