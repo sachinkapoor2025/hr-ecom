@@ -11,9 +11,9 @@ export function Footer() {
   return (
     <footer className="border-t border-slate-200 bg-primary text-white mt-auto">
       <div className="max-w-7xl mx-auto px-4 py-10 sm:py-12">
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-8 sm:gap-x-8 sm:gap-y-10 text-sm">
+        <div className="grid grid-cols-2 lg:grid-cols-12 gap-x-6 gap-y-8 sm:gap-x-8 sm:gap-y-10 text-sm">
           {/* Brand + contact — full width on mobile, one column on desktop */}
-          <div className="col-span-2 lg:col-span-1">
+          <div className="col-span-2 lg:col-span-3">
             <SiteLogoLink size="desktop" className="mb-5" />
             <p className="text-white/80 leading-relaxed mb-4 max-w-xs">
               Send Rakhi to USA from India, UK, Canada &amp; worldwide. Premium Rakhis delivered to all 50 US
@@ -74,7 +74,7 @@ export function Footer() {
           </div>
 
           {/* Shop */}
-          <div className="min-w-0">
+          <div className="min-w-0 lg:col-span-2">
             <p className="font-semibold text-white mb-3 sm:mb-4">Shop Rakhi</p>
             <ul className="space-y-2 text-white/80">
               {navItems
@@ -95,7 +95,7 @@ export function Footer() {
           </div>
 
           {/* Help */}
-          <div className="min-w-0">
+          <div className="min-w-0 lg:col-span-2">
             <p className="font-semibold text-white mb-3 sm:mb-4">Help &amp; Info</p>
             <ul className="space-y-2 text-white/80">
               <li><Link href="/raksha-bandhan" className="hover:text-white hover:underline">Raksha Bandhan 2026</Link></li>
@@ -109,25 +109,19 @@ export function Footer() {
             </ul>
           </div>
 
-        </div>
-
-        {/* Cities — compact wrap so the list stays ~2–3 lines, not a tall column */}
-        <div className="mt-8 pt-6 border-t border-white/15">
-          <p className="font-semibold text-white mb-3 text-sm">Deliver to</p>
-          <ul className="flex flex-wrap gap-x-1 gap-y-1.5 text-sm text-white/80">
-            {cityLinks.map((c, i) => (
-              <li key={c.slug} className="flex items-center">
-                <Link href={`/send-rakhi-to-${c.slug}`} className="hover:text-white hover:underline whitespace-nowrap">
-                  {c.label}
-                </Link>
-                {i < cityLinks.length - 1 ? (
-                  <span className="mx-2 text-white/35 select-none" aria-hidden>
-                    ·
-                  </span>
-                ) : null}
-              </li>
-            ))}
-          </ul>
+          {/* Cities — 3 columns so footer height stays balanced */}
+          <div className="col-span-2 lg:col-span-5 min-w-0">
+            <p className="font-semibold text-white mb-3 sm:mb-4">Deliver to</p>
+            <ul className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2 text-white/80">
+              {cityLinks.map((c) => (
+                <li key={c.slug}>
+                  <Link href={`/send-rakhi-to-${c.slug}`} className="hover:text-white hover:underline">
+                    {c.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
 
         {/* Payments row */}
