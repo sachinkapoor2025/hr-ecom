@@ -20,6 +20,16 @@ export const categoryKeys = {
     `${String(Math.max(0, sortOrder || 0)).padStart(6, "0")}#${slug}`,
 };
 
+/** Product reviews live in the products table under PRODUCT#slug / REVIEW#id. */
+export const reviewKeys = {
+  pk: (productSlug: string) => `PRODUCT#${productSlug}`,
+  sk: (reviewId: string) => `REVIEW#${reviewId}`,
+  skPrefix: () => "REVIEW#" as const,
+  /** GSI1: global published review feed by date */
+  gsi1pk: () => "ENTITY#REVIEW" as const,
+  gsi1sk: (createdAt: string, reviewId: string) => `${createdAt}#${reviewId}`,
+};
+
 // ---- orders table ----
 export const orderKeys = {
   pk: (orderId: string) => `ORDER#${orderId}`,
@@ -93,6 +103,9 @@ export const couponKeys = {
   sk: () => "META" as const,
   welcomeEmailPk: (email: string) => `WELCOME#${email.trim().toLowerCase()}`,
   welcomeEmailSk: () => "ACTIVE" as const,
+  /** One-spin-per-day index keyed by normalized phone digits. */
+  welcomePhonePk: (phoneDigits: string) => `WELCOMEPHONE#${phoneDigits}`,
+  welcomePhoneSk: () => "ACTIVE" as const,
   abandonedEmailPk: (email: string) => `ABANDONED#${email.trim().toLowerCase()}`,
   abandonedEmailSk: () => "ACTIVE" as const,
 };

@@ -30,8 +30,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description:
       content?.metaExtra ??
       `Send Rakhi to ${city.label}, USA with ${site.name}. Premium rakhis, 5–7 day delivery, roli chawal included. Order from India worldwide.`,
-    path: `/cities/${slug}`,
-    keywords: `send rakhi to ${city.label}, rakhi delivery ${city.label}, rakhi USA ${city.label}, online rakhi ${city.label}, raksha bandhan ${city.label}, UsaRakhi, usarakhi.com`,
+    path: `/send-rakhi-to-${slug}`,
+    keywords: `send rakhi to ${city.label}, rakhi delivery ${city.label}, rakhi USA ${city.label}, online rakhi ${city.label}, raksha bandhan ${city.label}, UsaRakhi`,
   });
 }
 
@@ -60,7 +60,7 @@ export default async function CityPage({ params }: Props) {
     <div className="max-w-7xl mx-auto px-4 py-10">
       <JsonLd
         data={[
-          breadcrumbJsonLd(crumbs.map((c) => ({ name: c.label, path: c.href ?? `/cities/${slug}` }))),
+          breadcrumbJsonLd(crumbs.map((c) => ({ name: c.label, path: c.href ?? `/send-rakhi-to-${slug}` }))),
           faqJsonLd(content.faqs),
           serviceAreaJsonLd({ label: city.label, slug, state: content.state }),
         ]}
@@ -94,7 +94,7 @@ export default async function CityPage({ params }: Props) {
           {cityLinks
             .filter((c) => c.slug !== slug)
             .map((c) => (
-              <Link key={c.slug} href={`/cities/${c.slug}`} className="text-nav hover:underline">
+              <Link key={c.slug} href={`/send-rakhi-to-${c.slug}`} className="text-nav hover:underline">
                 {c.label}
               </Link>
             ))}

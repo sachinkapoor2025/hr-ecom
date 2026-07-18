@@ -40,10 +40,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         : location.name;
   const path = locationPublicPath(slug);
   const primary = location.keywords[0] ?? `send rakhi to ${location.name.toLowerCase()}`;
+  const warehouseNote = location.isCaliforniaWarehouse
+    ? " Ships from our California warehouse for faster West Coast delivery."
+    : location.state
+      ? ` Domestic USA shipping to ${place} — no customs delays.`
+      : " Domestic USA shipping nationwide — no customs delays.";
+  const regionNote =
+    location.region === "state"
+      ? `Browse designer Single Rakhi, combos, and hampers for addresses across ${location.name}.`
+      : `Order online for doorstep delivery in ${place}${location.state ? ` and nearby ${location.state} metros` : ""}.`;
 
   return pageMetadata({
-    title: `Send Rakhi to ${place} | USA Delivery | ${site.name}`,
-    description: `${primary.charAt(0).toUpperCase() + primary.slice(1)} with ${site.name}. Premium rakhis, domestic USA shipping${location.isCaliforniaWarehouse ? ", fast California warehouse dispatch" : ""}, roli chawal included.`,
+    title: `Send Rakhi to ${place} | ${primary.charAt(0).toUpperCase() + primary.slice(1)} | ${site.name}`,
+    description: `${primary.charAt(0).toUpperCase() + primary.slice(1)} with ${site.name}.${warehouseNote} ${regionNote} Roli chawal included. Secure Stripe & Razorpay checkout.`,
     path,
     keywords: location.keywords.slice(0, 12).join(", "),
     absoluteTitle: true,

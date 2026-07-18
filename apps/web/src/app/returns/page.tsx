@@ -49,7 +49,7 @@ export default function ReturnsPage() {
             </Link>
           </li>
         </ul>
-        <p className="text-slate-500 text-sm">Last updated: June 2025</p>
+        <p className="text-slate-500 text-sm">Last updated: July 2026</p>
         <Link href="/" className="text-nav font-semibold hover:underline inline-block">
           ← Back to home
         </Link>

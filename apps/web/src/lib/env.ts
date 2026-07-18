@@ -37,7 +37,14 @@ export function getApiUrl(): string {
  */
 export function getSiteUrl(): string {
   const fromEnv = process.env.NEXT_PUBLIC_SITE_URL?.trim();
-  if (fromEnv) return fromEnv.replace(/\/$/, "");
+  if (fromEnv) {
+    const cleaned = fromEnv.replace(/\/$/, "");
+    // Canonical host is www — avoid advertising apex in sitemap/canonical tags.
+    if (cleaned === "https://usarakhi.com" || cleaned === "http://usarakhi.com") {
+      return "https://www.usarakhi.com";
+    }
+    return cleaned;
+  }
 
   const amplifyBranch = getAmplifyBranchUrl();
   if (amplifyBranch && process.env.NODE_ENV === "production") return amplifyBranch;
@@ -46,10 +53,10 @@ export function getSiteUrl(): string {
   return "http://localhost:3000";
 }
 
-/** Production CDN for WordPress media migrated to S3/CloudFront. */
+/** Production CDN for product/media images (S3 via CloudFront). */
 export const PROD_CDN_URL = "https://d301af4ndyn9qx.cloudfront.net";
 
-/** CloudFront (or cdn.usarakhi.com) base for product/media images migrated off WordPress. */
+/** CloudFront base for product/media images. */
 export function getCdnUrl(): string {
   const fromEnv = process.env.NEXT_PUBLIC_CDN_URL?.trim();
   if (fromEnv) return fromEnv.replace(/\/$/, "");

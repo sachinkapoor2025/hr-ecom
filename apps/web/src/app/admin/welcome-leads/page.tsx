@@ -9,7 +9,8 @@ import { formatCouponExpiry } from "@/lib/welcome-coupon";
 
 type WelcomeCouponRow = {
   code: string;
-  email: string;
+  email?: string;
+  phone?: string;
   discountPercent: number;
   expiresAt: string;
   createdAt: string;
@@ -61,10 +62,14 @@ export default function AdminWelcomeLeadsPage() {
     return rows.filter((r) => {
       if (statusTab !== "all" && rowStatus(r) !== statusTab) return false;
       if (!q) return true;
+      const phoneDigits = (r.phone ?? "").replace(/\D/g, "");
+      const qDigits = q.replace(/\D/g, "");
       return (
-        r.email.toLowerCase().includes(q) ||
+        (r.email ?? "").toLowerCase().includes(q) ||
+        (r.phone ?? "").toLowerCase().includes(q) ||
+        (qDigits.length >= 4 && phoneDigits.includes(qDigits)) ||
         r.code.toLowerCase().includes(q) ||
-        r.orderId?.toLowerCase().includes(q)
+        (r.orderId?.toLowerCase().includes(q) ?? false)
       );
     });
   }, [rows, search, statusTab]);
@@ -77,10 +82,11 @@ export default function AdminWelcomeLeadsPage() {
   const paged = paginate(sorted, page, pageSize);
 
   const exportCsv = () => {
-    downloadCsv("welcome-email-leads.csv", [
-      ["Email", "Coupon", "Discount %", "Created", "Expires", "Status", "Order ID"],
+    downloadCsv("welcome-phone-leads.csv", [
+      ["Mobile", "Email", "Coupon", "Discount %", "Created", "Expires", "Status", "Order ID"],
       ...sorted.map((r) => [
-        r.email,
+        r.phone ?? "",
+        r.email ?? "",
         r.code,
         String(r.discountPercent),
         r.createdAt,
@@ -103,7 +109,7 @@ export default function AdminWelcomeLeadsPage() {
         <div>
           <h1 className="text-2xl font-bold text-primary">Discount of the Day</h1>
           <p className="text-sm text-slate-600 mt-1">
-            Spin-the-wheel signups (6–10% off, 1-hour validity, one spin per email per day).
+            Spin-the-wheel signups (mystery 6–10% off, 1-hour validity, one spin per mobile per day).
           </p>
         </div>
         <button
@@ -169,7 +175,7 @@ export default function AdminWelcomeLeadsPage() {
             setSearch(e.target.value);
             setPage(1);
           }}
-          placeholder="Search email or coupon…"
+          placeholder="Search mobile, email, or coupon…"
           className="border border-slate-200 rounded-lg px-3 py-2 text-sm flex-1 min-w-[200px]"
         />
       </div>
@@ -194,6 +200,7 @@ export default function AdminWelcomeLeadsPage() {
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
             <tr>
+              <th className="px-4 py-3">Mobile</th>
               <th className="px-4 py-3">Email</th>
               <th className="px-4 py-3">Coupon</th>
               <th className="px-4 py-3">Created</th>
@@ -205,13 +212,13 @@ export default function AdminWelcomeLeadsPage() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-slate-500">
+                <td colSpan={7} className="px-4 py-8 text-center text-slate-500">
                   Loading…
                 </td>
               </tr>
             ) : paged.items.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-slate-500">
+                <td colSpan={7} className="px-4 py-8 text-center text-slate-500">
                   No welcome signups yet.
                 </td>
               </tr>
@@ -220,6 +227,15 @@ export default function AdminWelcomeLeadsPage() {
                 const status = statusLabel(r);
                 return (
                   <tr key={`${r.code}-${r.createdAt}`} className="border-t border-slate-100">
+                    <td className="px-4 py-3 font-medium whitespace-nowrap">
+                      {r.phone ? (
+                        <a href={`tel:${r.phone}`} className="text-nav hover:underline">
+                          {r.phone}
+                        </a>
+                      ) : (
+                        <span className="text-slate-400">—</span>
+                      )}
+                    </td>
                     <td className="px-4 py-3">
                       {r.email ? (
                         <Link
@@ -229,7 +245,7 @@ export default function AdminWelcomeLeadsPage() {
                           {r.email}
                         </Link>
                       ) : (
-                        "—"
+                        <span className="text-slate-400">—</span>
                       )}
                     </td>
                     <td className="px-4 py-3 font-mono font-semibold">{r.code}</td>

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   DAILY_DEAL_SEGMENTS,
+  DAILY_DEAL_WHEEL_LABELS,
   WELCOME_COUPON_HOURS,
   pickDailyDealDiscount,
 } from "@hr-ecom/shared";
@@ -14,13 +15,16 @@ import { getOrCreateSessionId } from "@/lib/session";
 import { api } from "@/lib/api";
 import { saveWelcomeCoupon, formatCouponExpiry } from "@/lib/welcome-coupon";
 import { trackSessionHeartbeat } from "@/lib/track";
+import { DEFAULT_COUNTRY_ISO } from "@/lib/country-codes";
 import { ConfettiBurst } from "@/components/ConfettiBurst";
+import { PhoneInput, buildPhoneValue } from "@/components/PhoneInput";
 
 const STORAGE_KEY = "usarakhi_daily_deal_shown";
 const SHOW_AFTER_MS = 10_000;
 const SPIN_MS = 4200;
 
 const SEGMENTS = [...DAILY_DEAL_SEGMENTS];
+const WHEEL_LABELS = [...DAILY_DEAL_WHEEL_LABELS];
 const SEGMENT_COLORS = [
   "#183a68",
   "#c4a35a",
@@ -34,6 +38,11 @@ const SEGMENT_COLORS = [
 
 function isValidEmail(value: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+}
+
+function isValidPhone(value: string): boolean {
+  const digits = value.replace(/\D/g, "");
+  return digits.length >= 7 && digits.length <= 15;
 }
 
 function segmentIndexForPercent(percent: number): number {
@@ -59,6 +68,8 @@ type CouponResult = {
 export function ExitIntentPopup() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [countryIso, setCountryIso] = useState(DEFAULT_COUNTRY_ISO);
+  const [localNumber, setLocalNumber] = useState("");
   const [email, setEmail] = useState("");
   const [phase, setPhase] = useState<
     "idle" | "spinning" | "celebrating" | "done" | "blocked"
@@ -119,10 +130,15 @@ export function ExitIntentPopup() {
 
   const spin = (e: React.FormEvent) => {
     e.preventDefault();
+    const fullPhone = buildPhoneValue(countryIso, localNumber);
     const trimmedEmail = email.trim();
     if (phase !== "idle") return;
-    if (!isValidEmail(trimmedEmail)) {
-      setError("Enter a valid email to spin for today’s discount.");
+    if (!isValidPhone(fullPhone)) {
+      setError("Enter a valid mobile number to spin for today’s discount.");
+      return;
+    }
+    if (trimmedEmail && !isValidEmail(trimmedEmail)) {
+      setError("Enter a valid email, or leave it blank.");
       return;
     }
 
@@ -139,7 +155,6 @@ export function ExitIntentPopup() {
     const sessionId = getOrCreateSessionId();
     const spinStartedAt = Date.now();
 
-    // Token generation runs in parallel with the spin animation
     const couponPromise = api<{
       ok: boolean;
       coupon?: CouponResult;
@@ -148,7 +163,8 @@ export function ExitIntentPopup() {
       sessionId,
       body: JSON.stringify({
         sessionId,
-        email: trimmedEmail,
+        phone: fullPhone,
+        ...(trimmedEmail ? { email: trimmedEmail } : {}),
         page: pathname,
         source: "newsletter",
         metadata: {
@@ -165,7 +181,7 @@ export function ExitIntentPopup() {
         await new Promise((r) => window.setTimeout(r, remainingSpin));
         setAnimateSpin(false);
 
-        // Cracker burst + "You won" while coupon finishes generating
+        // Firecracker / confetti — reveal discount % only here
         setBurstKey((k) => k + 1);
         setPhase("celebrating");
 
@@ -199,9 +215,12 @@ export function ExitIntentPopup() {
         }
 
         setCoupon(result);
-        saveWelcomeCoupon({ ...result, email: trimmedEmail });
+        saveWelcomeCoupon({
+          ...result,
+          phone: fullPhone,
+          ...(trimmedEmail ? { email: trimmedEmail } : {}),
+        });
 
-        // Brief beat so celebration is visible, then reveal code
         await new Promise((r) => window.setTimeout(r, 900));
         setPhase("done");
       } catch (err) {
@@ -211,7 +230,7 @@ export function ExitIntentPopup() {
         setError(
           err instanceof Error
             ? err.message
-            : "Could not spin right now. Try again or email order@usarakhi.com."
+            : "Could not spin right now. Try again or WhatsApp us."
         );
       }
     })();
@@ -255,7 +274,7 @@ export function ExitIntentPopup() {
             <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-amber-200">Rakhi offer · Today only</p>
             <h2 className="text-2xl font-bold leading-tight mt-0.5">Discount of the Day</h2>
             <p className="text-xs sm:text-sm text-white/90 mt-1">
-              Spin for 6–10% off your Rakhi · 1 spin / email / day · valid {WELCOME_COUPON_HOURS}h
+              Spin for a mystery Rakhi discount · 1 spin / mobile / day · valid {WELCOME_COUPON_HOURS}h
             </p>
           </div>
         </div>
@@ -265,7 +284,7 @@ export function ExitIntentPopup() {
             <div className="text-center py-2">
               <p className="text-lg font-bold text-primary mb-2">You already spun today</p>
               <p className="text-sm text-slate-600 mb-4">
-                Each email gets one Discount of the Day spin per day. Come back tomorrow for another chance.
+                Each mobile number gets one Discount of the Day spin per day. Come back tomorrow for another chance.
               </p>
               <button
                 type="button"
@@ -297,7 +316,11 @@ export function ExitIntentPopup() {
                 </div>
                 <p className="text-xs text-slate-500 mt-1">Expires {formatCouponExpiry(coupon.expiresAt)}</p>
               </div>
-              <p className="text-xs text-slate-500 mb-4">Also sent to your email.</p>
+              <p className="text-xs text-slate-500 mb-4">
+                {email.trim()
+                  ? "Also sent to your email when available."
+                  : "Use this code at checkout with the same mobile number."}
+              </p>
               <Link
                 href="/products"
                 onClick={close}
@@ -334,23 +357,23 @@ export function ExitIntentPopup() {
                     boxShadow: "0 8px 28px rgba(24,58,104,0.28)",
                   }}
                 >
-                  {SEGMENTS.map((pct, i) => {
-                    const slice = 360 / SEGMENTS.length;
+                  {WHEEL_LABELS.map((label, i) => {
+                    const slice = 360 / WHEEL_LABELS.length;
                     const angle = i * slice;
                     return (
                       <div
-                        key={`${pct}-${i}`}
+                        key={`${label}-${i}`}
                         className="absolute inset-0 pointer-events-none"
                         style={{ transform: `rotate(${angle}deg)` }}
                       >
                         <span
-                          className="absolute left-1/2 top-[16%] whitespace-nowrap text-[11px] sm:text-xs font-extrabold text-white"
+                          className="absolute left-1/2 top-[16%] whitespace-nowrap text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wide text-white"
                           style={{
-                            transform: `translateX(-50%) rotate(${-angle}deg)`,
+                            transform: `translateX(-50%) rotate(${slice / 2 - angle}deg)`,
                             textShadow: "0 1px 2px rgba(0,0,0,0.5)",
                           }}
                         >
-                          {pct}%
+                          {label}
                         </span>
                       </div>
                     );
@@ -375,23 +398,33 @@ export function ExitIntentPopup() {
                   <p className="text-lg sm:text-xl font-bold text-primary animate-bounce">
                     You won {wonPercent}% discount!
                   </p>
-                  <p className="text-sm text-slate-600">
-                    Generating your discount coupon…
-                  </p>
+                  <p className="text-sm text-slate-600">Generating your discount coupon…</p>
                   <div className="mx-auto h-1.5 w-40 overflow-hidden rounded-full bg-slate-100">
                     <div className="h-full w-1/2 animate-pulse rounded-full bg-accent" />
                   </div>
                 </div>
               ) : (
                 <form onSubmit={spin} className="space-y-3">
+                  <PhoneInput
+                    label=""
+                    countryIso={countryIso}
+                    localNumber={localNumber}
+                    onCountryChange={setCountryIso}
+                    onLocalNumberChange={setLocalNumber}
+                    required
+                    compact
+                    disabled={phase === "spinning"}
+                    placeholder="Mobile number"
+                    selectClassName="border-slate-200 py-2.5 focus:outline-none focus:ring-2 focus:ring-nav"
+                    inputClassName="border-slate-200 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-nav"
+                  />
                   <input
                     type="email"
-                    required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@email.com"
+                    placeholder="Share email to get coupon on email (optional)"
                     disabled={phase === "spinning"}
-                    className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-nav disabled:opacity-60"
+                    className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-nav disabled:opacity-60"
                   />
                   <button
                     type="submit"

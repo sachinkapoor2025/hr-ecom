@@ -34,7 +34,7 @@ function CitiesMenu({ onNavigate }: { onNavigate?: () => void }) {
             {cityLinks.map((c) => (
               <Link
                 key={c.slug}
-                href={`/cities/${c.slug}`}
+                href={`/send-rakhi-to-${c.slug}`}
                 className="block px-4 py-2.5 text-sm text-slate-700 hover:bg-blue-50 hover:text-nav whitespace-nowrap"
                 onClick={() => {
                   setOpen(false);
@@ -321,7 +321,7 @@ export function Header() {
                     {cityLinks.map((c) => (
                       <Link
                         key={c.slug}
-                        href={`/cities/${c.slug}`}
+                        href={`/send-rakhi-to-${c.slug}`}
                         onClick={closeMenu}
                         className="block rounded-lg px-4 py-2.5 text-sm text-slate-700 hover:bg-blue-50 hover:text-nav"
                       >

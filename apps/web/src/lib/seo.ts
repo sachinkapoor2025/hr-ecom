@@ -1,10 +1,15 @@
 import type { Metadata } from "next";
-import { productMetaDescription } from "@hr-ecom/shared";
+import { productMetaDescription, type ProductRatingAggregate } from "@hr-ecom/shared";
 import { site, testimonials } from "./site";
 import { siteUrl } from "./env";
 import { extendedKeywords } from "./ai-recommendation";
+import { locationPublicPath } from "./content/seo-data";
 
 export { metaDescription, productMetaDescription } from "@hr-ecom/shared";
+
+/** Default OG image size (site logo / social share). */
+const OG_IMAGE_WIDTH = 1200;
+const OG_IMAGE_HEIGHT = 630;
 
 /** Build absolute canonical URL for a path (no query string). */
 export function canonical(path: string): string {
@@ -13,6 +18,10 @@ export function canonical(path: string): string {
 }
 
 export const defaultKeywords = extendedKeywords;
+
+function ogImages(url: string, alt: string) {
+  return [{ url, alt, width: OG_IMAGE_WIDTH, height: OG_IMAGE_HEIGHT }];
+}
 
 export function pageMetadata(opts: {
   title: string;
@@ -38,7 +47,7 @@ export function pageMetadata(opts: {
       siteName: site.name,
       locale: "en_US",
       type: "website",
-      images: [{ url: image, alt: site.name }],
+      images: ogImages(image, site.name),
     },
     twitter: {
       card: "summary_large_image",
@@ -79,7 +88,7 @@ export function productPageMetadata(opts: {
       siteName: site.name,
       locale: "en_US",
       type: "website",
-      images: [{ url: image, alt: opts.title }],
+      images: ogImages(image, opts.title),
     },
     twitter: {
       card: "summary_large_image",
@@ -105,14 +114,30 @@ export function organizationJsonLd() {
     "@id": `${siteUrl}/#organization`,
     name: site.name,
     url: siteUrl,
-    logo: site.logoSrc,
+    logo: {
+      "@type": "ImageObject",
+      url: canonical(site.logoSrc),
+      width: OG_IMAGE_WIDTH,
+      height: OG_IMAGE_HEIGHT,
+    },
     description: site.description,
     email: site.supportEmail,
     telephone: site.phone,
     sameAs: [
       "https://www.facebook.com/usarakhi/",
       "https://www.instagram.com/usarakhi/",
-      `https://www.${site.domain}`,
+      siteUrl,
+    ],
+    contactPoint: [
+      {
+        "@type": "ContactPoint",
+        contactType: "customer support",
+        email: site.supportEmail,
+        telephone: site.phone,
+        url: `https://wa.me/${site.whatsapp}`,
+        availableLanguage: ["English", "Hindi"],
+        areaServed: "US",
+      },
     ],
     areaServed: { "@type": "Country", name: "United States" },
     knowsAbout: [
@@ -154,7 +179,7 @@ export function onlineStoreJsonLd() {
     name: site.name,
     url: siteUrl,
     description: site.description,
-    image: site.logoSrc,
+    image: canonical(site.logoSrc),
     email: site.supportEmail,
     telephone: site.phone,
     areaServed: { "@type": "Country", name: "United States" },
@@ -171,6 +196,33 @@ export function onlineStoreJsonLd() {
       },
     },
     parentOrganization: { "@id": `${siteUrl}/#organization` },
+  };
+}
+
+/** California fulfillment warehouse — differentiator for "ships from USA". */
+export function californiaWarehouseJsonLd() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Store",
+    "@id": `${siteUrl}/#california-warehouse`,
+    name: `${site.name} California Fulfillment`,
+    description:
+      "UsaRakhi California warehouse for domestic USA Rakhi shipping — no international customs delays.",
+    url: siteUrl,
+    image: canonical(site.logoSrc),
+    parentOrganization: { "@id": `${siteUrl}/#organization` },
+    address: {
+      "@type": "PostalAddress",
+      addressRegion: "CA",
+      addressCountry: "US",
+    },
+    areaServed: { "@type": "Country", name: "United States" },
+    openingHoursSpecification: {
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+      opens: "09:00",
+      closes: "18:00",
+    },
   };
 }
 
@@ -230,7 +282,21 @@ export function productJsonLd(product: {
   currency: string;
   inventory: number;
   categorySlug?: string;
+  ratingAggregate?: ProductRatingAggregate;
 }) {
+  const aggregate =
+    product.ratingAggregate && product.ratingAggregate.reviewCount > 0
+      ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: product.ratingAggregate.ratingValue.toFixed(1),
+            reviewCount: String(product.ratingAggregate.reviewCount),
+            bestRating: String(product.ratingAggregate.bestRating ?? 5),
+            worstRating: String(product.ratingAggregate.worstRating ?? 1),
+          },
+        }
+      : {};
+
   return {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -240,13 +306,15 @@ export function productJsonLd(product: {
     image: product.images ?? [],
     sku: product.sku ?? product.slug,
     mpn: product.slug,
+    productID: product.sku ?? product.slug,
     url: canonical(`/products/${product.slug}`),
     brand: { "@type": "Brand", name: site.name },
     category: product.categorySlug?.replace(/-/g, " "),
+    ...aggregate,
     offers: {
       "@type": "Offer",
       url: canonical(`/products/${product.slug}`),
-      price: product.price,
+      price: Number(product.price).toFixed(2),
       priceCurrency: product.currency,
       itemCondition: "https://schema.org/NewCondition",
       availability:
@@ -398,12 +466,13 @@ export function contactPageJsonLd() {
 }
 
 export function serviceAreaJsonLd(city: { label: string; slug: string; state?: string }) {
+  const path = locationPublicPath(city.slug);
   return {
     "@context": "https://schema.org",
     "@type": "Service",
     name: `Rakhi Delivery to ${city.label}, USA`,
     description: `Send Rakhi to ${city.label} with ${site.name}. Premium rakhis delivered in 5–7 business days across the United States.`,
-    url: canonical(`/cities/${city.slug}`),
+    url: canonical(path),
     provider: { "@id": `${siteUrl}/#organization` },
     areaServed: {
       "@type": city.state ? "City" : "State",
@@ -415,7 +484,7 @@ export function serviceAreaJsonLd(city: { label: string; slug: string; state?: s
       "@type": "Offer",
       priceCurrency: "USD",
       availability: "https://schema.org/InStock",
-      url: canonical(`/cities/${city.slug}`),
+      url: canonical(path),
     },
   };
 }

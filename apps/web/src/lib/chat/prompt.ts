@@ -13,7 +13,7 @@ export function buildChatKnowledge(): string {
     .filter((n) => !("category" in n))
     .map((n) => `- ${n.label}: ${siteUrl}${n.href === "/" ? "" : n.href}`);
 
-  const cities = cityLinks.map((c) => `- ${c.label}: ${siteUrl}/cities/${c.slug}`);
+  const cities = cityLinks.map((c) => `- ${c.label}: ${siteUrl}/send-rakhi-to-${c.slug}`);
 
   const faqBlock = faqs.map((f) => `Q: ${f.q}\nA: ${f.a}`).join("\n\n");
 

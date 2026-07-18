@@ -1,6 +1,7 @@
 import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import {
+  resolveProductImageUrls,
   stripVendorPrivateFields,
   withCompetitiveStorefrontPricing,
   type Product,
@@ -38,6 +39,8 @@ export function getCatalogProducts(): Product[] {
   ]) {
     // Never expose vendorCost / vendorSlug to the browser via SSR props.
     const publicProduct = stripVendorPrivateFields(product) as Product;
+    // Rewrite legacy WordPress / non-www media hosts to CloudFront.
+    publicProduct.images = resolveProductImageUrls(publicProduct.images);
     bySlug.set(product.slug, withCompetitiveStorefrontPricing(publicProduct));
   }
   cached = [...bySlug.values()];

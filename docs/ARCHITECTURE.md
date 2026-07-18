@@ -79,6 +79,8 @@ When admin sets order status to **Delivered** or **Complete**, the API sets `rev
 |--------|------|---------|
 | GET | `/products` | List/search products |
 | GET | `/products/{slug}` | Product detail |
+| GET | `/products/{slug}/reviews` | Published product reviews |
+| POST | `/products/{slug}/reviews` | Admin: create/moderate a review |
 | POST | `/products` | Admin: create product |
 | PUT | `/products/{slug}` | Admin: update |
 | DELETE | `/products/{slug}` | Admin: delete |

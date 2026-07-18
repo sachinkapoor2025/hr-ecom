@@ -88,13 +88,19 @@ export async function captureLead(event: APIGatewayProxyEventV2) {
     | undefined;
   let leadPayload = parsed.data;
   if (parsed.data.source === "newsletter") {
-    if (!email) return badRequest("Enter a valid email address to generate a coupon");
+    const phone = parsed.data.phone?.trim();
+    if (!phone) return badRequest("Enter a valid mobile number to spin");
     const requested = Number(parsed.data.metadata?.discountPercent);
-    welcomeCoupon = await issueWelcomeCoupon({
-      email,
-      sessionId,
-      discountPercent: Number.isFinite(requested) ? requested : undefined,
-    });
+    try {
+      welcomeCoupon = await issueWelcomeCoupon({
+        phone,
+        email,
+        sessionId,
+        discountPercent: Number.isFinite(requested) ? requested : undefined,
+      });
+    } catch (err) {
+      return badRequest(err instanceof Error ? err.message : "Could not issue discount coupon");
+    }
     leadPayload = {
       ...parsed.data,
       metadata: {
@@ -133,10 +139,11 @@ export async function captureLead(event: APIGatewayProxyEventV2) {
   });
 
   const emailResult = await notifyAdminLead(leadPayload);
+  // Newsletter spins are phone-first — only require SMTP when an email was provided.
   const emailRequired =
     leadPayload.source === "contact" ||
-    leadPayload.source === "newsletter" ||
-    leadPayload.source === "review";
+    leadPayload.source === "review" ||
+    (leadPayload.source === "newsletter" && Boolean(email));
 
   if (emailRequired && emailResult.skipped) {
     console.error("Email skipped — SMTP not configured:", leadPayload.source);
@@ -221,10 +228,16 @@ export async function checkout(event: APIGatewayProxyEventV2) {
   let discount = 0;
   let couponCode: string | undefined;
   const checkoutEmail = normalizeEmail(parsed.data.shippingAddress.email);
+  const checkoutPhone = parsed.data.shippingAddress.phone?.trim();
 
   if (parsed.data.couponCode?.trim()) {
-    if (!checkoutEmail) return badRequest("Email is required to apply a coupon");
-    const coupon = await validateCouponRecord(parsed.data.couponCode, checkoutEmail);
+    if (!checkoutEmail && !checkoutPhone) {
+      return badRequest("Phone or email is required to apply a coupon");
+    }
+    const coupon = await validateCouponRecord(parsed.data.couponCode, {
+      email: checkoutEmail,
+      phone: checkoutPhone,
+    });
     if (!coupon.valid) return badRequest(coupon.error ?? "Invalid coupon code");
     discount = applyPercentDiscount(subtotal, coupon.discountPercent!);
     couponCode = coupon.code;

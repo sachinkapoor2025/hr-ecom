@@ -6,8 +6,23 @@ export const WELCOME_COUPON_HOURS = 1;
 /** @deprecated Prefer weighted spin; kept as fallback average. */
 export const WELCOME_DISCOUNT_PERCENT = 10;
 
-/** Visual wheel segments (labels on the wheel). */
+/** Underlying discount values for each wheel slice (not shown on the wheel). */
 export const DAILY_DEAL_SEGMENTS = [6, 7, 8, 10, 6, 7, 8, 10] as const;
+
+/**
+ * Mystery labels shown on the wheel — never reveal the % until the prize reveal.
+ * Length must match DAILY_DEAL_SEGMENTS.
+ */
+export const DAILY_DEAL_WHEEL_LABELS = [
+  "Lucky",
+  "Surprise",
+  "Bonus",
+  "Mystery",
+  "Lucky",
+  "Surprise",
+  "Bonus",
+  "Mystery",
+] as const;
 
 export type DailyDealPercent = 6 | 7 | 8 | 10;
 
@@ -37,7 +52,7 @@ export function pickDailyDealDiscount(): DailyDealPercent {
   return 7;
 }
 
-/** Calendar day key in America/New_York for one-spin-per-email-per-day. */
+/** Calendar day key in America/New_York for one-spin-per-phone-per-day. */
 export function dailyDealDayKey(date = new Date()): string {
   return new Intl.DateTimeFormat("en-CA", {
     timeZone: "America/New_York",
@@ -79,7 +94,8 @@ export type CreateAdminCouponInput = z.infer<typeof createAdminCouponSchema>;
 
 export const couponSchema = z.object({
   code: z.string(),
-  email: z.string().email(),
+  /** Optional when coupon is bound to phone (spin-the-wheel). */
+  email: z.string().email().optional(),
   discountPercent: z.number().int().min(1).max(100),
   expiresAt: z.string(),
   createdAt: z.string(),
@@ -88,7 +104,7 @@ export const couponSchema = z.object({
   orderId: z.string().optional(),
   source: couponSourceSchema,
   dayKey: z.string().optional(),
-  /** Customer phone (admin-generated abandoned outreach). */
+  /** Customer phone (welcome spin / admin abandoned outreach). */
   phone: z.string().optional(),
   /** Cognito email of admin who created the coupon. */
   createdBy: z.string().email().optional(),
@@ -96,10 +112,15 @@ export const couponSchema = z.object({
 
 export type StoreCoupon = z.infer<typeof couponSchema>;
 
-export const couponValidateSchema = z.object({
-  code: z.string().min(4).max(32),
-  email: z.string().email().max(254),
-});
+export const couponValidateSchema = z
+  .object({
+    code: z.string().min(4).max(32),
+    email: z.string().max(254).optional(),
+    phone: z.string().max(40).optional(),
+  })
+  .refine((v) => Boolean(v.email?.trim()) || Boolean(v.phone?.trim()), {
+    message: "Email or phone is required to apply a coupon",
+  });
 
 export const welcomeCouponSchema = couponSchema.extend({
   source: z.literal("welcome"),

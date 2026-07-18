@@ -7,6 +7,7 @@ import { formatCouponExpiry } from "@/lib/welcome-coupon";
 
 type Props = {
   email: string;
+  phone?: string;
   subtotal: number;
   currency: "USD" | "INR";
   formatMoney: (amount: number, currency: "USD" | "INR") => string;
@@ -17,6 +18,7 @@ type Props = {
 
 export function CouponInput({
   email,
+  phone = "",
   subtotal,
   currency,
   formatMoney,
@@ -38,8 +40,10 @@ export function CouponInput({
   const apply = async () => {
     const trimmed = code.trim().toUpperCase();
     if (!trimmed) return;
-    if (!email.trim() || !email.includes("@")) {
-      setError("Enter your email in the shipping form first");
+    const hasEmail = Boolean(email.trim() && email.includes("@"));
+    const hasPhone = phone.replace(/\D/g, "").length >= 7;
+    if (!hasEmail && !hasPhone) {
+      setError("Enter your mobile number or email in the shipping form first");
       return;
     }
     setLoading(true);
@@ -54,7 +58,11 @@ export function CouponInput({
       }>("/coupons/validate", {
         method: "POST",
         sessionId: sessionId ?? undefined,
-        body: JSON.stringify({ code: trimmed, email: email.trim() }),
+        body: JSON.stringify({
+          code: trimmed,
+          ...(hasEmail ? { email: email.trim() } : {}),
+          ...(hasPhone ? { phone: phone.trim() } : {}),
+        }),
       });
 
       if (!result.valid || !result.discountPercent || !result.code) {

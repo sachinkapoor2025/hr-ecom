@@ -4,6 +4,7 @@ export type StoredWelcomeCoupon = {
   code: string;
   expiresAt: string;
   discountPercent: number;
+  phone?: string;
   email?: string;
 };
 

@@ -717,6 +717,7 @@ function CheckoutPageInner() {
             {!isRetry && (
               <CouponInput
                 email={address.email}
+                phone={address.phone}
                 subtotal={displaySubtotal}
                 currency={displayCurrency}
                 formatMoney={format}
