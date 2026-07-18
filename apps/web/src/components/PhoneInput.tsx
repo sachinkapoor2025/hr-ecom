@@ -15,10 +15,18 @@ interface PhoneInputProps {
   onLocalNumberChange: (value: string) => void;
   required?: boolean;
   disabled?: boolean;
+  /** Show only dial codes (e.g. +91); ISO added when dial is shared (+1 US / +1 CA). */
+  compact?: boolean;
   placeholder?: string;
   className?: string;
   selectClassName?: string;
   inputClassName?: string;
+}
+
+function optionLabel(c: (typeof COUNTRIES)[number], compact: boolean): string {
+  if (!compact) return `${c.dial} ${c.name}`;
+  const shared = COUNTRIES.some((other) => other.iso !== c.iso && other.dial === c.dial);
+  return shared ? `${c.dial} ${c.iso}` : c.dial;
 }
 
 export function PhoneInput({
@@ -29,6 +37,7 @@ export function PhoneInput({
   onLocalNumberChange,
   required = false,
   disabled = false,
+  compact = false,
   placeholder = "Phone number",
   className = "",
   selectClassName = "",
@@ -45,11 +54,14 @@ export function PhoneInput({
           onChange={(e) => onCountryChange(e.target.value)}
           aria-label="Country code"
           disabled={disabled}
-          className={`w-[min(100%,11rem)] shrink-0 border border-slate-300 rounded-lg px-2 py-2 text-sm bg-white disabled:opacity-60 ${selectClassName}`}
+          title={selected ? `${selected.dial} ${selected.name}` : "Country code"}
+          className={`${
+            compact ? "w-[4.75rem]" : "w-[min(100%,11rem)]"
+          } shrink-0 border border-slate-300 rounded-lg px-1.5 py-2 text-sm bg-white disabled:opacity-60 ${selectClassName}`}
         >
           {COUNTRIES.map((c) => (
-            <option key={c.iso} value={c.iso}>
-              {c.dial} {c.name}
+            <option key={c.iso} value={c.iso} title={`${c.dial} ${c.name}`}>
+              {optionLabel(c, compact)}
             </option>
           ))}
         </select>

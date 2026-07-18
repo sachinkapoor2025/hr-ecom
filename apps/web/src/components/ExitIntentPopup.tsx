@@ -412,6 +412,7 @@ export function ExitIntentPopup() {
                     onCountryChange={setCountryIso}
                     onLocalNumberChange={setLocalNumber}
                     required
+                    compact
                     disabled={phase === "spinning"}
                     placeholder="Mobile number"
                     selectClassName="border-slate-200 py-2.5 focus:outline-none focus:ring-2 focus:ring-nav"
