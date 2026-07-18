@@ -70,6 +70,8 @@ export const createSesTemplateSchema = z.object({
   htmlBody: z.string().min(1).max(500_000),
 });
 
+export const updateSesTemplateSchema = createSesTemplateSchema.partial();
+
 export const sesSettingsSchema = z.object({
   awsRegion: z.string().min(2).max(40).default("us-east-1"),
   defaultSenderName: z.string().min(1).max(80).default("UsaRakhi"),
@@ -100,6 +102,8 @@ export const sendTestEmailSchema = z.object({
 export type SesRecipient = z.infer<typeof sesRecipientSchema>;
 export type CreateSesCampaignInput = z.infer<typeof createSesCampaignSchema>;
 export type UpdateSesCampaignInput = z.infer<typeof updateSesCampaignSchema>;
+export type CreateSesTemplateInput = z.infer<typeof createSesTemplateSchema>;
+export type UpdateSesTemplateInput = z.infer<typeof updateSesTemplateSchema>;
 export type SesSettings = z.infer<typeof sesSettingsSchema>;
 export type SesTemplate = z.infer<typeof createSesTemplateSchema> & {
   templateId: string;

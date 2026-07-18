@@ -14,6 +14,7 @@ import {
   updateSesCampaignSchema,
   uploadSesRecipientsSchema,
   createSesTemplateSchema,
+  updateSesTemplateSchema,
   sesSettingsSchema,
   suppressEmailSchema,
   sendTestEmailSchema,
@@ -23,6 +24,7 @@ import {
   type SesCampaign,
   type SesSettings,
   type SesRecipient,
+  type SesTemplate,
 } from "@hr-ecom/shared";
 import { docClient, now, dayBucket } from "../lib/db";
 import { ok, created, badRequest, notFound, forbidden, unauthorized } from "../lib/response";
@@ -447,6 +449,35 @@ export async function uploadRecipients(event: APIGatewayProxyEventV2) {
   });
 }
 
+async function getTemplate(templateId: string): Promise<SesTemplate | null> {
+  const res = await docClient.send(
+    new GetCommand({
+      TableName: TABLE,
+      Key: { PK: sesEmailKeys.templatePk(templateId), SK: sesEmailKeys.templateSk() },
+    })
+  );
+  if (!res.Item) return null;
+  return {
+    templateId: String(res.Item.templateId),
+    name: String(res.Item.name ?? ""),
+    subject: String(res.Item.subject ?? ""),
+    htmlBody: String(res.Item.htmlBody ?? ""),
+    createdAt: String(res.Item.createdAt ?? ""),
+    updatedAt: String(res.Item.updatedAt ?? ""),
+  };
+}
+
+function toTemplateResponse(item: Record<string, unknown>): SesTemplate {
+  return {
+    templateId: String(item.templateId),
+    name: String(item.name ?? ""),
+    subject: String(item.subject ?? ""),
+    htmlBody: String(item.htmlBody ?? ""),
+    createdAt: String(item.createdAt ?? ""),
+    updatedAt: String(item.updatedAt ?? ""),
+  };
+}
+
 export async function listTemplates(event: APIGatewayProxyEventV2) {
   if (!requireAdmin(event)) return unauthorized("Admin access required");
   const res = await docClient.send(
@@ -459,7 +490,18 @@ export async function listTemplates(event: APIGatewayProxyEventV2) {
       Limit: 100,
     })
   );
-  return ok({ templates: res.Items ?? [] });
+  return ok({
+    templates: (res.Items ?? []).map((item) => toTemplateResponse(item as Record<string, unknown>)),
+  });
+}
+
+export async function getTemplateHandler(event: APIGatewayProxyEventV2) {
+  if (!requireAdmin(event)) return unauthorized("Admin access required");
+  const id = event.pathParameters?.templateId;
+  if (!id) return badRequest("templateId required");
+  const template = await getTemplate(id);
+  if (!template) return notFound("Template not found");
+  return ok({ template });
 }
 
 export async function createTemplate(event: APIGatewayProxyEventV2) {
@@ -480,7 +522,59 @@ export async function createTemplate(event: APIGatewayProxyEventV2) {
     updatedAt: ts,
   };
   await docClient.send(new PutCommand({ TableName: TABLE, Item: item }));
-  return created({ template: item });
+  return created({ template: toTemplateResponse(item) });
+}
+
+export async function updateTemplate(event: APIGatewayProxyEventV2) {
+  if (!requireAdmin(event)) return unauthorized("Admin access required");
+  const id = event.pathParameters?.templateId;
+  if (!id) return badRequest("templateId required");
+
+  const existing = await getTemplate(id);
+  if (!existing) return notFound("Template not found");
+
+  const body = JSON.parse(event.body ?? "{}");
+  const parsed = updateSesTemplateSchema.safeParse(body);
+  if (!parsed.success) return badRequest(parsed.error.message);
+
+  const updated: SesTemplate = {
+    ...existing,
+    ...parsed.data,
+    templateId: existing.templateId,
+    createdAt: existing.createdAt,
+    updatedAt: now(),
+  };
+
+  await docClient.send(
+    new PutCommand({
+      TableName: TABLE,
+      Item: {
+        PK: sesEmailKeys.templatePk(updated.templateId),
+        SK: sesEmailKeys.templateSk(),
+        GSI1PK: sesEmailKeys.entityTemplatePk(),
+        GSI1SK: updated.createdAt,
+        ...updated,
+      },
+    })
+  );
+  return ok({ template: updated });
+}
+
+export async function deleteTemplate(event: APIGatewayProxyEventV2) {
+  if (!requireAdmin(event)) return unauthorized("Admin access required");
+  const id = event.pathParameters?.templateId;
+  if (!id) return badRequest("templateId required");
+
+  const existing = await getTemplate(id);
+  if (!existing) return notFound("Template not found");
+
+  await docClient.send(
+    new DeleteCommand({
+      TableName: TABLE,
+      Key: { PK: sesEmailKeys.templatePk(id), SK: sesEmailKeys.templateSk() },
+    })
+  );
+  return ok({ ok: true, templateId: id });
 }
 
 export async function getSettings(event: APIGatewayProxyEventV2) {
