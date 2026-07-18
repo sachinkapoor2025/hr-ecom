@@ -2,25 +2,34 @@ import Script from "next/script";
 import { getAnalyticsIds } from "@/lib/analytics-config";
 
 /**
- * Google Analytics 4 (gtag.js) — always loaded when ga4Id is set.
- * Placed in <head> per Google install instructions (independent of GTM).
+ * Google tag (gtag.js) — GA4 + Google Ads in one loader (no duplicate Google tags).
+ * Hardcoded IDs via analytics-config; placed in <head> per Google install instructions.
  */
 export function GoogleAnalytics() {
-  const { ga4Id } = getAnalyticsIds();
-  if (!ga4Id) return null;
+  const { ga4Id, googleAdsId } = getAnalyticsIds();
+  // Prefer Ads ID for the script URL when present (matches Google Ads install snippet).
+  const loaderId = googleAdsId || ga4Id;
+  if (!loaderId) return null;
+
+  const configLines = [
+    ga4Id ? `gtag('config', '${ga4Id}');` : "",
+    googleAdsId ? `gtag('config', '${googleAdsId}');` : "",
+  ]
+    .filter(Boolean)
+    .join("\n        ");
 
   return (
     <>
       <Script
-        id="ga4-loader"
-        src={`https://www.googletagmanager.com/gtag/js?id=${ga4Id}`}
+        id="gtag-loader"
+        src={`https://www.googletagmanager.com/gtag/js?id=${loaderId}`}
         strategy="beforeInteractive"
       />
-      <Script id="ga4-config" strategy="beforeInteractive">{`
+      <Script id="gtag-config" strategy="beforeInteractive">{`
         window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
-        gtag('config', '${ga4Id}');
+        ${configLines}
       `}</Script>
     </>
   );
