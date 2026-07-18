@@ -103,6 +103,9 @@ export const couponKeys = {
   sk: () => "META" as const,
   welcomeEmailPk: (email: string) => `WELCOME#${email.trim().toLowerCase()}`,
   welcomeEmailSk: () => "ACTIVE" as const,
+  /** One-spin-per-day index keyed by normalized phone digits. */
+  welcomePhonePk: (phoneDigits: string) => `WELCOMEPHONE#${phoneDigits}`,
+  welcomePhoneSk: () => "ACTIVE" as const,
   abandonedEmailPk: (email: string) => `ABANDONED#${email.trim().toLowerCase()}`,
   abandonedEmailSk: () => "ACTIVE" as const,
 };

@@ -139,6 +139,7 @@ export async function sendNewsletterEmails(input: {
   const adminText = [
     "Source: Discount of the Day spin",
     `Email: ${input.email}`,
+    input.metadata?.phone ? `Phone: ${input.metadata.phone}` : null,
     coupon.code ? `Coupon: ${coupon.code} (${pct}% off)` : null,
     coupon.expiresAt ? `Expires: ${coupon.expiresAt}` : null,
     input.page ? `Page: ${input.page}` : null,
@@ -172,7 +173,7 @@ Your exclusive code:
 
 Enter this code at checkout on https://www.usarakhi.com/checkout
 
-One spin per email per day. Shop premium Rakhis with delivery to all 50 US states:
+One spin per mobile number per day. Shop premium Rakhis with delivery to all 50 US states:
 https://www.usarakhi.com/products
 
 Raksha Bandhan 2026 is August 28 — order early for on-time delivery.
@@ -317,7 +318,7 @@ export async function notifyAdminLead(lead: LeadCaptureInput): Promise<EmailSend
     });
   }
 
-  if (lead.source === "newsletter" && lead.email) {
+  if (lead.source === "newsletter") {
     const coupon =
       lead.metadata?.couponCode && lead.metadata?.couponExpiresAt
         ? {
@@ -326,11 +327,32 @@ export async function notifyAdminLead(lead: LeadCaptureInput): Promise<EmailSend
             discountPercent: Number(lead.metadata.discountPercent ?? WELCOME_DISCOUNT_PERCENT),
           }
         : undefined;
-    return sendNewsletterEmails({
-      email: lead.email,
-      page: lead.page,
-      metadata: lead.metadata,
-      coupon,
+    if (lead.email) {
+      return sendNewsletterEmails({
+        email: lead.email,
+        page: lead.page,
+        metadata: {
+          ...lead.metadata,
+          ...(lead.phone ? { phone: lead.phone } : {}),
+        },
+        coupon,
+      });
+    }
+    // Phone-only spin — notify admin, no customer email.
+    if (!smtpConfigured()) return { ok: true, skipped: true };
+    const pct = coupon?.discountPercent ?? WELCOME_DISCOUNT_PERCENT;
+    return sendEmail({
+      to: adminNotifyAddresses(),
+      subject: `[${SITE_NAME}] Discount of the Day — phone ${lead.phone ?? "unknown"} (${pct}% off)`,
+      text: [
+        "Source: Discount of the Day spin (phone only)",
+        lead.phone ? `Phone: ${lead.phone}` : null,
+        coupon?.code ? `Coupon: ${coupon.code} (${pct}% off)` : null,
+        coupon?.expiresAt ? `Expires: ${coupon.expiresAt}` : null,
+        lead.page ? `Page: ${lead.page}` : null,
+      ]
+        .filter(Boolean)
+        .join("\n"),
     });
   }
 
