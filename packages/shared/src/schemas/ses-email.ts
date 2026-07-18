@@ -68,6 +68,13 @@ export const createSesTemplateSchema = z.object({
   name: z.string().min(1).max(120),
   subject: z.string().min(1).max(200),
   htmlBody: z.string().min(1).max(500_000),
+  /** Optional stable id for starter/seed templates (e.g. raksha-bandhan-usa). */
+  templateId: z
+    .string()
+    .min(1)
+    .max(80)
+    .regex(/^[a-z0-9-]+$/, "templateId must be lowercase letters, numbers, or hyphens")
+    .optional(),
 });
 
 export const updateSesTemplateSchema = createSesTemplateSchema.partial();

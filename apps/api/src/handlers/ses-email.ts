@@ -111,6 +111,25 @@ function buildFooter(settings: SesSettings, unsubUrl: string): string {
 </div>`;
 }
 
+/** Insert fragment before </body> when present so full HTML emails stay valid. */
+function appendToHtml(html: string, fragment: string): string {
+  if (/<\/body>/i.test(html)) return html.replace(/<\/body>/i, `${fragment}</body>`);
+  return `${html}${fragment}`;
+}
+
+/**
+ * Finalize campaign HTML for send/test:
+ * - replace {{unsubscribe}} when present
+ * - otherwise append the standard compliance footer
+ */
+function finalizeEmailHtml(html: string, settings: SesSettings, unsubUrl: string): string {
+  const unsubLink = `<a href="${unsubUrl}" target="_blank" style="color:#c41e3a;text-decoration:underline">Unsubscribe</a>`;
+  if (/\{\{\s*unsubscribe\s*\}\}/i.test(html)) {
+    return html.replace(/\{\{\s*unsubscribe\s*\}\}/gi, unsubLink);
+  }
+  return appendToHtml(html, buildFooter(settings, unsubUrl));
+}
+
 function injectTracking(html: string, openToken: string, linkMap: Map<string, string>): string {
   let out = html;
   out = out.replace(/href=(["'])(https?:\/\/[^"']+)\1/gi, (_m, q, url) => {
@@ -467,6 +486,33 @@ async function getTemplate(templateId: string): Promise<SesTemplate | null> {
   };
 }
 
+function looksLikeDefaultCampaignHtml(html: string): boolean {
+  const body = html.trim();
+  if (!body) return true;
+  // Legacy compose placeholder — prefer linked template instead of this stub.
+  return body.length < 400 && /Hello\s*\{\{\s*name\s*\}\}/i.test(body);
+}
+
+async function resolveCampaignEmailContent(campaign: SesCampaign): Promise<{
+  subject: string;
+  htmlBody: string;
+}> {
+  let subject = campaign.subject?.trim() || "";
+  let htmlBody = campaign.htmlBody || "";
+
+  if (campaign.templateId) {
+    const template = await getTemplate(campaign.templateId);
+    if (template) {
+      if (looksLikeDefaultCampaignHtml(htmlBody)) {
+        htmlBody = template.htmlBody;
+      }
+      if (!subject) subject = template.subject;
+    }
+  }
+
+  return { subject, htmlBody };
+}
+
 function toTemplateResponse(item: Record<string, unknown>): SesTemplate {
   return {
     templateId: String(item.templateId),
@@ -509,20 +555,29 @@ export async function createTemplate(event: APIGatewayProxyEventV2) {
   const body = JSON.parse(event.body ?? "{}");
   const parsed = createSesTemplateSchema.safeParse(body);
   if (!parsed.success) return badRequest(parsed.error.message);
+  const { templateId: requestedId, name, subject, htmlBody } = parsed.data;
+  const templateId = requestedId ?? randomUUID();
+
+  if (requestedId) {
+    const existing = await getTemplate(requestedId);
+    if (existing) return ok({ template: existing, existed: true });
+  }
+
   const ts = now();
-  const templateId = randomUUID();
   const item = {
     PK: sesEmailKeys.templatePk(templateId),
     SK: sesEmailKeys.templateSk(),
     GSI1PK: sesEmailKeys.entityTemplatePk(),
     GSI1SK: ts,
     templateId,
-    ...parsed.data,
+    name,
+    subject,
+    htmlBody,
     createdAt: ts,
     updatedAt: ts,
   };
   await docClient.send(new PutCommand({ TableName: TABLE, Item: item }));
-  return created({ template: toTemplateResponse(item) });
+  return created({ template: toTemplateResponse(item), existed: false });
 }
 
 export async function updateTemplate(event: APIGatewayProxyEventV2) {
@@ -720,23 +775,27 @@ export async function sendTest(event: APIGatewayProxyEventV2) {
   if (!parsed.success) return badRequest(parsed.error.message);
   const campaign = await getCampaign(parsed.data.campaignId);
   if (!campaign) return notFound("Campaign not found");
-  if (!campaign.htmlBody || !campaign.subject) return badRequest("Subject and HTML body required");
+
+  const content = await resolveCampaignEmailContent(campaign);
+  if (!content.htmlBody || !content.subject) {
+    return badRequest("Subject and HTML body required (load a template or enter content)");
+  }
 
   const settings = await loadSettings();
   const openToken = randomUUID().replace(/-/g, "");
   const unsubToken = randomUUID().replace(/-/g, "");
   const linkMap = new Map<string, string>();
-  let html = renderSesTemplate(campaign.htmlBody, {
+  let html = renderSesTemplate(content.htmlBody, {
     name: "Test User",
     company: "Test Co",
     email: parsed.data.to,
   });
   html = injectTracking(html, openToken, linkMap);
-  html += buildFooter(settings, `${SITE_URL}/email/unsubscribe/${unsubToken}`);
+  html = finalizeEmailHtml(html, settings, `${SITE_URL}/email/unsubscribe/${unsubToken}`);
 
   await sendViaSes({
     to: parsed.data.to,
-    subject: `[TEST] ${campaign.subject}`,
+    subject: `[TEST] ${content.subject}`,
     html,
     text: htmlToText(html),
     fromName: campaign.senderName,
@@ -1120,13 +1179,14 @@ async function sendQueuedEmail(
   const unsubToken = randomUUID().replace(/-/g, "");
   const linkMap = new Map<string, string>();
 
-  let html = renderSesTemplate(campaign.htmlBody, {
+  const content = await resolveCampaignEmailContent(campaign);
+  let html = renderSesTemplate(content.htmlBody, {
     name: recipient.name as string | undefined,
     company: recipient.company as string | undefined,
     email,
   });
   html = injectTracking(html, openToken, linkMap);
-  html += buildFooter(settings, `${SITE_URL}/email/unsubscribe/${unsubToken}`);
+  html = finalizeEmailHtml(html, settings, `${SITE_URL}/email/unsubscribe/${unsubToken}`);
 
   // Store open + unsub token (reuse open record for unsub lookup by storing email)
   await docClient.send(
@@ -1175,7 +1235,7 @@ async function sendQueuedEmail(
 
   await sendViaSes({
     to: email,
-    subject: campaign.subject,
+    subject: content.subject,
     html,
     text: htmlToText(html),
     fromName: campaign.senderName,

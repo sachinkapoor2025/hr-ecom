@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useApiClient } from "@/lib/auth-context";
+import { ensureStarterEmailTemplates } from "@/lib/ensure-starter-email-templates";
+import { RAKSHA_BANDHAN_TEMPLATE_ID } from "@/lib/starter-email-templates";
 import type { SesTemplate } from "@hr-ecom/shared";
 
 const EMPTY_HTML = "<p>Hello {{name}}</p>";
@@ -18,18 +20,23 @@ export default function TemplatesPage() {
   const [saving, setSaving] = useState(false);
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [booting, setBooting] = useState(true);
 
   const isEditing = Boolean(selectedId);
 
   const load = useCallback(async () => {
-    const res = await api<{ templates: SesTemplate[] }>("/ses-email/templates");
-    setTemplates(res.templates);
+    const { templates: list, installed } = await ensureStarterEmailTemplates(api);
+    setTemplates(list);
+    if (installed.includes(RAKSHA_BANDHAN_TEMPLATE_ID)) {
+      setMessage("Raksha Bandhan USA template installed and ready to use.");
+    }
+    return list;
   }, [api]);
 
   useEffect(() => {
-    void load().catch((err) =>
-      setError(err instanceof Error ? err.message : "Failed to load templates")
-    );
+    void load()
+      .catch((err) => setError(err instanceof Error ? err.message : "Failed to load templates"))
+      .finally(() => setBooting(false));
   }, [load]);
 
   const resetForm = () => {
@@ -85,6 +92,9 @@ export default function TemplatesPage() {
           body: JSON.stringify(payload),
         });
         setSelectedId(res.template.templateId);
+        setName(res.template.name);
+        setSubject(res.template.subject);
+        setHtmlBody(res.template.htmlBody);
         setMessage("Template created.");
       }
       await load();
@@ -153,7 +163,7 @@ export default function TemplatesPage() {
           <button
             type="button"
             onClick={() => void save()}
-            disabled={saving || deleting}
+            disabled={saving || deleting || booting}
             className="rounded-lg bg-nav text-white px-4 py-2 text-sm disabled:opacity-60"
           >
             {saving ? "Saving…" : isEditing ? "Update template" : "Save template"}
@@ -176,9 +186,13 @@ export default function TemplatesPage() {
       <div className="rounded-xl border bg-white overflow-hidden">
         <div className="px-4 py-3 border-b">
           <h2 className="text-sm font-semibold text-slate-700">Saved templates</h2>
-          <p className="text-xs text-slate-500 mt-0.5">Click a template to open it in the editor.</p>
+          <p className="text-xs text-slate-500 mt-0.5">
+            Click a template to open it in the editor. Use it from Compose → Load template for campaigns.
+          </p>
         </div>
-        {templates.length === 0 ? (
+        {booting ? (
+          <p className="p-4 text-sm text-slate-500">Loading templates…</p>
+        ) : templates.length === 0 ? (
           <p className="p-4 text-sm text-slate-500">No templates yet. Create one above.</p>
         ) : (
           <ul className="divide-y">
