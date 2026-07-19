@@ -1,0 +1,154 @@
+import { z } from "zod";
+
+export const SES_CAMPAIGN_STATUSES = [
+  "draft",
+  "scheduled",
+  "preparing",
+  "sending",
+  "paused",
+  "completed",
+  "cancelled",
+  "failed",
+] as const;
+
+export type SesCampaignStatus = (typeof SES_CAMPAIGN_STATUSES)[number];
+
+export const SES_RECURRENCE_TYPES = ["none", "daily", "weekly", "monthly", "cron"] as const;
+export type SesRecurrenceType = (typeof SES_RECURRENCE_TYPES)[number];
+
+export const SES_TIMEZONES = [
+  "Asia/Kolkata",
+  "UTC",
+  "America/New_York",
+  "Europe/London",
+  "Australia/Sydney",
+] as const;
+
+export const DEFAULT_SENDER_MESSAGE_FOOTER = {
+  companyName: "UsaRakhi / Divit Global Ventures",
+  companyAddress: "California, United States",
+  contactEmail: "order@usarakhi.com",
+  privacyUrl: "https://www.usarakhi.com/privacy",
+} as const;
+
+export const sesRecipientSchema = z.object({
+  email: z.string().email(),
+  name: z.string().max(120).optional(),
+  company: z.string().max(120).optional(),
+  city: z.string().max(80).optional(),
+  state: z.string().max(80).optional(),
+  country: z.string().max(80).optional(),
+});
+
+export const createSesCampaignSchema = z.object({
+  name: z.string().min(1).max(120),
+  subject: z.string().min(1).max(200).optional(),
+  senderName: z.string().min(1).max(80).optional(),
+  senderEmail: z.string().email().optional(),
+  replyTo: z.string().email().optional(),
+  htmlBody: z.string().max(500_000).optional(),
+  templateId: z.string().optional(),
+  scheduledAt: z.string().datetime().optional(),
+  timezone: z.enum(SES_TIMEZONES).optional(),
+  recurrenceType: z.enum(SES_RECURRENCE_TYPES).optional(),
+  recurrenceExpression: z.string().max(120).optional(),
+});
+
+export const updateSesCampaignSchema = createSesCampaignSchema.partial().extend({
+  status: z.enum(SES_CAMPAIGN_STATUSES).optional(),
+  action: z.enum(["pause", "resume", "cancel", "send_now", "duplicate"]).optional(),
+});
+
+export const uploadSesRecipientsSchema = z.object({
+  campaignId: z.string().min(1),
+  recipients: z.array(sesRecipientSchema).min(1).max(50_000),
+});
+
+export const createSesTemplateSchema = z.object({
+  name: z.string().min(1).max(120),
+  subject: z.string().min(1).max(200),
+  htmlBody: z.string().min(1).max(500_000),
+});
+
+export const sesSettingsSchema = z.object({
+  awsRegion: z.string().min(2).max(40).default("us-east-1"),
+  defaultSenderName: z.string().min(1).max(80).default("UsaRakhi"),
+  defaultSenderEmail: z.string().email().default("order@usarakhi.com"),
+  defaultReplyTo: z.string().email().default("order@usarakhi.com"),
+  dailyLimit: z.number().int().min(1).max(200_000).default(50_000),
+  maxSendRatePerMinute: z.number().int().min(1).max(14_000).default(600),
+  batchSize: z.number().int().min(1).max(500).default(50),
+  delayBetweenBatchesMs: z.number().int().min(0).max(60_000).default(5000),
+  concurrentWorkers: z.number().int().min(1).max(10).default(5),
+  companyName: z.string().max(120).optional(),
+  companyAddress: z.string().max(240).optional(),
+  contactEmail: z.string().email().optional(),
+  privacyUrl: z.string().url().optional(),
+  adminNotifyEmail: z.string().email().optional(),
+});
+
+export const suppressEmailSchema = z.object({
+  email: z.string().email(),
+  reason: z.enum(["manual", "hard_bounce", "complaint", "unsubscribe"]).default("manual"),
+});
+
+export const sendTestEmailSchema = z.object({
+  campaignId: z.string().min(1),
+  to: z.string().email(),
+});
+
+export type SesRecipient = z.infer<typeof sesRecipientSchema>;
+export type CreateSesCampaignInput = z.infer<typeof createSesCampaignSchema>;
+export type UpdateSesCampaignInput = z.infer<typeof updateSesCampaignSchema>;
+export type SesSettings = z.infer<typeof sesSettingsSchema>;
+export type SesTemplate = z.infer<typeof createSesTemplateSchema> & {
+  templateId: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type SesCampaign = {
+  campaignId: string;
+  name: string;
+  subject: string;
+  senderName: string;
+  senderEmail: string;
+  replyTo: string;
+  htmlBody: string;
+  templateId?: string;
+  status: SesCampaignStatus;
+  scheduledAt?: string;
+  timezone: string;
+  recurrenceType: SesRecurrenceType;
+  recurrenceExpression?: string;
+  nextRunAt?: string;
+  lastRunAt?: string;
+  recipientCount: number;
+  queuedCount: number;
+  sentCount: number;
+  deliveredCount: number;
+  failedCount: number;
+  bouncedCount: number;
+  complaintCount: number;
+  openCount: number;
+  clickCount: number;
+  createdBy?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+/** Basic email format check for client-side CSV preview. */
+export function isValidSesEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+}
+
+/** Replace {{name}}, {{company}}, {{email}} placeholders. */
+export function renderSesTemplate(
+  html: string,
+  vars: { name?: string; company?: string; email?: string }
+): string {
+  return html
+    .replace(/\{\{\s*name\s*\}\}/gi, vars.name?.trim() || "there")
+    .replace(/\{\{\s*company\s*\}\}/gi, vars.company?.trim() || "")
+    .replace(/\{\{\s*email\s*\}\}/gi, vars.email?.trim() || "");
+}
