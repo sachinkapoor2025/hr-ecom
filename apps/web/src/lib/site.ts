@@ -176,7 +176,7 @@ export const faqs = [
   },
   {
     q: "When should I order for Raksha Bandhan 2026?",
-    a: "Raksha Bandhan 2026 is August 28, 2026. Order by August 5–6, 2026 for express delivery to major US cities. Ideal ordering window is July 25 – August 1 for guaranteed on-time delivery.",
+    a: "Raksha Bandhan 2026 is August 28, 2026. Order today for express delivery to major US cities to avoid the last-minute rush and ensure your Rakhi reaches the USA on time.",
   },
   {
     q: "Can I send Rakhi from India to the USA?",

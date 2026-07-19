@@ -82,7 +82,7 @@ export const rakshaBandhanFaqs = [
   },
   {
     q: "When is Raksha Bandhan 2026 in the USA?",
-    a: `Raksha Bandhan 2026 falls on ${RAKSHA_BANDHAN_2026_DATE}. Sisters in India, UK, Canada, and worldwide can order on UsaRakhi.com and enter their brother's US address for delivery before the festival.`,
+    a: `Raksha Bandhan 2026 falls on ${RAKSHA_BANDHAN_2026_DATE}. To avoid the last-minute rush and ensure timely delivery to the USA, order today for standard shipping.`,
   },
   {
     q: "How do I send Rakhi to my brother in the USA from India?",
@@ -90,7 +90,7 @@ export const rakshaBandhanFaqs = [
   },
   {
     q: "When should I order Rakhi for on-time Raksha Bandhan 2026 delivery?",
-    a: `Order by August 5–6, 2026 for express delivery to major US cities before ${RAKSHA_BANDHAN_2026_DATE}. Ideal window: July 25 – August 1, 2026. Same-day dispatch on most orders before our daily cut-off.`,
+    a: `Raksha Bandhan 2026 is ${RAKSHA_BANDHAN_2026_DATE}. Order today for express delivery to major US cities to avoid the last-minute rush and ensure your Rakhi reaches the USA on time. Same-day dispatch on most orders before our daily cut-off.`,
   },
   {
     q: "Which US states do you deliver Rakhi to?",

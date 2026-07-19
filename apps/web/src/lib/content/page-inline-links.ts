@@ -1,16 +1,15 @@
 import { categoryHref } from "@/lib/category-urls";
 
+/** Homepage: keep "send rakhi to USA" / "buy rakhi online USA from India" as plain text (no category deep-links). */
 export const homepageInlineLinks = [
-  { phrase: "send rakhi to USA", href: categoryHref("kids-rakhi") },
-  { phrase: "buy rakhi online USA from India", href: categoryHref("bhaiya-bhabhi-rakhi") },
   { phrase: "rakhi gift hamper", href: categoryHref("rakhi-hampers") },
 ] as const;
 
 export const categoryPageInlineLinks: Record<string, readonly { phrase: string; href: string }[]> = {
   "single-rakhi": [{ phrase: "buy designer rakhi online usa", href: categoryHref("lumba-rakhi") }],
   "bhaiya-bhabhi-rakhi": [{ phrase: "send rakhi to USA", href: "/" }],
-  "kids-rakhi": [{ phrase: "sending rakhi to USA from India", href: categoryHref("rakhi-combo") }],
-  "lumba-rakhi": [{ phrase: "buy rakhi online USA", href: categoryHref("single-rakhi") }],
+  "kids-rakhi": [{ phrase: "sending rakhi to USA from India", href: "/" }],
+  "lumba-rakhi": [{ phrase: "buy rakhi online USA", href: "/" }],
   "rakhi-combo": [{ phrase: "rakhi gift hamper", href: categoryHref("rakhi-hampers") }],
   "rakhi-hampers": [
     { phrase: "Rakhi Combos", href: categoryHref("rakhi-combo") },
