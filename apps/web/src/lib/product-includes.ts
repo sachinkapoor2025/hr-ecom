@@ -1,7 +1,9 @@
 import type { Product } from "@hr-ecom/shared";
 import { looksLikeHtml, stripHtml } from "./html-text";
 
-type ProductLike = Pick<Product, "name" | "description" | "categorySlug" | "tags">;
+type ProductLike = Pick<Product, "name" | "description" | "categorySlug" | "tags"> & {
+  slug?: string;
+};
 
 function hasChocolateSignal(text: string): boolean {
   return /chocolate|ferrero|hershey|lindor|lindt|kitkat|dairy\s*milk|snicker/i.test(text);
@@ -15,24 +17,24 @@ export function parseChocolateInclude(text: string): string | null {
       label: (n) => `${n} Ferrero Rocher Chocolates`,
     },
     {
-      re: /includes\s+(\d+)\s+hershey'?s?\s+chocolates?/i,
-      label: (n) => `${n} Hershey's Chocolates`,
+      re: /includes\s+(\d+)\s+(?:small\s+)?hershey'?s?\s+chocolates?/i,
+      label: (n) => `${n} small Hershey's chocolates`,
     },
     {
       re: /includes\s+(\d+)\s+lind(?:or|t(?:\s+lindor)?)\s+chocolates?/i,
       label: (n) => `${n} Lindor Chocolates`,
     },
     {
-      re: /includes\s+(\d+)\s+assorted\s+chocolates?/i,
-      label: (n) => `${n} Assorted Chocolates`,
+      re: /includes\s+\d+\s+assorted\s+chocolates?/i,
+      label: () => "Assorted Chocolates",
     },
     {
-      re: /includes\s+(\d+)\s+chocolates?/i,
-      label: (n) => `${n} Chocolates`,
+      re: /includes\s+\d+\s+chocolates?/i,
+      label: () => "Assorted Chocolates",
     },
     {
-      re: /with\s+(\d+)\s+hershey'?s?\s+chocolates?/i,
-      label: (n) => `${n} Hershey's Chocolates`,
+      re: /with\s+(\d+)\s+(?:small\s+)?hershey'?s?\s+chocolates?/i,
+      label: (n) => `${n} small Hershey's chocolates`,
     },
     {
       re: /with\s+(\d+)\s+ferrero\s*rocher\s+chocolates?/i,
@@ -43,23 +45,27 @@ export function parseChocolateInclude(text: string): string | null {
       label: (n) => `${n} Lindor Chocolates`,
     },
     {
-      re: /with\s+(\d+)\s+(?:assorted\s+)?chocolates?/i,
-      label: (n) => `${n} Assorted Chocolates`,
+      re: /with\s+\d+\s+assorted\s+chocolates?/i,
+      label: () => "Assorted Chocolates",
+    },
+    {
+      re: /with\s+\d+\s+chocolates?/i,
+      label: () => "Assorted Chocolates",
     },
   ];
 
   for (const { re, label } of patterns) {
     const m = text.match(re);
-    if (m?.[1]) return label(m[1]);
+    if (m) return label(m[1] ?? "");
   }
 
   if (!hasChocolateSignal(text)) return null;
 
   // Brand defaults when qty is not stated (standard UsaRakhi pack sizes).
   if (/ferrero/i.test(text)) return "3 Ferrero Rocher Chocolates";
-  if (/hershey/i.test(text)) return "2 Hershey's Chocolates";
+  if (/hershey/i.test(text)) return "2 small Hershey's chocolates";
   if (/lindor|lindt/i.test(text)) return "5 Lindor Chocolates";
-  return "5 Assorted Chocolates";
+  return "Assorted Chocolates";
 }
 
 function rakhiLines(categorySlug: string): string[] {
@@ -121,8 +127,14 @@ export function normalizeHamperIncludeLine(line: string): string[] {
   }
 
   if (/^roli\s*(?:&|and|-)?\s*chawal\s+dibbi$/i.test(t)) {
-    return ["Roli Dibbi", "Chawal Dibbi"];
+    return ["Small Roli box", "Small Chawal box"];
   }
+  if (/^roli\s+dibbi$/i.test(t)) return ["Small Roli box"];
+  if (/^chawal\s+dibbi$/i.test(t)) return ["Small Chawal box"];
+  t = t
+    .replace(/\broli\s+chawal\s+dibbi\b/gi, "Small Roli box & Small Chawal box")
+    .replace(/\broli\s+dibbi\b/gi, "Small Roli box")
+    .replace(/\bchawal\s+dibbi\b/gi, "Small Chawal box");
 
   // Combined or already-split tikka lines → Roli + Chawal + Designer tikka set
   // Skip lone "Chawal … Tikka" when a paired "Roli … Tikka" line already expands.
@@ -184,8 +196,13 @@ export function getProductIncludes(product: ProductLike): string[] {
 
   const items = [...rakhiLines(categorySlug), ...ritualPackets()];
 
-  const chocolate = parseChocolateInclude(plain);
-  if (chocolate) items.push(chocolate);
+  // Pack includes 2 small Hershey's (SKU HER-RK-10-15) even when description omits brand.
+  if (product.slug === "bhai-bhabhi-lumba-rakhi-set") {
+    items.push("2 small Hershey's chocolates");
+  } else {
+    const chocolate = parseChocolateInclude(plain);
+    if (chocolate) items.push(chocolate);
+  }
 
   return [...items, ...shippingIncludeLines()];
 }

@@ -44,9 +44,9 @@ function isKidsComboProduct(product: Product): boolean {
   ].some((term) => text.includes(term));
 }
 
-/** Warm-instance caches — cut DynamoDB under concurrent browse. */
-const PRODUCT_LIST_CACHE_TTL_MS = 60_000;
-const PRODUCT_GET_CACHE_TTL_MS = 30_000;
+/** Warm-instance caches — cut DynamoDB under concurrent browse; keep prices stable. */
+const PRODUCT_LIST_CACHE_TTL_MS = 5 * 60_000; // 5 minutes
+const PRODUCT_GET_CACHE_TTL_MS = 5 * 60_000; // 5 minutes
 let productListCache: { at: number; items: Product[] } | null = null;
 const categoryProductCache = new Map<string, { at: number; items: Product[] }>();
 const productGetCache = new Map<string, { at: number; product: Product }>();

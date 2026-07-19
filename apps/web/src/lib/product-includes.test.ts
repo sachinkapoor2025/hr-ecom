@@ -13,7 +13,14 @@ describe("parseChocolateInclude", () => {
   it("reads Hershey count from name", () => {
     assert.equal(
       parseChocolateInclude("Elegant Designer Rakhi with 2 HERSHEY'S Chocolates"),
-      "2 Hershey's Chocolates"
+      "2 small Hershey's chocolates"
+    );
+  });
+
+  it("omits count for assorted chocolates", () => {
+    assert.equal(
+      parseChocolateInclude("Gift set. Includes 5 assorted chocolates."),
+      "Assorted Chocolates"
     );
   });
 
@@ -75,7 +82,20 @@ describe("getProductIncludes", () => {
     });
     assert.ok(items.includes("1 Bhaiya Rakhi"));
     assert.ok(items.includes("1 Lumba Rakhi for Bhabhi"));
-    assert.ok(items.includes("5 Assorted Chocolates"));
+    assert.ok(items.includes("Assorted Chocolates"));
+  });
+
+  it("adds 2 small Hershey's for Bhai & Bhabhi Lumba Rakhi Set", () => {
+    const items = getProductIncludes({
+      slug: "bhai-bhabhi-lumba-rakhi-set",
+      name: "Bhai & Bhabhi Lumba Rakhi Set",
+      description: "Celebrate with roli and chawal.",
+      categorySlug: "bhaiya-bhabhi-rakhi",
+      tags: [],
+    });
+    assert.ok(items.includes("1 Bhaiya Rakhi"));
+    assert.ok(items.includes("1 Lumba Rakhi for Bhabhi"));
+    assert.ok(items.includes("2 small Hershey's chocolates"));
   });
 
   it("uses hamper what's-included list, splits roli/chawal, skips marketing", () => {
@@ -92,8 +112,8 @@ describe("getProductIncludes", () => {
       "Set of 3 Rakhi",
       "Besan Laddoo 200 g",
       "100 g almonds",
-      "Roli Dibbi",
-      "Chawal Dibbi",
+      "Small Roli box",
+      "Small Chawal box",
       "Ships from our California warehouse",
       "No delays due to global affairs",
       "Best quality at the most competitive rates",

@@ -122,8 +122,12 @@ export async function addToCart(event: APIGatewayProxyEventV2) {
 
   const existingIdx = cart.items.findIndex((i) => i.productSlug === parsed.data.productSlug);
 
-  // Vendor catalogs already include sale pricing — do not apply site-wide competitive cuts.
-  const unitPrice = product.vendorSlug
+  // Vendor / hamper catalogs already include sale pricing — do not stack competitive cuts.
+  // Competitive % is applied to the DynamoDB catalog base (same as forStorefront).
+  const skipCompetitive =
+    Boolean(product.vendorSlug) ||
+    (productItem as { categorySlug?: string }).categorySlug === "rakhi-hampers";
+  const unitPrice = skipCompetitive
     ? product.price
     : applyCompetitivePriceReduction(product.price, product.currency);
 

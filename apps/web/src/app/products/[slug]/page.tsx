@@ -15,8 +15,8 @@ interface Props {
   params: Promise<{ slug: string }>;
 }
 
-/** Cached 60s; admin image/price updates use /api/revalidate/product. */
-export const revalidate = 60;
+/** Cached 1h; admin image/price updates use /api/revalidate/product. */
+export const revalidate = 3600;
 
 export async function generateStaticParams() {
   const slugs = getStaticProductSlugs();
