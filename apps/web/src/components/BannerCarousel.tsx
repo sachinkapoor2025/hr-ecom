@@ -104,7 +104,11 @@ export function BannerCarousel({ banners }: { banners: readonly HomeBanner[] }) 
           {/* Banner image */}
           <div className="order-1 lg:order-2 relative w-full">
             <div className="relative w-full aspect-[5/2] sm:aspect-[1024/420] overflow-hidden bg-slate-900/5">
-              {banners.map((b, i) => (
+              {banners.map((b, i) => {
+                // Only mount the active slide (+ slide 0 for LCP). Opacity-0 siblings
+                // still count as in-viewport, so lazy alone was still fetching all 3 at once.
+                const mounted = i === index || i === 0;
+                return (
                 <div
                   key={b.src}
                   className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
@@ -112,15 +116,19 @@ export function BannerCarousel({ banners }: { banners: readonly HomeBanner[] }) 
                   }`}
                   aria-hidden={i !== index}
                 >
-                  {b.href ? (
+                  {mounted &&
+                    (b.href ? (
                     <Link href={b.href} className="block h-full w-full" tabIndex={i === index ? 0 : -1}>
                       <Image
                         src={b.src}
                         alt={b.alt}
                         fill
                         className="object-cover object-center"
-                        sizes="(max-width: 1024px) 100vw, 60vw"
+                        /* Mobile: full bleed. Desktop: 3/5 of max-w-7xl (~768px), not 60vw of the viewport. */
+                        sizes="(max-width: 1023px) 100vw, min(768px, 60vw)"
                         priority={i === 0}
+                        fetchPriority={i === 0 ? "high" : "auto"}
+                        loading={i === 0 ? "eager" : "lazy"}
                       />
                     </Link>
                   ) : (
@@ -129,12 +137,15 @@ export function BannerCarousel({ banners }: { banners: readonly HomeBanner[] }) 
                       alt={b.alt}
                       fill
                       className="object-cover object-center"
-                      sizes="(max-width: 1024px) 100vw, 60vw"
+                      sizes="(max-width: 1023px) 100vw, min(768px, 60vw)"
                       priority={i === 0}
+                      fetchPriority={i === 0 ? "high" : "auto"}
+                      loading={i === 0 ? "eager" : "lazy"}
                     />
-                  )}
+                  ))}
                 </div>
-              ))}
+              );
+              })}
 
               {banners.length > 1 && (
                 <>

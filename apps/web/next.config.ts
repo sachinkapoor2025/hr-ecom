@@ -14,14 +14,19 @@ const nextConfig: NextConfig = {
       ...categoryRedirectRules(),
       ...legacyRedirectRules(),
       // Prefer 301 over Next's default 308 for permanent:true so crawlers treat these as classic permanent moves.
+      // Legacy /cities/* → canonical /send-rakhi-to-* (handled by locations/[slug] dynamic route).
       { source: "/cities/:slug", destination: "/send-rakhi-to-:slug", statusCode: 301 },
       { source: "/cities/:slug/", destination: "/send-rakhi-to-:slug", statusCode: 301 },
+      // Slash form → hyphenated canonical (keeps one public URL per city).
+      { source: "/send-rakhi-to/:city", destination: "/send-rakhi-to-:city", statusCode: 301 },
+      { source: "/send-rakhi-to/:city/", destination: "/send-rakhi-to-:city", statusCode: 301 },
       { source: "/sitemap.rss", destination: "/sitemap.xml", statusCode: 301 },
     ];
   },
   async rewrites() {
     return [
       ...categoryRewriteRules(),
+      // All city/state landings (express + secondary + other) → one dynamic handler.
       { source: "/send-rakhi-to-:slug", destination: "/locations/:slug" },
     ];
   },
