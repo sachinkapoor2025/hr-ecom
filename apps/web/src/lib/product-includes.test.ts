@@ -87,6 +87,24 @@ describe("getProductIncludes", () => {
     ]);
   });
 
+  it("splits roli/chawal tikka set into three lines", () => {
+    const items = getProductIncludes({
+      name: "Divine Ritual Rakhi Pack",
+      description: `<p><strong>What's included in this hamper:</strong></p>
+<ul><li>Set of 2 designer Rakhis</li><li>Besan Laddoo 200 g</li><li>100 g almonds</li><li>Roli Chawal Designer Tikka Set</li></ul>`,
+      categorySlug: "rakhi-hampers",
+      tags: [],
+    });
+    assert.deepEqual(items, [
+      "Set of 2 designer Rakhis",
+      "Besan Laddoo 200 g",
+      "100 g almonds",
+      "Roli",
+      "Chawal",
+      "Designer tikka set",
+    ]);
+  });
+
   it("expands kk and splits complimentary roli chawal", () => {
     const items = getProductIncludes({
       name: "Love to Treat Rakhi Hamper",

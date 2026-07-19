@@ -78,7 +78,10 @@ export const createAdminCouponSchema = z
       .max(254)
       .optional()
       .or(z.literal("")),
+    /** Local mobile digits only — used for coupon binding / checkout match (no country code). */
     phone: z.string().trim().max(22).optional().or(z.literal("")),
+    /** Full E.164 for WhatsApp outreach only; never used for coupon validation. */
+    whatsappPhone: z.string().trim().max(22).optional().or(z.literal("")),
     discountPercent: z
       .number()
       .int()
@@ -92,11 +95,11 @@ export const createAdminCouponSchema = z
     const email = v.email?.trim() ?? "";
     const phoneDigits = (v.phone ?? "").replace(/\D/g, "");
     const hasEmail = Boolean(email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
-    const hasPhone = phoneDigits.length >= 7;
+    const hasPhone = phoneDigits.length >= 7 && phoneDigits.length <= 12;
     if (!hasEmail && !hasPhone) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Enter a customer email or phone number",
+        message: "Enter a customer email or mobile number",
         path: ["email"],
       });
     }
@@ -110,7 +113,7 @@ export const createAdminCouponSchema = z
     if ((v.phone ?? "").trim() && !hasPhone) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Enter a valid phone number with country code",
+        message: "Enter a valid mobile number",
         path: ["phone"],
       });
     }

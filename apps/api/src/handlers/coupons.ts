@@ -458,10 +458,14 @@ export async function createAdminAbandonedCoupon(event: APIGatewayProxyEventV2) 
   }
 
   const email = normalizeEmail(parsed.data.email);
-  const phoneRaw = parsed.data.phone?.trim() ?? "";
-  const phone = normalizePhone(phoneRaw) ? phoneRaw : undefined;
+  // Coupon binding uses mobile digits only (country code ignored at validate time).
+  const phone = normalizePhone(parsed.data.phone);
+  const whatsappPhone =
+    parsed.data.whatsappPhone?.trim() ||
+    parsed.data.phone?.trim() ||
+    undefined;
   if (!email && !phone) {
-    return badRequest("Enter a customer email or phone number");
+    return badRequest("Enter a customer email or mobile number");
   }
 
   const discountPercent = parsed.data.discountPercent;
@@ -502,8 +506,8 @@ export async function createAdminAbandonedCoupon(event: APIGatewayProxyEventV2) 
     discountPercent,
     expiresAt,
   });
-  const whatsapp = phone
-    ? await sendWhatsAppMessage({ phone, message: waMessage })
+  const whatsapp = whatsappPhone
+    ? await sendWhatsAppMessage({ phone: whatsappPhone, message: waMessage })
     : {
         ok: false,
         skipped: true as const,
@@ -514,7 +518,7 @@ export async function createAdminAbandonedCoupon(event: APIGatewayProxyEventV2) 
 
   const emails = await sendAdminAbandonedCouponEmails({
     customerEmail: email,
-    phone,
+    phone: phone ?? whatsappPhone,
     code,
     discountPercent,
     expiresAt,

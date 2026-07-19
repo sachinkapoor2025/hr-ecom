@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useApiClient, useAuth } from "@/lib/auth-context";
 import { ADMIN_COUPON_DISCOUNT_OPTIONS, type StoreCoupon } from "@hr-ecom/shared";
+import { PhoneInput, buildPhoneValue } from "@/components/PhoneInput";
 
 type CreateResult = {
   coupon: StoreCoupon & { phone?: string; createdBy?: string };
@@ -25,7 +26,8 @@ export default function AdminCouponsPage() {
   const api = useApiClient();
   const { user } = useAuth();
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
+  const [phoneCountry, setPhoneCountry] = useState("IN");
+  const [phoneLocal, setPhoneLocal] = useState("");
   const [discountPercent, setDiscountPercent] = useState<number>(10);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -54,9 +56,10 @@ export default function AdminCouponsPage() {
   const generate = async (e: React.FormEvent) => {
     e.preventDefault();
     const hasEmail = Boolean(email.trim() && email.includes("@"));
-    const hasPhone = phone.replace(/\D/g, "").length >= 7;
+    const mobileDigits = phoneLocal.replace(/\D/g, "");
+    const hasPhone = mobileDigits.length >= 7;
     if (!hasEmail && !hasPhone) {
-      setError("Enter a customer email or phone number");
+      setError("Enter a customer email or mobile number");
       return;
     }
 
@@ -70,7 +73,13 @@ export default function AdminCouponsPage() {
         method: "POST",
         body: JSON.stringify({
           ...(hasEmail ? { email: email.trim() } : {}),
-          ...(hasPhone ? { phone: phone.trim() } : {}),
+          // Coupon match uses mobile only; country code is for WhatsApp send.
+          ...(hasPhone
+            ? {
+                phone: mobileDigits,
+                whatsappPhone: buildPhoneValue(phoneCountry, phoneLocal),
+              }
+            : {}),
           discountPercent,
         }),
       });
@@ -102,7 +111,7 @@ export default function AdminCouponsPage() {
         `Coupon ${res.coupon.code} created (${res.coupon.discountPercent}% · expires in 1 hour). ${emailNotes}. ${waNote}.`
       );
       setEmail("");
-      setPhone("");
+      setPhoneLocal("");
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not generate coupon");
@@ -116,8 +125,8 @@ export default function AdminCouponsPage() {
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Abandoned cart coupons</h1>
         <p className="text-sm text-slate-500 mt-1">
-          Generate a 1-hour coupon for outreach. Provide email, phone, or both — the shopper can
-          apply it at checkout with a matching email or phone. Team notifications go to
+          Generate a 1-hour coupon for outreach. Provide email, phone, or both — checkout matches
+          the mobile number only (country code is ignored). Team notifications go to
           order@mydgv.com, priya.yadav@mydgv.com, and you ({user?.email ?? "logged-in admin"}).
         </p>
       </div>
@@ -133,20 +142,26 @@ export default function AdminCouponsPage() {
             className="mt-1 w-full border rounded-lg px-3 py-2"
           />
         </label>
-        <label className="block text-sm">
-          Phone number (WhatsApp){" "}
-          <span className="text-slate-400 font-normal">(optional if email is set)</span>
-          <input
-            type="tel"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            placeholder="+1 408 555 0100"
-            className="mt-1 w-full border rounded-lg px-3 py-2"
+
+        <div>
+          <PhoneInput
+            label="Phone number (WhatsApp)"
+            countryIso={phoneCountry}
+            localNumber={phoneLocal}
+            onCountryChange={setPhoneCountry}
+            onLocalNumberChange={setPhoneLocal}
+            compact
+            placeholder="Mobile number"
+            className="text-sm"
+            selectClassName="mt-1"
+            inputClassName="mt-1"
           />
-          <span className="text-xs text-slate-500 mt-1 block">
-            Include country code. Used for WhatsApp send / deep link when provided.
-          </span>
-        </label>
+          <p className="text-xs text-slate-500 mt-1">
+            Optional if email is set. Country code is for WhatsApp only — coupon validation uses the
+            mobile number.
+          </p>
+        </div>
+
         <label className="block text-sm">
           Discount
           <select
@@ -212,7 +227,12 @@ export default function AdminCouponsPage() {
                   <div>
                     <p className="font-mono font-medium">{c.code}</p>
                     <p className="text-xs text-slate-500">
-                      {[c.email || null, phoneVal || null, `${c.discountPercent}%`, `by ${(c as { createdBy?: string }).createdBy ?? "—"}`]
+                      {[
+                        c.email || null,
+                        phoneVal || null,
+                        `${c.discountPercent}%`,
+                        `by ${(c as { createdBy?: string }).createdBy ?? "—"}`,
+                      ]
                         .filter(Boolean)
                         .join(" · ")}
                     </p>

@@ -24,9 +24,12 @@ interface PhoneInputProps {
 }
 
 function optionLabel(c: (typeof COUNTRIES)[number], compact: boolean): string {
-  if (!compact) return `${c.dial} ${c.name}`;
-  const shared = COUNTRIES.some((other) => other.iso !== c.iso && other.dial === c.dial);
-  return shared ? `${c.dial} ${c.iso}` : c.dial;
+  // Compact = dial codes only (no country names). Disambiguate shared dials with ISO.
+  if (compact) {
+    const shared = COUNTRIES.some((other) => other.iso !== c.iso && other.dial === c.dial);
+    return shared ? `${c.dial} ${c.iso}` : c.dial;
+  }
+  return `${c.dial} ${c.name}`;
 }
 
 export function PhoneInput({

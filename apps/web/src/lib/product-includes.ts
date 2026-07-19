@@ -115,12 +115,16 @@ export function normalizeHamperIncludeLine(line: string): string[] {
     return ["Roli Dibbi", "Chawal Dibbi"];
   }
 
-  if (/^roli\s*(?:&|and|-)?\s*chawal\s+designer\s+tikka(?:\s+set)?$/i.test(t)) {
-    return ["Roli Designer Tikka Set", "Chawal Designer Tikka Set"];
+  // Combined or already-split tikka lines → Roli + Chawal + Designer tikka set
+  // Skip lone "Chawal … Tikka" when a paired "Roli … Tikka" line already expands.
+  if (/^chawal\s+(?:designer\s+)?tikka(?:\s+set)?$/i.test(t)) {
+    return [];
   }
-
-  if (/^roli\s*(?:&|and|-)?\s*chawal\s+tikka(?:\s+set)?$/i.test(t)) {
-    return ["Roli Tikka Set", "Chawal Tikka Set"];
+  if (
+    /^roli\s*(?:&|and|-)?\s*chawal\s+(?:designer\s+)?tikka(?:\s+set)?$/i.test(t) ||
+    /^roli\s+(?:designer\s+)?tikka(?:\s+set)?$/i.test(t)
+  ) {
+    return ["Roli", "Chawal", "Designer tikka set"];
   }
 
   if (/^roli\s*(?:&|and|-)?\s*chawal$/i.test(t)) {
@@ -130,6 +134,9 @@ export function normalizeHamperIncludeLine(line: string): string[] {
   const combined = t.match(/^roli\s*(?:&|and|-)?\s*chawal\s+(.+)$/i);
   if (combined?.[1]) {
     const rest = combined[1].trim();
+    if (/(?:designer\s+)?tikka/i.test(rest)) {
+      return ["Roli", "Chawal", "Designer tikka set"];
+    }
     return [`Roli ${rest}`, `Chawal ${rest}`];
   }
 
