@@ -318,7 +318,7 @@ export function VisitorAnalyticsPanel() {
           <section className="bg-white border rounded-xl p-5">
             <h3 className="font-semibold mb-1">Visitors by country</h3>
             <p className="text-xs text-slate-500 mb-4">
-              Hover the 3D circle or legend for country counts and conversion stats
+              Hover a slice or country for counts and conversion stats
             </p>
             <CountryPie3D data={data.byCountry} />
           </section>

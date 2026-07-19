@@ -42,14 +42,41 @@ function topDevice(devices?: Record<string, number>): string {
   return entries[0]?.[0] ?? "—";
 }
 
+function polar(cx: number, cy: number, r: number, angleDeg: number) {
+  const rad = ((angleDeg - 90) * Math.PI) / 180;
+  return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+}
+
+function donutPath(
+  cx: number,
+  cy: number,
+  outerR: number,
+  innerR: number,
+  startDeg: number,
+  endDeg: number
+): string {
+  const sweep = Math.max(0.01, endDeg - startDeg);
+  const large = sweep > 180 ? 1 : 0;
+  const o0 = polar(cx, cy, outerR, startDeg);
+  const o1 = polar(cx, cy, outerR, startDeg + sweep);
+  const i1 = polar(cx, cy, innerR, startDeg + sweep);
+  const i0 = polar(cx, cy, innerR, startDeg);
+  return [
+    `M ${o0.x} ${o0.y}`,
+    `A ${outerR} ${outerR} 0 ${large} 1 ${o1.x} ${o1.y}`,
+    `L ${i1.x} ${i1.y}`,
+    `A ${innerR} ${innerR} 0 ${large} 0 ${i0.x} ${i0.y}`,
+    "Z",
+  ].join(" ");
+}
+
 interface Props {
   data: CountrySlice[];
   size?: number;
 }
 
-export function CountryPie3D({ data, size = 260 }: Props) {
+export function CountryPie3D({ data, size = 220 }: Props) {
   const [hover, setHover] = useState<number | null>(null);
-  const [tipPos, setTipPos] = useState({ x: 0, y: 0 });
 
   const slices = useMemo(() => {
     if (!data.length) return [];
@@ -69,106 +96,88 @@ export function CountryPie3D({ data, size = 260 }: Props) {
     });
   }, [data]);
 
-  const gradient = useMemo(() => {
-    if (!slices.length) return "conic-gradient(#e2e8f0 0deg 360deg)";
-    const parts = slices.map((s) => `${s.color} ${s.start}deg ${s.end}deg`);
-    return `conic-gradient(from -90deg, ${parts.join(", ")})`;
-  }, [slices]);
-
-  const findSlice = (clientX: number, clientY: number, el: HTMLElement) => {
-    const rect = el.getBoundingClientRect();
-    const cx = rect.left + rect.width / 2;
-    const cy = rect.top + rect.height / 2;
-    const dx = clientX - cx;
-    const dy = clientY - cy;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    const radius = Math.min(rect.width, rect.height) / 2;
-    if (dist > radius || dist < radius * 0.22) {
-      setHover(null);
-      return;
-    }
-    // Match conic-gradient(from -90deg): 0° at top, clockwise
-    let deg = (Math.atan2(dx, -dy) * 180) / Math.PI;
-    if (deg < 0) deg += 360;
-    const idx = slices.findIndex((s) => deg >= s.start && deg < s.end);
-    setHover(idx >= 0 ? idx : slices.length - 1);
-    setTipPos({ x: clientX - rect.left, y: clientY - rect.top });
-  };
-
   if (!slices.length) {
     return <p className="text-sm text-slate-500">No visitor country data yet.</p>;
   }
 
+  const cx = size / 2;
+  const cy = size / 2;
+  const outerR = size / 2 - 4;
+  const innerR = outerR * 0.58;
   const active = hover != null ? slices[hover] : null;
+  const totalVisitors = data.reduce((sum, d) => sum + d.visitors, 0);
 
   return (
-    <div className="flex flex-col lg:flex-row gap-8 items-center lg:items-start">
-      <div
-        className="relative shrink-0"
-        style={{ width: size, height: size * 0.78, perspective: 900 }}
-        onMouseLeave={() => setHover(null)}
-      >
-        {/* Depth rim */}
-        <div
-          aria-hidden
-          className="absolute left-1/2 -translate-x-1/2 rounded-full"
-          style={{
-            width: size,
-            height: size,
-            top: size * 0.12,
-            background: "radial-gradient(circle at 50% 40%, #94a3b8, #475569)",
-            transform: "rotateX(62deg)",
-            boxShadow: "0 28px 40px rgba(15, 23, 42, 0.28)",
-          }}
-        />
-        {/* Extruded layers for 3D thickness */}
-        {Array.from({ length: 8 }).map((_, i) => (
-          <div
-            key={i}
-            aria-hidden
-            className="absolute left-1/2 -translate-x-1/2 rounded-full"
-            style={{
-              width: size,
-              height: size,
-              top: size * 0.12 - i * 1.5,
-              background: gradient,
-              filter: "brightness(0.72)",
-              transform: "rotateX(62deg)",
-              opacity: 0.95,
-            }}
-          />
-        ))}
-        {/* Top face */}
-        <div
-          className="absolute left-1/2 -translate-x-1/2 rounded-full cursor-crosshair"
-          style={{
-            width: size,
-            height: size,
-            top: size * 0.12 - 12,
-            background: gradient,
-            transform: "rotateX(62deg)",
-            boxShadow: "inset 0 0 40px rgba(255,255,255,0.18)",
-          }}
-          onMouseMove={(e) => findSlice(e.clientX, e.clientY, e.currentTarget)}
+    <div className="grid grid-cols-1 md:grid-cols-[220px_minmax(0,1fr)] gap-6 md:gap-8 items-start">
+      <div className="relative mx-auto w-full max-w-[220px] shrink-0">
+        <svg
+          viewBox={`0 0 ${size} ${size}`}
+          width="100%"
+          height="auto"
+          className="block overflow-visible"
+          role="img"
+          aria-label="Visitors by country"
+          onMouseLeave={() => setHover(null)}
         >
-          <div
-            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white"
-            style={{ width: "38%", height: "38%", boxShadow: "0 2px 8px rgba(15,23,42,0.12)" }}
-          />
-        </div>
+          {slices.map((s, i) => {
+            const path =
+              s.end - s.start >= 359.9
+                ? [
+                    `M ${cx} ${cy - outerR}`,
+                    `A ${outerR} ${outerR} 0 1 1 ${cx - 0.01} ${cy - outerR}`,
+                    `L ${cx - 0.01} ${cy - innerR}`,
+                    `A ${innerR} ${innerR} 0 1 0 ${cx} ${cy - innerR}`,
+                    "Z",
+                  ].join(" ")
+                : donutPath(cx, cy, outerR, innerR, s.start, s.end);
+            return (
+              <path
+                key={s.country}
+                d={path}
+                fill={s.color}
+                opacity={hover == null || hover === i ? 1 : 0.35}
+                stroke="#fff"
+                strokeWidth={1.5}
+                className="cursor-pointer transition-opacity"
+                onMouseEnter={() => setHover(i)}
+              >
+                <title>
+                  {s.label}: {s.visitors.toLocaleString()} visitors (
+                  {(s.share * 100).toFixed(1)}%)
+                </title>
+              </path>
+            );
+          })}
+        </svg>
 
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <div className="text-center px-2">
+            {active ? (
+              <>
+                <p className="text-xs text-slate-500 truncate max-w-[96px]">{active.label}</p>
+                <p className="text-lg font-bold tabular-nums text-slate-900 leading-tight">
+                  {active.visitors.toLocaleString()}
+                </p>
+                <p className="text-[11px] text-slate-500">{(active.share * 100).toFixed(1)}%</p>
+              </>
+            ) : (
+              <>
+                <p className="text-xs text-slate-500">Total</p>
+                <p className="text-lg font-bold tabular-nums text-slate-900 leading-tight">
+                  {totalVisitors.toLocaleString()}
+                </p>
+                <p className="text-[11px] text-slate-500">visitors</p>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="min-w-0 w-full">
         {active && (
-          <div
-            className="absolute z-20 pointer-events-none bg-slate-900 text-white text-xs rounded-lg px-3 py-2 shadow-xl max-w-[220px]"
-            style={{
-              left: Math.min(Math.max(tipPos.x + 12, 8), size - 180),
-              top: Math.max(tipPos.y - 8, 8),
-            }}
-          >
-            <p className="font-semibold text-sm mb-1">{active.label}</p>
-            <p>
-              Visitors: <span className="font-medium">{active.visitors.toLocaleString()}</span>
-            </p>
+          <div className="mb-3 rounded-lg bg-slate-900 text-white text-xs px-3 py-2 grid grid-cols-2 gap-x-4 gap-y-0.5">
+            <p className="col-span-2 font-semibold text-sm mb-0.5">{active.label}</p>
+            <p>Visitors: {active.visitors.toLocaleString()}</p>
             <p>Share: {(active.share * 100).toFixed(1)}%</p>
             <p>Purchased: {active.purchased}</p>
             <p>Checkout: {active.checkoutStarted}</p>
@@ -178,34 +187,31 @@ export function CountryPie3D({ data, size = 260 }: Props) {
             <p>Top device: {topDevice(active.devices)}</p>
           </div>
         )}
-      </div>
 
-      <ul className="flex-1 w-full space-y-2 max-h-72 overflow-y-auto pr-1">
-        {slices.map((s, i) => (
-          <li key={s.country}>
-            <button
-              type="button"
-              className={`w-full flex items-center gap-3 text-left rounded-lg px-2 py-1.5 text-sm transition-colors ${
-                hover === i ? "bg-slate-100" : "hover:bg-slate-50"
-              }`}
-              onMouseEnter={() => {
-                setHover(i);
-                setTipPos({ x: size * 0.55, y: size * 0.25 });
-              }}
-              onMouseLeave={() => setHover(null)}
-            >
-              <span
-                className="w-3 h-3 rounded-sm shrink-0"
-                style={{ backgroundColor: s.color }}
-              />
-              <span className="flex-1 truncate text-slate-700">{s.label}</span>
-              <span className="tabular-nums text-slate-500 shrink-0">
-                {s.visitors.toLocaleString()} · {(s.share * 100).toFixed(0)}%
-              </span>
-            </button>
-          </li>
-        ))}
-      </ul>
+        <ul className="space-y-1 max-h-72 overflow-y-auto pr-1">
+          {slices.map((s, i) => (
+            <li key={s.country}>
+              <button
+                type="button"
+                className={`w-full flex items-center gap-3 text-left rounded-lg px-2 py-1.5 text-sm transition-colors ${
+                  hover === i ? "bg-slate-100" : "hover:bg-slate-50"
+                }`}
+                onMouseEnter={() => setHover(i)}
+                onMouseLeave={() => setHover(null)}
+              >
+                <span
+                  className="w-3 h-3 rounded-sm shrink-0"
+                  style={{ backgroundColor: s.color }}
+                />
+                <span className="flex-1 truncate text-slate-700">{s.label}</span>
+                <span className="tabular-nums text-slate-500 shrink-0">
+                  {s.visitors.toLocaleString()} · {(s.share * 100).toFixed(0)}%
+                </span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }
