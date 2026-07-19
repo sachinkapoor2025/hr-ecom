@@ -3,7 +3,12 @@ import crypto from "crypto";
 import type SMTPTransport from "nodemailer/lib/smtp-transport";
 import type { Order, Product, CartItem } from "@hr-ecom/shared";
 import type { LeadCaptureInput } from "@hr-ecom/shared";
-import { WELCOME_DISCOUNT_PERCENT, LOW_STOCK_ALERT_EMAIL, ABANDONED_CART_DISCOUNT_PERCENT } from "@hr-ecom/shared";
+import {
+  ORDER_STATUS,
+  WELCOME_DISCOUNT_PERCENT,
+  LOW_STOCK_ALERT_EMAIL,
+  ABANDONED_CART_DISCOUNT_PERCENT,
+} from "@hr-ecom/shared";
 
 const DEFAULT_NOTIFY = "order@usarakhi.com";
 /** Admin inbox for new orders + contact form (comma-separated). */
@@ -531,6 +536,208 @@ Admin: https://www.usarakhi.com/admin/products`;
 
 function siteUrl(): string {
   return (process.env.SITE_URL ?? "https://www.usarakhi.com").replace(/\/$/, "");
+}
+
+/** Customer-facing copy for each fulfillment / terminal status step. */
+function customerStatusEmailContent(order: Order): { subject: string; body: string } | null {
+  const name = order.shippingAddress?.name?.split(" ")[0] ?? "there";
+  const shortId = order.orderId.slice(0, 8).toUpperCase();
+  const total = `${order.currency} ${order.total.toFixed(2)}`;
+  const trackingLines = [
+    order.carrier ? `Carrier: ${order.carrier}` : null,
+    order.trackingNumber ? `Tracking number: ${order.trackingNumber}` : null,
+    order.estimatedDeliveryAt
+      ? `Estimated delivery: ${new Date(order.estimatedDeliveryAt).toLocaleDateString("en-US", {
+          dateStyle: "medium",
+          timeZone: "America/New_York",
+        })}`
+      : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const footer = `
+
+View your order: ${siteUrl()}/orders/${order.orderId}
+
+Questions? Reply to this email or WhatsApp us.
+
+— ${SITE_NAME} Team
+${siteUrl()}`;
+
+  switch (order.status) {
+    case ORDER_STATUS.PAID:
+      return {
+        subject: `Order confirmed — ${SITE_NAME}`,
+        body: `Hi ${name},
+
+Thank you for your order! Payment has been received.
+
+Order ID: ${shortId}
+Total: ${total}
+
+We deliver to all 50 US states in 5–7 business days after dispatch.${footer}`,
+      };
+    case ORDER_STATUS.ACCEPTED:
+      return {
+        subject: `Order accepted — #${shortId} | ${SITE_NAME}`,
+        body: `Hi ${name},
+
+Good news — we've accepted your Rakhi order #${shortId} and our team is preparing it for fulfillment.
+
+Order total: ${total}
+
+We'll email you again when packing starts and when your package ships.${footer}`,
+      };
+    case ORDER_STATUS.PROCESSING:
+      return {
+        subject: `Order packing — #${shortId} | ${SITE_NAME}`,
+        body: `Hi ${name},
+
+Your order #${shortId} is now being packed at our warehouse.
+
+Order total: ${total}
+
+You'll receive another update with tracking details once it ships.${footer}`,
+      };
+    case ORDER_STATUS.SHIPPED:
+      return {
+        subject: `Order shipped — #${shortId} | ${SITE_NAME}`,
+        body: `Hi ${name},
+
+Your Rakhi order #${shortId} is on its way!
+
+${trackingLines || "Tracking details will appear on your order page shortly."}
+
+Order total: ${total}
+
+Typical USA delivery is 5–7 business days after dispatch (faster to many metros).${footer}`,
+      };
+    case ORDER_STATUS.DELIVERED:
+      return {
+        subject: `Order delivered — #${shortId} | ${SITE_NAME}`,
+        body: `Hi ${name},
+
+Your order #${shortId} has been marked as delivered.
+
+We hope your brother loves his Rakhi! If anything looks wrong with the package, reply to this email and we'll help right away.${footer}`,
+      };
+    case ORDER_STATUS.COMPLETE:
+      return {
+        subject: `Order complete — #${shortId} | ${SITE_NAME}`,
+        body: `Hi ${name},
+
+Your order #${shortId} is complete. Thank you for celebrating Raksha Bandhan with ${SITE_NAME}.
+
+We'd love a quick review when you have a moment: ${siteUrl()}/reviews${footer}`,
+      };
+    case ORDER_STATUS.CANCELLED:
+      return {
+        subject: `Order cancelled — #${shortId} | ${SITE_NAME}`,
+        body: `Hi ${name},
+
+Your order #${shortId} has been cancelled.
+
+Order total: ${total}
+
+If you did not request this or have questions about a refund, reply to this email and our team will help.${footer}`,
+      };
+    case ORDER_STATUS.REFUNDED:
+      return {
+        subject: `Refund processed — #${shortId} | ${SITE_NAME}`,
+        body: `Hi ${name},
+
+A refund has been processed for order #${shortId}.
+
+Order total: ${total}
+
+Depending on your bank or payment method, the credit may take a few business days to appear. Questions? Just reply to this email.${footer}`,
+      };
+    default:
+      return null;
+  }
+}
+
+/**
+ * Daily SMTP reminder while an order is still pending_payment (through 28 Aug 2026).
+ * Do NOT use SES — transactional path only.
+ */
+export async function sendPendingPaymentReminderEmail(order: Order): Promise<EmailSendResult> {
+  if (!smtpConfigured()) {
+    return { ok: false, skipped: true, error: "SMTP not configured" };
+  }
+
+  const customerEmail = order.shippingAddress?.email?.trim();
+  if (!customerEmail?.includes("@")) {
+    return { ok: false, skipped: true, error: "No customer email" };
+  }
+
+  const name = order.shippingAddress?.name?.split(" ")[0] ?? "there";
+  const shortId = order.orderId.slice(0, 8).toUpperCase();
+  const total = `${order.currency} ${order.total.toFixed(2)}`;
+  const count = (order.pendingPaymentReminderCount ?? 0) + 1;
+  const orderUrl = `${siteUrl()}/orders/${order.orderId}`;
+  const checkoutUrl = `${siteUrl()}/checkout`;
+  const unsubUrl = `${siteUrl()}/unsubscribe/payment-reminders?email=${encodeURIComponent(customerEmail)}`;
+
+  const text = `Hi ${name},
+
+This is a friendly reminder — your Rakhi order #${shortId} is still waiting for payment.
+
+Order total: ${total}
+Status: Payment pending
+
+Complete payment so we can pack and ship your Rakhi for Raksha Bandhan 2026 (August 28):
+→ ${orderUrl}
+→ ${checkoutUrl}
+
+We'll keep reminding you once a day until payment is completed (last reminder day: August 28, 2026).
+
+Questions? Reply to this email or WhatsApp us.
+
+— ${SITE_NAME} Team
+${siteUrl()}
+(Reminder #${count})
+
+---
+Don't want payment reminders? Unsubscribe here (you will still get order updates if you pay):
+${unsubUrl}`;
+
+  return sendEmail({
+    to: customerEmail,
+    subject: `Payment reminder — order #${shortId} | ${SITE_NAME}`,
+    text,
+    replyTo: notifyAddress(),
+  });
+}
+
+/**
+ * Transactional customer email on admin order-status change.
+ * Uses SMTP via sendEmail() (same path as paid confirmation / review request).
+ * Do NOT use SES here — SES is reserved for marketing campaigns (/ses-email/*).
+ * Skips pending_payment and unknown statuses. Status update still succeeds if SMTP is down.
+ */
+export async function notifyCustomerOrderStatusChange(order: Order): Promise<EmailSendResult> {
+  if (!smtpConfigured()) {
+    return { ok: false, skipped: true, error: "SMTP not configured" };
+  }
+
+  const customerEmail = order.shippingAddress?.email?.trim();
+  if (!customerEmail?.includes("@")) {
+    return { ok: false, skipped: true, error: "No customer email" };
+  }
+
+  const content = customerStatusEmailContent(order);
+  if (!content) {
+    return { ok: true, skipped: true };
+  }
+
+  return sendEmail({
+    to: customerEmail,
+    subject: content.subject,
+    text: content.body,
+    replyTo: notifyAddress(),
+  });
 }
 
 export async function sendReviewRequestEmail(order: Order): Promise<EmailSendResult> {

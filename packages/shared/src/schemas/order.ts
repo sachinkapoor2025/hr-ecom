@@ -113,6 +113,12 @@ export const orderSchema = z.object({
   reviewEmailDueAt: z.string().optional(),
   /** Set after review request email is sent (idempotency). */
   reviewEmailSentAt: z.string().optional(),
+  /** Last pending-payment reminder send time (ISO). */
+  pendingPaymentReminderLastSentAt: z.string().optional(),
+  /** America/New_York calendar day (YYYY-MM-DD) of last pending-payment reminder. */
+  pendingPaymentReminderLastDateKey: z.string().optional(),
+  /** How many pending-payment reminder emails have been sent. */
+  pendingPaymentReminderCount: z.number().int().min(0).optional(),
   /** USPS rate-shopping metadata (customer may still pay $0 when mode is free). */
   shippingServiceCode: z.string().optional(),
   shippingServiceName: z.string().optional(),
