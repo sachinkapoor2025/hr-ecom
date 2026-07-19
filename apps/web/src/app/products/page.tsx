@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { api } from "@/lib/api";
 import { HomeProductCard } from "@/components/HomeProductCard";
-import { Suspense } from "react";
 import { ProductGrid } from "@/components/ProductGrid";
+import type { ProductSort } from "@/components/ProductSortBar";
 import { SearchTracker } from "@/components/SearchTracker";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { pageMetadata } from "@/lib/seo";
@@ -14,7 +14,13 @@ import { homeCategoryOrder, orderCategories } from "@/lib/site";
 export const revalidate = 60;
 
 interface Props {
-  searchParams: Promise<{ search?: string; category?: string }>;
+  searchParams: Promise<{ search?: string; category?: string; sort?: string }>;
+}
+
+const SORT_VALUES: ProductSort[] = ["featured", "price-asc", "price-desc", "name-asc", "name-desc"];
+
+function resolveSort(raw?: string): ProductSort {
+  return SORT_VALUES.includes(raw as ProductSort) ? (raw as ProductSort) : "featured";
 }
 
 const CATEGORY_SEO: Record<string, { title: string; description: string }> = {
@@ -69,6 +75,7 @@ export default async function ProductsPage({ searchParams }: Props) {
   const params = await searchParams;
   const search = params.search;
   const category = params.category;
+  const sort = resolveSort(params.sort);
 
   let products: Product[] = [];
   let categories: Category[] = [];
@@ -167,9 +174,7 @@ export default async function ProductsPage({ searchParams }: Props) {
           )}
         </div>
       ) : (
-        <Suspense fallback={<p className="text-slate-500">Loading products…</p>}>
-          <ProductGrid products={products} />
-        </Suspense>
+        <ProductGrid products={products} sort={sort} />
       )}
     </div>
   );

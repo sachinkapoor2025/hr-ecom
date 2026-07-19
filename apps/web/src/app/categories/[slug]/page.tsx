@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { api } from "@/lib/api";
-import { Suspense } from "react";
 import { ProductGrid } from "@/components/ProductGrid";
+import type { ProductSort } from "@/components/ProductSortBar";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { CategoryContentSection } from "@/components/CategoryContentSection";
 import { JsonLd } from "@/components/JsonLd";
@@ -22,6 +22,13 @@ import type { Product, Category } from "@hr-ecom/shared";
 
 interface Props {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ sort?: string }>;
+}
+
+const SORT_VALUES: ProductSort[] = ["featured", "price-asc", "price-desc", "name-asc", "name-desc"];
+
+function resolveSort(raw?: string): ProductSort {
+  return SORT_VALUES.includes(raw as ProductSort) ? (raw as ProductSort) : "featured";
 }
 
 export function generateStaticParams() {
@@ -64,8 +71,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-export default async function CategoryPage({ params }: Props) {
+export default async function CategoryPage({ params, searchParams }: Props) {
   const { slug } = await params;
+  const sort = resolveSort((await searchParams).sort);
 
   let category: Category | null = null;
   let products: Product[] = [];
@@ -119,9 +127,7 @@ export default async function CategoryPage({ params }: Props) {
       <h1 className="text-3xl font-bold text-primary mb-8">{h1}</h1>
 
       {products.length > 0 ? (
-        <Suspense fallback={<p className="text-slate-500">Loading products…</p>}>
-          <ProductGrid products={products} />
-        </Suspense>
+        <ProductGrid products={products} sort={sort} />
       ) : (
         <p className="text-slate-500">
           Products loading soon.{" "}
@@ -134,7 +140,7 @@ export default async function CategoryPage({ params }: Props) {
       <CategoryProductLinks products={products} categoryName={name} />
 
       {rich ? (
-        <CategoryContentSection content={rich} categoryName={name} products={products} />
+        <CategoryContentSection content={rich} categoryName={name} />
       ) : (
         <>
           <section className="mt-12 pt-10 border-t border-slate-200">

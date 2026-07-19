@@ -8,7 +8,7 @@ export const analyticsConfig = {
   ga4Id: "G-8YRF0X8YV9",
   /** Google Ads conversion tag (gtag.js) — hardcoded, not Amplify env. */
   googleAdsId: "AW-18198485613",
-  metaPixelId: "145909935879507",
+  metaPixelId: "1459099935879507",
   clarityId: "xdpv6v2lq9",
   /** Meta tag content for Google Search Console (also backed by /public/google882629f2a0f6ec6d.html). */
   googleSiteVerification: "google882629f2a0f6ec6d",

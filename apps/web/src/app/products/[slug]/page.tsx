@@ -15,16 +15,22 @@ interface Props {
   params: Promise<{ slug: string }>;
 }
 
-/** Cached 1h; admin image/price updates use /api/revalidate/product. */
-export const revalidate = 3600;
+/**
+ * Always SSR from the live products API. Static ISR + stale-while-revalidate (~1 year)
+ * was serving prerendered catalog prices ($1.50) while the API returned $14.72 — flipping
+ * product:price:amount and % OFF between requests / edge caches.
+ */
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
+/** Keep for discoverability; with force-dynamic these are not baked as static HTML. */
 export async function generateStaticParams() {
   const slugs = getStaticProductSlugs();
   if (slugs.length > 0) {
     return slugs.map((slug) => ({ slug }));
   }
   try {
-    const data = await api<{ products: Product[] }>("/products", { revalidate: 3600 });
+    const data = await api<{ products: Product[] }>("/products", { revalidate: 300 });
     return data.products.map((p) => ({ slug: p.slug }));
   } catch {
     return [];
