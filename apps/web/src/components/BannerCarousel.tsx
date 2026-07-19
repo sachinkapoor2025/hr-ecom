@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, type ReactNode } from "react";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -71,7 +71,43 @@ function Eyebrow({ text }: { text: string }) {
   );
 }
 
-export function BannerCarousel({ banners }: { banners: readonly HomeBanner[] }) {
+function SlideImage({
+  banner,
+  priority,
+}: {
+  banner: HomeBanner;
+  priority?: boolean;
+}) {
+  const img = (
+    <Image
+      src={banner.src}
+      alt={banner.alt}
+      fill
+      className="object-cover object-center"
+      sizes="(max-width: 1023px) 100vw, 768px"
+      priority={priority}
+      fetchPriority={priority ? "high" : "auto"}
+      loading={priority ? "eager" : "lazy"}
+    />
+  );
+  if (banner.href) {
+    return (
+      <Link href={banner.href} className="block h-full w-full" tabIndex={priority ? 0 : -1}>
+        {img}
+      </Link>
+    );
+  }
+  return img;
+}
+
+export function BannerCarousel({
+  banners,
+  lcpImage,
+}: {
+  banners: readonly HomeBanner[];
+  /** Server-rendered first-slide image — always in initial HTML for LCP. */
+  lcpImage?: ReactNode;
+}) {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
 
@@ -101,50 +137,37 @@ export function BannerCarousel({ banners }: { banners: readonly HomeBanner[] }) 
     >
       <div className="relative overflow-hidden bg-white border-b border-slate-100">
         <div className="relative max-w-7xl mx-auto lg:grid lg:grid-cols-[2fr_3fr] lg:gap-6 lg:items-center lg:px-4 lg:py-4">
-          {/* Banner image */}
           <div className="order-1 lg:order-2 relative w-full">
             <div className="relative w-full aspect-[5/2] sm:aspect-[1024/420] overflow-hidden bg-slate-900/5">
-              {banners.map((b, i) => {
-                // Only mount the active slide (+ slide 0 for LCP). Opacity-0 siblings
-                // still count as in-viewport, so lazy alone was still fetching all 3 at once.
-                const mounted = i === index || i === 0;
-                return (
+              {/* Server LCP image for slide 0 */}
+              {lcpImage ? (
                 <div
-                  key={b.src}
                   className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
-                    i === index ? "opacity-100 z-10" : "opacity-0 z-0"
+                    index === 0 ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"
                   }`}
-                  aria-hidden={i !== index}
+                  aria-hidden={index !== 0}
                 >
-                  {mounted &&
-                    (b.href ? (
-                    <Link href={b.href} className="block h-full w-full" tabIndex={i === index ? 0 : -1}>
-                      <Image
-                        src={b.src}
-                        alt={b.alt}
-                        fill
-                        className="object-cover object-center"
-                        /* Mobile: full bleed. Desktop: ~3/5 of max-w-7xl (~768px). Avoid min() — poorly supported in sizes. */
-                        sizes="(max-width: 1023px) 100vw, 768px"
-                        priority={i === 0}
-                        fetchPriority={i === 0 ? "high" : "auto"}
-                        loading={i === 0 ? "eager" : "lazy"}
-                      />
-                    </Link>
-                  ) : (
-                    <Image
-                      src={b.src}
-                      alt={b.alt}
-                      fill
-                      className="object-cover object-center"
-                      sizes="(max-width: 1023px) 100vw, 768px"
-                      priority={i === 0}
-                      fetchPriority={i === 0 ? "high" : "auto"}
-                      loading={i === 0 ? "eager" : "lazy"}
-                    />
-                  ))}
+                  {lcpImage}
                 </div>
-              );
+              ) : null}
+
+              {banners.map((b, i) => {
+                // When server LCP slot exists, never remount slide 0 as a client Image.
+                if (lcpImage && i === 0) return null;
+                // Only mount the active slide (+ slide 0 fallback when no lcpImage).
+                if (i !== index && !(i === 0 && !lcpImage)) return null;
+
+                return (
+                  <div
+                    key={b.src}
+                    className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
+                      i === index ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"
+                    }`}
+                    aria-hidden={i !== index}
+                  >
+                    <SlideImage banner={b} priority={!lcpImage && i === 0} />
+                  </div>
+                );
               })}
 
               {banners.length > 1 && (
@@ -174,9 +197,8 @@ export function BannerCarousel({ banners }: { banners: readonly HomeBanner[] }) 
             </div>
           </div>
 
-          {/* Copy */}
           <div className="order-2 lg:order-1 text-center lg:text-left z-10 px-4 py-6 sm:py-8 lg:py-0 lg:pl-2 lg:pr-4">
-            <div key={banner.src} className="hero-slide-in">
+            <div key={banner.src}>
               <Eyebrow text={banner.eyebrow} />
 
               <p className="font-serif text-3xl sm:text-4xl lg:text-[2.65rem] leading-tight text-primary mb-4">
@@ -218,7 +240,6 @@ export function BannerCarousel({ banners }: { banners: readonly HomeBanner[] }) 
           </div>
         </div>
 
-        {/* Mobile trust icons */}
         <ul className="sm:hidden grid grid-cols-4 gap-2 px-4 pb-4">
           {TRUST_FEATURES.map((f) => (
             <li key={f.label} className="flex flex-col items-center gap-1.5">
@@ -232,7 +253,6 @@ export function BannerCarousel({ banners }: { banners: readonly HomeBanner[] }) 
           ))}
         </ul>
 
-        {/* Bottom pill strip */}
         <div className="px-4 sm:px-6 pb-4 sm:pb-5 max-w-7xl mx-auto">
           <div className="flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-blue-100/80 via-sky-50 to-blue-100/80 border border-blue-100 px-4 sm:px-6 py-3 text-center">
             <svg className="w-4 h-4 text-accent shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
@@ -254,7 +274,6 @@ export function BannerCarousel({ banners }: { banners: readonly HomeBanner[] }) 
         </div>
       </div>
 
-      {/* Pagination pills */}
       {banners.length > 1 && (
         <div className="flex justify-center items-center gap-2 py-3 bg-white" role="tablist" aria-label="Banner slides">
           {banners.map((_, i) => (

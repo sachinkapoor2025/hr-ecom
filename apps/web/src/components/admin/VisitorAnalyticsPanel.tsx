@@ -13,6 +13,7 @@ import {
 } from "@/lib/admin-utils";
 import { TableControls } from "@/components/admin/TableControls";
 import { CountryPie3D, type CountrySlice } from "@/components/admin/CountryPie3D";
+import { ChartLegend, DailyVisitorsChart, type DailyVisitorPoint } from "@/components/admin/Charts";
 
 interface SessionSummary {
   sessionId: string;
@@ -56,6 +57,8 @@ interface VisitorAnalyticsResponse {
     withCart: number;
     countries: number;
   };
+  /** Unique sessions per UTC day (firstSeen). Additive field — older APIs may omit. */
+  byDay?: DailyVisitorPoint[];
   byCountry: CountrySlice[];
   sessions: SessionSummary[];
 }
@@ -314,6 +317,26 @@ export function VisitorAnalyticsPanel() {
             {data.stats.checkoutStarted.toLocaleString()} checkout ·{" "}
             {data.stats.withCart.toLocaleString()} with cart
           </p>
+
+          {(data.byDay?.length ?? 0) > 0 && (
+            <section className="bg-white border rounded-xl p-5">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-3">
+                <div>
+                  <h3 className="font-semibold">Daily visitors</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Unique sessions by first-seen day. Hover a point for full stats.
+                  </p>
+                </div>
+                <ChartLegend
+                  items={[
+                    { color: "#4876e8", label: "Visitors" },
+                    { color: "#16a34a", label: "Purchased" },
+                  ]}
+                />
+              </div>
+              <DailyVisitorsChart data={data.byDay!} height={220} />
+            </section>
+          )}
 
           <section className="bg-white border rounded-xl p-5">
             <h3 className="font-semibold mb-1">Visitors by country</h3>
