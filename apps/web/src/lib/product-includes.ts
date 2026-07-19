@@ -88,6 +88,7 @@ function shippingIncludeLines(): string[] {
   return [
     "Ships from our California warehouse",
     "No delays due to global affairs",
+    "Best quality at the most competitive rates",
   ];
 }
 

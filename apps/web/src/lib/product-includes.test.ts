@@ -41,6 +41,7 @@ describe("getProductIncludes", () => {
         "Small packet of Chawal (Rice)",
         "Ships from our California warehouse",
         "No delays due to global affairs",
+        "Best quality at the most competitive rates",
       ]
     );
   });
@@ -60,6 +61,7 @@ describe("getProductIncludes", () => {
         "3 Ferrero Rocher Chocolates",
         "Ships from our California warehouse",
         "No delays due to global affairs",
+        "Best quality at the most competitive rates",
       ]
     );
   });
@@ -94,6 +96,7 @@ describe("getProductIncludes", () => {
       "Chawal Dibbi",
       "Ships from our California warehouse",
       "No delays due to global affairs",
+      "Best quality at the most competitive rates",
     ]);
   });
 
@@ -114,6 +117,7 @@ describe("getProductIncludes", () => {
       "Designer tikka set",
       "Ships from our California warehouse",
       "No delays due to global affairs",
+      "Best quality at the most competitive rates",
     ]);
   });
 
@@ -134,6 +138,7 @@ describe("getProductIncludes", () => {
       "Complimentary Chawal (Rice)",
       "Ships from our California warehouse",
       "No delays due to global affairs",
+      "Best quality at the most competitive rates",
     ]);
   });
 });
