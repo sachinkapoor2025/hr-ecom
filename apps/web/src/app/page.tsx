@@ -4,7 +4,7 @@ import { categoryHref } from "@/lib/category-urls";
 import { api } from "@/lib/api";
 import { applyInlineLinks } from "@/lib/inline-links";
 import { homepageInlineLinks } from "@/lib/content/page-inline-links";
-import { BannerCarousel } from "@/components/BannerCarousel";
+import { HomeHero } from "@/components/HomeHero";
 import { CustomerReviews } from "@/components/CustomerReviews";
 import { HomeProductCard } from "@/components/HomeProductCard";
 import { FastSellingSection } from "@/components/FastSellingSection";
@@ -82,7 +82,7 @@ export default async function HomePage() {
   return (
     <div>
       <JsonLd data={[faqJsonLd(faqs), howToSendRakhiJsonLd()]} />
-      <BannerCarousel banners={homeBanners} />
+      <HomeHero banners={homeBanners} />
       <TrustStrip />
 
       <section className="max-w-4xl mx-auto px-4 py-10 text-center">
