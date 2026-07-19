@@ -22,7 +22,13 @@ import { docClient, ORDERS_TABLE, CUSTOMERS_TABLE, now } from "../lib/db";
 import { ok, created, badRequest, unauthorized, forbidden, notFound } from "../lib/response";
 import { getAuth, getSessionId, getUserOrSessionKey, requireAdmin, requireSuperAdmin } from "../lib/auth";
 import { getCartHandler, clearCartForUser } from "./cart";
-import { notifyAdminLead, notifyAdminOrderPaid, notifyAdminOrderPlaced, notifyAdminOrderPaymentFailed } from "../lib/email";
+import {
+  notifyAdminLead,
+  notifyAdminOrderPaid,
+  notifyAdminOrderPlaced,
+  notifyAdminOrderPaymentFailed,
+  notifyCustomerOrderStatusChange,
+} from "../lib/email";
 import { decrementInventoryForOrder, validateOrderInventory } from "../lib/inventory";
 import { applyDeliveryReviewSchedule } from "./review-emails";
 import { markCartConverted } from "./abandoned-cart-emails";
@@ -484,6 +490,9 @@ export async function updateOrderStatus(event: APIGatewayProxyEventV2) {
   };
 
   await docClient.send(new PutCommand({ TableName: ORDERS_TABLE, Item: updated }));
+
+  const statusChanged = Boolean(parsed.data.status && parsed.data.status !== order.status);
+
   if (
     order.status === ORDER_STATUS.PENDING_PAYMENT &&
     nextStatus === ORDER_STATUS.CANCELLED
@@ -491,6 +500,22 @@ export async function updateOrderStatus(event: APIGatewayProxyEventV2) {
     const emailResult = await notifyAdminOrderPaymentFailed(updated);
     if (!emailResult.ok) console.error("Order payment failed email failed:", emailResult.error);
   }
+
+  // Notify customer on every status step (accepted → … → complete, plus cancelled/refunded).
+  // Skip pending_payment → cancelled: shopper never paid; admin alert above is enough.
+  if (
+    statusChanged &&
+    !(
+      order.status === ORDER_STATUS.PENDING_PAYMENT &&
+      nextStatus === ORDER_STATUS.CANCELLED
+    )
+  ) {
+    const customerEmailResult = await notifyCustomerOrderStatusChange(updated);
+    if (!customerEmailResult.ok && !customerEmailResult.skipped) {
+      console.error("Customer order status email failed:", customerEmailResult.error);
+    }
+  }
+
   return ok({ order: updated });
 }
 

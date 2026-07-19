@@ -124,8 +124,8 @@ export function BannerCarousel({ banners }: { banners: readonly HomeBanner[] }) 
                         alt={b.alt}
                         fill
                         className="object-cover object-center"
-                        /* Mobile: full bleed. Desktop: 3/5 of max-w-7xl (~768px), not 60vw of the viewport. */
-                        sizes="(max-width: 1023px) 100vw, min(768px, 60vw)"
+                        /* Mobile: full bleed. Desktop: ~3/5 of max-w-7xl (~768px). Avoid min() — poorly supported in sizes. */
+                        sizes="(max-width: 1023px) 100vw, 768px"
                         priority={i === 0}
                         fetchPriority={i === 0 ? "high" : "auto"}
                         loading={i === 0 ? "eager" : "lazy"}
@@ -137,7 +137,7 @@ export function BannerCarousel({ banners }: { banners: readonly HomeBanner[] }) 
                       alt={b.alt}
                       fill
                       className="object-cover object-center"
-                      sizes="(max-width: 1023px) 100vw, min(768px, 60vw)"
+                      sizes="(max-width: 1023px) 100vw, 768px"
                       priority={i === 0}
                       fetchPriority={i === 0 ? "high" : "auto"}
                       loading={i === 0 ? "eager" : "lazy"}

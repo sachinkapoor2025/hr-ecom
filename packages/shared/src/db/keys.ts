@@ -155,6 +155,12 @@ export const reminderEmailKeys = {
   statusSk: (createdAt: string, email: string) => `${createdAt}#${email.trim().toLowerCase()}`,
 };
 
+/** Pending-payment reminder unsubscribe list (dedicated table). */
+export const pendingPaymentUnsubKeys = {
+  pk: (email: string) => `EMAIL#${email.trim().toLowerCase()}`,
+  sk: () => "META" as const,
+};
+
 /**
  * Legacy single-table helpers — retained only for the one-time migration script
  * that reads the old `hr-ecom-{env}` table. Do not use in handlers.

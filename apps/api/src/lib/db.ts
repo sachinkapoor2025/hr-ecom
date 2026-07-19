@@ -39,6 +39,8 @@ export const EMAIL_CAMPAIGNS_TABLE =
   process.env.EMAIL_CAMPAIGNS_TABLE ?? `hr-ecom-email-campaigns-${ENV}`;
 export const REMINDER_EMAILS_TABLE =
   process.env.REMINDER_EMAILS_TABLE ?? `hr-ecom-reminder-emails-${ENV}`;
+export const PENDING_PAYMENT_UNSUB_TABLE =
+  process.env.PENDING_PAYMENT_UNSUB_TABLE ?? `hr-ecom-pending-payment-unsub-${ENV}`;
 
 /** All table names, useful for setup/migration scripts. */
 export const ALL_TABLES = {
@@ -50,6 +52,7 @@ export const ALL_TABLES = {
   config: CONFIG_TABLE,
   emailCampaigns: EMAIL_CAMPAIGNS_TABLE,
   reminderEmails: REMINDER_EMAILS_TABLE,
+  pendingPaymentUnsub: PENDING_PAYMENT_UNSUB_TABLE,
 };
 
 export function now(): string {

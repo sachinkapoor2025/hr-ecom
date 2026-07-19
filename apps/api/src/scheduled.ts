@@ -1,8 +1,9 @@
 import type { ScheduledEvent, Context } from "aws-lambda";
 import { processDueReviewEmails } from "./handlers/review-emails";
 import { processAbandonedCartEmails } from "./handlers/abandoned-cart-emails";
+import { processPendingPaymentReminders } from "./handlers/pending-payment-reminders";
 
-/** EventBridge Schedule — review emails + abandoned cart recovery. */
+/** EventBridge Schedule — review emails + abandoned cart + pending-payment reminders. */
 export async function handler(_event: ScheduledEvent, _context: Context) {
   const results: Record<string, unknown> = {};
 
@@ -20,7 +21,18 @@ export async function handler(_event: ScheduledEvent, _context: Context) {
     results.abandonedCartEmailsError = err instanceof Error ? err.message : String(err);
   }
 
-  if (results.reviewEmailsError || results.abandonedCartEmailsError) {
+  try {
+    results.pendingPaymentReminders = await processPendingPaymentReminders();
+  } catch (err) {
+    console.error("Pending payment reminders cron failed:", err);
+    results.pendingPaymentRemindersError = err instanceof Error ? err.message : String(err);
+  }
+
+  if (
+    results.reviewEmailsError ||
+    results.abandonedCartEmailsError ||
+    results.pendingPaymentRemindersError
+  ) {
     throw new Error(JSON.stringify(results));
   }
 
