@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { categoryHref } from "@/lib/category-urls";
 import type { SecondaryCity } from "@/lib/content/city-delivery-tiers";
+import { secondaryCityIntro } from "@/lib/content/city-delivery-tiers";
 import { locationPublicPath } from "@/lib/content/seo-data";
 import { site, whatsappChatUrl } from "@/lib/site";
 
@@ -34,9 +35,9 @@ export function SecondaryCityLanding({ city }: { city: SecondaryCity }) {
           Send Rakhi to {place} — USA domestic delivery
         </h2>
         <p className="mb-4">
-          UsaRakhi delivers premium rakhis to {place} with domestic USA shipping (5–7 business days
-          after dispatch). Sisters in India, the UK, Canada, and worldwide order online; we fulfill
-          from our US operations so your brother avoids international customs delays.
+          {secondaryCityIntro(city.slug, city.name, city.state)} Sisters in India, the UK, Canada, and
+          worldwide order online; we fulfill from our US operations so your brother avoids
+          international customs delays.
         </p>
         <p>
           Shop single rakhis, combos with chocolates, kids rakhis, Bhaiya Bhabhi sets, and Lumba

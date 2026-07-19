@@ -20,6 +20,7 @@ import {
   getSecondaryCity,
   isExpressMetro,
   isSecondaryCity,
+  secondaryCityIntro,
 } from "@/lib/content/city-delivery-tiers";
 import { shuffleForCity } from "@/lib/city-products";
 import { breadcrumbJsonLd, faqJsonLd, pageMetadata, serviceAreaJsonLd } from "@/lib/seo";
@@ -166,8 +167,7 @@ export default async function SeoLocationPage({ params }: Props) {
           Send Rakhi to {place} — Online USA Delivery
         </h1>
         <p className="text-slate-600 mb-8 max-w-3xl">
-          Premium rakhi delivery to {place} in 5–7 business days. Order from India, UK, Canada, or
-          anywhere — we ship domestically within America.
+          {secondaryCityIntro(secondary.slug, secondary.name, secondary.state)}
         </p>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {cityProducts.map((p) => (
