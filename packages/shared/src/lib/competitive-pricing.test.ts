@@ -73,6 +73,19 @@ describe("withCompetitiveStorefrontPricing", () => {
     assert.equal(result.price, 15.64); // 17 * 0.92
     assert.equal(result.compareAtPrice, 22);
   });
+
+  it("does not stack competitive cuts when applied twice", () => {
+    const once = withCompetitiveStorefrontPricing({
+      price: 16,
+      compareAtPrice: 22,
+      currency: "USD" as const,
+    });
+    const twice = withCompetitiveStorefrontPricing(once);
+    assert.equal(once.price, 14.72);
+    assert.equal(twice.price, 14.72);
+    assert.equal(twice.compareAtPrice, 22);
+    assert.equal(twice.storefrontPricingApplied, true);
+  });
 });
 
 describe("INR conversion keeps the same discount percent", () => {

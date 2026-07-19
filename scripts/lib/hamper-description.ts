@@ -43,8 +43,10 @@ function expandRitualLines(line: string): string[] {
     return ["Complimentary Roli", "Complimentary Chawal (Rice)"];
   }
   if (/^roli\s*(?:&|and|-|–)?\s*chawal\s+dibbi$/i.test(t)) {
-    return ["Roli Dibbi", "Chawal Dibbi"];
+    return ["Small Roli box", "Small Chawal box"];
   }
+  if (/^roli\s+dibbi$/i.test(t)) return ["Small Roli box"];
+  if (/^chawal\s+dibbi$/i.test(t)) return ["Small Chawal box"];
   if (/^chawal\s+(?:designer\s+)?tikka(?:\s+set)?$/i.test(t)) {
     return [];
   }

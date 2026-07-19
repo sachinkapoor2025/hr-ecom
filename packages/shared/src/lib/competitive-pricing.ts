@@ -29,6 +29,8 @@ type Priced = {
   price: number;
   compareAtPrice?: number;
   currency?: ShopCurrency;
+  /** Set after competitive pricing runs — makes this helper idempotent across API/catalog paths. */
+  storefrontPricingApplied?: boolean;
 };
 
 /**
@@ -42,20 +44,25 @@ type VendorPriced = Priced & { vendorSlug?: string; categorySlug?: string };
  * Storefront view of a product: lower selling price + keep/raise compare-at
  * so the original catalog price still shows as strikethrough.
  * Vendor-priced products (e.g. Orange County hampers) keep their sale/list prices as stored.
+ * Safe to call more than once — never stacks competitive cuts.
  */
 export function withCompetitiveStorefrontPricing<T extends VendorPriced>(product: T): T {
   // Already has intentional list vs sale pricing from the vendor catalog.
   if (product.vendorSlug || product.categorySlug === "rakhi-hampers") return product;
+  if (product.storefrontPricingApplied) return product;
 
   const currency = product.currency ?? "USD";
   const original = product.price;
   const reduced = applyCompetitivePriceReduction(original, currency);
-  if (reduced >= original) return product;
+  if (reduced >= original) {
+    return { ...product, storefrontPricingApplied: true };
+  }
 
   const compareAtPrice = Math.max(product.compareAtPrice ?? 0, original);
   return {
     ...product,
     price: reduced,
     compareAtPrice,
+    storefrontPricingApplied: true,
   };
 }

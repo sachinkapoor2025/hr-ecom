@@ -5,9 +5,14 @@ import {
   type ExchangeRateQuote,
 } from "@hr-ecom/shared";
 
-const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
+const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour — do not hit FX providers per request
 
 let cache: (ExchangeRateQuote & { expiresAt: number }) | null = null;
+
+/** Round FX to 4 dp so display/checkout stay stable within the cache window. */
+function stabilizeRate(rate: number): number {
+  return Math.round(rate * 10_000) / 10_000;
+}
 
 /** Live USD→INR with in-memory cache (Lambda container reuse). */
 export async function getLiveUsdInrRate(): Promise<ExchangeRateQuote> {
@@ -19,11 +24,13 @@ export async function getLiveUsdInrRate(): Promise<ExchangeRateQuote> {
   const envFallback = resolveUsdInrRate(process.env.USD_INR_RATE ?? process.env.NEXT_PUBLIC_USD_INR_RATE);
   const live = await fetchLiveUsdInrRate();
 
-  const quote: ExchangeRateQuote = live ?? {
-    rate: envFallback,
-    source: "env-fallback",
-    asOf: new Date().toISOString(),
-  };
+  const quote: ExchangeRateQuote = live
+    ? { ...live, rate: stabilizeRate(live.rate) }
+    : {
+        rate: stabilizeRate(envFallback),
+        source: "env-fallback",
+        asOf: new Date().toISOString(),
+      };
 
   cache = { ...quote, expiresAt: now + CACHE_TTL_MS };
   return quote;
