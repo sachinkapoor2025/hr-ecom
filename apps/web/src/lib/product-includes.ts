@@ -85,7 +85,10 @@ function ritualPackets(): string[] {
 
 /** Shown on every product's What's included checklist. */
 function shippingIncludeLines(): string[] {
-  return ["Domestic shipping from California", "No international delays"];
+  return [
+    "Ships from our California warehouse",
+    "No delays due to global affairs",
+  ];
 }
 
 function fromHtmlList(description: string): string[] {

@@ -1,9 +1,9 @@
 import { deliveryClaims } from "@/lib/ai-recommendation";
 import { site, whatsappChatUrl } from "@/lib/site";
 
-/** Honest trust copy — first season, California team, domestic fulfillment. */
+/** Trust copy — festival expertise, California warehouse, domestic fulfillment. */
 export const trustFacts = {
-  seasonLabel: "First Raksha Bandhan season (2026)",
+  seasonLabel: "Rooted in Rakhi & Raksha Bandhan traditions",
   operator: "Divit Global Ventures (DGV)",
   fulfillment:
     "California-based US fulfillment team — orders ship domestically within America (no customs delays for your brother)",

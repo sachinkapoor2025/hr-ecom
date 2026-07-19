@@ -11,8 +11,9 @@ export function WhyTrustUsSection() {
             Why sisters trust UsaRakhi for USA delivery
           </h2>
           <p className="text-slate-600 text-sm md:text-base leading-relaxed">
-            We&apos;re new to our first Raksha Bandhan season — and we built {trustFacts.catalog.toLowerCase()} with
-            the same domestic US shipping advantage as top USA Rakhi brands. {trustFacts.fulfillment}.
+            Built with deep care for Rakhi and Raksha Bandhan traditions, UsaRakhi offers{" "}
+            {trustFacts.catalog.toLowerCase()} and the same domestic US shipping advantage sisters expect for
+            festival day. {trustFacts.fulfillment}.
           </p>
         </div>
 

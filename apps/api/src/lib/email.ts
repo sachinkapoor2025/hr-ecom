@@ -551,7 +551,7 @@ export async function sendReviewRequestEmail(order: Order): Promise<EmailSendRes
 
 We hope your Rakhi order #${shortId} arrived safely and made Raksha Bandhan special!
 
-We're UsaRakhi — in our first Raksha Bandhan season — and your feedback helps other sisters trust us for USA Rakhi delivery.
+We're UsaRakhi — dedicated to Rakhi and Raksha Bandhan traditions — and your feedback helps other sisters trust us for USA Rakhi delivery.
 
 Would you take 30 seconds to share your experience?
 ${reviewUrl}

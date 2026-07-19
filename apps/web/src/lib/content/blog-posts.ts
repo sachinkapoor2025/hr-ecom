@@ -343,7 +343,7 @@ export const blogPosts: BlogPost[] = [
         heading: "California fulfillment team",
         paragraphs: [
           "UsaRakhi is operated by Divit Global Ventures (DGV) with a California-based fulfillment team. Orders are packed with roli and chawal on most rakhis, gift combos are assembled carefully, and trusted US carriers deliver nationwide.",
-          "We are in our first Raksha Bandhan season — focused on earning trust through on-time delivery, responsive WhatsApp support, and a satisfaction guarantee.",
+          "We bring focused care for Rakhi festival traditions — on-time California warehouse shipping, responsive WhatsApp support, and a satisfaction guarantee.",
         ],
       },
       {
