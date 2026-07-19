@@ -35,7 +35,13 @@ describe("getProductIncludes", () => {
         categorySlug: "single-rakhi",
         tags: [],
       }),
-      ["1 Designer Rakhi", "Small packet of Roli", "Small packet of Chawal (Rice)"]
+      [
+        "1 Designer Rakhi",
+        "Small packet of Roli",
+        "Small packet of Chawal (Rice)",
+        "Domestic shipping from California",
+        "No international delays",
+      ]
     );
   });
 
@@ -52,6 +58,8 @@ describe("getProductIncludes", () => {
         "Small packet of Roli",
         "Small packet of Chawal (Rice)",
         "3 Ferrero Rocher Chocolates",
+        "Domestic shipping from California",
+        "No international delays",
       ]
     );
   });
@@ -84,6 +92,8 @@ describe("getProductIncludes", () => {
       "100 g almonds",
       "Roli Dibbi",
       "Chawal Dibbi",
+      "Domestic shipping from California",
+      "No international delays",
     ]);
   });
 
@@ -102,6 +112,8 @@ describe("getProductIncludes", () => {
       "Roli",
       "Chawal",
       "Designer tikka set",
+      "Domestic shipping from California",
+      "No international delays",
     ]);
   });
 
@@ -120,6 +132,8 @@ describe("getProductIncludes", () => {
       "3pc Ferrero chocolates",
       "Complimentary Roli",
       "Complimentary Chawal (Rice)",
+      "Domestic shipping from California",
+      "No international delays",
     ]);
   });
 });

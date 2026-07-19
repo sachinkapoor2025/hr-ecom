@@ -83,6 +83,11 @@ function ritualPackets(): string[] {
   return ["Small packet of Roli", "Small packet of Chawal (Rice)"];
 }
 
+/** Shown on every product's What's included checklist. */
+function shippingIncludeLines(): string[] {
+  return ["Domestic shipping from California", "No international delays"];
+}
+
 function fromHtmlList(description: string): string[] {
   return [...description.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)]
     .map((m) => stripHtml(m[1]!))
@@ -162,12 +167,12 @@ export function getProductIncludes(product: ProductLike): string[] {
   const { description, name, categorySlug, tags } = product;
 
   if (categorySlug === "rakhi-hampers") {
-    return hamperIncludeLines(description);
+    return [...hamperIncludeLines(description), ...shippingIncludeLines()];
   }
 
   if (looksLikeHtml(description) && /<li[\s>]/i.test(description)) {
     const fromHtml = fromHtmlList(description).flatMap(normalizeHamperIncludeLine);
-    if (fromHtml.length > 0) return fromHtml;
+    if (fromHtml.length > 0) return [...fromHtml, ...shippingIncludeLines()];
   }
 
   const blob = [name, description, ...(tags ?? [])].join(" ");
@@ -178,5 +183,5 @@ export function getProductIncludes(product: ProductLike): string[] {
   const chocolate = parseChocolateInclude(plain);
   if (chocolate) items.push(chocolate);
 
-  return items;
+  return [...items, ...shippingIncludeLines()];
 }
