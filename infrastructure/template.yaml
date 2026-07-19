@@ -77,6 +77,34 @@ Parameters:
     Default: ""
     NoEcho: true
     Description: API key for Orange County vendor order feed (X-Vendor-Api-Key)
+  WhatsAppToken:
+    Type: String
+    Default: ""
+    NoEcho: true
+    Description: Meta WhatsApp Cloud API permanent token (optional)
+  WhatsAppPhoneNumberId:
+    Type: String
+    Default: ""
+    Description: Meta WhatsApp phone number ID (optional)
+  WhatsAppTemplateName:
+    Type: String
+    Default: ""
+    Description: Optional approved Meta template name for out-of-session messages
+  WhatsAppTemplateLang:
+    Type: String
+    Default: "en"
+  TwilioAccountSid:
+    Type: String
+    Default: ""
+    NoEcho: true
+  TwilioAuthToken:
+    Type: String
+    Default: ""
+    NoEcho: true
+  TwilioWhatsAppFrom:
+    Type: String
+    Default: ""
+    Description: e.g. whatsapp:+14155238886 (optional Twilio WhatsApp sender)
 
 Globals:
   Function:
@@ -126,6 +154,13 @@ Globals:
         USPS_EPS_ACCOUNT_NUMBER: !Ref UspsEpsAccountNumber
         USPS_PAYMENT_AUTHORIZATION_TOKEN: !Ref UspsPaymentAuthorizationToken
         ORANGE_COUNTY_VENDOR_API_KEY: !Ref OrangeCountyVendorApiKey
+        WHATSAPP_TOKEN: !Ref WhatsAppToken
+        WHATSAPP_PHONE_NUMBER_ID: !Ref WhatsAppPhoneNumberId
+        WHATSAPP_TEMPLATE_NAME: !Ref WhatsAppTemplateName
+        WHATSAPP_TEMPLATE_LANG: !Ref WhatsAppTemplateLang
+        TWILIO_ACCOUNT_SID: !Ref TwilioAccountSid
+        TWILIO_AUTH_TOKEN: !Ref TwilioAuthToken
+        TWILIO_WHATSAPP_FROM: !Ref TwilioWhatsAppFrom
 
 Resources:
   ProductsTable:

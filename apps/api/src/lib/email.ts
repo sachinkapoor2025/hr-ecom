@@ -9,6 +9,16 @@ import {
   LOW_STOCK_ALERT_EMAIL,
   ABANDONED_CART_DISCOUNT_PERCENT,
 } from "@hr-ecom/shared";
+import {
+  abandonedCartWhatsAppMessage,
+  contactAckWhatsAppMessage,
+  notifyCustomerWhatsApp,
+  orderPaidWhatsAppMessage,
+  orderStatusWhatsAppMessage,
+  pendingPaymentWhatsAppMessage,
+  reviewRequestWhatsAppMessage,
+  welcomeCouponWhatsAppMessage,
+} from "./whatsapp";
 
 const DEFAULT_NOTIFY = "order@usarakhi.com";
 /** Admin inbox for new orders + contact form (comma-separated). */
@@ -187,6 +197,19 @@ Raksha Bandhan 2026 is August 28 — order early for on-time delivery.
 order@usarakhi.com`,
   });
 
+  const waPhone = input.metadata?.phone?.trim();
+  if (waPhone && coupon.code && coupon.expiresAt) {
+    await notifyCustomerWhatsApp({
+      phone: waPhone,
+      context: "welcome-coupon",
+      message: welcomeCouponWhatsAppMessage({
+        code: coupon.code,
+        discountPercent: pct,
+        expiresAt: coupon.expiresAt,
+      }),
+    });
+  }
+
   if (!customer.ok) {
     console.error("Discount of the Day email failed:", customer.error);
     return customer;
@@ -301,6 +324,14 @@ For urgent order help, WhatsApp us or email ${notifyAddress()}.
 https://www.usarakhi.com`,
   });
 
+  if (input.phone) {
+    await notifyCustomerWhatsApp({
+      phone: input.phone,
+      context: "contact-ack",
+      message: contactAckWhatsAppMessage({ name: input.name }),
+    });
+  }
+
   if (!customer.ok) {
     console.error("Customer auto-reply failed:", customer.error);
   }
@@ -343,9 +374,21 @@ export async function notifyAdminLead(lead: LeadCaptureInput): Promise<EmailSend
         coupon,
       });
     }
-    // Phone-only spin — notify admin, no customer email.
-    if (!smtpConfigured()) return { ok: true, skipped: true };
+    // Phone-only spin — WhatsApp customer + admin email (no customer email).
     const pct = coupon?.discountPercent ?? WELCOME_DISCOUNT_PERCENT;
+    const alreadyClaimed = lead.metadata?.alreadyClaimedToday === "true";
+    if (!alreadyClaimed && lead.phone && coupon?.code && coupon.expiresAt) {
+      await notifyCustomerWhatsApp({
+        phone: lead.phone,
+        context: "welcome-coupon-phone",
+        message: welcomeCouponWhatsAppMessage({
+          code: coupon.code,
+          discountPercent: pct,
+          expiresAt: coupon.expiresAt,
+        }),
+      });
+    }
+    if (!smtpConfigured()) return { ok: true, skipped: true };
     return sendEmail({
       to: adminNotifyAddresses(),
       subject: `[${SITE_NAME}] Discount of the Day — phone ${lead.phone ?? "unknown"} (${pct}% off)`,
@@ -463,6 +506,7 @@ export async function notifyAdminOrderPaid(order: Order): Promise<EmailSendResul
   if (!admin.ok) return admin;
 
   const customerEmail = order.shippingAddress?.email?.trim();
+  const totalLabel = `${order.currency} ${order.total.toFixed(2)}`;
   if (customerEmail && customerEmail.includes("@")) {
     await sendEmail({
       to: customerEmail,
@@ -472,7 +516,7 @@ export async function notifyAdminOrderPaid(order: Order): Promise<EmailSendResul
 Thank you for your order! Payment has been received.
 
 Order ID: ${order.orderId}
-Total: ${order.currency} ${order.total.toFixed(2)}
+Total: ${totalLabel}
 
 We deliver to all 50 US states in 5–7 business days after dispatch.
 
@@ -481,6 +525,16 @@ Questions? Reply to this email or WhatsApp us.
 — ${SITE_NAME} Team`,
     });
   }
+
+  await notifyCustomerWhatsApp({
+    phone: order.shippingAddress?.phone,
+    context: "order-paid",
+    message: orderPaidWhatsAppMessage({
+      name: order.shippingAddress?.name?.split(" ")[0],
+      orderId: order.orderId,
+      totalLabel,
+    }),
+  });
 
   return { ok: true };
 }
@@ -703,12 +757,24 @@ ${siteUrl()}
 Don't want payment reminders? Unsubscribe here (you will still get order updates if you pay):
 ${unsubUrl}`;
 
-  return sendEmail({
+  const emailResult = await sendEmail({
     to: customerEmail,
     subject: `Payment reminder — order #${shortId} | ${SITE_NAME}`,
     text,
     replyTo: notifyAddress(),
   });
+
+  await notifyCustomerWhatsApp({
+    phone: order.shippingAddress?.phone,
+    context: "pending-payment",
+    message: pendingPaymentWhatsAppMessage({
+      name,
+      orderId: order.orderId,
+      totalLabel: total,
+    }),
+  });
+
+  return emailResult;
 }
 
 /**
@@ -732,12 +798,27 @@ export async function notifyCustomerOrderStatusChange(order: Order): Promise<Ema
     return { ok: true, skipped: true };
   }
 
-  return sendEmail({
+  const emailResult = await sendEmail({
     to: customerEmail,
     subject: content.subject,
     text: content.body,
     replyTo: notifyAddress(),
   });
+
+  await notifyCustomerWhatsApp({
+    phone: order.shippingAddress?.phone,
+    context: `order-status-${order.status}`,
+    message: orderStatusWhatsAppMessage({
+      name: order.shippingAddress?.name?.split(" ")[0],
+      orderId: order.orderId,
+      status: order.status,
+      totalLabel: `${order.currency} ${order.total.toFixed(2)}`,
+      carrier: order.carrier,
+      trackingNumber: order.trackingNumber,
+    }),
+  });
+
+  return emailResult;
 }
 
 export async function sendReviewRequestEmail(order: Order): Promise<EmailSendResult> {
@@ -771,12 +852,23 @@ Thank you for choosing ${SITE_NAME}.
 ${siteUrl()}
 WhatsApp / support: ${notifyAddress()}`;
 
-  return sendEmail({
+  const emailResult = await sendEmail({
     to: customerEmail,
     subject: `How was your Rakhi delivery? — ${SITE_NAME}`,
     text,
     replyTo: notifyAddress(),
   });
+
+  await notifyCustomerWhatsApp({
+    phone: order.shippingAddress?.phone,
+    context: "review-request",
+    message: reviewRequestWhatsAppMessage({
+      name,
+      orderId: order.orderId,
+    }),
+  });
+
+  return emailResult;
 }
 
 function formatCartLines(items: CartItem[], currency: string): string {
@@ -789,6 +881,7 @@ function formatCartLines(items: CartItem[], currency: string): string {
 export async function sendAbandonedCartEmail(input: {
   email: string;
   name: string;
+  phone?: string;
   items: CartItem[];
   value: number;
   currency: string;
@@ -833,7 +926,7 @@ Raksha Bandhan 2026 is August 28 — order early for on-time USA delivery.
 — ${SITE_NAME} Team
 order@usarakhi.com`;
 
-  return sendEmail({
+  const emailResult = await sendEmail({
     to: input.email,
     subject:
       input.reminder === 1
@@ -841,6 +934,20 @@ order@usarakhi.com`;
         : `Last chance: ${ABANDONED_CART_DISCOUNT_PERCENT}% off your cart (${input.couponCode})`,
     text,
   });
+
+  await notifyCustomerWhatsApp({
+    phone: input.phone,
+    context: `abandoned-cart-${input.reminder}`,
+    message: abandonedCartWhatsAppMessage({
+      name: input.name,
+      couponCode: input.couponCode,
+      discountPercent: ABANDONED_CART_DISCOUNT_PERCENT,
+      expiresAt: input.expiresAt || undefined,
+      reminder: input.reminder,
+    }),
+  });
+
+  return emailResult;
 }
 
 /** Customer + staff alerts when an admin issues a 1-hour abandoned-cart coupon. */

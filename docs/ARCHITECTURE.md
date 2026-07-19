@@ -73,6 +73,8 @@ leads/sessions; products re-seed via `import:usarakhi`).
 
 When admin changes order status (accepted, processing, shipped, delivered, complete, cancelled, refunded, or paid), the API emails the customer at `shippingAddress.email` via **SMTP** (`notifyCustomerOrderStatusChange` in `apps/api/src/lib/email.ts` — same transactional path as paid confirmation). **SES is marketing-only** (`/ses-email/*`) and is not used for order updates. Shipped emails include carrier/tracking when present. `pending_payment` → `cancelled` skips the customer email (admin payment-failed alert only). Separately, **Delivered** or **Complete** also sets `reviewEmailDueAt` (delivery + 1 day); the cron sends one review-request email per order (`reviewEmailSentAt`).
 
+**WhatsApp (optional, additive):** When Meta Cloud API (`WHATSAPP_TOKEN` + `WHATSAPP_PHONE_NUMBER_ID`) and/or Twilio (`TWILIO_*`) env vars are set, the same customer notifications also send via WhatsApp (`apps/api/src/lib/whatsapp.ts` → `notifyCustomerWhatsApp`): welcome/admin/abandoned coupons, order paid + status updates, pending-payment reminders, review requests, contact ack, abandoned-cart recovery. Email remains primary — WhatsApp failures never block checkout or SMTP. Admin abandoned coupons still return a `wa.me` deep link when APIs are unset. For Meta out-of-session sends, set an approved `WHATSAPP_TEMPLATE_NAME` (freeform text only works inside the 24h customer-care window).
+
 **Pending-payment reminders (SMTP):** While an order stays `pending_payment`, the shared 15‑minute cron (`scheduled.handler` → `processPendingPaymentReminders`) emails the customer **once per America/New_York calendar day** (first send ≥ 2 hours after checkout). Campaign ends after **2026-08-28** (last reminder day). Stops immediately when status leaves `pending_payment` (paid/cancelled). Tracked via `pendingPaymentReminderLastDateKey` / `pendingPaymentReminderCount`.
 
 **Pending-payment unsubscribe:** Reminder emails include a link to `/unsubscribe/payment-reminders` (email prefilled). `POST /pending-payment-unsubscribe` stores the address in DynamoDB table `hr-ecom-pending-payment-unsub-{env}` (`PENDING_PAYMENT_UNSUB_TABLE`). The cron skips any order whose `shippingAddress.email` is on that list. This list is separate from SES marketing suppression.
@@ -211,4 +213,4 @@ See `apps/web/.env.example` and `infrastructure/template.yaml` Parameters sectio
 - Email (SES), SMS (SNS)
 - Multi-currency, multi-language
 - Analytics (Plausible / GA4)
-- Abandoned cart emails
+- Abandoned cart emails (+ WhatsApp when phone + API configured)
