@@ -89,6 +89,64 @@ function fromHtmlList(description: string): string[] {
     .filter(Boolean);
 }
 
+/** Marketing / benefit bullets that must not appear in hamper "What's included". */
+function isMarketingHamperLine(line: string): boolean {
+  return /clear what'?s-included|domestic usa shipping|festive packaging|secure checkout|no international customs|stripe|razorpay/i.test(
+    line
+  );
+}
+
+/** Expand abbreviations and split combined Roli/Chawal lines into separate checklist items. */
+export function normalizeHamperIncludeLine(line: string): string[] {
+  let t = line.replace(/\.$/, "").replace(/\s+/g, " ").trim();
+  if (!t || isMarketingHamperLine(t)) return [];
+
+  t = t
+    .replace(/\b(\d+)\s*g\s*kk\b/gi, "$1 g Kaju Katli")
+    .replace(/\b(\d+)\s*gms?\s*kk\b/gi, "$1 g Kaju Katli")
+    .replace(/\bkk\b/gi, "Kaju Katli")
+    .replace(/\bKaju Katli Katli\b/g, "Kaju Katli");
+
+  if (/^complimentary\s+roli\s*(?:&|and|-)?\s*chawal\b/i.test(t)) {
+    return ["Complimentary Roli", "Complimentary Chawal (Rice)"];
+  }
+
+  if (/^roli\s*(?:&|and|-)?\s*chawal\s+dibbi$/i.test(t)) {
+    return ["Roli Dibbi", "Chawal Dibbi"];
+  }
+
+  if (/^roli\s*(?:&|and|-)?\s*chawal\s+designer\s+tikka(?:\s+set)?$/i.test(t)) {
+    return ["Roli Designer Tikka Set", "Chawal Designer Tikka Set"];
+  }
+
+  if (/^roli\s*(?:&|and|-)?\s*chawal\s+tikka(?:\s+set)?$/i.test(t)) {
+    return ["Roli Tikka Set", "Chawal Tikka Set"];
+  }
+
+  if (/^roli\s*(?:&|and|-)?\s*chawal$/i.test(t)) {
+    return ["Roli", "Chawal (Rice)"];
+  }
+
+  const combined = t.match(/^roli\s*(?:&|and|-)?\s*chawal\s+(.+)$/i);
+  if (combined?.[1]) {
+    const rest = combined[1].trim();
+    return [`Roli ${rest}`, `Chawal ${rest}`];
+  }
+
+  return [t];
+}
+
+/** Prefer the "What's included in this hamper" list; ignore "Why sisters choose…" bullets. */
+function hamperIncludeLines(description: string): string[] {
+  const afterHeading = description.split(/What'?s included in this hamper:?/i)[1];
+  const section = afterHeading
+    ? afterHeading.split(/Why sisters choose|Looking for more options|SKU:/i)[0] ?? afterHeading
+    : description;
+
+  const raw = fromHtmlList(section);
+  return raw.flatMap(normalizeHamperIncludeLine);
+}
+
 /**
  * Customer-facing "What's included" lines for product detail pages.
  * Hampers use HTML list items; other categories use category defaults + chocolate parsing.
@@ -96,12 +154,14 @@ function fromHtmlList(description: string): string[] {
 export function getProductIncludes(product: ProductLike): string[] {
   const { description, name, categorySlug, tags } = product;
 
-  if (categorySlug === "rakhi-hampers" || (looksLikeHtml(description) && /<li[\s>]/i.test(description))) {
-    const fromHtml = fromHtmlList(description);
-    if (fromHtml.length > 0) return fromHtml;
+  if (categorySlug === "rakhi-hampers") {
+    return hamperIncludeLines(description);
   }
 
-  if (categorySlug === "rakhi-hampers") return [];
+  if (looksLikeHtml(description) && /<li[\s>]/i.test(description)) {
+    const fromHtml = fromHtmlList(description).flatMap(normalizeHamperIncludeLine);
+    if (fromHtml.length > 0) return fromHtml;
+  }
 
   const blob = [name, description, ...(tags ?? [])].join(" ");
   const plain = looksLikeHtml(blob) ? stripHtml(blob) : blob;
