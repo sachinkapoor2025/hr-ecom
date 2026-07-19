@@ -591,6 +591,45 @@ export async function getVisitorAnalytics(event: APIGatewayProxyEventV2) {
     }))
     .sort((a, b) => b.visitors - a.visitors);
 
+  /** Unique sessions bucketed by firstSeen UTC day (zero-filled for the selected range). */
+  type DayAgg = {
+    day: string;
+    visitors: number;
+    known: number;
+    anonymous: number;
+    purchased: number;
+    checkoutStarted: number;
+    withCart: number;
+    events: number;
+  };
+  const byDayMap = new Map<string, DayAgg>();
+  for (const day of range.days) {
+    byDayMap.set(day, {
+      day,
+      visitors: 0,
+      known: 0,
+      anonymous: 0,
+      purchased: 0,
+      checkoutStarted: 0,
+      withCart: 0,
+      events: 0,
+    });
+  }
+  for (const s of list) {
+    const day = (s.firstSeen || s.lastSeen || "").slice(0, 10);
+    if (!day || !byDayMap.has(day)) continue;
+    const row = byDayMap.get(day)!;
+    row.visitors += 1;
+    row.events += s.eventCount ?? 0;
+    if (isKnownContact(s)) row.known += 1;
+    else row.anonymous += 1;
+    if (s.purchased) row.purchased += 1;
+    if (s.checkoutStarted) row.checkoutStarted += 1;
+    if (s.hasCart || (s.cartAdds ?? 0) > 0) row.withCart += 1;
+  }
+  // Chronological (oldest → newest) for charts; rangeDays() is newest-first.
+  const byDay = [...byDayMap.values()].sort((a, b) => a.day.localeCompare(b.day));
+
   return ok({
     days: range.windowDays,
     from: range.from,
@@ -604,6 +643,7 @@ export async function getVisitorAnalytics(event: APIGatewayProxyEventV2) {
       withCart,
       countries: byCountry.length,
     },
+    byDay,
     byCountry,
     sessions: list,
   });

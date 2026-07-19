@@ -130,7 +130,7 @@ When admin changes order status (accepted, processing, shipped, delivered, compl
 | GET | `/admin/analytics/overview` | Admin: traffic + funnel (`?days=`) |
 | GET | `/admin/analytics/products` | Admin: most-viewed products |
 | GET | `/admin/analytics/searches` | Admin: top + zero-result searches |
-| GET | `/admin/analytics/visitors` | Admin: visitor analytics (`?days=` or `?from=&to=` YYYY-MM-DD); totals, by-country, session list |
+| GET | `/admin/analytics/visitors` | Admin: visitor analytics (`?days=` or `?from=&to=` YYYY-MM-DD); totals, byDay (unique sessions/day), by-country, session list |
 | GET | `/admin/sessions` | Admin: recent visitor sessions (`?days=` or `?from=&to=` & `identity=all|known|anonymous`) |
 | GET | `/admin/sessions/{sessionId}` | Admin: full visitor journey |
 | GET | `/admin/customers/{email}` | Admin: unified customer profile (orders, leads, carts, sessions) |
