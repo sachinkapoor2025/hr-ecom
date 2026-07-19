@@ -203,8 +203,8 @@ export const faqs = [
     a: "Yes. We deliver to all 50 US states including California, New York, Texas, Florida, New Jersey, Illinois, and every other state.",
   },
   {
-    q: "Is UsaRakhi a new store? Can I trust you for USA Rakhi delivery?",
-    a: "UsaRakhi launched for Raksha Bandhan 2026 with 126+ premium designs and California-based US fulfillment. We ship domestically within America (no customs delays), offer secure Stripe and Razorpay checkout, WhatsApp support, and a satisfaction guarantee. Read customer stories at usarakhi.com/reviews or contact us before ordering.",
+    q: "Can I trust UsaRakhi for USA Rakhi delivery?",
+    a: "Yes. UsaRakhi is built around Rakhi and Raksha Bandhan traditions — 126+ premium designs, California warehouse fulfillment, and domestic shipping within America (no customs delays). We offer secure Stripe and Razorpay checkout, WhatsApp support, and a satisfaction guarantee. Read customer stories at usarakhi.com/reviews or contact us before ordering.",
   },
   {
     q: "What payment methods do you accept?",

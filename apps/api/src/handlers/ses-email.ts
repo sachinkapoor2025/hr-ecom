@@ -14,6 +14,7 @@ import {
   updateSesCampaignSchema,
   uploadSesRecipientsSchema,
   createSesTemplateSchema,
+  updateSesTemplateSchema,
   sesSettingsSchema,
   suppressEmailSchema,
   sendTestEmailSchema,
@@ -23,6 +24,7 @@ import {
   type SesCampaign,
   type SesSettings,
   type SesRecipient,
+  type SesTemplate,
 } from "@hr-ecom/shared";
 import { docClient, now, dayBucket } from "../lib/db";
 import { ok, created, badRequest, notFound, forbidden, unauthorized } from "../lib/response";
@@ -109,10 +111,53 @@ function buildFooter(settings: SesSettings, unsubUrl: string): string {
 </div>`;
 }
 
+/** Insert fragment before </body> when present so full HTML emails stay valid. */
+function appendToHtml(html: string, fragment: string): string {
+  if (/<\/body>/i.test(html)) return html.replace(/<\/body>/i, `${fragment}</body>`);
+  return `${html}${fragment}`;
+}
+
+/**
+ * Finalize campaign HTML for send/test:
+ * - replace {{unsubscribe}} when present
+ * - full HTML templates keep their own footer (no extra unsubscribe block)
+ * - simple HTML snippets still get the standard compliance footer
+ */
+function finalizeEmailHtml(html: string, settings: SesSettings, unsubUrl: string): string {
+  const unsubLink = `<a href="${unsubUrl}" target="_blank" style="color:#c41e3a;text-decoration:underline">Unsubscribe</a>`;
+  if (/\{\{\s*unsubscribe\s*\}\}/i.test(html)) {
+    return html.replace(/\{\{\s*unsubscribe\s*\}\}/gi, unsubLink);
+  }
+  if (/<!DOCTYPE\s+html/i.test(html) || /<\/html>/i.test(html)) {
+    return html;
+  }
+  return appendToHtml(html, buildFooter(settings, unsubUrl));
+}
+
+/** External social / app links should open directly (not via click-tracking redirect). */
+function shouldSkipClickTracking(url: string): boolean {
+  if (url.includes("/email/click/") || url.includes("/email/unsubscribe/")) return true;
+  try {
+    const host = new URL(url).hostname.toLowerCase().replace(/^www\./, "");
+    return (
+      host === "facebook.com" ||
+      host.endsWith(".facebook.com") ||
+      host === "fb.com" ||
+      host.endsWith(".fb.com") ||
+      host === "instagram.com" ||
+      host.endsWith(".instagram.com") ||
+      host === "wa.me" ||
+      host === "api.whatsapp.com"
+    );
+  } catch {
+    return false;
+  }
+}
+
 function injectTracking(html: string, openToken: string, linkMap: Map<string, string>): string {
   let out = html;
   out = out.replace(/href=(["'])(https?:\/\/[^"']+)\1/gi, (_m, q, url) => {
-    if (url.includes("/email/click/") || url.includes("/email/unsubscribe/")) {
+    if (shouldSkipClickTracking(url)) {
       return `href=${q}${url}${q}`;
     }
     const token = randomUUID().replace(/-/g, "").slice(0, 24);
@@ -123,6 +168,28 @@ function injectTracking(html: string, openToken: string, linkMap: Map<string, st
   if (/<\/body>/i.test(out)) out = out.replace(/<\/body>/i, `${pixel}</body>`);
   else out += pixel;
   return out;
+}
+
+async function persistClickTokens(
+  linkMap: Map<string, string>,
+  meta: { campaignId?: string; email?: string }
+) {
+  for (const [token, targetUrl] of linkMap) {
+    await docClient.send(
+      new PutCommand({
+        TableName: TABLE,
+        Item: {
+          PK: sesEmailKeys.trackClickPk(token),
+          SK: sesEmailKeys.trackSk(),
+          campaignId: meta.campaignId,
+          email: meta.email,
+          targetUrl,
+          clickCount: 0,
+          createdAt: now(),
+        },
+      })
+    );
+  }
 }
 
 async function getCampaign(campaignId: string): Promise<SesCampaign | null> {
@@ -447,6 +514,62 @@ export async function uploadRecipients(event: APIGatewayProxyEventV2) {
   });
 }
 
+async function getTemplate(templateId: string): Promise<SesTemplate | null> {
+  const res = await docClient.send(
+    new GetCommand({
+      TableName: TABLE,
+      Key: { PK: sesEmailKeys.templatePk(templateId), SK: sesEmailKeys.templateSk() },
+    })
+  );
+  if (!res.Item) return null;
+  return {
+    templateId: String(res.Item.templateId),
+    name: String(res.Item.name ?? ""),
+    subject: String(res.Item.subject ?? ""),
+    htmlBody: String(res.Item.htmlBody ?? ""),
+    createdAt: String(res.Item.createdAt ?? ""),
+    updatedAt: String(res.Item.updatedAt ?? ""),
+  };
+}
+
+function looksLikeDefaultCampaignHtml(html: string): boolean {
+  const body = html.trim();
+  if (!body) return true;
+  // Legacy compose placeholder — prefer linked template instead of this stub.
+  return body.length < 400 && /Hello\s*\{\{\s*name\s*\}\}/i.test(body);
+}
+
+async function resolveCampaignEmailContent(campaign: SesCampaign): Promise<{
+  subject: string;
+  htmlBody: string;
+}> {
+  let subject = campaign.subject?.trim() || "";
+  let htmlBody = campaign.htmlBody || "";
+
+  if (campaign.templateId) {
+    const template = await getTemplate(campaign.templateId);
+    if (template) {
+      if (looksLikeDefaultCampaignHtml(htmlBody)) {
+        htmlBody = template.htmlBody;
+      }
+      if (!subject) subject = template.subject;
+    }
+  }
+
+  return { subject, htmlBody };
+}
+
+function toTemplateResponse(item: Record<string, unknown>): SesTemplate {
+  return {
+    templateId: String(item.templateId),
+    name: String(item.name ?? ""),
+    subject: String(item.subject ?? ""),
+    htmlBody: String(item.htmlBody ?? ""),
+    createdAt: String(item.createdAt ?? ""),
+    updatedAt: String(item.updatedAt ?? ""),
+  };
+}
+
 export async function listTemplates(event: APIGatewayProxyEventV2) {
   if (!requireAdmin(event)) return unauthorized("Admin access required");
   const res = await docClient.send(
@@ -459,7 +582,18 @@ export async function listTemplates(event: APIGatewayProxyEventV2) {
       Limit: 100,
     })
   );
-  return ok({ templates: res.Items ?? [] });
+  return ok({
+    templates: (res.Items ?? []).map((item) => toTemplateResponse(item as Record<string, unknown>)),
+  });
+}
+
+export async function getTemplateHandler(event: APIGatewayProxyEventV2) {
+  if (!requireAdmin(event)) return unauthorized("Admin access required");
+  const id = event.pathParameters?.templateId;
+  if (!id) return badRequest("templateId required");
+  const template = await getTemplate(id);
+  if (!template) return notFound("Template not found");
+  return ok({ template });
 }
 
 export async function createTemplate(event: APIGatewayProxyEventV2) {
@@ -467,20 +601,81 @@ export async function createTemplate(event: APIGatewayProxyEventV2) {
   const body = JSON.parse(event.body ?? "{}");
   const parsed = createSesTemplateSchema.safeParse(body);
   if (!parsed.success) return badRequest(parsed.error.message);
+  const { templateId: requestedId, name, subject, htmlBody } = parsed.data;
+  const templateId = requestedId ?? randomUUID();
+
+  if (requestedId) {
+    const existing = await getTemplate(requestedId);
+    if (existing) return ok({ template: existing, existed: true });
+  }
+
   const ts = now();
-  const templateId = randomUUID();
   const item = {
     PK: sesEmailKeys.templatePk(templateId),
     SK: sesEmailKeys.templateSk(),
     GSI1PK: sesEmailKeys.entityTemplatePk(),
     GSI1SK: ts,
     templateId,
-    ...parsed.data,
+    name,
+    subject,
+    htmlBody,
     createdAt: ts,
     updatedAt: ts,
   };
   await docClient.send(new PutCommand({ TableName: TABLE, Item: item }));
-  return created({ template: item });
+  return created({ template: toTemplateResponse(item), existed: false });
+}
+
+export async function updateTemplate(event: APIGatewayProxyEventV2) {
+  if (!requireAdmin(event)) return unauthorized("Admin access required");
+  const id = event.pathParameters?.templateId;
+  if (!id) return badRequest("templateId required");
+
+  const existing = await getTemplate(id);
+  if (!existing) return notFound("Template not found");
+
+  const body = JSON.parse(event.body ?? "{}");
+  const parsed = updateSesTemplateSchema.safeParse(body);
+  if (!parsed.success) return badRequest(parsed.error.message);
+
+  const updated: SesTemplate = {
+    ...existing,
+    ...parsed.data,
+    templateId: existing.templateId,
+    createdAt: existing.createdAt,
+    updatedAt: now(),
+  };
+
+  await docClient.send(
+    new PutCommand({
+      TableName: TABLE,
+      Item: {
+        PK: sesEmailKeys.templatePk(updated.templateId),
+        SK: sesEmailKeys.templateSk(),
+        GSI1PK: sesEmailKeys.entityTemplatePk(),
+        GSI1SK: updated.createdAt,
+        ...updated,
+      },
+    })
+  );
+  return ok({ template: updated });
+}
+
+export async function deleteTemplate(event: APIGatewayProxyEventV2) {
+  if (!requireAdmin(event)) return unauthorized("Admin access required");
+  const id = event.pathParameters?.templateId;
+  if (!id) return badRequest("templateId required");
+
+  const existing = await getTemplate(id);
+  if (!existing) return notFound("Template not found");
+
+  await docClient.send(
+    new DeleteCommand({
+      TableName: TABLE,
+      Key: { PK: sesEmailKeys.templatePk(id), SK: sesEmailKeys.templateSk() },
+    })
+  );
+  return ok({ ok: true, templateId: id });
 }
 
 export async function getSettings(event: APIGatewayProxyEventV2) {
@@ -626,23 +821,31 @@ export async function sendTest(event: APIGatewayProxyEventV2) {
   if (!parsed.success) return badRequest(parsed.error.message);
   const campaign = await getCampaign(parsed.data.campaignId);
   if (!campaign) return notFound("Campaign not found");
-  if (!campaign.htmlBody || !campaign.subject) return badRequest("Subject and HTML body required");
+
+  const content = await resolveCampaignEmailContent(campaign);
+  if (!content.htmlBody || !content.subject) {
+    return badRequest("Subject and HTML body required (load a template or enter content)");
+  }
 
   const settings = await loadSettings();
   const openToken = randomUUID().replace(/-/g, "");
   const unsubToken = randomUUID().replace(/-/g, "");
   const linkMap = new Map<string, string>();
-  let html = renderSesTemplate(campaign.htmlBody, {
+  let html = renderSesTemplate(content.htmlBody, {
     name: "Test User",
     company: "Test Co",
     email: parsed.data.to,
   });
   html = injectTracking(html, openToken, linkMap);
-  html += buildFooter(settings, `${SITE_URL}/email/unsubscribe/${unsubToken}`);
+  html = finalizeEmailHtml(html, settings, `${SITE_URL}/email/unsubscribe/${unsubToken}`);
+  await persistClickTokens(linkMap, {
+    campaignId: campaign.campaignId,
+    email: parsed.data.to,
+  });
 
   await sendViaSes({
     to: parsed.data.to,
-    subject: `[TEST] ${campaign.subject}`,
+    subject: `[TEST] ${content.subject}`,
     html,
     text: htmlToText(html),
     fromName: campaign.senderName,
@@ -1026,13 +1229,14 @@ async function sendQueuedEmail(
   const unsubToken = randomUUID().replace(/-/g, "");
   const linkMap = new Map<string, string>();
 
-  let html = renderSesTemplate(campaign.htmlBody, {
+  const content = await resolveCampaignEmailContent(campaign);
+  let html = renderSesTemplate(content.htmlBody, {
     name: recipient.name as string | undefined,
     company: recipient.company as string | undefined,
     email,
   });
   html = injectTracking(html, openToken, linkMap);
-  html += buildFooter(settings, `${SITE_URL}/email/unsubscribe/${unsubToken}`);
+  html = finalizeEmailHtml(html, settings, `${SITE_URL}/email/unsubscribe/${unsubToken}`);
 
   // Store open + unsub token (reuse open record for unsub lookup by storing email)
   await docClient.send(
@@ -1062,26 +1266,11 @@ async function sendQueuedEmail(
     })
   );
 
-  for (const [token, targetUrl] of linkMap) {
-    await docClient.send(
-      new PutCommand({
-        TableName: TABLE,
-        Item: {
-          PK: sesEmailKeys.trackClickPk(token),
-          SK: sesEmailKeys.trackSk(),
-          campaignId: campaign.campaignId,
-          email,
-          targetUrl,
-          clickCount: 0,
-          createdAt: now(),
-        },
-      })
-    );
-  }
+  await persistClickTokens(linkMap, { campaignId: campaign.campaignId, email });
 
   await sendViaSes({
     to: email,
-    subject: campaign.subject,
+    subject: content.subject,
     html,
     text: htmlToText(html),
     fromName: campaign.senderName,

@@ -70,25 +70,54 @@ export const ADMIN_MANUAL_COUPON_HOURS = 1;
 export const ADMIN_COUPON_DISCOUNT_OPTIONS = [7, 8, 9, 10, 11, 12, 13, 14, 15] as const;
 export type AdminCouponDiscountPercent = (typeof ADMIN_COUPON_DISCOUNT_OPTIONS)[number];
 
-export const createAdminCouponSchema = z.object({
-  email: z.string().email().max(254),
-  phone: z
-    .string()
-    .trim()
-    .min(7, "Phone number is required")
-    .max(22)
-    .refine((v) => v.replace(/\D/g, "").length >= 7, {
-      message: "Enter a valid phone number with country code",
-    }),
-  discountPercent: z
-    .number()
-    .int()
-    .refine(
-      (n): n is AdminCouponDiscountPercent =>
-        (ADMIN_COUPON_DISCOUNT_OPTIONS as readonly number[]).includes(n),
-      { message: "Discount must be between 7% and 15%" }
-    ),
-});
+export const createAdminCouponSchema = z
+  .object({
+    email: z
+      .string()
+      .trim()
+      .max(254)
+      .optional()
+      .or(z.literal("")),
+    /** Local mobile digits only — used for coupon binding / checkout match (no country code). */
+    phone: z.string().trim().max(22).optional().or(z.literal("")),
+    /** Full E.164 for WhatsApp outreach only; never used for coupon validation. */
+    whatsappPhone: z.string().trim().max(22).optional().or(z.literal("")),
+    discountPercent: z
+      .number()
+      .int()
+      .refine(
+        (n): n is AdminCouponDiscountPercent =>
+          (ADMIN_COUPON_DISCOUNT_OPTIONS as readonly number[]).includes(n),
+        { message: "Discount must be between 7% and 15%" }
+      ),
+  })
+  .superRefine((v, ctx) => {
+    const email = v.email?.trim() ?? "";
+    const phoneDigits = (v.phone ?? "").replace(/\D/g, "");
+    const hasEmail = Boolean(email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
+    const hasPhone = phoneDigits.length >= 7 && phoneDigits.length <= 12;
+    if (!hasEmail && !hasPhone) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Enter a customer email or mobile number",
+        path: ["email"],
+      });
+    }
+    if (email && !hasEmail) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Enter a valid email address",
+        path: ["email"],
+      });
+    }
+    if ((v.phone ?? "").trim() && !hasPhone) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Enter a valid mobile number",
+        path: ["phone"],
+      });
+    }
+  });
 
 export type CreateAdminCouponInput = z.infer<typeof createAdminCouponSchema>;
 

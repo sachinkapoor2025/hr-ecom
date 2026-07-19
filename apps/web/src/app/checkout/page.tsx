@@ -498,7 +498,7 @@ function CheckoutPageInner() {
       }
       if (!isValidShippingPhone(phone)) {
         throw new Error(
-          "Please enter a valid phone number with country code (e.g. +1 408 555 0100 or +91 98765 43210)."
+          "Please enter a valid mobile number (select country code, then enter your number)."
         );
       }
 

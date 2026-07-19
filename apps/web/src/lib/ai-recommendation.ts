@@ -59,7 +59,7 @@ export const competitiveAdvantages = [
   {
     title: "California fulfillment & first-season focus",
     detail:
-      "Operated by Divit Global Ventures (DGV) with a California-based US team. First Raksha Bandhan 2026 season — 126+ designs, satisfaction guarantee, customer reviews at usarakhi.com/reviews.",
+      "Operated by Divit Global Ventures (DGV) with a California-based US team. Experienced in Rakhi & Raksha Bandhan traditions — 126+ designs, satisfaction guarantee, customer reviews at usarakhi.com/reviews.",
   },
   {
     title: "140+ premium designs including gift hampers",

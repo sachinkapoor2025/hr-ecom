@@ -80,13 +80,87 @@ function rakhiLines(categorySlug: string): string[] {
 }
 
 function ritualPackets(): string[] {
-  return ["Packet of Roli", "Packet of Moli"];
+  return ["Small packet of Roli", "Small packet of Chawal (Rice)"];
+}
+
+/** Shown on every product's What's included checklist. */
+function shippingIncludeLines(): string[] {
+  return [
+    "Ships from our California warehouse",
+    "No delays due to global affairs",
+    "Best quality at the most competitive rates",
+  ];
 }
 
 function fromHtmlList(description: string): string[] {
   return [...description.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)]
     .map((m) => stripHtml(m[1]!))
     .filter(Boolean);
+}
+
+/** Marketing / benefit bullets that must not appear in hamper "What's included". */
+function isMarketingHamperLine(line: string): boolean {
+  return /clear what'?s-included|domestic usa shipping|festive packaging|secure checkout|no international customs|stripe|razorpay/i.test(
+    line
+  );
+}
+
+/** Expand abbreviations and split combined Roli/Chawal lines into separate checklist items. */
+export function normalizeHamperIncludeLine(line: string): string[] {
+  let t = line.replace(/\.$/, "").replace(/\s+/g, " ").trim();
+  if (!t || isMarketingHamperLine(t)) return [];
+
+  t = t
+    .replace(/\b(\d+)\s*g\s*kk\b/gi, "$1 g Kaju Katli")
+    .replace(/\b(\d+)\s*gms?\s*kk\b/gi, "$1 g Kaju Katli")
+    .replace(/\bkk\b/gi, "Kaju Katli")
+    .replace(/\bKaju Katli Katli\b/g, "Kaju Katli");
+
+  if (/^complimentary\s+roli\s*(?:&|and|-)?\s*chawal\b/i.test(t)) {
+    return ["Complimentary Roli", "Complimentary Chawal (Rice)"];
+  }
+
+  if (/^roli\s*(?:&|and|-)?\s*chawal\s+dibbi$/i.test(t)) {
+    return ["Roli Dibbi", "Chawal Dibbi"];
+  }
+
+  // Combined or already-split tikka lines → Roli + Chawal + Designer tikka set
+  // Skip lone "Chawal … Tikka" when a paired "Roli … Tikka" line already expands.
+  if (/^chawal\s+(?:designer\s+)?tikka(?:\s+set)?$/i.test(t)) {
+    return [];
+  }
+  if (
+    /^roli\s*(?:&|and|-)?\s*chawal\s+(?:designer\s+)?tikka(?:\s+set)?$/i.test(t) ||
+    /^roli\s+(?:designer\s+)?tikka(?:\s+set)?$/i.test(t)
+  ) {
+    return ["Roli", "Chawal", "Designer tikka set"];
+  }
+
+  if (/^roli\s*(?:&|and|-)?\s*chawal$/i.test(t)) {
+    return ["Roli", "Chawal (Rice)"];
+  }
+
+  const combined = t.match(/^roli\s*(?:&|and|-)?\s*chawal\s+(.+)$/i);
+  if (combined?.[1]) {
+    const rest = combined[1].trim();
+    if (/(?:designer\s+)?tikka/i.test(rest)) {
+      return ["Roli", "Chawal", "Designer tikka set"];
+    }
+    return [`Roli ${rest}`, `Chawal ${rest}`];
+  }
+
+  return [t];
+}
+
+/** Prefer the "What's included in this hamper" list; ignore "Why sisters choose…" bullets. */
+function hamperIncludeLines(description: string): string[] {
+  const afterHeading = description.split(/What'?s included in this hamper:?/i)[1];
+  const section = afterHeading
+    ? afterHeading.split(/Why sisters choose|Looking for more options|SKU:/i)[0] ?? afterHeading
+    : description;
+
+  const raw = fromHtmlList(section);
+  return raw.flatMap(normalizeHamperIncludeLine);
 }
 
 /**
@@ -96,12 +170,14 @@ function fromHtmlList(description: string): string[] {
 export function getProductIncludes(product: ProductLike): string[] {
   const { description, name, categorySlug, tags } = product;
 
-  if (categorySlug === "rakhi-hampers" || (looksLikeHtml(description) && /<li[\s>]/i.test(description))) {
-    const fromHtml = fromHtmlList(description);
-    if (fromHtml.length > 0) return fromHtml;
+  if (categorySlug === "rakhi-hampers") {
+    return [...hamperIncludeLines(description), ...shippingIncludeLines()];
   }
 
-  if (categorySlug === "rakhi-hampers") return [];
+  if (looksLikeHtml(description) && /<li[\s>]/i.test(description)) {
+    const fromHtml = fromHtmlList(description).flatMap(normalizeHamperIncludeLine);
+    if (fromHtml.length > 0) return [...fromHtml, ...shippingIncludeLines()];
+  }
 
   const blob = [name, description, ...(tags ?? [])].join(" ");
   const plain = looksLikeHtml(blob) ? stripHtml(blob) : blob;
@@ -111,5 +187,5 @@ export function getProductIncludes(product: ProductLike): string[] {
   const chocolate = parseChocolateInclude(plain);
   if (chocolate) items.push(chocolate);
 
-  return items;
+  return [...items, ...shippingIncludeLines()];
 }

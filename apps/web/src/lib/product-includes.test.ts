@@ -27,14 +27,22 @@ describe("parseChocolateInclude", () => {
 });
 
 describe("getProductIncludes", () => {
-  it("lists rakhi, roli, moli for single rakhi", () => {
+  it("lists rakhi, roli, chawal for single rakhi", () => {
     assert.deepEqual(
       getProductIncludes({
         name: "Om Rakhi with Roli Chawal for Brother",
         description: "Elegant single rakhi for brother.",
         categorySlug: "single-rakhi",
+        tags: [],
       }),
-      ["1 Designer Rakhi", "Packet of Roli", "Packet of Moli"]
+      [
+        "1 Designer Rakhi",
+        "Small packet of Roli",
+        "Small packet of Chawal (Rice)",
+        "Ships from our California warehouse",
+        "No delays due to global affairs",
+        "Best quality at the most competitive rates",
+      ]
     );
   });
 
@@ -44,12 +52,16 @@ describe("getProductIncludes", () => {
         name: "Rakhi with Ferrero Rocher Chocolates & Roli Chawal",
         description: "Premium combo. Includes 3 Ferrero Rocher chocolates.",
         categorySlug: "rakhi-combo",
+        tags: [],
       }),
       [
         "1 Designer Rakhi",
-        "Packet of Roli",
-        "Packet of Moli",
+        "Small packet of Roli",
+        "Small packet of Chawal (Rice)",
         "3 Ferrero Rocher Chocolates",
+        "Ships from our California warehouse",
+        "No delays due to global affairs",
+        "Best quality at the most competitive rates",
       ]
     );
   });
@@ -59,23 +71,74 @@ describe("getProductIncludes", () => {
       name: "Rakhi Combo for Bhai Bhabhi with Premium Chocolates Gift Set",
       description: "Includes 5 assorted chocolates.",
       categorySlug: "bhaiya-bhabhi-rakhi",
+      tags: [],
     });
     assert.ok(items.includes("1 Bhaiya Rakhi"));
     assert.ok(items.includes("1 Lumba Rakhi for Bhabhi"));
     assert.ok(items.includes("5 Assorted Chocolates"));
   });
 
-  it("uses hamper HTML list items", () => {
+  it("uses hamper what's-included list, splits roli/chawal, skips marketing", () => {
     const items = getProductIncludes({
-      name: "Classic Rakhi Double Delight Box",
-      description:
-        "<p>Intro</p><ul><li>Set of 2 designer Rakhis</li><li>200 g Besan Laddoo</li><li>Roli Chawal Designer Tikka Set</li></ul>",
+      name: "Divine Rakhi Gift Set",
+      description: `<p><strong>What's included in this hamper:</strong></p>
+<ul><li>Set of 3 Rakhi</li><li>Besan Laddoo 200 g</li><li>100 g almonds</li><li>Roli Chawal Dibbi</li></ul>
+<p><strong>Why sisters choose this hamper for USA delivery:</strong></p>
+<ul><li>Clear what's-included list with quantities</li><li>Domestic USA shipping — no international customs delay for your brother</li><li>Festive packaging ready for Raksha Bandhan 2026</li><li>Secure checkout in USD (Stripe) or INR (Razorpay)</li></ul>`,
       categorySlug: "rakhi-hampers",
+      tags: ["rakhi-hamper"],
+    });
+    assert.deepEqual(items, [
+      "Set of 3 Rakhi",
+      "Besan Laddoo 200 g",
+      "100 g almonds",
+      "Roli Dibbi",
+      "Chawal Dibbi",
+      "Ships from our California warehouse",
+      "No delays due to global affairs",
+      "Best quality at the most competitive rates",
+    ]);
+  });
+
+  it("splits roli/chawal tikka set into three lines", () => {
+    const items = getProductIncludes({
+      name: "Divine Ritual Rakhi Pack",
+      description: `<p><strong>What's included in this hamper:</strong></p>
+<ul><li>Set of 2 designer Rakhis</li><li>Besan Laddoo 200 g</li><li>100 g almonds</li><li>Roli Chawal Designer Tikka Set</li></ul>`,
+      categorySlug: "rakhi-hampers",
+      tags: [],
     });
     assert.deepEqual(items, [
       "Set of 2 designer Rakhis",
-      "200 g Besan Laddoo",
-      "Roli Chawal Designer Tikka Set",
+      "Besan Laddoo 200 g",
+      "100 g almonds",
+      "Roli",
+      "Chawal",
+      "Designer tikka set",
+      "Ships from our California warehouse",
+      "No delays due to global affairs",
+      "Best quality at the most competitive rates",
+    ]);
+  });
+
+  it("expands kk and splits complimentary roli chawal", () => {
+    const items = getProductIncludes({
+      name: "Love to Treat Rakhi Hamper",
+      description: `<p><strong>What's included in this hamper:</strong></p>
+<ul><li>1 designer Single Rakhi</li><li>100 g almonds</li><li>200 g kk</li><li>3pc Ferrero chocolates</li><li>Complimentary Roli Chawal.</li></ul>`,
+      categorySlug: "rakhi-hampers",
+      tags: [],
+    });
+    assert.deepEqual(items, [
+      "1 designer Single Rakhi",
+      "100 g almonds",
+      "200 g Kaju Katli",
+      "3pc Ferrero chocolates",
+      "Complimentary Roli",
+      "Complimentary Chawal (Rice)",
+      "Ships from our California warehouse",
+      "No delays due to global affairs",
+      "Best quality at the most competitive rates",
     ]);
   });
 });

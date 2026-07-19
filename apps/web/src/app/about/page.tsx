@@ -54,8 +54,9 @@ export default function AboutPage() {
         <h2 className="text-xl font-bold text-primary pt-4">Our promise</h2>
         <p>
           Every Rakhi is carefully packed for the festival. We understand Raksha Bandhan is emotional — not just a
-          transaction. This is our first Raksha Bandhan season, and we&apos;re earning trust one delivery at a time
-          with reliable USA shipping, responsive WhatsApp support, and a satisfaction guarantee.
+          transaction. With years of care for Rakhi traditions and California warehouse fulfillment, we focus on
+          reliable USA shipping, responsive WhatsApp support, and a satisfaction guarantee for every sister who
+          orders.
         </p>
         <p>
           Questions? Reach us on{" "}

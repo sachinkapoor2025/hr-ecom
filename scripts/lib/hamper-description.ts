@@ -19,6 +19,8 @@ export function normalizeInclusionLine(raw: string): string {
   line = line
     .replace(/\b(\d+)\s*gms?\b/gi, "$1 g")
     .replace(/\b(\d+)\s*g\s+/gi, "$1 g ")
+    .replace(/\b(\d+)\s*g\s*kk\b/gi, "$1 g Kaju Katli")
+    .replace(/\bkk\b/gi, "Kaju Katli")
     .replace(/\bpc\b/gi, "pc")
     .replace(/\bSoap Papdi\b/gi, "Soan Papdi")
     .replace(/\bSoan papdi\b/gi, "Soan Papdi")
@@ -29,23 +31,49 @@ export function normalizeInclusionLine(raw: string): string {
     .replace(/\bPistachios\b/g, "pistachios")
     .replace(/\bAlmonds\b/g, "almonds")
     .replace(/\bsingle Rakhi\b/gi, "1 designer Single Rakhi")
-    .replace(/\bset of 2 Rakhi\b/gi, "Set of 2 designer Rakhis")
-    // Avoid "&" — it becomes &amp; in HTML and shows literally in plain-text previews.
-    .replace(/\bRoli\s*[-–]?\s*Chawal\s+Designer\s+Tikka(?:\s+Set)?\b/gi, "Roli Chawal Designer Tikka Set")
-    .replace(/\bRoli\s*[-–]?\s*Chawal\s+Dibbi\b/gi, "Roli Chawal Dibbi")
-    .replace(/\bRoli\s*[-–]?\s*Chawal\s+Tikka(?:\s+Set)?\b/gi, "Roli Chawal Designer Tikka Set")
-    .replace(/\bRoli\s*&\s*chawal\s+designer\s+tikka\s+set\b/gi, "Roli Chawal Designer Tikka Set")
-    .replace(/\bRoli\s*&\s*chawal\s+dibbi\b/gi, "Roli Chawal Dibbi")
-    .replace(/\bRoli\s*&\s*chawal\b/gi, "Roli Chawal");
+    .replace(/\bset of 2 Rakhi\b/gi, "Set of 2 designer Rakhis");
 
   return line.charAt(0).toUpperCase() + line.slice(1);
+}
+
+/** Split combined Roli/Chawal vendor lines into two checklist items. */
+function expandRitualLines(line: string): string[] {
+  const t = line.replace(/\.$/, "").trim();
+  if (/^complimentary\s+roli\s*(?:&|and|-)?\s*chawal\b/i.test(t)) {
+    return ["Complimentary Roli", "Complimentary Chawal (Rice)"];
+  }
+  if (/^roli\s*(?:&|and|-|–)?\s*chawal\s+dibbi$/i.test(t)) {
+    return ["Roli Dibbi", "Chawal Dibbi"];
+  }
+  if (/^chawal\s+(?:designer\s+)?tikka(?:\s+set)?$/i.test(t)) {
+    return [];
+  }
+  if (
+    /^roli\s*(?:&|and|-|–)?\s*chawal\s+(?:designer\s+)?tikka(?:\s+set)?$/i.test(t) ||
+    /^roli\s+(?:designer\s+)?tikka(?:\s+set)?$/i.test(t)
+  ) {
+    return ["Roli", "Chawal", "Designer tikka set"];
+  }
+  if (/^roli\s*(?:&|and|-|–)?\s*chawal$/i.test(t)) {
+    return ["Roli", "Chawal (Rice)"];
+  }
+  const combined = t.match(/^roli\s*(?:&|and|-|–)?\s*chawal\s+(.+)$/i);
+  if (combined?.[1]) {
+    const rest = combined[1].trim();
+    if (/(?:designer\s+)?tikka/i.test(rest)) {
+      return ["Roli", "Chawal", "Designer tikka set"];
+    }
+    return [`Roli ${rest}`, `Chawal ${rest}`];
+  }
+  return [t];
 }
 
 export function parseInclusionLines(raw: string): string[] {
   return raw
     .split(/\r?\n/)
     .map(normalizeInclusionLine)
-    .filter(Boolean);
+    .filter(Boolean)
+    .flatMap(expandRitualLines);
 }
 
 /** Unique SEO meta from inclusions + name (no HTML). */

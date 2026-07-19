@@ -4,7 +4,11 @@ import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { useApiClient } from "@/lib/auth-context";
-import { SES_TIMEZONES, type SesCampaign } from "@hr-ecom/shared";
+import { ensureStarterEmailTemplates } from "@/lib/ensure-starter-email-templates";
+import { SES_TIMEZONES, type SesCampaign, type SesTemplate } from "@hr-ecom/shared";
+
+const DEFAULT_HTML =
+  `<h1>Hello {{name}}</h1><p>A note from UsaRakhi for {{company}}.</p><p><a href="https://www.usarakhi.com/products">Shop Rakhi</a></p>`;
 
 function ComposeInner() {
   const api = useApiClient();
@@ -17,18 +21,18 @@ function ComposeInner() {
   const [senderName, setSenderName] = useState("UsaRakhi");
   const [senderEmail, setSenderEmail] = useState("order@usarakhi.com");
   const [replyTo, setReplyTo] = useState("order@usarakhi.com");
-  const [htmlBody, setHtmlBody] = useState(
-    `<h1>Hello {{name}}</h1><p>A note from UsaRakhi for {{company}}.</p><p><a href="https://www.usarakhi.com/products">Shop Rakhi</a></p>`
-  );
+  const [htmlBody, setHtmlBody] = useState(DEFAULT_HTML);
+  const [templateId, setTemplateId] = useState("");
   const [mode, setMode] = useState<"now" | "later">("now");
   const [scheduledLocal, setScheduledLocal] = useState("");
   const [timezone, setTimezone] = useState<(typeof SES_TIMEZONES)[number]>("Asia/Kolkata");
   const [recurrenceType, setRecurrenceType] = useState<"none" | "daily" | "weekly" | "monthly" | "cron">("none");
   const [testTo, setTestTo] = useState("");
-  const [templates, setTemplates] = useState<{ templateId: string; name: string; subject: string; htmlBody: string }[]>([]);
+  const [templates, setTemplates] = useState<SesTemplate[]>([]);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [testing, setTesting] = useState(false);
   const [campaignId, setCampaignId] = useState(editId ?? "");
 
   useEffect(() => {
@@ -41,9 +45,10 @@ function ComposeInner() {
         setReplyTo(r.settings.defaultReplyTo);
       })
       .catch(() => undefined);
-    void api<{ templates: typeof templates }>("/ses-email/templates")
+
+    void ensureStarterEmailTemplates(api)
       .then((r) => setTemplates(r.templates))
-      .catch(() => undefined);
+      .catch((err) => setError(err instanceof Error ? err.message : "Failed to load templates"));
   }, [api]);
 
   useEffect(() => {
@@ -58,6 +63,7 @@ function ComposeInner() {
         setSenderEmail(c.senderEmail);
         setReplyTo(c.replyTo);
         setHtmlBody(c.htmlBody);
+        setTemplateId(c.templateId ?? "");
         if (c.scheduledAt) {
           setMode("later");
           setScheduledLocal(c.scheduledAt.slice(0, 16));
@@ -67,36 +73,67 @@ function ComposeInner() {
       .catch((err) => setError(err instanceof Error ? err.message : "Load failed"));
   }, [api, editId]);
 
+  const applyTemplate = async (id: string) => {
+    setTemplateId(id);
+    if (!id) return;
+    setError("");
+    try {
+      const fromList = templates.find((t) => t.templateId === id);
+      if (fromList?.htmlBody) {
+        setSubject(fromList.subject);
+        setHtmlBody(fromList.htmlBody);
+        if (!name.trim()) setName(fromList.name);
+        return;
+      }
+      const res = await api<{ template: SesTemplate }>(`/ses-email/templates/${id}`);
+      setSubject(res.template.subject);
+      setHtmlBody(res.template.htmlBody);
+      if (!name.trim()) setName(res.template.name);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load template");
+    }
+  };
+
+  const buildPayload = (): Record<string, unknown> => {
+    const payload: Record<string, unknown> = {
+      name,
+      subject,
+      senderName,
+      senderEmail,
+      replyTo,
+      htmlBody,
+      timezone,
+      recurrenceType,
+      templateId: templateId || undefined,
+    };
+    if (mode === "later" && scheduledLocal) {
+      payload.scheduledAt = new Date(scheduledLocal).toISOString();
+    }
+    return payload;
+  };
+
+  const persistCampaign = async (): Promise<string> => {
+    const payload = buildPayload();
+    let id = campaignId;
+    if (id) {
+      await api(`/ses-email/campaigns/${id}`, { method: "PUT", body: JSON.stringify(payload) });
+    } else {
+      const created = await api<{ campaign: SesCampaign }>("/ses-email/campaigns", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      id = created.campaign.campaignId;
+      setCampaignId(id);
+    }
+    return id;
+  };
+
   const save = async (sendNow: boolean) => {
     setSaving(true);
     setError("");
     setMessage("");
     try {
-      const payload: Record<string, unknown> = {
-        name,
-        subject,
-        senderName,
-        senderEmail,
-        replyTo,
-        htmlBody,
-        timezone,
-        recurrenceType,
-      };
-      if (mode === "later" && scheduledLocal) {
-        payload.scheduledAt = new Date(scheduledLocal).toISOString();
-      }
-
-      let id = campaignId;
-      if (id) {
-        await api(`/ses-email/campaigns/${id}`, { method: "PUT", body: JSON.stringify(payload) });
-      } else {
-        const created = await api<{ campaign: SesCampaign }>("/ses-email/campaigns", {
-          method: "POST",
-          body: JSON.stringify(payload),
-        });
-        id = created.campaign.campaignId;
-        setCampaignId(id);
-      }
+      const id = await persistCampaign();
 
       if (sendNow) {
         await api(`/ses-email/campaigns/${id}`, {
@@ -118,19 +155,29 @@ function ComposeInner() {
   };
 
   const sendTest = async () => {
-    if (!campaignId) {
-      setError("Save the campaign first, then send a test.");
+    if (!testTo.trim()) {
+      setError("Enter a test email address.");
       return;
     }
+    if (!name.trim() || !subject.trim() || !htmlBody.trim()) {
+      setError("Campaign name, subject, and HTML body are required before sending a test.");
+      return;
+    }
+    setTesting(true);
     setError("");
+    setMessage("");
     try {
+      // Persist current editor content (including selected template) before test send.
+      const id = await persistCampaign();
       await api("/ses-email/test", {
         method: "POST",
-        body: JSON.stringify({ campaignId, to: testTo }),
+        body: JSON.stringify({ campaignId: id, to: testTo.trim() }),
       });
-      setMessage(`Test email sent to ${testTo}`);
+      setMessage(`Test email sent to ${testTo.trim()} using the current template content.`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Test send failed");
+    } finally {
+      setTesting(false);
     }
   };
 
@@ -139,6 +186,8 @@ function ComposeInner() {
       <h1 className="text-2xl font-bold text-primary">Compose Email</h1>
       <p className="text-sm text-slate-500">
         Variables: <code>{"{{name}}"}</code> <code>{"{{company}}"}</code> <code>{"{{email}}"}</code>
+        {" · "}
+        Unsubscribe: <code>{"{{unsubscribe}}"}</code>
       </p>
 
       <div className="space-y-4 rounded-xl border bg-white p-5">
@@ -165,28 +214,24 @@ function ComposeInner() {
           </label>
         </div>
 
-        {templates.length > 0 && (
-          <label className="block text-sm">
-            Load template
-            <select
-              className="mt-1 w-full border rounded-lg px-3 py-2"
-              defaultValue=""
-              onChange={(e) => {
-                const t = templates.find((x) => x.templateId === e.target.value);
-                if (!t) return;
-                setSubject(t.subject);
-                setHtmlBody(t.htmlBody);
-              }}
-            >
-              <option value="">Select…</option>
-              {templates.map((t) => (
-                <option key={t.templateId} value={t.templateId}>
-                  {t.name}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
+        <label className="block text-sm">
+          Email template
+          <select
+            className="mt-1 w-full border rounded-lg px-3 py-2"
+            value={templateId}
+            onChange={(e) => void applyTemplate(e.target.value)}
+          >
+            <option value="">Custom HTML (no template)</option>
+            {templates.map((t) => (
+              <option key={t.templateId} value={t.templateId}>
+                {t.name}
+              </option>
+            ))}
+          </select>
+          <span className="mt-1 block text-xs text-slate-500">
+            Selecting a template fills subject and HTML. Send Test / Send Campaign use this content.
+          </span>
+        </label>
 
         <label className="block text-sm">
           HTML body
@@ -252,7 +297,7 @@ function ComposeInner() {
         <div className="flex flex-wrap gap-2 pt-2">
           <button
             type="button"
-            disabled={saving || !name || !subject}
+            disabled={saving || testing || !name || !subject}
             onClick={() => void save(false)}
             className="rounded-lg border px-4 py-2 text-sm font-medium hover:bg-slate-50 disabled:opacity-50"
           >
@@ -260,7 +305,7 @@ function ComposeInner() {
           </button>
           <button
             type="button"
-            disabled={saving || !name || !subject}
+            disabled={saving || testing || !name || !subject}
             onClick={() => void save(mode === "now")}
             className="rounded-lg bg-nav text-white px-4 py-2 text-sm font-medium disabled:opacity-50"
           >
@@ -281,10 +326,11 @@ function ComposeInner() {
           </label>
           <button
             type="button"
+            disabled={testing || saving}
             onClick={() => void sendTest()}
-            className="rounded-lg border border-nav text-nav px-4 py-2 text-sm font-medium"
+            className="rounded-lg border border-nav text-nav px-4 py-2 text-sm font-medium disabled:opacity-50"
           >
-            Send test
+            {testing ? "Sending…" : "Send test"}
           </button>
         </div>
 

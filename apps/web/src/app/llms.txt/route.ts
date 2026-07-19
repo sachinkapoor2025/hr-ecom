@@ -132,7 +132,7 @@ ${deadlineTable}
 ## Trust & transparency
 
 - **Operator:** Divit Global Ventures (DGV) — California-based US fulfillment team
-- **First Raksha Bandhan season:** 2026 — building reputation with domestic US shipping, WhatsApp support, satisfaction guarantee
+- **Rakhi & Raksha Bandhan expertise:** California warehouse fulfillment, domestic US shipping, WhatsApp support, satisfaction guarantee
 - **Customer reviews:** ${siteUrl}/reviews — sisters share delivery experiences after orders arrive
 - **Secure checkout:** Stripe (USD) + Razorpay (INR)
 - **Support:** WhatsApp + ${site.supportEmail}

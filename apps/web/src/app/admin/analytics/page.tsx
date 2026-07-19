@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useApiClient } from "@/lib/auth-context";
 import { HorizontalBarChart, AreaChart, ChartLegend } from "@/components/admin/Charts";
 import { SalesReportPanel } from "@/components/admin/SalesReportPanel";
+import { VisitorAnalyticsPanel } from "@/components/admin/VisitorAnalyticsPanel";
 import { downloadCsv, downloadPdfReport, formatMoney } from "@/lib/admin-utils";
 
 interface ProductStat {
@@ -50,8 +51,11 @@ interface Insights {
   ordersByDay: { day: string; orders: number; pageViews: number }[];
 }
 
+type AnalyticsTab = "overview" | "visitors";
+
 export default function AdminAnalyticsPage() {
   const apiClient = useApiClient();
+  const [tab, setTab] = useState<AnalyticsTab>("overview");
   const [days, setDays] = useState(7);
   const [products, setProducts] = useState<ProductStat[]>([]);
   const [searches, setSearches] = useState<SearchStat[]>([]);
@@ -62,6 +66,7 @@ export default function AdminAnalyticsPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    if (tab !== "overview") return;
     setLoading(true);
     setError("");
     Promise.all([
@@ -88,7 +93,7 @@ export default function AdminAnalyticsPage() {
         setError(err instanceof Error ? err.message : "Could not load analytics");
       })
       .finally(() => setLoading(false));
-  }, [apiClient, days]);
+  }, [apiClient, days, tab]);
 
   const productChart = products.slice(0, 8).map((p) => ({
     label: p.slug.replace(/-/g, " "),
@@ -181,40 +186,65 @@ export default function AdminAnalyticsPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <h1 className="text-2xl font-bold">Analytics</h1>
-        <div className="flex items-center gap-2">
-          <select
-            value={days}
-            onChange={(e) => setDays(Number(e.target.value))}
-            className="border border-slate-300 rounded-lg px-3 py-1.5 text-sm"
-          >
-            <option value={7}>Last 7 days</option>
-            <option value={30}>Last 30 days</option>
-            <option value={90}>Last 90 days</option>
-          </select>
-          {overview && (
+        <div className="flex flex-wrap items-center gap-2">
+          {(
+            [
+              { id: "overview" as const, label: "Overview" },
+              { id: "visitors" as const, label: "Visitor analytics" },
+            ] as const
+          ).map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => setTab(t.id)}
+              className={`text-sm px-3 py-1.5 rounded-lg border transition-colors ${
+                tab === t.id
+                  ? "bg-nav text-white border-nav"
+                  : "border-slate-300 hover:bg-slate-50"
+              }`}
+            >
+              {t.label}
+            </button>
+          ))}
+          {tab === "overview" && (
             <>
-              <button
-                type="button"
-                onClick={exportAnalytics}
-                className="text-sm border border-slate-300 px-3 py-1.5 rounded-lg hover:bg-slate-50"
+              <select
+                value={days}
+                onChange={(e) => setDays(Number(e.target.value))}
+                className="border border-slate-300 rounded-lg px-3 py-1.5 text-sm"
               >
-                Export CSV
-              </button>
-              <button
-                type="button"
-                onClick={exportPdf}
-                className="text-sm bg-nav text-white px-3 py-1.5 rounded-lg"
-              >
-                Export PDF
-              </button>
+                <option value={7}>Last 7 days</option>
+                <option value={30}>Last 30 days</option>
+                <option value={90}>Last 90 days</option>
+              </select>
+              {overview && (
+                <>
+                  <button
+                    type="button"
+                    onClick={exportAnalytics}
+                    className="text-sm border border-slate-300 px-3 py-1.5 rounded-lg hover:bg-slate-50"
+                  >
+                    Export CSV
+                  </button>
+                  <button
+                    type="button"
+                    onClick={exportPdf}
+                    className="text-sm bg-nav text-white px-3 py-1.5 rounded-lg"
+                  >
+                    Export PDF
+                  </button>
+                </>
+              )}
             </>
           )}
         </div>
       </div>
 
-      {loading ? (
+      {tab === "visitors" ? (
+        <VisitorAnalyticsPanel />
+      ) : loading ? (
         <p className="text-slate-500">Loading…</p>
       ) : error ? (
         <p className="text-red-600 text-sm">{error}</p>

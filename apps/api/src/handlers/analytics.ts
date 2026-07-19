@@ -38,6 +38,47 @@ function parseDays(event: APIGatewayProxyEventV2, fallback = 30, max = 90): numb
   return Math.min(Math.floor(raw), max);
 }
 
+const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
+
+/** Inclusive UTC day list from `from`/`to`, or trailing `days` window. Max 90 days. */
+function parseDayList(
+  event: APIGatewayProxyEventV2,
+  fallbackDays = 7,
+  max = 90
+): { days: string[]; from: string; to: string; windowDays: number } | { error: string } {
+  const fromRaw = event.queryStringParameters?.from?.trim();
+  const toRaw = event.queryStringParameters?.to?.trim();
+
+  if (fromRaw || toRaw) {
+    if (!fromRaw || !toRaw || !ISO_DAY.test(fromRaw) || !ISO_DAY.test(toRaw)) {
+      return { error: "from and to must be YYYY-MM-DD" };
+    }
+    if (fromRaw > toRaw) return { error: "from must be on or before to" };
+
+    const start = new Date(`${fromRaw}T00:00:00.000Z`);
+    const end = new Date(`${toRaw}T00:00:00.000Z`);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+      return { error: "Invalid from/to date" };
+    }
+
+    const days: string[] = [];
+    for (let t = start.getTime(); t <= end.getTime(); t += 86_400_000) {
+      days.push(dayBucket(new Date(t)));
+      if (days.length > max) return { error: `Date range cannot exceed ${max} days` };
+    }
+    return { days, from: fromRaw, to: toRaw, windowDays: days.length };
+  }
+
+  const windowDays = parseDays(event, fallbackDays, max);
+  const days = rangeDays(windowDays);
+  return {
+    days,
+    from: days[days.length - 1] ?? dayBucket(),
+    to: days[0] ?? dayBucket(),
+    windowDays,
+  };
+}
+
 async function getRollup(day: string): Promise<RollupItem[]> {
   const res = await docClient.send(
     new QueryCommand({
@@ -430,14 +471,10 @@ function mergeSessionEvent(
   if (!existing.os && metadata.os) existing.os = metadata.os;
 }
 
-export async function listSessions(event: APIGatewayProxyEventV2) {
-  if (!requireAdmin(event)) return forbidden();
-  const days = parseDays(event, 7, 90);
-  const identityFilter = (event.queryStringParameters?.identity ?? "all").toLowerCase();
-
+async function collectSessionsForDayList(dayList: string[]): Promise<SessionSummary[]> {
   const sessions = new Map<string, SessionSummary>();
 
-  for (const day of rangeDays(days)) {
+  for (const day of dayList) {
     for (const type of SESSION_EVENT_TYPES) {
       const items = await querySessionEventsForDay(type, day);
       for (const raw of items) {
@@ -468,7 +505,16 @@ export async function listSessions(event: APIGatewayProxyEventV2) {
   );
   await mapInBatches(needsEnrich, 25, (s) => enrichSessionIdentity(s));
 
-  list = backfillContactsByIdentity(list);
+  return backfillContactsByIdentity(list);
+}
+
+export async function listSessions(event: APIGatewayProxyEventV2) {
+  if (!requireAdmin(event)) return forbidden();
+  const range = parseDayList(event, 7, 90);
+  if ("error" in range) return badRequest(range.error);
+  const identityFilter = (event.queryStringParameters?.identity ?? "all").toLowerCase();
+
+  let list = await collectSessionsForDayList(range.days);
 
   const knownCount = list.filter((s) => isKnownContact(s)).length;
   const anonymousCount = list.length - knownCount;
@@ -480,10 +526,86 @@ export async function listSessions(event: APIGatewayProxyEventV2) {
   }
 
   return ok({
-    days,
+    days: range.windowDays,
+    from: range.from,
+    to: range.to,
     sessions: list,
     identity: { known: knownCount, anonymous: anonymousCount },
     total: list.length,
+  });
+}
+
+export async function getVisitorAnalytics(event: APIGatewayProxyEventV2) {
+  if (!requireAdmin(event)) return forbidden();
+  const range = parseDayList(event, 7, 90);
+  if ("error" in range) return badRequest(range.error);
+
+  const list = await collectSessionsForDayList(range.days);
+  const knownCount = list.filter((s) => isKnownContact(s)).length;
+  const anonymousCount = list.length - knownCount;
+  const purchased = list.filter((s) => s.purchased).length;
+  const checkoutStarted = list.filter((s) => s.checkoutStarted).length;
+  const withCart = list.filter((s) => s.hasCart || (s.cartAdds ?? 0) > 0).length;
+
+  type CountryAgg = {
+    country: string;
+    visitors: number;
+    purchased: number;
+    checkoutStarted: number;
+    withCart: number;
+    identified: number;
+    events: number;
+    devices: Record<string, number>;
+  };
+
+  const byCountryMap = new Map<string, CountryAgg>();
+  for (const s of list) {
+    const country = (s.country || "Unknown").toUpperCase();
+    const row =
+      byCountryMap.get(country) ??
+      ({
+        country,
+        visitors: 0,
+        purchased: 0,
+        checkoutStarted: 0,
+        withCart: 0,
+        identified: 0,
+        events: 0,
+        devices: {},
+      } satisfies CountryAgg);
+    row.visitors += 1;
+    row.events += s.eventCount;
+    if (s.purchased) row.purchased += 1;
+    if (s.checkoutStarted) row.checkoutStarted += 1;
+    if (s.hasCart || (s.cartAdds ?? 0) > 0) row.withCart += 1;
+    if (isKnownContact(s)) row.identified += 1;
+    const device = s.deviceType || "unknown";
+    row.devices[device] = (row.devices[device] ?? 0) + 1;
+    byCountryMap.set(country, row);
+  }
+
+  const byCountry = [...byCountryMap.values()]
+    .map((row) => ({
+      ...row,
+      share: list.length ? row.visitors / list.length : 0,
+    }))
+    .sort((a, b) => b.visitors - a.visitors);
+
+  return ok({
+    days: range.windowDays,
+    from: range.from,
+    to: range.to,
+    stats: {
+      totalVisitors: list.length,
+      known: knownCount,
+      anonymous: anonymousCount,
+      purchased,
+      checkoutStarted,
+      withCart,
+      countries: byCountry.length,
+    },
+    byCountry,
+    sessions: list,
   });
 }
 

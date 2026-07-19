@@ -439,7 +439,7 @@ export async function listWelcomeCoupons(event: APIGatewayProxyEventV2) {
   return ok({ coupons });
 }
 
-/** Admin: generate 1-hour email-bound coupon for WhatsApp abandoned-cart outreach. */
+/** Admin: generate 1-hour coupon bound to email and/or phone for abandoned-cart outreach. */
 export async function createAdminAbandonedCoupon(event: APIGatewayProxyEventV2) {
   const auth = requireAdmin(event);
   if (!auth) return unauthorized("Admin access required");
@@ -452,11 +452,22 @@ export async function createAdminAbandonedCoupon(event: APIGatewayProxyEventV2) 
   }
 
   const parsed = createAdminCouponSchema.safeParse(body);
-  if (!parsed.success) return badRequest(parsed.error.message);
+  if (!parsed.success) {
+    const msg = parsed.error.issues[0]?.message ?? parsed.error.message;
+    return badRequest(msg);
+  }
 
   const email = normalizeEmail(parsed.data.email);
-  if (!email) return badRequest("Enter a valid email address");
-  const phone = parsed.data.phone.trim();
+  // Coupon binding uses mobile digits only (country code ignored at validate time).
+  const phone = normalizePhone(parsed.data.phone);
+  const whatsappPhone =
+    parsed.data.whatsappPhone?.trim() ||
+    parsed.data.phone?.trim() ||
+    undefined;
+  if (!email && !phone) {
+    return badRequest("Enter a customer email or mobile number");
+  }
+
   const discountPercent = parsed.data.discountPercent;
   const timestamp = now();
   const expiresAt = new Date(
@@ -468,8 +479,8 @@ export async function createAdminAbandonedCoupon(event: APIGatewayProxyEventV2) 
     PK: couponKeys.pk(code),
     SK: couponKeys.sk(),
     code,
-    email,
-    phone,
+    ...(email ? { email } : {}),
+    ...(phone ? { phone } : {}),
     discountPercent,
     expiresAt,
     createdAt: timestamp,
@@ -495,16 +506,24 @@ export async function createAdminAbandonedCoupon(event: APIGatewayProxyEventV2) 
     discountPercent,
     expiresAt,
   });
-  const whatsapp = await sendWhatsAppMessage({ phone, message: waMessage });
+  const whatsapp = whatsappPhone
+    ? await sendWhatsAppMessage({ phone: whatsappPhone, message: waMessage })
+    : {
+        ok: false,
+        skipped: true as const,
+        deepLink: "",
+        provider: undefined as string | undefined,
+        error: "No phone provided",
+      };
 
   const emails = await sendAdminAbandonedCouponEmails({
     customerEmail: email,
-    phone,
+    phone: phone ?? whatsappPhone,
     code,
     discountPercent,
     expiresAt,
     createdByAdminEmail: auth.email,
-    whatsappDeepLink: whatsapp.deepLink,
+    whatsappDeepLink: whatsapp.deepLink || undefined,
   });
 
   return ok({
