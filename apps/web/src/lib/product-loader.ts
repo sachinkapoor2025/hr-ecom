@@ -7,7 +7,11 @@ import {
   mergeProductsPreferExisting,
 } from "./catalog-fallback";
 
-/** Prefer last good API price over bundled catalog when the API blips (catalog can be stale). */
+/**
+ * Prefer last good API price over bundled catalog when the API blips.
+ * Catalog JSON has historically diverged from DynamoDB (e.g. Om at $1.50 vs live $14.72)
+ * and ISR + year-long stale-while-revalidate kept those wrong prices in HTML/OG tags.
+ */
 const PRODUCT_MEMORY_TTL_MS = 60 * 60 * 1000; // 1 hour
 const productMemoryCache = new Map<string, { product: Product; at: number }>();
 
@@ -23,25 +27,37 @@ function memoryProduct(slug: string): Product | null {
   return hit.product;
 }
 
+/** Catalog is OK for vendor/hamper SKUs that may not be in DynamoDB yet. */
+function allowCatalogFallback(product: Product): boolean {
+  return Boolean(product.vendorSlug) || product.categorySlug === "rakhi-hampers";
+}
+
 /**
- * Authoritative storefront product load: API (ISR-cached) first, then in-process
- * memory of the last good API response, then bundled catalog only as last resort.
+ * Authoritative storefront product: API only for standard SKUs.
+ * Never bake catalog list prices into PDP HTML — that caused $1.50 / $1.38 / $14.72 flips.
  */
 export async function loadProduct(slug: string): Promise<Product | null> {
   try {
-    const data = await api<{ product: Product }>(`/products/${slug}`, { revalidate: 3600 });
+    // Short shared cache; PDP route is dynamic so this is not a year-long prerender.
+    const data = await api<{ product: Product }>(`/products/${slug}`, { revalidate: 60 });
     return rememberProduct(data.product);
   } catch {
     const stale = memoryProduct(slug);
     if (stale) return stale;
-    // Fall through to bundled catalog (e.g. hampers before DynamoDB import / cold CI).
   }
-  return getCatalogProduct(slug) ?? null;
+
+  const catalog = getCatalogProduct(slug);
+  if (catalog && allowCatalogFallback(catalog)) return catalog;
+
+  // Production: refuse stale catalog prices for regular catalog products.
+  if (process.env.NODE_ENV === "production") return null;
+
+  return catalog ?? null;
 }
 
 export async function loadFeaturedProducts(limit = 10): Promise<Product[]> {
   try {
-    const data = await api<{ products: Product[] }>("/products", { revalidate: 3600 });
+    const data = await api<{ products: Product[] }>("/products", { revalidate: 300 });
     for (const product of data.products) rememberProduct(product);
     return data.products.slice(0, limit);
   } catch {
@@ -53,7 +69,7 @@ export async function loadRelatedProducts(categorySlug: string, excludeSlug: str
   let products: Product[] = [];
   try {
     const data = await api<{ products: Product[] }>(`/products?category=${categorySlug}`, {
-      revalidate: 3600,
+      revalidate: 300,
     });
     products = data.products;
     for (const product of products) rememberProduct(product);

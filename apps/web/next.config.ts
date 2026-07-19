@@ -4,6 +4,11 @@ import { legacyRedirectRules } from "./src/lib/legacy-urls";
 
 const nextConfig: NextConfig = {
   transpilePackages: ["@hr-ecom/shared"],
+  /**
+   * Cap ISR stale-while-revalidate. Next default (~1 year) kept wrong product prices
+   * in CloudFront/HTML long after DynamoDB + API had the correct storefront price.
+   */
+  expireTime: 300,
   async redirects() {
     return [
       ...categoryRedirectRules(),

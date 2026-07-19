@@ -1,17 +1,15 @@
 import Link from "next/link";
 import type { CategoryRichContent } from "@/lib/content/category-rich-content";
 import { categoryPageInlineLinks } from "@/lib/content/page-inline-links";
-import type { Product } from "@hr-ecom/shared";
 import { applyInlineLinks } from "@/lib/inline-links";
 import { whatsappChatUrl } from "@/lib/site";
 
 interface Props {
   content: CategoryRichContent;
   categoryName: string;
-  products?: Product[];
 }
 
-export function CategoryContentSection({ content, categoryName, products = [] }: Props) {
+export function CategoryContentSection({ content, categoryName }: Props) {
   const inlineLinks = categoryPageInlineLinks[content.slug] ?? [];
 
   return (
@@ -126,29 +124,21 @@ export function CategoryContentSection({ content, categoryName, products = [] }:
           </ul>
         </section>
 
-        {products.length > 0 ? (
-          <section className="bg-white border border-slate-200 rounded-xl p-6">
-            <h3 className="text-lg font-semibold text-primary mb-4">Popular products</h3>
-            <ul className="grid sm:grid-cols-2 gap-x-4 gap-y-2 text-sm">
-              {products.slice(0, 8).map((product) => (
-                <li key={product.slug}>
-                  <Link href={`/products/${product.slug}`} className="font-medium text-nav hover:underline">
-                    {product.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-            {products.length > 8 && (
-              <p className="text-xs text-slate-500 mt-3">
-                +{products.length - 8} more in the product list above
-              </p>
-            )}
-          </section>
-        ) : (
-          <section className="bg-slate-50 border border-slate-200 rounded-xl p-6 flex items-center justify-center text-sm text-slate-500">
-            Browse the product grid above for our latest {categoryName} designs.
-          </section>
-        )}
+        <section className="bg-slate-50 border border-slate-200 rounded-xl p-6">
+          <h3 className="text-lg font-semibold text-primary mb-3">Need help choosing?</h3>
+          <p className="text-sm text-slate-600 leading-relaxed mb-4">
+            Message us on WhatsApp for sizing, delivery timing before Raksha Bandhan, or gift
+            recommendations for {categoryName.toLowerCase()}.
+          </p>
+          <a
+            href={whatsappChatUrl(`Hi! I need help choosing a ${categoryName} for USA delivery.`)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex text-sm font-semibold text-nav hover:underline"
+          >
+            Chat on WhatsApp →
+          </a>
+        </section>
       </div>
 
       <section className="mt-10 pt-8 border-t border-slate-200">
