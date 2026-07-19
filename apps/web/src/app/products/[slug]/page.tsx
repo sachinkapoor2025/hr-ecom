@@ -9,7 +9,20 @@ import { resolveImageUrl } from "@/lib/images";
 import { loadProduct, loadRelatedProducts, getStaticProductSlugs } from "@/lib/product-loader";
 import { api } from "@/lib/api";
 import { categoryHref } from "@/lib/category-urls";
+import { getCategoryPageSeo } from "@/lib/content/category-seo";
 import type { Product } from "@hr-ecom/shared";
+
+function categoryBreadcrumbLabel(categorySlug: string): string {
+  const seo = getCategoryPageSeo(categorySlug);
+  if (seo?.h1) {
+    // "Send Single Rakhi to USA" → "Single Rakhi"
+    return seo.h1.replace(/^Send\s+/i, "").replace(/\s+to USA$/i, "").trim();
+  }
+  return categorySlug
+    .split("-")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -61,7 +74,7 @@ export default async function ProductPage({ params }: Props) {
 
   const relatedProducts = await loadRelatedProducts(product.categorySlug, product.slug);
 
-  const categoryLabel = product.categorySlug.replace(/-/g, " ");
+  const categoryLabel = categoryBreadcrumbLabel(product.categorySlug);
   const crumbs = [
     { label: "Home", href: "/" },
     { label: "Shop", href: "/products" },
@@ -73,6 +86,7 @@ export default async function ProductPage({ params }: Props) {
     <>
       <JsonLd
         data={[
+          // Same `product` from loadProduct as the visible price / OG meta.
           productJsonLd(product),
           breadcrumbJsonLd(crumbs.map((c) => ({ name: c.label, path: c.href ?? `/products/${slug}` }))),
           faqJsonLd(productPageFaqs),

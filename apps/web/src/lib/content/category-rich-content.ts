@@ -1,14 +1,19 @@
 /** Rich SEO layout content for category pages (mirrors city page structure). */
 
 import { categoryHref } from "@/lib/category-urls";
-import { extractProductStyleLabels, productKeywordsForCategory } from "@/lib/content/seo-data";
 
 export interface CategoryRichContent {
   slug: string;
   headline: string;
   intro: string[];
   delivery: { heading: string; paragraphs: string[] };
-  highlights: { heading: string; items: string[] };
+  highlights: {
+    heading: string;
+    /** Checklist bullets (omit when using paragraphs instead). */
+    items: string[];
+    /** Prose alternative to keyword-stuffed style lists. */
+    paragraphs?: string[];
+  };
   tradition?: { heading: string; paragraphs: string[] };
   whyUs: { heading: string; bullets: string[] };
   howTo: { heading: string; steps: string[] };
@@ -48,13 +53,9 @@ export const categoryRichContent: Record<string, CategoryRichContent> = {
     },
     highlights: {
       heading: "Popular Single Rakhi Styles",
-      items: [
-        "Om and spiritual rakhis — divine symbols for blessings and protection",
-        "Pearl and designer rakhis — elegant choices for adult brothers",
-        "Evil eye (Nazar) rakhis — trendy designs with protective symbolism",
-        "Traditional multicolor thread rakhis — classic festival favorites",
-        "Stone and bead rakhis — premium finishes for a special Raksha Bandhan",
-        "Minimalist silk thread rakhis — perfect for brothers who prefer subtle designs",
+      items: [],
+      paragraphs: [
+        "Beyond the styles above, our single rakhi collection also includes auspicious and handmade designs favored for their simplicity, bracelet-style rakhis that double as everyday jewelry after the festival, kundan and premium finishes for a more formal look, and floral and printed patterns popular with younger brothers. Every style ships domestically across all 50 states in 5–7 business days, whether you're ordering from India, the UK, Canada, or elsewhere.",
       ],
     },
     tradition: {
@@ -435,41 +436,11 @@ export const categoryRichContent: Record<string, CategoryRichContent> = {
   },
 };
 
-function enrichWithProductKeywords(base: CategoryRichContent, slug: string): CategoryRichContent {
-  const keywords = productKeywordsForCategory(slug);
-  if (keywords.length === 0) return base;
-
-  const styles = extractProductStyleLabels(keywords);
-  if (styles.length === 0) return base;
-
-  const styleList = styles.slice(0, 8).join(", ").toLowerCase();
-  const sampleKw = keywords.find((k) => /designer|silver|kundan|combo|cartoon|lumba/i.test(k)) ?? keywords[0];
-
-  return {
-    ...base,
-    intro: [
-      ...base.intro,
-      `Looking to buy rakhi online USA or order specialty styles? This collection covers ${styleList} — popular searches include "${sampleKw}" and similar phrases sisters use when sending rakhi to USA from India.`,
-    ],
-    highlights: {
-      ...base.highlights,
-      items: [
-        ...base.highlights.items,
-        ...styles.slice(0, 10).map((s) => `${s} rakhi — buy online with USA domestic delivery`),
-      ],
-    },
-    faqs: [
-      ...base.faqs,
-      {
-        q: `Can I order ${styles[0]?.toLowerCase() ?? "designer"} rakhis for USA delivery?`,
-        a: `Yes. UsaRakhi ships ${styleList} and more domestically across all 50 states. Order from India or worldwide — enter your brother's US address at checkout for reliable rakhi delivery USA.`,
-      },
-    ],
-  };
-}
-
+/**
+ * Formerly appended keyword-stuffed highlight lines
+ * ("{style} rakhi — buy online with USA domestic delivery"). Removed — category
+ * copy is maintained explicitly in categoryRichContent / styles paragraphs.
+ */
 export function getCategoryRichContent(slug: string): CategoryRichContent | undefined {
-  const base = categoryRichContent[slug];
-  if (!base) return undefined;
-  return enrichWithProductKeywords(base, slug);
+  return categoryRichContent[slug];
 }
