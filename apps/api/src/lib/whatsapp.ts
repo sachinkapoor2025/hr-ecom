@@ -239,16 +239,46 @@ async function sendViaMeta(toDigits: string, body: string): Promise<Omit<WhatsAp
   return { ok: true, provider: "meta" };
 }
 
+/** Normalize Twilio WhatsApp From → `whatsapp:+E164` (strip spaces/dashes). */
+function twilioWhatsAppFromAddress(raw: string): string {
+  const trimmed = raw.trim();
+  const withoutPrefix = trimmed.replace(/^whatsapp:/i, "").trim();
+  const digits = withoutPrefix.replace(/\D/g, "");
+  if (!digits) return trimmed.startsWith("whatsapp:") ? trimmed : `whatsapp:${trimmed}`;
+  return `whatsapp:+${digits}`;
+}
+
+function friendlyTwilioError(status: number, body: string): string {
+  try {
+    const parsed = JSON.parse(body) as { code?: number; message?: string };
+    if (parsed.code === 63007) {
+      return (
+        "Twilio 63007: From number is not a WhatsApp sender on this Twilio account. " +
+        "Register +919650457697 under Twilio Console → Messaging → Senders → WhatsApp " +
+        "(status ONLINE), or for testing set TWILIO_WHATSAPP_FROM to the Sandbox number " +
+        "whatsapp:+14155238886 and join the sandbox from the recipient phone."
+      );
+    }
+    if (parsed.code && parsed.message) {
+      return `Twilio ${parsed.code}: ${parsed.message}`;
+    }
+  } catch {
+    /* use raw body */
+  }
+  return `Twilio ${status}: ${body.slice(0, 300)}`;
+}
+
 async function sendViaTwilio(toDigits: string, body: string): Promise<Omit<WhatsAppSendResult, "deepLink">> {
   const sid = process.env.TWILIO_ACCOUNT_SID?.trim();
   const token = process.env.TWILIO_AUTH_TOKEN?.trim();
-  const from = process.env.TWILIO_WHATSAPP_FROM?.trim(); // e.g. whatsapp:+14155238886
-  if (!sid || !token || !from) {
+  const fromRaw = process.env.TWILIO_WHATSAPP_FROM?.trim(); // e.g. whatsapp:+14155238886
+  if (!sid || !token || !fromRaw) {
     return { ok: false, skipped: true, error: "Twilio WhatsApp not configured" };
   }
 
+  const from = twilioWhatsAppFromAddress(fromRaw);
   const params = new URLSearchParams({
-    From: from.startsWith("whatsapp:") ? from : `whatsapp:${from}`,
+    From: from,
     To: `whatsapp:+${toDigits}`,
     Body: body.slice(0, 1600),
   });
@@ -263,7 +293,7 @@ async function sendViaTwilio(toDigits: string, body: string): Promise<Omit<Whats
   });
   if (!res.ok) {
     const text = await res.text().catch(() => "");
-    return { ok: false, provider: "twilio", error: `Twilio ${res.status}: ${text.slice(0, 300)}` };
+    return { ok: false, provider: "twilio", error: friendlyTwilioError(res.status, text) };
   }
   return { ok: true, provider: "twilio" };
 }
