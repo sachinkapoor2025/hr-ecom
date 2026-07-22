@@ -17,32 +17,32 @@ export const homeSeoContent = {
       "Browse curated collections for every sibling — from traditional single rakhis to chocolate combos and full Rakhi hamper gift boxes with sweets and dry fruits. Nationwide rakhi delivery USA on every order.",
     links: [
       {
-        label: "Single Rakhi",
+        label: "Single Rakhi to USA",
         href: categoryHref("single-rakhi"),
         text: "Buy designer rakhi, Om, pearl, silver, and traditional rakhis for your brother.",
       },
       {
-        label: "Bhaiya Bhabhi Rakhi",
+        label: "Bhaiya Bhabhi Rakhi to USA",
         href: categoryHref("bhaiya-bhabhi-rakhi"),
         text: "Send rakhi pair for Bhaiya Bhabhi — matching sets with Lumba rakhis.",
       },
       {
-        label: "Kids Rakhi",
+        label: "Kids Rakhi to USA",
         href: categoryHref("kids-rakhi"),
         text: "Cartoon and superhero rakhis made for little brothers.",
       },
       {
-        label: "Lumba Rakhi",
+        label: "Lumba Rakhi to USA",
         href: categoryHref("lumba-rakhi"),
         text: "Elegant bracelet-style Lumba rakhis for your sister-in-law.",
       },
       {
-        label: "Rakhi Combo",
+        label: "Rakhi Combos to USA",
         href: categoryHref("rakhi-combo"),
         text: "Send rakhi with chocolates — Ferrero Rocher, Lindt, Hershey's gift sets.",
       },
       {
-        label: "Rakhi Hamper",
+        label: "Rakhi Hampers to USA",
         href: categoryHref("rakhi-hampers"),
         text: "Premium gift boxes with rakhi, kaju katli, dry fruits, and festive sweets.",
       },
@@ -52,7 +52,7 @@ export const homeSeoContent = {
     heading: "Rakhi Delivery Across USA — California Warehouse + Nationwide",
     paragraphs: [
       "We deliver rakhi across California, New York, Texas, Florida, New Jersey, Illinois, and every other US state. Domestic fulfillment from our India + California warehouse means your brother receives his rakhi quickly — without international customs delays. Rakhi home delivery USA with tracking on every order.",
-      "Planning ahead for Raksha Bandhan 2026? Order by August 5–10 for standard nationwide delivery before the festival on August 28, 2026. California metro areas (Los Angeles, San Jose, San Francisco, Irvine, and more) often ship faster from our US warehouse team.",
+      "Planning ahead for Raksha Bandhan 2026 (August 28)? Order today for standard nationwide delivery to avoid the last-minute rush. California metro areas (Los Angeles, San Jose, San Francisco, Irvine, and more) often ship faster from our US warehouse team.",
     ],
   },
   howItWorks: {
@@ -95,7 +95,7 @@ export const homeSeoContent = {
     },
     {
       q: "When is Raksha Bandhan 2026?",
-      a: "Raksha Bandhan 2026 falls on Friday, August 28, 2026. Order by August 5–10 for standard USA delivery; see our Raksha Bandhan 2026 guide for cutoff dates.",
+      a: "Raksha Bandhan 2026 falls on Friday, August 28, 2026. To avoid the last-minute rush and ensure timely delivery to the USA, order today for standard shipping.",
     },
     {
       q: "Do rakhis include roli and chawal?",

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { categoryHref } from "@/lib/category-urls";
-import { rakshaBandhan2026Deadlines, RAKSHA_BANDHAN_2026_DATE } from "@/lib/ai-recommendation";
+import { RAKSHA_BANDHAN_2026_DATE } from "@/lib/ai-recommendation";
 import {
   californiaWarehouseLocations,
   locationPublicPath,
@@ -23,22 +23,9 @@ export function HomeRakshaBandhan2026Section() {
           </h2>
           <p className="text-lg text-white/90">{RAKSHA_BANDHAN_2026_DATE}</p>
           <p className="text-sm text-white/75 mt-2 max-w-2xl mx-auto">
-            Plan ahead for rakhi delivery before Raksha Bandhan 2026 — domestic USA shipping from our India +
-            California warehouse network.
+            Order today for rakhi delivery before Raksha Bandhan 2026 — domestic USA shipping from our India +
+            California warehouse network. Avoid the last-minute rush and ensure your Rakhi reaches the USA on time.
           </p>
-        </div>
-
-        <div className="grid sm:grid-cols-3 gap-4 mb-8">
-          {rakshaBandhan2026Deadlines.map((d) => (
-            <div
-              key={d.label}
-              className="rounded-xl bg-white/10 border border-white/20 px-4 py-4 text-center backdrop-blur-sm"
-            >
-              <p className="text-xs uppercase tracking-wide text-white/70 mb-1">{d.label}</p>
-              <p className="font-bold text-sm md:text-base">{d.orderBy}</p>
-              <p className="text-xs text-white/70 mt-1">{d.notes}</p>
-            </div>
-          ))}
         </div>
 
         <div className="flex flex-wrap justify-center gap-3 text-sm mb-8">

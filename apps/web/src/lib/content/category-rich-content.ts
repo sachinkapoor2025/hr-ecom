@@ -1,14 +1,19 @@
 /** Rich SEO layout content for category pages (mirrors city page structure). */
 
 import { categoryHref } from "@/lib/category-urls";
-import { extractProductStyleLabels, productKeywordsForCategory } from "@/lib/content/seo-data";
 
 export interface CategoryRichContent {
   slug: string;
   headline: string;
   intro: string[];
   delivery: { heading: string; paragraphs: string[] };
-  highlights: { heading: string; items: string[] };
+  highlights: {
+    heading: string;
+    /** Checklist bullets (omit when using paragraphs instead). */
+    items: string[];
+    /** Prose alternative to keyword-stuffed style lists. */
+    paragraphs?: string[];
+  };
   tradition?: { heading: string; paragraphs: string[] };
   whyUs: { heading: string; bullets: string[] };
   howTo: { heading: string; steps: string[] };
@@ -17,12 +22,12 @@ export interface CategoryRichContent {
 }
 
 const relatedAll = [
-  { slug: "single-rakhi", label: "Single Rakhi", text: "Traditional and designer rakhis with roli chawal." },
-  { slug: "rakhi-combo", label: "Rakhi Combo", text: "Rakhi with Ferrero Rocher, Lindt, Hershey's." },
-  { slug: "rakhi-hampers", label: "Rakhi Hamper", text: "Festive gift boxes with sweets and dry fruits." },
-  { slug: "bhaiya-bhabhi-rakhi", label: "Bhaiya Bhabhi Rakhi", text: "Matching sets for brother and Bhabhi." },
-  { slug: "kids-rakhi", label: "Kids Rakhi", text: "Cartoon and colorful rakhis for little brothers." },
-  { slug: "lumba-rakhi", label: "Lumba Rakhi", text: "Bracelet-style rakhis for sister-in-law." },
+  { slug: "single-rakhi", label: "Single Rakhi to USA", text: "Traditional and designer rakhis with roli chawal." },
+  { slug: "rakhi-combo", label: "Rakhi Combos to USA", text: "Rakhi with Ferrero Rocher, Lindt, Hershey's." },
+  { slug: "rakhi-hampers", label: "Rakhi Hampers to USA", text: "Festive gift boxes with sweets and dry fruits." },
+  { slug: "bhaiya-bhabhi-rakhi", label: "Bhaiya Bhabhi Rakhi to USA", text: "Matching sets for brother and Bhabhi." },
+  { slug: "kids-rakhi", label: "Kids Rakhi to USA", text: "Cartoon and colorful rakhis for little brothers." },
+  { slug: "lumba-rakhi", label: "Lumba Rakhi to USA", text: "Bracelet-style rakhis for sister-in-law." },
 ].map((c) => ({ ...c, href: categoryHref(c.slug) }));
 
 function relatedExcept(slug: string) {
@@ -48,13 +53,9 @@ export const categoryRichContent: Record<string, CategoryRichContent> = {
     },
     highlights: {
       heading: "Popular Single Rakhi Styles",
-      items: [
-        "Om and spiritual rakhis — divine symbols for blessings and protection",
-        "Pearl and designer rakhis — elegant choices for adult brothers",
-        "Evil eye (Nazar) rakhis — trendy designs with protective symbolism",
-        "Traditional multicolor thread rakhis — classic festival favorites",
-        "Stone and bead rakhis — premium finishes for a special Raksha Bandhan",
-        "Minimalist silk thread rakhis — perfect for brothers who prefer subtle designs",
+      items: [],
+      paragraphs: [
+        "Beyond the styles above, our single rakhi collection also includes auspicious and handmade designs favored for their simplicity, bracelet-style rakhis that double as everyday jewelry after the festival, kundan and premium finishes for a more formal look, and floral and printed patterns popular with younger brothers. Every style ships domestically across all 50 states in 5–7 business days, whether you're ordering from India, the UK, Canada, or elsewhere.",
       ],
     },
     tradition: {
@@ -121,13 +122,9 @@ export const categoryRichContent: Record<string, CategoryRichContent> = {
     },
     highlights: {
       heading: "Best Kids Rakhi for Brothers in the USA",
-      items: [
-        "Cartoon rakhis — Chhota Bheem, Mickey Mouse, Doraemon, and more",
-        "Soft silk and thread rakhis — comfortable for toddlers and young boys",
-        "Kids rakhi with chocolates — Hershey's and assorted minis",
-        "BRO charm and superhero-style rakhis — trendy for school-age brothers",
-        "Bright multicolor rakhis — eye-catching festival favorites",
-        "Combo sets — multiple kids rakhis for families with more than one brother",
+      items: [],
+      paragraphs: [
+        "Beyond the cartoon designs above, our kids rakhi collection also includes superhero and character-themed threads, rakhis paired with small toys or chocolates for younger brothers, and simple colorful designs sized comfortably for smaller wrists. Every design ships domestically across all 50 states in 5–7 business days, whether you're ordering from India, the UK, Canada, or elsewhere.",
       ],
     },
     tradition: {
@@ -194,12 +191,9 @@ export const categoryRichContent: Record<string, CategoryRichContent> = {
     },
     highlights: {
       heading: "Popular Lumba Rakhi Styles",
-      items: [
-        "Pink pearl and floral Lumba rakhis",
-        "Peach designer Lumba rakhis with gold accents",
-        "Lumba rakhis with Lindor or Hershey's chocolates",
-        "Premium stone and bead Lumba designs",
-        "Matching Bhaiya Bhabhi sets with coordinated Lumba",
+      items: [],
+      paragraphs: [
+        "Beyond the styles above, our Lumba rakhi collection also includes beaded and floral bracelet-style designs, pieces paired with chocolates for a complete bhabhi gift, and simpler pearl or thread variations for everyday wear after the festival. Every design ships domestically across all 50 states in 5–7 business days, whether you're ordering from India, the UK, Canada, or elsewhere.",
       ],
     },
     whyUs: {
@@ -255,12 +249,9 @@ export const categoryRichContent: Record<string, CategoryRichContent> = {
     },
     highlights: {
       heading: "What's in Our Bhaiya Bhabhi Sets",
-      items: [
-        "Coordinated brother + Bhabhi rakhi pairs",
-        "Peach, pink, and gold designer matching sets",
-        "Sets with premium chocolates",
-        "Complete sets with roli chawal",
-        "Premium pearl and stone designs",
+      items: [],
+      paragraphs: [
+        "Beyond the sets above, our Bhaiya Bhabhi collection also includes matching thread and lumba pairs in traditional and contemporary colors, sets with coordinating bangles or bracelets for bhabhi, and simpler duo designs for couples who prefer understated jewelry. Every set ships domestically across all 50 states in 5–7 business days, whether you're ordering from India, the UK, Canada, or elsewhere.",
       ],
     },
     whyUs: {
@@ -294,7 +285,7 @@ export const categoryRichContent: Record<string, CategoryRichContent> = {
       },
       {
         q: "When should I order for Raksha Bandhan 2026?",
-        a: "Order by early August 2026 for delivery before August 28.",
+        a: "Raksha Bandhan 2026 is August 28, 2026. Order today for express delivery to major US cities to avoid the last-minute rush and ensure your Rakhi reaches the USA on time.",
       },
     ],
     relatedCategories: relatedExcept("bhaiya-bhabhi-rakhi"),
@@ -316,12 +307,9 @@ export const categoryRichContent: Record<string, CategoryRichContent> = {
     },
     highlights: {
       heading: "Popular Rakhi Combo Types",
-      items: [
-        "Rakhi with Ferrero Rocher gold chocolates",
-        "Rakhi with Lindt Lindor truffles",
-        "Rakhi with Hershey's minis",
-        "Multi-rakhi family combo sets",
-        "Rakhi with roli chawal and sweets",
+      items: [],
+      paragraphs: [
+        "Beyond the combos above, our Rakhi Combo collection also includes sets paired with Ferrero Rocher, Lindt, or Hershey's chocolates, designer thread and stone rakhis bundled with sweets, and multi-rakhi packs for brothers with more than one sibling to celebrate with. Every combo ships domestically across all 50 states in 5–7 business days, whether you're ordering from India, the UK, Canada, or elsewhere.",
       ],
     },
     whyUs: {
@@ -377,13 +365,9 @@ export const categoryRichContent: Record<string, CategoryRichContent> = {
     },
     highlights: {
       heading: "What's Inside a Popular Rakhi Hamper",
-      items: [
-        "Single, duo, trio, and multi-rakhi festive sets",
-        "Kaju katli, besan laddoo, and soan papdi sweet boxes",
-        "Cashews, almonds, and pistachios dry-fruit packs",
-        "Ferrero Rocher chocolate pairings",
-        "Roli–chawal / designer tilak for the ceremony",
-        "Gift-ready packaging for brothers in every US state",
+      items: [],
+      paragraphs: [
+        "Beyond the boxes above, our Rakhi Hamper collection also includes gift sets with kaju katli, dry fruits, and festive sweets alongside a designer rakhi, larger multi-item boxes for bigger celebrations, and smaller hampers suited for a simpler gift. Every hamper ships domestically across all 50 states in 5–7 business days, whether you're ordering from India, the UK, Canada, or elsewhere.",
       ],
     },
     tradition: {
@@ -435,41 +419,11 @@ export const categoryRichContent: Record<string, CategoryRichContent> = {
   },
 };
 
-function enrichWithProductKeywords(base: CategoryRichContent, slug: string): CategoryRichContent {
-  const keywords = productKeywordsForCategory(slug);
-  if (keywords.length === 0) return base;
-
-  const styles = extractProductStyleLabels(keywords);
-  if (styles.length === 0) return base;
-
-  const styleList = styles.slice(0, 8).join(", ").toLowerCase();
-  const sampleKw = keywords.find((k) => /designer|silver|kundan|combo|cartoon|lumba/i.test(k)) ?? keywords[0];
-
-  return {
-    ...base,
-    intro: [
-      ...base.intro,
-      `Looking to buy rakhi online USA or order specialty styles? This collection covers ${styleList} — popular searches include "${sampleKw}" and similar phrases sisters use when sending rakhi to USA from India.`,
-    ],
-    highlights: {
-      ...base.highlights,
-      items: [
-        ...base.highlights.items,
-        ...styles.slice(0, 10).map((s) => `${s} rakhi — buy online with USA domestic delivery`),
-      ],
-    },
-    faqs: [
-      ...base.faqs,
-      {
-        q: `Can I order ${styles[0]?.toLowerCase() ?? "designer"} rakhis for USA delivery?`,
-        a: `Yes. UsaRakhi ships ${styleList} and more domestically across all 50 states. Order from India or worldwide — enter your brother's US address at checkout for reliable rakhi delivery USA.`,
-      },
-    ],
-  };
-}
-
+/**
+ * Formerly appended keyword-stuffed highlight lines
+ * ("{style} rakhi — buy online with USA domestic delivery"). Removed — category
+ * copy is maintained explicitly in categoryRichContent / styles paragraphs.
+ */
 export function getCategoryRichContent(slug: string): CategoryRichContent | undefined {
-  const base = categoryRichContent[slug];
-  if (!base) return undefined;
-  return enrichWithProductKeywords(base, slug);
+  return categoryRichContent[slug];
 }

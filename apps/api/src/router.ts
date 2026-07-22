@@ -15,6 +15,7 @@ import * as account from "./handlers/account";
 import * as coupons from "./handlers/coupons";
 import * as sesEmail from "./handlers/ses-email";
 import * as reminderEmails from "./handlers/reminder-emails";
+import * as pendingPaymentUnsub from "./handlers/pending-payment-unsub";
 import * as shipping from "./handlers/shipping";
 import * as loadTest from "./handlers/load-test";
 import * as vendorOrders from "./handlers/vendor-orders";
@@ -111,6 +112,11 @@ const routes: Route[] = [
   { method: "POST", pattern: /^\/admin\/coupons\/abandoned$/, handler: coupons.createAdminAbandonedCoupon },
   { method: "GET", pattern: /^\/admin\/coupons\/abandoned$/, handler: coupons.listAdminCoupons },
   { method: "POST", pattern: /^\/leads$/, handler: orders.captureLead },
+  {
+    method: "POST",
+    pattern: /^\/pending-payment-unsubscribe$/,
+    handler: pendingPaymentUnsub.unsubscribePendingPaymentReminders,
+  },
   { method: "POST", pattern: /^\/events$/, handler: events.recordEvent },
   { method: "GET", pattern: /^\/config\/payments$/, handler: config.getPaymentConfig },
   { method: "GET", pattern: /^\/config\/usd-inr-rate$/, handler: config.getUsdInrRate },

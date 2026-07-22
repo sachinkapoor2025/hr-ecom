@@ -77,6 +77,34 @@ Parameters:
     Default: ""
     NoEcho: true
     Description: API key for Orange County vendor order feed (X-Vendor-Api-Key)
+  WhatsAppToken:
+    Type: String
+    Default: ""
+    NoEcho: true
+    Description: Meta WhatsApp Cloud API permanent token (optional)
+  WhatsAppPhoneNumberId:
+    Type: String
+    Default: ""
+    Description: Meta WhatsApp phone number ID (optional)
+  WhatsAppTemplateName:
+    Type: String
+    Default: ""
+    Description: Optional approved Meta template name for out-of-session messages
+  WhatsAppTemplateLang:
+    Type: String
+    Default: "en"
+  TwilioAccountSid:
+    Type: String
+    Default: ""
+    NoEcho: true
+  TwilioAuthToken:
+    Type: String
+    Default: ""
+    NoEcho: true
+  TwilioWhatsAppFrom:
+    Type: String
+    Default: ""
+    Description: e.g. whatsapp:+14155238886 (optional Twilio WhatsApp sender)
 
 Globals:
   Function:
@@ -94,6 +122,7 @@ Globals:
         CONFIG_TABLE: !Ref ConfigTable
         EMAIL_CAMPAIGNS_TABLE: !Ref EmailCampaignsTable
         REMINDER_EMAILS_TABLE: !Ref ReminderEmailsTable
+        PENDING_PAYMENT_UNSUB_TABLE: !Ref PendingPaymentUnsubTable
         UPLOAD_BUCKET: !Ref UploadBucket
         USER_POOL_ID: !Ref UserPool
         USER_POOL_CLIENT_ID: !Ref UserPoolClient
@@ -125,6 +154,13 @@ Globals:
         USPS_EPS_ACCOUNT_NUMBER: !Ref UspsEpsAccountNumber
         USPS_PAYMENT_AUTHORIZATION_TOKEN: !Ref UspsPaymentAuthorizationToken
         ORANGE_COUNTY_VENDOR_API_KEY: !Ref OrangeCountyVendorApiKey
+        WHATSAPP_TOKEN: !Ref WhatsAppToken
+        WHATSAPP_PHONE_NUMBER_ID: !Ref WhatsAppPhoneNumberId
+        WHATSAPP_TEMPLATE_NAME: !Ref WhatsAppTemplateName
+        WHATSAPP_TEMPLATE_LANG: !Ref WhatsAppTemplateLang
+        TWILIO_ACCOUNT_SID: !Ref TwilioAccountSid
+        TWILIO_AUTH_TOKEN: !Ref TwilioAuthToken
+        TWILIO_WHATSAPP_FROM: !Ref TwilioWhatsAppFrom
 
 Resources:
   ProductsTable:
@@ -410,6 +446,25 @@ Resources:
       SSESpecification:
         SSEEnabled: true
 
+  # Opt-out list for pending-payment reminder emails only (not SES marketing).
+  PendingPaymentUnsubTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub hr-ecom-pending-payment-unsub-${Environment}
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: PK
+          AttributeType: S
+        - AttributeName: SK
+          AttributeType: S
+      KeySchema:
+        - AttributeName: PK
+          KeyType: HASH
+        - AttributeName: SK
+          KeyType: RANGE
+      SSESpecification:
+        SSEEnabled: true
+
   UploadBucket:
     Type: AWS::S3::Bucket
     Properties:
@@ -578,6 +633,8 @@ Resources:
             TableName: !Ref EmailCampaignsTable
         - DynamoDBCrudPolicy:
             TableName: !Ref ReminderEmailsTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref PendingPaymentUnsubTable
         - S3CrudPolicy:
             BucketName: !Ref UploadBucket
         - Statement:
@@ -631,12 +688,14 @@ Resources:
             TableName: !Ref CustomersTable
         - DynamoDBCrudPolicy:
             TableName: !Ref ConfigTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref PendingPaymentUnsubTable
       Events:
         HourlyReviewEmails:
           Type: Schedule
           Properties:
             Schedule: rate(15 minutes)
-            Description: Review request emails + abandoned cart recovery (15 min / 4 hr)
+            Description: Review emails + abandoned cart + pending-payment reminders (daily through 2026-08-28)
             Enabled: true
     Metadata:
       BuildMethod: makefile

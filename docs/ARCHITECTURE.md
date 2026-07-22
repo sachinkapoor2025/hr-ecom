@@ -71,7 +71,13 @@ leads/sessions; products re-seed via `import:usarakhi`).
 |-----|----------|---------|
 | `ReviewEmailsCronFunction` | Every hour | Email customers 1 day after order is marked **Delivered** or **Complete**, linking to `/reviews` |
 
-When admin sets order status to **Delivered** or **Complete**, the API sets `reviewEmailDueAt` (delivery + 1 day). The cron sends one email per order (tracked via `reviewEmailSentAt`).
+When admin changes order status (accepted, processing, shipped, delivered, complete, cancelled, refunded, or paid), the API emails the customer at `shippingAddress.email` via **SMTP** (`notifyCustomerOrderStatusChange` in `apps/api/src/lib/email.ts` — same transactional path as paid confirmation). **SES is marketing-only** (`/ses-email/*`) and is not used for order updates. Shipped emails include carrier/tracking when present. `pending_payment` → `cancelled` skips the customer email (admin payment-failed alert only). Separately, **Delivered** or **Complete** also sets `reviewEmailDueAt` (delivery + 1 day); the cron sends one review-request email per order (`reviewEmailSentAt`).
+
+**WhatsApp (optional, additive):** When Meta Cloud API (`WHATSAPP_TOKEN` + `WHATSAPP_PHONE_NUMBER_ID`) and/or Twilio (`TWILIO_*`) env vars are set, the same customer notifications also send via WhatsApp (`apps/api/src/lib/whatsapp.ts` → `notifyCustomerWhatsApp`): welcome/admin/abandoned coupons, order paid + status updates, pending-payment reminders, review requests, contact ack, abandoned-cart recovery. Email remains primary — WhatsApp failures never block checkout or SMTP. Admin abandoned coupons still return a `wa.me` deep link when APIs are unset. For Meta out-of-session sends, set an approved `WHATSAPP_TEMPLATE_NAME` (freeform text only works inside the 24h customer-care window).
+
+**Pending-payment reminders (SMTP):** While an order stays `pending_payment`, the shared 15‑minute cron (`scheduled.handler` → `processPendingPaymentReminders`) emails the customer **once per America/New_York calendar day** (first send ≥ 2 hours after checkout). Campaign ends after **2026-08-28** (last reminder day). Stops immediately when status leaves `pending_payment` (paid/cancelled). Tracked via `pendingPaymentReminderLastDateKey` / `pendingPaymentReminderCount`.
+
+**Pending-payment unsubscribe:** Reminder emails include a link to `/unsubscribe/payment-reminders` (email prefilled). `POST /pending-payment-unsubscribe` stores the address in DynamoDB table `hr-ecom-pending-payment-unsub-{env}` (`PENDING_PAYMENT_UNSUB_TABLE`). The cron skips any order whose `shippingAddress.email` is on that list. This list is separate from SES marketing suppression.
 
 ## API Routes (Lambda)
 
@@ -113,19 +119,20 @@ When admin sets order status to **Delivered** or **Complete**, the API sets `rev
 
 | POST | `/webhooks/razorpay` | Razorpay webhook |
 | POST | `/leads` | Save partial customer info |
+| POST | `/pending-payment-unsubscribe` | Public: opt out of pending-payment reminder emails (DynamoDB list) |
 | POST | `/events` | First-party analytics events (batched, public) |
 | GET | `/orders` | User orders |
 | GET | `/orders/{orderId}` | Order detail (owner/admin) |
 | GET | `/admin/orders` | Admin: list orders (filter `?status=`) |
 | GET | `/admin/orders/{orderId}` | Admin: order detail |
-| PATCH | `/admin/orders/{orderId}` | Admin: update status + tracking (schedules review email 1 day after delivered) |
+| PATCH | `/admin/orders/{orderId}` | Admin: update status + tracking; emails customer on each status step; schedules review email 1 day after delivered |
 | DELETE | `/admin/orders/{orderId}` | Super admin: permanently delete order |
 | POST | `/admin/orders/bulk-delete` | Super admin: bulk delete orders (`{ orderIds: string[] }`) |
 | GET | `/admin/analytics/sales` | Admin: day/week/month payments received (excludes refunds) |
 | GET | `/admin/analytics/overview` | Admin: traffic + funnel (`?days=`) |
 | GET | `/admin/analytics/products` | Admin: most-viewed products |
 | GET | `/admin/analytics/searches` | Admin: top + zero-result searches |
-| GET | `/admin/analytics/visitors` | Admin: visitor analytics (`?days=` or `?from=&to=` YYYY-MM-DD); totals, by-country, session list |
+| GET | `/admin/analytics/visitors` | Admin: visitor analytics (`?days=` or `?from=&to=` YYYY-MM-DD); totals, byDay (unique sessions/day), by-country, session list |
 | GET | `/admin/sessions` | Admin: recent visitor sessions (`?days=` or `?from=&to=` & `identity=all|known|anonymous`) |
 | GET | `/admin/sessions/{sessionId}` | Admin: full visitor journey |
 | GET | `/admin/customers/{email}` | Admin: unified customer profile (orders, leads, carts, sessions) |
@@ -206,4 +213,4 @@ See `apps/web/.env.example` and `infrastructure/template.yaml` Parameters sectio
 - Email (SES), SMS (SNS)
 - Multi-currency, multi-language
 - Analytics (Plausible / GA4)
-- Abandoned cart emails
+- Abandoned cart emails (+ WhatsApp when phone + API configured)

@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
-import { productMetaDescription, type ProductRatingAggregate } from "@hr-ecom/shared";
+import {
+  productMetaDescription,
+  resolveProductImageUrls,
+  type ProductRatingAggregate,
+} from "@hr-ecom/shared";
 import { site, testimonials } from "./site";
-import { siteUrl } from "./env";
+import { getCdnUrl, siteUrl } from "./env";
 import { extendedKeywords } from "./ai-recommendation";
 import { locationPublicPath } from "./content/seo-data";
 
@@ -126,7 +130,6 @@ export function organizationJsonLd() {
     sameAs: [
       "https://www.facebook.com/usarakhi/",
       "https://www.instagram.com/usarakhi/",
-      siteUrl,
     ],
     contactPoint: [
       {
@@ -271,6 +274,12 @@ export function breadcrumbJsonLd(items: { name: string; path: string }[]) {
   };
 }
 
+/**
+ * Product JSON-LD — price/offers come from the same storefront `product` object
+ * used for the PDP UI and `product:price:amount` meta (via loadProduct → API).
+ * AggregateRating is included only when DynamoDB has real published reviews
+ * (`product.ratingAggregate`); site testimonials are NOT copied onto every SKU.
+ */
 export function productJsonLd(product: {
   slug: string;
   name: string;
@@ -297,25 +306,29 @@ export function productJsonLd(product: {
         }
       : {};
 
+  const images = resolveProductImageUrls(product.images, getCdnUrl()).filter(Boolean);
+  const offerPrice = Number(product.price).toFixed(2);
+  const productUrl = canonical(`/products/${product.slug}`);
+
   return {
     "@context": "https://schema.org",
     "@type": "Product",
-    "@id": `${siteUrl}/products/${product.slug}#product`,
+    "@id": `${productUrl}#product`,
     name: product.name,
     description: productMetaDescription(product.seoDescription, product.description),
-    image: product.images ?? [],
+    image: images,
     sku: product.sku ?? product.slug,
     mpn: product.slug,
     productID: product.sku ?? product.slug,
-    url: canonical(`/products/${product.slug}`),
+    url: productUrl,
     brand: { "@type": "Brand", name: site.name },
     category: product.categorySlug?.replace(/-/g, " "),
     ...aggregate,
     offers: {
       "@type": "Offer",
-      url: canonical(`/products/${product.slug}`),
-      price: Number(product.price).toFixed(2),
-      priceCurrency: product.currency,
+      url: productUrl,
+      price: offerPrice,
+      priceCurrency: product.currency === "INR" ? "INR" : "USD",
       itemCondition: "https://schema.org/NewCondition",
       availability:
         product.inventory > 0
@@ -327,7 +340,7 @@ export function productJsonLd(product: {
         shippingRate: {
           "@type": "MonetaryAmount",
           value: "0",
-          currency: product.currency,
+          currency: product.currency === "INR" ? "INR" : "USD",
         },
         deliveryTime: {
           "@type": "ShippingDeliveryTime",

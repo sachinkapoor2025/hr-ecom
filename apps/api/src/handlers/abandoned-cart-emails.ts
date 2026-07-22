@@ -40,7 +40,7 @@ async function loadProfile(sessionId: string) {
       Key: { PK: customerKeys.pk(sessionId), SK: customerKeys.profileSk() },
     })
   );
-  return res.Item as { email?: string; name?: string } | undefined;
+  return res.Item as { email?: string; name?: string; phone?: string } | undefined;
 }
 
 async function hasPaidOrderForSession(sessionId: string, sinceIso: string): Promise<string | undefined> {
@@ -114,11 +114,14 @@ async function processCart(cart: StoredCart): Promise<"sent1" | "sent2" | "skipp
   const idleMs = Date.now() - new Date(cart.updatedAt).getTime();
   const name = profile?.name?.split(" ")[0] ?? "there";
 
+  const phone = profile?.phone?.trim();
+
   if (!cart.abandonedEmail1SentAt && idleMs >= MS_15_MIN) {
     const coupon = await issueAbandonedCartCoupon({ email, sessionId });
     const result = await sendAbandonedCartEmail({
       email,
       name,
+      phone,
       items: cart.items ?? [],
       value: cart.value ?? 0,
       currency: cart.currency ?? "USD",
@@ -144,6 +147,7 @@ async function processCart(cart: StoredCart): Promise<"sent1" | "sent2" | "skipp
     const result = await sendAbandonedCartEmail({
       email,
       name,
+      phone,
       items: cart.items ?? [],
       value: cart.value ?? 0,
       currency: cart.currency ?? "USD",

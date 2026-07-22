@@ -36,14 +36,22 @@ export function CategoryContentSection({ content, categoryName }: Props) {
 
           <section>
             <h3 className="text-xl font-semibold text-primary mb-3">{content.highlights.heading}</h3>
-            <ul className="grid sm:grid-cols-2 gap-2 text-sm">
-              {content.highlights.items.map((item) => (
-                <li key={item} className="flex items-start gap-2">
-                  <span className="text-nav mt-0.5 shrink-0">✓</span>
-                  {item}
-                </li>
-              ))}
-            </ul>
+            {content.highlights.paragraphs && content.highlights.paragraphs.length > 0 ? (
+              <div className="space-y-3 text-slate-700 leading-relaxed">
+                {content.highlights.paragraphs.map((p, i) => (
+                  <p key={i}>{p}</p>
+                ))}
+              </div>
+            ) : (
+              <ul className="grid sm:grid-cols-2 gap-2 text-sm">
+                {content.highlights.items.map((item) => (
+                  <li key={item} className="flex items-start gap-2">
+                    <span className="text-nav mt-0.5 shrink-0">✓</span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            )}
           </section>
 
           {content.tradition && (
