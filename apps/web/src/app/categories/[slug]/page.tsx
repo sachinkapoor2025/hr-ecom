@@ -18,7 +18,12 @@ import {
 } from "@/lib/catalog-fallback";
 import { categoryOrder } from "@/lib/site";
 import { breadcrumbJsonLd, faqJsonLd, itemListJsonLd, pageMetadata } from "@/lib/seo";
-import type { Product, Category } from "@hr-ecom/shared";
+import {
+  isRakhiSetSizeCategory,
+  rakhiSetCategoryLabel,
+  type Product,
+  type Category,
+} from "@hr-ecom/shared";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -29,6 +34,10 @@ const SORT_VALUES: ProductSort[] = ["featured", "price-asc", "price-desc", "name
 
 function resolveSort(raw?: string): ProductSort {
   return SORT_VALUES.includes(raw as ProductSort) ? (raw as ProductSort) : "featured";
+}
+
+function isKnownCategorySlug(slug: string): boolean {
+  return (categoryOrder as readonly string[]).includes(slug);
 }
 
 export function generateStaticParams() {
@@ -63,9 +72,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       path,
     });
   } catch {
+    const setLabel = rakhiSetCategoryLabel(slug);
     return pageMetadata({
-      title: `${slug.replace(/-/g, " ")} Rakhi USA`,
-      description: `Shop ${slug.replace(/-/g, " ")} with USA delivery from UsaRakhi.`,
+      title: `${setLabel ?? slug.replace(/-/g, " ")} Rakhi USA`,
+      description: `Shop ${setLabel ?? slug.replace(/-/g, " ")} with USA delivery from UsaRakhi.`,
       path,
     });
   }
@@ -75,19 +85,42 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   const { slug } = await params;
   const sort = resolveSort((await searchParams).sort);
 
+  if (!isKnownCategorySlug(slug)) notFound();
+
   let category: Category | null = null;
   let products: Product[] = [];
 
-  try {
-    const [catData, prodData] = await Promise.all([
-      api<{ category: Category }>(`/categories/${slug}`, { revalidate: 3600 }),
-      api<{ products: Product[] }>(`/products?category=${slug}`, { revalidate: 60 }),
-    ]);
-    category = catData.category;
-    products = prodData.products;
-  } catch {
-    if (!categoryOrder.includes(slug as (typeof categoryOrder)[number])) notFound();
-    products = getCatalogProductsByCategory(slug);
+  if (isRakhiSetSizeCategory(slug)) {
+    try {
+      const prodData = await api<{ products: Product[] }>(`/products?category=${slug}`, {
+        revalidate: 60,
+      });
+      products = prodData.products;
+    } catch {
+      products = getCatalogProductsByCategory(slug);
+    }
+    const label = rakhiSetCategoryLabel(slug) ?? slug;
+    const now = new Date().toISOString();
+    category = {
+      slug,
+      name: label,
+      description: `Shop ${label} collections for brothers in the USA — multi-piece designer rakhi sets with fast domestic delivery.`,
+      sortOrder: 0,
+      published: true,
+      createdAt: now,
+      updatedAt: now,
+    };
+  } else {
+    try {
+      const [catData, prodData] = await Promise.all([
+        api<{ category: Category }>(`/categories/${slug}`, { revalidate: 3600 }),
+        api<{ products: Product[] }>(`/products?category=${slug}`, { revalidate: 60 }),
+      ]);
+      category = catData.category;
+      products = prodData.products;
+    } catch {
+      products = getCatalogProductsByCategory(slug);
+    }
   }
 
   // Merge bundled catalog (includes Orange County hampers listed in additional categories).
@@ -96,6 +129,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
 
   const name =
     category?.name ??
+    rakhiSetCategoryLabel(slug) ??
     (slug === "rakhi-hampers" ? "Rakhi Hamper" : slug.replace(/-/g, " "));
   const pageSeo = getCategoryPageSeo(slug);
   const h1 = pageSeo?.h1 ?? `${name} — Send to USA`;

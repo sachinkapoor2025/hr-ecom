@@ -1,6 +1,8 @@
 import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import {
+  isRakhiSetSizeCategory,
+  productMatchesRakhiSetCategory,
   resolveProductImageUrls,
   stripVendorPrivateFields,
   withCompetitiveStorefrontPricing,
@@ -78,6 +80,10 @@ function productInCategory(product: Product, categorySlug: string): boolean {
 }
 
 export function getCatalogProductsByCategory(categorySlug: string): Product[] {
+  if (isRakhiSetSizeCategory(categorySlug)) {
+    return getCatalogProducts().filter((product) => productMatchesRakhiSetCategory(product, categorySlug));
+  }
+
   const bySlug = new Map<string, Product>();
   for (const product of getCatalogProducts()) {
     if (productInCategory(product, categorySlug)) bySlug.set(product.slug, product);

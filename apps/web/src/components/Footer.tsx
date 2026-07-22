@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { site, navItems, cityLinks, whatsappChatUrl } from "@/lib/site";
+import { site, navItems, cityLinks, rakhiSetsMenu, whatsappChatUrl } from "@/lib/site";
 import { PaymentMethodIcons } from "@/components/PaymentMethodIcons";
 import { SiteLogoLink } from "@/components/SiteLogo";
 import { trustFacts } from "@/lib/trust";
@@ -77,6 +77,13 @@ export function Footer() {
           <div className="min-w-0 lg:col-span-2">
             <p className="font-semibold text-white mb-3 sm:mb-4">Shop Rakhi</p>
             <ul className="space-y-2 text-white/80">
+              {rakhiSetsMenu.items.map((n) => (
+                <li key={n.href}>
+                  <Link href={n.href} className="hover:text-white hover:underline">
+                    {n.label}
+                  </Link>
+                </li>
+              ))}
               {navItems
                 .filter((n) => "category" in n)
                 .map((n) => (

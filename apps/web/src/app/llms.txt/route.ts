@@ -1,4 +1,4 @@
-import { site, navItems, cityLinks, faqs } from "@/lib/site";
+import { site, navItems, cityLinks, faqs, rakhiSetsMenu } from "@/lib/site";
 import { categoryHref } from "@/lib/category-urls";
 import { siteUrl } from "@/lib/env";
 import { allCityContent } from "@/lib/content/city-pages";
@@ -17,9 +17,12 @@ import {
  * Spec: https://llmstxt.org/
  */
 export async function GET() {
-  const categories = navItems
-    .filter((n): n is typeof n & { category: string } => "category" in n)
-    .map((n) => `- ${n.label}: ${siteUrl}${n.href}`);
+  const categories = [
+    ...rakhiSetsMenu.items.map((n) => `- ${n.label}: ${siteUrl}${n.href}`),
+    ...navItems
+      .filter((n): n is typeof n & { category: string } => "category" in n)
+      .map((n) => `- ${n.label}: ${siteUrl}${n.href}`),
+  ];
 
   const cities = cityLinks.map((c) => `- ${c.label}, USA: ${siteUrl}/send-rakhi-to-${c.slug}`);
 

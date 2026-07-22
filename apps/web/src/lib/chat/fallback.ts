@@ -1,4 +1,4 @@
-import { site, navItems, faqs } from "@/lib/site";
+import { site, navItems, faqs, rakhiSetsMenu } from "@/lib/site";
 import { categoryHref } from "@/lib/category-urls";
 import { siteUrl } from "@/lib/env";
 
@@ -10,10 +10,12 @@ const SITE_KEYWORDS =
   /\b(rakhi|raksha|bandhan|usa|us\b|shipping|deliver|order|payment|stripe|razorpay|product|categor|bhaiya|bhabhi|lumba|kids|combo|chocolate|roli|chawal|california|texas|new york|florida|india|checkout|cart|price|track|support|usarakhi)\b/i;
 
 function categoriesReply(): string {
-  const links = navItems
-    .filter((n): n is typeof n & { category: string } => "category" in n)
-    .map((n) => `- [${n.label}](${siteUrl}${n.href})`)
-    .join("\n");
+  const links = [
+    ...rakhiSetsMenu.items.map((n) => `- [${n.label}](${siteUrl}${n.href})`),
+    ...navItems
+      .filter((n): n is typeof n & { category: string } => "category" in n)
+      .map((n) => `- [${n.label}](${siteUrl}${n.href})`),
+  ].join("\n");
 
   return `We sell premium Rakhis for USA delivery:\n\n${links}\n- [All Products](${siteUrl}/products)\n\nEach category includes designer rakhis with complimentary roli & chawal on most singles. [Rakhi Combos](${siteUrl}${categoryHref("rakhi-combo")}) pair rakhis with Ferrero Rocher, Lindt, or Hershey's chocolates — perfect for Raksha Bandhan!`;
 }

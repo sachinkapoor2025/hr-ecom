@@ -1,13 +1,17 @@
-import { site, navItems, cityLinks, faqs } from "@/lib/site";
+import { site, navItems, cityLinks, faqs, rakhiSetsMenu } from "@/lib/site";
 import { categoryHref } from "@/lib/category-urls";
 import { siteUrl } from "@/lib/env";
 import { blogPosts } from "@/lib/content/blog-posts";
 
 /** Compact site knowledge injected into the chatbot system prompt. */
 export function buildChatKnowledge(): string {
-  const categories = navItems
-    .filter((n): n is typeof n & { category: string } => "category" in n)
-    .map((n) => `- ${n.label}: ${siteUrl}${n.href}`);
+  const setCategories = rakhiSetsMenu.items.map((n) => `- ${n.label}: ${siteUrl}${n.href}`);
+  const categories = [
+    ...setCategories,
+    ...navItems
+      .filter((n): n is typeof n & { category: string } => "category" in n)
+      .map((n) => `- ${n.label}: ${siteUrl}${n.href}`),
+  ];
 
   const pages = navItems
     .filter((n) => !("category" in n))

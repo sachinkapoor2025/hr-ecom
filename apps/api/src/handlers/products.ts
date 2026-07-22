@@ -8,6 +8,8 @@ import {
   DEFAULT_PRODUCT_INVENTORY,
   withCompetitiveStorefrontPricing,
   stripVendorPrivateFields,
+  isRakhiSetSizeCategory,
+  productMatchesRakhiSetCategory,
   type Product,
 } from "@hr-ecom/shared";
 import { docClient, PRODUCTS_TABLE, now, slugify } from "../lib/db";
@@ -116,7 +118,10 @@ export async function listProducts(event: APIGatewayProxyEventV2) {
   let items: Product[] = [];
 
   if (category) {
-    if (category === "rakhi-combo") {
+    if (isRakhiSetSizeCategory(category)) {
+      const all = await scanAllProducts();
+      items = all.filter((product) => productMatchesRakhiSetCategory(product, category));
+    } else if (category === "rakhi-combo") {
       const [combo, kids, hampers] = await Promise.all([
         queryProductsByCategory("rakhi-combo"),
         queryProductsByCategory("kids-rakhi"),
