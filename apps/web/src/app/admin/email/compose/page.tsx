@@ -335,7 +335,11 @@ function ComposeInner() {
         </div>
 
         {message && <p className="text-green-600 text-sm">{message}</p>}
-        {error && <p className="text-red-600 text-sm">{error}</p>}
+        {error && (
+          <p className="text-red-600 text-sm whitespace-pre-wrap break-words" role="alert">
+            {error}
+          </p>
+        )}
       </div>
     </div>
   );

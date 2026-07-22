@@ -27,9 +27,9 @@ import {
   type SesTemplate,
 } from "@hr-ecom/shared";
 import { docClient, now, dayBucket } from "../lib/db";
-import { ok, created, badRequest, notFound, forbidden, unauthorized } from "../lib/response";
+import { ok, created, badRequest, notFound, forbidden, unauthorized, serverError, badGateway } from "../lib/response";
 import { requireAdmin, getAuth } from "../lib/auth";
-import { sendViaSes, htmlToText } from "../lib/ses";
+import { sendViaSes, htmlToText, SesSendError, formatSesError } from "../lib/ses";
 
 const TABLE = process.env.EMAIL_CAMPAIGNS_TABLE ?? `hr-ecom-email-campaigns-${process.env.ENVIRONMENT ?? "dev"}`;
 const SITE_URL = (process.env.SITE_URL ?? "https://www.usarakhi.com").replace(/\/$/, "");
@@ -53,14 +53,26 @@ function defaultSettings(): SesSettings {
 }
 
 async function loadSettings(): Promise<SesSettings> {
-  const res = await docClient.send(
-    new GetCommand({
-      TableName: TABLE,
-      Key: { PK: sesEmailKeys.settingsPk(), SK: sesEmailKeys.settingsSk() },
-    })
-  );
-  if (!res.Item) return defaultSettings();
-  return sesSettingsSchema.parse({ ...defaultSettings(), ...res.Item.settings });
+  try {
+    const res = await docClient.send(
+      new GetCommand({
+        TableName: TABLE,
+        Key: { PK: sesEmailKeys.settingsPk(), SK: sesEmailKeys.settingsSk() },
+      })
+    );
+    if (!res.Item) return defaultSettings();
+    const parsed = sesSettingsSchema.safeParse({ ...defaultSettings(), ...res.Item.settings });
+    if (!parsed.success) {
+      console.error("[SES] Invalid settings in DynamoDB; using defaults", parsed.error.message);
+      return defaultSettings();
+    }
+    return parsed.data;
+  } catch (err) {
+    console.error("[SES] Failed to load settings from DynamoDB", err);
+    throw new Error(
+      `Failed to load SES settings from table ${TABLE}: ${err instanceof Error ? err.message : String(err)}`
+    );
+  }
 }
 
 async function isSuppressed(email: string): Promise<boolean> {
@@ -816,44 +828,107 @@ export async function listNotifications(event: APIGatewayProxyEventV2) {
 
 export async function sendTest(event: APIGatewayProxyEventV2) {
   if (!requireAdmin(event)) return unauthorized("Admin access required");
-  const body = JSON.parse(event.body ?? "{}");
-  const parsed = sendTestEmailSchema.safeParse(body);
-  if (!parsed.success) return badRequest(parsed.error.message);
-  const campaign = await getCampaign(parsed.data.campaignId);
-  if (!campaign) return notFound("Campaign not found");
 
-  const content = await resolveCampaignEmailContent(campaign);
-  if (!content.htmlBody || !content.subject) {
-    return badRequest("Subject and HTML body required (load a template or enter content)");
+  let body: unknown;
+  try {
+    body = JSON.parse(event.body ?? "{}");
+  } catch {
+    return badRequest("Request body must be valid JSON");
   }
 
-  const settings = await loadSettings();
-  const openToken = randomUUID().replace(/-/g, "");
-  const unsubToken = randomUUID().replace(/-/g, "");
-  const linkMap = new Map<string, string>();
-  let html = renderSesTemplate(content.htmlBody, {
-    name: "Test User",
-    company: "Test Co",
-    email: parsed.data.to,
-  });
-  html = injectTracking(html, openToken, linkMap);
-  html = finalizeEmailHtml(html, settings, `${SITE_URL}/email/unsubscribe/${unsubToken}`);
-  await persistClickTokens(linkMap, {
-    campaignId: campaign.campaignId,
-    email: parsed.data.to,
-  });
+  const parsed = sendTestEmailSchema.safeParse(body);
+  if (!parsed.success) return badRequest(parsed.error.message);
 
-  await sendViaSes({
-    to: parsed.data.to,
-    subject: `[TEST] ${content.subject}`,
-    html,
-    text: htmlToText(html),
-    fromName: campaign.senderName,
-    fromEmail: campaign.senderEmail,
-    replyTo: campaign.replyTo,
-  });
+  try {
+    if (!TABLE) {
+      return serverError("EMAIL_CAMPAIGNS_TABLE environment variable is not configured");
+    }
 
-  return ok({ ok: true, message: `Test email sent to ${parsed.data.to}` });
+    const campaign = await getCampaign(parsed.data.campaignId);
+    if (!campaign) return notFound("Campaign not found");
+
+    const content = await resolveCampaignEmailContent(campaign);
+    if (!content.htmlBody || !content.subject) {
+      return badRequest("Subject and HTML body required (load a template or enter content)");
+    }
+
+    const settings = await loadSettings();
+    const fromName = (campaign.senderName || settings.defaultSenderName || "UsaRakhi").trim();
+    const fromEmail = (campaign.senderEmail || settings.defaultSenderEmail || "").trim();
+    const replyTo = (campaign.replyTo || settings.defaultReplyTo || fromEmail).trim();
+
+    if (!fromEmail) {
+      return badRequest(
+        "Sender email is missing. Set a verified From address in the campaign or SES settings (e.g. order@usarakhi.com)."
+      );
+    }
+
+    const openToken = randomUUID().replace(/-/g, "");
+    const unsubToken = randomUUID().replace(/-/g, "");
+    const linkMap = new Map<string, string>();
+    let html = renderSesTemplate(content.htmlBody, {
+      name: "Test User",
+      company: "Test Co",
+      email: parsed.data.to,
+    });
+    html = injectTracking(html, openToken, linkMap);
+    html = finalizeEmailHtml(html, settings, `${SITE_URL}/email/unsubscribe/${unsubToken}`);
+    await persistClickTokens(linkMap, {
+      campaignId: campaign.campaignId,
+      email: parsed.data.to,
+    });
+
+    const result = await sendViaSes({
+      to: parsed.data.to,
+      subject: `[TEST] ${content.subject}`,
+      html,
+      text: htmlToText(html),
+      fromName,
+      fromEmail,
+      replyTo,
+    });
+
+    console.info("[SES] Test email sent", {
+      campaignId: campaign.campaignId,
+      to: parsed.data.to,
+      fromEmail,
+      messageId: result.messageId,
+    });
+
+    return ok({
+      ok: true,
+      message: `Test email sent to ${parsed.data.to}`,
+      messageId: result.messageId,
+    });
+  } catch (err) {
+    const formatted =
+      err instanceof SesSendError
+        ? err
+        : err instanceof Error && /Failed to load SES settings|EMAIL_CAMPAIGNS|DynamoDB|ResourceNotFound/i.test(err.message)
+          ? err
+          : formatSesError(err);
+    const message = formatted.message;
+
+    console.error("[SES] sendTest failed", {
+      campaignId: parsed.data.campaignId,
+      to: parsed.data.to,
+      code: formatted instanceof SesSendError ? formatted.code : undefined,
+      httpStatusCode: formatted instanceof SesSendError ? formatted.httpStatusCode : undefined,
+      message,
+      err,
+    });
+
+    try {
+      await addNotification(`Test email failed: ${message}`, "error");
+    } catch (notifyErr) {
+      console.error("[SES] Failed to write test-email failure notification", notifyErr);
+    }
+
+    if (formatted instanceof SesSendError) {
+      return badGateway(message);
+    }
+    return serverError(message);
+  }
 }
 
 /** Public tracking — open pixel */
@@ -1078,6 +1153,8 @@ export async function processSesEmailJobs() {
       results.sent = Number(results.sent) + 1;
     } catch (err) {
       const retries = Number(item.retries ?? 0) + 1;
+      const lastError = formatSesError(err).message;
+      console.error("[SES] queue send failed", { campaignId, email, retries, lastError, err });
       if (retries >= 3) {
         await deleteQueueItem(campaignId, email);
         campaign.failedCount += 1;
@@ -1095,7 +1172,7 @@ export async function processSesEmailJobs() {
             UpdateExpression: "SET retries = :r, lastError = :e",
             ExpressionAttributeValues: {
               ":r": retries,
-              ":e": err instanceof Error ? err.message : String(err),
+              ":e": lastError,
             },
           })
         );
@@ -1273,9 +1350,9 @@ async function sendQueuedEmail(
     subject: content.subject,
     html,
     text: htmlToText(html),
-    fromName: campaign.senderName,
-    fromEmail: campaign.senderEmail,
-    replyTo: campaign.replyTo,
+    fromName: (campaign.senderName || settings.defaultSenderName || "UsaRakhi").trim(),
+    fromEmail: (campaign.senderEmail || settings.defaultSenderEmail || "").trim(),
+    replyTo: (campaign.replyTo || settings.defaultReplyTo || "").trim() || undefined,
   });
 }
 

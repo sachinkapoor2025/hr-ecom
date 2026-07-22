@@ -7,21 +7,48 @@ type ApiOptions = RequestInit & {
   revalidate?: number | false;
 };
 
+function isIdempotentMethod(method?: string): boolean {
+  const m = (method ?? "GET").toUpperCase();
+  return m === "GET" || m === "HEAD" || m === "OPTIONS";
+}
+
+/**
+ * Retry only network failures (and transient 5xx on idempotent GETs).
+ * Always return the final Response — including 5xx — so callers can parse `{ error }` bodies.
+ * Never retry POST/PUT/PATCH/DELETE on 5xx (avoids duplicate sends like Test Email).
+ */
 async function fetchWithRetry(url: string, init: RequestInit, attempts = 3): Promise<Response> {
-  let lastError: unknown;
-  for (let i = 0; i < attempts; i++) {
+  const retryServerErrors = isIdempotentMethod(init.method);
+  const maxAttempts = retryServerErrors ? attempts : 1;
+  let lastNetworkError: unknown;
+
+  for (let i = 0; i < maxAttempts; i++) {
     try {
       const res = await fetch(url, init);
-      if (res.ok || res.status < 500) return res;
-      lastError = new Error(`HTTP ${res.status}`);
+      if (res.ok || res.status < 500 || !retryServerErrors || i === maxAttempts - 1) {
+        return res;
+      }
     } catch (err) {
-      lastError = err;
+      lastNetworkError = err;
+      if (i === maxAttempts - 1) {
+        throw lastNetworkError instanceof Error ? lastNetworkError : new Error("Fetch failed");
+      }
     }
-    if (i < attempts - 1) {
+    if (i < maxAttempts - 1) {
       await new Promise((r) => setTimeout(r, 250 * (i + 1)));
     }
   }
-  throw lastError instanceof Error ? lastError : new Error("Fetch failed");
+
+  throw lastNetworkError instanceof Error ? lastNetworkError : new Error("Fetch failed");
+}
+
+function errorMessageFromBody(body: unknown, status: number): string {
+  if (body && typeof body === "object") {
+    const record = body as Record<string, unknown>;
+    if (typeof record.error === "string" && record.error.trim()) return record.error;
+    if (typeof record.message === "string" && record.message.trim()) return record.message;
+  }
+  return `API error (${status})`;
 }
 
 export async function api<T>(path: string, options: ApiOptions = {}): Promise<T> {
@@ -51,8 +78,8 @@ export async function api<T>(path: string, options: ApiOptions = {}): Promise<T>
   });
 
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: res.statusText }));
-    throw new Error(err.error ?? `API error (${res.status})`);
+    const errBody = await res.json().catch(() => null);
+    throw new Error(errorMessageFromBody(errBody, res.status));
   }
 
   return res.json();
