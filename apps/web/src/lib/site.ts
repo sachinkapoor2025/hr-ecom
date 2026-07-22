@@ -28,10 +28,10 @@ export const site = {
 export const rakhiSetsMenu = {
   label: "Rakhi Sets USA",
   items: [
-    { label: "Single Rakhi", href: categoryHref("single-rakhi"), category: "single-rakhi" },
-    { label: "2 Set Rakhi", href: categoryHref("2-set-rakhi"), category: "2-set-rakhi" },
-    { label: "3 Set Rakhi", href: categoryHref("3-set-rakhi"), category: "3-set-rakhi" },
-    { label: "4 Set Rakhi", href: categoryHref("4-set-rakhi"), category: "4-set-rakhi" },
+    { label: "Single Rakhi to USA", href: categoryHref("single-rakhi"), category: "single-rakhi" },
+    { label: "Set of 2 Rakhis", href: categoryHref("2-set-rakhi"), category: "2-set-rakhi" },
+    { label: "Set of 3 Rakhis", href: categoryHref("3-set-rakhi"), category: "3-set-rakhi" },
+    { label: "Set of 4 Rakhis", href: categoryHref("4-set-rakhi"), category: "4-set-rakhi" },
   ],
 } as const;
 
