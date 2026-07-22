@@ -68,8 +68,9 @@ jobs:
           TWILIO_ACCOUNT_SID: ${{ secrets.TWILIO_ACCOUNT_SID }}
           TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
           TWILIO_WHATSAPP_FROM: ${{ secrets.TWILIO_WHATSAPP_FROM }}
+          MARKETING_SMTP_PASS: ${{ secrets.MARKETING_SMTP_PASS }}
         run: |
-          # Omit empty WhatsApp/Twilio overrides so a prior SAM deploy's values are not wiped.
+          # Omit empty WhatsApp/Twilio/marketing overrides so a prior SAM deploy's values are not wiped.
           BASE_URL="${USPS_BASE_URL:-https://apis.usps.com}"
           EXTRA=""
           [ -n "${WHATSAPP_TOKEN:-}" ] && EXTRA="$EXTRA WhatsAppToken=${WHATSAPP_TOKEN}"
@@ -79,6 +80,7 @@ jobs:
           [ -n "${TWILIO_ACCOUNT_SID:-}" ] && EXTRA="$EXTRA TwilioAccountSid=${TWILIO_ACCOUNT_SID}"
           [ -n "${TWILIO_AUTH_TOKEN:-}" ] && EXTRA="$EXTRA TwilioAuthToken=${TWILIO_AUTH_TOKEN}"
           [ -n "${TWILIO_WHATSAPP_FROM:-}" ] && EXTRA="$EXTRA TwilioWhatsAppFrom=${TWILIO_WHATSAPP_FROM}"
+          [ -n "${MARKETING_SMTP_PASS:-}" ] && EXTRA="$EXTRA MarketingSmtpPassword=${MARKETING_SMTP_PASS}"
           sam build && sam deploy --no-confirm-changeset --no-fail-on-empty-changeset --config-env prod \
             --parameter-overrides "\
           Environment=prod \

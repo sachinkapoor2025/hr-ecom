@@ -37,6 +37,11 @@ Parameters:
     Default: ""
     NoEcho: true
     Description: SMTP password for order@usarakhi.com (contact & order emails)
+  MarketingSmtpPassword:
+    Type: String
+    Default: ""
+    NoEcho: true
+    Description: Marketing SMTP password (Mailercloud) for /admin/email campaigns
   UspsClientId:
     Type: String
     Default: ""
@@ -145,6 +150,12 @@ Globals:
         SES_AWS_REGION: us-east-1
         SES_FROM_EMAIL: order@usarakhi.com
         SES_REPLY_TO: order@usarakhi.com
+        MARKETING_TRANSPORT: smtp
+        MARKETING_SMTP_HOST: smtp-prod.mailrcld.com
+        MARKETING_SMTP_PORT: "587"
+        MARKETING_SMTP_SECURE: "false"
+        MARKETING_SMTP_USER: order@usarakhi.com
+        MARKETING_SMTP_PASS: !Ref MarketingSmtpPassword
         USPS_CLIENT_ID: !Ref UspsClientId
         USPS_CLIENT_SECRET: !Ref UspsClientSecret
         USPS_SECRET_ARN: !Ref UspsSecretArn
@@ -717,6 +728,12 @@ Resources:
           SES_AWS_REGION: us-east-1
           SES_FROM_EMAIL: order@usarakhi.com
           SES_REPLY_TO: order@usarakhi.com
+          MARKETING_TRANSPORT: smtp
+          MARKETING_SMTP_HOST: smtp-prod.mailrcld.com
+          MARKETING_SMTP_PORT: "587"
+          MARKETING_SMTP_SECURE: "false"
+          MARKETING_SMTP_USER: order@usarakhi.com
+          MARKETING_SMTP_PASS: !Ref MarketingSmtpPassword
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref EmailCampaignsTable

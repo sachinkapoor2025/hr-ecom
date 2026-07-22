@@ -29,7 +29,15 @@ import {
 import { docClient, now, dayBucket } from "../lib/db";
 import { ok, created, badRequest, notFound, forbidden, unauthorized, serverError, badGateway } from "../lib/response";
 import { requireAdmin, getAuth } from "../lib/auth";
-import { sendViaSes, htmlToText, SesSendError, formatSesError } from "../lib/ses";
+import {
+  sendViaSes,
+  htmlToText,
+  SesSendError,
+  formatSesError,
+  clearMarketingTransportCache,
+  redactSettingsForAdmin,
+  isRedactedPassword,
+} from "../lib/ses";
 
 const TABLE = process.env.EMAIL_CAMPAIGNS_TABLE ?? `hr-ecom-email-campaigns-${process.env.ENVIRONMENT ?? "dev"}`;
 const SITE_URL = (process.env.SITE_URL ?? "https://www.usarakhi.com").replace(/\/$/, "");
@@ -49,6 +57,12 @@ function defaultSettings(): SesSettings {
     companyAddress: DEFAULT_SENDER_MESSAGE_FOOTER.companyAddress,
     contactEmail: DEFAULT_SENDER_MESSAGE_FOOTER.contactEmail,
     privacyUrl: DEFAULT_SENDER_MESSAGE_FOOTER.privacyUrl,
+    marketingTransport: "smtp",
+    smtpHost: process.env.MARKETING_SMTP_HOST || "smtp-prod.mailrcld.com",
+    smtpPort: Number(process.env.MARKETING_SMTP_PORT || 587),
+    smtpSecure: process.env.MARKETING_SMTP_SECURE === "true",
+    smtpUser: process.env.MARKETING_SMTP_USER || process.env.SES_FROM_EMAIL || "order@usarakhi.com",
+    smtpPassword: "",
   });
 }
 
@@ -692,13 +706,28 @@ export async function deleteTemplate(event: APIGatewayProxyEventV2) {
 
 export async function getSettings(event: APIGatewayProxyEventV2) {
   if (!requireAdmin(event)) return unauthorized("Admin access required");
-  return ok({ settings: await loadSettings() });
+  const settings = await loadSettings();
+  return ok({
+    settings: redactSettingsForAdmin(settings),
+    smtpPasswordSet: Boolean(settings.smtpPassword && !isRedactedPassword(settings.smtpPassword)),
+  });
 }
 
 export async function updateSettings(event: APIGatewayProxyEventV2) {
   if (!requireAdmin(event)) return unauthorized("Admin access required");
-  const body = JSON.parse(event.body ?? "{}");
-  const parsed = sesSettingsSchema.safeParse({ ...(await loadSettings()), ...body });
+  const body = JSON.parse(event.body ?? "{}") as Record<string, unknown>;
+  const existing = await loadSettings();
+  const incomingPassword =
+    typeof body.smtpPassword === "string" ? body.smtpPassword : undefined;
+  const keepPassword =
+    incomingPassword === undefined || isRedactedPassword(incomingPassword);
+
+  const merged = {
+    ...existing,
+    ...body,
+    smtpPassword: keepPassword ? existing.smtpPassword || "" : incomingPassword,
+  };
+  const parsed = sesSettingsSchema.safeParse(merged);
   if (!parsed.success) return badRequest(parsed.error.message);
   await docClient.send(
     new PutCommand({
@@ -711,7 +740,11 @@ export async function updateSettings(event: APIGatewayProxyEventV2) {
       },
     })
   );
-  return ok({ settings: parsed.data });
+  clearMarketingTransportCache();
+  return ok({
+    settings: redactSettingsForAdmin(parsed.data),
+    smtpPasswordSet: Boolean(parsed.data.smtpPassword),
+  });
 }
 
 export async function listSuppression(event: APIGatewayProxyEventV2) {
