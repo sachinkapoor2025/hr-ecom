@@ -2,11 +2,18 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useApiClient, useAuth } from "@/lib/auth-context";
-import { ADMIN_COUPON_DISCOUNT_OPTIONS, type StoreCoupon } from "@hr-ecom/shared";
+import {
+  ADMIN_COUPON_DISCOUNT_OPTIONS,
+  ADMIN_CONFIRMED_SALE_DISCOUNT_PERCENT,
+  ADMIN_CONFIRMED_SALE_COUPON_HOURS,
+  ADMIN_MANUAL_COUPON_HOURS,
+  isAdminConfirmedSaleDiscount,
+  type StoreCoupon,
+} from "@hr-ecom/shared";
 import { PhoneInput, buildPhoneValue } from "@/components/PhoneInput";
 
 type CreateResult = {
-  coupon: StoreCoupon & { phone?: string; createdBy?: string };
+  coupon: StoreCoupon & { phone?: string; createdBy?: string; confirmedSale?: boolean };
   emails: {
     customerOk: boolean;
     notifyOk: boolean;
@@ -69,6 +76,8 @@ export default function AdminCouponsPage() {
     setLastWhatsAppLink("");
     setLastCode("");
     try {
+      const confirmedSale = isAdminConfirmedSaleDiscount(discountPercent);
+      const hours = confirmedSale ? ADMIN_CONFIRMED_SALE_COUPON_HOURS : ADMIN_MANUAL_COUPON_HOURS;
       const res = await api<CreateResult>("/admin/coupons/abandoned", {
         method: "POST",
         body: JSON.stringify({
@@ -81,6 +90,7 @@ export default function AdminCouponsPage() {
               }
             : {}),
           discountPercent,
+          ...(confirmedSale ? { confirmedSale: true } : {}),
         }),
       });
       setLastCode(res.coupon.code);
@@ -107,8 +117,9 @@ export default function AdminCouponsPage() {
           : res.whatsapp.skipped
             ? "WhatsApp API not configured — use Open WhatsApp below"
             : `WhatsApp failed${res.whatsapp.error ? `: ${res.whatsapp.error}` : ""}`;
+      const saleLabel = res.coupon.confirmedSale || confirmedSale ? " · Confirmed sale" : "";
       setMessage(
-        `Coupon ${res.coupon.code} created (${res.coupon.discountPercent}% · expires in 1 hour). ${emailNotes}. ${waNote}.`
+        `Coupon ${res.coupon.code} created (${res.coupon.discountPercent}%${saleLabel} · expires in ${hours} hour${hours === 1 ? "" : "s"}). ${emailNotes}. ${waNote}.`
       );
       setEmail("");
       setPhoneLocal("");
@@ -125,8 +136,9 @@ export default function AdminCouponsPage() {
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Abandoned cart coupons</h1>
         <p className="text-sm text-slate-500 mt-1">
-          Generate a 1-hour coupon for outreach. Provide email, phone, or both — checkout matches
-          the mobile number only (country code is ignored). Team notifications go to
+          Generate a coupon for outreach (7–15%, 1 hour) or a confirmed sale ({ADMIN_CONFIRMED_SALE_DISCOUNT_PERCENT}%
+          , {ADMIN_CONFIRMED_SALE_COUPON_HOURS} hours so the code is not wasted). Provide email, phone, or both —
+          checkout matches the mobile number only (country code is ignored). Team notifications go to
           order@mydgv.com, priya.yadav@mydgv.com, and you ({user?.email ?? "logged-in admin"}).
         </p>
       </div>
@@ -171,18 +183,35 @@ export default function AdminCouponsPage() {
           >
             {ADMIN_COUPON_DISCOUNT_OPTIONS.map((pct) => (
               <option key={pct} value={pct}>
-                {pct}% off
+                {isAdminConfirmedSaleDiscount(pct)
+                  ? `${pct}% off — Confirmed sale (${ADMIN_CONFIRMED_SALE_COUPON_HOURS}h)`
+                  : `${pct}% off (${ADMIN_MANUAL_COUPON_HOURS}h outreach)`}
               </option>
             ))}
           </select>
         </label>
+
+        {isAdminConfirmedSaleDiscount(discountPercent) && (
+          <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+            <span className="inline-flex items-center rounded-md bg-emerald-700 text-white text-xs font-semibold px-2 py-0.5 mr-2">
+              Confirmed sale
+            </span>
+            Use only when the customer has confirmed they will buy. Code stays valid for{" "}
+            {ADMIN_CONFIRMED_SALE_COUPON_HOURS} hours so the {ADMIN_CONFIRMED_SALE_DISCOUNT_PERCENT}% discount is
+            not wasted.
+          </div>
+        )}
 
         <button
           type="submit"
           disabled={saving}
           className="bg-nav text-white rounded-lg px-4 py-2.5 text-sm font-medium disabled:opacity-50"
         >
-          {saving ? "Generating…" : "Generate coupon"}
+          {saving
+            ? "Generating…"
+            : isAdminConfirmedSaleDiscount(discountPercent)
+              ? "Generate confirmed-sale coupon"
+              : "Generate coupon"}
         </button>
       </form>
 
@@ -218,6 +247,7 @@ export default function AdminCouponsPage() {
             {rows.slice(0, 50).map((c) => {
               const expired = new Date(c.expiresAt).getTime() < Date.now();
               const used = Boolean(c.usedAt);
+              const confirmed = Boolean(c.confirmedSale) || isAdminConfirmedSaleDiscount(c.discountPercent);
               const phoneVal =
                 "phone" in c && typeof (c as { phone?: string }).phone === "string"
                   ? (c as { phone?: string }).phone
@@ -225,7 +255,14 @@ export default function AdminCouponsPage() {
               return (
                 <li key={c.code} className="px-4 py-3 flex flex-wrap gap-2 justify-between">
                   <div>
-                    <p className="font-mono font-medium">{c.code}</p>
+                    <p className="font-mono font-medium flex flex-wrap items-center gap-2">
+                      {c.code}
+                      {confirmed && (
+                        <span className="rounded bg-emerald-700 text-white text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5">
+                          Confirmed sale
+                        </span>
+                      )}
+                    </p>
                     <p className="text-xs text-slate-500">
                       {[
                         c.email || null,

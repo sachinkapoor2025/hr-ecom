@@ -8,7 +8,8 @@ import {
   WELCOME_COUPON_HOURS,
   ABANDONED_CART_COUPON_HOURS,
   ABANDONED_CART_DISCOUNT_PERCENT,
-  ADMIN_MANUAL_COUPON_HOURS,
+  adminCouponHoursForDiscount,
+  isAdminConfirmedSaleDiscount,
   pickDailyDealDiscount,
   dailyDealDayKey,
   isValidDailyDealPercent,
@@ -439,7 +440,7 @@ export async function listWelcomeCoupons(event: APIGatewayProxyEventV2) {
   return ok({ coupons });
 }
 
-/** Admin: generate 1-hour coupon bound to email and/or phone for abandoned-cart outreach. */
+/** Admin: generate coupon bound to email and/or phone (outreach or confirmed sale). */
 export async function createAdminAbandonedCoupon(event: APIGatewayProxyEventV2) {
   const auth = requireAdmin(event);
   if (!auth) return unauthorized("Admin access required");
@@ -469,10 +470,11 @@ export async function createAdminAbandonedCoupon(event: APIGatewayProxyEventV2) 
   }
 
   const discountPercent = parsed.data.discountPercent;
+  const confirmedSale =
+    parsed.data.confirmedSale === true || isAdminConfirmedSaleDiscount(discountPercent);
+  const hours = adminCouponHoursForDiscount(discountPercent);
   const timestamp = now();
-  const expiresAt = new Date(
-    Date.now() + ADMIN_MANUAL_COUPON_HOURS * 60 * 60 * 1000
-  ).toISOString();
+  const expiresAt = new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
   const code = generateCode();
 
   const coupon: StoreCoupon & { PK: string; SK: string } = {
@@ -486,6 +488,7 @@ export async function createAdminAbandonedCoupon(event: APIGatewayProxyEventV2) 
     createdAt: timestamp,
     source: "admin",
     createdBy: auth.email,
+    ...(confirmedSale ? { confirmedSale: true } : {}),
   };
 
   try {
@@ -505,6 +508,7 @@ export async function createAdminAbandonedCoupon(event: APIGatewayProxyEventV2) 
     code,
     discountPercent,
     expiresAt,
+    confirmedSale,
   });
   const whatsapp = whatsappPhone
     ? await sendWhatsAppMessage({ phone: whatsappPhone, message: waMessage })
@@ -522,6 +526,8 @@ export async function createAdminAbandonedCoupon(event: APIGatewayProxyEventV2) 
     code,
     discountPercent,
     expiresAt,
+    hours,
+    confirmedSale,
     createdByAdminEmail: auth.email,
     whatsappDeepLink: whatsapp.deepLink || undefined,
   });
@@ -536,6 +542,7 @@ export async function createAdminAbandonedCoupon(event: APIGatewayProxyEventV2) 
       createdAt: timestamp,
       createdBy: auth.email,
       source: "admin" as const,
+      confirmedSale,
     },
     emails: {
       customerOk: emails.customer.ok,

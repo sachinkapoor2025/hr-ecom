@@ -67,8 +67,21 @@ export type CouponSource = z.infer<typeof couponSourceSchema>;
 
 /** Admin manual abandoned-cart coupons (WhatsApp / phone outreach). */
 export const ADMIN_MANUAL_COUPON_HOURS = 1;
-export const ADMIN_COUPON_DISCOUNT_OPTIONS = [7, 8, 9, 10, 11, 12, 13, 14, 15] as const;
+/** Higher % for customers who already confirmed they will buy — longer validity so the code is not wasted. */
+export const ADMIN_CONFIRMED_SALE_DISCOUNT_PERCENT = 20;
+export const ADMIN_CONFIRMED_SALE_COUPON_HOURS = 24;
+export const ADMIN_COUPON_DISCOUNT_OPTIONS = [7, 8, 9, 10, 11, 12, 13, 14, 15, 20] as const;
 export type AdminCouponDiscountPercent = (typeof ADMIN_COUPON_DISCOUNT_OPTIONS)[number];
+
+export function isAdminConfirmedSaleDiscount(percent: number): boolean {
+  return percent === ADMIN_CONFIRMED_SALE_DISCOUNT_PERCENT;
+}
+
+export function adminCouponHoursForDiscount(percent: number): number {
+  return isAdminConfirmedSaleDiscount(percent)
+    ? ADMIN_CONFIRMED_SALE_COUPON_HOURS
+    : ADMIN_MANUAL_COUPON_HOURS;
+}
 
 export const createAdminCouponSchema = z
   .object({
@@ -88,8 +101,13 @@ export const createAdminCouponSchema = z
       .refine(
         (n): n is AdminCouponDiscountPercent =>
           (ADMIN_COUPON_DISCOUNT_OPTIONS as readonly number[]).includes(n),
-        { message: "Discount must be between 7% and 15%" }
+        { message: "Discount must be 7%–15% (outreach) or 20% (confirmed sale)" }
       ),
+    /**
+     * Optional explicit flag. When omitted, 20% is treated as confirmed sale.
+     * Confirmed-sale coupons get a longer validity window.
+     */
+    confirmedSale: z.boolean().optional(),
   })
   .superRefine((v, ctx) => {
     const email = v.email?.trim() ?? "";
@@ -137,6 +155,11 @@ export const couponSchema = z.object({
   phone: z.string().optional(),
   /** Cognito email of admin who created the coupon. */
   createdBy: z.string().email().optional(),
+  /**
+   * Admin 20% coupons for customers who confirmed they will buy.
+   * Longer expiry so the code is less likely to expire unused.
+   */
+  confirmedSale: z.boolean().optional(),
 });
 
 export type StoreCoupon = z.infer<typeof couponSchema>;

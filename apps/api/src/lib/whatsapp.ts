@@ -51,9 +51,13 @@ export function abandonedCouponWhatsAppMessage(input: {
   discountPercent: number;
   expiresAt: string;
   checkoutUrl?: string;
+  confirmedSale?: boolean;
 }): string {
   const expiry = formatExpiryEt(input.expiresAt);
   const url = input.checkoutUrl ?? `${SITE_URL()}/checkout`;
+  if (input.confirmedSale) {
+    return `Hi! This is ${SITE}. Thanks for confirming your order — use code ${input.code} for ${input.discountPercent}% off (Confirmed sale). Valid until ${expiry} (ET). Checkout: ${url}`;
+  }
   return `Hi! This is ${SITE}. Complete your Rakhi order with ${input.discountPercent}% off using code ${input.code}. Valid until ${expiry} (ET). Checkout: ${url}`;
 }
 
