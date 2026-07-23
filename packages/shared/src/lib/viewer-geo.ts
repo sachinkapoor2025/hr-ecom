@@ -76,13 +76,55 @@ export function formatViewerLocation(
   if (geo.country) parts.push(geo.country);
   if (parts.length > 0) return parts.join(", ");
 
-  if (hints?.timezone?.includes("Kolkata") || hints?.timezone?.includes("Calcutta")) {
-    return "IN";
-  }
-  if (hints?.locale?.startsWith("en-IN")) return "IN";
-  if (hints?.locale?.startsWith("en-US")) return "US";
+  const inferred = inferViewerCountryCode(geo, hints);
+  if (inferred) return inferred;
   if (hints?.timezone) return hints.timezone;
   return "—";
+}
+
+/**
+ * Best-effort ISO country for analytics pies.
+ * Prefer CDN/geo country; otherwise infer from timezone/locale (same cues as Location column).
+ */
+export function inferViewerCountryCode(
+  geo: ViewerGeo,
+  hints?: { timezone?: string; locale?: string }
+): string | undefined {
+  if (geo.country && /^[A-Z]{2}$/i.test(geo.country)) {
+    return geo.country.toUpperCase();
+  }
+
+  const tz = hints?.timezone ?? "";
+  const locale = (hints?.locale ?? "").toLowerCase();
+
+  if (tz.includes("Kolkata") || tz.includes("Calcutta") || locale.startsWith("en-in") || locale.startsWith("hi")) {
+    return "IN";
+  }
+  if (tz.startsWith("Asia/Singapore") || locale.endsWith("-sg")) return "SG";
+  if (tz.startsWith("Asia/Shanghai") || tz.startsWith("Asia/Chongqing") || tz.startsWith("Asia/Harbin")) {
+    return "CN";
+  }
+  if (tz.startsWith("Asia/Hong_Kong")) return "HK";
+  if (tz.startsWith("Asia/Tokyo")) return "JP";
+  if (tz.startsWith("Asia/Dubai")) return "AE";
+  if (tz.startsWith("Asia/Ho_Chi_Minh") || tz.startsWith("Asia/Saigon")) return "VN";
+  if (tz.startsWith("Australia/") || locale.endsWith("-au")) return "AU";
+  if (
+    tz.startsWith("America/Toronto") ||
+    tz.startsWith("America/Vancouver") ||
+    tz.startsWith("America/Edmonton") ||
+    tz.startsWith("America/Winnipeg") ||
+    locale.endsWith("-ca")
+  ) {
+    return "CA";
+  }
+  if (tz.startsWith("America/") || locale.startsWith("en-us")) return "US";
+  if (tz.startsWith("Europe/London") || locale.endsWith("-gb")) return "GB";
+  if (tz.startsWith("Europe/")) return undefined; // don't guess a single EU country
+  if (locale.startsWith("en-us")) return "US";
+  if (locale.startsWith("en-in")) return "IN";
+
+  return undefined;
 }
 
 export function viewerGeoFromMetadata(metadata?: Record<string, string>): ViewerGeo {

@@ -245,10 +245,11 @@ export default function AdminVisitorsPage() {
           onChange={(e) => setDays(Number(e.target.value))}
           className="border border-slate-300 rounded-lg px-3 py-1.5 text-sm"
         >
-          <option value={7}>Last 7 days</option>
-          <option value={14}>Last 14 days</option>
-          <option value={30}>Last 30 days</option>
-          <option value={90}>Last 90 days</option>
+          <option value={1}>Today (IST)</option>
+          <option value={7}>Last 7 days (IST)</option>
+          <option value={14}>Last 14 days (IST)</option>
+          <option value={30}>Last 30 days (IST)</option>
+          <option value={90}>Last 90 days (IST)</option>
         </select>
       </div>
 

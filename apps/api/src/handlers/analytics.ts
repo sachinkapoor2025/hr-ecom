@@ -8,11 +8,17 @@ import {
   EVENT_TYPES,
   ORDER_STATUS,
   viewerGeoFromMetadata,
+  inferViewerCountryCode,
   isRevenueOrder,
   getOrderPaidAt,
   applyContactFields,
   backfillContactsByIdentity,
   isKnownContact,
+  ADMIN_ANALYTICS_TIMEZONE,
+  rangeBusinessDays,
+  businessDaysBetween,
+  utcDayBucketsForBusinessDays,
+  instantToBusinessDay,
   type Order,
 } from "@hr-ecom/shared";
 import { docClient, EVENTS_TABLE, CUSTOMERS_TABLE, CARTS_TABLE, ORDERS_TABLE, dayBucket, now } from "../lib/db";
@@ -40,12 +46,26 @@ function parseDays(event: APIGatewayProxyEventV2, fallback = 30, max = 90): numb
 
 const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
 
-/** Inclusive UTC day list from `from`/`to`, or trailing `days` window. Max 90 days. */
+type DayListRange = {
+  /** UTC GSI day keys to query events (may be longer than businessDays). */
+  days: string[];
+  /** Calendar days in Asia/Kolkata for charts / from-to display (chronological). */
+  businessDays: string[];
+  from: string;
+  to: string;
+  windowDays: number;
+  timeZone: string;
+};
+
+/**
+ * Inclusive day list for admin visitors/analytics.
+ * Presets and from/to are interpreted in Asia/Kolkata (IST); event storage stays UTC.
+ */
 function parseDayList(
   event: APIGatewayProxyEventV2,
   fallbackDays = 7,
   max = 90
-): { days: string[]; from: string; to: string; windowDays: number } | { error: string } {
+): DayListRange | { error: string } {
   const fromRaw = event.queryStringParameters?.from?.trim();
   const toRaw = event.queryStringParameters?.to?.trim();
 
@@ -55,28 +75,38 @@ function parseDayList(
     }
     if (fromRaw > toRaw) return { error: "from must be on or before to" };
 
-    const start = new Date(`${fromRaw}T00:00:00.000Z`);
-    const end = new Date(`${toRaw}T00:00:00.000Z`);
-    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
-      return { error: "Invalid from/to date" };
+    const businessDays = businessDaysBetween(fromRaw, toRaw);
+    if (!businessDays.length) return { error: "Invalid from/to date" };
+    if (businessDays.length > max) {
+      return { error: `Date range cannot exceed ${max} days` };
     }
-
-    const days: string[] = [];
-    for (let t = start.getTime(); t <= end.getTime(); t += 86_400_000) {
-      days.push(dayBucket(new Date(t)));
-      if (days.length > max) return { error: `Date range cannot exceed ${max} days` };
-    }
-    return { days, from: fromRaw, to: toRaw, windowDays: days.length };
+    const days = utcDayBucketsForBusinessDays(businessDays);
+    return {
+      days,
+      businessDays,
+      from: fromRaw,
+      to: toRaw,
+      windowDays: businessDays.length,
+      timeZone: ADMIN_ANALYTICS_TIMEZONE,
+    };
   }
 
   const windowDays = parseDays(event, fallbackDays, max);
-  const days = rangeDays(windowDays);
+  const businessNewestFirst = rangeBusinessDays(windowDays);
+  const businessDays = [...businessNewestFirst].reverse();
+  const days = utcDayBucketsForBusinessDays(businessDays);
   return {
     days,
-    from: days[days.length - 1] ?? dayBucket(),
-    to: days[0] ?? dayBucket(),
+    businessDays,
+    from: businessDays[0] ?? businessDayFallback(),
+    to: businessDays[businessDays.length - 1] ?? businessDayFallback(),
     windowDays,
+    timeZone: ADMIN_ANALYTICS_TIMEZONE,
   };
+}
+
+function businessDayFallback(): string {
+  return rangeBusinessDays(1)[0] ?? dayBucket();
 }
 
 async function getRollup(day: string): Promise<RollupItem[]> {
@@ -529,6 +559,7 @@ export async function listSessions(event: APIGatewayProxyEventV2) {
     days: range.windowDays,
     from: range.from,
     to: range.to,
+    timeZone: range.timeZone,
     sessions: list,
     identity: { known: knownCount, anonymous: anonymousCount },
     total: list.length,
@@ -556,11 +587,21 @@ export async function getVisitorAnalytics(event: APIGatewayProxyEventV2) {
     identified: number;
     events: number;
     devices: Record<string, number>;
+    inferred?: boolean;
   };
 
   const byCountryMap = new Map<string, CountryAgg>();
   for (const s of list) {
-    const country = (s.country || "Unknown").toUpperCase();
+    const inferred = inferViewerCountryCode(
+      {
+        country: s.country,
+        city: s.city,
+        region: s.region,
+        regionName: s.regionName,
+      },
+      { timezone: s.timezone, locale: s.locale }
+    );
+    const country = (inferred || "Unknown").toUpperCase();
     const row =
       byCountryMap.get(country) ??
       ({
@@ -572,6 +613,7 @@ export async function getVisitorAnalytics(event: APIGatewayProxyEventV2) {
         identified: 0,
         events: 0,
         devices: {},
+        inferred: !s.country && Boolean(inferred),
       } satisfies CountryAgg);
     row.visitors += 1;
     row.events += s.eventCount;
@@ -579,6 +621,7 @@ export async function getVisitorAnalytics(event: APIGatewayProxyEventV2) {
     if (s.checkoutStarted) row.checkoutStarted += 1;
     if (s.hasCart || (s.cartAdds ?? 0) > 0) row.withCart += 1;
     if (isKnownContact(s)) row.identified += 1;
+    if (!s.country && inferred) row.inferred = true;
     const device = s.deviceType || "unknown";
     row.devices[device] = (row.devices[device] ?? 0) + 1;
     byCountryMap.set(country, row);
@@ -591,7 +634,10 @@ export async function getVisitorAnalytics(event: APIGatewayProxyEventV2) {
     }))
     .sort((a, b) => b.visitors - a.visitors);
 
-  /** Unique sessions bucketed by firstSeen UTC day (zero-filled for the selected range). */
+  /**
+   * Unique sessions per IST calendar day (last activity in range).
+   * Matches totalVisitors: every session in `list` is counted exactly once.
+   */
   type DayAgg = {
     day: string;
     visitors: number;
@@ -603,7 +649,7 @@ export async function getVisitorAnalytics(event: APIGatewayProxyEventV2) {
     events: number;
   };
   const byDayMap = new Map<string, DayAgg>();
-  for (const day of range.days) {
+  for (const day of range.businessDays) {
     byDayMap.set(day, {
       day,
       visitors: 0,
@@ -615,8 +661,14 @@ export async function getVisitorAnalytics(event: APIGatewayProxyEventV2) {
       events: 0,
     });
   }
+  const fallbackDay = range.businessDays[range.businessDays.length - 1];
   for (const s of list) {
-    const day = (s.firstSeen || s.lastSeen || "").slice(0, 10);
+    const lastDay = instantToBusinessDay(s.lastSeen);
+    const firstDay = instantToBusinessDay(s.firstSeen);
+    const day =
+      (lastDay && byDayMap.has(lastDay) ? lastDay : undefined) ||
+      (firstDay && byDayMap.has(firstDay) ? firstDay : undefined) ||
+      fallbackDay;
     if (!day || !byDayMap.has(day)) continue;
     const row = byDayMap.get(day)!;
     row.visitors += 1;
@@ -627,13 +679,13 @@ export async function getVisitorAnalytics(event: APIGatewayProxyEventV2) {
     if (s.checkoutStarted) row.checkoutStarted += 1;
     if (s.hasCart || (s.cartAdds ?? 0) > 0) row.withCart += 1;
   }
-  // Chronological (oldest → newest) for charts; rangeDays() is newest-first.
-  const byDay = [...byDayMap.values()].sort((a, b) => a.day.localeCompare(b.day));
+  const byDay = range.businessDays.map((day) => byDayMap.get(day)!);
 
   return ok({
     days: range.windowDays,
     from: range.from,
     to: range.to,
+    timeZone: range.timeZone,
     stats: {
       totalVisitors: list.length,
       known: knownCount,
