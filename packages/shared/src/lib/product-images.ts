@@ -35,3 +35,33 @@ export function mergeProductImages(imported: string[], existing: string[] = []):
 
   return merged;
 }
+
+/**
+ * Drop vendor thumbnail assets (often 100×100) that get upscaled on listing cards / PDP.
+ * Keep the largest frame(s) when the whole set is uniformly tiny.
+ */
+export const PRODUCT_IMAGE_MIN_EDGE_PX = 250;
+
+export type SizedProductImage = {
+  url: string;
+  width: number;
+  height: number;
+};
+
+export function shortEdge(width: number, height: number): number {
+  if (!width || !height) return 0;
+  return Math.min(width, height);
+}
+
+/** Prefer sharp gallery frames; fall back to the largest frame if all are tiny. */
+export function selectDisplayableProductImages(entries: SizedProductImage[]): string[] {
+  const valid = entries.filter((e) => e.url && e.width > 0 && e.height > 0);
+  if (valid.length === 0) return [];
+
+  const sharp = valid.filter((e) => shortEdge(e.width, e.height) >= PRODUCT_IMAGE_MIN_EDGE_PX);
+  if (sharp.length > 0) return sharp.map((e) => e.url);
+
+  let best = 0;
+  for (const e of valid) best = Math.max(best, e.width * e.height);
+  return valid.filter((e) => e.width * e.height === best).map((e) => e.url);
+}

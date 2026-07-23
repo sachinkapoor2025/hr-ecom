@@ -1,7 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { resolveImageUrls } from "@/lib/images";
+import {
+  selectDisplayableProductImages,
+  type SizedProductImage,
+} from "@hr-ecom/shared";
 
 interface ProductImageGalleryProps {
   images: string[];
@@ -61,13 +65,49 @@ export function ProductImageGallery({ images, alt }: ProductImageGalleryProps) {
   const [isHovering, setIsHovering] = useState(false);
   const [lens, setLens] = useState<LensState | null>(null);
   const [imageBounds, setImageBounds] = useState<ImageBounds | null>(null);
+  const [displayImgs, setDisplayImgs] = useState<string[]>([]);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const isDesktop = useDesktopHoverZoom();
 
-  const imgs = resolveImageUrls(images);
+  const resolved = useMemo(() => resolveImageUrls(images), [images]);
+  const imgs = displayImgs.length > 0 ? displayImgs : resolved.slice(0, 1);
   const current = imgs[selected] ?? "";
+
+  useEffect(() => {
+    setDisplayImgs([]);
+    setSelected(0);
+    if (resolved.length === 0) return;
+
+    let cancelled = false;
+    const measured: SizedProductImage[] = [];
+    let remaining = resolved.length;
+
+    const finish = () => {
+      if (cancelled) return;
+      const picked = selectDisplayableProductImages(measured);
+      setDisplayImgs(picked.length > 0 ? picked : resolved.slice(0, 1));
+    };
+
+    resolved.forEach((url) => {
+      const img = new Image();
+      img.onload = () => {
+        measured.push({ url, width: img.naturalWidth, height: img.naturalHeight });
+        remaining -= 1;
+        if (remaining === 0) finish();
+      };
+      img.onerror = () => {
+        remaining -= 1;
+        if (remaining === 0) finish();
+      };
+      img.src = url;
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [resolved]);
 
   const updateBounds = useCallback(() => {
     const container = containerRef.current;

@@ -34,6 +34,14 @@ export function resolveProductImageUrl(url: string | undefined | null, cdnBase?:
   const uploadsMatch = trimmed.match(/\/wp-content\/uploads\/(.+)$/i);
   if (uploadsMatch) return cdnUploadUrl(uploadsMatch[1], cdn);
 
+  // Relative storefront uploads (e.g. Orange County hampers under /uploads/orange-county/…).
+  if (trimmed.startsWith("/uploads/")) {
+    return `${cdn}${trimmed}`;
+  }
+  if (/^uploads\//i.test(trimmed)) {
+    return cdnUploadUrl(trimmed.replace(/^uploads\//i, ""), cdn);
+  }
+
   return trimmed;
 }
 
