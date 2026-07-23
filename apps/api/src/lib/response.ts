@@ -66,3 +66,8 @@ export function notFound(message = "Not found") {
 export function serverError(message = "Internal server error") {
   return json(500, { error: message });
 }
+
+/** Upstream dependency failure (SES, SMTP, etc.) with an actionable message. */
+export function badGateway(message: string) {
+  return json(502, { error: message });
+}

@@ -61,9 +61,26 @@ jobs:
           USPS_EPS_ACCOUNT_NUMBER: ${{ secrets.USPS_EPS_ACCOUNT_NUMBER }}
           USPS_PAYMENT_AUTHORIZATION_TOKEN: ${{ secrets.USPS_PAYMENT_AUTHORIZATION_TOKEN }}
           ORANGE_COUNTY_VENDOR_API_KEY: ${{ secrets.ORANGE_COUNTY_VENDOR_API_KEY }}
+          WHATSAPP_TOKEN: ${{ secrets.WHATSAPP_TOKEN }}
+          WHATSAPP_PHONE_NUMBER_ID: ${{ secrets.WHATSAPP_PHONE_NUMBER_ID }}
+          WHATSAPP_TEMPLATE_NAME: ${{ secrets.WHATSAPP_TEMPLATE_NAME }}
+          WHATSAPP_TEMPLATE_LANG: ${{ secrets.WHATSAPP_TEMPLATE_LANG }}
+          TWILIO_ACCOUNT_SID: ${{ secrets.TWILIO_ACCOUNT_SID }}
+          TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
+          TWILIO_WHATSAPP_FROM: ${{ secrets.TWILIO_WHATSAPP_FROM }}
+          MARKETING_SMTP_PASS: ${{ secrets.MARKETING_SMTP_PASS }}
         run: |
-          # Empty secrets become empty SAM params (safe defaults in template.yaml).
+          # Omit empty WhatsApp/Twilio/marketing overrides so a prior SAM deploy's values are not wiped.
           BASE_URL="${USPS_BASE_URL:-https://apis.usps.com}"
+          EXTRA=""
+          [ -n "${WHATSAPP_TOKEN:-}" ] && EXTRA="$EXTRA WhatsAppToken=${WHATSAPP_TOKEN}"
+          [ -n "${WHATSAPP_PHONE_NUMBER_ID:-}" ] && EXTRA="$EXTRA WhatsAppPhoneNumberId=${WHATSAPP_PHONE_NUMBER_ID}"
+          [ -n "${WHATSAPP_TEMPLATE_NAME:-}" ] && EXTRA="$EXTRA WhatsAppTemplateName=${WHATSAPP_TEMPLATE_NAME}"
+          [ -n "${WHATSAPP_TEMPLATE_LANG:-}" ] && EXTRA="$EXTRA WhatsAppTemplateLang=${WHATSAPP_TEMPLATE_LANG}"
+          [ -n "${TWILIO_ACCOUNT_SID:-}" ] && EXTRA="$EXTRA TwilioAccountSid=${TWILIO_ACCOUNT_SID}"
+          [ -n "${TWILIO_AUTH_TOKEN:-}" ] && EXTRA="$EXTRA TwilioAuthToken=${TWILIO_AUTH_TOKEN}"
+          [ -n "${TWILIO_WHATSAPP_FROM:-}" ] && EXTRA="$EXTRA TwilioWhatsAppFrom=${TWILIO_WHATSAPP_FROM}"
+          [ -n "${MARKETING_SMTP_PASS:-}" ] && EXTRA="$EXTRA MarketingSmtpPassword=${MARKETING_SMTP_PASS}"
           sam build && sam deploy --no-confirm-changeset --no-fail-on-empty-changeset --config-env prod \
             --parameter-overrides "\
           Environment=prod \
@@ -80,7 +97,7 @@ jobs:
           UspsMid=${USPS_MID} \
           UspsEpsAccountNumber=${USPS_EPS_ACCOUNT_NUMBER} \
           UspsPaymentAuthorizationToken=${USPS_PAYMENT_AUTHORIZATION_TOKEN} \
-          OrangeCountyVendorApiKey=${ORANGE_COUNTY_VENDOR_API_KEY}"
+          OrangeCountyVendorApiKey=${ORANGE_COUNTY_VENDOR_API_KEY}${EXTRA}"
 
       # Catalog import OVERWRITES product records and has wiped admin-uploaded images.
       # Run manually only: Actions → Import UsaRakhi Catalog (workflow_dispatch).

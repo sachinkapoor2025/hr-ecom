@@ -37,6 +37,11 @@ Parameters:
     Default: ""
     NoEcho: true
     Description: SMTP password for order@usarakhi.com (contact & order emails)
+  MarketingSmtpPassword:
+    Type: String
+    Default: ""
+    NoEcho: true
+    Description: Marketing SMTP password (Mailercloud) for /admin/email campaigns
   UspsClientId:
     Type: String
     Default: ""
@@ -77,6 +82,34 @@ Parameters:
     Default: ""
     NoEcho: true
     Description: API key for Orange County vendor order feed (X-Vendor-Api-Key)
+  WhatsAppToken:
+    Type: String
+    Default: ""
+    NoEcho: true
+    Description: Meta WhatsApp Cloud API permanent token (optional)
+  WhatsAppPhoneNumberId:
+    Type: String
+    Default: ""
+    Description: Meta WhatsApp phone number ID (optional)
+  WhatsAppTemplateName:
+    Type: String
+    Default: ""
+    Description: Optional approved Meta template name for out-of-session messages
+  WhatsAppTemplateLang:
+    Type: String
+    Default: "en"
+  TwilioAccountSid:
+    Type: String
+    Default: ""
+    NoEcho: true
+  TwilioAuthToken:
+    Type: String
+    Default: ""
+    NoEcho: true
+  TwilioWhatsAppFrom:
+    Type: String
+    Default: ""
+    Description: e.g. whatsapp:+14155238886 (optional Twilio WhatsApp sender)
 
 Globals:
   Function:
@@ -117,6 +150,12 @@ Globals:
         SES_AWS_REGION: us-east-1
         SES_FROM_EMAIL: order@usarakhi.com
         SES_REPLY_TO: order@usarakhi.com
+        MARKETING_TRANSPORT: smtp
+        MARKETING_SMTP_HOST: smtp-prod.mailrcld.com
+        MARKETING_SMTP_PORT: "587"
+        MARKETING_SMTP_SECURE: "false"
+        MARKETING_SMTP_USER: order@usarakhi.com
+        MARKETING_SMTP_PASS: !Ref MarketingSmtpPassword
         USPS_CLIENT_ID: !Ref UspsClientId
         USPS_CLIENT_SECRET: !Ref UspsClientSecret
         USPS_SECRET_ARN: !Ref UspsSecretArn
@@ -126,6 +165,13 @@ Globals:
         USPS_EPS_ACCOUNT_NUMBER: !Ref UspsEpsAccountNumber
         USPS_PAYMENT_AUTHORIZATION_TOKEN: !Ref UspsPaymentAuthorizationToken
         ORANGE_COUNTY_VENDOR_API_KEY: !Ref OrangeCountyVendorApiKey
+        WHATSAPP_TOKEN: !Ref WhatsAppToken
+        WHATSAPP_PHONE_NUMBER_ID: !Ref WhatsAppPhoneNumberId
+        WHATSAPP_TEMPLATE_NAME: !Ref WhatsAppTemplateName
+        WHATSAPP_TEMPLATE_LANG: !Ref WhatsAppTemplateLang
+        TWILIO_ACCOUNT_SID: !Ref TwilioAccountSid
+        TWILIO_AUTH_TOKEN: !Ref TwilioAuthToken
+        TWILIO_WHATSAPP_FROM: !Ref TwilioWhatsAppFrom
 
 Resources:
   ProductsTable:
@@ -682,6 +728,12 @@ Resources:
           SES_AWS_REGION: us-east-1
           SES_FROM_EMAIL: order@usarakhi.com
           SES_REPLY_TO: order@usarakhi.com
+          MARKETING_TRANSPORT: smtp
+          MARKETING_SMTP_HOST: smtp-prod.mailrcld.com
+          MARKETING_SMTP_PORT: "587"
+          MARKETING_SMTP_SECURE: "false"
+          MARKETING_SMTP_USER: order@usarakhi.com
+          MARKETING_SMTP_PASS: !Ref MarketingSmtpPassword
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref EmailCampaignsTable

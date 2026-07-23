@@ -54,6 +54,9 @@ export function getSeoBlogEntry(slug: string): SeoBlogEntry | undefined {
 /** Map category public path → internal slug for product keyword lookup. */
 export const categoryPathToSlug: Record<string, string> = {
   "/single-rakhi-to-usa": "single-rakhi",
+  "/2-set-rakhi-to-usa": "2-set-rakhi",
+  "/3-set-rakhi-to-usa": "3-set-rakhi",
+  "/4-set-rakhi-to-usa": "4-set-rakhi",
   "/bhaiya-bhabhi-rakhi-to-usa": "bhaiya-bhabhi-rakhi",
   "/kids-rakhi-to-usa": "kids-rakhi",
   "/lumba-rakhi-to-usa": "lumba-rakhi",

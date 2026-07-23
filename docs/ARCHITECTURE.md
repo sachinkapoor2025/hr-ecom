@@ -71,7 +71,9 @@ leads/sessions; products re-seed via `import:usarakhi`).
 |-----|----------|---------|
 | `ReviewEmailsCronFunction` | Every hour | Email customers 1 day after order is marked **Delivered** or **Complete**, linking to `/reviews` |
 
-When admin changes order status (accepted, processing, shipped, delivered, complete, cancelled, refunded, or paid), the API emails the customer at `shippingAddress.email` via **SMTP** (`notifyCustomerOrderStatusChange` in `apps/api/src/lib/email.ts` — same transactional path as paid confirmation). **SES is marketing-only** (`/ses-email/*`) and is not used for order updates. Shipped emails include carrier/tracking when present. `pending_payment` → `cancelled` skips the customer email (admin payment-failed alert only). Separately, **Delivered** or **Complete** also sets `reviewEmailDueAt` (delivery + 1 day); the cron sends one review-request email per order (`reviewEmailSentAt`).
+When admin changes order status (accepted, processing, shipped, delivered, complete, cancelled, refunded, or paid), the API emails the customer at `shippingAddress.email` via **SMTP** (`notifyCustomerOrderStatusChange` in `apps/api/src/lib/email.ts` — same transactional path as paid confirmation). **Marketing campaigns** (`/ses-email/*`, admin Email) send via **marketing SMTP** (default Mailercloud `smtp-prod.mailrcld.com:587`) configured under Admin → Email → Settings; Amazon SES API remains an optional legacy transport if `marketingTransport=ses`. Transactional `SMTP_*` env is separate and unchanged. Shipped emails include carrier/tracking when present. `pending_payment` → `cancelled` skips the customer email (admin payment-failed alert only). Separately, **Delivered** or **Complete** also sets `reviewEmailDueAt` (delivery + 1 day); the cron sends one review-request email per order (`reviewEmailSentAt`).
+
+**WhatsApp (optional, additive):** When Meta Cloud API (`WHATSAPP_TOKEN` + `WHATSAPP_PHONE_NUMBER_ID`) and/or Twilio (`TWILIO_*`) env vars are set, the same customer notifications also send via WhatsApp (`apps/api/src/lib/whatsapp.ts` → `notifyCustomerWhatsApp`): welcome/admin/abandoned coupons, order paid + status updates, pending-payment reminders, review requests, contact ack, abandoned-cart recovery. Email remains primary — WhatsApp failures never block checkout or SMTP. Admin abandoned coupons still return a `wa.me` deep link when APIs are unset. For Meta out-of-session sends, set an approved `WHATSAPP_TEMPLATE_NAME` (freeform text only works inside the 24h customer-care window).
 
 **Pending-payment reminders (SMTP):** While an order stays `pending_payment`, the shared 15‑minute cron (`scheduled.handler` → `processPendingPaymentReminders`) emails the customer **once per America/New_York calendar day** (first send ≥ 2 hours after checkout). Campaign ends after **2026-08-28** (last reminder day). Stops immediately when status leaves `pending_payment` (paid/cancelled). Tracked via `pendingPaymentReminderLastDateKey` / `pendingPaymentReminderCount`.
 
@@ -138,7 +140,7 @@ When admin changes order status (accepted, processing, shipped, delivered, compl
 | GET | `/admin/carts/abandoned` | Admin: abandoned carts (CSV in UI) |
 | GET | `/admin/leads` | Admin: captured leads |
 | GET/POST | `/ses-email/reminders*` | Admin: checkout-nudge audience (manual fetch, send, soft-delete). UI: `/admin/email/nudges` |
-| GET/POST | `/ses-email/*` | SES bulk campaigns (admin auth): dashboard, campaigns, recipients, templates (CRUD + starter “Raksha Bandhan USA”), queue, analytics, suppression, settings. UI at `/admin/email` |
+| GET/POST | `/ses-email/*` | Marketing campaigns (admin auth): dashboard, campaigns, recipients, templates, queue, analytics, suppression, settings (SMTP credentials). UI at `/admin/email` |
 | GET | `/email/open/{token}` | Open tracking pixel |
 | GET | `/email/click/{token}` | Click tracking redirect |
 | GET | `/email/unsubscribe/{token}` | Unsubscribe → suppression list |
@@ -211,4 +213,4 @@ See `apps/web/.env.example` and `infrastructure/template.yaml` Parameters sectio
 - Email (SES), SMS (SNS)
 - Multi-currency, multi-language
 - Analytics (Plausible / GA4)
-- Abandoned cart emails
+- Abandoned cart emails (+ WhatsApp when phone + API configured)

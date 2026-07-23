@@ -21,6 +21,24 @@ export const categoryPageSeo: Record<
       "Buy Single Rakhi to USA from our exclusive collection of traditional and designer Rakhis. Fast USA delivery with festive packaging and roli chawal.",
     h1: "Send Single Rakhi to USA",
   },
+  "2-set-rakhi": {
+    title: "Send 2 Set Rakhi to USA | Free Shipping | USA Rakhi",
+    description:
+      "Shop 2 Set Rakhi to USA — two-piece designer rakhi sets for brothers. Fast USA delivery with festive packaging and roli chawal.",
+    h1: "Send 2 Set Rakhi to USA",
+  },
+  "3-set-rakhi": {
+    title: "Send 3 Set Rakhi to USA | Free Shipping | USA Rakhi",
+    description:
+      "Shop 3 Set Rakhi to USA — three-piece designer rakhi sets for multiple brothers. Fast USA delivery with festive packaging.",
+    h1: "Send 3 Set Rakhi to USA",
+  },
+  "4-set-rakhi": {
+    title: "Send 4 Set Rakhi to USA | Free Shipping | USA Rakhi",
+    description:
+      "Shop 4 Set Rakhi to USA — four-piece designer rakhi sets for larger families. Fast USA delivery with festive packaging.",
+    h1: "Send 4 Set Rakhi to USA",
+  },
   "kids-rakhi": {
     title: "Send Kids Rakhi to USA | Free Shipping | USA Rakhi",
     description:

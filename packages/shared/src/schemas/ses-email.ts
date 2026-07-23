@@ -94,6 +94,18 @@ export const sesSettingsSchema = z.object({
   contactEmail: z.string().email().optional(),
   privacyUrl: z.string().url().optional(),
   adminNotifyEmail: z.string().email().optional(),
+  /**
+   * Marketing transport. Default smtp — SES account may be suspended.
+   * Transactional order mail still uses separate SMTP_* env (email.ts).
+   */
+  marketingTransport: z.enum(["smtp", "ses"]).default("smtp"),
+  smtpHost: z.string().max(200).optional().or(z.literal("")),
+  smtpPort: z.coerce.number().int().min(1).max(65535).default(587),
+  /** true = SMTPS (465); false = STARTTLS (typically 587). */
+  smtpSecure: z.coerce.boolean().default(false),
+  smtpUser: z.string().max(200).optional().or(z.literal("")),
+  /** Stored in Dynamo settings; never returned in full by GET (redacted). */
+  smtpPassword: z.string().max(500).optional().or(z.literal("")),
 });
 
 export const suppressEmailSchema = z.object({

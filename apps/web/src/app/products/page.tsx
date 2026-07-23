@@ -28,6 +28,18 @@ const CATEGORY_SEO: Record<string, { title: string; description: string }> = {
     title: "Single Rakhi USA — Send to Brother Online",
     description: "Shop single rakhis with roli chawal. Send Rakhi to USA — traditional, Om, pearl & designer styles. 5–7 day delivery.",
   },
+  "2-set-rakhi": {
+    title: "2 Set Rakhi USA — Two-Piece Rakhi Sets",
+    description: "Shop 2-piece rakhi sets for brothers in the USA. Designer multi-rakhi packs with fast domestic delivery.",
+  },
+  "3-set-rakhi": {
+    title: "3 Set Rakhi USA — Three-Piece Rakhi Sets",
+    description: "Shop 3-piece rakhi sets for multiple brothers in the USA. Designer packs with fast domestic delivery.",
+  },
+  "4-set-rakhi": {
+    title: "4 Set Rakhi USA — Four-Piece Rakhi Sets",
+    description: "Shop 4-piece rakhi sets for larger families in the USA. Designer packs with fast domestic delivery.",
+  },
   "rakhi-combo": {
     title: "Rakhi Combo USA — Rakhi with Chocolates",
     description: "Rakhi combo sets with Ferrero Rocher, Lindt & Hershey's. Send Rakhi combo to USA with free shipping on selected orders.",

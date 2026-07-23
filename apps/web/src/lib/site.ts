@@ -24,9 +24,19 @@ export const site = {
   accentColor: "#e11d48",
 } as const;
 
+/** Dropdown under "Rakhi Sets USA" — Single + multi-piece set filters. */
+export const rakhiSetsMenu = {
+  label: "Rakhi Sets USA",
+  items: [
+    { label: "Single Rakhi to USA", href: categoryHref("single-rakhi"), category: "single-rakhi" },
+    { label: "Set of 2 Rakhis", href: categoryHref("2-set-rakhi"), category: "2-set-rakhi" },
+    { label: "Set of 3 Rakhis", href: categoryHref("3-set-rakhi"), category: "3-set-rakhi" },
+    { label: "Set of 4 Rakhis", href: categoryHref("4-set-rakhi"), category: "4-set-rakhi" },
+  ],
+} as const;
+
 export const navItems = [
   { label: "Home", href: "/" },
-  { label: "Single Rakhi", href: categoryHref("single-rakhi"), category: "single-rakhi" },
   { label: "Bhaiya Bhabhi Rakhi", href: categoryHref("bhaiya-bhabhi-rakhi"), category: "bhaiya-bhabhi-rakhi" },
   { label: "Kids Rakhi", href: categoryHref("kids-rakhi"), category: "kids-rakhi" },
   { label: "Lumba Rakhi", href: categoryHref("lumba-rakhi"), category: "lumba-rakhi" },
@@ -116,7 +126,11 @@ export const homeCategoryOrder = [
   "rakhi-hampers",
 ] as const;
 
-export const categoryOrder = homeCategoryOrder;
+/** Virtual multi-piece set filters (nav dropdown + SEO landing pages). */
+export const setSizeCategoryOrder = ["2-set-rakhi", "3-set-rakhi", "4-set-rakhi"] as const;
+
+/** All browsable category slugs (home sections + set-size landings). */
+export const categoryOrder = [...homeCategoryOrder, ...setSizeCategoryOrder] as const;
 
 /** Sort API categories to match site display order (home + shop). */
 export function orderCategories<T extends { slug: string }>(categories: readonly T[]): T[] {

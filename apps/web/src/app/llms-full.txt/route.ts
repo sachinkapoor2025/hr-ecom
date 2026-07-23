@@ -1,5 +1,5 @@
 import { api } from "@/lib/api";
-import { site, navItems, faqs } from "@/lib/site";
+import { site, navItems, faqs, rakhiSetsMenu } from "@/lib/site";
 import { siteUrl } from "@/lib/env";
 import { getCatalogProducts } from "@/lib/catalog-fallback";
 import { stripHtml } from "@/lib/html-text";
@@ -24,10 +24,12 @@ export async function GET() {
   }
   products = [...bySlug.values()];
 
-  const categories = navItems
-    .filter((n): n is typeof n & { category: string } => "category" in n)
-    .map((n) => `- ${n.label}: ${siteUrl}${n.href}`)
-    .join("\n");
+  const categories = [
+    ...rakhiSetsMenu.items.map((n) => `- ${n.label}: ${siteUrl}${n.href}`),
+    ...navItems
+      .filter((n): n is typeof n & { category: string } => "category" in n)
+      .map((n) => `- ${n.label}: ${siteUrl}${n.href}`),
+  ].join("\n");
 
   const productLines = products
     .map((p) => {

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useCart } from "@/lib/cart-context";
 import { categoryHref } from "@/lib/category-urls";
-import { site, navItems, cityLinks } from "@/lib/site";
+import { navItems, cityLinks, rakhiSetsMenu } from "@/lib/site";
 import { SearchBar } from "@/components/SearchBar";
 import { SiteLogoLink } from "@/components/SiteLogo";
 
@@ -42,6 +42,54 @@ function CitiesMenu({ onNavigate }: { onNavigate?: () => void }) {
                 }}
               >
                 Rakhi to {c.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function RakhiSetsMenu({
+  active,
+  onNavigate,
+}: {
+  active: boolean;
+  onNavigate?: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div
+      className="relative shrink-0"
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        aria-haspopup="true"
+        className={`btn-nav gap-1 ${active || open ? "btn-nav-active" : ""}`}
+      >
+        {rakhiSetsMenu.label}
+        <span className={`text-xs transition-transform ${open ? "rotate-180" : ""}`}>▼</span>
+      </button>
+      {open && (
+        <div className="absolute top-full left-0 pt-1.5 z-[100]">
+          <div className="min-w-[200px] rounded-lg border border-slate-200 bg-white py-1 shadow-xl">
+            {rakhiSetsMenu.items.map((item) => (
+              <Link
+                key={item.category}
+                href={item.href}
+                className="block px-4 py-2.5 text-sm text-slate-700 hover:bg-blue-50 hover:text-nav whitespace-nowrap"
+                onClick={() => {
+                  setOpen(false);
+                  onNavigate?.();
+                }}
+              >
+                {item.label}
               </Link>
             ))}
           </div>
@@ -156,6 +204,7 @@ export function Header() {
   const activeCategory = searchParams.get("category");
   const [menuOpen, setMenuOpen] = useState(false);
   const [citiesOpen, setCitiesOpen] = useState(false);
+  const [rakhiSetsOpen, setRakhiSetsOpen] = useState(false);
 
   const isActive = (href: string, category?: string) => {
     if (href === "/") return pathname === "/" && !activeCategory;
@@ -168,14 +217,18 @@ export function Header() {
     return pathname.startsWith(href.split("?")[0]) && href !== "/";
   };
 
+  const isRakhiSetsActive = rakhiSetsMenu.items.some((item) => isActive(item.href, item.category));
+
   const closeMenu = () => {
     setMenuOpen(false);
     setCitiesOpen(false);
+    setRakhiSetsOpen(false);
   };
 
   useEffect(() => {
     setMenuOpen(false);
     setCitiesOpen(false);
+    setRakhiSetsOpen(false);
   }, [pathname, activeCategory]);
 
   useEffect(() => {
@@ -251,15 +304,30 @@ export function Header() {
       <nav className="hidden md:block border-t border-slate-100 bg-white overflow-visible">
         <div className="max-w-7xl mx-auto px-4 py-2.5">
           <div className="flex flex-wrap items-center gap-2">
-            {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`btn-nav ${isActive(item.href, "category" in item ? item.category : undefined) ? "btn-nav-active" : ""}`}
-              >
-                {item.label}
-              </Link>
-            ))}
+            {navItems.map((item) => {
+              if (item.href === "/") {
+                return (
+                  <span key={item.href} className="contents">
+                    <Link
+                      href={item.href}
+                      className={`btn-nav ${isActive(item.href) ? "btn-nav-active" : ""}`}
+                    >
+                      {item.label}
+                    </Link>
+                    <RakhiSetsMenu active={isRakhiSetsActive} />
+                  </span>
+                );
+              }
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`btn-nav ${isActive(item.href, "category" in item ? item.category : undefined) ? "btn-nav-active" : ""}`}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
             <CitiesMenu />
           </div>
         </div>
@@ -290,22 +358,77 @@ export function Header() {
             </div>
 
             <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-1">
-              {navItems.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={closeMenu}
-                className={`block rounded-lg px-4 py-3 text-sm font-semibold ${
-                  isActive(item.href, "category" in item ? item.category : undefined)
-                    ? "bg-nav text-white"
-                    : "text-primary hover:bg-blue-50 hover:text-nav"
-                }`}
-              >
-                {item.label}
-              </Link>
-            ))}
+              {navItems.map((item) => {
+                if (item.href === "/") {
+                  return (
+                    <div key={item.href} className="space-y-1">
+                      <Link
+                        href={item.href}
+                        onClick={closeMenu}
+                        className={`block rounded-lg px-4 py-3 text-sm font-semibold ${
+                          isActive(item.href)
+                            ? "bg-nav text-white"
+                            : "text-primary hover:bg-blue-50 hover:text-nav"
+                        }`}
+                      >
+                        {item.label}
+                      </Link>
+                      <div>
+                        <button
+                          type="button"
+                          onClick={() => setRakhiSetsOpen((v) => !v)}
+                          className={`w-full flex items-center justify-between rounded-lg px-4 py-3 text-sm font-semibold ${
+                            isRakhiSetsActive || rakhiSetsOpen
+                              ? "bg-nav text-white"
+                              : "text-primary hover:bg-blue-50 hover:text-nav"
+                          }`}
+                        >
+                          {rakhiSetsMenu.label}
+                          <span
+                            className={`text-xs transition-transform ${rakhiSetsOpen ? "rotate-180" : ""}`}
+                          >
+                            ▼
+                          </span>
+                        </button>
+                        {rakhiSetsOpen && (
+                          <div className="mt-1 ml-2 border-l-2 border-slate-100 pl-2 space-y-1">
+                            {rakhiSetsMenu.items.map((setItem) => (
+                              <Link
+                                key={setItem.category}
+                                href={setItem.href}
+                                onClick={closeMenu}
+                                className={`block rounded-lg px-4 py-2.5 text-sm ${
+                                  isActive(setItem.href, setItem.category)
+                                    ? "bg-blue-50 text-nav font-semibold"
+                                    : "text-slate-700 hover:bg-blue-50 hover:text-nav"
+                                }`}
+                              >
+                                {setItem.label}
+                              </Link>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                }
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={closeMenu}
+                    className={`block rounded-lg px-4 py-3 text-sm font-semibold ${
+                      isActive(item.href, "category" in item ? item.category : undefined)
+                        ? "bg-nav text-white"
+                        : "text-primary hover:bg-blue-50 hover:text-nav"
+                    }`}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
 
-            <div>
+              <div>
                 <button
                   type="button"
                   onClick={() => setCitiesOpen((v) => !v)}

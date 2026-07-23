@@ -4,6 +4,9 @@
  */
 export const CATEGORY_PUBLIC_SLUG: Record<string, string> = {
   "single-rakhi": "single-rakhi-to-usa",
+  "2-set-rakhi": "2-set-rakhi-to-usa",
+  "3-set-rakhi": "3-set-rakhi-to-usa",
+  "4-set-rakhi": "4-set-rakhi-to-usa",
   "kids-rakhi": "kids-rakhi-to-usa",
   "rakhi-combo": "rakhi-combo-to-usa",
   "lumba-rakhi": "lumba-rakhi-to-usa",
