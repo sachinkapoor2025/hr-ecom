@@ -48,9 +48,11 @@ export async function GET() {
 ${site.description}
 
 **Website:** ${siteUrl}
+**Primary buyers:** Sisters in India (and worldwide) ordering for brothers in the USA.
 **Raksha Bandhan 2026:** August 28, 2026 — order by early August for on-time USA delivery.
 **Delivery:** 5–7 business days to all 50 US states (domestic US fulfillment).
-**Payments:** Stripe (USD), Razorpay (INR).
+**Payments:** Stripe (USD), Razorpay (INR / UPI).
+**Order from India (INR/UPI guide):** ${siteUrl}/send-rakhi-from-india
 
 ---
 

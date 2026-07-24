@@ -1,13 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { resolveImageUrl } from "@/lib/images";
+import {
+  selectDisplayableProductImages,
+  type SizedProductImage,
+} from "@hr-ecom/shared";
 
 const ROTATE_MS = 4000;
 
 /**
  * Auto-rotates through a product's gallery images on listing cards.
  * Pauses while hovered; only advances when the card is on-screen.
+ * Skips tiny vendor thumbnails (e.g. 100×100) once real dimensions are known.
  */
 export function ProductImageRotator({
   images,
@@ -24,11 +29,49 @@ export function ProductImageRotator({
   staggerKey?: string;
   priority?: boolean;
 }) {
-  const urls = images.map(resolveImageUrl).filter(Boolean);
+  const resolved = useMemo(
+    () => [...new Set(images.map(resolveImageUrl).filter(Boolean))],
+    [images]
+  );
+  const [urls, setUrls] = useState<string[]>([]);
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const [visible, setVisible] = useState(true);
   const [root, setRoot] = useState<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    setUrls([]);
+    setIndex(0);
+    if (resolved.length === 0) return;
+
+    let cancelled = false;
+    const measured: SizedProductImage[] = [];
+    let remaining = resolved.length;
+
+    const finish = () => {
+      if (cancelled) return;
+      const picked = selectDisplayableProductImages(measured);
+      setUrls(picked.length > 0 ? picked : resolved.slice(0, 1));
+    };
+
+    resolved.forEach((url) => {
+      const img = new Image();
+      img.onload = () => {
+        measured.push({ url, width: img.naturalWidth, height: img.naturalHeight });
+        remaining -= 1;
+        if (remaining === 0) finish();
+      };
+      img.onerror = () => {
+        remaining -= 1;
+        if (remaining === 0) finish();
+      };
+      img.src = url;
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [resolved]);
 
   useEffect(() => {
     if (!root || typeof IntersectionObserver === "undefined") return;
@@ -41,6 +84,10 @@ export function ProductImageRotator({
   }, [root]);
 
   useEffect(() => {
+    setIndex(0);
+  }, [urls]);
+
+  useEffect(() => {
     if (urls.length <= 1 || paused || !visible) return;
 
     let hash = 0;
@@ -51,9 +98,9 @@ export function ProductImageRotator({
       setIndex((i) => (i + 1) % urls.length);
     }, delay);
     return () => window.clearInterval(id);
-  }, [urls.length, paused, visible, staggerKey]);
+  }, [urls, paused, visible, staggerKey]);
 
-  if (urls.length === 0) {
+  if (resolved.length === 0) {
     return (
       <div className={`flex items-center justify-center bg-slate-50 text-slate-400 text-sm ${className}`}>
         No image
@@ -75,13 +122,13 @@ export function ProductImageRotator({
           src={src}
           alt={i === 0 ? alt : ""}
           aria-hidden={i !== index}
-          className={`absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-700 ease-out ${
+          className={`absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-500 ease-out ${
             i === index ? "opacity-100" : "opacity-0"
           }`}
           loading={priority && i === 0 ? "eager" : "lazy"}
           decoding="async"
-          width={600}
-          height={600}
+          width={1200}
+          height={1200}
         />
       ))}
       {urls.length > 1 && (

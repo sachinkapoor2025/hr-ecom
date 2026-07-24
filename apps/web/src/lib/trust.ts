@@ -50,7 +50,7 @@ export const trustHighlights = [
 export const trustStripItems = [
   "Ships from within the USA",
   "5–7 day delivery · all 50 states",
+  "Order from India · pay INR/UPI",
   "Secure Stripe & Razorpay checkout",
-  "California fulfillment team",
-  "WhatsApp support",
+  "WhatsApp +91 support",
 ] as const;

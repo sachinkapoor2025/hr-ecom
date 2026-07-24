@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { formatViewerLocation } from "@hr-ecom/shared";
+import { formatViewerLocation, ADMIN_ANALYTICS_TIMEZONE, businessDayKey } from "@hr-ecom/shared";
 import { useApiClient } from "@/lib/auth-context";
 import {
   downloadCsv,
@@ -48,6 +48,7 @@ interface VisitorAnalyticsResponse {
   days: number;
   from: string;
   to: string;
+  timeZone?: string;
   stats: {
     totalVisitors: number;
     known: number;
@@ -57,7 +58,7 @@ interface VisitorAnalyticsResponse {
     withCart: number;
     countries: number;
   };
-  /** Unique sessions per UTC day (firstSeen). Additive field — older APIs may omit. */
+  /** Unique sessions per IST day (last activity). Additive field — older APIs may omit. */
   byDay?: DailyVisitorPoint[];
   byCountry: CountrySlice[];
   sessions: SessionSummary[];
@@ -74,13 +75,14 @@ const PRESETS: { id: Preset; label: string; days?: number }[] = [
 ];
 
 function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
+  return businessDayKey(new Date(), ADMIN_ANALYTICS_TIMEZONE);
 }
 
 function daysAgoIso(n: number): string {
-  const d = new Date();
-  d.setUTCDate(d.getUTCDate() - (n - 1));
-  return d.toISOString().slice(0, 10);
+  const today = todayIso();
+  const cursor = new Date(`${today}T12:00:00+05:30`);
+  cursor.setTime(cursor.getTime() - (n - 1) * 86_400_000);
+  return businessDayKey(cursor, ADMIN_ANALYTICS_TIMEZONE);
 }
 
 function visitorLabel(s: SessionSummary): string {
@@ -226,8 +228,9 @@ export function VisitorAnalyticsPanel() {
         <div>
           <h2 className="text-lg font-semibold">Visitor analytics</h2>
           <p className="text-sm text-slate-500">
-            Unique sessions in the selected window, with country mix and full visitor list.
-          </p>
+          Unique sessions in the selected window (IST / Asia/Kolkata), with country mix and full
+          visitor list. Same day rules as Admin → Visitors.
+        </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {PRESETS.map((p) => (
@@ -313,7 +316,8 @@ export function VisitorAnalyticsPanel() {
           </div>
 
           <p className="text-xs text-slate-500">
-            Range {data.from} → {data.to} · {data.stats.anonymous.toLocaleString()} anonymous ·{" "}
+            Range {data.from} → {data.to} ({data.timeZone ?? ADMIN_ANALYTICS_TIMEZONE}) ·{" "}
+            {data.stats.anonymous.toLocaleString()} anonymous ·{" "}
             {data.stats.checkoutStarted.toLocaleString()} checkout ·{" "}
             {data.stats.withCart.toLocaleString()} with cart
           </p>
@@ -324,7 +328,8 @@ export function VisitorAnalyticsPanel() {
                 <div>
                   <h3 className="font-semibold">Daily visitors</h3>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    Unique sessions by first-seen day. Hover a point for full stats.
+                    Unique sessions by last activity day (IST). Sum of daily points matches Total
+                    visitors. Hover a point for full stats.
                   </p>
                 </div>
                 <ChartLegend
@@ -341,7 +346,8 @@ export function VisitorAnalyticsPanel() {
           <section className="bg-white border rounded-xl p-5">
             <h3 className="font-semibold mb-1">Visitors by country</h3>
             <p className="text-xs text-slate-500 mb-4">
-              Hover a slice or country for counts and conversion stats
+              Prefer CDN country; if missing, inferred from timezone/locale (same cues as the
+              Location column). Remaining Unknown = no country and no usable timezone hint.
             </p>
             <CountryPie3D data={data.byCountry} />
           </section>

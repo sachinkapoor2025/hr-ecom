@@ -86,7 +86,12 @@ async function fetchUsdInrRate(): Promise<{ rate: number; source: string }> {
 }
 
 export function CurrencyProvider({ children }: { children: ReactNode }) {
-  const [displayCurrency, setDisplayCurrencyState] = useState<DisplayCurrency>("USD");
+  const [displayCurrency, setDisplayCurrencyState] = useState<DisplayCurrency>(() => {
+    if (typeof window === "undefined") return "USD";
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved === "USD" || saved === "INR") return saved;
+    return "USD";
+  });
   const [usdInrRate, setUsdInrRate] = useState(ENV_FALLBACK);
   const [rateSource, setRateSource] = useState("loading");
   const [rateLoading, setRateLoading] = useState(true);
@@ -104,18 +109,20 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
       if (manual) {
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved === "USD" || saved === "INR") setDisplayCurrencyState(saved);
-      } else {
-        try {
-          const res = await fetch("/api/geo", { cache: "no-store" });
-          if (res.ok) {
-            const data = (await res.json()) as { currency?: string };
-            if (data.currency === "INR" || data.currency === "USD") {
-              setDisplayCurrencyState(data.currency);
-            }
+        return;
+      }
+      try {
+        const res = await fetch("/api/geo", { cache: "no-store" });
+        if (res.ok) {
+          const data = (await res.json()) as { currency?: string };
+          if (data.currency === "INR" || data.currency === "USD") {
+            setDisplayCurrencyState(data.currency);
+            // Persist geo default so next visit starts in INR for India visitors (no USD flash).
+            localStorage.setItem(STORAGE_KEY, data.currency);
           }
-        } catch {
-          setDisplayCurrencyState("USD");
         }
+      } catch {
+        /* keep prior / USD */
       }
     };
 

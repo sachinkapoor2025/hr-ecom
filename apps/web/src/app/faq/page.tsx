@@ -31,7 +31,12 @@ export default function FaqPage() {
         ))}
       </div>
       <p className="mt-10 text-sm text-slate-500">
-        More guides: <Link href="/blog" className="text-nav hover:underline">Blog</Link>
+        More guides:{" "}
+        <Link href="/send-rakhi-from-india" className="text-nav hover:underline">
+          Send Rakhi from India
+        </Link>
+        {" · "}
+        <Link href="/blog" className="text-nav hover:underline">Blog</Link>
         {" · "}
         <Link href="/shipping" className="text-nav hover:underline">Shipping</Link>
         {" · "}

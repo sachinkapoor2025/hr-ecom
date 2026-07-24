@@ -7,7 +7,7 @@
  *
  *   COPY_IMAGES=1 npx tsx scripts/generate-orange-county-catalog.ts
  */
-import { readdirSync, writeFileSync, existsSync, mkdirSync, copyFileSync } from "fs";
+import { readdirSync, writeFileSync, existsSync, mkdirSync, copyFileSync, readFileSync } from "fs";
 import { join, basename, resolve } from "path";
 import * as XLSX from "xlsx";
 import {
@@ -26,6 +26,8 @@ const OUT = join(ROOT, "scripts/data/orange-county-hampers.json");
 const API_OUT = join(ROOT, "apps/api/src/data/orange-county-hampers.json");
 const PUBLIC_IMG = join(ROOT, "apps/web/public/uploads/orange-county");
 const COPY_IMAGES = process.env.COPY_IMAGES === "1" || process.env.COPY_IMAGES === "true";
+/** Skip Windows/vendor thumbnails that upscale into blur on storefront cards. */
+const MIN_IMAGE_EDGE_PX = 250;
 
 type RawRow = { sku: string; name: string; description: string; vendorCost: number; source: string };
 
@@ -154,6 +156,29 @@ function safeSkuFolder(sku: string): string {
   return sku.replace(/[^\w.-]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "") || "sku";
 }
 
+/** Read JPEG SOF dimensions without pulling in image libraries. */
+function jpegDimensions(filePath: string): { width: number; height: number } | null {
+  try {
+    const buf = readFileSync(filePath);
+    for (let i = 0; i < buf.length - 9; i++) {
+      if (buf[i] === 0xff && (buf[i + 1] === 0xc0 || buf[i + 1] === 0xc1 || buf[i + 1] === 0xc2)) {
+        return { height: buf.readUInt16BE(i + 5), width: buf.readUInt16BE(i + 7) };
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+
+function isUsableProductImage(filePath: string, allowSmallFallback: boolean): boolean {
+  const dims = jpegDimensions(filePath);
+  if (!dims) return allowSmallFallback;
+  const edge = Math.min(dims.width, dims.height);
+  if (edge >= MIN_IMAGE_EDGE_PX) return true;
+  return allowSmallFallback;
+}
+
 const seenSku = new Set<string>();
 const seenSlug = new Set<string>();
 const rows: RawRow[] = [];
@@ -197,16 +222,30 @@ for (const row of rows) {
   const localImages = imagesForSku(row.sku, imageFiles);
   const folder = safeSkuFolder(row.sku);
   const imageUrls: string[] = [];
+  let skippedTiny = 0;
 
-  for (const file of localImages) {
+  const candidates = localImages.map((file) => ({
+    file,
+    path: join(row.source, file),
+  }));
+  const hasSharp = candidates.some((c) => isUsableProductImage(c.path, false));
+
+  for (const { file, path: srcPath } of candidates) {
+    if (!isUsableProductImage(srcPath, !hasSharp)) {
+      skippedTiny += 1;
+      continue;
+    }
     const safeName = basename(file).replace(/[`']/g, "").replace(/\s+/g, "-");
     const publicPath = `/uploads/orange-county/${folder}/${safeName}`;
     if (COPY_IMAGES) {
       const destDir = join(PUBLIC_IMG, folder);
       mkdirSync(destDir, { recursive: true });
-      copyFileSync(join(row.source, file), join(destDir, safeName));
+      copyFileSync(srcPath, join(destDir, safeName));
     }
     imageUrls.push(publicPath);
+  }
+  if (skippedTiny > 0) {
+    console.warn(`  ${row.sku}: skipped ${skippedTiny} tiny thumbnail image(s)`);
   }
 
   const additionalCategorySlugs = inferAdditionalCategorySlugs(row.name, row.description);
