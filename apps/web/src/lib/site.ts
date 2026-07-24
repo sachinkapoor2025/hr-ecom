@@ -43,7 +43,6 @@ export const navItems = [
   { label: "Rakhi Combo", href: categoryHref("rakhi-combo"), category: "rakhi-combo" },
   { label: "Rakhi Hamper", href: categoryHref("rakhi-hampers"), category: "rakhi-hampers" },
   { label: "Raksha Bandhan", href: "/raksha-bandhan" },
-  { label: "Contact Us", href: "/contact" },
 ] as const;
 
 export const cityLinks = [
