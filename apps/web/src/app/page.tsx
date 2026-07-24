@@ -11,6 +11,7 @@ import { FastSellingSection } from "@/components/FastSellingSection";
 import { HomeSeoSection } from "@/components/HomeSeoSection";
 import { HomeRakshaBandhan2026Section } from "@/components/HomeRakshaBandhan2026Section";
 import { TrustStrip } from "@/components/TrustStrip";
+import { IndiaBuyerBanner } from "@/components/IndiaBuyerBanner";
 import { WhyTrustUsSection } from "@/components/WhyTrustUsSection";
 import { JsonLd } from "@/components/JsonLd";
 import { site, homeBanners, homeCategoryOrder, faqs } from "@/lib/site";
@@ -24,10 +25,10 @@ import type { Product, Category } from "@hr-ecom/shared";
 export const metadata: Metadata = pageMetadata({
   title: "Send Rakhi to USA Online | Rakhi Delivery USA | UsaRakhi",
   description:
-    "Send rakhi to USA with domestic delivery — buy rakhi online USA, order from India worldwide. Rakhi store USA: designer rakhis, combos, 5–7 day nationwide shipping. California warehouse for fast local delivery.",
+    "Send rakhi to USA with domestic delivery — order from India with INR/UPI, or buy rakhi online USA. Designer rakhis, combos, 5–7 day nationwide shipping from our California warehouse.",
   path: "/",
   keywords:
-    "send rakhi to usa, rakhi delivery usa, buy rakhi online usa, send rakhi to usa from india, rakhi store usa, usa rakhi shop online, rakhi gifts to usa, nationwide rakhi delivery usa",
+    "send rakhi to usa, rakhi delivery usa, buy rakhi online usa, send rakhi to usa from india, order rakhi from india to usa, rakhi store usa, usa rakhi shop online, rakhi gifts to usa, nationwide rakhi delivery usa, pay inr rakhi usa",
 });
 
 export const dynamic = "force-static";
@@ -84,6 +85,7 @@ export default async function HomePage() {
       <JsonLd data={[faqJsonLd(faqs), howToSendRakhiJsonLd()]} />
       <HomeHero banners={homeBanners} />
       <TrustStrip />
+      <IndiaBuyerBanner />
 
       <FastSellingSection products={products} />
 
@@ -125,6 +127,9 @@ export default async function HomePage() {
         <div className="flex flex-wrap justify-center gap-3 text-sm">
           <Link href="/raksha-bandhan" className="text-nav font-semibold hover:underline">
             Raksha Bandhan 2026 →
+          </Link>
+          <Link href="/send-rakhi-from-india" className="text-nav font-semibold hover:underline">
+            Order from India (INR/UPI) →
           </Link>
           <Link href="/blog/send-rakhi-to-usa-from-india" className="text-nav font-semibold hover:underline">
             Send from India guide →

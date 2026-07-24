@@ -105,6 +105,7 @@ export function Footer() {
           <div className="min-w-0 lg:col-span-2">
             <p className="font-semibold text-white mb-3 sm:mb-4">Help &amp; Info</p>
             <ul className="space-y-2 text-white/80">
+              <li><Link href="/send-rakhi-from-india" className="hover:text-white hover:underline">Send Rakhi from India</Link></li>
               <li><Link href="/raksha-bandhan" className="hover:text-white hover:underline">Raksha Bandhan 2026</Link></li>
               <li><Link href="/blog" className="hover:text-white hover:underline">Blog &amp; Guides</Link></li>
               <li><Link href="/shipping" className="hover:text-white hover:underline">Shipping &amp; Delivery</Link></li>

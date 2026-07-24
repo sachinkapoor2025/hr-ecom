@@ -101,6 +101,9 @@ export function HomeSeoSection() {
                 <Link href="/shipping" className="text-nav font-semibold hover:underline">
                   Shipping details →
                 </Link>
+                <Link href="/send-rakhi-from-india" className="text-nav font-semibold hover:underline">
+                  Order from India →
+                </Link>
                 <Link href="/blog/send-rakhi-to-usa-from-india" className="text-nav font-semibold hover:underline">
                   India guide →
                 </Link>

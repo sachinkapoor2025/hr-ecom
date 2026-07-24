@@ -60,7 +60,7 @@ export const homeSeoContent = {
     steps: [
       "Choose a rakhi or combo from our rakhi online shopping USA store and add it to your cart.",
       "Enter your brother's US shipping address at checkout — send rakhi to USA from India or anywhere abroad.",
-      "Pay securely with Stripe (USD) or Razorpay (INR).",
+      "Pay securely with Stripe (USD) or Razorpay (INR / UPI from India).",
       "We pack your order with care and deliver rakhi in USA within 5–7 business days (faster from California).",
       "Your brother receives a beautifully packed rakhi ready for Raksha Bandhan.",
     ],
@@ -76,6 +76,7 @@ export const homeSeoContent = {
     heading: "Why Sisters Choose UsaRakhi — USA Rakhi Shop Online",
     bullets: [
       "Domestic USA shipping — rakhi India to USA delivery without customs hassle for your brother",
+      "Order from India with INR / UPI (Razorpay) or USD (Stripe)",
       "140+ premium rakhis across all major categories including gift hampers",
       "Roli and chawal included on most orders",
       "Pay in USD (Stripe) or INR (Razorpay) from anywhere",
