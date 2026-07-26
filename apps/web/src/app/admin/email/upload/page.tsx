@@ -54,18 +54,27 @@ export default function UploadRecipientsPage() {
     try {
       const res = await api<{
         imported: number;
+        skippedInvalid?: number;
         skippedDuplicate: number;
         skippedSuppressed: number;
+        skippedBounced?: number;
+        skippedBlocked?: number;
         totalRecipients?: number;
       }>("/ses-email/recipients", {
         method: "POST",
         body: JSON.stringify({ campaignId, recipients: preview.valid }),
       });
+      const bounced = res.skippedBounced ?? 0;
+      const suppressed = res.skippedSuppressed ?? 0;
+      const invalid = res.skippedInvalid ?? 0;
       setMessage(
-        `Imported ${res.imported}. Duplicates skipped: ${res.skippedDuplicate}. Suppressed skipped: ${res.skippedSuppressed}.` +
-          (typeof res.totalRecipients === "number"
-            ? ` Campaign total: ${res.totalRecipients}.`
-            : "")
+        `Imported ${res.imported}` +
+          (invalid ? `, ${invalid} invalid skipped` : "") +
+          (res.skippedDuplicate ? `, ${res.skippedDuplicate} duplicates skipped` : "") +
+          (bounced ? `, ${bounced} bounced skipped` : "") +
+          (suppressed ? `, ${suppressed} suppressed/unsubscribed skipped` : "") +
+          (typeof res.totalRecipients === "number" ? `. Campaign total: ${res.totalRecipients}` : "") +
+          "."
       );
       setPreview(null);
       setManual("");

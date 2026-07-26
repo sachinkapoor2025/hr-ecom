@@ -128,6 +128,8 @@ const routes: Route[] = [
   { method: "DELETE", pattern: /^\/products\/([^/]+)\/images$/, handler: uploads.deleteImageFromProduct, params: ["slug"] },
   { method: "POST", pattern: /^\/webhooks\/stripe$/, handler: stripeWebhook },
   { method: "POST", pattern: /^\/webhooks\/razorpay$/, handler: razorpayWebhook },
+  /** Mailercloud bounce/complaint/unsub → marketing SUPPRESS# (no SMTP credential changes). */
+  { method: "POST", pattern: /^\/webhooks\/mailercloud$/, handler: sesEmail.mailercloudWebhook },
   { method: "POST", pattern: /^\/payments\/razorpay\/verify$/, handler: verifyRazorpayPayment },
 
   // SES bulk email campaigns (admin)
@@ -149,6 +151,8 @@ const routes: Route[] = [
   { method: "DELETE", pattern: /^\/ses-email\/suppression\/([^/]+)$/, handler: sesEmail.removeSuppression, params: ["email"] },
   { method: "GET", pattern: /^\/ses-email\/queue$/, handler: sesEmail.listQueue },
   { method: "GET", pattern: /^\/ses-email\/analytics$/, handler: sesEmail.getAnalytics },
+  { method: "GET", pattern: /^\/ses-email\/analytics\/recipients$/, handler: sesEmail.listAnalyticsRecipients },
+  { method: "POST", pattern: /^\/ses-email\/bounces\/sync$/, handler: sesEmail.syncBouncesHandler },
   { method: "GET", pattern: /^\/ses-email\/notifications$/, handler: sesEmail.listNotifications },
   { method: "POST", pattern: /^\/ses-email\/test$/, handler: sesEmail.sendTest },
   { method: "GET", pattern: /^\/ses-email\/reminders$/, handler: reminderEmails.listReminderEmailsHandler },

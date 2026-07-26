@@ -140,7 +140,8 @@ When admin changes order status (accepted, processing, shipped, delivered, compl
 | GET | `/admin/carts/abandoned` | Admin: abandoned carts (CSV in UI) |
 | GET | `/admin/leads` | Admin: captured leads |
 | GET/POST | `/ses-email/reminders*` | Admin: checkout-nudge audience (manual fetch, send, soft-delete). UI: `/admin/email/nudges` |
-| GET/POST | `/ses-email/*` | Marketing campaigns (admin auth): dashboard, campaigns, recipients, templates, queue, analytics, suppression, settings (SMTP credentials). UI at `/admin/email` |
+| GET/POST | `/ses-email/*` | Marketing campaigns (admin auth): dashboard, campaigns, recipients, templates, queue, analytics (+ per-email activity), suppression, bounce sync, settings. UI at `/admin/email` |
+| POST | `/webhooks/mailercloud` | Mailercloud bounce/complaint/unsub → marketing `SUPPRESS#` (skipped on next import/send) |
 | GET | `/email/open/{token}` | Open tracking pixel |
 | GET | `/email/click/{token}` | Click tracking redirect |
 | GET | `/email/unsubscribe/{token}` | Unsubscribe → suppression list |

@@ -113,6 +113,40 @@ export const suppressEmailSchema = z.object({
   reason: z.enum(["manual", "hard_bounce", "complaint", "unsubscribe"]).default("manual"),
 });
 
+/** Per-recipient lifecycle for marketing campaigns (stored on RECIPIENT# rows). */
+export const SES_RECIPIENT_STATUSES = [
+  "ready",
+  "queued",
+  "sent",
+  "delivered",
+  "opened",
+  "clicked",
+  "failed",
+  "bounced",
+  "unsubscribed",
+] as const;
+export type SesRecipientStatus = (typeof SES_RECIPIENT_STATUSES)[number];
+
+export type SesRecipientActivity = {
+  email: string;
+  name?: string;
+  campaignId: string;
+  campaignName?: string;
+  status: SesRecipientStatus | string;
+  sentAt?: string;
+  deliveredAt?: string;
+  openedAt?: string;
+  clickedAt?: string;
+  bouncedAt?: string;
+  failedAt?: string;
+  lastError?: string;
+  /** Clicked a tracked link in the email (visited site via campaign). */
+  visitedSite: boolean;
+  /** Matched a store order email after the campaign send. */
+  placedOrder: boolean;
+  orderId?: string;
+};
+
 export const sendTestEmailSchema = z.object({
   campaignId: z.string().min(1),
   to: z.string().email(),

@@ -763,6 +763,32 @@ Resources:
     Metadata:
       BuildMethod: makefile
 
+  BounceSyncFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub hr-ecom-bounce-sync-${Environment}
+      Handler: bounce-sync.handler
+      Timeout: 120
+      MemorySize: 512
+      CodeUri: ..
+      Environment:
+        Variables:
+          EMAIL_CAMPAIGNS_TABLE: !Ref EmailCampaignsTable
+          ENVIRONMENT: !Ref Environment
+          SITE_URL: https://www.usarakhi.com
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref EmailCampaignsTable
+      Events:
+        HourlyBounceSync:
+          Type: Schedule
+          Properties:
+            Schedule: rate(1 hour)
+            Description: Promote hard-bounced marketing recipients onto SUPPRESS# skip list
+            Enabled: true
+    Metadata:
+      BuildMethod: makefile
+
   HttpApi:
     Type: AWS::Serverless::HttpApi
     Properties:

@@ -133,6 +133,12 @@ export const sesEmailKeys = {
   suppressSk: () => "META" as const,
   entitySuppressPk: () => "ENTITY#SUPPRESS" as const,
   entitySuppressSk: (createdAt: string) => createdAt,
+  /** Pending bounce events from Mailercloud webhook (processed by bounce-sync Lambda). */
+  bounceEventPk: (id: string) => `BOUNCEEVT#${id}`,
+  bounceEventSk: () => "META" as const,
+  pendingBouncePk: () => "BOUNCE#PENDING" as const,
+  pendingBounceSk: (createdAt: string, email: string) =>
+    `${createdAt}#${email.trim().toLowerCase()}`,
   settingsPk: () => "SETTINGS#SES" as const,
   settingsSk: () => "META" as const,
   trackOpenPk: (token: string) => `TRACKOPEN#${token}`,

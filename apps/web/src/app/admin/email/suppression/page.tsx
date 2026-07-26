@@ -37,7 +37,9 @@ export default function SuppressionPage() {
     <div className="space-y-6 max-w-3xl">
       <h1 className="text-2xl font-bold text-primary">Suppression List</h1>
       <p className="text-sm text-slate-500">
-        Hard bounces, spam complaints, unsubscribes, and manual exclusions are never emailed.
+        Hard bounces, spam complaints, unsubscribes, and manual exclusions are never emailed. The hourly
+        bounce-sync Lambda and Mailercloud webhook add hard bounces here automatically — imports show
+        e.g. “100 imported, 4 bounced skipped”.
       </p>
       <div className="rounded-xl border bg-white p-5 flex flex-wrap gap-2">
         <input

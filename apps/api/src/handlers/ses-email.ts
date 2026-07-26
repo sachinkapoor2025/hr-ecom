@@ -21,10 +21,12 @@ import {
   renderSesTemplate,
   DEFAULT_SENDER_MESSAGE_FOOTER,
   sesEmailKeys,
+  orderKeys,
   type SesCampaign,
   type SesSettings,
   type SesRecipient,
   type SesTemplate,
+  type SesRecipientActivity,
 } from "@hr-ecom/shared";
 import { docClient, now, dayBucket } from "../lib/db";
 import { ok, created, badRequest, notFound, forbidden, unauthorized, serverError, badGateway } from "../lib/response";
@@ -38,8 +40,18 @@ import {
   redactSettingsForAdmin,
   isRedactedPassword,
 } from "../lib/ses";
+import {
+  getSuppression,
+  isSuppressedEmail,
+  looksLikeHardBounce,
+  recordBounceEvent,
+  syncHardBouncesFromFailedRecipients,
+  updateRecipientStatus,
+  upsertSuppression,
+} from "../lib/marketing-bounces";
 
 const TABLE = process.env.EMAIL_CAMPAIGNS_TABLE ?? `hr-ecom-email-campaigns-${process.env.ENVIRONMENT ?? "dev"}`;
+const ORDERS_TABLE = process.env.ORDERS_TABLE ?? `hr-ecom-orders-${process.env.ENVIRONMENT ?? "dev"}`;
 const SITE_URL = (process.env.SITE_URL ?? "https://www.usarakhi.com").replace(/\/$/, "");
 
 function defaultSettings(): SesSettings {
@@ -94,13 +106,7 @@ async function loadSettings(): Promise<SesSettings> {
 }
 
 async function isSuppressed(email: string): Promise<boolean> {
-  const res = await docClient.send(
-    new GetCommand({
-      TableName: TABLE,
-      Key: { PK: sesEmailKeys.suppressPk(email), SK: sesEmailKeys.suppressSk() },
-    })
-  );
-  return Boolean(res.Item);
+  return isSuppressedEmail(email);
 }
 
 async function addNotification(message: string, level: "info" | "success" | "error" = "info") {
@@ -579,6 +585,7 @@ export async function uploadRecipients(event: APIGatewayProxyEventV2) {
   let skippedInvalid = 0;
   let skippedDuplicate = 0;
   let skippedSuppressed = 0;
+  let skippedBounced = 0;
 
   for (const row of parsed.data.recipients) {
     const email = row.email.trim().toLowerCase();
@@ -590,8 +597,10 @@ export async function uploadRecipients(event: APIGatewayProxyEventV2) {
       skippedDuplicate += 1;
       continue;
     }
-    if (await isSuppressed(email)) {
-      skippedSuppressed += 1;
+    const suppression = await getSuppression(email);
+    if (suppression) {
+      if (suppression.reason === "hard_bounce") skippedBounced += 1;
+      else skippedSuppressed += 1;
       continue;
     }
     unique.set(email, { ...row, email });
@@ -635,6 +644,9 @@ export async function uploadRecipients(event: APIGatewayProxyEventV2) {
     skippedInvalid,
     skippedDuplicate,
     skippedSuppressed,
+    skippedBounced,
+    /** Convenience total for admin UI: bounced + unsub/manual/complaint. */
+    skippedBlocked: skippedSuppressed + skippedBounced,
     totalRecipients: allEmails.size,
     preview: recipients.slice(0, 20),
     campaign,
@@ -956,6 +968,197 @@ export async function getAnalytics(event: APIGatewayProxyEventV2) {
   return ok({ totals, byCampaign: byDay, campaigns: campaigns.slice(0, 50) });
 }
 
+async function loadRecentOrderEmails(maxOrders = 1500): Promise<Map<string, string>> {
+  const byEmail = new Map<string, string>();
+  let startKey: Record<string, unknown> | undefined;
+  let fetched = 0;
+  try {
+    do {
+      const page = await docClient.send(
+        new QueryCommand({
+          TableName: ORDERS_TABLE,
+          IndexName: "GSI2",
+          KeyConditionExpression: "GSI2PK = :pk",
+          ExpressionAttributeValues: { ":pk": orderKeys.gsi2pk() },
+          ScanIndexForward: false,
+          Limit: 100,
+          ExclusiveStartKey: startKey,
+        })
+      );
+      for (const item of page.Items ?? []) {
+        fetched += 1;
+        const email = String(
+          (item.shippingAddress as { email?: string } | undefined)?.email ?? item.email ?? ""
+        )
+          .trim()
+          .toLowerCase();
+        const orderId = String(item.orderId ?? "");
+        const status = String(item.status ?? "");
+        if (!email || !orderId) continue;
+        if (status === "pending_payment" || status === "cancelled") continue;
+        if (!byEmail.has(email)) byEmail.set(email, orderId);
+      }
+      startKey = page.LastEvaluatedKey as Record<string, unknown> | undefined;
+    } while (startKey && fetched < maxOrders);
+  } catch (err) {
+    console.error("[SES] loadRecentOrderEmails failed", err);
+  }
+  return byEmail;
+}
+
+/** Admin: paginated per-email activity across campaigns (or one campaign). */
+export async function listAnalyticsRecipients(event: APIGatewayProxyEventV2) {
+  if (!requireAdmin(event)) return unauthorized("Admin access required");
+
+  const qs = event.queryStringParameters ?? {};
+  const campaignId = qs.campaignId?.trim();
+  const statusFilter = qs.status?.trim().toLowerCase();
+  const limit = Math.min(100, Math.max(1, Number(qs.limit ?? 50) || 50));
+  let exclusiveStartKey: Record<string, unknown> | undefined;
+  if (qs.cursor) {
+    try {
+      exclusiveStartKey = JSON.parse(Buffer.from(qs.cursor, "base64url").toString("utf8")) as Record<
+        string,
+        unknown
+      >;
+    } catch {
+      return badRequest("Invalid cursor");
+    }
+  }
+
+  const campaigns = await listCampaignItems();
+  const nameById = new Map(campaigns.map((c) => [c.campaignId, c.name]));
+  const orderEmails = await loadRecentOrderEmails();
+
+  const campaignIds = campaignId
+    ? [campaignId]
+    : campaigns.slice(0, 25).map((c) => c.campaignId);
+
+  const rows: SesRecipientActivity[] = [];
+  let nextCursor: string | undefined;
+
+  for (const id of campaignIds) {
+    if (rows.length >= limit) break;
+    const page = await docClient.send(
+      new QueryCommand({
+        TableName: TABLE,
+        KeyConditionExpression: "PK = :pk AND begins_with(SK, :sk)",
+        ExpressionAttributeValues: {
+          ":pk": sesEmailKeys.campaignPk(id),
+          ":sk": "RECIPIENT#",
+        },
+        ExclusiveStartKey: campaignId ? exclusiveStartKey : undefined,
+        Limit: limit - rows.length + 10,
+      })
+    );
+
+    for (const item of page.Items ?? []) {
+      const email = String(item.email ?? "").toLowerCase();
+      if (!email) continue;
+      const status = String(item.status ?? "ready");
+      if (statusFilter && status !== statusFilter) continue;
+      const clickedAt = item.clickedAt ? String(item.clickedAt) : undefined;
+      const orderId = orderEmails.get(email);
+      rows.push({
+        email,
+        name: item.name ? String(item.name) : undefined,
+        campaignId: id,
+        campaignName: nameById.get(id),
+        status,
+        sentAt: item.sentAt ? String(item.sentAt) : undefined,
+        deliveredAt: item.deliveredAt ? String(item.deliveredAt) : undefined,
+        openedAt: item.openedAt ? String(item.openedAt) : undefined,
+        clickedAt,
+        bouncedAt: item.bouncedAt ? String(item.bouncedAt) : undefined,
+        failedAt: item.failedAt ? String(item.failedAt) : undefined,
+        lastError: item.lastError ? String(item.lastError) : undefined,
+        visitedSite: Boolean(clickedAt),
+        placedOrder: Boolean(orderId),
+        orderId,
+      });
+      if (rows.length >= limit) break;
+    }
+
+    if (campaignId && page.LastEvaluatedKey) {
+      nextCursor = Buffer.from(JSON.stringify(page.LastEvaluatedKey), "utf8").toString("base64url");
+    }
+  }
+
+  return ok({
+    recipients: rows.slice(0, limit),
+    nextCursor,
+    filters: { campaignId: campaignId || null, status: statusFilter || null },
+  });
+}
+
+/** Public Mailercloud webhook — bounce / complaint / unsubscribe → SUPPRESS#. */
+export async function mailercloudWebhook(event: APIGatewayProxyEventV2) {
+  let body: Record<string, unknown> = {};
+  try {
+    body = JSON.parse(event.body ?? "{}") as Record<string, unknown>;
+  } catch {
+    return badRequest("Invalid JSON");
+  }
+
+  const eventName = String(body.event ?? body.type ?? body.status ?? "").toLowerCase();
+  const email = String(body.email ?? body.recipient ?? body.to ?? "")
+    .trim()
+    .toLowerCase();
+  if (!email.includes("@")) {
+    return ok({ ok: true, skipped: "no_email" });
+  }
+
+  const isBounce = /bounce|hard_bounce|soft_bounce|failed/.test(eventName) || body.bounce === true;
+  const isComplaint = /spam|complaint/.test(eventName);
+  const isUnsub = /unsub/.test(eventName);
+
+  if (isBounce) {
+    await recordBounceEvent({
+      email,
+      reason: String(body.reason ?? (eventName || "bounce")),
+      detail: String(body.reason ?? body.message ?? eventName),
+      campaignId: body.campaign_id ? String(body.campaign_id) : undefined,
+      provider: "mailercloud",
+    });
+    return ok({ ok: true, action: "suppressed_bounce", email });
+  }
+  if (isComplaint) {
+    await upsertSuppression({
+      email,
+      reason: "complaint",
+      source: "mailercloud",
+      detail: String(body.reason ?? "complaint"),
+    });
+    return ok({ ok: true, action: "suppressed_complaint", email });
+  }
+  if (isUnsub) {
+    await upsertSuppression({
+      email,
+      reason: "unsubscribe",
+      source: "mailercloud",
+    });
+    return ok({ ok: true, action: "suppressed_unsubscribe", email });
+  }
+
+  return ok({ ok: true, skipped: "unhandled_event", event: eventName });
+}
+
+/** Admin: run bounce sync now (same work as the hourly Lambda). */
+export async function syncBouncesHandler(event: APIGatewayProxyEventV2) {
+  if (!requireAdmin(event)) return unauthorized("Admin access required");
+  const result = await syncHardBouncesFromFailedRecipients();
+  await addNotification(
+    `Bounce sync: scanned ${result.scanned} failed rows, newly suppressed ${result.suppressed}`,
+    result.suppressed > 0 ? "success" : "info"
+  );
+  return ok(result);
+}
+
+/** Scheduled Lambda entry — promote hard-fail recipients onto SUPPRESS#. */
+export async function processMarketingBounceSync() {
+  return syncHardBouncesFromFailedRecipients();
+}
+
 export async function listNotifications(event: APIGatewayProxyEventV2) {
   if (!requireAdmin(event)) return unauthorized("Admin access required");
   const res = await docClient.send(
@@ -1093,20 +1296,45 @@ export async function trackOpen(event: APIGatewayProxyEventV2) {
   );
   if (res.Item && !res.Item.openedAt) {
     const ua = event.headers?.["user-agent"] ?? event.headers?.["User-Agent"] ?? "";
+    const openedAt = now();
     await docClient.send(
       new UpdateCommand({
         TableName: TABLE,
         Key: { PK: sesEmailKeys.trackOpenPk(token), SK: sesEmailKeys.trackSk() },
         UpdateExpression: "SET openedAt = :t, userAgent = :ua",
-        ExpressionAttributeValues: { ":t": now(), ":ua": ua },
+        ExpressionAttributeValues: { ":t": openedAt, ":ua": ua },
       })
     );
     if (res.Item.campaignId) {
       const c = await getCampaign(String(res.Item.campaignId));
       if (c) {
         c.openCount += 1;
-        c.updatedAt = now();
+        c.updatedAt = openedAt;
         await saveCampaign(c);
+      }
+      if (res.Item.email) {
+        // Do not downgrade clicked → opened
+        const recip = await docClient.send(
+          new GetCommand({
+            TableName: TABLE,
+            Key: {
+              PK: sesEmailKeys.campaignPk(String(res.Item.campaignId)),
+              SK: sesEmailKeys.recipientSk(String(res.Item.email)),
+            },
+          })
+        );
+        const current = String(recip.Item?.status ?? "");
+        if (current !== "clicked") {
+          await updateRecipientStatus(String(res.Item.campaignId), String(res.Item.email), {
+            status: "opened",
+            openedAt,
+          });
+        } else {
+          await updateRecipientStatus(String(res.Item.campaignId), String(res.Item.email), {
+            status: "clicked",
+            openedAt,
+          });
+        }
       }
     }
   }
@@ -1139,20 +1367,28 @@ export async function trackClick(event: APIGatewayProxyEventV2) {
   );
   const target = (res.Item?.targetUrl as string) || SITE_URL;
   if (res.Item) {
+    const clickedAt = now();
     await docClient.send(
       new UpdateCommand({
         TableName: TABLE,
         Key: { PK: sesEmailKeys.trackClickPk(token), SK: sesEmailKeys.trackSk() },
         UpdateExpression: "SET clickCount = if_not_exists(clickCount, :z) + :one, lastClickedAt = :t",
-        ExpressionAttributeValues: { ":z": 0, ":one": 1, ":t": now() },
+        ExpressionAttributeValues: { ":z": 0, ":one": 1, ":t": clickedAt },
       })
     );
     if (res.Item.campaignId) {
       const c = await getCampaign(String(res.Item.campaignId));
       if (c) {
         c.clickCount += 1;
-        c.updatedAt = now();
+        c.updatedAt = clickedAt;
         await saveCampaign(c);
+      }
+      if (res.Item.email) {
+        await updateRecipientStatus(String(res.Item.campaignId), String(res.Item.email), {
+          status: "clicked",
+          clickedAt,
+          openedAt: clickedAt,
+        });
       }
     }
   }
@@ -1176,21 +1412,12 @@ export async function unsubscribe(event: APIGatewayProxyEventV2) {
   // Also try dedicated unsub tokens stored as TRACKOPEN with type unsubscribe
   const email = (res.Item?.email as string) || "";
   if (email) {
-    const ts = now();
-    await docClient.send(
-      new PutCommand({
-        TableName: TABLE,
-        Item: {
-          PK: sesEmailKeys.suppressPk(email),
-          SK: sesEmailKeys.suppressSk(),
-          GSI1PK: sesEmailKeys.entitySuppressPk(),
-          GSI1SK: ts,
-          email,
-          reason: "unsubscribe",
-          createdAt: ts,
-        },
-      })
-    );
+    await upsertSuppression({ email, reason: "unsubscribe", source: "unsubscribe-link" });
+    if (res.Item?.campaignId) {
+      await updateRecipientStatus(String(res.Item.campaignId), email, {
+        status: "unsubscribed",
+      });
+    }
   }
   return ok({
     message: email
@@ -1287,6 +1514,11 @@ export async function processSesEmailJobs() {
       await deleteQueueItem(campaignId, email);
       campaign.failedCount += 1;
       await saveCampaign(campaign);
+      await updateRecipientStatus(campaignId, email, {
+        status: "bounced",
+        bouncedAt: now(),
+        lastError: "suppressed",
+      });
       results.failed = Number(results.failed) + 1;
       continue;
     }
@@ -1294,12 +1526,18 @@ export async function processSesEmailJobs() {
     try {
       await sendQueuedEmail(campaign, item as Record<string, unknown>, settings);
       await deleteQueueItem(campaignId, email);
+      const sentAt = now();
       campaign.sentCount += 1;
       campaign.deliveredCount += 1;
       campaign.queuedCount = Math.max(0, campaign.queuedCount - 1);
-      campaign.updatedAt = now();
+      campaign.updatedAt = sentAt;
       await saveCampaign(campaign);
       await incrementDailySent();
+      await updateRecipientStatus(campaignId, email, {
+        status: "delivered",
+        sentAt,
+        deliveredAt: sentAt,
+      });
       results.sent = Number(results.sent) + 1;
     } catch (err) {
       const retries = Number(item.retries ?? 0) + 1;
@@ -1309,6 +1547,28 @@ export async function processSesEmailJobs() {
         await deleteQueueItem(campaignId, email);
         campaign.failedCount += 1;
         campaign.queuedCount = Math.max(0, campaign.queuedCount - 1);
+        const hardBounce = looksLikeHardBounce(lastError);
+        if (hardBounce) {
+          campaign.bouncedCount += 1;
+          await upsertSuppression({
+            email,
+            reason: "hard_bounce",
+            source: "smtp-send",
+            detail: lastError,
+          });
+          await updateRecipientStatus(campaignId, email, {
+            status: "bounced",
+            bouncedAt: now(),
+            failedAt: now(),
+            lastError,
+          });
+        } else {
+          await updateRecipientStatus(campaignId, email, {
+            status: "failed",
+            failedAt: now(),
+            lastError,
+          });
+        }
         await saveCampaign(campaign);
         results.failed = Number(results.failed) + 1;
       } else {
@@ -1410,6 +1670,7 @@ async function enqueueCampaignRecipients(campaignId: string) {
           })
         );
         queued += 1;
+        await updateRecipientStatus(campaignId, email, { status: "queued" });
       } catch {
         // already queued — skip duplicate
       }
@@ -1507,6 +1768,11 @@ async function sendQueuedEmail(
       "email@usarakhi.com"
     ).trim(),
     replyTo: (campaign.replyTo || settings.defaultReplyTo || "").trim() || undefined,
+  });
+
+  await updateRecipientStatus(campaign.campaignId, email, {
+    status: "sent",
+    sentAt: now(),
   });
 }
 
