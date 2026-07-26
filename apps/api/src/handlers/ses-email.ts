@@ -729,6 +729,12 @@ export async function updateSettings(event: APIGatewayProxyEventV2) {
   };
   const parsed = sesSettingsSchema.safeParse(merged);
   if (!parsed.success) return badRequest(parsed.error.message);
+  const host = (parsed.data.smtpHost || "").trim().toLowerCase();
+  if (/^(smtp|mail)\.usarakhi\.com$/.test(host)) {
+    return badRequest(
+      "Marketing SMTP must use Mailercloud (smtp-prod.mailrcld.com). smtp.usarakhi.com is reserved for transactional order emails only."
+    );
+  }
   await docClient.send(
     new PutCommand({
       TableName: TABLE,

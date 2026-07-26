@@ -81,9 +81,10 @@ export default function SettingsPage() {
       <div className="rounded-xl border bg-white p-5 space-y-3">
         <h2 className="font-semibold text-primary">Marketing SMTP</h2>
         <p className="text-xs text-slate-500">
-          From Mailercloud: host <code>smtp-prod.mailrcld.com</code>, port <code>587</code>, STARTTLS,
-          user <code>order@usarakhi.com</code>. Click <strong>Generate New Password</strong> in
-          Mailercloud, then paste it here and Save.
+          Marketing only — use Mailercloud: host <code>smtp-prod.mailrcld.com</code>, port{" "}
+          <code>587</code>, STARTTLS (secure unchecked), user <code>order@usarakhi.com</code>. Do{" "}
+          <strong>not</strong> use <code>smtp.usarakhi.com</code> here (that is for order/transactional
+          mail only). Paste the Mailercloud SMTP password and Save.
         </p>
 
         <label className="block text-sm">
