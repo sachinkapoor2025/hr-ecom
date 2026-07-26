@@ -317,6 +317,14 @@ export async function getCampaignHandler(event: APIGatewayProxyEventV2) {
   const campaign = await getCampaign(id);
   if (!campaign) return notFound("Campaign not found");
 
+  // Keep counter honest — stale recipientCount was showing 200 while RECIPIENT# rows were missing.
+  const allEmails = await listCampaignRecipientEmails(id);
+  if (campaign.recipientCount !== allEmails.size) {
+    campaign.recipientCount = allEmails.size;
+    campaign.updatedAt = now();
+    await saveCampaign(campaign);
+  }
+
   const recipients = await docClient.send(
     new QueryCommand({
       TableName: TABLE,
@@ -416,9 +424,28 @@ export async function updateCampaign(event: APIGatewayProxyEventV2) {
     if (!["draft", "scheduled", "paused"].includes(existing.status)) {
       return badRequest("Cannot send from current status");
     }
+    const recipientEmails = await listCampaignRecipientEmails(existing.campaignId);
+    existing.recipientCount = recipientEmails.size;
+    if (recipientEmails.size === 0) {
+      return badRequest(
+        "This campaign has 0 recipients in the database. Upload a recipient list first (Import), then send."
+      );
+    }
     existing.status = "preparing";
     existing.scheduledAt = undefined;
     existing.nextRunAt = now();
+    existing.updatedAt = now();
+    await saveCampaign(existing);
+    // Build send queue immediately — don't wait for the cron tick.
+    await enqueueCampaignRecipients(existing.campaignId);
+    const refreshed = await getCampaign(existing.campaignId);
+    if (!refreshed) return serverError("Campaign disappeared while starting send");
+    refreshed.status = "sending";
+    refreshed.lastRunAt = now();
+    refreshed.updatedAt = now();
+    await saveCampaign(refreshed);
+    await addNotification(`Campaign started: ${refreshed.name}`, "success");
+    return ok({ campaign: refreshed });
   } else if (action === "duplicate") {
     const ts = now();
     const copy: SesCampaign = {
@@ -476,6 +503,64 @@ export async function updateCampaign(event: APIGatewayProxyEventV2) {
   return ok({ campaign: existing });
 }
 
+async function listCampaignRecipientEmails(campaignId: string): Promise<Set<string>> {
+  const emails = new Set<string>();
+  let lastKey: Record<string, unknown> | undefined;
+  do {
+    const page = await docClient.send(
+      new QueryCommand({
+        TableName: TABLE,
+        KeyConditionExpression: "PK = :pk AND begins_with(SK, :sk)",
+        ExpressionAttributeValues: {
+          ":pk": sesEmailKeys.campaignPk(campaignId),
+          ":sk": "RECIPIENT#",
+        },
+        ProjectionExpression: "email",
+        ExclusiveStartKey: lastKey,
+        Limit: 500,
+      })
+    );
+    for (const item of page.Items ?? []) {
+      const email = String(item.email ?? "")
+        .trim()
+        .toLowerCase();
+      if (email) emails.add(email);
+    }
+    lastKey = page.LastEvaluatedKey as Record<string, unknown> | undefined;
+  } while (lastKey);
+  return emails;
+}
+
+async function batchPutRecipientItems(items: Record<string, unknown>[]) {
+  // DynamoDB BatchWrite max 25; retry UnprocessedItems (previously ignored → silent data loss).
+  for (let i = 0; i < items.length; i += 25) {
+    let requestItems: { PutRequest: { Item: Record<string, unknown> } }[] = items
+      .slice(i, i + 25)
+      .map((Item) => ({ PutRequest: { Item } }));
+
+    for (let attempt = 0; attempt < 8 && requestItems.length > 0; attempt++) {
+      const res = await docClient.send(
+        new BatchWriteCommand({
+          RequestItems: { [TABLE]: requestItems },
+        })
+      );
+      const unprocessed = res.UnprocessedItems?.[TABLE] ?? [];
+      requestItems = unprocessed
+        .map((u) => u.PutRequest?.Item)
+        .filter((item): item is Record<string, unknown> => Boolean(item))
+        .map((Item) => ({ PutRequest: { Item } }));
+      if (requestItems.length > 0) {
+        await new Promise((r) => setTimeout(r, 50 * (attempt + 1)));
+      }
+    }
+    if (requestItems.length > 0) {
+      throw new Error(
+        `Failed to persist ${requestItems.length} recipients after retries. Please try again.`
+      );
+    }
+  }
+}
+
 export async function uploadRecipients(event: APIGatewayProxyEventV2) {
   if (!requireAdmin(event)) return unauthorized("Admin access required");
   const body = JSON.parse(event.body ?? "{}");
@@ -488,6 +573,7 @@ export async function uploadRecipients(event: APIGatewayProxyEventV2) {
     return badRequest("Recipients can only be uploaded before sending starts");
   }
 
+  const existingEmails = await listCampaignRecipientEmails(campaign.campaignId);
   const unique = new Map<string, SesRecipient>();
   let skippedInvalid = 0;
   let skippedDuplicate = 0;
@@ -495,7 +581,11 @@ export async function uploadRecipients(event: APIGatewayProxyEventV2) {
 
   for (const row of parsed.data.recipients) {
     const email = row.email.trim().toLowerCase();
-    if (unique.has(email)) {
+    if (!email) {
+      skippedInvalid += 1;
+      continue;
+    }
+    if (unique.has(email) || existingEmails.has(email)) {
       skippedDuplicate += 1;
       continue;
     }
@@ -507,29 +597,35 @@ export async function uploadRecipients(event: APIGatewayProxyEventV2) {
   }
 
   const recipients = [...unique.values()];
-  // Batch write in chunks of 25
-  for (let i = 0; i < recipients.length; i += 25) {
-    const chunk = recipients.slice(i, i + 25);
-    await docClient.send(
-      new BatchWriteCommand({
-        RequestItems: {
-          [TABLE]: chunk.map((r) => ({
-            PutRequest: {
-              Item: {
-                PK: sesEmailKeys.campaignPk(campaign.campaignId),
-                SK: sesEmailKeys.recipientSk(r.email),
-                ...r,
-                status: "ready",
-                createdAt: now(),
-              },
-            },
-          })),
-        },
-      })
-    );
+  const ts = now();
+  const items = recipients.map((r) => ({
+    PK: sesEmailKeys.campaignPk(campaign.campaignId),
+    SK: sesEmailKeys.recipientSk(r.email),
+    campaignId: campaign.campaignId,
+    email: r.email,
+    ...(r.name ? { name: r.name } : {}),
+    ...(r.company ? { company: r.company } : {}),
+    ...(r.city ? { city: r.city } : {}),
+    ...(r.state ? { state: r.state } : {}),
+    ...(r.country ? { country: r.country } : {}),
+    status: "ready",
+    createdAt: ts,
+  }));
+
+  try {
+    await batchPutRecipientItems(items);
+  } catch (err) {
+    console.error("[SES] uploadRecipients batch write failed", {
+      campaignId: campaign.campaignId,
+      count: items.length,
+      err,
+    });
+    return serverError(err instanceof Error ? err.message : "Failed to save recipients");
   }
 
-  campaign.recipientCount = recipients.length;
+  // Authoritative count from DynamoDB (not just this upload size).
+  const allEmails = await listCampaignRecipientEmails(campaign.campaignId);
+  campaign.recipientCount = allEmails.size;
   campaign.updatedAt = now();
   await saveCampaign(campaign);
 
@@ -538,6 +634,7 @@ export async function uploadRecipients(event: APIGatewayProxyEventV2) {
     skippedInvalid,
     skippedDuplicate,
     skippedSuppressed,
+    totalRecipients: allEmails.size,
     preview: recipients.slice(0, 20),
     campaign,
   });

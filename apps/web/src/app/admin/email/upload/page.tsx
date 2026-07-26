@@ -56,12 +56,16 @@ export default function UploadRecipientsPage() {
         imported: number;
         skippedDuplicate: number;
         skippedSuppressed: number;
+        totalRecipients?: number;
       }>("/ses-email/recipients", {
         method: "POST",
         body: JSON.stringify({ campaignId, recipients: preview.valid }),
       });
       setMessage(
-        `Imported ${res.imported}. Duplicates skipped: ${res.skippedDuplicate}. Suppressed skipped: ${res.skippedSuppressed}.`
+        `Imported ${res.imported}. Duplicates skipped: ${res.skippedDuplicate}. Suppressed skipped: ${res.skippedSuppressed}.` +
+          (typeof res.totalRecipients === "number"
+            ? ` Campaign total: ${res.totalRecipients}.`
+            : "")
       );
       setPreview(null);
       setManual("");

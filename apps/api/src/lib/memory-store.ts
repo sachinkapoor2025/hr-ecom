@@ -237,6 +237,27 @@ export const memoryStore = {
       return { Attributes: updated };
     }
 
+    if (name === "BatchWriteCommand") {
+      const requestItems = (input.RequestItems ?? {}) as Record<
+        string,
+        Array<{ PutRequest?: { Item?: Item }; DeleteRequest?: { Key?: Item } }>
+      >;
+      for (const [tableName, ops] of Object.entries(requestItems)) {
+        const t = tableFor(tableName);
+        for (const op of ops ?? []) {
+          if (op.PutRequest?.Item) {
+            const item = op.PutRequest.Item;
+            t.set(itemKey(item.PK, item.SK), { ...item });
+          }
+          if (op.DeleteRequest?.Key) {
+            const key = op.DeleteRequest.Key;
+            t.delete(itemKey(key.PK, key.SK));
+          }
+        }
+      }
+      return { UnprocessedItems: {} };
+    }
+
     return {};
   },
 };
