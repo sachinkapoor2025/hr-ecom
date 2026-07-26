@@ -74,22 +74,31 @@ export default function SettingsPage() {
     <div className="space-y-6 max-w-2xl">
       <h1 className="text-2xl font-bold text-primary">Settings</h1>
       <p className="text-sm text-slate-500">
-        Marketing campaigns send via SMTP below (Mailercloud / mailrcld). Transactional order emails
-        still use the separate server SMTP and are not changed here.
+        Two separate email systems — do not mix them:
       </p>
+      <ul className="text-sm text-slate-600 list-disc pl-5 space-y-1">
+        <li>
+          <strong>Website / orders / coupons</strong> — <code>order@usarakhi.com</code> via{" "}
+          <code>smtp.usarakhi.com</code> (server config; not edited here)
+        </li>
+        <li>
+          <strong>Marketing campaigns</strong> — Mailercloud below; From ={" "}
+          <code>email@usarakhi.com</code>
+        </li>
+      </ul>
 
       <div className="rounded-xl border bg-white p-5 space-y-3">
         <h2 className="font-semibold text-primary">Marketing SMTP</h2>
         <p className="text-xs text-slate-500">
-          Marketing only — Mailercloud host <code>smtp-prod.mailrcld.com</code>, port <code>587</code>,
-          STARTTLS (secure unchecked). SMTP username = Mailercloud login (often{" "}
-          <code>order@usarakhi.com</code>). <strong>Default sender email</strong> below must be your
-          verified Sender ID: <code>email@usarakhi.com</code>. Do not use{" "}
-          <code>smtp.usarakhi.com</code> here.
+          Marketing only — host <code>smtp-prod.mailrcld.com</code>, port <code>587</code>, STARTTLS
+          (secure unchecked). SMTP login can be your Mailercloud user.{" "}
+          <strong>Default sender</strong> must be the verified Sender ID{" "}
+          <code>email@usarakhi.com</code>.
         </p>
         <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-          Invalid sender usually means From is not a verified Sender ID. Keep From / Default sender
-          as <code>email@usarakhi.com</code> (verified in Mailercloud).
+          Never set SMTP host to <code>smtp.usarakhi.com</code> here. That mailbox has a low daily
+          send limit (~220) used for order notifications — using it for campaigns blocks coupons and
+          order emails for the rest of the day.
         </p>
 
         <label className="block text-sm">

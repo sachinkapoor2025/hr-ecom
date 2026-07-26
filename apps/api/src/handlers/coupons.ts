@@ -510,8 +510,14 @@ export async function createAdminAbandonedCoupon(event: APIGatewayProxyEventV2) 
     expiresAt,
     confirmedSale,
   });
+  // Prefer Twilio: Meta free-form text is blocked outside the 24h care window
+  // for business-initiated coupon messages (email still works independently).
   const whatsapp = whatsappPhone
-    ? await sendWhatsAppMessage({ phone: whatsappPhone, message: waMessage })
+    ? await sendWhatsAppMessage({
+        phone: whatsappPhone,
+        message: waMessage,
+        prefer: "twilio",
+      })
     : {
         ok: false,
         skipped: true as const,
@@ -519,6 +525,12 @@ export async function createAdminAbandonedCoupon(event: APIGatewayProxyEventV2) 
         provider: undefined as string | undefined,
         error: "No phone provided",
       };
+  if (whatsappPhone && !whatsapp.ok && !whatsapp.skipped) {
+    console.error("createAdminAbandonedCoupon WhatsApp failed", {
+      error: whatsapp.error,
+      provider: whatsapp.provider,
+    });
+  }
 
   const emails = await sendAdminAbandonedCouponEmails({
     customerEmail: email,

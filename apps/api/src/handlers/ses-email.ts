@@ -64,7 +64,8 @@ function defaultSettings(): SesSettings {
     smtpHost: process.env.MARKETING_SMTP_HOST || "smtp-prod.mailrcld.com",
     smtpPort: Number(process.env.MARKETING_SMTP_PORT || 587),
     smtpSecure: process.env.MARKETING_SMTP_SECURE === "true",
-    smtpUser: process.env.MARKETING_SMTP_USER || process.env.SES_FROM_EMAIL || "order@usarakhi.com",
+    // Marketing login/from defaults — never transactional order@ SMTP host.
+    smtpUser: process.env.MARKETING_SMTP_USER || "order@usarakhi.com",
     smtpPassword: "",
   });
 }

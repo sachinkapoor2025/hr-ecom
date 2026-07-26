@@ -251,7 +251,10 @@ export async function sendEmail(opts: {
     });
     return { ok: true };
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+    const raw = err instanceof Error ? err.message : String(err);
+    const message = /Daily send limit/i.test(raw)
+      ? `${raw} — transactional mailbox order@usarakhi.com hit its daily cap (shared hosting). Marketing campaigns must use Mailercloud only; ask the host to raise the limit or wait for daily reset.`
+      : raw;
     console.error("sendEmail failed:", message);
     return { ok: false, error: message };
   }
@@ -999,9 +1002,13 @@ Questions? Reply to this email or WhatsApp us.
 — ${SITE_NAME} Team
 ${siteUrl()}`;
 
+  // Same inbox list as order/contact alerts (order@usarakhi.com + team) — not marketing SMTP.
   const notifyTo = [
+    ...adminNotifyAddresses()
+      .split(",")
+      .map((s) => s.trim().toLowerCase())
+      .filter(Boolean),
     "order@mydgv.com",
-    "priya.yadav@mydgv.com",
     input.createdByAdminEmail.trim().toLowerCase(),
   ]
     .filter(Boolean)

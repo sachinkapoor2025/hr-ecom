@@ -238,6 +238,16 @@ async function sendViaMeta(toDigits: string, body: string): Promise<Omit<WhatsAp
   });
   if (!res.ok) {
     const text = await res.text().catch(() => "");
+    // Free-form text outside the 24h window is the usual coupon failure mode.
+    if (!template && (text.includes("131047") || text.includes("470") || /outside.*window/i.test(text))) {
+      return {
+        ok: false,
+        provider: "meta",
+        error:
+          "Meta WhatsApp: cannot send free-form text outside the 24h customer window. " +
+          "Set an approved WHATSAPP_TEMPLATE_NAME or use Twilio (TWILIO_*).",
+      };
+    }
     return { ok: false, provider: "meta", error: `Meta WhatsApp ${res.status}: ${text.slice(0, 300)}` };
   }
   return { ok: true, provider: "meta" };
@@ -302,10 +312,22 @@ async function sendViaTwilio(toDigits: string, body: string): Promise<Omit<Whats
   return { ok: true, provider: "twilio" };
 }
 
-/** Send WhatsApp when a provider is configured; always returns a deep link fallback. */
+type WhatsAppProvider = "meta" | "twilio";
+
+/**
+ * Send WhatsApp when a provider is configured; always returns a deep link fallback.
+ *
+ * Tries Meta and Twilio. On API failure of one, falls through to the other
+ * (previously Meta errors short-circuited and never attempted Twilio).
+ *
+ * Prefer Twilio for business-initiated outreach (coupons) — Meta free-form
+ * text only works inside the 24h customer-care window unless a template is set.
+ */
 export async function sendWhatsAppMessage(input: {
   phone: string;
   message: string;
+  /** Provider order. Default: Twilio first when no Meta template; else Meta first. */
+  prefer?: WhatsAppProvider;
 }): Promise<WhatsAppSendResult> {
   const deepLink = buildWhatsAppDeepLink(input.phone, input.message);
   const toDigits = digitsOnly(input.phone);
@@ -313,14 +335,40 @@ export async function sendWhatsAppMessage(input: {
     return { ok: false, deepLink, error: "Invalid phone number" };
   }
 
-  try {
-    const meta = await sendViaMeta(toDigits, input.message);
-    if (meta.ok) return { ...meta, deepLink };
-    if (!meta.skipped) return { ...meta, deepLink };
+  const metaTemplate = Boolean(process.env.WHATSAPP_TEMPLATE_NAME?.trim());
+  const prefer: WhatsAppProvider =
+    input.prefer ?? (metaTemplate ? "meta" : "twilio");
+  const order: WhatsAppProvider[] =
+    prefer === "twilio" ? ["twilio", "meta"] : ["meta", "twilio"];
 
-    const twilio = await sendViaTwilio(toDigits, input.message);
-    if (twilio.ok) return { ...twilio, deepLink };
-    if (!twilio.skipped) return { ...twilio, deepLink };
+  try {
+    const errors: string[] = [];
+
+    for (const provider of order) {
+      const result =
+        provider === "meta"
+          ? await sendViaMeta(toDigits, input.message)
+          : await sendViaTwilio(toDigits, input.message);
+
+      if (result.ok) return { ...result, deepLink };
+      if (result.skipped) continue;
+      if (result.error) {
+        errors.push(`${provider}: ${result.error}`);
+        console.error("WhatsApp provider failed, trying next", {
+          provider,
+          error: result.error,
+        });
+      }
+    }
+
+    if (errors.length > 0) {
+      return {
+        ok: false,
+        deepLink,
+        provider: order[0],
+        error: errors.join(" | "),
+      };
+    }
 
     return {
       ok: false,
