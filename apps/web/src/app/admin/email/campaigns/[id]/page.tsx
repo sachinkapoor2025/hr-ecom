@@ -95,7 +95,13 @@ export default function CampaignDetailPage() {
             </li>
           ))}
         </ul>
-        {preview.length === 0 && <p className="text-slate-500 text-sm">No recipients yet — upload a list.</p>}
+        {preview.length === 0 && (
+          <p className="text-slate-500 text-sm">
+            {campaign.recipientCount > 0
+              ? `Counter shows ${campaign.recipientCount} but no recipient rows were found. Re-import the list on Upload Recipients.`
+              : "No recipients yet — upload a list."}
+          </p>
+        )}
         <Link href="/admin/email/upload" className="inline-block mt-3 text-sm text-nav hover:underline">
           Upload recipients →
         </Link>

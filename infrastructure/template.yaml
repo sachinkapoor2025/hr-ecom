@@ -148,14 +148,18 @@ Globals:
         SMTP_PASS: !Ref SmtpPassword
         SITE_URL: https://www.usarakhi.com
         SES_AWS_REGION: us-east-1
-        SES_FROM_EMAIL: order@usarakhi.com
-        SES_REPLY_TO: order@usarakhi.com
+        # Legacy SES_* names used only as marketing From fallbacks — keep as verified Sender ID.
+        SES_FROM_EMAIL: email@usarakhi.com
+        SES_REPLY_TO: email@usarakhi.com
+        # Marketing only (Mailercloud). Never point at smtp.usarakhi.com — that mailbox
+        # is reserved for transactional order/coupon/contact mail (SMTP_* above).
         MARKETING_TRANSPORT: smtp
         MARKETING_SMTP_HOST: smtp-prod.mailrcld.com
         MARKETING_SMTP_PORT: "587"
         MARKETING_SMTP_SECURE: "false"
         MARKETING_SMTP_USER: order@usarakhi.com
         MARKETING_SMTP_PASS: !Ref MarketingSmtpPassword
+        MARKETING_FROM_EMAIL: email@usarakhi.com
         USPS_CLIENT_ID: !Ref UspsClientId
         USPS_CLIENT_SECRET: !Ref UspsClientSecret
         USPS_SECRET_ARN: !Ref UspsSecretArn
@@ -726,8 +730,9 @@ Resources:
           ENVIRONMENT: !Ref Environment
           SITE_URL: https://www.usarakhi.com
           SES_AWS_REGION: us-east-1
-          SES_FROM_EMAIL: order@usarakhi.com
-          SES_REPLY_TO: order@usarakhi.com
+          SES_FROM_EMAIL: email@usarakhi.com
+          SES_REPLY_TO: email@usarakhi.com
+          MARKETING_FROM_EMAIL: email@usarakhi.com
           MARKETING_TRANSPORT: smtp
           MARKETING_SMTP_HOST: smtp-prod.mailrcld.com
           MARKETING_SMTP_PORT: "587"

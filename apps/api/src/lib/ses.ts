@@ -143,10 +143,10 @@ type MarketingSmtp = {
   pass: string;
 };
 
-type ResolvedTransport = {
-  mode: "smtp" | "ses";
-  smtp?: MarketingSmtp;
-};
+type ResolvedTransport =
+  | { mode: "smtp"; smtp: MarketingSmtp }
+  | { mode: "ses" }
+  | { mode: "misconfigured"; message: string };
 
 const PASSWORD_REDACTED = "********";
 const CACHE_MS = 30_000;
@@ -157,21 +157,15 @@ export function clearMarketingTransportCache() {
   transportCache = null;
 }
 
+/**
+ * Marketing SMTP only — never fall back to transactional SMTP_* credentials.
+ * Transactional order mail uses apps/api/src/lib/email.ts (smtp.usarakhi.com).
+ * Marketing campaigns use Mailercloud (smtp-prod.mailrcld.com) via MARKETING_SMTP_* / admin settings.
+ */
 function envMarketingSmtp(): MarketingSmtp | null {
-  const host =
-    process.env.MARKETING_SMTP_HOST?.trim() ||
-    process.env.SMTP_HOST?.trim() ||
-    "";
-  const user =
-    process.env.MARKETING_SMTP_USER?.trim() ||
-    process.env.SES_FROM_EMAIL?.trim() ||
-    process.env.SMTP_USER?.trim() ||
-    "";
-  const pass =
-    process.env.MARKETING_SMTP_PASS?.trim() ||
-    process.env.SMTP_PASS?.trim() ||
-    process.env.SMTP_PASSWORD?.trim() ||
-    "";
+  const host = process.env.MARKETING_SMTP_HOST?.trim() || "";
+  const user = process.env.MARKETING_SMTP_USER?.trim() || "";
+  const pass = process.env.MARKETING_SMTP_PASS?.trim() || "";
   if (!host || !user || !pass) return null;
   const port = Number(process.env.MARKETING_SMTP_PORT ?? "587");
   const secureRaw = process.env.MARKETING_SMTP_SECURE?.trim().toLowerCase();
@@ -217,16 +211,13 @@ async function resolveTransport(): Promise<ResolvedTransport> {
     process.env.MARKETING_SMTP_HOST?.trim() ||
     "smtp-prod.mailrcld.com";
   const port = Number(stored.smtpPort ?? process.env.MARKETING_SMTP_PORT ?? 587);
-  const secure =
-    typeof stored.smtpSecure === "boolean"
-      ? stored.smtpSecure
-      : process.env.MARKETING_SMTP_SECURE?.trim().toLowerCase() === "true" ||
-        port === 465;
+  // Never use SMTPS on 587 — that yields TLS "wrong version number" with Mailercloud.
+  const secure = port === 465;
   const user =
     stored.smtpUser?.trim() ||
     process.env.MARKETING_SMTP_USER?.trim() ||
-    process.env.SES_FROM_EMAIL?.trim() ||
     "order@usarakhi.com";
+  // Prefer admin-stored marketing password; else MARKETING_SMTP_PASS only (never SMTP_PASS).
   const pass =
     (stored.smtpPassword && stored.smtpPassword !== PASSWORD_REDACTED
       ? stored.smtpPassword.trim()
@@ -234,8 +225,17 @@ async function resolveTransport(): Promise<ResolvedTransport> {
     envSmtp?.pass ||
     "";
 
+  // Refuse transactional hosts for marketing — order mail uses smtp.usarakhi.com separately.
+  const isTransactionalHost = /^(smtp|mail)\.usarakhi\.com$/i.test(host);
+
   let value: ResolvedTransport;
-  if (mode === "smtp" && host && user && pass) {
+  if (mode === "smtp" && isTransactionalHost) {
+    value = {
+      mode: "misconfigured",
+      message:
+        "Marketing campaigns must use Mailercloud (smtp-prod.mailrcld.com), not transactional SMTP (smtp.usarakhi.com). Update Admin → Email → Settings.",
+    };
+  } else if (mode === "smtp" && host && user && pass) {
     value = {
       mode: "smtp",
       smtp: {
@@ -246,8 +246,14 @@ async function resolveTransport(): Promise<ResolvedTransport> {
         pass,
       },
     };
-  } else if (mode === "smtp" && envSmtp) {
+  } else if (mode === "smtp" && envSmtp && !/^(smtp|mail)\.usarakhi\.com$/i.test(envSmtp.host)) {
     value = { mode: "smtp", smtp: envSmtp };
+  } else if (mode === "smtp") {
+    value = {
+      mode: "misconfigured",
+      message:
+        "Marketing SMTP is not configured. Set Mailercloud host/user/password in Admin → Email → Settings (do not use order-email SMTP).",
+    };
   } else {
     value = { mode: "ses" };
   }
@@ -260,7 +266,17 @@ async function sendViaMarketingSmtp(
   input: SesSendInput,
   smtp: MarketingSmtp
 ): Promise<{ messageId?: string }> {
-  const from = formatSesFromAddress(input.fromName, input.fromEmail);
+  // Auth (smtp.user) can differ from From. Mailercloud requires From = verified Sender ID
+  // (e.g. email@usarakhi.com), not necessarily the SMTP login user.
+  const fromEmail = (input.fromEmail || smtp.user).trim();
+  const fromName = (input.fromName || "UsaRakhi").trim();
+  const replyTo = (input.replyTo || fromEmail).trim() || fromEmail;
+  if (!fromEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fromEmail)) {
+    throw new SesSendError(
+      `Marketing SMTP failed: invalid From address "${fromEmail || "(empty)"}". Set Default sender email to your verified Mailercloud Sender ID.`,
+      { code: "MarketingSmtpInvalidSender" }
+    );
+  }
   const options: SMTPTransport.Options = {
     host: smtp.host,
     port: smtp.port,
@@ -274,17 +290,27 @@ async function sendViaMarketingSmtp(
   const transporter = nodemailer.createTransport(options);
   try {
     const info = await transporter.sendMail({
-      from,
+      from: { name: fromName, address: fromEmail },
       to: input.to,
-      replyTo: input.replyTo?.trim() || input.fromEmail,
+      replyTo,
       subject: input.subject,
       html: input.html,
       text: input.text,
+      envelope: {
+        from: fromEmail,
+        to: input.to,
+      },
     });
     return { messageId: typeof info.messageId === "string" ? info.messageId : undefined };
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    throw new SesSendError(`Marketing SMTP failed: ${message}`, {
+    const raw = err instanceof Error ? err.message : String(err);
+    if (/invalid sender|no valid From address/i.test(raw)) {
+      throw new SesSendError(
+        `Marketing SMTP failed: Mailercloud rejected sender ${fromEmail}. Use a verified Sender ID (e.g. email@usarakhi.com) as Default sender email in Admin → Email → Settings. SMTP login user can stay as provided by Mailercloud. Host: ${smtp.host}`,
+        { code: "MarketingSmtpInvalidSender", cause: err }
+      );
+    }
+    throw new SesSendError(`Marketing SMTP failed: ${raw}`, {
       code: "MarketingSmtpError",
       cause: err,
     });
@@ -341,7 +367,10 @@ async function sendViaSesApi(input: SesSendInput): Promise<{ messageId?: string 
  */
 export async function sendViaSes(input: SesSendInput): Promise<{ messageId?: string }> {
   const transport = await resolveTransport();
-  if (transport.mode === "smtp" && transport.smtp) {
+  if (transport.mode === "misconfigured") {
+    throw new SesSendError(transport.message, { code: "MarketingSmtpMisconfigured" });
+  }
+  if (transport.mode === "smtp") {
     try {
       return await sendViaMarketingSmtp(input, transport.smtp);
     } catch (err) {

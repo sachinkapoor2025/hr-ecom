@@ -19,8 +19,8 @@ function ComposeInner() {
   const [name, setName] = useState("");
   const [subject, setSubject] = useState("");
   const [senderName, setSenderName] = useState("UsaRakhi");
-  const [senderEmail, setSenderEmail] = useState("order@usarakhi.com");
-  const [replyTo, setReplyTo] = useState("order@usarakhi.com");
+  const [senderEmail, setSenderEmail] = useState("email@usarakhi.com");
+  const [replyTo, setReplyTo] = useState("email@usarakhi.com");
   const [htmlBody, setHtmlBody] = useState(DEFAULT_HTML);
   const [templateId, setTemplateId] = useState("");
   const [mode, setMode] = useState<"now" | "later">("now");

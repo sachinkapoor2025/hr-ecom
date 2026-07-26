@@ -74,16 +74,31 @@ export default function SettingsPage() {
     <div className="space-y-6 max-w-2xl">
       <h1 className="text-2xl font-bold text-primary">Settings</h1>
       <p className="text-sm text-slate-500">
-        Marketing campaigns send via SMTP below (Mailercloud / mailrcld). Transactional order emails
-        still use the separate server SMTP and are not changed here.
+        Two separate email systems — do not mix them:
       </p>
+      <ul className="text-sm text-slate-600 list-disc pl-5 space-y-1">
+        <li>
+          <strong>Website / orders / coupons</strong> — <code>order@usarakhi.com</code> via{" "}
+          <code>smtp.usarakhi.com</code> (server config; not edited here)
+        </li>
+        <li>
+          <strong>Marketing campaigns</strong> — Mailercloud below; From ={" "}
+          <code>email@usarakhi.com</code>
+        </li>
+      </ul>
 
       <div className="rounded-xl border bg-white p-5 space-y-3">
         <h2 className="font-semibold text-primary">Marketing SMTP</h2>
         <p className="text-xs text-slate-500">
-          From Mailercloud: host <code>smtp-prod.mailrcld.com</code>, port <code>587</code>, STARTTLS,
-          user <code>order@usarakhi.com</code>. Click <strong>Generate New Password</strong> in
-          Mailercloud, then paste it here and Save.
+          Marketing only — host <code>smtp-prod.mailrcld.com</code>, port <code>587</code>, STARTTLS
+          (secure unchecked). SMTP login can be your Mailercloud user.{" "}
+          <strong>Default sender</strong> must be the verified Sender ID{" "}
+          <code>email@usarakhi.com</code>.
+        </p>
+        <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+          Never set SMTP host to <code>smtp.usarakhi.com</code> here. That mailbox has a low daily
+          send limit (~220) used for order notifications — using it for campaigns blocks coupons and
+          order emails for the rest of the day.
         </p>
 
         <label className="block text-sm">
@@ -104,7 +119,23 @@ export default function SettingsPage() {
         </label>
 
         {field("smtpHost", "SMTP host")}
-        {field("smtpPort", "SMTP port", "number")}
+        <label className="block text-sm">
+          SMTP port
+          <input
+            type="number"
+            className="mt-1 w-full border rounded-lg px-3 py-2"
+            value={String(settings.smtpPort ?? 587)}
+            onChange={(e) => {
+              const smtpPort = Number(e.target.value);
+              setSettings({
+                ...settings,
+                smtpPort,
+                // Port 587 = STARTTLS; port 465 = SMTPS. Wrong combo causes TLS "wrong version number".
+                smtpSecure: smtpPort === 465,
+              });
+            }}
+          />
+        </label>
 
         <label className="flex items-center gap-2 text-sm">
           <input
@@ -112,8 +143,14 @@ export default function SettingsPage() {
             checked={Boolean(settings.smtpSecure)}
             onChange={(e) => setSettings({ ...settings, smtpSecure: e.target.checked })}
           />
-          Use SMTPS / secure (port 465). Leave unchecked for STARTTLS on 587.
+          Use SMTPS / secure (port 465 only). For Mailercloud port 587 this must stay unchecked
+          (STARTTLS).
         </label>
+        {Number(settings.smtpPort) === 587 && settings.smtpSecure ? (
+          <p className="text-xs text-red-600">
+            Port 587 with Secure checked will fail. Uncheck Secure, then Save.
+          </p>
+        ) : null}
 
         {field("smtpUser", "SMTP username")}
 
