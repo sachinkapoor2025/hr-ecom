@@ -81,16 +81,15 @@ export default function SettingsPage() {
       <div className="rounded-xl border bg-white p-5 space-y-3">
         <h2 className="font-semibold text-primary">Marketing SMTP</h2>
         <p className="text-xs text-slate-500">
-          Marketing only — use Mailercloud: host <code>smtp-prod.mailrcld.com</code>, port{" "}
-          <code>587</code>, STARTTLS (secure unchecked), user <code>order@usarakhi.com</code>. Do{" "}
-          <strong>not</strong> use <code>smtp.usarakhi.com</code> here (that is for order/transactional
-          mail only). Paste the Mailercloud SMTP password and Save.
+          Marketing only — Mailercloud host <code>smtp-prod.mailrcld.com</code>, port <code>587</code>,
+          STARTTLS (secure unchecked). SMTP username = Mailercloud login (often{" "}
+          <code>order@usarakhi.com</code>). <strong>Default sender email</strong> below must be your
+          verified Sender ID: <code>email@usarakhi.com</code>. Do not use{" "}
+          <code>smtp.usarakhi.com</code> here.
         </p>
         <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-          If you see <strong>invalid sender</strong>, Mailercloud has not verified sending yet: in
-          Mailercloud complete <strong>Domain authentication</strong> for <code>usarakhi.com</code>{" "}
-          (SPF/DKIM) and add/verify <strong>Sender ID</strong> <code>order@usarakhi.com</code>, then
-          retry.
+          Invalid sender usually means From is not a verified Sender ID. Keep From / Default sender
+          as <code>email@usarakhi.com</code> (verified in Mailercloud).
         </p>
 
         <label className="block text-sm">

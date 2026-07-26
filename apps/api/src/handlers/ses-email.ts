@@ -46,8 +46,11 @@ function defaultSettings(): SesSettings {
   return sesSettingsSchema.parse({
     awsRegion: process.env.SES_AWS_REGION || process.env.AWS_REGION || "us-east-1",
     defaultSenderName: "UsaRakhi",
-    defaultSenderEmail: process.env.SES_FROM_EMAIL || "order@usarakhi.com",
-    defaultReplyTo: process.env.SES_REPLY_TO || "order@usarakhi.com",
+    // Mailercloud verified Sender ID (From). SMTP login user may differ (smtpUser).
+    defaultSenderEmail:
+      process.env.MARKETING_FROM_EMAIL || process.env.SES_FROM_EMAIL || "email@usarakhi.com",
+    defaultReplyTo:
+      process.env.MARKETING_FROM_EMAIL || process.env.SES_REPLY_TO || "email@usarakhi.com",
     dailyLimit: 50_000,
     maxSendRatePerMinute: 600,
     batchSize: 50,
@@ -898,18 +901,17 @@ export async function sendTest(event: APIGatewayProxyEventV2) {
 
     const settings = await loadSettings();
     const fromName = (campaign.senderName || settings.defaultSenderName || "UsaRakhi").trim();
-    // Marketing From must be the Mailercloud SMTP user / verified Sender ID.
+    // From must be Mailercloud verified Sender ID (email@usarakhi.com), not SMTP login.
     const fromEmail = (
-      settings.smtpUser ||
-      settings.defaultSenderEmail ||
       campaign.senderEmail ||
-      "order@usarakhi.com"
+      settings.defaultSenderEmail ||
+      "email@usarakhi.com"
     ).trim();
     const replyTo = (campaign.replyTo || settings.defaultReplyTo || fromEmail).trim();
 
     if (!fromEmail) {
       return badRequest(
-        "Sender email is missing. Set SMTP username / default sender to your verified Mailercloud Sender ID (e.g. order@usarakhi.com)."
+        "Sender email is missing. Set Default sender email to your verified Mailercloud Sender ID (e.g. email@usarakhi.com)."
       );
     }
 
@@ -1401,7 +1403,11 @@ async function sendQueuedEmail(
     html,
     text: htmlToText(html),
     fromName: (campaign.senderName || settings.defaultSenderName || "UsaRakhi").trim(),
-    fromEmail: (campaign.senderEmail || settings.defaultSenderEmail || "").trim(),
+    fromEmail: (
+      campaign.senderEmail ||
+      settings.defaultSenderEmail ||
+      "email@usarakhi.com"
+    ).trim(),
     replyTo: (campaign.replyTo || settings.defaultReplyTo || "").trim() || undefined,
   });
 }

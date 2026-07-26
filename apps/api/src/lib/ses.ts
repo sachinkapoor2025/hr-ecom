@@ -266,11 +266,17 @@ async function sendViaMarketingSmtp(
   input: SesSendInput,
   smtp: MarketingSmtp
 ): Promise<{ messageId?: string }> {
-  // Always send as the Mailercloud SMTP mailbox (verified Sender ID). Campaign "from"
-  // mismatches are moved to Reply-To so we never hit invalid-sender on MAIL FROM.
-  const fromEmail = smtp.user.trim();
+  // Auth (smtp.user) can differ from From. Mailercloud requires From = verified Sender ID
+  // (e.g. email@usarakhi.com), not necessarily the SMTP login user.
+  const fromEmail = (input.fromEmail || smtp.user).trim();
   const fromName = (input.fromName || "UsaRakhi").trim();
-  const replyTo = (input.replyTo || input.fromEmail || fromEmail).trim() || fromEmail;
+  const replyTo = (input.replyTo || fromEmail).trim() || fromEmail;
+  if (!fromEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(fromEmail)) {
+    throw new SesSendError(
+      `Marketing SMTP failed: invalid From address "${fromEmail || "(empty)"}". Set Default sender email to your verified Mailercloud Sender ID.`,
+      { code: "MarketingSmtpInvalidSender" }
+    );
+  }
   const options: SMTPTransport.Options = {
     host: smtp.host,
     port: smtp.port,
@@ -300,7 +306,7 @@ async function sendViaMarketingSmtp(
     const raw = err instanceof Error ? err.message : String(err);
     if (/invalid sender|no valid From address/i.test(raw)) {
       throw new SesSendError(
-        `Marketing SMTP failed: Mailercloud rejected sender ${fromEmail}. In Mailercloud, add & verify Sender ID "${fromEmail}" and finish domain authentication (SPF/DKIM) for usarakhi.com — then retry. Host used: ${smtp.host}`,
+        `Marketing SMTP failed: Mailercloud rejected sender ${fromEmail}. Use a verified Sender ID (e.g. email@usarakhi.com) as Default sender email in Admin → Email → Settings. SMTP login user can stay as provided by Mailercloud. Host: ${smtp.host}`,
         { code: "MarketingSmtpInvalidSender", cause: err }
       );
     }
