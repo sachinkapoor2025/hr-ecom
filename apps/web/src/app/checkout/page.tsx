@@ -377,6 +377,29 @@ function CheckoutPageInner() {
               resolve();
               router.push(`/orders/${order.orderId}`);
             } catch (verifyErr) {
+              // Payment may already be captured; webhook/reconcile can still mark paid.
+              try {
+                for (let i = 0; i < 8; i++) {
+                  await new Promise((r) => setTimeout(r, 1500));
+                  const res = await api<{ order: Order }>(`/orders/${order.orderId}`, {
+                    sessionId,
+                    token,
+                  });
+                  if (res.order.status !== "pending_payment") {
+                    trackPurchase(order.total, {
+                      orderId: order.orderId,
+                      provider: "razorpay",
+                      currency: order.currency,
+                    });
+                    await refresh();
+                    resolve();
+                    router.push(`/orders/${order.orderId}`);
+                    return;
+                  }
+                }
+              } catch {
+                /* fall through */
+              }
               reject(verifyErr);
             }
           },
@@ -750,7 +773,19 @@ function CheckoutPageInner() {
               <RazorpayQrPanel
                 qrImageUrl={razorpayPayment.qrImageUrl}
                 amountLabel={format(razorpayPayment.order.total, displayCurrency)}
+                orderId={razorpayPayment.order.orderId}
+                sessionId={sessionId}
+                token={token}
                 openingCheckout={openingRazorpay}
+                onPaid={(paidOrder) => {
+                  trackPurchase(paidOrder.total, {
+                    orderId: paidOrder.orderId,
+                    provider: "razorpay",
+                    currency: paidOrder.currency,
+                  });
+                  void refresh();
+                  router.push(`/orders/${paidOrder.orderId}`);
+                }}
                 onOpenCheckout={() =>
                   void openRazorpayCheckout(
                     razorpayPayment.order,

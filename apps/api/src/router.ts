@@ -21,7 +21,11 @@ import * as loadTest from "./handlers/load-test";
 import * as vendorOrders from "./handlers/vendor-orders";
 import * as reviews from "./handlers/reviews";
 import { stripeWebhook } from "./handlers/payments/stripe";
-import { razorpayWebhook, verifyRazorpayPayment } from "./handlers/payments/razorpay";
+import {
+  razorpayWebhook,
+  verifyRazorpayPayment,
+  syncAdminOrderPayment,
+} from "./handlers/payments/razorpay";
 
 type RouteHandler = (event: APIGatewayProxyEventV2) => Promise<APIGatewayProxyResultV2>;
 
@@ -68,6 +72,12 @@ const routes: Route[] = [
   { method: "GET", pattern: /^\/admin\/shipping\/settings$/, handler: shipping.getAdminShippingSettings },
   { method: "PUT", pattern: /^\/admin\/shipping\/settings$/, handler: shipping.updateAdminShippingSettings },
   { method: "POST", pattern: /^\/admin\/orders\/([^/]+)\/buy-label$/, handler: shipping.buyLabelForOrder, params: ["orderId"] },
+  {
+    method: "POST",
+    pattern: /^\/admin\/orders\/([^/]+)\/sync-payment$/,
+    handler: syncAdminOrderPayment,
+    params: ["orderId"],
+  },
   { method: "POST", pattern: /^\/admin\/orders\/([^/]+)\/rates$/, handler: shipping.getOrderShippingRates, params: ["orderId"] },
   { method: "GET", pattern: /^\/admin\/shipping\/products-missing-dims$/, handler: shipping.listProductsMissingDims },
   { method: "GET", pattern: /^\/admin\/load-test$/, handler: loadTest.getLoadTestInfo },

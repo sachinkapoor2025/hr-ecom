@@ -32,6 +32,11 @@ Parameters:
     Type: String
     Default: ""
     NoEcho: true
+  RazorpayWebhookSecret:
+    Type: String
+    Default: ""
+    NoEcho: true
+    Description: Razorpay webhook signing secret (Dashboard → Webhooks). Required so captured payments mark orders paid without relying on browser redirect.
   SmtpPassword:
     Type: String
     Default: ""
@@ -138,6 +143,7 @@ Globals:
         RAZORPAY_SECRET_ARN: !Ref RazorpaySecretArn
         RAZORPAY_KEY_ID: !Ref RazorpayKeyId
         RAZORPAY_KEY_SECRET: !Ref RazorpayKeySecret
+        RAZORPAY_WEBHOOK_SECRET: !Ref RazorpayWebhookSecret
         CLOUDFRONT_DOMAIN: !GetAtt CloudFrontDistribution.DomainName
         SMTP_HOST: smtp.usarakhi.com
         SMTP_PORT: "465"

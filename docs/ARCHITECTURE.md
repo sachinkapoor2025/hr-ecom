@@ -154,10 +154,13 @@ When admin changes order status (accepted, processing, shipped, delivered, compl
 1. Checkout reads `CONFIG#PAYMENTS` → region (`US` → Stripe, `IN` → Razorpay)
 2. Create order in DynamoDB (status: `pending_payment`)
 3. Create Stripe PaymentIntent or Razorpay Order
-4. Client completes payment
-5. Webhook confirms → order status `paid` → inventory decrement
+4. Client completes payment (Razorpay also calls `POST /payments/razorpay/verify`)
+5. **Webhook is source of truth** (`POST /webhooks/stripe`, `POST /webhooks/razorpay`) → `paid` + inventory
+6. Safety net: cron reconciles Razorpay `pending_payment` orders against Razorpay capture API; admin can **Sync payment from Razorpay** on the order page
 
-Secrets (Stripe/Razorpay keys) live in **SSM Parameter Store** / **Secrets Manager**, never in code.
+Requires GitHub secret `RAZORPAY_WEBHOOK_SECRET` and Razorpay Dashboard webhook to `{API}/webhooks/razorpay` for events `payment.captured`, `order.paid`, `qr_code.credited`.
+
+Secrets (Stripe/Razorpay keys) live in **SSM Parameter Store** / **Secrets Manager** / GitHub Actions secrets, never in code.
 
 ## Customer / Lead Capture
 
