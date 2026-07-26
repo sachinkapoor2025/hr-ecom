@@ -712,12 +712,19 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName: !Ref PendingPaymentUnsubTable
       Events:
-        HourlyReviewEmails:
+        EmailJobsEvery15Minutes:
           Type: Schedule
           Properties:
             Schedule: rate(15 minutes)
-            Description: Review emails + abandoned cart + pending-payment reminders (daily through 2026-08-28)
+            Description: Review emails + abandoned cart + pending-payment reminders
             Enabled: true
+        RazorpayReconcileHourly:
+          Type: Schedule
+          Properties:
+            Schedule: rate(1 hour)
+            Description: Reconcile Razorpay captured payments stuck in pending_payment (webhook safety net)
+            Enabled: true
+            Input: '{"task":"razorpayReconcile"}'
     Metadata:
       BuildMethod: makefile
 
