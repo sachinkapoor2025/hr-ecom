@@ -211,11 +211,8 @@ async function resolveTransport(): Promise<ResolvedTransport> {
     process.env.MARKETING_SMTP_HOST?.trim() ||
     "smtp-prod.mailrcld.com";
   const port = Number(stored.smtpPort ?? process.env.MARKETING_SMTP_PORT ?? 587);
-  const secure =
-    typeof stored.smtpSecure === "boolean"
-      ? stored.smtpSecure
-      : process.env.MARKETING_SMTP_SECURE?.trim().toLowerCase() === "true" ||
-        port === 465;
+  // Never use SMTPS on 587 — that yields TLS "wrong version number" with Mailercloud.
+  const secure = port === 465;
   const user =
     stored.smtpUser?.trim() ||
     process.env.MARKETING_SMTP_USER?.trim() ||
@@ -269,9 +266,11 @@ async function sendViaMarketingSmtp(
   input: SesSendInput,
   smtp: MarketingSmtp
 ): Promise<{ messageId?: string }> {
-  // Mailercloud requires MAIL FROM / From to match the authenticated marketing mailbox.
-  const fromEmail = (input.fromEmail || smtp.user).trim() || smtp.user;
-  const from = formatSesFromAddress(input.fromName, fromEmail);
+  // Always send as the Mailercloud SMTP mailbox (verified Sender ID). Campaign "from"
+  // mismatches are moved to Reply-To so we never hit invalid-sender on MAIL FROM.
+  const fromEmail = smtp.user.trim();
+  const fromName = (input.fromName || "UsaRakhi").trim();
+  const replyTo = (input.replyTo || input.fromEmail || fromEmail).trim() || fromEmail;
   const options: SMTPTransport.Options = {
     host: smtp.host,
     port: smtp.port,
@@ -285,21 +284,27 @@ async function sendViaMarketingSmtp(
   const transporter = nodemailer.createTransport(options);
   try {
     const info = await transporter.sendMail({
-      from,
+      from: { name: fromName, address: fromEmail },
       to: input.to,
-      replyTo: input.replyTo?.trim() || fromEmail,
+      replyTo,
       subject: input.subject,
       html: input.html,
       text: input.text,
       envelope: {
-        from: smtp.user,
+        from: fromEmail,
         to: input.to,
       },
     });
     return { messageId: typeof info.messageId === "string" ? info.messageId : undefined };
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    throw new SesSendError(`Marketing SMTP failed: ${message}`, {
+    const raw = err instanceof Error ? err.message : String(err);
+    if (/invalid sender|no valid From address/i.test(raw)) {
+      throw new SesSendError(
+        `Marketing SMTP failed: Mailercloud rejected sender ${fromEmail}. In Mailercloud, add & verify Sender ID "${fromEmail}" and finish domain authentication (SPF/DKIM) for usarakhi.com — then retry. Host used: ${smtp.host}`,
+        { code: "MarketingSmtpInvalidSender", cause: err }
+      );
+    }
+    throw new SesSendError(`Marketing SMTP failed: ${raw}`, {
       code: "MarketingSmtpError",
       cause: err,
     });

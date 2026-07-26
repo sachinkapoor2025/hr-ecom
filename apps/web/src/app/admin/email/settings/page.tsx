@@ -86,6 +86,12 @@ export default function SettingsPage() {
           <strong>not</strong> use <code>smtp.usarakhi.com</code> here (that is for order/transactional
           mail only). Paste the Mailercloud SMTP password and Save.
         </p>
+        <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+          If you see <strong>invalid sender</strong>, Mailercloud has not verified sending yet: in
+          Mailercloud complete <strong>Domain authentication</strong> for <code>usarakhi.com</code>{" "}
+          (SPF/DKIM) and add/verify <strong>Sender ID</strong> <code>order@usarakhi.com</code>, then
+          retry.
+        </p>
 
         <label className="block text-sm">
           Transport
@@ -105,7 +111,23 @@ export default function SettingsPage() {
         </label>
 
         {field("smtpHost", "SMTP host")}
-        {field("smtpPort", "SMTP port", "number")}
+        <label className="block text-sm">
+          SMTP port
+          <input
+            type="number"
+            className="mt-1 w-full border rounded-lg px-3 py-2"
+            value={String(settings.smtpPort ?? 587)}
+            onChange={(e) => {
+              const smtpPort = Number(e.target.value);
+              setSettings({
+                ...settings,
+                smtpPort,
+                // Port 587 = STARTTLS; port 465 = SMTPS. Wrong combo causes TLS "wrong version number".
+                smtpSecure: smtpPort === 465,
+              });
+            }}
+          />
+        </label>
 
         <label className="flex items-center gap-2 text-sm">
           <input
@@ -113,8 +135,14 @@ export default function SettingsPage() {
             checked={Boolean(settings.smtpSecure)}
             onChange={(e) => setSettings({ ...settings, smtpSecure: e.target.checked })}
           />
-          Use SMTPS / secure (port 465). Leave unchecked for STARTTLS on 587.
+          Use SMTPS / secure (port 465 only). For Mailercloud port 587 this must stay unchecked
+          (STARTTLS).
         </label>
+        {Number(settings.smtpPort) === 587 && settings.smtpSecure ? (
+          <p className="text-xs text-red-600">
+            Port 587 with Secure checked will fail. Uncheck Secure, then Save.
+          </p>
+        ) : null}
 
         {field("smtpUser", "SMTP username")}
 

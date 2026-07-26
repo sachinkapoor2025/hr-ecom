@@ -735,21 +735,26 @@ export async function updateSettings(event: APIGatewayProxyEventV2) {
       "Marketing SMTP must use Mailercloud (smtp-prod.mailrcld.com). smtp.usarakhi.com is reserved for transactional order emails only."
     );
   }
+  // Coerce TLS mode from port so Mailercloud 587 never saves as SMTPS (causes wrong version number).
+  const settingsToSave = {
+    ...parsed.data,
+    smtpSecure: Number(parsed.data.smtpPort) === 465,
+  };
   await docClient.send(
     new PutCommand({
       TableName: TABLE,
       Item: {
         PK: sesEmailKeys.settingsPk(),
         SK: sesEmailKeys.settingsSk(),
-        settings: parsed.data,
+        settings: settingsToSave,
         updatedAt: now(),
       },
     })
   );
   clearMarketingTransportCache();
   return ok({
-    settings: redactSettingsForAdmin(parsed.data),
-    smtpPasswordSet: Boolean(parsed.data.smtpPassword),
+    settings: redactSettingsForAdmin(settingsToSave),
+    smtpPasswordSet: Boolean(settingsToSave.smtpPassword),
   });
 }
 
@@ -893,12 +898,18 @@ export async function sendTest(event: APIGatewayProxyEventV2) {
 
     const settings = await loadSettings();
     const fromName = (campaign.senderName || settings.defaultSenderName || "UsaRakhi").trim();
-    const fromEmail = (campaign.senderEmail || settings.defaultSenderEmail || "").trim();
+    // Marketing From must be the Mailercloud SMTP user / verified Sender ID.
+    const fromEmail = (
+      settings.smtpUser ||
+      settings.defaultSenderEmail ||
+      campaign.senderEmail ||
+      "order@usarakhi.com"
+    ).trim();
     const replyTo = (campaign.replyTo || settings.defaultReplyTo || fromEmail).trim();
 
     if (!fromEmail) {
       return badRequest(
-        "Sender email is missing. Set a verified From address in the campaign or SES settings (e.g. order@usarakhi.com)."
+        "Sender email is missing. Set SMTP username / default sender to your verified Mailercloud Sender ID (e.g. order@usarakhi.com)."
       );
     }
 
