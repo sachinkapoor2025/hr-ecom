@@ -47,6 +47,7 @@ export default function AdminOrderDetailPage() {
   const [deleting, setDeleting] = useState(false);
   const [message, setMessage] = useState("");
   const [buyingLabel, setBuyingLabel] = useState(false);
+  const [syncingPayment, setSyncingPayment] = useState(false);
   const [loadingRates, setLoadingRates] = useState(false);
   const [savingService, setSavingService] = useState(false);
   const [rateOptions, setRateOptions] = useState<RateQuote[]>([]);
@@ -224,6 +225,33 @@ export default function AdminOrderDetailPage() {
       await load();
     } finally {
       setBuyingLabel(false);
+    }
+  };
+
+  /** Pull capture status from Razorpay when browser verify/webhook was missed. */
+  const syncRazorpayPayment = async () => {
+    setSyncingPayment(true);
+    setError("");
+    setMessage("");
+    try {
+      const data = await apiClient<{ order: AdminOrder; synced?: boolean; alreadyPaid?: boolean }>(
+        `/admin/orders/${orderId}/sync-payment`,
+        { method: "POST" }
+      );
+      setOrder(data.order);
+      setMessage(
+        data.alreadyPaid
+          ? "Order was already paid."
+          : data.synced
+            ? "Payment synced from Razorpay — order marked paid."
+            : "Sync completed."
+      );
+      const next = nextStatuses(data.order.status);
+      setNewStatus(next[0] ?? data.order.status);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not sync payment from Razorpay.");
+    } finally {
+      setSyncingPayment(false);
     }
   };
 
@@ -489,6 +517,17 @@ export default function AdminOrderDetailPage() {
           <section className="bg-white border rounded-xl p-5 text-sm">
             <h2 className="font-semibold mb-3">Payment & shipping</h2>
             <p className="text-slate-600 capitalize">Method: {order.paymentProvider ?? "—"}</p>
+            {order.status === ORDER_STATUS.PENDING_PAYMENT &&
+              (order.paymentProvider === "razorpay" || order.razorpayOrderId) && (
+                <button
+                  type="button"
+                  disabled={syncingPayment}
+                  onClick={() => void syncRazorpayPayment()}
+                  className="mt-2 text-sm rounded-lg border border-nav text-nav px-3 py-1.5 hover:bg-blue-50 disabled:opacity-50"
+                >
+                  {syncingPayment ? "Checking Razorpay…" : "Sync payment from Razorpay"}
+                </button>
+              )}
             <p className="text-slate-600 mt-1">Shipping: {shippingStatusLabel(order.status)}</p>
             {(order.shippingServiceName || order.shippingServiceCode) && (
               <p className="text-slate-600 mt-1">

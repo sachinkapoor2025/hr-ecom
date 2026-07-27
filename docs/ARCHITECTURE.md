@@ -105,8 +105,8 @@ When admin changes order status (accepted, processing, shipped, delivered, compl
 | GET | `/admin/shipping/products-missing-dims` | Admin: products without weight/dimensions |
 | GET | `/admin/load-test` | Super admin: load-test presets + LOAD_TEST_MODE status |
 | POST | `/admin/load-test/run` | Super admin: prefer UI browser runner (`smoke` / `u100`…`u1000`). UI: `/admin/load-test` |
-| GET | `/vendors/orange-county/orders` | Backend vendor feed (`X-Vendor-Api-Key`): orders with `vendorSlug=orange-county` hamper lines only (name not shown on storefront). See `docs/VENDOR_ORANGE_COUNTY_API.md` |
-| GET | `/vendors/orange-county/orders/{orderId}` | Same auth: single order, vendor line items only |
+| GET | `/vendors/orange-county/orders` | **Vendor API only** (`VendorApiUrl`, not storefront `ApiUrl`). `X-Vendor-Api-Key`; OC hamper lines only; no selling prices. See `docs/VENDOR_ORANGE_COUNTY_API.md` |
+| GET | `/vendors/orange-county/orders/{orderId}` | Same vendor API + auth; single order, vendor line items + SKU only |
 | POST | `/webhooks/stripe` | Stripe webhook |
 
 ### Scale notes (catalog / concurrency)
@@ -140,7 +140,8 @@ When admin changes order status (accepted, processing, shipped, delivered, compl
 | GET | `/admin/carts/abandoned` | Admin: abandoned carts (CSV in UI) |
 | GET | `/admin/leads` | Admin: captured leads |
 | GET/POST | `/ses-email/reminders*` | Admin: checkout-nudge audience (manual fetch, send, soft-delete). UI: `/admin/email/nudges` |
-| GET/POST | `/ses-email/*` | Marketing campaigns (admin auth): dashboard, campaigns, recipients, templates, queue, analytics, suppression, settings (SMTP credentials). UI at `/admin/email` |
+| GET/POST | `/ses-email/*` | Marketing campaigns (admin auth): dashboard, campaigns, recipients, templates, queue, analytics (+ per-email activity), suppression, bounce sync, settings. UI at `/admin/email` |
+| POST | `/webhooks/mailercloud` | Mailercloud bounce/complaint/unsub → marketing `SUPPRESS#` (skipped on next import/send) |
 | GET | `/email/open/{token}` | Open tracking pixel |
 | GET | `/email/click/{token}` | Click tracking redirect |
 | GET | `/email/unsubscribe/{token}` | Unsubscribe → suppression list |
@@ -153,10 +154,13 @@ When admin changes order status (accepted, processing, shipped, delivered, compl
 1. Checkout reads `CONFIG#PAYMENTS` → region (`US` → Stripe, `IN` → Razorpay)
 2. Create order in DynamoDB (status: `pending_payment`)
 3. Create Stripe PaymentIntent or Razorpay Order
-4. Client completes payment
-5. Webhook confirms → order status `paid` → inventory decrement
+4. Client completes payment (Razorpay also calls `POST /payments/razorpay/verify`)
+5. **Webhook is source of truth** (`POST /webhooks/stripe`, `POST /webhooks/razorpay`) → `paid` + inventory
+6. Safety net: hourly cron reconciles Razorpay `pending_payment` orders against Razorpay capture API; admin can **Sync payment from Razorpay** on the order page
 
-Secrets (Stripe/Razorpay keys) live in **SSM Parameter Store** / **Secrets Manager**, never in code.
+Requires GitHub secret `RAZORPAY_WEBHOOK_SECRET` and Razorpay Dashboard webhook to `{API}/webhooks/razorpay` for events `payment.captured`, `order.paid`, `qr_code.credited`.
+
+Secrets (Stripe/Razorpay keys) live in **SSM Parameter Store** / **Secrets Manager** / GitHub Actions secrets, never in code.
 
 ## Customer / Lead Capture
 

@@ -87,11 +87,18 @@ export default function CampaignDetailPage() {
 
       <section className="rounded-xl border bg-white p-5">
         <h2 className="font-semibold mb-2">Recipients preview</h2>
+        <p className="text-xs text-slate-500 mb-2">
+          Full activity list (opens, clicks, orders) is on{" "}
+          <Link href="/admin/email/analytics" className="text-nav hover:underline">
+            Analytics
+          </Link>
+          .
+        </p>
         <ul className="text-sm divide-y max-h-60 overflow-auto">
           {preview.map((r) => (
-            <li key={r.email} className="py-1.5 flex justify-between">
-              <span>{r.email}</span>
-              <span className="text-slate-500">{r.name}</span>
+            <li key={r.email} className="py-1.5 flex justify-between gap-2">
+              <span className="truncate">{r.email}</span>
+              <span className="text-slate-500 shrink-0 capitalize">{r.status || "ready"}</span>
             </li>
           ))}
         </ul>

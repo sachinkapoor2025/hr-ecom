@@ -1,7 +1,7 @@
 # Orange County vendor order API
 
 UsaRakhi admin sees **all** orders in `/admin/orders`.  
-Orange County only receives orders that include **their** hamper line items (`vendorSlug=orange-county`).
+Orange County uses a **separate API Gateway** (not the storefront API) and only receives orders that include **their** hamper line items (`vendorSlug=orange-county`).
 
 Customer storefront never shows the vendor name — only “Rakhi Hamper”.
 
@@ -9,9 +9,20 @@ Customer storefront never shows the vendor name — only “Rakhi Hamper”.
 
 | Item | Value |
 |------|--------|
-| Base API URL | Your live API (same as `NEXT_PUBLIC_API_URL`), e.g. `https://xxxx.execute-api.us-east-1.amazonaws.com` |
+| Base API URL | CloudFormation output `VendorApiUrl` (different host from storefront `ApiUrl`) |
 | Auth header | `X-Vendor-Api-Key: <secret>` |
-| API key | GitHub Actions secret / SAM param `ORANGE_COUNTY_VENDOR_API_KEY` (generate a long random string; do not commit it) |
+| API key | GitHub Actions secret / SAM param `ORANGE_COUNTY_VENDOR_API_KEY` |
+
+After deploy, get the live URL:
+
+```bash
+aws cloudformation describe-stacks --stack-name hr-ecom-prod \
+  --query "Stacks[0].Outputs[?OutputKey=='VendorApiUrl'].OutputValue" --output text
+```
+
+Example shape (ID changes per account):
+
+`https://xxxxxxxx.execute-api.us-east-1.amazonaws.com/prod`
 
 ### Generate a key (example)
 
@@ -24,14 +35,16 @@ Set it as:
 1. GitHub repo secret: `ORANGE_COUNTY_VENDOR_API_KEY`
 2. Redeploy API (SAM) so Lambda env `ORANGE_COUNTY_VENDOR_API_KEY` is set
 
-Share **only** the base URL + this key with Orange County (over a secure channel). Rotate if leaked.
+Share **only** the **VendorApiUrl** + this key with Orange County (secure channel). Rotate if leaked.
+
+The storefront API (`ApiUrl` / `foqu2…`) does **not** expose these vendor routes.
 
 ## Endpoints
 
 ### List their orders
 
 ```http
-GET {API_URL}/vendors/orange-county/orders
+GET {VENDOR_API_URL}/vendors/orange-county/orders
 X-Vendor-Api-Key: <key>
 ```
 
@@ -48,7 +61,7 @@ Example:
 ```bash
 curl -sS \
   -H "X-Vendor-Api-Key: YOUR_KEY" \
-  "https://YOUR_API_URL/vendors/orange-county/orders?limit=50"
+  "https://YOUR_VENDOR_API_URL/prod/vendors/orange-county/orders?limit=50"
 ```
 
 Response shape (simplified):
@@ -62,14 +75,26 @@ Response shape (simplified):
       "orderId": "…",
       "status": "paid",
       "createdAt": "…",
-      "currency": "USD",
-      "shippingAddress": { "name": "…", "line1": "…", "city": "…", "state": "…", "postalCode": "…", "country": "US", "phone": "…" },
+      "shippingAddress": {
+        "name": "…",
+        "line1": "…",
+        "city": "…",
+        "state": "…",
+        "postalCode": "…",
+        "country": "US",
+        "phone": "…",
+        "email": "…"
+      },
       "trackingNumber": null,
       "carrier": null,
       "items": [
-        { "productSlug": "…", "sku": "TFUSA001", "name": "…", "quantity": 1, "price": 57, "currency": "USD" }
-      ],
-      "vendorSubtotal": 57
+        {
+          "sku": "TFUSRH2026-16",
+          "productSlug": "classic-rakhi-double-delight-box",
+          "name": "…",
+          "quantity": 1
+        }
+      ]
     }
   ]
 }
@@ -77,14 +102,15 @@ Response shape (simplified):
 
 Notes:
 
+- **Selling price is never returned** (no `price`, `currency`, or `vendorSubtotal`)
+- `sku` is the vendor code from the Orange County sheet (e.g. `TFUSRH2026-16`)
 - Unpaid / cancelled / refunded orders are **hidden** unless you pass `?status=…`
 - `items` are **only** Orange County lines (UsaRakhi-only SKUs on mixed carts are omitted)
-- `vendorSubtotal` is the sum of those lines only
 
 ### Single order
 
 ```http
-GET {API_URL}/vendors/orange-county/orders/{orderId}
+GET {VENDOR_API_URL}/vendors/orange-county/orders/{orderId}
 X-Vendor-Api-Key: <key>
 ```
 
@@ -98,8 +124,8 @@ Returns `403` if the order has no Orange County items or the key is wrong.
 
 ## Requirements for tagging to work
 
-1. Products imported with `vendorSlug: orange-county` (our Orange County import/catalog)
-2. Customer adds those products to cart after import (cart stamps `vendorSlug` on the line)
+1. Products imported with `vendorSlug: orange-county` and `sku` from the vendor sheet
+2. Customer adds those products to cart (cart stamps `vendorSlug` + `sku` on the line)
 3. Checkout writes `vendorSlugs` on the order
 
-If an old order was placed before `vendorSlug` existed on products, it will not appear in the vendor feed.
+If an old order was placed before `vendorSlug` existed on products, it will not appear in the vendor feed. SKU is still resolved from the bundled catalog when missing on the line.

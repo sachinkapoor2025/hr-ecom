@@ -574,6 +574,14 @@ export async function markOrderPaid(
   const order = await fetchOrder(orderId);
   if (!order) return;
   if (order.status === ORDER_STATUS.PAID) return;
+  // Only promote unpaid checkouts — avoid clobbering fulfilled orders via late webhooks.
+  if (order.status !== ORDER_STATUS.PENDING_PAYMENT) {
+    console.warn("markOrderPaid skipped — order not pending_payment", {
+      orderId,
+      status: order.status,
+    });
+    return;
+  }
 
   const timestamp = now();
   const updated: StoredOrder = {

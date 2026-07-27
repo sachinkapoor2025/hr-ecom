@@ -18,10 +18,13 @@ import * as reminderEmails from "./handlers/reminder-emails";
 import * as pendingPaymentUnsub from "./handlers/pending-payment-unsub";
 import * as shipping from "./handlers/shipping";
 import * as loadTest from "./handlers/load-test";
-import * as vendorOrders from "./handlers/vendor-orders";
 import * as reviews from "./handlers/reviews";
 import { stripeWebhook } from "./handlers/payments/stripe";
-import { razorpayWebhook, verifyRazorpayPayment } from "./handlers/payments/razorpay";
+import {
+  razorpayWebhook,
+  verifyRazorpayPayment,
+  syncAdminOrderPayment,
+} from "./handlers/payments/razorpay";
 
 type RouteHandler = (event: APIGatewayProxyEventV2) => Promise<APIGatewayProxyResultV2>;
 
@@ -68,18 +71,17 @@ const routes: Route[] = [
   { method: "GET", pattern: /^\/admin\/shipping\/settings$/, handler: shipping.getAdminShippingSettings },
   { method: "PUT", pattern: /^\/admin\/shipping\/settings$/, handler: shipping.updateAdminShippingSettings },
   { method: "POST", pattern: /^\/admin\/orders\/([^/]+)\/buy-label$/, handler: shipping.buyLabelForOrder, params: ["orderId"] },
+  {
+    method: "POST",
+    pattern: /^\/admin\/orders\/([^/]+)\/sync-payment$/,
+    handler: syncAdminOrderPayment,
+    params: ["orderId"],
+  },
   { method: "POST", pattern: /^\/admin\/orders\/([^/]+)\/rates$/, handler: shipping.getOrderShippingRates, params: ["orderId"] },
   { method: "GET", pattern: /^\/admin\/shipping\/products-missing-dims$/, handler: shipping.listProductsMissingDims },
   { method: "GET", pattern: /^\/admin\/load-test$/, handler: loadTest.getLoadTestInfo },
   { method: "POST", pattern: /^\/admin\/load-test\/run$/, handler: loadTest.runLoadTest },
-  // Orange County vendor fulfillment feed (API key auth)
-  { method: "GET", pattern: /^\/vendors\/orange-county\/orders$/, handler: vendorOrders.listOrangeCountyOrders },
-  {
-    method: "GET",
-    pattern: /^\/vendors\/orange-county\/orders\/([^/]+)$/,
-    handler: vendorOrders.getOrangeCountyOrder,
-    params: ["orderId"],
-  },
+  // Vendor order feed lives on a separate VendorHttpApi (vendor-api.ts) — not here.
   { method: "GET", pattern: /^\/orders$/, handler: orders.listOrders },
   { method: "GET", pattern: /^\/orders\/([^/]+)$/, handler: orders.getOrder, params: ["orderId"] },
   { method: "POST", pattern: /^\/orders\/([^/]+)\/retry-payment$/, handler: orders.retryOrderPayment, params: ["orderId"] },
@@ -128,6 +130,8 @@ const routes: Route[] = [
   { method: "DELETE", pattern: /^\/products\/([^/]+)\/images$/, handler: uploads.deleteImageFromProduct, params: ["slug"] },
   { method: "POST", pattern: /^\/webhooks\/stripe$/, handler: stripeWebhook },
   { method: "POST", pattern: /^\/webhooks\/razorpay$/, handler: razorpayWebhook },
+  /** Mailercloud bounce/complaint/unsub → marketing SUPPRESS# (no SMTP credential changes). */
+  { method: "POST", pattern: /^\/webhooks\/mailercloud$/, handler: sesEmail.mailercloudWebhook },
   { method: "POST", pattern: /^\/payments\/razorpay\/verify$/, handler: verifyRazorpayPayment },
 
   // SES bulk email campaigns (admin)
@@ -149,6 +153,8 @@ const routes: Route[] = [
   { method: "DELETE", pattern: /^\/ses-email\/suppression\/([^/]+)$/, handler: sesEmail.removeSuppression, params: ["email"] },
   { method: "GET", pattern: /^\/ses-email\/queue$/, handler: sesEmail.listQueue },
   { method: "GET", pattern: /^\/ses-email\/analytics$/, handler: sesEmail.getAnalytics },
+  { method: "GET", pattern: /^\/ses-email\/analytics\/recipients$/, handler: sesEmail.listAnalyticsRecipients },
+  { method: "POST", pattern: /^\/ses-email\/bounces\/sync$/, handler: sesEmail.syncBouncesHandler },
   { method: "GET", pattern: /^\/ses-email\/notifications$/, handler: sesEmail.listNotifications },
   { method: "POST", pattern: /^\/ses-email\/test$/, handler: sesEmail.sendTest },
   { method: "GET", pattern: /^\/ses-email\/reminders$/, handler: reminderEmails.listReminderEmailsHandler },

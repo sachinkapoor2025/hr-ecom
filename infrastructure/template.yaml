@@ -32,6 +32,11 @@ Parameters:
     Type: String
     Default: ""
     NoEcho: true
+  RazorpayWebhookSecret:
+    Type: String
+    Default: ""
+    NoEcho: true
+    Description: Razorpay webhook signing secret (Dashboard → Webhooks). Required so captured payments mark orders paid without relying on browser redirect.
   SmtpPassword:
     Type: String
     Default: ""
@@ -138,6 +143,7 @@ Globals:
         RAZORPAY_SECRET_ARN: !Ref RazorpaySecretArn
         RAZORPAY_KEY_ID: !Ref RazorpayKeyId
         RAZORPAY_KEY_SECRET: !Ref RazorpayKeySecret
+        RAZORPAY_WEBHOOK_SECRET: !Ref RazorpayWebhookSecret
         CLOUDFRONT_DOMAIN: !GetAtt CloudFrontDistribution.DomainName
         SMTP_HOST: smtp.usarakhi.com
         SMTP_PORT: "465"
@@ -687,6 +693,60 @@ Resources:
     Metadata:
       BuildMethod: makefile
 
+  # Separate API Gateway + Lambda for Orange County vendor order feed only.
+  # Storefront/admin traffic stays on HttpApi — vendors cannot reach those routes here.
+  VendorHttpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: !Ref Environment
+      CorsConfiguration:
+        AllowMethods: ["GET", "OPTIONS"]
+        AllowHeaders: ["Content-Type", "X-Vendor-Api-Key"]
+        AllowOrigins: ["*"]
+
+  VendorApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub hr-ecom-vendor-api-${Environment}
+      Handler: vendor-api.handler
+      CodeUri: ..
+      Environment:
+        Variables:
+          ORDERS_TABLE: !Ref OrdersTable
+          ENVIRONMENT: !Ref Environment
+          ORANGE_COUNTY_VENDOR_API_KEY: !Ref OrangeCountyVendorApiKey
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref OrdersTable
+        - Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:Query
+              Resource:
+                - !GetAtt OrdersTable.Arn
+                - !Sub "${OrdersTable.Arn}/index/*"
+      Events:
+        VendorListOrders:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref VendorHttpApi
+            Path: /vendors/orange-county/orders
+            Method: GET
+        VendorGetOrder:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref VendorHttpApi
+            Path: /vendors/orange-county/orders/{orderId}
+            Method: GET
+        VendorHealth:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref VendorHttpApi
+            Path: /health
+            Method: GET
+    Metadata:
+      BuildMethod: makefile
+
   ReviewEmailsCronFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -706,12 +766,19 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName: !Ref PendingPaymentUnsubTable
       Events:
-        HourlyReviewEmails:
+        EmailJobsEvery15Minutes:
           Type: Schedule
           Properties:
             Schedule: rate(15 minutes)
-            Description: Review emails + abandoned cart + pending-payment reminders (daily through 2026-08-28)
+            Description: Review emails + abandoned cart + pending-payment reminders
             Enabled: true
+        RazorpayReconcileHourly:
+          Type: Schedule
+          Properties:
+            Schedule: rate(1 hour)
+            Description: Reconcile Razorpay captured payments stuck in pending_payment (webhook safety net)
+            Enabled: true
+            Input: '{"task":"razorpayReconcile"}'
     Metadata:
       BuildMethod: makefile
 
@@ -763,19 +830,48 @@ Resources:
     Metadata:
       BuildMethod: makefile
 
+  BounceSyncFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub hr-ecom-bounce-sync-${Environment}
+      Handler: bounce-sync.handler
+      Timeout: 120
+      MemorySize: 512
+      CodeUri: ..
+      Environment:
+        Variables:
+          EMAIL_CAMPAIGNS_TABLE: !Ref EmailCampaignsTable
+          ENVIRONMENT: !Ref Environment
+          SITE_URL: https://www.usarakhi.com
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref EmailCampaignsTable
+      Events:
+        HourlyBounceSync:
+          Type: Schedule
+          Properties:
+            Schedule: rate(1 hour)
+            Description: Promote hard-bounced marketing recipients onto SUPPRESS# skip list
+            Enabled: true
+    Metadata:
+      BuildMethod: makefile
+
   HttpApi:
     Type: AWS::Serverless::HttpApi
     Properties:
       StageName: !Ref Environment
       CorsConfiguration:
         AllowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
-        AllowHeaders: ["Content-Type", "Authorization", "X-Session-Id", "X-Vendor-Api-Key"]
+        AllowHeaders: ["Content-Type", "Authorization", "X-Session-Id"]
         AllowOrigins: ["*"]
 
 Outputs:
   ApiUrl:
-    Description: HTTP API endpoint
+    Description: HTTP API endpoint (storefront + admin — not for vendors)
     Value: !Sub https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}
+  VendorApiUrl:
+    Description: Orange County vendor order API only (X-Vendor-Api-Key)
+    Value: !Sub https://${VendorHttpApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}
   ProductsTableName:
     Value: !Ref ProductsTable
   OrdersTableName:
