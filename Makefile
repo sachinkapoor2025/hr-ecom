@@ -1,4 +1,4 @@
-.PHONY: build-ApiFunction build-ReviewEmailsCronFunction build-SesEmailCronFunction build-BounceSyncFunction api-deps api-bundle
+.PHONY: build-ApiFunction build-VendorApiFunction build-ReviewEmailsCronFunction build-SesEmailCronFunction build-BounceSyncFunction api-deps api-bundle
 
 api-deps:
 	npm ci
@@ -11,6 +11,16 @@ api-bundle: api-deps
 		--target=es2022 \
 		--minify \
 		--outfile=$(ARTIFACTS_DIR)/index.js \
+		--external:@aws-sdk/client-dynamodb \
+		--external:@aws-sdk/lib-dynamodb \
+		--external:@aws-sdk/client-s3 \
+		--external:@aws-sdk/s3-request-presigner
+	npx esbuild apps/api/src/vendor-api.ts \
+		--bundle \
+		--platform=node \
+		--target=es2022 \
+		--minify \
+		--outfile=$(ARTIFACTS_DIR)/vendor-api.js \
 		--external:@aws-sdk/client-dynamodb \
 		--external:@aws-sdk/lib-dynamodb \
 		--external:@aws-sdk/client-s3 \
@@ -47,6 +57,8 @@ api-bundle: api-deps
 		--external:@aws-sdk/s3-request-presigner
 
 build-ApiFunction: api-bundle
+
+build-VendorApiFunction: api-bundle
 
 build-ReviewEmailsCronFunction: api-bundle
 

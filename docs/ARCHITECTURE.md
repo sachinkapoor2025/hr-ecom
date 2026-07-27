@@ -105,8 +105,8 @@ When admin changes order status (accepted, processing, shipped, delivered, compl
 | GET | `/admin/shipping/products-missing-dims` | Admin: products without weight/dimensions |
 | GET | `/admin/load-test` | Super admin: load-test presets + LOAD_TEST_MODE status |
 | POST | `/admin/load-test/run` | Super admin: prefer UI browser runner (`smoke` / `u100`…`u1000`). UI: `/admin/load-test` |
-| GET | `/vendors/orange-county/orders` | Backend vendor feed (`X-Vendor-Api-Key`): orders with `vendorSlug=orange-county` hamper lines only (name not shown on storefront). See `docs/VENDOR_ORANGE_COUNTY_API.md` |
-| GET | `/vendors/orange-county/orders/{orderId}` | Same auth: single order, vendor line items only |
+| GET | `/vendors/orange-county/orders` | **Vendor API only** (`VendorApiUrl`, not storefront `ApiUrl`). `X-Vendor-Api-Key`; OC hamper lines only; no selling prices. See `docs/VENDOR_ORANGE_COUNTY_API.md` |
+| GET | `/vendors/orange-county/orders/{orderId}` | Same vendor API + auth; single order, vendor line items + SKU only |
 | POST | `/webhooks/stripe` | Stripe webhook |
 
 ### Scale notes (catalog / concurrency)

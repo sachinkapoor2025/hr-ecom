@@ -693,6 +693,60 @@ Resources:
     Metadata:
       BuildMethod: makefile
 
+  # Separate API Gateway + Lambda for Orange County vendor order feed only.
+  # Storefront/admin traffic stays on HttpApi — vendors cannot reach those routes here.
+  VendorHttpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: !Ref Environment
+      CorsConfiguration:
+        AllowMethods: ["GET", "OPTIONS"]
+        AllowHeaders: ["Content-Type", "X-Vendor-Api-Key"]
+        AllowOrigins: ["*"]
+
+  VendorApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub hr-ecom-vendor-api-${Environment}
+      Handler: vendor-api.handler
+      CodeUri: ..
+      Environment:
+        Variables:
+          ORDERS_TABLE: !Ref OrdersTable
+          ENVIRONMENT: !Ref Environment
+          ORANGE_COUNTY_VENDOR_API_KEY: !Ref OrangeCountyVendorApiKey
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref OrdersTable
+        - Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:Query
+              Resource:
+                - !GetAtt OrdersTable.Arn
+                - !Sub "${OrdersTable.Arn}/index/*"
+      Events:
+        VendorListOrders:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref VendorHttpApi
+            Path: /vendors/orange-county/orders
+            Method: GET
+        VendorGetOrder:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref VendorHttpApi
+            Path: /vendors/orange-county/orders/{orderId}
+            Method: GET
+        VendorHealth:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref VendorHttpApi
+            Path: /health
+            Method: GET
+    Metadata:
+      BuildMethod: makefile
+
   ReviewEmailsCronFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -808,13 +862,16 @@ Resources:
       StageName: !Ref Environment
       CorsConfiguration:
         AllowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
-        AllowHeaders: ["Content-Type", "Authorization", "X-Session-Id", "X-Vendor-Api-Key"]
+        AllowHeaders: ["Content-Type", "Authorization", "X-Session-Id"]
         AllowOrigins: ["*"]
 
 Outputs:
   ApiUrl:
-    Description: HTTP API endpoint
+    Description: HTTP API endpoint (storefront + admin — not for vendors)
     Value: !Sub https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}
+  VendorApiUrl:
+    Description: Orange County vendor order API only (X-Vendor-Api-Key)
+    Value: !Sub https://${VendorHttpApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}
   ProductsTableName:
     Value: !Ref ProductsTable
   OrdersTableName:

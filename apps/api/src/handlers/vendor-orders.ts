@@ -1,17 +1,18 @@
 /**
- * Orange County vendor order feed.
+ * Orange County vendor order feed (dedicated Vendor API only).
  *
  * GET /vendors/orange-county/orders
  * Header: X-Vendor-Api-Key: <ORANGE_COUNTY_VENDOR_API_KEY>
  *
  * Returns paid+ fulfillment orders that include at least one orange-county line item.
- * Line items are filtered to that vendor only (UsaRakhi-only SKUs are omitted).
+ * Selling prices are never exposed — only fulfillment fields + vendor SKU.
  */
-import { QueryCommand } from "@aws-sdk/lib-dynamodb";
+import { QueryCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
 import type { APIGatewayProxyEventV2 } from "aws-lambda";
 import { VENDOR_ORANGE_COUNTY, orderKeys, type Order, type CartItem } from "@hr-ecom/shared";
 import { docClient, ORDERS_TABLE } from "../lib/db";
 import { ok, unauthorized, badRequest, forbidden } from "../lib/response";
+import { getBundledOrangeCountyProduct } from "../lib/orange-county-catalog";
 
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 100;
@@ -38,6 +39,38 @@ function orderTouchesVendor(order: Order, vendorSlug: string): boolean {
   return (order.items ?? []).some((i) => i.vendorSlug === vendorSlug);
 }
 
+/** Resolve vendor SKU from cart line or bundled catalog (Excel import codes). */
+function resolveVendorSku(item: CartItem): string {
+  const fromLine = item.sku?.trim();
+  if (fromLine) return fromLine;
+  const bundled = getBundledOrangeCountyProduct(item.productSlug);
+  return bundled?.sku?.trim() || item.productSlug;
+}
+
+/** Vendor-safe line — no selling price / currency. */
+function toVendorItem(item: CartItem) {
+  return {
+    sku: resolveVendorSku(item),
+    productSlug: item.productSlug,
+    name: item.name,
+    quantity: item.quantity,
+  };
+}
+
+function toVendorOrder(order: Order, items: CartItem[]) {
+  return {
+    orderId: order.orderId,
+    status: order.status,
+    createdAt: order.createdAt,
+    updatedAt: order.updatedAt,
+    shippingAddress: order.shippingAddress,
+    trackingNumber: order.trackingNumber ?? null,
+    carrier: order.carrier ?? null,
+    shippingServiceName: order.shippingServiceName ?? null,
+    items: items.map(toVendorItem),
+  };
+}
+
 /** Public vendor catalog of orders for Orange County fulfillment. */
 export async function listOrangeCountyOrders(event: APIGatewayProxyEventV2) {
   return listVendorOrders(event, VENDOR_ORANGE_COUNTY);
@@ -50,10 +83,9 @@ async function listVendorOrders(event: APIGatewayProxyEventV2, vendorSlug: strin
 
   const qs = event.queryStringParameters ?? {};
   const limit = Math.min(MAX_LIMIT, Math.max(1, Number(qs.limit ?? DEFAULT_LIMIT) || DEFAULT_LIMIT));
-  const statusFilter = qs.status?.trim(); // optional exact status
-  const since = qs.since?.trim(); // ISO date lower bound on createdAt
+  const statusFilter = qs.status?.trim();
+  const since = qs.since?.trim();
 
-  // Pull recent orders from admin date feed, then filter to this vendor.
   const collected: Order[] = [];
   let ExclusiveStartKey: Record<string, unknown> | undefined;
   let scanned = 0;
@@ -81,7 +113,6 @@ async function listVendorOrders(event: APIGatewayProxyEventV2, vendorSlug: strin
       if (!orderTouchesVendor(order, vendorSlug)) continue;
       if (since && order.createdAt < since) continue;
       if (statusFilter && order.status !== statusFilter) continue;
-      // Skip unpaid / cancelled by default unless status explicitly requested
       if (
         !statusFilter &&
         (order.status === "pending_payment" ||
@@ -108,27 +139,7 @@ async function listVendorOrders(event: APIGatewayProxyEventV2, vendorSlug: strin
   return ok({
     vendorSlug,
     count: collected.length,
-    orders: collected.map((o) => ({
-      orderId: o.orderId,
-      status: o.status,
-      createdAt: o.createdAt,
-      updatedAt: o.updatedAt,
-      currency: o.currency,
-      shippingAddress: o.shippingAddress,
-      trackingNumber: o.trackingNumber,
-      carrier: o.carrier,
-      shippingServiceName: o.shippingServiceName,
-      items: o.items.map((i) => ({
-        productSlug: i.productSlug,
-        sku: i.sku,
-        name: i.name,
-        quantity: i.quantity,
-        price: i.price,
-        currency: i.currency,
-      })),
-      // Vendor-facing subtotal for their lines only
-      vendorSubtotal: o.items.reduce((s, i) => s + i.price * i.quantity, 0),
-    })),
+    orders: collected.map((o) => toVendorOrder(o, o.items)),
   });
 }
 
@@ -139,7 +150,6 @@ export async function getOrangeCountyOrder(event: APIGatewayProxyEventV2) {
   const orderId = event.pathParameters?.orderId;
   if (!orderId) return badRequest("orderId required");
 
-  const { GetCommand } = await import("@aws-sdk/lib-dynamodb");
   const result = await docClient.send(
     new GetCommand({
       TableName: ORDERS_TABLE,
@@ -153,17 +163,6 @@ export async function getOrangeCountyOrder(event: APIGatewayProxyEventV2) {
 
   const items = vendorLineItems(order, VENDOR_ORANGE_COUNTY);
   return ok({
-    order: {
-      orderId: order.orderId,
-      status: order.status,
-      createdAt: order.createdAt,
-      updatedAt: order.updatedAt,
-      currency: order.currency,
-      shippingAddress: order.shippingAddress,
-      trackingNumber: order.trackingNumber,
-      carrier: order.carrier,
-      items,
-      vendorSubtotal: items.reduce((s, i) => s + i.price * i.quantity, 0),
-    },
+    order: toVendorOrder(order, items),
   });
 }
