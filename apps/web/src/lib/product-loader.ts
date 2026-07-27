@@ -32,27 +32,33 @@ function allowCatalogFallback(product: Product): boolean {
   return Boolean(product.vendorSlug) || product.categorySlug === "rakhi-hampers";
 }
 
+function isProductMissingError(err: unknown): boolean {
+  const message = err instanceof Error ? err.message : String(err ?? "");
+  return /not found/i.test(message) || /\(404\)/.test(message);
+}
+
 /**
- * Authoritative storefront product: API only for standard SKUs.
- * Never bake catalog list prices into PDP HTML — that caused $1.50 / $1.38 / $14.72 flips.
+ * Authoritative storefront product: API first for standard SKUs.
+ * On API 404 for a bundled catalog slug, fall back so PDPs do not hard-redirect home.
+ * Do not fall back on transient API failures — that reintroduced stale catalog prices.
  */
 export async function loadProduct(slug: string): Promise<Product | null> {
   try {
     // Short shared cache; PDP route is dynamic so this is not a year-long prerender.
     const data = await api<{ product: Product }>(`/products/${slug}`, { revalidate: 60 });
     return rememberProduct(data.product);
-  } catch {
+  } catch (err) {
     const stale = memoryProduct(slug);
     if (stale) return stale;
+
+    const catalog = getCatalogProduct(slug);
+    if (catalog && (allowCatalogFallback(catalog) || isProductMissingError(err))) {
+      return catalog;
+    }
+
+    if (process.env.NODE_ENV !== "production") return catalog ?? null;
+    return null;
   }
-
-  const catalog = getCatalogProduct(slug);
-  if (catalog && allowCatalogFallback(catalog)) return catalog;
-
-  // Production: refuse stale catalog prices for regular catalog products.
-  if (process.env.NODE_ENV === "production") return null;
-
-  return catalog ?? null;
 }
 
 export async function loadFeaturedProducts(limit = 10): Promise<Product[]> {

@@ -370,7 +370,18 @@ async function main() {
     catalog = await fetchCatalog();
     mkdirSync(join(process.cwd(), "scripts/data"), { recursive: true });
     writeFileSync(CATALOG_PATH, JSON.stringify(catalog, null, 2));
+    const apiCatalogPath = join(process.cwd(), "apps/api/src/data/usarakhi-catalog.json");
+    mkdirSync(join(process.cwd(), "apps/api/src/data"), { recursive: true });
+    writeFileSync(apiCatalogPath, JSON.stringify(catalog, null, 2));
     console.log(`Saved ${CATALOG_PATH} (${catalog.products.length} products)`);
+    console.log(`Also updated ${apiCatalogPath}`);
+  }
+
+  // Keep Lambda-bundled catalog in sync (including when using cached scripts/data copy).
+  {
+    const apiCatalogPath = join(process.cwd(), "apps/api/src/data/usarakhi-catalog.json");
+    mkdirSync(join(process.cwd(), "apps/api/src/data"), { recursive: true });
+    writeFileSync(apiCatalogPath, JSON.stringify(catalog, null, 2));
   }
 
   if (!fetchOnly) {
