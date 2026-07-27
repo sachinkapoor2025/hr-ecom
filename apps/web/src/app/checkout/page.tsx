@@ -72,6 +72,8 @@ function CheckoutPageInner() {
     qrImageUrl?: string;
   } | null>(null);
   const [razorpayReady, setRazorpayReady] = useState(false);
+  const [razorpayScriptKey, setRazorpayScriptKey] = useState(0);
+  const [razorpayLoadError, setRazorpayLoadError] = useState("");
   const [openingRazorpay, setOpeningRazorpay] = useState(false);
   const [retryOrder, setRetryOrder] = useState<Order | null>(null);
   const [retryLoading, setRetryLoading] = useState(Boolean(retryOrderId));
@@ -163,6 +165,50 @@ function CheckoutPageInner() {
     setStripeCheckout(null);
     setRazorpayPayment(null);
   }, [displayCurrency]);
+
+  const markRazorpayReady = useCallback(() => {
+    setRazorpayReady(true);
+    setRazorpayLoadError("");
+  }, []);
+
+  const retryRazorpayScript = useCallback(() => {
+    setRazorpayReady(false);
+    setRazorpayLoadError("");
+    setRazorpayScriptKey((k) => k + 1);
+  }, []);
+
+  // Razorpay checkout.js can fail silently (ad blockers, flaky mobile data) or
+  // skip onLoad when already cached — without a fallback the Pay button stays
+  // on "Loading payment…" forever (customer reports we couldn't reproduce).
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.Razorpay) {
+      markRazorpayReady();
+      return;
+    }
+
+    let cancelled = false;
+    const started = Date.now();
+    const poll = window.setInterval(() => {
+      if (cancelled) return;
+      if (window.Razorpay) {
+        markRazorpayReady();
+        window.clearInterval(poll);
+        return;
+      }
+      if (Date.now() - started >= 12_000) {
+        window.clearInterval(poll);
+        setRazorpayLoadError(
+          "Payment is taking too long to load. Check your connection or turn off ad blockers, then retry."
+        );
+      }
+    }, 250);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(poll);
+    };
+  }, [razorpayScriptKey, markRazorpayReady]);
 
   useEffect(() => {
     const stored = loadWelcomeCoupon();
@@ -651,9 +697,15 @@ function CheckoutPageInner() {
   return (
     <>
       <Script
+        key={razorpayScriptKey}
         src="https://checkout.razorpay.com/v1/checkout.js"
         strategy="afterInteractive"
-        onLoad={() => setRazorpayReady(true)}
+        onLoad={markRazorpayReady}
+        onError={() =>
+          setRazorpayLoadError(
+            "Could not load Razorpay. Disable ad blockers or try another network, then tap Retry."
+          )
+        }
       />
       <div className="max-w-6xl mx-auto px-4 py-8 sm:py-10">
         <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">Checkout</h1>
@@ -808,19 +860,36 @@ function CheckoutPageInner() {
             )}
 
             {!stripeCheckout && !razorpayPayment && (
-            <button
-              type="submit"
-              disabled={loading || (paymentMethod === "razorpay" && !razorpayReady)}
-              className="w-full rounded-md bg-primary text-white font-bold text-sm uppercase tracking-wide py-3.5 hover:bg-primary/90 transition disabled:opacity-50"
-            >
-              {loading
-                ? "Processing..."
-                : paymentMethod === "razorpay" && !razorpayReady
-                  ? "Loading payment…"
-                : paymentMethod === "razorpay"
-                  ? "Pay with Razorpay"
-                  : "Continue to Stripe payment"}
-            </button>
+              <>
+                {paymentMethod === "razorpay" && razorpayLoadError && !razorpayReady && (
+                  <p className="text-amber-800 text-sm bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+                    {razorpayLoadError}
+                  </p>
+                )}
+                {paymentMethod === "razorpay" && razorpayLoadError && !razorpayReady ? (
+                  <button
+                    type="button"
+                    onClick={retryRazorpayScript}
+                    className="w-full rounded-md bg-primary text-white font-bold text-sm uppercase tracking-wide py-3.5 hover:bg-primary/90 transition"
+                  >
+                    Retry loading payment
+                  </button>
+                ) : (
+                  <button
+                    type="submit"
+                    disabled={loading || (paymentMethod === "razorpay" && !razorpayReady)}
+                    className="w-full rounded-md bg-primary text-white font-bold text-sm uppercase tracking-wide py-3.5 hover:bg-primary/90 transition disabled:opacity-50"
+                  >
+                    {loading
+                      ? "Processing..."
+                      : paymentMethod === "razorpay" && !razorpayReady
+                        ? "Loading payment…"
+                        : paymentMethod === "razorpay"
+                          ? "Pay with Razorpay"
+                          : "Continue to Stripe payment"}
+                  </button>
+                )}
+              </>
             )}
 
             <CheckoutLegalNotice className="text-center" />
