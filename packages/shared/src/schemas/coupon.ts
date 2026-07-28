@@ -67,14 +67,45 @@ export type CouponSource = z.infer<typeof couponSourceSchema>;
 
 /** Admin manual abandoned-cart coupons (WhatsApp / phone outreach). */
 export const ADMIN_MANUAL_COUPON_HOURS = 1;
-/** Higher % for customers who already confirmed they will buy — longer validity so the code is not wasted. */
+/** Default / baseline confirmed-sale discount (also the min for typed special offers). */
 export const ADMIN_CONFIRMED_SALE_DISCOUNT_PERCENT = 20;
 export const ADMIN_CONFIRMED_SALE_COUPON_HOURS = 24;
-export const ADMIN_COUPON_DISCOUNT_OPTIONS = [7, 8, 9, 10, 11, 12, 13, 14, 15, 20] as const;
-export type AdminCouponDiscountPercent = (typeof ADMIN_COUPON_DISCOUNT_OPTIONS)[number];
+/** Manual special offers: whole numbers from 20% through 50%. */
+export const ADMIN_EXTREME_DISCOUNT_MIN = 20;
+export const ADMIN_EXTREME_DISCOUNT_MAX = 50;
+/** Outreach presets (short expiry). */
+export const ADMIN_OUTREACH_DISCOUNT_OPTIONS = [7, 8, 9, 10, 11, 12, 13, 14, 15] as const;
+/** @deprecated Prefer ADMIN_OUTREACH_DISCOUNT_OPTIONS + typed 20–50%; kept for older UI imports. */
+export const ADMIN_COUPON_DISCOUNT_OPTIONS = [
+  ...ADMIN_OUTREACH_DISCOUNT_OPTIONS,
+  ADMIN_CONFIRMED_SALE_DISCOUNT_PERCENT,
+] as const;
+export type AdminCouponDiscountPercent = number;
 
+export function isAdminOutreachDiscount(percent: number): boolean {
+  return (ADMIN_OUTREACH_DISCOUNT_OPTIONS as readonly number[]).includes(percent);
+}
+
+/** 20–50% confirmed / special offers (typed or preset). */
 export function isAdminConfirmedSaleDiscount(percent: number): boolean {
-  return percent === ADMIN_CONFIRMED_SALE_DISCOUNT_PERCENT;
+  return (
+    Number.isInteger(percent) &&
+    percent >= ADMIN_EXTREME_DISCOUNT_MIN &&
+    percent <= ADMIN_EXTREME_DISCOUNT_MAX
+  );
+}
+
+/** Above the standard 20% confirmed-sale rate — needs “Extreme discount offered” alert. */
+export function isAdminExtremeDiscount(percent: number): boolean {
+  return (
+    Number.isInteger(percent) &&
+    percent > ADMIN_CONFIRMED_SALE_DISCOUNT_PERCENT &&
+    percent <= ADMIN_EXTREME_DISCOUNT_MAX
+  );
+}
+
+export function isAllowedAdminCouponDiscount(percent: number): boolean {
+  return isAdminOutreachDiscount(percent) || isAdminConfirmedSaleDiscount(percent);
 }
 
 export function adminCouponHoursForDiscount(percent: number): number {
@@ -98,13 +129,11 @@ export const createAdminCouponSchema = z
     discountPercent: z
       .number()
       .int()
-      .refine(
-        (n): n is AdminCouponDiscountPercent =>
-          (ADMIN_COUPON_DISCOUNT_OPTIONS as readonly number[]).includes(n),
-        { message: "Discount must be 7%–15% (outreach) or 20% (confirmed sale)" }
-      ),
+      .refine(isAllowedAdminCouponDiscount, {
+        message: "Discount must be 7%–15% (outreach) or 20%–50% (confirmed / special offer)",
+      }),
     /**
-     * Optional explicit flag. When omitted, 20% is treated as confirmed sale.
+     * Optional explicit flag. When omitted, 20%–50% is treated as confirmed sale.
      * Confirmed-sale coupons get a longer validity window.
      */
     confirmedSale: z.boolean().optional(),
@@ -156,7 +185,7 @@ export const couponSchema = z.object({
   /** Cognito email of admin who created the coupon. */
   createdBy: z.string().email().optional(),
   /**
-   * Admin 20% coupons for customers who confirmed they will buy.
+   * Admin 20%–50% coupons for customers who confirmed they will buy.
    * Longer expiry so the code is less likely to expire unused.
    */
   confirmedSale: z.boolean().optional(),
