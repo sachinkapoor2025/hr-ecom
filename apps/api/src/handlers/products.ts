@@ -17,7 +17,7 @@ import { ok, okCached, created, badRequest, notFound, forbidden } from "../lib/r
 import { getAuth } from "../lib/auth";
 import { withResolvedProductImages, resolveProductImageUrl } from "../lib/images";
 import { syncInventoryAlertState } from "../lib/inventory";
-import { ensureOrangeCountyProductInDb } from "../lib/orange-county-catalog";
+import { ensureProductInDb } from "../lib/ensure-product";
 
 function forStorefront(product: Product): Product {
   return stripVendorPrivateFields(
@@ -184,8 +184,12 @@ export async function getProduct(event: APIGatewayProxyEventV2) {
 
   let item = result.Item as (Product & { published?: boolean }) | undefined;
   if (!item) {
-    const upserted = await ensureOrangeCountyProductInDb(slug);
-    if (upserted) item = upserted as Product & { published?: boolean };
+    // Storefront may list bundled catalog SKUs before DynamoDB import — upsert on first view.
+    const upserted = await ensureProductInDb(slug);
+    if (upserted) {
+      item = upserted as Product & { published?: boolean };
+      invalidateProductListCache(item.categorySlug);
+    }
   }
 
   if (!item) return notFound("Product not found");

@@ -14,6 +14,7 @@ import { getUserOrSessionKey, getSessionId } from "../lib/auth";
 import { resolveProductImageUrl } from "../lib/images";
 import { upsertSessionProfile } from "../lib/customer-profile";
 import { ensureOrangeCountyProductInDb } from "../lib/orange-county-catalog";
+import { ensureProductInDb } from "../lib/ensure-product";
 
 /** Stale carts auto-expire after this many days (TTL). */
 const CART_TTL_DAYS = 30;
@@ -91,11 +92,10 @@ export async function addToCart(event: APIGatewayProxyEventV2) {
     getCart(userKey),
   ]);
 
-  // Storefront may show Orange County catalog before DynamoDB import — upsert on first add.
+  // Storefront may show catalog fallback before DynamoDB import — upsert on first add.
   let productItem = productResult.Item as Record<string, unknown> | undefined;
   if (!productItem) {
-    productItem =
-      (await ensureOrangeCountyProductInDb(parsed.data.productSlug)) ?? undefined;
+    productItem = (await ensureProductInDb(parsed.data.productSlug)) ?? undefined;
   } else if (
     productItem.vendorSlug === "orange-county" ||
     productItem.categorySlug === "rakhi-hampers"
@@ -202,7 +202,14 @@ export async function updateCartItem(event: APIGatewayProxyEventV2) {
     )
   ).Item as { inventory: number; vendorSlug?: string; categorySlug?: string } | undefined;
 
-  if (!product || product.vendorSlug === "orange-county" || product.categorySlug === "rakhi-hampers") {
+  if (!product) {
+    product =
+      ((await ensureProductInDb(productSlug)) as {
+        inventory: number;
+        vendorSlug?: string;
+        categorySlug?: string;
+      } | null) ?? undefined;
+  } else if (product.vendorSlug === "orange-county" || product.categorySlug === "rakhi-hampers") {
     product =
       ((await ensureOrangeCountyProductInDb(productSlug)) as {
         inventory: number;

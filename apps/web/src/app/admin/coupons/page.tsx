@@ -3,11 +3,14 @@
 import { useCallback, useEffect, useState } from "react";
 import { useApiClient, useAuth } from "@/lib/auth-context";
 import {
-  ADMIN_COUPON_DISCOUNT_OPTIONS,
+  ADMIN_OUTREACH_DISCOUNT_OPTIONS,
   ADMIN_CONFIRMED_SALE_DISCOUNT_PERCENT,
   ADMIN_CONFIRMED_SALE_COUPON_HOURS,
   ADMIN_MANUAL_COUPON_HOURS,
+  ADMIN_EXTREME_DISCOUNT_MIN,
+  ADMIN_EXTREME_DISCOUNT_MAX,
   isAdminConfirmedSaleDiscount,
+  isAdminExtremeDiscount,
   type StoreCoupon,
 } from "@hr-ecom/shared";
 import { PhoneInput, buildPhoneValue } from "@/components/PhoneInput";
@@ -29,13 +32,19 @@ type CreateResult = {
   };
 };
 
+type DiscountMode = "outreach" | "special";
+
 export default function AdminCouponsPage() {
   const api = useApiClient();
   const { user } = useAuth();
   const [email, setEmail] = useState("");
   const [phoneCountry, setPhoneCountry] = useState("IN");
   const [phoneLocal, setPhoneLocal] = useState("");
-  const [discountPercent, setDiscountPercent] = useState<number>(10);
+  const [discountMode, setDiscountMode] = useState<DiscountMode>("outreach");
+  const [outreachPercent, setOutreachPercent] = useState<number>(10);
+  const [specialPercent, setSpecialPercent] = useState<string>(
+    String(ADMIN_CONFIRMED_SALE_DISCOUNT_PERCENT)
+  );
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -43,6 +52,11 @@ export default function AdminCouponsPage() {
   const [lastCode, setLastCode] = useState("");
   const [rows, setRows] = useState<StoreCoupon[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const discountPercent =
+    discountMode === "outreach"
+      ? outreachPercent
+      : Math.round(Number(specialPercent));
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -70,6 +84,21 @@ export default function AdminCouponsPage() {
       return;
     }
 
+    if (discountMode === "special") {
+      const n = Math.round(Number(specialPercent));
+      if (
+        !Number.isFinite(n) ||
+        !Number.isInteger(n) ||
+        n < ADMIN_EXTREME_DISCOUNT_MIN ||
+        n > ADMIN_EXTREME_DISCOUNT_MAX
+      ) {
+        setError(
+          `Special discount must be a whole number from ${ADMIN_EXTREME_DISCOUNT_MIN} to ${ADMIN_EXTREME_DISCOUNT_MAX}`
+        );
+        return;
+      }
+    }
+
     setSaving(true);
     setMessage("");
     setError("");
@@ -82,7 +111,6 @@ export default function AdminCouponsPage() {
         method: "POST",
         body: JSON.stringify({
           ...(hasEmail ? { email: email.trim() } : {}),
-          // Coupon match uses mobile only; country code is for WhatsApp send.
           ...(hasPhone
             ? {
                 phone: mobileDigits,
@@ -101,13 +129,17 @@ export default function AdminCouponsPage() {
               ? "customer emailed"
               : `customer email failed${res.emails.customerError ? `: ${res.emails.customerError}` : ""}`,
             res.emails.notifyOk
-              ? "team notified"
+              ? isAdminExtremeDiscount(discountPercent)
+                ? "extreme-discount alert emailed"
+                : "team notified"
               : `notify failed${res.emails.notifyError ? `: ${res.emails.notifyError}` : ""}`,
           ].join(" · ")
         : [
             "no customer email (phone-only)",
             res.emails.notifyOk
-              ? "team notified"
+              ? isAdminExtremeDiscount(discountPercent)
+                ? "extreme-discount alert emailed"
+                : "team notified"
               : `notify failed${res.emails.notifyError ? `: ${res.emails.notifyError}` : ""}`,
           ].join(" · ");
       const waNote = !hasPhone
@@ -117,7 +149,11 @@ export default function AdminCouponsPage() {
           : res.whatsapp.skipped
             ? "WhatsApp API not configured — use Open WhatsApp below"
             : `WhatsApp failed${res.whatsapp.error ? `: ${res.whatsapp.error}` : ""}`;
-      const saleLabel = res.coupon.confirmedSale || confirmedSale ? " · Confirmed sale" : "";
+      const saleLabel = isAdminExtremeDiscount(discountPercent)
+        ? " · Extreme discount"
+        : res.coupon.confirmedSale || confirmedSale
+          ? " · Confirmed sale"
+          : "";
       setMessage(
         `Coupon ${res.coupon.code} created (${res.coupon.discountPercent}%${saleLabel} · expires in ${hours} hour${hours === 1 ? "" : "s"}). ${emailNotes}. ${waNote}.`
       );
@@ -136,10 +172,13 @@ export default function AdminCouponsPage() {
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Abandoned cart coupons</h1>
         <p className="text-sm text-slate-500 mt-1">
-          Generate a coupon for outreach (7–15%, 1 hour) or a confirmed sale ({ADMIN_CONFIRMED_SALE_DISCOUNT_PERCENT}%
-          , {ADMIN_CONFIRMED_SALE_COUPON_HOURS} hours so the code is not wasted). Provide email, phone, or both —
-          checkout matches the mobile number only (country code is ignored). Team notifications go to
-          order@mydgv.com, priya.yadav@mydgv.com, and you ({user?.email ?? "logged-in admin"}).
+          Generate a coupon for outreach (7–15%, 1 hour) or a confirmed / special offer (
+          {ADMIN_EXTREME_DISCOUNT_MIN}–{ADMIN_EXTREME_DISCOUNT_MAX}%,{" "}
+          {ADMIN_CONFIRMED_SALE_COUPON_HOURS} hours). Type any whole percent from{" "}
+          {ADMIN_EXTREME_DISCOUNT_MIN}–{ADMIN_EXTREME_DISCOUNT_MAX} for customers who need more than{" "}
+          {ADMIN_CONFIRMED_SALE_DISCOUNT_PERCENT}%. Discounts above {ADMIN_CONFIRMED_SALE_DISCOUNT_PERCENT}%
+          email the team with subject “Extreme discount offered”, including you (
+          {user?.email ?? "logged-in admin"}).
         </p>
       </div>
 
@@ -174,31 +213,94 @@ export default function AdminCouponsPage() {
           </p>
         </div>
 
-        <label className="block text-sm">
-          Discount
-          <select
-            value={discountPercent}
-            onChange={(e) => setDiscountPercent(Number(e.target.value))}
-            className="mt-1 w-full border rounded-lg px-3 py-2"
-          >
-            {ADMIN_COUPON_DISCOUNT_OPTIONS.map((pct) => (
-              <option key={pct} value={pct}>
-                {isAdminConfirmedSaleDiscount(pct)
-                  ? `${pct}% off — Confirmed sale (${ADMIN_CONFIRMED_SALE_COUPON_HOURS}h)`
-                  : `${pct}% off (${ADMIN_MANUAL_COUPON_HOURS}h outreach)`}
-              </option>
-            ))}
-          </select>
-        </label>
+        <fieldset className="space-y-3">
+          <legend className="text-sm font-medium text-slate-700">Discount</legend>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <label className="flex items-center gap-2 text-sm border rounded-lg px-3 py-2 cursor-pointer flex-1">
+              <input
+                type="radio"
+                name="discountMode"
+                checked={discountMode === "outreach"}
+                onChange={() => setDiscountMode("outreach")}
+              />
+              Outreach (7–15%)
+            </label>
+            <label className="flex items-center gap-2 text-sm border rounded-lg px-3 py-2 cursor-pointer flex-1">
+              <input
+                type="radio"
+                name="discountMode"
+                checked={discountMode === "special"}
+                onChange={() => setDiscountMode("special")}
+              />
+              Confirmed / special ({ADMIN_EXTREME_DISCOUNT_MIN}–{ADMIN_EXTREME_DISCOUNT_MAX}%)
+            </label>
+          </div>
 
-        {isAdminConfirmedSaleDiscount(discountPercent) && (
-          <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
-            <span className="inline-flex items-center rounded-md bg-emerald-700 text-white text-xs font-semibold px-2 py-0.5 mr-2">
-              Confirmed sale
-            </span>
-            Use only when the customer has confirmed they will buy. Code stays valid for{" "}
-            {ADMIN_CONFIRMED_SALE_COUPON_HOURS} hours so the {ADMIN_CONFIRMED_SALE_DISCOUNT_PERCENT}% discount is
-            not wasted.
+          {discountMode === "outreach" ? (
+            <label className="block text-sm">
+              Outreach percent
+              <select
+                value={outreachPercent}
+                onChange={(e) => setOutreachPercent(Number(e.target.value))}
+                className="mt-1 w-full border rounded-lg px-3 py-2"
+              >
+                {ADMIN_OUTREACH_DISCOUNT_OPTIONS.map((pct) => (
+                  <option key={pct} value={pct}>
+                    {pct}% off ({ADMIN_MANUAL_COUPON_HOURS}h outreach)
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : (
+            <label className="block text-sm">
+              Type discount percent ({ADMIN_EXTREME_DISCOUNT_MIN}–{ADMIN_EXTREME_DISCOUNT_MAX})
+              <input
+                type="number"
+                inputMode="numeric"
+                min={ADMIN_EXTREME_DISCOUNT_MIN}
+                max={ADMIN_EXTREME_DISCOUNT_MAX}
+                step={1}
+                value={specialPercent}
+                onChange={(e) => {
+                  const raw = e.target.value.replace(/[^\d]/g, "").slice(0, 2);
+                  setSpecialPercent(raw);
+                }}
+                className="mt-1 w-full border rounded-lg px-3 py-2 font-mono text-base"
+                placeholder="20"
+              />
+              <span className="mt-1 block text-xs text-slate-500">
+                Whole numbers only. Default {ADMIN_CONFIRMED_SALE_DISCOUNT_PERCENT}%. Use 21–50 when the
+                customer needs a higher offer — that sends an “Extreme discount offered” alert.
+              </span>
+            </label>
+          )}
+        </fieldset>
+
+        {discountMode === "special" && isAdminConfirmedSaleDiscount(discountPercent) && (
+          <div
+            className={`rounded-lg border px-3 py-2 text-sm ${
+              isAdminExtremeDiscount(discountPercent)
+                ? "border-amber-300 bg-amber-50 text-amber-950"
+                : "border-emerald-200 bg-emerald-50 text-emerald-900"
+            }`}
+          >
+            {isAdminExtremeDiscount(discountPercent) ? (
+              <>
+                <span className="inline-flex items-center rounded-md bg-amber-700 text-white text-xs font-semibold px-2 py-0.5 mr-2">
+                  Extreme discount
+                </span>
+                {discountPercent}% off — team + you will get email subject “Extreme discount offered”.
+                Valid {ADMIN_CONFIRMED_SALE_COUPON_HOURS} hours.
+              </>
+            ) : (
+              <>
+                <span className="inline-flex items-center rounded-md bg-emerald-700 text-white text-xs font-semibold px-2 py-0.5 mr-2">
+                  Confirmed sale
+                </span>
+                Use when the customer confirmed they will buy. Code stays valid for{" "}
+                {ADMIN_CONFIRMED_SALE_COUPON_HOURS} hours.
+              </>
+            )}
           </div>
         )}
 
@@ -209,9 +311,11 @@ export default function AdminCouponsPage() {
         >
           {saving
             ? "Generating…"
-            : isAdminConfirmedSaleDiscount(discountPercent)
-              ? "Generate confirmed-sale coupon"
-              : "Generate coupon"}
+            : isAdminExtremeDiscount(discountPercent)
+              ? "Generate extreme-discount coupon"
+              : isAdminConfirmedSaleDiscount(discountPercent)
+                ? "Generate confirmed-sale coupon"
+                : "Generate coupon"}
         </button>
       </form>
 
@@ -247,7 +351,9 @@ export default function AdminCouponsPage() {
             {rows.slice(0, 50).map((c) => {
               const expired = new Date(c.expiresAt).getTime() < Date.now();
               const used = Boolean(c.usedAt);
-              const confirmed = Boolean(c.confirmedSale) || isAdminConfirmedSaleDiscount(c.discountPercent);
+              const extreme = isAdminExtremeDiscount(c.discountPercent);
+              const confirmed =
+                Boolean(c.confirmedSale) || isAdminConfirmedSaleDiscount(c.discountPercent);
               const phoneVal =
                 "phone" in c && typeof (c as { phone?: string }).phone === "string"
                   ? (c as { phone?: string }).phone
@@ -257,11 +363,15 @@ export default function AdminCouponsPage() {
                   <div>
                     <p className="font-mono font-medium flex flex-wrap items-center gap-2">
                       {c.code}
-                      {confirmed && (
+                      {extreme ? (
+                        <span className="rounded bg-amber-700 text-white text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5">
+                          Extreme
+                        </span>
+                      ) : confirmed ? (
                         <span className="rounded bg-emerald-700 text-white text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5">
                           Confirmed sale
                         </span>
-                      )}
+                      ) : null}
                     </p>
                     <p className="text-xs text-slate-500">
                       {[
