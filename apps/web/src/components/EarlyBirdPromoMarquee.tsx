@@ -41,6 +41,15 @@ function formatPromoEnd(dateYmd: string): string {
   });
 }
 
+function formatShortDayMonth(dateYmd: string): string {
+  const [y, m, d] = dateYmd.split("-").map(Number);
+  return new Date(Date.UTC(y!, m! - 1, d!)).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    timeZone: "UTC",
+  });
+}
+
 function formatRemaining(ms: number): string {
   if (ms <= 0) return "00:00";
   const totalSec = Math.floor(ms / 1000);
@@ -82,6 +91,7 @@ export function EarlyBirdPromoMarquee() {
   const [nowMs, setNowMs] = useState(() => Date.now());
 
   const promoEndLabel = formatPromoEnd(EARLY_BIRD_ENDS_DATE);
+  const promoEndShort = formatShortDayMonth(EARLY_BIRD_ENDS_DATE);
   const scheduleMaxLabel = formatPromoEnd(SCHEDULE_DELIVERY_MAX_DATE);
 
   const remainingMs = coupon?.expiresAt
@@ -129,13 +139,6 @@ export function EarlyBirdPromoMarquee() {
       setVisible(false);
       return;
     }
-    const existing = loadWelcomeCoupon();
-    // Always show while a live coupon is active so the code + timer stay visible.
-    if (existing) {
-      setVisible(true);
-      trackSessionHeartbeat("early_bird_marquee_shown", 0, pathname);
-      return;
-    }
     if (sessionStorage.getItem(DISMISS_KEY) === "1") {
       setVisible(false);
       return;
@@ -144,17 +147,14 @@ export function EarlyBirdPromoMarquee() {
     trackSessionHeartbeat("early_bird_marquee_shown", 0, pathname);
   }, [pathname]);
 
-  // Keep ribbon visible after a fresh claim (even if previously dismissed).
+  // Re-show ribbon after a fresh claim only if user hasn’t dismissed it.
   useEffect(() => {
-    if (hasLiveCoupon) setVisible(true);
+    if (hasLiveCoupon && sessionStorage.getItem(DISMISS_KEY) !== "1") {
+      setVisible(true);
+    }
   }, [hasLiveCoupon]);
 
   const dismiss = () => {
-    // Keep claimed code + countdown visible so shoppers don’t lose it.
-    if (hasLiveCoupon) {
-      setExpanded(false);
-      return;
-    }
     sessionStorage.setItem(DISMISS_KEY, "1");
     setExpanded(false);
     setVisible(false);
@@ -270,13 +270,26 @@ export function EarlyBirdPromoMarquee() {
         {/* Mobile: bullets + claim below (no overlap) */}
         <div className="md:hidden relative px-3 py-3 space-y-3">
           {hasLiveCoupon && coupon ? (
-            <div className="flex flex-col items-stretch gap-2">
-              <p className="text-center text-[15px] font-extrabold tracking-wide text-amber-50">
+            <div className="relative pr-9 flex flex-col items-stretch gap-2.5">
+              <button
+                type="button"
+                onClick={dismiss}
+                className="absolute right-0 top-0 rounded-full p-2 text-white/75 hover:bg-white/15 hover:text-white"
+                aria-label="Dismiss Early Bird banner"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+              </button>
+              <p className="text-center text-[15px] font-extrabold tracking-wide text-amber-50 pr-2">
                 <span className="early-bird-emphasis early-bird-hot text-amber-300">
                   {coupon.discountPercent}% OFF
                 </span>
                 <span className="mx-1.5 text-white/40">·</span>
-                <span className="text-white/90">Your code</span>
+                <span className="text-xs font-semibold uppercase tracking-wide text-white/90">Time left</span>{" "}
+                <span className="font-mono text-base font-black tabular-nums text-white early-bird-hot">
+                  {formatRemaining(remainingMs)}
+                </span>
               </p>
               <button
                 type="button"
@@ -291,77 +304,60 @@ export function EarlyBirdPromoMarquee() {
                   {copied ? "Copied!" : "Copy"}
                 </span>
               </button>
-              <div className="inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-accent/90 px-3 py-2 shadow-md shadow-accent/30">
-                <span className="text-xs font-semibold uppercase tracking-wide text-white/90">Time left</span>
-                <span className="font-mono text-lg font-black tabular-nums text-white early-bird-hot">
-                  {formatRemaining(remainingMs)}
-                </span>
-              </div>
             </div>
           ) : (
-            <ul className="space-y-1.5 text-[13px] font-bold leading-snug text-amber-50">
-              <li className="flex gap-2">
-                <span className="text-amber-300 shrink-0" aria-hidden>
-                  •
-                </span>
-                <span>
-                  <span className="early-bird-emphasis early-bird-hot text-amber-300">
-                    Early Bird discount {EARLY_BIRD_DISCOUNT_PERCENT}%
+            <>
+              <ul className="space-y-1.5 text-[13px] font-bold leading-snug text-amber-50">
+                <li className="flex gap-2">
+                  <span className="text-amber-300 shrink-0" aria-hidden>
+                    •
                   </span>
-                </span>
-              </li>
-              <li className="flex gap-2">
-                <span className="text-amber-300 shrink-0" aria-hidden>
-                  •
-                </span>
-                <span>
-                  coupon code valid for{" "}
-                  <span className="text-white font-extrabold">{WELCOME_COUPON_HOURS} hour</span>
-                </span>
-              </li>
-              <li className="flex gap-2">
-                <span className="text-amber-300 shrink-0" aria-hidden>
-                  •
-                </span>
-                <span>
-                  Early bird deal ends on{" "}
-                  <span className="text-amber-200 font-extrabold">{promoEndLabel}</span>
-                </span>
-              </li>
-              <li className="flex gap-2">
-                <span className="text-amber-300 shrink-0" aria-hidden>
-                  •
-                </span>
-                <span className="early-bird-emphasis early-bird-hot text-amber-300">
-                  option to Schedule delivery
-                </span>
-              </li>
-            </ul>
-          )}
+                  <span>
+                    <span className="early-bird-emphasis early-bird-hot text-amber-300">
+                      Early Bird discount {EARLY_BIRD_DISCOUNT_PERCENT}%
+                    </span>
+                  </span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-amber-300 shrink-0" aria-hidden>
+                    •
+                  </span>
+                  <span>
+                    discount ends on{" "}
+                    <span className="text-amber-200 font-extrabold">{promoEndShort}</span>
+                  </span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-amber-300 shrink-0" aria-hidden>
+                    •
+                  </span>
+                  <span className="early-bird-emphasis early-bird-hot text-amber-300">
+                    option to Schedule delivery
+                  </span>
+                </li>
+              </ul>
 
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setExpanded((v) => !v)}
-              className="early-bird-claim-btn flex-1 rounded-full bg-accent px-4 py-2.5 text-xs font-extrabold uppercase tracking-wide text-white shadow-[0_0_0_3px_rgba(225,29,72,0.25)] hover:brightness-110 active:scale-[0.98] transition"
-            >
-              {expanded
-                ? "Close"
-                : hasLiveCoupon
-                  ? "View details"
-                  : `Claim ${EARLY_BIRD_DISCOUNT_PERCENT}% OFF`}
-            </button>
-            <button
-              type="button"
-              onClick={dismiss}
-              className="shrink-0 rounded-full p-2.5 text-white/75 hover:bg-white/15 hover:text-white"
-              aria-label="Dismiss Early Bird banner"
-            >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M18 6L6 18M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setExpanded((v) => !v)}
+                  className="early-bird-claim-btn flex-1 rounded-full bg-accent px-4 py-2.5 text-xs font-extrabold uppercase tracking-wide text-white shadow-[0_0_0_3px_rgba(225,29,72,0.25)] hover:brightness-110 active:scale-[0.98] transition"
+                >
+                  {expanded ? "Close" : `Claim ${EARLY_BIRD_DISCOUNT_PERCENT}% OFF`}
+                </button>
+                <button
+                  type="button"
+                  onClick={dismiss}
+                  className="shrink-0 rounded-full p-2.5 text-white/75 hover:bg-white/15 hover:text-white"
+                  aria-label="Dismiss Early Bird banner"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M18 6L6 18M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Desktop: unchanged centered line + claim on the right */}
