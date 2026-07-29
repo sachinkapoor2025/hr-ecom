@@ -5,7 +5,8 @@ import { api } from "@/lib/api";
 import { applyInlineLinks } from "@/lib/inline-links";
 import { homepageInlineLinks } from "@/lib/content/page-inline-links";
 import { HomeHero } from "@/components/HomeHero";
-import { CustomerReviews } from "@/components/CustomerReviews";
+import { GoogleReviews } from "@/components/GoogleReviews";
+import { getGoogleReviews } from "@/lib/google-reviews";
 import { HomeProductCard } from "@/components/HomeProductCard";
 import { FastSellingSection } from "@/components/FastSellingSection";
 import { HomeSeoSection } from "@/components/HomeSeoSection";
@@ -79,6 +80,7 @@ export default async function HomePage() {
       (p) => p.categorySlug === slug || p.additionalCategorySlugs?.includes(slug)
     ),
   }));
+  const googleReviews = await getGoogleReviews();
 
   return (
     <div>
@@ -147,7 +149,7 @@ export default async function HomePage() {
 
       <WhyTrustUsSection />
 
-      <CustomerReviews />
+      <GoogleReviews data={googleReviews} />
 
       <HomeSeoSection />
 

@@ -6,6 +6,8 @@ import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2, Context } from "a
 import {
   listOrangeCountyOrders,
   getOrangeCountyOrder,
+  postOrangeCountyShipment,
+  postOrangeCountyTracking,
 } from "./handlers/vendor-orders";
 
 type Handler = (event: APIGatewayProxyEventV2) => Promise<APIGatewayProxyResultV2>;
@@ -28,6 +30,18 @@ const routes: Array<{
     params: ["orderId"],
   },
   {
+    method: "POST",
+    pattern: /^\/vendors\/orange-county\/orders\/([^/]+)\/shipment$/,
+    handler: postOrangeCountyShipment,
+    params: ["orderId"],
+  },
+  {
+    method: "POST",
+    pattern: /^\/vendors\/orange-county\/orders\/([^/]+)\/tracking$/,
+    handler: postOrangeCountyTracking,
+    params: ["orderId"],
+  },
+  {
     method: "GET",
     pattern: /^\/health$/,
     handler: async () => ({
@@ -42,7 +56,7 @@ function corsHeaders() {
   return {
     "Content-Type": "application/json",
     "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, X-Vendor-Api-Key",
   };
 }
