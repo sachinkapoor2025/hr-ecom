@@ -72,7 +72,9 @@ export function ProductImageGallery({ images, alt }: ProductImageGalleryProps) {
   const isDesktop = useDesktopHoverZoom();
 
   const resolved = useMemo(() => resolveImageUrls(images), [images]);
-  const imgs = displayImgs.length > 0 ? displayImgs : resolved.slice(0, 1);
+  // Show the full list immediately so multi-image PDPs never look like a single photo
+  // while size filtering runs (or if remote probes fail).
+  const imgs = displayImgs.length > 0 ? displayImgs : resolved;
   const current = imgs[selected] ?? "";
 
   useEffect(() => {
@@ -276,7 +278,7 @@ export function ProductImageGallery({ images, alt }: ProductImageGalleryProps) {
                 type="button"
                 aria-label="Previous image"
                 onClick={goPrev}
-                className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/95 shadow-md text-primary font-bold hover:bg-white opacity-0 group-hover:opacity-100 transition-opacity z-[4]"
+                className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/95 shadow-md text-primary font-bold hover:bg-white opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity z-[4]"
               >
                 ‹
               </button>
@@ -284,7 +286,7 @@ export function ProductImageGallery({ images, alt }: ProductImageGalleryProps) {
                 type="button"
                 aria-label="Next image"
                 onClick={goNext}
-                className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/95 shadow-md text-primary font-bold hover:bg-white opacity-0 group-hover:opacity-100 transition-opacity z-[4]"
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-white/95 shadow-md text-primary font-bold hover:bg-white opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity z-[4]"
               >
                 ›
               </button>
