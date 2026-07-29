@@ -299,7 +299,12 @@ export default function AdminOrderDetailPage() {
 
       <div className="flex flex-wrap items-center justify-between gap-3 mt-3 mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Order {order.orderId}</h1>
+          <h1 className="text-2xl font-bold">
+            Order {order.orderNumber ?? order.orderId}
+          </h1>
+          {order.orderNumber ? (
+            <p className="text-xs text-slate-400 font-mono mt-0.5">ID {order.orderId}</p>
+          ) : null}
           <p className="text-sm text-slate-500">
             Placed {new Date(order.createdAt).toLocaleString()} · Updated{" "}
             {new Date(order.updatedAt).toLocaleString()}
@@ -357,7 +362,7 @@ export default function AdminOrderDetailPage() {
       </div>
 
       <div id="invoice-print" className="hidden print:block mb-8">
-        <h2 className="text-xl font-bold">Invoice — {order.orderId}</h2>
+        <h2 className="text-xl font-bold">Invoice — {order.orderNumber ?? order.orderId}</h2>
         <p className="text-sm">{addr.name} · {addr.email}</p>
         <p className="text-sm mt-4 font-bold">Total: {formatMoney(order.total, order.currency)}</p>
       </div>

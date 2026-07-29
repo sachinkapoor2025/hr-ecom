@@ -35,8 +35,10 @@ Unpaid / cancelled / refunded are hidden unless `status` is set.
 ### Duplicate prevention (recommended)
 
 1. Always call with default **last 15 days** (or pass `days=15`).
-2. Store each `orderId` locally; skip ids you already imported.
+2. Store each `orderId` / `orderNumber` (e.g. `OC10001`) locally; skip ids you already imported.
 3. For incremental sync, pass `updatedSince` = last successful poll time.
+
+> **Note (2026-07-29):** `orderId` in this API is the human-readable number (`OC#####`). Older UUID-only feeds are superseded — re-import using `orderNumber` / `orderId` from the latest response. `internalOrderId` remains the UUID if you need a stable internal key.
 
 ### Example
 
@@ -50,7 +52,8 @@ curl -sS \
 
 | Field | Meaning |
 |-------|---------|
-| `orderId` | Unique order id |
+| `orderId` / `orderNumber` | **Human-readable** id — `OC10001`, `OC10002`, … for Orange County fulfill orders |
+| `internalOrderId` | Internal UUID (support only; prefer `orderNumber` for tracking) |
 | `orderDate` / `createdAt` | When order was placed |
 | `senderName` | Gift sender name |
 | `recipientName` | Ship-to name |
@@ -74,7 +77,7 @@ curl -sS \
 | `price` | Vendor purchase / fulfill unit price (`vendorCost`). Not website retail. |
 | `quantity` | Units |
 | `productImageUrl` | Absolute image URL |
-| `weight` / `weightUnit` | When available (may be `null` until product weights are set) |
+| `weight` / `weightUnit` | Package weight in **oz** (from product data, or category defaults: single ≈ 6 oz, set-of-2 ≈ 16 oz, hamper ≈ 32 oz) |
 
 ---
 
@@ -96,11 +99,15 @@ X-Vendor-Api-Key: YOUR_KEY
 
 ```json
 {
-  "orderNumber": "same-as-orderId-optional",
+  "orderNumber": "OC10001",
   "courierName": "USPS",
   "awb": "9400111899223344556677"
 }
 ```
+
+Use the human-readable `orderId` / `orderNumber` from the list feed in the URL:
+
+`POST .../vendors/orange-county/orders/OC10001/shipment`
 
 Effects:
 

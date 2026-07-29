@@ -34,6 +34,11 @@ import { applyDeliveryReviewSchedule } from "./review-emails";
 import { markCartConverted } from "./abandoned-cart-emails";
 import { upsertSessionProfile } from "../lib/customer-profile";
 import {
+  allocateOrderNumberForCart,
+  putOrderNumberPointer,
+  resolveOrderByIdOrNumber,
+} from "../lib/order-numbers";
+import {
   applyPercentDiscount,
   issueWelcomeCoupon,
   markCouponUsed,
@@ -273,8 +278,11 @@ export async function checkout(event: APIGatewayProxyEventV2) {
     ),
   ];
 
+  const orderNumber = await allocateOrderNumberForCart(orderItems as CartItem[], vendorSlugs);
+
   const order: Order = {
     orderId,
+    orderNumber,
     userId: auth?.userId,
     sessionId,
     items: orderItems,
@@ -312,6 +320,7 @@ export async function checkout(event: APIGatewayProxyEventV2) {
     order.paymentProvider = "stripe";
     order.paymentIntentId = payment.paymentIntentId;
     await docClient.send(new PutCommand({ TableName: ORDERS_TABLE, Item: buildOrderItem(order, userKey) }));
+    await putOrderNumberPointer(orderNumber, orderId);
     await clearCartForUser(userKey);
     const emailResult = await notifyAdminOrderPlaced(order);
     if (!emailResult.ok) console.error("Order placed email failed:", emailResult.error);
@@ -322,6 +331,7 @@ export async function checkout(event: APIGatewayProxyEventV2) {
   order.paymentProvider = "razorpay";
   order.razorpayOrderId = payment.razorpayOrderId;
   await docClient.send(new PutCommand({ TableName: ORDERS_TABLE, Item: buildOrderItem(order, userKey) }));
+  await putOrderNumberPointer(orderNumber, orderId);
   await clearCartForUser(userKey);
   const emailResult = await notifyAdminOrderPlaced(order);
   if (!emailResult.ok) console.error("Order placed email failed:", emailResult.error);
@@ -382,13 +392,7 @@ export async function listAdminOrders(event: APIGatewayProxyEventV2) {
 }
 
 async function fetchOrder(orderId: string): Promise<StoredOrder | undefined> {
-  const result = await docClient.send(
-    new GetCommand({
-      TableName: ORDERS_TABLE,
-      Key: { PK: orderKeys.pk(orderId), SK: orderKeys.sk() },
-    })
-  );
-  return result.Item as StoredOrder | undefined;
+  return resolveOrderByIdOrNumber(orderId) as Promise<StoredOrder | undefined>;
 }
 
 export async function getOrder(event: APIGatewayProxyEventV2) {

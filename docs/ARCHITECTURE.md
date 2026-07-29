@@ -105,8 +105,8 @@ When admin changes order status (accepted, processing, shipped, delivered, compl
 | GET | `/admin/shipping/products-missing-dims` | Admin: products without weight/dimensions |
 | GET | `/admin/load-test` | Super admin: load-test presets + LOAD_TEST_MODE status |
 | POST | `/admin/load-test/run` | Super admin: prefer UI browser runner (`smoke` / `u100`…`u1000`). UI: `/admin/load-test` |
-| GET | `/vendors/orange-county/orders` | **Vendor API only** (`VendorApiUrl`). Last **15 days** by default; OC fulfill fields + vendorCost (not retail). See `docs/VENDOR_ORANGE_COUNTY_API.md` |
-| GET | `/vendors/orange-county/orders/{orderId}` | Same vendor API; single order |
+| GET | `/vendors/orange-county/orders` | **Vendor API only** (`VendorApiUrl`). Last **15 days** by default; human `orderId`=`OC#####`; OC fulfill fields + vendorCost (not retail). See `docs/VENDOR_ORANGE_COUNTY_API.md` |
+| GET | `/vendors/orange-county/orders/{orderId}` | Same vendor API; `{orderId}` accepts `OC10001` or internal UUID |
 | POST | `/vendors/orange-county/orders/{orderId}/shipment` | Vendor posts AWB + courier name |
 | POST | `/vendors/orange-county/orders/{orderId}/tracking` | Vendor posts tracking status updates |
 | POST | `/webhooks/stripe` | Stripe webhook |
