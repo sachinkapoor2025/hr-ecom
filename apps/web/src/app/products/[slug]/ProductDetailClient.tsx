@@ -21,6 +21,7 @@ import { productPageFaqs } from "@/lib/content/product-faqs";
 import { testimonials } from "@/lib/site";
 import { LOW_STOCK_THRESHOLD, isFastSelling, getUnitsSold, estimatedDeliveryLabel } from "@hr-ecom/shared";
 import { EstimatedDeliveryNote } from "@/components/EstimatedDeliveryNote";
+import { ScheduleDeliveryPicker } from "@/components/ScheduleDeliveryPicker";
 import type { Product } from "@hr-ecom/shared";
 import { FastSellingBanner } from "@/components/FastSellingBadge";
 import { looksLikeHtml, shortPlainDescription } from "@/lib/html-text";
@@ -205,51 +206,72 @@ export function ProductDetailClient({
           <TrustBadges variant="compact" className="mb-5" />
 
           {inCart ? (
-            <div className="flex flex-wrap items-center gap-3 mb-3">
-              <Link
-                href="/cart"
-                className="flex items-center gap-2 text-green-700 hover:text-green-800 shrink-0"
-              >
-                <span className="flex h-5 w-5 items-center justify-center rounded bg-green-600 text-white">
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3} aria-hidden>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                </span>
-                <span className="text-sm font-semibold whitespace-nowrap">
-                  {itemCount} {itemCount === 1 ? "item" : "items"} in cart
-                </span>
-              </Link>
+            <div className="mb-3">
+              <div className="flex flex-wrap items-center gap-3 mb-3">
+                <Link
+                  href="/cart"
+                  className="flex items-center gap-2 text-green-700 hover:text-green-800 shrink-0"
+                >
+                  <span className="flex h-5 w-5 items-center justify-center rounded bg-green-600 text-white">
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3} aria-hidden>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </span>
+                  <span className="text-sm font-semibold whitespace-nowrap">
+                    {itemCount} {itemCount === 1 ? "item" : "items"} in cart
+                  </span>
+                </Link>
 
-              <div className="flex-1 min-w-[13rem] max-w-[18rem]">
-                <AddToCartControl
-                  productSlug={product.slug}
-                  disabled={product.inventory <= 0}
-                  fullWidth
-                  variant="detail"
-                  getContact={getContact}
-                />
+                <div className="flex-1 min-w-[13rem] max-w-[18rem]">
+                  <AddToCartControl
+                    productSlug={product.slug}
+                    disabled={product.inventory <= 0}
+                    fullWidth
+                    variant="detail"
+                    getContact={getContact}
+                  />
+                </div>
+
+                <div className="flex items-center gap-2 sm:ml-auto">
+                  <WishlistButton product={product} variant="toolbar" />
+                  {productUrl ? <ShareButton title={product.name} url={productUrl} /> : null}
+                </div>
               </div>
 
-              <div className="flex items-center gap-2 sm:ml-auto">
-                <WishlistButton product={product} variant="toolbar" />
-                {productUrl ? <ShareButton title={product.name} url={productUrl} /> : null}
+              <div className="grid grid-cols-2 gap-2 max-w-md">
+                <Link
+                  href="/cart"
+                  className="inline-flex items-center justify-center rounded-md border-2 border-nav bg-white text-nav font-bold text-sm uppercase tracking-wide py-3 hover:bg-blue-50 transition"
+                >
+                  View Cart
+                </Link>
+                <Link
+                  href="/checkout"
+                  className="inline-flex items-center justify-center rounded-md bg-accent text-white font-bold text-sm uppercase tracking-wide py-3 hover:opacity-90 transition"
+                >
+                  Proceed to Pay
+                </Link>
               </div>
             </div>
           ) : (
-            <div className="flex items-stretch gap-2 mb-3">
-              <div className="flex-1 min-w-0">
-                <AddToCartControl
-                  productSlug={product.slug}
-                  disabled={product.inventory <= 0}
-                  fullWidth
-                  variant="detail"
-                  getContact={getContact}
-                />
+            <div className="mb-3">
+              <div className="flex items-stretch gap-2 mb-3">
+                <div className="flex-1 min-w-0">
+                  <AddToCartControl
+                    productSlug={product.slug}
+                    disabled={product.inventory <= 0}
+                    fullWidth
+                    variant="detail"
+                    getContact={getContact}
+                  />
+                </div>
+                <WishlistButton product={product} variant="toolbar" />
+                {productUrl ? <ShareButton title={product.name} url={productUrl} /> : <div className="w-12 shrink-0" />}
               </div>
-              <WishlistButton product={product} variant="toolbar" />
-              {productUrl ? <ShareButton title={product.name} url={productUrl} /> : <div className="w-12 shrink-0" />}
             </div>
           )}
+
+          <ScheduleDeliveryPicker className="mb-5" />
 
         </div>
       </div>

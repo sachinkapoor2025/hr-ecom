@@ -13,6 +13,8 @@ import {
   ORDER_STATUS_TRANSITIONS,
   convertCartItemsToCurrency,
   cartSubtotal,
+  isValidScheduleDeliveryDate,
+  preferredDeliveryDateToIso,
   type Order,
   type OrderStatusHistoryEntry,
   type CartItem,
@@ -100,17 +102,17 @@ export async function captureLead(event: APIGatewayProxyEventV2) {
   let leadPayload = parsed.data;
   if (parsed.data.source === "newsletter") {
     const phone = parsed.data.phone?.trim();
-    if (!phone) return badRequest("Enter a valid mobile number to spin");
-    const requested = Number(parsed.data.metadata?.discountPercent);
+    if (!phone) return badRequest("Enter a valid mobile number");
+    if (!email) return badRequest("Enter a valid email address");
     try {
       welcomeCoupon = await issueWelcomeCoupon({
         phone,
         email,
         sessionId,
-        discountPercent: Number.isFinite(requested) ? requested : undefined,
+        discountPercent: 15,
       });
     } catch (err) {
-      return badRequest(err instanceof Error ? err.message : "Could not issue discount coupon");
+      return badRequest(err instanceof Error ? err.message : "Could not issue Early Bird coupon");
     }
     leadPayload = {
       ...parsed.data,
@@ -120,7 +122,7 @@ export async function captureLead(event: APIGatewayProxyEventV2) {
         couponExpiresAt: welcomeCoupon.expiresAt,
         discountPercent: String(welcomeCoupon.discountPercent),
         alreadyClaimedToday: welcomeCoupon.alreadyClaimedToday ? "true" : "false",
-        offer: "discount_of_the_day",
+        offer: "early_bird",
       },
     };
   }
@@ -150,11 +152,11 @@ export async function captureLead(event: APIGatewayProxyEventV2) {
   });
 
   const emailResult = await notifyAdminLead(leadPayload);
-  // Newsletter spins are phone-first — only require SMTP when an email was provided.
+  // Early Bird requires email — SMTP needed for newsletter claims.
   const emailRequired =
     leadPayload.source === "contact" ||
     leadPayload.source === "review" ||
-    (leadPayload.source === "newsletter" && Boolean(email));
+    leadPayload.source === "newsletter";
 
   if (emailRequired && emailResult.skipped) {
     console.error("Email skipped — SMTP not configured:", leadPayload.source);
@@ -280,6 +282,11 @@ export async function checkout(event: APIGatewayProxyEventV2) {
 
   const orderNumber = await allocateOrderNumberForCart(orderItems as CartItem[], vendorSlugs);
 
+  const preferredDeliveryDate = parsed.data.preferredDeliveryDate?.trim();
+  if (preferredDeliveryDate && !isValidScheduleDeliveryDate(preferredDeliveryDate)) {
+    return badRequest("Scheduled delivery must be today through 28 August 2026");
+  }
+
   const order: Order = {
     orderId,
     orderNumber,
@@ -297,6 +304,9 @@ export async function checkout(event: APIGatewayProxyEventV2) {
     status: ORDER_STATUS.PENDING_PAYMENT,
     statusHistory: [{ status: ORDER_STATUS.PENDING_PAYMENT, at: timestamp }],
     shippingAddress: parsed.data.shippingAddress,
+    ...(preferredDeliveryDate
+      ? { estimatedDeliveryAt: preferredDeliveryDateToIso(preferredDeliveryDate) }
+      : {}),
     ...(shippingResult.selected && {
       shippingServiceCode: shippingResult.selected.mailClass,
       shippingServiceName: shippingResult.selected.serviceName,

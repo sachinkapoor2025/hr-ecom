@@ -1,14 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  DAILY_DEAL_SEGMENTS,
-  DAILY_DEAL_WHEEL_LABELS,
+  EARLY_BIRD_DISCOUNT_PERCENT,
+  EARLY_BIRD_ENDS_DATE,
+  SCHEDULE_DELIVERY_MAX_DATE,
   WELCOME_COUPON_HOURS,
-  pickDailyDealDiscount,
+  isEarlyBirdPromoActive,
 } from "@hr-ecom/shared";
 import { site } from "@/lib/site";
 import { getOrCreateSessionId } from "@/lib/session";
@@ -19,22 +20,8 @@ import { DEFAULT_COUNTRY_ISO } from "@/lib/country-codes";
 import { ConfettiBurst } from "@/components/ConfettiBurst";
 import { PhoneInput, buildPhoneValue } from "@/components/PhoneInput";
 
-const STORAGE_KEY = "usarakhi_daily_deal_shown";
+const STORAGE_KEY = "usarakhi_early_bird_shown";
 const SHOW_AFTER_MS = 10_000;
-const SPIN_MS = 4200;
-
-const SEGMENTS = [...DAILY_DEAL_SEGMENTS];
-const WHEEL_LABELS = [...DAILY_DEAL_WHEEL_LABELS];
-const SEGMENT_COLORS = [
-  "#183a68",
-  "#c4a35a",
-  "#4876e8",
-  "#e11d48",
-  "#0f766e",
-  "#c4a35a",
-  "#183a68",
-  "#e11d48",
-];
 
 function isValidEmail(value: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
@@ -45,16 +32,14 @@ function isValidPhone(value: string): boolean {
   return digits.length >= 7 && digits.length <= 15;
 }
 
-function segmentIndexForPercent(percent: number): number {
-  const matches = SEGMENTS.map((p, i) => (p === percent ? i : -1)).filter((i) => i >= 0);
-  if (matches.length === 0) return 0;
-  return matches[Math.floor(Math.random() * matches.length)]!;
-}
-
-function rotationForSegment(index: number, extraSpins = 6): number {
-  const slice = 360 / SEGMENTS.length;
-  const centerOfSlice = index * slice;
-  return extraSpins * 360 + ((360 - centerOfSlice) % 360);
+function formatPromoEnd(dateYmd: string): string {
+  const [y, m, d] = dateYmd.split("-").map(Number);
+  return new Date(Date.UTC(y!, m! - 1, d!)).toLocaleDateString(undefined, {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  });
 }
 
 type CouponResult = {
@@ -65,37 +50,29 @@ type CouponResult = {
   alreadyClaimedToday?: boolean;
 };
 
+/** Early Bird Discount popup (replaces Spin the Wheel). */
 export function ExitIntentPopup() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [countryIso, setCountryIso] = useState(DEFAULT_COUNTRY_ISO);
   const [localNumber, setLocalNumber] = useState("");
   const [email, setEmail] = useState("");
-  const [phase, setPhase] = useState<
-    "idle" | "spinning" | "celebrating" | "done" | "blocked"
-  >("idle");
+  const [phase, setPhase] = useState<"idle" | "submitting" | "done" | "blocked" | "ended">(
+    "idle"
+  );
   const [error, setError] = useState("");
   const [coupon, setCoupon] = useState<CouponResult | null>(null);
   const [copied, setCopied] = useState(false);
-  const [rotation, setRotation] = useState(0);
-  const [animateSpin, setAnimateSpin] = useState(false);
-  const [wonPercent, setWonPercent] = useState<number | null>(null);
   const [burstKey, setBurstKey] = useState(0);
 
-  const wheelGradient = useMemo(() => {
-    const slice = 100 / SEGMENTS.length;
-    const stops = SEGMENTS.map((_, i) => {
-      const color = SEGMENT_COLORS[i % SEGMENT_COLORS.length];
-      return `${color} ${i * slice}% ${(i + 1) * slice}%`;
-    });
-    return `conic-gradient(from -${180 / SEGMENTS.length}deg, ${stops.join(", ")})`;
-  }, []);
-
   useEffect(() => {
-    if (pathname.startsWith("/admin") || pathname.startsWith("/ses-email") || pathname.startsWith("/checkout")) return;
+    if (!isEarlyBirdPromoActive()) return;
+    if (pathname.startsWith("/admin") || pathname.startsWith("/ses-email") || pathname.startsWith("/checkout")) {
+      return;
+    }
     if (sessionStorage.getItem(STORAGE_KEY)) return;
 
-    const TIMER_START_KEY = "usarakhi_daily_deal_timer_start";
+    const TIMER_START_KEY = "usarakhi_early_bird_timer_start";
     let startedAt = Number(sessionStorage.getItem(TIMER_START_KEY) || 0);
     if (!startedAt) {
       startedAt = Date.now();
@@ -105,11 +82,12 @@ export function ExitIntentPopup() {
     const remaining = Math.max(0, SHOW_AFTER_MS - (Date.now() - startedAt));
     const timer = window.setTimeout(() => {
       if (sessionStorage.getItem(STORAGE_KEY)) return;
+      if (!isEarlyBirdPromoActive()) return;
       const path = window.location.pathname;
       if (path.startsWith("/admin") || path.startsWith("/ses-email") || path.startsWith("/checkout")) return;
       sessionStorage.setItem(STORAGE_KEY, "1");
       setOpen(true);
-      trackSessionHeartbeat("daily_deal_shown", SHOW_AFTER_MS, path);
+      trackSessionHeartbeat("early_bird_shown", SHOW_AFTER_MS, path);
     }, remaining);
 
     return () => window.clearTimeout(timer);
@@ -128,68 +106,55 @@ export function ExitIntentPopup() {
 
   const close = () => setOpen(false);
 
-  const spin = (e: React.FormEvent) => {
+  const claim = (e: React.FormEvent) => {
     e.preventDefault();
-    const fullPhone = buildPhoneValue(countryIso, localNumber);
-    const trimmedEmail = email.trim();
     if (phase !== "idle") return;
-    if (!isValidPhone(fullPhone)) {
-      setError("Enter a valid mobile number to spin for today’s discount.");
+    if (!isEarlyBirdPromoActive()) {
+      setPhase("ended");
       return;
     }
-    if (trimmedEmail && !isValidEmail(trimmedEmail)) {
-      setError("Enter a valid email, or leave it blank.");
+
+    const fullPhone = buildPhoneValue(countryIso, localNumber);
+    const trimmedEmail = email.trim();
+    if (!isValidPhone(fullPhone)) {
+      setError("Enter a valid mobile number with country code.");
+      return;
+    }
+    if (!isValidEmail(trimmedEmail)) {
+      setError("Enter a valid email address.");
       return;
     }
 
     setError("");
     setCoupon(null);
-    setPhase("spinning");
-
-    const won = pickDailyDealDiscount();
-    setWonPercent(won);
-    const idx = segmentIndexForPercent(won);
-    setAnimateSpin(true);
-    setRotation((prev) => prev + rotationForSegment(idx, 7));
+    setPhase("submitting");
 
     const sessionId = getOrCreateSessionId();
-    const spinStartedAt = Date.now();
-
-    const couponPromise = api<{
-      ok: boolean;
-      coupon?: CouponResult;
-    }>("/leads", {
-      method: "POST",
-      sessionId,
-      body: JSON.stringify({
-        sessionId,
-        phone: fullPhone,
-        ...(trimmedEmail ? { email: trimmedEmail } : {}),
-        page: pathname,
-        source: "newsletter",
-        metadata: {
-          offer: "discount_of_the_day",
-          trigger: "daily_deal_wheel",
-          discountPercent: String(won),
-        },
-      }),
-    });
 
     void (async () => {
       try {
-        const remainingSpin = Math.max(0, SPIN_MS - (Date.now() - spinStartedAt));
-        await new Promise((r) => window.setTimeout(r, remainingSpin));
-        setAnimateSpin(false);
-
-        // Firecracker / confetti — reveal discount % only here
-        setBurstKey((k) => k + 1);
-        setPhase("celebrating");
-
-        const res = await couponPromise;
+        const res = await api<{
+          ok: boolean;
+          coupon?: CouponResult;
+        }>("/leads", {
+          method: "POST",
+          sessionId,
+          body: JSON.stringify({
+            sessionId,
+            phone: fullPhone,
+            email: trimmedEmail,
+            page: pathname,
+            source: "newsletter",
+            metadata: {
+              offer: "early_bird",
+              trigger: "early_bird_popup",
+              discountPercent: String(EARLY_BIRD_DISCOUNT_PERCENT),
+            },
+          }),
+        });
 
         if (!res.coupon) {
           setPhase("idle");
-          setWonPercent(null);
           setError("Could not save your discount. Please try again.");
           return;
         }
@@ -199,38 +164,24 @@ export function ExitIntentPopup() {
 
         if (result.alreadyClaimedToday && expired) {
           setCoupon(result);
-          setWonPercent(null);
           setPhase("blocked");
           return;
-        }
-
-        if (result.discountPercent !== won) {
-          setWonPercent(result.discountPercent);
-          setAnimateSpin(true);
-          const reuseIdx = segmentIndexForPercent(result.discountPercent);
-          setRotation((prev) => prev + rotationForSegment(reuseIdx, 2));
-          await new Promise((r) => window.setTimeout(r, 1600));
-          setAnimateSpin(false);
-          setBurstKey((k) => k + 1);
         }
 
         setCoupon(result);
         saveWelcomeCoupon({
           ...result,
           phone: fullPhone,
-          ...(trimmedEmail ? { email: trimmedEmail } : {}),
+          email: trimmedEmail,
         });
-
-        await new Promise((r) => window.setTimeout(r, 900));
+        setBurstKey((k) => k + 1);
         setPhase("done");
       } catch (err) {
-        setAnimateSpin(false);
-        setWonPercent(null);
         setPhase("idle");
         setError(
           err instanceof Error
             ? err.message
-            : "Could not spin right now. Try again or WhatsApp us."
+            : "Could not claim Early Bird discount. Try again or WhatsApp us."
         );
       }
     })();
@@ -238,17 +189,17 @@ export function ExitIntentPopup() {
 
   if (!open) return null;
 
-  const showWheel = phase === "idle" || phase === "spinning" || phase === "celebrating";
-  const celebrating = phase === "celebrating";
+  const promoEndLabel = formatPromoEnd(EARLY_BIRD_ENDS_DATE);
+  const scheduleMaxLabel = formatPromoEnd(SCHEDULE_DELIVERY_MAX_DATE);
 
   return (
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/65 backdrop-blur-[2px]"
       role="dialog"
-      aria-label="Discount of the Day"
+      aria-label="Early Bird Discount"
     >
-      <div className="relative w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/5">
-        <ConfettiBurst active={celebrating} burstKey={burstKey} />
+      <div className="relative w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/5">
+        <ConfettiBurst active={phase === "done"} burstKey={burstKey} />
 
         <div className="relative h-28 sm:h-32 overflow-hidden">
           <Image
@@ -271,20 +222,37 @@ export function ExitIntentPopup() {
             </svg>
           </button>
           <div className="absolute inset-x-0 bottom-0 px-5 pb-4 text-white">
-            <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-amber-200">Rakhi offer · Today only</p>
-            <h2 className="text-2xl font-bold leading-tight mt-0.5">Discount of the Day</h2>
+            <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-amber-200">
+              Limited time · ends {promoEndLabel}
+            </p>
+            <h2 className="text-2xl font-bold leading-tight mt-0.5">Early Bird Discount</h2>
             <p className="text-xs sm:text-sm text-white/90 mt-1">
-              Spin for a mystery Rakhi discount · 1 spin / mobile / day · valid {WELCOME_COUPON_HOURS}h
+              {EARLY_BIRD_DISCOUNT_PERCENT}% OFF · unique code valid {WELCOME_COUPON_HOURS} hour
             </p>
           </div>
         </div>
 
         <div className="relative px-5 py-5">
-          {phase === "blocked" ? (
+          {phase === "ended" ? (
             <div className="text-center py-2">
-              <p className="text-lg font-bold text-primary mb-2">You already spun today</p>
+              <p className="text-lg font-bold text-primary mb-2">Early Bird has ended</p>
               <p className="text-sm text-slate-600 mb-4">
-                Each mobile number gets one Discount of the Day spin per day. Come back tomorrow for another chance.
+                This offer was available through {promoEndLabel}. Continue shopping for current Rakhi deals.
+              </p>
+              <button
+                type="button"
+                onClick={close}
+                className="rounded-lg bg-primary text-white font-semibold text-sm px-5 py-2.5"
+              >
+                Continue shopping
+              </button>
+            </div>
+          ) : phase === "blocked" ? (
+            <div className="text-center py-2">
+              <p className="text-lg font-bold text-primary mb-2">Already claimed today</p>
+              <p className="text-sm text-slate-600 mb-4">
+                Each mobile number can claim one Early Bird code per day. Your previous code may have expired —
+                try again tomorrow before {promoEndLabel}.
               </p>
               <button
                 type="button"
@@ -296,12 +264,15 @@ export function ExitIntentPopup() {
             </div>
           ) : phase === "done" && coupon ? (
             <div className="text-center py-2">
-              <p className="text-sm uppercase tracking-wide text-accent font-bold mb-1">You won!</p>
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white border-2 border-primary overflow-hidden p-1">
+                <Image src={site.logoSrc} alt={site.name} width={48} height={20} className="object-contain" />
+              </div>
+              <p className="text-sm uppercase tracking-wide text-accent font-bold mb-1">You&apos;re in!</p>
               <p className="text-4xl font-bold text-primary mb-2">{coupon.discountPercent}% off</p>
               <p className="text-sm text-slate-600 mb-3">
                 {coupon.reused
-                  ? "Here’s your active Discount of the Day code:"
-                  : `Your Rakhi discount is valid for ${WELCOME_COUPON_HOURS} hour — use it at checkout:`}
+                  ? "Here’s your active Early Bird code:"
+                  : `Your unique code is live for ${WELCOME_COUPON_HOURS} hour — use it at checkout:`}
               </p>
               <div className="rounded-xl border-2 border-dashed border-nav bg-gradient-to-b from-slate-50 to-amber-50/40 px-4 py-3 mb-3">
                 <div className="flex items-center justify-center gap-2">
@@ -316,95 +287,29 @@ export function ExitIntentPopup() {
                 </div>
                 <p className="text-xs text-slate-500 mt-1">Expires {formatCouponExpiry(coupon.expiresAt)}</p>
               </div>
-              <p className="text-xs text-slate-500 mb-4">
-                {email.trim()
-                  ? "Also sent to your email when available."
-                  : "Use this code at checkout with the same mobile number."}
+              <p className="text-sm text-slate-700 mb-4 rounded-lg bg-slate-50 border border-slate-100 px-3 py-2">
+                You can <strong>schedule your delivery</strong> on the product page or at checkout — choose any
+                date through <strong>{scheduleMaxLabel}</strong>.
               </p>
               <Link
                 href="/products"
                 onClick={close}
                 className="inline-block rounded-lg bg-accent text-white font-semibold text-sm px-5 py-2.5 hover:opacity-90 shadow-sm"
               >
-                Shop Rakhi with my discount
+                Shop with my discount
               </Link>
             </div>
-          ) : showWheel ? (
+          ) : (
             <>
-              <div className="relative mx-auto mb-4 w-[260px] h-[260px] sm:w-[300px] sm:h-[300px]">
-                <div
-                  className="absolute -inset-1 rounded-full opacity-90"
-                  style={{
-                    background:
-                      "conic-gradient(from 0deg, #c4a35a, #183a68, #c4a35a, #e11d48, #c4a35a, #4876e8, #c4a35a)",
-                  }}
-                  aria-hidden
-                />
-                <div className="absolute inset-0 rounded-full bg-white" aria-hidden />
-
-                <div className="absolute left-1/2 -top-0.5 z-30 -translate-x-1/2 drop-shadow-md" aria-hidden>
-                  <div className="h-0 w-0 border-l-[12px] border-r-[12px] border-t-[22px] border-l-transparent border-r-transparent border-t-accent" />
-                </div>
-
-                <div
-                  className="absolute inset-[6px] rounded-full shadow-[inset_0_0_24px_rgba(0,0,0,0.25)] border-[3px] border-amber-200/80"
-                  style={{
-                    background: wheelGradient,
-                    transform: `rotate(${rotation}deg)`,
-                    transition: animateSpin
-                      ? `transform ${SPIN_MS}ms cubic-bezier(0.12, 0.75, 0.18, 1)`
-                      : undefined,
-                    boxShadow: "0 8px 28px rgba(24,58,104,0.28)",
-                  }}
-                >
-                  {WHEEL_LABELS.map((label, i) => {
-                    const slice = 360 / WHEEL_LABELS.length;
-                    const angle = i * slice;
-                    return (
-                      <div
-                        key={`${label}-${i}`}
-                        className="absolute inset-0 pointer-events-none"
-                        style={{ transform: `rotate(${angle}deg)` }}
-                      >
-                        <span
-                          className="absolute left-1/2 top-[16%] whitespace-nowrap text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wide text-white"
-                          style={{
-                            transform: `translateX(-50%) rotate(${slice / 2 - angle}deg)`,
-                            textShadow: "0 1px 2px rgba(0,0,0,0.5)",
-                          }}
-                        >
-                          {label}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-                  <div className="flex h-[72px] w-[72px] sm:h-20 sm:w-20 items-center justify-center rounded-full bg-white border-[3px] border-primary shadow-lg ring-2 ring-amber-300/70 overflow-hidden p-1.5">
-                    <Image
-                      src={site.logoSrc}
-                      alt={site.name}
-                      width={64}
-                      height={28}
-                      className="h-auto w-full object-contain"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {celebrating && wonPercent != null ? (
-                <div className="text-center space-y-3 mb-1">
-                  <p className="text-lg sm:text-xl font-bold text-primary animate-bounce">
-                    You won {wonPercent}% discount!
-                  </p>
-                  <p className="text-sm text-slate-600">Generating your discount coupon…</p>
-                  <div className="mx-auto h-1.5 w-40 overflow-hidden rounded-full bg-slate-100">
-                    <div className="h-full w-1/2 animate-pulse rounded-full bg-accent" />
-                  </div>
-                </div>
-              ) : (
-                <form onSubmit={spin} className="space-y-3">
+              <p className="text-sm text-slate-600 mb-4">
+                Lock in <strong>{EARLY_BIRD_DISCOUNT_PERCENT}% OFF</strong> before {promoEndLabel}. After you claim,
+                you can <strong>schedule delivery</strong> for any date through {scheduleMaxLabel}.
+              </p>
+              <form onSubmit={claim} className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Country code &amp; mobile number <span className="text-red-500">*</span>
+                  </label>
                   <PhoneInput
                     label=""
                     countryIso={countryIso}
@@ -413,41 +318,45 @@ export function ExitIntentPopup() {
                     onLocalNumberChange={setLocalNumber}
                     required
                     compact
-                    disabled={phase === "spinning"}
+                    disabled={phase === "submitting"}
                     placeholder="Mobile number"
                     selectClassName="border-slate-200 py-2.5 focus:outline-none focus:ring-2 focus:ring-nav"
                     inputClassName="border-slate-200 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-nav"
                   />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1" htmlFor="early-bird-email">
+                    Email address <span className="text-red-500">*</span>
+                  </label>
                   <input
+                    id="early-bird-email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Share email to get coupon on email (optional)"
-                    disabled={phase === "spinning"}
+                    placeholder="you@example.com"
+                    required
+                    disabled={phase === "submitting"}
                     className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-nav disabled:opacity-60"
                   />
-                  <button
-                    type="submit"
-                    disabled={phase === "spinning"}
-                    className="w-full rounded-lg bg-accent text-white font-bold text-sm py-3.5 hover:opacity-90 disabled:opacity-70 shadow-md shadow-accent/25"
-                  >
-                    {phase === "spinning" ? "Spinning…" : "Spin the wheel"}
-                  </button>
-                  {error && <p className="text-red-500 text-xs text-center">{error}</p>}
-                </form>
-              )}
-
-              {phase === "idle" && (
+                </div>
                 <button
-                  type="button"
-                  onClick={close}
-                  className="mt-3 w-full text-center text-xs text-slate-500 hover:text-slate-700 underline underline-offset-2"
+                  type="submit"
+                  disabled={phase === "submitting"}
+                  className="w-full rounded-lg bg-accent text-white font-bold text-sm py-3.5 hover:opacity-90 disabled:opacity-70 shadow-md shadow-accent/25"
                 >
-                  No thanks — continue without a discount
+                  {phase === "submitting" ? "Generating your code…" : `Claim ${EARLY_BIRD_DISCOUNT_PERCENT}% OFF`}
                 </button>
-              )}
+                {error && <p className="text-red-500 text-xs text-center">{error}</p>}
+              </form>
+              <button
+                type="button"
+                onClick={close}
+                className="mt-3 w-full text-center text-xs text-slate-500 hover:text-slate-700 underline underline-offset-2"
+              >
+                No thanks — continue without a discount
+              </button>
             </>
-          ) : null}
+          )}
         </div>
       </div>
     </div>

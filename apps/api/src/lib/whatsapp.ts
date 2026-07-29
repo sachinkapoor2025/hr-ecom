@@ -67,12 +67,13 @@ export function welcomeCouponWhatsAppMessage(input: {
   expiresAt: string;
 }): string {
   const expiry = formatExpiryEt(input.expiresAt);
-  return `Hi! You spun Discount of the Day at ${SITE}.
+  return `Hi! Your Early Bird discount at ${SITE} is ready.
 
 Your code: ${input.code}
 Discount: ${input.discountPercent}% off
 Valid until: ${expiry} (ET)
 
+You can schedule delivery on the product page or at checkout (through 28 Aug).
 Checkout: ${SITE_URL()}/checkout
 Shop: ${SITE_URL()}/products`;
 }
