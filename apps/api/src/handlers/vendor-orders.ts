@@ -11,26 +11,29 @@
  * Item `price` / order `orderValue` are vendor fulfill / purchase amounts (vendorCost),
  * not UsaRakhi retail selling prices.
  */
-import { QueryCommand, GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
+import { GetCommand, QueryCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import type { APIGatewayProxyEventV2 } from "aws-lambda";
 import {
   VENDOR_ORANGE_COUNTY,
   VENDOR_ORDERS_DEFAULT_DAYS,
   orderKeys,
+  productKeys,
   ORDER_STATUS,
   ORDER_STATUS_TRANSITIONS,
   resolveProductImageUrl,
   vendorShipmentUpdateSchema,
   vendorTrackingUpdateSchema,
+  displayOrderRef,
   type Order,
   type CartItem,
   type OrderStatusHistoryEntry,
 } from "@hr-ecom/shared";
-import { docClient, ORDERS_TABLE, now } from "../lib/db";
+import { docClient, ORDERS_TABLE, PRODUCTS_TABLE, now } from "../lib/db";
 import { ok, unauthorized, badRequest, forbidden, notFound } from "../lib/response";
 import { getBundledOrangeCountyProduct } from "../lib/orange-county-catalog";
 import { notifyCustomerOrderStatusChange } from "../lib/email";
 import { applyDeliveryReviewSchedule } from "./review-emails";
+import { resolveOrderByIdOrNumber } from "../lib/order-numbers";
 
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 100;
@@ -93,11 +96,53 @@ function resolveWeight(item: CartItem): { weight: number | null; weightUnit: str
   if (typeof oz === "number" && oz > 0) {
     return { weight: oz, weightUnit: "oz" };
   }
-  return { weight: null, weightUnit: null };
+
+  // Category / set defaults when catalog weight was never imported (vendor asked for weight).
+  const slug = item.productSlug.toLowerCase();
+  const sku = (item.sku ?? bundled?.sku ?? "").toLowerCase();
+  if (/setof?5|set-?of-?5|set5/.test(slug + sku) || /md005set5/.test(sku)) {
+    return { weight: 40, weightUnit: "oz" };
+  }
+  if (/setof?4|set-?of-?4|4-set/.test(slug + sku)) {
+    return { weight: 32, weightUnit: "oz" };
+  }
+  if (/setof?3|set-?of-?3|3-set/.test(slug + sku)) {
+    return { weight: 24, weightUnit: "oz" };
+  }
+  if (/setof?2|set-?of-?2|2-set|setof2/.test(slug + sku)) {
+    return { weight: 16, weightUnit: "oz" };
+  }
+  if (
+    bundled?.categorySlug === "rakhi-hampers" ||
+    /hamper|combo|dry-fruit|chocolate/.test(slug)
+  ) {
+    return { weight: 32, weightUnit: "oz" };
+  }
+  // Single rakhi default
+  return { weight: 6, weightUnit: "oz" };
 }
 
-function toVendorItem(item: CartItem) {
-  const { weight, weightUnit } = resolveWeight(item);
+async function resolveWeightWithDb(item: CartItem): Promise<{ weight: number | null; weightUnit: string | null }> {
+  try {
+    const res = await docClient.send(
+      new GetCommand({
+        TableName: PRODUCTS_TABLE,
+        Key: { PK: productKeys.pk(item.productSlug), SK: productKeys.sk() },
+        ProjectionExpression: "weightOz",
+      })
+    );
+    const oz = res.Item?.weightOz;
+    if (typeof oz === "number" && oz > 0) {
+      return { weight: oz, weightUnit: "oz" };
+    }
+  } catch {
+    /* fall through to catalog/defaults */
+  }
+  return resolveWeight(item);
+}
+
+async function toVendorItem(item: CartItem) {
+  const { weight, weightUnit } = await resolveWeightWithDb(item);
   const price = resolveVendorCost(item);
   return {
     sku: resolveVendorSku(item),
@@ -112,17 +157,22 @@ function toVendorItem(item: CartItem) {
   };
 }
 
-function toVendorOrder(order: Order, items: CartItem[]) {
+async function toVendorOrder(order: Order, items: CartItem[]) {
   const addr = order.shippingAddress;
-  const mappedItems = items.map(toVendorItem);
+  const mappedItems = await Promise.all(items.map(toVendorItem));
   const orderValue = mappedItems.reduce((sum, i) => {
     if (i.price == null) return sum;
     return sum + i.price * i.quantity;
   }, 0);
   const hasAllCosts = mappedItems.every((i) => i.price != null);
+  const humanNumber = displayOrderRef(order);
 
   return {
-    orderId: order.orderId,
+    /** Human-readable id for vendor systems (OC10001…). */
+    orderId: humanNumber,
+    orderNumber: humanNumber,
+    /** Internal UUID — keep for support/debugging; prefer orderNumber for tracking. */
+    internalOrderId: order.orderId,
     orderDate: order.createdAt,
     createdAt: order.createdAt,
     updatedAt: order.updatedAt,
@@ -154,13 +204,7 @@ function defaultSinceIso(days: number): string {
 }
 
 async function loadVendorOrder(orderId: string): Promise<StoredOrder | undefined> {
-  const result = await docClient.send(
-    new GetCommand({
-      TableName: ORDERS_TABLE,
-      Key: { PK: orderKeys.pk(orderId), SK: orderKeys.sk() },
-    })
-  );
-  return result.Item as StoredOrder | undefined;
+  return resolveOrderByIdOrNumber(orderId) as Promise<StoredOrder | undefined>;
 }
 
 function mapVendorStatus(raw: string): string | null {
@@ -324,7 +368,7 @@ export async function listOrangeCountyOrders(event: APIGatewayProxyEventV2) {
     since,
     days,
     updatedSince: updatedSince ?? null,
-    orders: collected.map((o) => toVendorOrder(o, o.items)),
+    orders: await Promise.all(collected.map((o) => toVendorOrder(o, o.items))),
   });
 }
 
@@ -342,7 +386,7 @@ export async function getOrangeCountyOrder(event: APIGatewayProxyEventV2) {
 
   const items = vendorLineItems(order, VENDOR_ORANGE_COUNTY);
   return ok({
-    order: toVendorOrder(order, items),
+    order: await toVendorOrder(order, items),
   });
 }
 
@@ -365,14 +409,22 @@ export async function postOrangeCountyShipment(event: APIGatewayProxyEventV2) {
     return badRequest(parsed.error.issues[0]?.message ?? parsed.error.message);
   }
 
-  if (parsed.data.orderNumber && parsed.data.orderNumber !== orderId) {
-    return badRequest("orderNumber does not match URL orderId");
-  }
-
   const order = await loadVendorOrder(orderId);
   if (!order) return notFound("Order not found");
   if (!orderTouchesVendor(order, VENDOR_ORANGE_COUNTY)) {
     return forbidden("Order not found for this vendor");
+  }
+
+  if (parsed.data.orderNumber) {
+    const human = displayOrderRef(order);
+    if (
+      parsed.data.orderNumber !== orderId &&
+      parsed.data.orderNumber !== order.orderId &&
+      parsed.data.orderNumber !== human &&
+      parsed.data.orderNumber.toUpperCase() !== human.toUpperCase()
+    ) {
+      return badRequest("orderNumber does not match URL orderId");
+    }
   }
 
   try {
@@ -391,7 +443,9 @@ export async function postOrangeCountyShipment(event: APIGatewayProxyEventV2) {
     });
 
     return ok({
-      orderId: updated.orderId,
+      orderId: displayOrderRef(updated),
+      orderNumber: displayOrderRef(updated),
+      internalOrderId: updated.orderId,
       status: updated.status,
       awb: updated.trackingNumber,
       courierName: updated.carrier,
@@ -421,14 +475,22 @@ export async function postOrangeCountyTracking(event: APIGatewayProxyEventV2) {
     return badRequest(parsed.error.issues[0]?.message ?? parsed.error.message);
   }
 
-  if (parsed.data.orderNumber && parsed.data.orderNumber !== orderId) {
-    return badRequest("orderNumber does not match URL orderId");
-  }
-
   const order = await loadVendorOrder(orderId);
   if (!order) return notFound("Order not found");
   if (!orderTouchesVendor(order, VENDOR_ORANGE_COUNTY)) {
     return forbidden("Order not found for this vendor");
+  }
+
+  if (parsed.data.orderNumber) {
+    const human = displayOrderRef(order);
+    if (
+      parsed.data.orderNumber !== orderId &&
+      parsed.data.orderNumber !== order.orderId &&
+      parsed.data.orderNumber !== human &&
+      parsed.data.orderNumber.toUpperCase() !== human.toUpperCase()
+    ) {
+      return badRequest("orderNumber does not match URL orderId");
+    }
   }
 
   const mapped = mapVendorStatus(parsed.data.currentStatus);
@@ -443,7 +505,9 @@ export async function postOrangeCountyTracking(event: APIGatewayProxyEventV2) {
     });
 
     return ok({
-      orderId: updated.orderId,
+      orderId: displayOrderRef(updated),
+      orderNumber: displayOrderRef(updated),
+      internalOrderId: updated.orderId,
       status: updated.status,
       currentStatusReceived: parsed.data.currentStatus.trim(),
       statusMapped: mapped,
