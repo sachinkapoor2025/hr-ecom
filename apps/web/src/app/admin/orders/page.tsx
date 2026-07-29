@@ -22,6 +22,8 @@ import { TableControls } from "@/components/admin/TableControls";
 
 interface Order {
   orderId: string;
+  /** Human-readable OC##### / US##### when assigned. */
+  orderNumber?: string;
   status: string;
   total: number;
   currency: string;
