@@ -100,8 +100,7 @@ export const ORANGE_COUNTY_CATEGORY_SLUG = "rakhi-hampers" as const;
  *   sale price = cost × 2.0  → 50% margin before coupons  ((P−C)/P)
  *   list/compare-at = cost × 2.5 → sale badge (~20% off list)
  *
- * After spin-the-wheel 6–10% off sale price, net margin stays ~44–47%
- * (≈40–44%+ band at the higher discount end).
+ * After Early Bird 15% off sale price, net margin stays ~42.5% on sale markup.
  */
 export const ORANGE_COUNTY_LIST_MARKUP = 2.5;
 export const ORANGE_COUNTY_SALE_MARKUP = 2.0;

@@ -19,7 +19,9 @@ import { CouponInput } from "@/components/CouponInput";
 import { StripePaymentForm } from "@/components/StripePaymentForm";
 import { RazorpayQrPanel } from "@/components/RazorpayQrPanel";
 import { EstimatedDeliveryNote } from "@/components/EstimatedDeliveryNote";
+import { ScheduleDeliveryPicker } from "@/components/ScheduleDeliveryPicker";
 import { loadWelcomeCoupon } from "@/lib/welcome-coupon";
+import { loadPreferredDeliveryDate } from "@/lib/preferred-delivery";
 import {
   emptyShippingAddress,
   loadSavedAddresses,
@@ -604,6 +606,9 @@ function CheckoutPageInner() {
           ...(displayCurrency === "INR" ? { usdInrRate } : {}),
           shippingAddress: payload,
           ...(appliedCouponCode ? { couponCode: appliedCouponCode } : {}),
+          ...(loadPreferredDeliveryDate()
+            ? { preferredDeliveryDate: loadPreferredDeliveryDate() }
+            : {}),
           ...(shippingQuote.selected
             ? {
                 shippingServiceCode: shippingQuote.selected.mailClass,
@@ -714,7 +719,8 @@ function CheckoutPageInner() {
             Retrying payment for order <span className="font-mono">{retryOrder!.orderId.slice(0, 8)}…</span>
           </p>
         )}
-        <EstimatedDeliveryNote variant="banner" prefix="Estimated delivery:" className="mb-6" />
+        <EstimatedDeliveryNote variant="banner" prefix="Estimated delivery:" className="mb-4" />
+        <ScheduleDeliveryPicker className="mb-6" />
 
         <form
           onSubmit={handleCheckout}

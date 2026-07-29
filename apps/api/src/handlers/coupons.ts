@@ -6,18 +6,17 @@ import {
   createAdminCouponSchema,
   couponKeys,
   WELCOME_COUPON_HOURS,
+  EARLY_BIRD_DISCOUNT_PERCENT,
   ABANDONED_CART_COUPON_HOURS,
   ABANDONED_CART_DISCOUNT_PERCENT,
   adminCouponHoursForDiscount,
   isAdminConfirmedSaleDiscount,
-  pickDailyDealDiscount,
+  isEarlyBirdPromoActive,
   dailyDealDayKey,
-  isValidDailyDealPercent,
   normalizePhone,
   type CouponValidationResult,
   type WelcomeCoupon,
   type StoreCoupon,
-  type DailyDealPercent,
 } from "@hr-ecom/shared";
 import { docClient, CONFIG_TABLE, now } from "../lib/db";
 import { ok, badRequest, forbidden, unauthorized, serverError } from "../lib/response";
@@ -152,20 +151,24 @@ export async function validateCouponRecord(
 }
 
 /**
- * Discount of the Day — spin result.
- * One coupon per phone per calendar day (America/New_York); valid for WELCOME_COUPON_HOURS.
- * Email is optional (used for delivery of the code when provided).
+ * Early Bird welcome coupon — fixed 15% off, 1 hour validity.
+ * One coupon per phone per calendar day (America/New_York).
+ * Available only while Early Bird promo is active (through 10 Aug 2026).
  */
 export async function issueWelcomeCoupon(input: {
   phone: string;
   email?: string;
   sessionId?: string;
-  /** Client spin result — accepted only if 6|7|8|10 so animation can start instantly. */
+  /** Ignored — Early Bird is always EARLY_BIRD_DISCOUNT_PERCENT. */
   discountPercent?: number;
 }): Promise<WelcomeCouponIssueResult> {
+  if (!isEarlyBirdPromoActive()) {
+    throw new Error("Early Bird offer ended on 10 August. Shop our current Rakhi deals instead.");
+  }
   const phone = normalizePhone(input.phone);
-  if (!phone) throw new Error("Enter a valid mobile number to spin");
+  if (!phone) throw new Error("Enter a valid mobile number");
   const email = normalizeEmail(input.email);
+  if (!email) throw new Error("Enter a valid email address");
   const timestamp = now();
   const dayKey = dailyDealDayKey();
   const contact: CouponContact = { phone, email };
@@ -212,16 +215,14 @@ export async function issueWelcomeCoupon(input: {
     return { ...existingActive, alreadyClaimedToday: false };
   }
 
-  const discountPercent: DailyDealPercent = isValidDailyDealPercent(input.discountPercent)
-    ? input.discountPercent
-    : pickDailyDealDiscount();
+  const discountPercent = EARLY_BIRD_DISCOUNT_PERCENT;
   const expiresAt = welcomeExpiresAt();
   const code = generateCode();
   const coupon: WelcomeCoupon & { PK: string; SK: string } = {
     PK: couponKeys.pk(code),
     SK: couponKeys.sk(),
     code,
-    ...(email ? { email } : {}),
+    email,
     phone,
     discountPercent,
     expiresAt,

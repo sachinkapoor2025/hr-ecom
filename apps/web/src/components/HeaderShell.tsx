@@ -3,6 +3,7 @@
 import { Suspense } from "react";
 import { usePathname } from "next/navigation";
 import { Header } from "./Header";
+import { EarlyBirdPromoMarquee } from "./EarlyBirdPromoMarquee";
 
 function HeaderFallback() {
   return (
@@ -19,8 +20,11 @@ export function HeaderShell() {
   if (pathname.startsWith("/admin") || pathname.startsWith("/ses-email")) return null;
 
   return (
-    <Suspense fallback={<HeaderFallback />}>
-      <Header />
-    </Suspense>
+    <>
+      <EarlyBirdPromoMarquee />
+      <Suspense fallback={<HeaderFallback />}>
+        <Header />
+      </Suspense>
+    </>
   );
 }
