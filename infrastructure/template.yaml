@@ -700,7 +700,7 @@ Resources:
     Properties:
       StageName: !Ref Environment
       CorsConfiguration:
-        AllowMethods: ["GET", "OPTIONS"]
+        AllowMethods: ["GET", "POST", "OPTIONS"]
         AllowHeaders: ["Content-Type", "X-Vendor-Api-Key"]
         AllowOrigins: ["*"]
 
@@ -715,8 +715,9 @@ Resources:
           ORDERS_TABLE: !Ref OrdersTable
           ENVIRONMENT: !Ref Environment
           ORANGE_COUNTY_VENDOR_API_KEY: !Ref OrangeCountyVendorApiKey
+          SITE_URL: https://www.usarakhi.com
       Policies:
-        - DynamoDBReadPolicy:
+        - DynamoDBCrudPolicy:
             TableName: !Ref OrdersTable
         - Statement:
             - Effect: Allow
@@ -738,6 +739,18 @@ Resources:
             ApiId: !Ref VendorHttpApi
             Path: /vendors/orange-county/orders/{orderId}
             Method: GET
+        VendorPostShipment:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref VendorHttpApi
+            Path: /vendors/orange-county/orders/{orderId}/shipment
+            Method: POST
+        VendorPostTracking:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref VendorHttpApi
+            Path: /vendors/orange-county/orders/{orderId}/tracking
+            Method: POST
         VendorHealth:
           Type: HttpApi
           Properties:

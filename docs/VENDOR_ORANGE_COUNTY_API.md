@@ -1,131 +1,153 @@
 # Orange County vendor order API
 
-UsaRakhi admin sees **all** orders in `/admin/orders`.  
-Orange County uses a **separate API Gateway** (not the storefront API) and only receives orders that include **their** hamper line items (`vendorSlug=orange-county`).
+Dedicated API Gateway (`VendorApiUrl`) — **not** the storefront API.
 
-Customer storefront never shows the vendor name — only “Rakhi Hamper”.
+Auth header on every request:
 
-## What to share with the vendor
-
-| Item | Value |
-|------|--------|
-| Base API URL | CloudFormation output `VendorApiUrl` (different host from storefront `ApiUrl`) |
-| Auth header | `X-Vendor-Api-Key: <secret>` |
-| API key | GitHub Actions secret / SAM param `ORANGE_COUNTY_VENDOR_API_KEY` |
-
-After deploy, get the live URL:
-
-```bash
-aws cloudformation describe-stacks --stack-name hr-ecom-prod \
-  --query "Stacks[0].Outputs[?OutputKey=='VendorApiUrl'].OutputValue" --output text
+```http
+X-Vendor-Api-Key: <ORANGE_COUNTY_VENDOR_API_KEY>
 ```
 
-Example shape (ID changes per account):
+Base URL (prod example):
 
-`https://xxxxxxxx.execute-api.us-east-1.amazonaws.com/prod`
+`https://hou08enf2k.execute-api.us-east-1.amazonaws.com/prod`
 
-### Generate a key (example)
+---
 
-```bash
-openssl rand -hex 32
-```
-
-Set it as:
-
-1. GitHub repo secret: `ORANGE_COUNTY_VENDOR_API_KEY`
-2. Redeploy API (SAM) so Lambda env `ORANGE_COUNTY_VENDOR_API_KEY` is set
-
-Share **only** the **VendorApiUrl** + this key with Orange County (secure channel). Rotate if leaked.
-
-The storefront API (`ApiUrl` / `foqu2…`) does **not** expose these vendor routes.
-
-## Endpoints
-
-### List their orders
+## 1. List orders (import feed)
 
 ```http
 GET {VENDOR_API_URL}/vendors/orange-county/orders
-X-Vendor-Api-Key: <key>
 ```
 
-Optional query params:
+### Query params
 
-| Param | Description |
-|-------|-------------|
-| `limit` | Max orders (default 50, max 100) |
-| `status` | Exact status, e.g. `paid`, `processing`, `shipped` |
-| `since` | ISO date — only orders with `createdAt >= since` |
+| Param | Default | Description |
+|-------|---------|-------------|
+| `days` | **15** | Only orders with `createdAt` in the last N days (max 90). Prevents re-importing old history. |
+| `since` | *(derived from `days`)* | ISO timestamp override for createdAt lower bound |
+| `updatedSince` | — | Optional ISO — only orders with `updatedAt >= updatedSince` (incremental sync) |
+| `limit` | 50 | Max orders (max 100) |
+| `status` | — | Exact status filter, e.g. `paid` |
 
-Example:
+Unpaid / cancelled / refunded are hidden unless `status` is set.
+
+### Duplicate prevention (recommended)
+
+1. Always call with default **last 15 days** (or pass `days=15`).
+2. Store each `orderId` locally; skip ids you already imported.
+3. For incremental sync, pass `updatedSince` = last successful poll time.
+
+### Example
 
 ```bash
 curl -sS \
   -H "X-Vendor-Api-Key: YOUR_KEY" \
-  "https://YOUR_VENDOR_API_URL/prod/vendors/orange-county/orders?limit=50"
+  "https://hou08enf2k.execute-api.us-east-1.amazonaws.com/prod/vendors/orange-county/orders?days=15&limit=50"
 ```
 
-Response shape (simplified):
+### Response fields (order)
 
-```json
-{
-  "vendorSlug": "orange-county",
-  "count": 2,
-  "orders": [
-    {
-      "orderId": "…",
-      "status": "paid",
-      "createdAt": "…",
-      "shippingAddress": {
-        "name": "…",
-        "line1": "…",
-        "city": "…",
-        "state": "…",
-        "postalCode": "…",
-        "country": "US",
-        "phone": "…",
-        "email": "…"
-      },
-      "trackingNumber": null,
-      "carrier": null,
-      "items": [
-        {
-          "sku": "TFUSRH2026-16",
-          "productSlug": "classic-rakhi-double-delight-box",
-          "name": "…",
-          "quantity": 1
-        }
-      ]
-    }
-  ]
-}
-```
+| Field | Meaning |
+|-------|---------|
+| `orderId` | Unique order id |
+| `orderDate` / `createdAt` | When order was placed |
+| `senderName` | Gift sender name |
+| `recipientName` | Ship-to name |
+| `recipientAddressLine1` | Street |
+| `recipientAddressLine2` | Apt / suite (nullable) |
+| `city` / `state` / `country` / `zipCode` | Address |
+| `recipientPhoneNumber` | Recipient phone |
+| `orderValue` | **Total fulfill** = sum of item vendor costs × qty (USD). Not retail. |
+| `orderValueCurrency` | `USD` |
+| `deliveryDate` | Requested / estimated delivery (nullable) |
+| `giftMessage` | Greeting text for the shipment |
+| `status` | UsaRakhi status |
+| `trackingNumber` / `carrier` | If already set |
 
-Notes:
+### Response fields (each item)
 
-- **Selling price is never returned** (no `price`, `currency`, or `vendorSubtotal`)
-- `sku` is the vendor code from the Orange County sheet (e.g. `TFUSRH2026-16`)
-- Unpaid / cancelled / refunded orders are **hidden** unless you pass `?status=…`
-- `items` are **only** Orange County lines (UsaRakhi-only SKUs on mixed carts are omitted)
+| Field | Meaning |
+|-------|---------|
+| `sku` / `productCode` | Vendor SKU (e.g. `TFUSRH2026-16`) |
+| `productName` | Title |
+| `price` | Vendor purchase / fulfill unit price (`vendorCost`). Not website retail. |
+| `quantity` | Units |
+| `productImageUrl` | Absolute image URL |
+| `weight` / `weightUnit` | When available (may be `null` until product weights are set) |
 
-### Single order
+---
+
+## 2. Get one order
 
 ```http
 GET {VENDOR_API_URL}/vendors/orange-county/orders/{orderId}
-X-Vendor-Api-Key: <key>
 ```
 
-Returns `403` if the order has no Orange County items or the key is wrong.
+---
 
-## Admin portal (UsaRakhi)
+## 3. Post AWB when shipped
 
-- `/admin/orders` — all orders
-- Filter **Vendor → Orange County** to see only orders that include OC hampers
-- Order detail shows an **Orange County** badge on the order and on each OC line item
+```http
+POST {VENDOR_API_URL}/vendors/orange-county/orders/{orderId}/shipment
+Content-Type: application/json
+X-Vendor-Api-Key: YOUR_KEY
+```
 
-## Requirements for tagging to work
+```json
+{
+  "orderNumber": "same-as-orderId-optional",
+  "courierName": "USPS",
+  "awb": "9400111899223344556677"
+}
+```
 
-1. Products imported with `vendorSlug: orange-county` and `sku` from the vendor sheet
-2. Customer adds those products to cart (cart stamps `vendorSlug` + `sku` on the line)
-3. Checkout writes `vendorSlugs` on the order
+Effects:
 
-If an old order was placed before `vendorSlug` existed on products, it will not appear in the vendor feed. SKU is still resolved from the bundled catalog when missing on the line.
+- Saves `trackingNumber` = `awb`, `carrier` = `courierName`
+- Moves order to `shipped` when allowed
+- Notifies the customer
+
+```bash
+curl -sS -X POST \
+  -H "X-Vendor-Api-Key: YOUR_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"courierName":"USPS","awb":"9400111899223344556677"}' \
+  "https://hou08enf2k.execute-api.us-east-1.amazonaws.com/prod/vendors/orange-county/orders/ORDER_ID/shipment"
+```
+
+---
+
+## 4. Post tracking status updates
+
+```http
+POST {VENDOR_API_URL}/vendors/orange-county/orders/{orderId}/tracking
+Content-Type: application/json
+X-Vendor-Api-Key: YOUR_KEY
+```
+
+```json
+{
+  "orderNumber": "same-as-orderId-optional",
+  "currentStatus": "in_transit",
+  "note": "optional free text"
+}
+```
+
+Accepted status examples (case-insensitive):  
+`processing`, `packed`, `shipped`, `in_transit`, `dispatched`, `out_for_delivery`, `delivered`, `complete`
+
+```bash
+curl -sS -X POST \
+  -H "X-Vendor-Api-Key: YOUR_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"currentStatus":"delivered"}' \
+  "https://hou08enf2k.execute-api.us-east-1.amazonaws.com/prod/vendors/orange-county/orders/ORDER_ID/tracking"
+```
+
+---
+
+## Admin (UsaRakhi)
+
+- `/admin/orders` — filter Vendor → Orange County  
+- Storefront API host does **not** expose these routes
