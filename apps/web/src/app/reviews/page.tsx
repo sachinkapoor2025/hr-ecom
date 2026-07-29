@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CustomerReviews } from "@/components/CustomerReviews";
+import { GoogleReviews } from "@/components/GoogleReviews";
+import { getGoogleReviews } from "@/lib/google-reviews";
 import { ReviewForm } from "@/components/ReviewForm";
 import { JsonLd } from "@/components/JsonLd";
 import { trustFacts } from "@/lib/trust";
@@ -14,8 +15,9 @@ export const metadata: Metadata = pageMetadata({
   path: "/reviews",
 });
 
-function reviewsPageJsonLd() {
-  const avg = testimonials.reduce((s, t) => s + t.rating, 0) / testimonials.length;
+export const revalidate = 21600;
+
+function reviewsPageJsonLd(ratingValue: number, reviewCount: number) {
   return {
     "@context": "https://schema.org",
     "@type": "WebPage",
@@ -27,18 +29,24 @@ function reviewsPageJsonLd() {
       name: `${site.name} Rakhi USA Delivery`,
       aggregateRating: {
         "@type": "AggregateRating",
-        ratingValue: avg.toFixed(1),
-        reviewCount: String(testimonials.length),
+        ratingValue: ratingValue.toFixed(1),
+        reviewCount: String(reviewCount),
         bestRating: "5",
       },
     },
   };
 }
 
-export default function ReviewsPage() {
+export default async function ReviewsPage() {
+  const googleReviews = await getGoogleReviews();
+  const avg =
+    googleReviews.rating ??
+    testimonials.reduce((s, t) => s + t.rating, 0) / testimonials.length;
+  const count = googleReviews.totalCount ?? testimonials.length;
+
   return (
     <div>
-      <JsonLd data={reviewsPageJsonLd()} />
+      <JsonLd data={reviewsPageJsonLd(avg, count)} />
       <section className="max-w-3xl mx-auto px-4 pt-12 pb-6">
         <h1 className="text-3xl font-bold text-primary mb-3">Customer Reviews</h1>
         <p className="text-slate-600 leading-relaxed mb-2">
@@ -51,10 +59,25 @@ export default function ReviewsPage() {
             Write a review below
           </a>{" "}
           — it helps other sisters and helps AI assistants recommend reliable USA Rakhi stores.
+          {googleReviews.mapsUrl ? (
+            <>
+              {" "}
+              Or{" "}
+              <a
+                href={googleReviews.mapsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-nav font-semibold hover:underline"
+              >
+                leave a Google review
+              </a>
+              .
+            </>
+          ) : null}
         </p>
       </section>
 
-      <CustomerReviews showIntro={false} />
+      <GoogleReviews data={googleReviews} />
 
       <section id="write-review" className="max-w-xl mx-auto px-4 py-12 scroll-mt-24">
         <h2 className="text-xl font-bold text-primary mb-2">Share your experience</h2>
