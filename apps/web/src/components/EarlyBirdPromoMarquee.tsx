@@ -14,7 +14,7 @@ import {
 import { site } from "@/lib/site";
 import { getOrCreateSessionId } from "@/lib/session";
 import { api } from "@/lib/api";
-import { saveWelcomeCoupon, formatCouponExpiry } from "@/lib/welcome-coupon";
+import { saveWelcomeCoupon, loadWelcomeCoupon, formatCouponExpiry } from "@/lib/welcome-coupon";
 import { trackSessionHeartbeat } from "@/lib/track";
 import { DEFAULT_COUNTRY_ISO } from "@/lib/country-codes";
 import { ConfettiBurst } from "@/components/ConfettiBurst";
@@ -39,6 +39,18 @@ function formatPromoEnd(dateYmd: string): string {
     year: "numeric",
     timeZone: "UTC",
   });
+}
+
+function formatRemaining(ms: number): string {
+  if (ms <= 0) return "00:00";
+  const totalSec = Math.floor(ms / 1000);
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  if (h > 0) {
+    return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  }
+  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
 type CouponResult = {
@@ -67,9 +79,15 @@ export function EarlyBirdPromoMarquee() {
   const [coupon, setCoupon] = useState<CouponResult | null>(null);
   const [copied, setCopied] = useState(false);
   const [burstKey, setBurstKey] = useState(0);
+  const [nowMs, setNowMs] = useState(() => Date.now());
 
   const promoEndLabel = formatPromoEnd(EARLY_BIRD_ENDS_DATE);
   const scheduleMaxLabel = formatPromoEnd(SCHEDULE_DELIVERY_MAX_DATE);
+
+  const remainingMs = coupon?.expiresAt
+    ? Math.max(0, new Date(coupon.expiresAt).getTime() - nowMs)
+    : 0;
+  const hasLiveCoupon = Boolean(coupon?.code && remainingMs > 0);
 
   const marqueeItems = useMemo(
     () => [
@@ -77,8 +95,11 @@ export function EarlyBirdPromoMarquee() {
         key: "offer",
         node: (
           <>
-            Early Bird Discount —{" "}
-            <span className="early-bird-hot text-amber-300">{EARLY_BIRD_DISCOUNT_PERCENT}% OFF</span>
+            <span className="early-bird-emphasis early-bird-hot text-amber-300">Early Bird</span>
+            {" Discount — "}
+            <span className="early-bird-emphasis early-bird-hot text-amber-300">
+              {EARLY_BIRD_DISCOUNT_PERCENT}% OFF
+            </span>
           </>
         ),
       },
@@ -102,7 +123,8 @@ export function EarlyBirdPromoMarquee() {
         key: "schedule",
         node: (
           <>
-            Schedule delivery through{" "}
+            <span className="early-bird-emphasis early-bird-hot text-amber-300">Schedule delivery</span>
+            {" through "}
             <span className="text-white font-extrabold">{scheduleMaxLabel}</span>
           </>
         ),
@@ -111,7 +133,10 @@ export function EarlyBirdPromoMarquee() {
         key: "lock",
         node: (
           <>
-            Lock in <span className="early-bird-hot text-amber-300">{EARLY_BIRD_DISCOUNT_PERCENT}% OFF</span>{" "}
+            Lock in{" "}
+            <span className="early-bird-emphasis early-bird-hot text-amber-300">
+              {EARLY_BIRD_DISCOUNT_PERCENT}% OFF
+            </span>{" "}
             before {promoEndLabel}
           </>
         ),
@@ -119,6 +144,33 @@ export function EarlyBirdPromoMarquee() {
     ],
     [promoEndLabel, scheduleMaxLabel]
   );
+
+  useEffect(() => {
+    const existing = loadWelcomeCoupon();
+    if (existing) {
+      setCoupon({
+        code: existing.code,
+        expiresAt: existing.expiresAt,
+        discountPercent: existing.discountPercent,
+      });
+      setPhase("done");
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!coupon?.expiresAt) return;
+    const tick = () => {
+      const t = Date.now();
+      setNowMs(t);
+      if (new Date(coupon.expiresAt).getTime() <= t) {
+        setCoupon(null);
+        setPhase("idle");
+      }
+    };
+    tick();
+    const id = window.setInterval(tick, 1000);
+    return () => window.clearInterval(id);
+  }, [coupon?.expiresAt]);
 
   useEffect(() => {
     if (!isEarlyBirdPromoActive()) {
@@ -133,6 +185,13 @@ export function EarlyBirdPromoMarquee() {
       setVisible(false);
       return;
     }
+    const existing = loadWelcomeCoupon();
+    // Always show while a live coupon is active so the code + timer stay visible.
+    if (existing) {
+      setVisible(true);
+      trackSessionHeartbeat("early_bird_marquee_shown", 0, pathname);
+      return;
+    }
     if (sessionStorage.getItem(DISMISS_KEY) === "1") {
       setVisible(false);
       return;
@@ -141,7 +200,17 @@ export function EarlyBirdPromoMarquee() {
     trackSessionHeartbeat("early_bird_marquee_shown", 0, pathname);
   }, [pathname]);
 
+  // Keep ribbon visible after a fresh claim (even if previously dismissed).
+  useEffect(() => {
+    if (hasLiveCoupon) setVisible(true);
+  }, [hasLiveCoupon]);
+
   const dismiss = () => {
+    // Keep claimed code + countdown visible so shoppers don’t lose it.
+    if (hasLiveCoupon) {
+      setExpanded(false);
+      return;
+    }
     sessionStorage.setItem(DISMISS_KEY, "1");
     setExpanded(false);
     setVisible(false);
@@ -256,7 +325,7 @@ export function EarlyBirdPromoMarquee() {
         />
         <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-amber-200/70 to-transparent" aria-hidden />
 
-        <div className="relative flex items-center gap-2.5 sm:gap-4 px-2.5 sm:px-4 py-3 sm:py-3.5 min-h-[3.25rem] sm:min-h-[3.75rem]">
+        <div className="relative flex items-center gap-2.5 sm:gap-4 px-2.5 sm:px-4 py-3.5 sm:py-4 min-h-[3.75rem] sm:min-h-[4.25rem]">
           <div className="shrink-0 flex items-center rounded-full bg-white px-2.5 py-1.5 shadow-md ring-2 ring-amber-200/50">
             <Image
               src={site.logoSrc}
@@ -268,28 +337,70 @@ export function EarlyBirdPromoMarquee() {
             />
           </div>
 
-          <div className="min-w-0 flex-1 overflow-hidden mask-fade-x">
-            <div className="early-bird-marquee flex w-max items-center gap-10 whitespace-nowrap will-change-transform">
-              {loop.map((item, i) => (
-                <span
-                  key={`${item.key}-${i}`}
-                  className="inline-flex items-center gap-10 text-[13px] sm:text-base font-bold tracking-wide text-amber-50 drop-shadow-[0_1px_1px_rgba(0,0,0,0.35)]"
-                >
-                  <span>{item.node}</span>
-                  <span className="text-amber-300/80 text-sm" aria-hidden>
-                    ◆
-                  </span>
+          {hasLiveCoupon && coupon ? (
+            <div className="min-w-0 flex-1 flex flex-wrap items-center gap-x-3 gap-y-1.5 sm:gap-x-4">
+              <p className="text-[15px] sm:text-lg font-extrabold tracking-wide text-amber-50">
+                <span className="early-bird-emphasis early-bird-hot text-amber-300">
+                  {coupon.discountPercent}% OFF
                 </span>
-              ))}
+                <span className="mx-1.5 text-white/40">·</span>
+                <span className="text-white/90">Your code</span>
+              </p>
+              <button
+                type="button"
+                onClick={() => void copyCode()}
+                className="inline-flex items-center gap-2 rounded-lg border-2 border-dashed border-amber-200/80 bg-white/10 px-2.5 sm:px-3 py-1.5 hover:bg-white/15 transition"
+                title="Copy coupon code"
+              >
+                <span className="font-mono text-base sm:text-xl font-black tracking-[0.14em] text-amber-200 early-bird-hot">
+                  {coupon.code}
+                </span>
+                <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wide text-white/90">
+                  {copied ? "Copied!" : "Copy"}
+                </span>
+              </button>
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-accent/90 px-3 py-1.5 shadow-md shadow-accent/30">
+                <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-wide text-white/90">
+                  Time left
+                </span>
+                <span className="font-mono text-base sm:text-xl font-black tabular-nums text-white early-bird-hot">
+                  {formatRemaining(remainingMs)}
+                </span>
+              </div>
+              <span className="hidden md:inline text-sm sm:text-base font-bold text-amber-50/90">
+                <span className="early-bird-emphasis text-amber-300">Early Bird</span>
+                {" · "}
+                <span className="early-bird-emphasis text-amber-300">Schedule delivery</span>
+              </span>
             </div>
-          </div>
+          ) : (
+            <div className="min-w-0 flex-1 overflow-hidden mask-fade-x">
+              <div className="early-bird-marquee flex w-max items-center gap-10 whitespace-nowrap will-change-transform">
+                {loop.map((item, i) => (
+                  <span
+                    key={`${item.key}-${i}`}
+                    className="inline-flex items-center gap-10 text-[15px] sm:text-lg font-bold tracking-wide text-amber-50 drop-shadow-[0_1px_1px_rgba(0,0,0,0.35)]"
+                  >
+                    <span>{item.node}</span>
+                    <span className="text-amber-300/80 text-base" aria-hidden>
+                      ◆
+                    </span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
 
           <button
             type="button"
             onClick={() => setExpanded((v) => !v)}
-            className="early-bird-claim-btn shrink-0 rounded-full bg-accent px-3.5 sm:px-5 py-2 sm:py-2.5 text-[11px] sm:text-sm font-extrabold uppercase tracking-wide text-white shadow-[0_0_0_3px_rgba(225,29,72,0.25)] hover:brightness-110 active:scale-[0.98] transition"
+            className="early-bird-claim-btn shrink-0 rounded-full bg-accent px-3.5 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-extrabold uppercase tracking-wide text-white shadow-[0_0_0_3px_rgba(225,29,72,0.25)] hover:brightness-110 active:scale-[0.98] transition"
           >
-            {expanded ? "Close" : `Claim ${EARLY_BIRD_DISCOUNT_PERCENT}% OFF`}
+            {expanded
+              ? "Close"
+              : hasLiveCoupon
+                ? "View details"
+                : `Claim ${EARLY_BIRD_DISCOUNT_PERCENT}% OFF`}
           </button>
 
           <button
@@ -381,7 +492,10 @@ export function EarlyBirdPromoMarquee() {
                           {copied ? "Copied!" : "Copy"}
                         </button>
                       </div>
-                      <p className="text-xs text-slate-500 mt-1">Expires {formatCouponExpiry(coupon.expiresAt)}</p>
+                      <p className="text-xs text-slate-500 mt-1">
+                        Expires {formatCouponExpiry(coupon.expiresAt)}
+                        {remainingMs > 0 ? ` · ${formatRemaining(remainingMs)} left` : ""}
+                      </p>
                     </div>
                     <p className="text-sm text-slate-700 mb-4 rounded-lg bg-slate-50 border border-slate-100 px-3 py-2">
                       You can <strong>schedule your delivery</strong> on the product page or at checkout — choose any
