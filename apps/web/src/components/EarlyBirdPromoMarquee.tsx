@@ -267,10 +267,11 @@ export function EarlyBirdPromoMarquee() {
         />
         <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-amber-200/70 to-transparent" aria-hidden />
 
-        <div className="relative flex items-center justify-center gap-2 px-2.5 sm:px-4 py-3 sm:py-3.5 min-h-[3.5rem] sm:min-h-[3.85rem] pr-[7.5rem] sm:pr-[11.5rem]">
+        {/* Mobile: bullets + claim below (no overlap) */}
+        <div className="md:hidden relative px-3 py-3 space-y-3">
           {hasLiveCoupon && coupon ? (
-            <div className="min-w-0 w-full flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 sm:gap-x-4 text-center">
-              <p className="text-[15px] sm:text-lg font-extrabold tracking-wide text-amber-50">
+            <div className="flex flex-col items-stretch gap-2">
+              <p className="text-center text-[15px] font-extrabold tracking-wide text-amber-50">
                 <span className="early-bird-emphasis early-bird-hot text-amber-300">
                   {coupon.discountPercent}% OFF
                 </span>
@@ -280,27 +281,122 @@ export function EarlyBirdPromoMarquee() {
               <button
                 type="button"
                 onClick={() => void copyCode()}
-                className="inline-flex items-center gap-2 rounded-lg border-2 border-dashed border-amber-200/80 bg-white/10 px-2.5 sm:px-3 py-1.5 hover:bg-white/15 transition"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-amber-200/80 bg-white/10 px-3 py-2 hover:bg-white/15 transition"
                 title="Copy coupon code"
               >
-                <span className="font-mono text-base sm:text-xl font-black tracking-[0.14em] text-amber-200 early-bird-hot">
+                <span className="font-mono text-lg font-black tracking-[0.14em] text-amber-200 early-bird-hot">
                   {coupon.code}
                 </span>
-                <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wide text-white/90">
+                <span className="text-xs font-bold uppercase tracking-wide text-white/90">
                   {copied ? "Copied!" : "Copy"}
                 </span>
               </button>
-              <div className="inline-flex items-center gap-1.5 rounded-full bg-accent/90 px-3 py-1.5 shadow-md shadow-accent/30">
-                <span className="text-[11px] sm:text-xs font-semibold uppercase tracking-wide text-white/90">
-                  Time left
-                </span>
-                <span className="font-mono text-base sm:text-xl font-black tabular-nums text-white early-bird-hot">
+              <div className="inline-flex w-full items-center justify-center gap-1.5 rounded-full bg-accent/90 px-3 py-2 shadow-md shadow-accent/30">
+                <span className="text-xs font-semibold uppercase tracking-wide text-white/90">Time left</span>
+                <span className="font-mono text-lg font-black tabular-nums text-white early-bird-hot">
                   {formatRemaining(remainingMs)}
                 </span>
               </div>
             </div>
           ) : (
-            <p className="min-w-0 w-full text-center text-[12px] sm:text-[14px] md:text-[15px] font-bold leading-snug text-amber-50 drop-shadow-[0_1px_1px_rgba(0,0,0,0.35)]">
+            <ul className="space-y-1.5 text-[13px] font-bold leading-snug text-amber-50">
+              <li className="flex gap-2">
+                <span className="text-amber-300 shrink-0" aria-hidden>
+                  •
+                </span>
+                <span>
+                  <span className="early-bird-emphasis early-bird-hot text-amber-300">
+                    Early Bird discount {EARLY_BIRD_DISCOUNT_PERCENT}%
+                  </span>
+                </span>
+              </li>
+              <li className="flex gap-2">
+                <span className="text-amber-300 shrink-0" aria-hidden>
+                  •
+                </span>
+                <span>
+                  coupon code valid for{" "}
+                  <span className="text-white font-extrabold">{WELCOME_COUPON_HOURS} hour</span>
+                </span>
+              </li>
+              <li className="flex gap-2">
+                <span className="text-amber-300 shrink-0" aria-hidden>
+                  •
+                </span>
+                <span>
+                  Early bird deal ends on{" "}
+                  <span className="text-amber-200 font-extrabold">{promoEndLabel}</span>
+                </span>
+              </li>
+              <li className="flex gap-2">
+                <span className="text-amber-300 shrink-0" aria-hidden>
+                  •
+                </span>
+                <span className="early-bird-emphasis early-bird-hot text-amber-300">
+                  option to Schedule delivery
+                </span>
+              </li>
+            </ul>
+          )}
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setExpanded((v) => !v)}
+              className="early-bird-claim-btn flex-1 rounded-full bg-accent px-4 py-2.5 text-xs font-extrabold uppercase tracking-wide text-white shadow-[0_0_0_3px_rgba(225,29,72,0.25)] hover:brightness-110 active:scale-[0.98] transition"
+            >
+              {expanded
+                ? "Close"
+                : hasLiveCoupon
+                  ? "View details"
+                  : `Claim ${EARLY_BIRD_DISCOUNT_PERCENT}% OFF`}
+            </button>
+            <button
+              type="button"
+              onClick={dismiss}
+              className="shrink-0 rounded-full p-2.5 text-white/75 hover:bg-white/15 hover:text-white"
+              aria-label="Dismiss Early Bird banner"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Desktop: unchanged centered line + claim on the right */}
+        <div className="relative hidden md:flex items-center justify-center gap-2 px-4 py-3.5 min-h-[3.85rem] pr-[11.5rem]">
+          {hasLiveCoupon && coupon ? (
+            <div className="min-w-0 w-full flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 sm:gap-x-4 text-center">
+              <p className="text-lg font-extrabold tracking-wide text-amber-50">
+                <span className="early-bird-emphasis early-bird-hot text-amber-300">
+                  {coupon.discountPercent}% OFF
+                </span>
+                <span className="mx-1.5 text-white/40">·</span>
+                <span className="text-white/90">Your code</span>
+              </p>
+              <button
+                type="button"
+                onClick={() => void copyCode()}
+                className="inline-flex items-center gap-2 rounded-lg border-2 border-dashed border-amber-200/80 bg-white/10 px-3 py-1.5 hover:bg-white/15 transition"
+                title="Copy coupon code"
+              >
+                <span className="font-mono text-xl font-black tracking-[0.14em] text-amber-200 early-bird-hot">
+                  {coupon.code}
+                </span>
+                <span className="text-xs font-bold uppercase tracking-wide text-white/90">
+                  {copied ? "Copied!" : "Copy"}
+                </span>
+              </button>
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-accent/90 px-3 py-1.5 shadow-md shadow-accent/30">
+                <span className="text-xs font-semibold uppercase tracking-wide text-white/90">Time left</span>
+                <span className="font-mono text-xl font-black tabular-nums text-white early-bird-hot">
+                  {formatRemaining(remainingMs)}
+                </span>
+              </div>
+            </div>
+          ) : (
+            <p className="min-w-0 w-full text-center text-[14px] md:text-[15px] font-bold leading-snug text-amber-50 drop-shadow-[0_1px_1px_rgba(0,0,0,0.35)]">
               <span className="early-bird-emphasis early-bird-hot text-amber-300">
                 Early Bird discount {EARLY_BIRD_DISCOUNT_PERCENT}%
               </span>
@@ -321,11 +417,11 @@ export function EarlyBirdPromoMarquee() {
             </p>
           )}
 
-          <div className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 sm:gap-2">
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
             <button
               type="button"
               onClick={() => setExpanded((v) => !v)}
-              className="early-bird-claim-btn shrink-0 rounded-full bg-accent px-3 sm:px-5 py-2 sm:py-2.5 text-[11px] sm:text-sm font-extrabold uppercase tracking-wide text-white shadow-[0_0_0_3px_rgba(225,29,72,0.25)] hover:brightness-110 active:scale-[0.98] transition"
+              className="early-bird-claim-btn shrink-0 rounded-full bg-accent px-5 py-2.5 text-sm font-extrabold uppercase tracking-wide text-white shadow-[0_0_0_3px_rgba(225,29,72,0.25)] hover:brightness-110 active:scale-[0.98] transition"
             >
               {expanded
                 ? "Close"
@@ -333,14 +429,13 @@ export function EarlyBirdPromoMarquee() {
                   ? "View details"
                   : `Claim ${EARLY_BIRD_DISCOUNT_PERCENT}% OFF`}
             </button>
-
             <button
               type="button"
               onClick={dismiss}
               className="shrink-0 rounded-full p-2 text-white/75 hover:bg-white/15 hover:text-white"
               aria-label="Dismiss Early Bird banner"
             >
-              <svg className="w-4 h-4 sm:w-[1.1rem] sm:h-[1.1rem]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg className="w-[1.1rem] h-[1.1rem]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M18 6L6 18M6 6l12 12" />
               </svg>
             </button>
