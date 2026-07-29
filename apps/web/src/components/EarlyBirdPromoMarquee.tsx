@@ -73,11 +73,49 @@ export function EarlyBirdPromoMarquee() {
 
   const marqueeItems = useMemo(
     () => [
-      `Early Bird Discount — ${EARLY_BIRD_DISCOUNT_PERCENT}% OFF`,
-      `Unique code valid ${WELCOME_COUPON_HOURS} hour`,
-      `Offer ends ${promoEndLabel}`,
-      `Schedule delivery through ${scheduleMaxLabel}`,
-      `Lock in ${EARLY_BIRD_DISCOUNT_PERCENT}% OFF before ${promoEndLabel}`,
+      {
+        key: "offer",
+        node: (
+          <>
+            Early Bird Discount —{" "}
+            <span className="early-bird-hot text-amber-300">{EARLY_BIRD_DISCOUNT_PERCENT}% OFF</span>
+          </>
+        ),
+      },
+      {
+        key: "code",
+        node: (
+          <>
+            Unique code valid <span className="text-white font-extrabold">{WELCOME_COUPON_HOURS} hour</span>
+          </>
+        ),
+      },
+      {
+        key: "ends",
+        node: (
+          <>
+            Offer ends <span className="text-amber-200 font-extrabold">{promoEndLabel}</span>
+          </>
+        ),
+      },
+      {
+        key: "schedule",
+        node: (
+          <>
+            Schedule delivery through{" "}
+            <span className="text-white font-extrabold">{scheduleMaxLabel}</span>
+          </>
+        ),
+      },
+      {
+        key: "lock",
+        node: (
+          <>
+            Lock in <span className="early-bird-hot text-amber-300">{EARLY_BIRD_DISCOUNT_PERCENT}% OFF</span>{" "}
+            before {promoEndLabel}
+          </>
+        ),
+      },
     ],
     [promoEndLabel, scheduleMaxLabel]
   );
@@ -207,34 +245,38 @@ export function EarlyBirdPromoMarquee() {
 
   return (
     <div className="sticky top-0 z-[60] isolate">
-      <div className="relative overflow-hidden border-b border-white/10 bg-gradient-to-r from-[#0f2748] via-primary to-[#1e4a7a] text-white shadow-[0_8px_24px_rgba(24,58,104,0.28)]">
+      <div className="relative overflow-hidden border-b border-amber-300/25 bg-primary/80 text-white shadow-[0_10px_28px_rgba(24,58,104,0.22)] backdrop-blur-md supports-[backdrop-filter]:bg-primary/70">
         <div
-          className="pointer-events-none absolute inset-0 opacity-30"
+          className="pointer-events-none absolute inset-0"
           style={{
             backgroundImage:
-              "radial-gradient(circle at 15% 50%, rgba(196,163,90,0.35), transparent 40%), radial-gradient(circle at 85% 50%, rgba(72,118,232,0.35), transparent 42%)",
+              "linear-gradient(90deg, rgba(196,163,90,0.22), transparent 28%, transparent 72%, rgba(225,29,72,0.18)), radial-gradient(circle at 50% 120%, rgba(255,255,255,0.12), transparent 55%)",
           }}
           aria-hidden
         />
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-amber-200/70 to-transparent" aria-hidden />
 
-        <div className="relative flex items-center gap-2 sm:gap-3 px-2 sm:px-4 py-2">
-          <div className="shrink-0 flex items-center gap-2 rounded-full bg-white/95 px-2 py-1 shadow-sm ring-1 ring-white/40">
+        <div className="relative flex items-center gap-2.5 sm:gap-4 px-2.5 sm:px-4 py-3 sm:py-3.5 min-h-[3.25rem] sm:min-h-[3.75rem]">
+          <div className="shrink-0 flex items-center rounded-full bg-white px-2.5 py-1.5 shadow-md ring-2 ring-amber-200/50">
             <Image
               src={site.logoSrc}
               alt={site.name}
-              width={88}
-              height={28}
-              className="h-6 w-auto object-contain sm:h-7"
+              width={104}
+              height={34}
+              className="h-7 w-auto object-contain sm:h-8"
               priority
             />
           </div>
 
           <div className="min-w-0 flex-1 overflow-hidden mask-fade-x">
-            <div className="early-bird-marquee flex w-max items-center gap-8 whitespace-nowrap will-change-transform">
-              {loop.map((text, i) => (
-                <span key={`${text}-${i}`} className="inline-flex items-center gap-8 text-[12px] sm:text-sm font-semibold tracking-wide">
-                  <span className="text-amber-200/95">{text}</span>
-                  <span className="text-white/35" aria-hidden>
+            <div className="early-bird-marquee flex w-max items-center gap-10 whitespace-nowrap will-change-transform">
+              {loop.map((item, i) => (
+                <span
+                  key={`${item.key}-${i}`}
+                  className="inline-flex items-center gap-10 text-[13px] sm:text-base font-bold tracking-wide text-amber-50 drop-shadow-[0_1px_1px_rgba(0,0,0,0.35)]"
+                >
+                  <span>{item.node}</span>
+                  <span className="text-amber-300/80 text-sm" aria-hidden>
                     ◆
                   </span>
                 </span>
@@ -245,7 +287,7 @@ export function EarlyBirdPromoMarquee() {
           <button
             type="button"
             onClick={() => setExpanded((v) => !v)}
-            className="shrink-0 rounded-full bg-accent px-3 sm:px-4 py-1.5 text-[11px] sm:text-xs font-bold uppercase tracking-wide text-white shadow-md shadow-accent/30 hover:opacity-95 active:scale-[0.98] transition"
+            className="early-bird-claim-btn shrink-0 rounded-full bg-accent px-3.5 sm:px-5 py-2 sm:py-2.5 text-[11px] sm:text-sm font-extrabold uppercase tracking-wide text-white shadow-[0_0_0_3px_rgba(225,29,72,0.25)] hover:brightness-110 active:scale-[0.98] transition"
           >
             {expanded ? "Close" : `Claim ${EARLY_BIRD_DISCOUNT_PERCENT}% OFF`}
           </button>
@@ -253,10 +295,10 @@ export function EarlyBirdPromoMarquee() {
           <button
             type="button"
             onClick={dismiss}
-            className="shrink-0 rounded-full p-1.5 text-white/70 hover:bg-white/10 hover:text-white"
+            className="shrink-0 rounded-full p-2 text-white/75 hover:bg-white/15 hover:text-white"
             aria-label="Dismiss Early Bird banner"
           >
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg className="w-4 h-4 sm:w-[1.1rem] sm:h-[1.1rem]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M18 6L6 18M6 6l12 12" />
             </svg>
           </button>
