@@ -179,12 +179,9 @@ function attractiveName(sku: string, index: number, setSize: number): string {
 
 function inclusionsFor(setSize: number): string {
   if (setSize >= 2) {
-    return [
-      `Set of ${setSize} designer Rakhis`,
-      "Roli Chawal Designer Tikka Set",
-    ].join("\n");
+    return [`Set of ${setSize} designer Rakhis`, "Roli", "Chawal"].join("\n");
   }
-  return ["1 designer Single Rakhi", "Roli Chawal Designer Tikka Set"].join("\n");
+  return ["1 designer Single Rakhi", "Roli", "Chawal"].join("\n");
 }
 
 function listAllImages(): { file: string; dir: string }[] {
