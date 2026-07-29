@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -88,62 +88,6 @@ export function EarlyBirdPromoMarquee() {
     ? Math.max(0, new Date(coupon.expiresAt).getTime() - nowMs)
     : 0;
   const hasLiveCoupon = Boolean(coupon?.code && remainingMs > 0);
-
-  const marqueeItems = useMemo(
-    () => [
-      {
-        key: "offer",
-        node: (
-          <>
-            <span className="early-bird-emphasis early-bird-hot text-amber-300">Early Bird</span>
-            {" Discount — "}
-            <span className="early-bird-emphasis early-bird-hot text-amber-300">
-              {EARLY_BIRD_DISCOUNT_PERCENT}% OFF
-            </span>
-          </>
-        ),
-      },
-      {
-        key: "code",
-        node: (
-          <>
-            Unique code valid <span className="text-white font-extrabold">{WELCOME_COUPON_HOURS} hour</span>
-          </>
-        ),
-      },
-      {
-        key: "ends",
-        node: (
-          <>
-            Offer ends <span className="text-amber-200 font-extrabold">{promoEndLabel}</span>
-          </>
-        ),
-      },
-      {
-        key: "schedule",
-        node: (
-          <>
-            <span className="early-bird-emphasis early-bird-hot text-amber-300">Schedule delivery</span>
-            {" through "}
-            <span className="text-white font-extrabold">{scheduleMaxLabel}</span>
-          </>
-        ),
-      },
-      {
-        key: "lock",
-        node: (
-          <>
-            Lock in{" "}
-            <span className="early-bird-emphasis early-bird-hot text-amber-300">
-              {EARLY_BIRD_DISCOUNT_PERCENT}% OFF
-            </span>{" "}
-            before {promoEndLabel}
-          </>
-        ),
-      },
-    ],
-    [promoEndLabel, scheduleMaxLabel]
-  );
 
   useEffect(() => {
     const existing = loadWelcomeCoupon();
@@ -310,8 +254,6 @@ export function EarlyBirdPromoMarquee() {
 
   if (!visible) return null;
 
-  const loop = [...marqueeItems, ...marqueeItems];
-
   return (
     <div className="sticky top-0 z-[60] isolate">
       <div className="relative overflow-hidden border-b border-amber-300/25 bg-primary/80 text-white shadow-[0_10px_28px_rgba(24,58,104,0.22)] backdrop-blur-md supports-[backdrop-filter]:bg-primary/70">
@@ -325,18 +267,7 @@ export function EarlyBirdPromoMarquee() {
         />
         <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-amber-200/70 to-transparent" aria-hidden />
 
-        <div className="relative flex items-center gap-2.5 sm:gap-4 px-2.5 sm:px-4 py-3.5 sm:py-4 min-h-[3.75rem] sm:min-h-[4.25rem]">
-          <div className="shrink-0 flex items-center rounded-full bg-white px-2.5 py-1.5 shadow-md ring-2 ring-amber-200/50">
-            <Image
-              src={site.logoSrc}
-              alt={site.name}
-              width={104}
-              height={34}
-              className="h-7 w-auto object-contain sm:h-8"
-              priority
-            />
-          </div>
-
+        <div className="relative flex items-center gap-2 sm:gap-3 px-2.5 sm:px-4 py-3 sm:py-3.5 min-h-[3.5rem] sm:min-h-[3.85rem]">
           {hasLiveCoupon && coupon ? (
             <div className="min-w-0 flex-1 flex flex-wrap items-center gap-x-3 gap-y-1.5 sm:gap-x-4">
               <p className="text-[15px] sm:text-lg font-extrabold tracking-wide text-amber-50">
@@ -367,28 +298,26 @@ export function EarlyBirdPromoMarquee() {
                   {formatRemaining(remainingMs)}
                 </span>
               </div>
-              <span className="hidden md:inline text-sm sm:text-base font-bold text-amber-50/90">
-                <span className="early-bird-emphasis text-amber-300">Early Bird</span>
-                {" · "}
-                <span className="early-bird-emphasis text-amber-300">Schedule delivery</span>
-              </span>
             </div>
           ) : (
-            <div className="min-w-0 flex-1 overflow-hidden mask-fade-x">
-              <div className="early-bird-marquee flex w-max items-center gap-10 whitespace-nowrap will-change-transform">
-                {loop.map((item, i) => (
-                  <span
-                    key={`${item.key}-${i}`}
-                    className="inline-flex items-center gap-10 text-[15px] sm:text-lg font-bold tracking-wide text-amber-50 drop-shadow-[0_1px_1px_rgba(0,0,0,0.35)]"
-                  >
-                    <span>{item.node}</span>
-                    <span className="text-amber-300/80 text-base" aria-hidden>
-                      ◆
-                    </span>
-                  </span>
-                ))}
-              </div>
-            </div>
+            <p className="min-w-0 flex-1 text-[13px] sm:text-[15px] md:text-base font-bold leading-snug text-amber-50 drop-shadow-[0_1px_1px_rgba(0,0,0,0.35)]">
+              <span className="early-bird-emphasis early-bird-hot text-amber-300">Early Bird</span>
+              {" · "}
+              <span className="early-bird-emphasis early-bird-hot text-amber-300">
+                {EARLY_BIRD_DISCOUNT_PERCENT}% OFF
+              </span>
+              <span className="text-white/45 mx-1.5">·</span>
+              <span>
+                {WELCOME_COUPON_HOURS}h code · ends{" "}
+                <span className="text-amber-200 font-extrabold">{promoEndLabel}</span>
+              </span>
+              <span className="text-white/45 mx-1.5">·</span>
+              <span className="early-bird-emphasis early-bird-hot text-amber-300">Schedule delivery</span>
+              <span className="hidden sm:inline">
+                {" by "}
+                <span className="text-white font-extrabold">{scheduleMaxLabel}</span>
+              </span>
+            </p>
           )}
 
           <button
