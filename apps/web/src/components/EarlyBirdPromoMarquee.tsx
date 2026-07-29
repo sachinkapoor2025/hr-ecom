@@ -312,7 +312,9 @@ export function EarlyBirdPromoMarquee() {
                 <span className="text-amber-200 font-extrabold">{promoEndLabel}</span>
               </span>
               <span className="text-white/45 mx-1.5">·</span>
-              <span className="early-bird-emphasis early-bird-hot text-amber-300">Schedule delivery</span>
+              <span className="early-bird-emphasis early-bird-hot text-amber-300">
+                Option to schedule delivery
+              </span>
               <span className="hidden sm:inline">
                 {" by "}
                 <span className="text-white font-extrabold">{scheduleMaxLabel}</span>
