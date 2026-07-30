@@ -36,6 +36,7 @@ export * from "./lib/client-device";
 export * from "./lib/abandoned-cart";
 export * from "./lib/rakhi-set-size";
 export * from "./lib/order-number";
+export * from "./lib/product-addons";
 export * from "./db/keys";
 export * from "./constants";
 export * from "./currency";

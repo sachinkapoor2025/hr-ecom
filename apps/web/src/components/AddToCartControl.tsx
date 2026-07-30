@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { estimatedDeliveryShort } from "@hr-ecom/shared";
+import type { ProductAddonSelection } from "@hr-ecom/shared";
 import { useCart } from "@/lib/cart-context";
 
 function TrashIcon({ className = "w-4 h-4" }: { className?: string }) {
@@ -44,6 +45,8 @@ interface AddToCartControlProps {
   variant?: "default" | "detail";
   /** Called before add — use to save name/email immediately (not debounced). */
   getContact?: () => { name?: string; email?: string; phone?: string };
+  /** Selected product add-ons with quantities (UsaRakhi only). */
+  addons?: ProductAddonSelection[];
 }
 
 export function AddToCartControl({
@@ -53,14 +56,17 @@ export function AddToCartControl({
   fullWidth = true,
   variant = "default",
   getContact,
+  addons = [],
 }: AddToCartControlProps) {
-  const { cart, sessionReady, addItem, updateItem, removeItem } = useCart();
+  const { sessionReady, addItem, updateItem, removeItem, quantityFor, lineIdFor } = useCart();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [addedNote, setAddedNote] = useState("");
 
-  const quantity = cart?.items.find((i) => i.productSlug === productSlug)?.quantity ?? 0;
-  const inCart = quantity > 0;
+  const quantity = quantityFor(productSlug, addons);
+  const lineId = lineIdFor(productSlug, addons);
+  const inCart = quantity > 0 && Boolean(lineId);
+  const addonsPayload = addons.length ? addons : undefined;
 
   const run = async (fn: () => Promise<void>) => {
     setError("");
@@ -82,7 +88,7 @@ export function AddToCartControl({
   const isDetail = variant === "detail";
   const addLabel = disabled ? "Out of Stock" : busy ? "Adding..." : isDetail ? "Add to cart" : "Add to cart";
 
-  if (!inCart) {
+  if (!inCart || !lineId) {
     return (
       <div className={className}>
         {error && <p className="text-xs text-red-600 mb-1">{error}</p>}
@@ -93,7 +99,7 @@ export function AddToCartControl({
             stop(e);
             void run(async () => {
               const contact = getContact?.();
-              await addItem(productSlug, 1, contact);
+              await addItem(productSlug, 1, contact, addonsPayload);
               setAddedNote(`Added! Est. delivery ${estimatedDeliveryShort()}`);
               window.setTimeout(() => setAddedNote(""), 5000);
             });
@@ -119,7 +125,7 @@ export function AddToCartControl({
         disabled={busy}
         onClick={(e) => {
           stop(e);
-          void run(() => (quantity <= 1 ? removeItem(productSlug) : updateItem(productSlug, quantity - 1)));
+          void run(() => (quantity <= 1 ? removeItem(lineId) : updateItem(lineId, quantity - 1)));
         }}
         className={stepBtnClass}
       >
@@ -134,7 +140,7 @@ export function AddToCartControl({
         disabled={busy || disabled}
         onClick={(e) => {
           stop(e);
-          void run(() => addItem(productSlug, 1, getContact?.()));
+          void run(() => addItem(productSlug, 1, getContact?.(), addonsPayload));
         }}
         className={stepBtnClass}
       >
@@ -150,7 +156,7 @@ export function AddToCartControl({
       disabled={busy}
       onClick={(e) => {
         stop(e);
-        void run(() => removeItem(productSlug));
+        void run(() => removeItem(lineId));
       }}
       className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full hover:bg-white/10 active:scale-95 disabled:opacity-50 transition"
     >
@@ -169,7 +175,7 @@ export function AddToCartControl({
             disabled={busy}
             onClick={(e) => {
               stop(e);
-              void run(() => (quantity <= 1 ? removeItem(productSlug) : updateItem(productSlug, quantity - 1)));
+              void run(() => (quantity <= 1 ? removeItem(lineId) : updateItem(lineId, quantity - 1)));
             }}
             className={detailPillBtnClass}
           >
@@ -182,7 +188,7 @@ export function AddToCartControl({
             disabled={busy || disabled}
             onClick={(e) => {
               stop(e);
-              void run(() => addItem(productSlug, 1, getContact?.()));
+              void run(() => addItem(productSlug, 1, getContact?.(), addonsPayload));
             }}
             className={detailPillBtnClass}
           >

@@ -515,7 +515,7 @@ export async function updateOrderStatus(event: APIGatewayProxyEventV2) {
     if (!emailResult.ok) console.error("Order payment failed email failed:", emailResult.error);
   }
 
-  // Notify customer on every status step (accepted → … → complete, plus cancelled/refunded).
+  // Notify customer + order@usarakhi on every status step (accepted → … → complete, cancelled/refunded).
   // Skip pending_payment → cancelled: shopper never paid; admin alert above is enough.
   if (
     statusChanged &&
@@ -524,9 +524,9 @@ export async function updateOrderStatus(event: APIGatewayProxyEventV2) {
       nextStatus === ORDER_STATUS.CANCELLED
     )
   ) {
-    const customerEmailResult = await notifyCustomerOrderStatusChange(updated);
-    if (!customerEmailResult.ok && !customerEmailResult.skipped) {
-      console.error("Customer order status email failed:", customerEmailResult.error);
+    const statusEmailResult = await notifyCustomerOrderStatusChange(updated);
+    if (!statusEmailResult.ok && !statusEmailResult.skipped) {
+      console.error("Order status email failed:", statusEmailResult.error);
     }
   }
 

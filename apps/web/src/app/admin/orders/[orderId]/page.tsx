@@ -449,9 +449,23 @@ export default function AdminOrderDetailPage() {
                       Qty {item.quantity}
                       {item.sku ? ` · SKU ${item.sku}` : ""}
                     </p>
+                    {item.addons?.length ? (
+                      <ul className="mt-1 space-y-0.5 text-xs text-slate-600">
+                        {item.addons.map((a) => (
+                          <li key={a.id}>
+                            + {a.quantity > 1 ? `${a.quantity}× ` : ""}
+                            {a.name} ({formatMoney(a.price * a.quantity * item.quantity, order.currency)})
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
                   </div>
                   <span className="text-sm shrink-0">
-                    {formatMoney(item.price * item.quantity, order.currency)}
+                    {formatMoney(
+                      (item.price + (item.addons?.reduce((s, a) => s + a.price * a.quantity, 0) ?? 0)) *
+                        item.quantity,
+                      order.currency
+                    )}
                   </span>
                 </li>
               ))}

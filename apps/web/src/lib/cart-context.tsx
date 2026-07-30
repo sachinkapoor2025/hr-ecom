@@ -5,7 +5,7 @@ import { api } from "./api";
 import { getOrCreateSessionId, useSessionId } from "./session";
 import { useAuth } from "./auth-context";
 import { trackCartAdd, trackCartRemove } from "./track";
-import type { Cart } from "@hr-ecom/shared";
+import { cartAddonSignature, type Cart, type ProductAddonSelection } from "@hr-ecom/shared";
 
 interface CartContextValue {
   cart: Cart | null;
@@ -15,11 +15,16 @@ interface CartContextValue {
   addItem: (
     productSlug: string,
     quantity?: number,
-    contact?: { name?: string; email?: string; phone?: string }
+    contact?: { name?: string; email?: string; phone?: string },
+    addons?: ProductAddonSelection[]
   ) => Promise<void>;
-  updateItem: (productSlug: string, quantity: number) => Promise<void>;
-  removeItem: (productSlug: string) => Promise<void>;
+  updateItem: (lineId: string, quantity: number) => Promise<void>;
+  removeItem: (lineId: string) => Promise<void>;
   itemCount: number;
+  /** Quantity for a product line matching the given add-on selections. */
+  quantityFor: (productSlug: string, addons?: ProductAddonSelection[]) => number;
+  /** lineId for product + addon signature, if present. */
+  lineIdFor: (productSlug: string, addons?: ProductAddonSelection[]) => string | undefined;
 }
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -61,7 +66,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const addItem = async (
     productSlug: string,
     quantity = 1,
-    contact?: { name?: string; email?: string; phone?: string }
+    contact?: { name?: string; email?: string; phone?: string },
+    addons?: ProductAddonSelection[]
   ) => {
     const sid = resolveSessionId();
     if (!sid) throw new Error("Session not ready — please try again");
@@ -76,35 +82,43 @@ export function CartProvider({ children }: { children: ReactNode }) {
         ...(contact?.name ? { name: contact.name } : {}),
         ...(contact?.email ? { email: contact.email } : {}),
         ...(contact?.phone ? { phone: contact.phone } : {}),
+        ...(addons?.length ? { addons } : {}),
       }),
     });
     setCart(normalizeCart(data.cart));
-    const added = data.cart.items.find((i) => i.productSlug === productSlug);
+    const sig = cartAddonSignature(addons);
+    const added = data.cart.items.find(
+      (i) => i.productSlug === productSlug && cartAddonSignature(i.addons) === sig
+    );
     trackCartAdd(
       productSlug,
-      added ? added.price * added.quantity : undefined,
+      added
+        ? (added.price +
+            (added.addons?.reduce((s, a) => s + a.price * a.quantity, 0) ?? 0)) *
+          added.quantity
+        : undefined,
       contact
     );
   };
 
-  const removeItem = async (productSlug: string) => {
+  const removeItem = async (lineId: string) => {
     const sid = resolveSessionId();
     if (!sid) return;
 
-    const data = await api<{ cart: Cart }>(`/cart/items/${productSlug}`, {
+    const data = await api<{ cart: Cart }>(`/cart/items/${encodeURIComponent(lineId)}`, {
       method: "DELETE",
       sessionId: sid,
       token,
     });
     setCart(normalizeCart(data.cart));
-    trackCartRemove(productSlug);
+    trackCartRemove(lineId);
   };
 
-  const updateItem = async (productSlug: string, quantity: number) => {
+  const updateItem = async (lineId: string, quantity: number) => {
     const sid = resolveSessionId();
     if (!sid) throw new Error("Session not ready — please try again");
 
-    const data = await api<{ cart: Cart }>(`/cart/items/${productSlug}`, {
+    const data = await api<{ cart: Cart }>(`/cart/items/${encodeURIComponent(lineId)}`, {
       method: "PUT",
       sessionId: sid,
       token,
@@ -113,10 +127,40 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setCart(normalizeCart(data.cart));
   };
 
+  const quantityFor = (productSlug: string, addons?: ProductAddonSelection[]) => {
+    const sig = cartAddonSignature(addons);
+    return (
+      cart?.items.find(
+        (i) => i.productSlug === productSlug && cartAddonSignature(i.addons) === sig
+      )?.quantity ?? 0
+    );
+  };
+
+  const lineIdFor = (productSlug: string, addons?: ProductAddonSelection[]) => {
+    const sig = cartAddonSignature(addons);
+    const item = cart?.items.find(
+      (i) => i.productSlug === productSlug && cartAddonSignature(i.addons) === sig
+    );
+    return item?.lineId ?? (sig === "" ? item?.productSlug : undefined);
+  };
+
   const itemCount = cart?.items.reduce((sum, i) => sum + i.quantity, 0) ?? 0;
 
   return (
-    <CartContext.Provider value={{ cart, loading, sessionReady, refresh, addItem, updateItem, removeItem, itemCount }}>
+    <CartContext.Provider
+      value={{
+        cart,
+        loading,
+        sessionReady,
+        refresh,
+        addItem,
+        updateItem,
+        removeItem,
+        itemCount,
+        quantityFor,
+        lineIdFor,
+      }}
+    >
       {children}
     </CartContext.Provider>
   );

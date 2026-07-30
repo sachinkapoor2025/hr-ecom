@@ -28,7 +28,7 @@ import {
   saveShippingAddress,
 } from "@/lib/shipping-address";
 import { fetchAccount, createAccountAddress } from "@/lib/account";
-import { ORDER_STATUS, isValidShippingPhone, DEFAULT_SENDER_MESSAGE, type Order, type RateQuote, type ShippingAddress } from "@hr-ecom/shared";
+import { ORDER_STATUS, isValidShippingPhone, DEFAULT_SENDER_MESSAGE, cartLineUnitTotal, type Order, type RateQuote, type ShippingAddress } from "@hr-ecom/shared";
 
 declare global {
   interface Window {
@@ -256,7 +256,7 @@ function CheckoutPageInner() {
     checkoutTracked.current = true;
     const value = cart.items.reduce((sum, item) => {
       const lineCurrency = (item.currency ?? "USD") as DisplayCurrency;
-      return sum + convert(item.price * item.quantity, lineCurrency);
+      return sum + convert(cartLineUnitTotal(item) * item.quantity, lineCurrency);
     }, 0);
     trackCheckoutStart(value);
   }, [cart, convert]);
@@ -675,7 +675,7 @@ function CheckoutPageInner() {
     ? retryOrder!.subtotal
     : checkoutItems.reduce((sum, item) => {
         const lineCurrency = (item.currency ?? cartCurrency) as DisplayCurrency;
-        return sum + convert(item.price * item.quantity, lineCurrency);
+        return sum + convert(cartLineUnitTotal(item) * item.quantity, lineCurrency);
       }, 0);
   const itemCount = checkoutItems.reduce((sum, i) => sum + i.quantity, 0);
   const orderTotal = isRetry
@@ -742,14 +742,27 @@ function CheckoutPageInner() {
             <ul className="space-y-3 text-sm border-b border-slate-200 pb-4">
               {checkoutItems.map((item) => {
                 const lineCurrency = (item.currency ?? cartCurrency) as DisplayCurrency;
+                const lineKey = item.lineId ?? item.productSlug;
                 return (
-                <li key={item.productSlug} className="flex justify-between gap-3">
-                  <span className="text-slate-700 line-clamp-2">
-                    {item.name} × {item.quantity}
-                  </span>
-                  <span className="font-medium text-slate-900 shrink-0">
-                    {format(item.price * item.quantity, lineCurrency)}
-                  </span>
+                <li key={lineKey} className="space-y-1">
+                  <div className="flex justify-between gap-3">
+                    <span className="text-slate-700 line-clamp-2">
+                      {item.name} × {item.quantity}
+                    </span>
+                    <span className="font-medium text-slate-900 shrink-0">
+                      {format(cartLineUnitTotal(item) * item.quantity, lineCurrency)}
+                    </span>
+                  </div>
+                  {item.addons?.length ? (
+                    <ul className="pl-2 space-y-0.5 text-xs text-slate-500">
+                      {item.addons.map((a) => (
+                        <li key={a.id}>
+                          + {a.quantity > 1 ? `${a.quantity}× ` : ""}
+                          {a.name}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null}
                 </li>
               );
               })}
