@@ -9,7 +9,7 @@ import {
   cartAddonSignature,
   cartLineUnitTotal,
   productAllowsAddons,
-  resolveProductAddonsFromIds,
+  resolveProductAddons,
   type Cart,
   type CartItem,
 } from "@hr-ecom/shared";
@@ -139,11 +139,11 @@ export async function addToCart(event: APIGatewayProxyEventV2) {
     return badRequest("Insufficient inventory");
   }
 
-  const requestedAddonIds = parsed.data.addons ?? [];
-  if (requestedAddonIds.length && !productAllowsAddons(product)) {
+  const requestedAddons = parsed.data.addons ?? [];
+  if (requestedAddons.length && !productAllowsAddons(product)) {
     return badRequest("Add-ons are not available for this product");
   }
-  const resolved = resolveProductAddonsFromIds(requestedAddonIds);
+  const resolved = resolveProductAddons(requestedAddons);
   if (!resolved.ok) return badRequest(resolved.error);
   const addons = resolved.addons;
   const signature = cartAddonSignature(addons);

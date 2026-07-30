@@ -453,7 +453,8 @@ export default function AdminOrderDetailPage() {
                       <ul className="mt-1 space-y-0.5 text-xs text-slate-600">
                         {item.addons.map((a) => (
                           <li key={a.id}>
-                            + {a.name} ({formatMoney(a.price * a.quantity * item.quantity, order.currency)})
+                            + {a.quantity > 1 ? `${a.quantity}× ` : ""}
+                            {a.name} ({formatMoney(a.price * a.quantity * item.quantity, order.currency)})
                           </li>
                         ))}
                       </ul>

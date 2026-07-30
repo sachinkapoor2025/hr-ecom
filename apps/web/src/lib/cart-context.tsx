@@ -5,7 +5,7 @@ import { api } from "./api";
 import { getOrCreateSessionId, useSessionId } from "./session";
 import { useAuth } from "./auth-context";
 import { trackCartAdd, trackCartRemove } from "./track";
-import { cartAddonSignature, type Cart } from "@hr-ecom/shared";
+import { cartAddonSignature, type Cart, type ProductAddonSelection } from "@hr-ecom/shared";
 
 interface CartContextValue {
   cart: Cart | null;
@@ -16,15 +16,15 @@ interface CartContextValue {
     productSlug: string,
     quantity?: number,
     contact?: { name?: string; email?: string; phone?: string },
-    addons?: string[]
+    addons?: ProductAddonSelection[]
   ) => Promise<void>;
   updateItem: (lineId: string, quantity: number) => Promise<void>;
   removeItem: (lineId: string) => Promise<void>;
   itemCount: number;
-  /** Quantity for a product line matching the given add-on ids (sorted signature). */
-  quantityFor: (productSlug: string, addonIds?: string[]) => number;
+  /** Quantity for a product line matching the given add-on selections. */
+  quantityFor: (productSlug: string, addons?: ProductAddonSelection[]) => number;
   /** lineId for product + addon signature, if present. */
-  lineIdFor: (productSlug: string, addonIds?: string[]) => string | undefined;
+  lineIdFor: (productSlug: string, addons?: ProductAddonSelection[]) => string | undefined;
 }
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -67,7 +67,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     productSlug: string,
     quantity = 1,
     contact?: { name?: string; email?: string; phone?: string },
-    addons?: string[]
+    addons?: ProductAddonSelection[]
   ) => {
     const sid = resolveSessionId();
     if (!sid) throw new Error("Session not ready — please try again");
@@ -86,13 +86,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }),
     });
     setCart(normalizeCart(data.cart));
-    const sig = cartAddonSignature((addons ?? []).map((id) => ({ id })));
+    const sig = cartAddonSignature(addons);
     const added = data.cart.items.find(
       (i) => i.productSlug === productSlug && cartAddonSignature(i.addons) === sig
     );
     trackCartAdd(
       productSlug,
-      added ? (added.price + (added.addons?.reduce((s, a) => s + a.price * a.quantity, 0) ?? 0)) * added.quantity : undefined,
+      added
+        ? (added.price +
+            (added.addons?.reduce((s, a) => s + a.price * a.quantity, 0) ?? 0)) *
+          added.quantity
+        : undefined,
       contact
     );
   };
@@ -123,8 +127,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setCart(normalizeCart(data.cart));
   };
 
-  const quantityFor = (productSlug: string, addonIds?: string[]) => {
-    const sig = cartAddonSignature((addonIds ?? []).map((id) => ({ id })));
+  const quantityFor = (productSlug: string, addons?: ProductAddonSelection[]) => {
+    const sig = cartAddonSignature(addons);
     return (
       cart?.items.find(
         (i) => i.productSlug === productSlug && cartAddonSignature(i.addons) === sig
@@ -132,8 +136,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
     );
   };
 
-  const lineIdFor = (productSlug: string, addonIds?: string[]) => {
-    const sig = cartAddonSignature((addonIds ?? []).map((id) => ({ id })));
+  const lineIdFor = (productSlug: string, addons?: ProductAddonSelection[]) => {
+    const sig = cartAddonSignature(addons);
     const item = cart?.items.find(
       (i) => i.productSlug === productSlug && cartAddonSignature(i.addons) === sig
     );

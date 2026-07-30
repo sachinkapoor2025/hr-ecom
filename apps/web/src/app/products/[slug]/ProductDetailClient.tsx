@@ -20,10 +20,10 @@ import { HomeProductCard } from "@/components/HomeProductCard";
 import { useCart } from "@/lib/cart-context";
 import { productPageFaqs } from "@/lib/content/product-faqs";
 import { testimonials } from "@/lib/site";
-import { LOW_STOCK_THRESHOLD, isFastSelling, getUnitsSold, estimatedDeliveryLabel } from "@hr-ecom/shared";
+import { LOW_STOCK_THRESHOLD, isFastSelling, getUnitsSold, estimatedDeliveryLabel, sumAddonPrices, getProductAddon } from "@hr-ecom/shared";
 import { EstimatedDeliveryNote } from "@/components/EstimatedDeliveryNote";
 import { ScheduleDeliveryPicker } from "@/components/ScheduleDeliveryPicker";
-import type { Product } from "@hr-ecom/shared";
+import type { Product, ProductAddonSelection } from "@hr-ecom/shared";
 import { FastSellingBanner } from "@/components/FastSellingBadge";
 import { looksLikeHtml, shortPlainDescription } from "@/lib/html-text";
 import { getProductIncludes } from "@/lib/product-includes";
@@ -105,11 +105,15 @@ export function ProductDetailClient({
   const [tab, setTab] = useState<Tab>("description");
   const [productUrl, setProductUrl] = useState("");
   const [galleryImages, setGalleryImages] = useState(product.images ?? []);
-  const [addonIds, setAddonIds] = useState<string[]>([]);
+  const [addons, setAddons] = useState<ProductAddonSelection[]>([]);
 
   useEffect(() => {
     setGalleryImages(product.images ?? []);
   }, [product.slug, product.images]);
+
+  useEffect(() => {
+    setAddons([]);
+  }, [product.slug]);
 
   useEffect(() => {
     trackProductView(product.slug);
@@ -134,6 +138,24 @@ export function ProductDetailClient({
   }, [product.slug]);
 
   const price = format(product.price, product.currency);
+  const addonsUsdTotal = sumAddonPrices(
+    addons.map((s) => {
+      const def = getProductAddon(s.id);
+      return {
+        id: s.id,
+        name: def?.name ?? s.id,
+        price: def?.priceUsd ?? 0,
+        quantity: s.quantity,
+      };
+    })
+  );
+  /** Add-on catalog is USD; show combined display when shopper has extras selected. */
+  const displayTotal =
+    addonsUsdTotal > 0 && product.currency === "USD"
+      ? format(product.price + addonsUsdTotal, product.currency)
+      : addonsUsdTotal > 0
+        ? format(product.price, product.currency)
+        : price;
   const comparePrice =
     product.compareAtPrice && product.compareAtPrice > product.price
       ? format(product.compareAtPrice, product.currency)
@@ -184,7 +206,12 @@ export function ProductDetailClient({
 
           <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 mb-4">
             {comparePrice && <span className="text-lg text-slate-400 line-through">{comparePrice}</span>}
-            <span className="text-2xl sm:text-3xl font-bold text-primary">{price}</span>
+            <span className="text-2xl sm:text-3xl font-bold text-primary">{displayTotal}</span>
+            {addonsUsdTotal > 0 && product.currency === "USD" ? (
+              <span className="text-sm text-slate-500">
+                includes +{format(addonsUsdTotal, "USD")} add-ons
+              </span>
+            ) : null}
             {discount !== null && (
               <span className="text-sm font-semibold text-green-600">{discount}% OFF</span>
             )}
@@ -210,7 +237,7 @@ export function ProductDetailClient({
           <TrustBadges variant="compact" className="mb-5" />
 
           {showAddons ? (
-            <ProductAddonsPicker selectedIds={addonIds} onChange={setAddonIds} className="mb-4" />
+            <ProductAddonsPicker selected={addons} onChange={setAddons} className="mb-4" />
           ) : null}
 
           {inCart ? (
@@ -237,7 +264,7 @@ export function ProductDetailClient({
                   fullWidth
                   variant="detail"
                   getContact={getContact}
-                  addonIds={addonIds}
+                  addons={addons}
                 />
               </div>
 
@@ -272,7 +299,7 @@ export function ProductDetailClient({
                     fullWidth
                     variant="detail"
                     getContact={getContact}
-                    addonIds={addonIds}
+                    addons={addons}
                   />
                 </div>
                 <WishlistButton product={product} variant="toolbar" />
@@ -442,7 +469,7 @@ export function ProductDetailClient({
         </dl>
       </section>
     </div>
-    <StickyAddToCartBar product={product} getContact={getContact} addonIds={addonIds} />
+    <StickyAddToCartBar product={product} getContact={getContact} addons={addons} />
     </>
   );
 }

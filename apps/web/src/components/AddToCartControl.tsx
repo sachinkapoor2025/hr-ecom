@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { estimatedDeliveryShort } from "@hr-ecom/shared";
+import type { ProductAddonSelection } from "@hr-ecom/shared";
 import { useCart } from "@/lib/cart-context";
 
 function TrashIcon({ className = "w-4 h-4" }: { className?: string }) {
@@ -44,8 +45,8 @@ interface AddToCartControlProps {
   variant?: "default" | "detail";
   /** Called before add — use to save name/email immediately (not debounced). */
   getContact?: () => { name?: string; email?: string; phone?: string };
-  /** Selected product add-on catalog ids (UsaRakhi only). */
-  addonIds?: string[];
+  /** Selected product add-ons with quantities (UsaRakhi only). */
+  addons?: ProductAddonSelection[];
 }
 
 export function AddToCartControl({
@@ -55,16 +56,17 @@ export function AddToCartControl({
   fullWidth = true,
   variant = "default",
   getContact,
-  addonIds = [],
+  addons = [],
 }: AddToCartControlProps) {
   const { sessionReady, addItem, updateItem, removeItem, quantityFor, lineIdFor } = useCart();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [addedNote, setAddedNote] = useState("");
 
-  const quantity = quantityFor(productSlug, addonIds);
-  const lineId = lineIdFor(productSlug, addonIds);
+  const quantity = quantityFor(productSlug, addons);
+  const lineId = lineIdFor(productSlug, addons);
   const inCart = quantity > 0 && Boolean(lineId);
+  const addonsPayload = addons.length ? addons : undefined;
 
   const run = async (fn: () => Promise<void>) => {
     setError("");
@@ -97,7 +99,7 @@ export function AddToCartControl({
             stop(e);
             void run(async () => {
               const contact = getContact?.();
-              await addItem(productSlug, 1, contact, addonIds.length ? addonIds : undefined);
+              await addItem(productSlug, 1, contact, addonsPayload);
               setAddedNote(`Added! Est. delivery ${estimatedDeliveryShort()}`);
               window.setTimeout(() => setAddedNote(""), 5000);
             });
@@ -138,7 +140,7 @@ export function AddToCartControl({
         disabled={busy || disabled}
         onClick={(e) => {
           stop(e);
-          void run(() => addItem(productSlug, 1, getContact?.(), addonIds.length ? addonIds : undefined));
+          void run(() => addItem(productSlug, 1, getContact?.(), addonsPayload));
         }}
         className={stepBtnClass}
       >
@@ -186,7 +188,7 @@ export function AddToCartControl({
             disabled={busy || disabled}
             onClick={(e) => {
               stop(e);
-              void run(() => addItem(productSlug, 1, getContact?.(), addonIds.length ? addonIds : undefined));
+              void run(() => addItem(productSlug, 1, getContact?.(), addonsPayload));
             }}
             className={detailPillBtnClass}
           >

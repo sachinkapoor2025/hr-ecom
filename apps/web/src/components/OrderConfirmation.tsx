@@ -124,7 +124,10 @@ export function OrderConfirmation({ order, paid }: OrderConfirmationProps) {
                   {item.addons?.length ? (
                     <ul className="mt-1 space-y-0.5 text-xs text-slate-500">
                       {item.addons.map((a) => (
-                        <li key={a.id}>+ {a.name}</li>
+                        <li key={a.id}>
+                          + {a.quantity > 1 ? `${a.quantity}× ` : ""}
+                          {a.name}
+                        </li>
                       ))}
                     </ul>
                   ) : null}

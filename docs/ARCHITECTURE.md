@@ -94,7 +94,7 @@ When admin (or Orange County vendor tracking) changes order status (accepted, pr
 | GET | `/categories` | List categories |
 | POST | `/categories` | Admin: create |
 | GET | `/cart` | Get cart |
-| POST | `/cart/items` | Add to cart (optional `addons[]` catalog ids for UsaRakhi products) |
+| POST | `/cart/items` | Add to cart (optional `addons[]` as catalog ids or `{ id, quantity }` for UsaRakhi products) |
 | PUT | `/cart/items/{lineId}` | Update quantity by cart line id |
 | DELETE | `/cart/items/{lineId}` | Remove cart line |
 | POST | `/checkout` | Create order + payment intent |
@@ -112,7 +112,7 @@ When admin (or Orange County vendor tracking) changes order status (accepted, pr
 | POST | `/vendors/orange-county/orders/{orderId}/tracking` | Vendor posts tracking status updates |
 | POST | `/webhooks/stripe` | Stripe webhook |
 
-**Product add-ons (UsaRakhi only):** Fixed dry-fruit / chocolate extras (`packages/shared/src/lib/product-addons.ts`). Shown on PDP when `allowsAddons` is true (non–Orange County). Nested on `CartItem.addons`; line totals include addon prices. OC products reject addons server-side.
+**Product add-ons (UsaRakhi only):** Fixed dry-fruit / chocolate extras (`packages/shared/src/lib/product-addons.ts`). Shown on PDP when `allowsAddons` is true (non–Orange County). Shoppers pick quantity per add-on (1–10); nested on `CartItem.addons` with `quantity`; line totals include `price × quantity`. Merge key includes quantities. OC products reject addons server-side.
 
 ### Scale notes (catalog / concurrency)
 

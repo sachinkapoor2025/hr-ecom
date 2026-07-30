@@ -24,14 +24,25 @@ export const cartItemSchema = z.object({
   addons: z.array(cartItemAddonSchema).max(20).optional(),
 });
 
+const addToCartAddonSchema = z.union([
+  z.string().min(1).max(80),
+  z.object({
+    id: z.string().min(1).max(80),
+    quantity: z.number().int().min(1).max(10).default(1),
+  }),
+]);
+
 export const addToCartSchema = z.object({
   productSlug: z.string(),
   quantity: z.number().int().min(1).default(1),
   name: z.string().max(120).optional(),
   email: z.string().max(254).optional(),
   phone: z.string().max(40).optional(),
-  /** Product add-on catalog ids (server resolves name/price). */
-  addons: z.array(z.string().min(1).max(80)).max(20).optional(),
+  /**
+   * Product add-ons: catalog ids and/or `{ id, quantity }` (server fills name/price).
+   * Plain string ids still accepted (= quantity 1).
+   */
+  addons: z.array(addToCartAddonSchema).max(20).optional(),
 });
 
 export const cartSchema = z.object({

@@ -453,7 +453,10 @@ function formatOrderItems(order: Order): string {
         `- ${i.name} × ${i.quantity} — ${order.currency} ${(unit * i.quantity).toFixed(2)}`,
       ];
       for (const a of i.addons ?? []) {
-        lines.push(`    + ${a.name} (${order.currency} ${(a.price * a.quantity * i.quantity).toFixed(2)})`);
+        const qtyLabel = a.quantity > 1 ? `${a.quantity}× ` : "";
+        lines.push(
+          `    + ${qtyLabel}${a.name} (${order.currency} ${(a.price * a.quantity * i.quantity).toFixed(2)})`
+        );
       }
       return lines.join("\n");
     })

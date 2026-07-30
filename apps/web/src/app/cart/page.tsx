@@ -26,12 +26,12 @@ function CartQuantityControls({
   lineId,
   productSlug,
   quantity,
-  addonIds,
+  addons,
 }: {
   lineId: string;
   productSlug: string;
   quantity: number;
-  addonIds?: string[];
+  addons?: { id: string; quantity: number }[];
 }) {
   const { addItem, updateItem, removeItem } = useCart();
   const [busy, setBusy] = useState(false);
@@ -64,7 +64,7 @@ function CartQuantityControls({
           type="button"
           disabled={busy}
           aria-label="Increase quantity"
-          onClick={() => void run(() => addItem(productSlug, 1, undefined, addonIds))}
+          onClick={() => void run(() => addItem(productSlug, 1, undefined, addons))}
           className="px-3 py-2 text-primary font-bold hover:bg-violet-200/60 disabled:opacity-50 transition"
         >
           +
@@ -90,7 +90,10 @@ function AddonList({ item, format }: { item: CartItem; format: (n: number, c: Di
     <ul className="mt-2 space-y-1 text-xs text-slate-600">
       {item.addons.map((a) => (
         <li key={a.id} className="flex justify-between gap-3">
-          <span>+ {a.name}</span>
+          <span>
+            + {a.quantity > 1 ? `${a.quantity}× ` : ""}
+            {a.name}
+          </span>
           <span className="shrink-0 font-medium text-slate-800">
             {format(a.price * a.quantity * item.quantity, lineCurrency)}
           </span>
@@ -165,7 +168,7 @@ export default function CartPage() {
                           lineId={lineKey}
                           productSlug={item.productSlug}
                           quantity={item.quantity}
-                          addonIds={item.addons?.map((a) => a.id)}
+                          addons={item.addons?.map((a) => ({ id: a.id, quantity: a.quantity }))}
                         />
                       </div>
 
