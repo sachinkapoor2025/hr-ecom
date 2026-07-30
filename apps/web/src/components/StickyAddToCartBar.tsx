@@ -9,9 +9,11 @@ import type { Product } from "@hr-ecom/shared";
 export function StickyAddToCartBar({
   product,
   getContact,
+  addonIds = [],
 }: {
   product: Product;
   getContact?: () => { name?: string; email?: string; phone?: string };
+  addonIds?: string[];
 }) {
   const { format } = useCurrency();
   const [visible, setVisible] = useState(false);
@@ -35,7 +37,14 @@ export function StickyAddToCartBar({
           <p className="font-bold text-primary">{format(product.price, product.currency)}</p>
         </div>
         <div className="w-[9.5rem] shrink-0">
-          <AddToCartControl productSlug={product.slug} disabled={false} fullWidth variant="detail" getContact={getContact} />
+          <AddToCartControl
+            productSlug={product.slug}
+            disabled={false}
+            fullWidth
+            variant="detail"
+            getContact={getContact}
+            addonIds={addonIds}
+          />
         </div>
       </div>
     </div>

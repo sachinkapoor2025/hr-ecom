@@ -447,7 +447,16 @@ export async function notifyAdminLead(lead: LeadCaptureInput): Promise<EmailSend
 
 function formatOrderItems(order: Order): string {
   return order.items
-    .map((i) => `- ${i.name} × ${i.quantity} — ${order.currency} ${(i.price * i.quantity).toFixed(2)}`)
+    .map((i) => {
+      const unit = i.price + (i.addons?.reduce((s, a) => s + a.price * a.quantity, 0) ?? 0);
+      const lines = [
+        `- ${i.name} × ${i.quantity} — ${order.currency} ${(unit * i.quantity).toFixed(2)}`,
+      ];
+      for (const a of i.addons ?? []) {
+        lines.push(`    + ${a.name} (${order.currency} ${(a.price * a.quantity * i.quantity).toFixed(2)})`);
+      }
+      return lines.join("\n");
+    })
     .join("\n");
 }
 

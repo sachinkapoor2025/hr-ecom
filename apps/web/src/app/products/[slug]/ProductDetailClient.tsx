@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { api } from "@/lib/api";
 import { AddToCartControl } from "@/components/AddToCartControl";
+import { ProductAddonsPicker } from "@/components/ProductAddonsPicker";
 import { ProductImageGallery } from "@/components/ProductImageGallery";
 import { WishlistButton } from "@/components/WishlistButton";
 import { TrustBadges } from "@/components/TrustBadges";
@@ -104,6 +105,7 @@ export function ProductDetailClient({
   const [tab, setTab] = useState<Tab>("description");
   const [productUrl, setProductUrl] = useState("");
   const [galleryImages, setGalleryImages] = useState(product.images ?? []);
+  const [addonIds, setAddonIds] = useState<string[]>([]);
 
   useEffect(() => {
     setGalleryImages(product.images ?? []);
@@ -139,8 +141,10 @@ export function ProductDetailClient({
   const discount = getDiscountPercent(product.price, product.compareAtPrice);
   const summary = shortPlainDescription(product.description);
   const descriptionIsHtml = looksLikeHtml(product.description);
-  const cartQuantity = cart?.items.find((i) => i.productSlug === product.slug)?.quantity ?? 0;
+  const cartQuantity =
+    cart?.items.filter((i) => i.productSlug === product.slug).reduce((s, i) => s + i.quantity, 0) ?? 0;
   const inCart = cartQuantity > 0;
+  const showAddons = product.allowsAddons === true;
   const lowStock = product.inventory > 0 && product.inventory <= LOW_STOCK_THRESHOLD;
   const fastSelling = isFastSelling(product);
   const unitsSold = getUnitsSold(product);
@@ -205,6 +209,10 @@ export function ProductDetailClient({
 
           <TrustBadges variant="compact" className="mb-5" />
 
+          {showAddons ? (
+            <ProductAddonsPicker selectedIds={addonIds} onChange={setAddonIds} className="mb-4" />
+          ) : null}
+
           {inCart ? (
             <div className="mb-3">
               <div className="flex flex-wrap items-center gap-3 mb-3">
@@ -223,20 +231,21 @@ export function ProductDetailClient({
                 </Link>
 
                 <div className="flex-1 min-w-[13rem] max-w-[18rem]">
-                  <AddToCartControl
-                    productSlug={product.slug}
-                    disabled={product.inventory <= 0}
-                    fullWidth
-                    variant="detail"
-                    getContact={getContact}
-                  />
-                </div>
-
-                <div className="flex items-center gap-2 sm:ml-auto">
-                  <WishlistButton product={product} variant="toolbar" />
-                  {productUrl ? <ShareButton title={product.name} url={productUrl} /> : null}
-                </div>
+                <AddToCartControl
+                  productSlug={product.slug}
+                  disabled={product.inventory <= 0}
+                  fullWidth
+                  variant="detail"
+                  getContact={getContact}
+                  addonIds={addonIds}
+                />
               </div>
+
+              <div className="flex items-center gap-2 sm:ml-auto">
+                <WishlistButton product={product} variant="toolbar" />
+                {productUrl ? <ShareButton title={product.name} url={productUrl} /> : null}
+              </div>
+            </div>
 
               <div className="grid grid-cols-2 gap-2 max-w-md">
                 <Link
@@ -263,6 +272,7 @@ export function ProductDetailClient({
                     fullWidth
                     variant="detail"
                     getContact={getContact}
+                    addonIds={addonIds}
                   />
                 </div>
                 <WishlistButton product={product} variant="toolbar" />
@@ -432,7 +442,7 @@ export function ProductDetailClient({
         </dl>
       </section>
     </div>
-    <StickyAddToCartBar product={product} getContact={getContact} />
+    <StickyAddToCartBar product={product} getContact={getContact} addonIds={addonIds} />
     </>
   );
 }

@@ -121,9 +121,20 @@ export function OrderConfirmation({ order, paid }: OrderConfirmationProps) {
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-slate-900 line-clamp-2">{item.name}</p>
                   <p className="text-sm text-slate-500 mt-0.5">Qty: {item.quantity}</p>
+                  {item.addons?.length ? (
+                    <ul className="mt-1 space-y-0.5 text-xs text-slate-500">
+                      {item.addons.map((a) => (
+                        <li key={a.id}>+ {a.name}</li>
+                      ))}
+                    </ul>
+                  ) : null}
                 </div>
                 <p className="font-semibold text-slate-900 shrink-0">
-                  {formatMoney(item.price * item.quantity, item.currency)}
+                  {formatMoney(
+                    (item.price + (item.addons?.reduce((s, a) => s + a.price * a.quantity, 0) ?? 0)) *
+                      item.quantity,
+                    item.currency
+                  )}
                 </p>
               </li>
             ))}

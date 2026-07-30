@@ -1,10 +1,15 @@
 import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import type { APIGatewayProxyEventV2 } from "aws-lambda";
+import { v4 as uuidv4 } from "uuid";
 import {
   addToCartSchema,
   cartKeys,
   productKeys,
   applyCompetitivePriceReduction,
+  cartAddonSignature,
+  cartLineUnitTotal,
+  productAllowsAddons,
+  resolveProductAddonsFromIds,
   type Cart,
   type CartItem,
 } from "@hr-ecom/shared";
@@ -19,6 +24,12 @@ import { ensureProductInDb } from "../lib/ensure-product";
 /** Stale carts auto-expire after this many days (TTL). */
 const CART_TTL_DAYS = 30;
 
+function ensureLineIds(items: CartItem[]): CartItem[] {
+  return items.map((item) =>
+    item.lineId ? item : { ...item, lineId: uuidv4() }
+  );
+}
+
 async function getCart(userKey: string): Promise<Cart & { createdAt?: string }> {
   const result = await docClient.send(
     new GetCommand({
@@ -26,7 +37,8 @@ async function getCart(userKey: string): Promise<Cart & { createdAt?: string }> 
       Key: { PK: cartKeys.pk(userKey), SK: cartKeys.sk() },
     })
   );
-  return (result.Item as Cart & { createdAt?: string }) ?? { items: [], updatedAt: now() };
+  const raw = (result.Item as Cart & { createdAt?: string }) ?? { items: [], updatedAt: now() };
+  return { ...raw, items: ensureLineIds(raw.items ?? []) };
 }
 
 /** Single Put — avoids a second Get on every cart write. */
@@ -37,8 +49,9 @@ async function saveCart(
 ) {
   const timestamp = now();
   const createdAt = cart.createdAt ?? timestamp;
-  const itemCount = cart.items.reduce((sum, i) => sum + i.quantity, 0);
-  const value = cart.items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+  const items = ensureLineIds(cart.items ?? []);
+  const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
+  const value = items.reduce((sum, i) => sum + cartLineUnitTotal(i) * i.quantity, 0);
 
   await docClient.send(
     new PutCommand({
@@ -46,13 +59,13 @@ async function saveCart(
       Item: {
         PK: cartKeys.pk(userKey),
         SK: cartKeys.sk(),
-        items: cart.items,
+        items,
         userKey,
         sessionId,
         createdAt,
         itemCount,
         value,
-        currency: cart.items[0]?.currency,
+        currency: items[0]?.currency,
         updatedAt: timestamp,
         GSI1PK: cartKeys.gsi1pk(),
         GSI1SK: cartKeys.gsi1sk(timestamp),
@@ -60,6 +73,8 @@ async function saveCart(
       },
     })
   );
+  cart.items = items;
+  cart.updatedAt = timestamp;
 }
 
 export async function getCartHandler(event: APIGatewayProxyEventV2) {
@@ -71,6 +86,10 @@ export async function getCartHandler(event: APIGatewayProxyEventV2) {
     ...item,
     image: item.image ? resolveProductImageUrl(item.image) : item.image,
   }));
+  // Persist backfilled lineIds so subsequent updates work.
+  if ((raw.items ?? []).some((i) => !i.lineId)) {
+    await saveCart(userKey, { ...raw, items }, getSessionId(event));
+  }
   return ok({ cart: { items, updatedAt: raw.updatedAt ?? now() } });
 }
 
@@ -120,10 +139,16 @@ export async function addToCart(event: APIGatewayProxyEventV2) {
     return badRequest("Insufficient inventory");
   }
 
-  const existingIdx = cart.items.findIndex((i) => i.productSlug === parsed.data.productSlug);
+  const requestedAddonIds = parsed.data.addons ?? [];
+  if (requestedAddonIds.length && !productAllowsAddons(product)) {
+    return badRequest("Add-ons are not available for this product");
+  }
+  const resolved = resolveProductAddonsFromIds(requestedAddonIds);
+  if (!resolved.ok) return badRequest(resolved.error);
+  const addons = resolved.addons;
+  const signature = cartAddonSignature(addons);
 
   // Vendor / hamper catalogs already include sale pricing — do not stack competitive cuts.
-  // Competitive % is applied to the DynamoDB catalog base (same as forStorefront).
   const skipCompetitive =
     Boolean(product.vendorSlug) ||
     (productItem as { categorySlug?: string }).categorySlug === "rakhi-hampers";
@@ -131,7 +156,14 @@ export async function addToCart(event: APIGatewayProxyEventV2) {
     ? product.price
     : applyCompetitivePriceReduction(product.price, product.currency);
 
+  const existingIdx = cart.items.findIndex(
+    (i) =>
+      i.productSlug === parsed.data.productSlug &&
+      cartAddonSignature(i.addons) === signature
+  );
+
   const item: CartItem = {
+    lineId: uuidv4(),
     productSlug: product.slug,
     name: product.name,
     price: unitPrice,
@@ -140,6 +172,7 @@ export async function addToCart(event: APIGatewayProxyEventV2) {
     image: resolveProductImageUrl(product.images?.[0]),
     ...(product.vendorSlug ? { vendorSlug: product.vendorSlug } : {}),
     ...(product.sku ? { sku: product.sku } : {}),
+    ...(addons.length ? { addons } : {}),
   };
 
   if (existingIdx >= 0) {
@@ -147,6 +180,9 @@ export async function addToCart(event: APIGatewayProxyEventV2) {
     if (newQty > product.inventory) return badRequest("Insufficient inventory");
     cart.items[existingIdx].quantity = newQty;
     cart.items[existingIdx].price = item.price;
+    if (addons.length) cart.items[existingIdx].addons = addons;
+    else delete cart.items[existingIdx].addons;
+    if (!cart.items[existingIdx].lineId) cart.items[existingIdx].lineId = uuidv4();
   } else {
     cart.items.push(item);
   }
@@ -169,11 +205,15 @@ export async function removeFromCart(event: APIGatewayProxyEventV2) {
   const userKey = getUserOrSessionKey(event);
   if (!userKey) return unauthorized("Session or auth required");
 
-  const productSlug = event.pathParameters?.productSlug;
-  if (!productSlug) return badRequest("Product slug required");
+  const lineId = event.pathParameters?.lineId ?? event.pathParameters?.productSlug;
+  if (!lineId) return badRequest("Cart line id required");
 
   const cart = await getCart(userKey);
-  cart.items = cart.items.filter((i) => i.productSlug !== productSlug);
+  const before = cart.items.length;
+  cart.items = cart.items.filter(
+    (i) => i.lineId !== lineId && i.productSlug !== lineId
+  );
+  if (cart.items.length === before) return badRequest("Item not in cart");
   await saveCart(userKey, cart, getSessionId(event));
   return ok({ cart });
 }
@@ -182,17 +222,20 @@ export async function updateCartItem(event: APIGatewayProxyEventV2) {
   const userKey = getUserOrSessionKey(event);
   if (!userKey) return unauthorized("Session or auth required");
 
-  const productSlug = event.pathParameters?.productSlug;
-  if (!productSlug) return badRequest("Product slug required");
+  const lineId = event.pathParameters?.lineId ?? event.pathParameters?.productSlug;
+  if (!lineId) return badRequest("Cart line id required");
 
   const body = JSON.parse(event.body ?? "{}");
   const quantity = Number(body.quantity);
   if (!quantity || quantity < 1) return badRequest("Valid quantity required");
 
   const cart = await getCart(userKey);
-  const item = cart.items.find((i) => i.productSlug === productSlug);
+  const item =
+    cart.items.find((i) => i.lineId === lineId) ??
+    cart.items.find((i) => i.productSlug === lineId);
   if (!item) return badRequest("Item not in cart");
 
+  const productSlug = item.productSlug;
   let product = (
     await docClient.send(
       new GetCommand({
@@ -221,6 +264,7 @@ export async function updateCartItem(event: APIGatewayProxyEventV2) {
   if (quantity > product.inventory) return badRequest("Insufficient inventory");
 
   item.quantity = quantity;
+  if (!item.lineId) item.lineId = uuidv4();
   await saveCart(userKey, cart, getSessionId(event));
   return ok({ cart });
 }

@@ -1,4 +1,5 @@
 import type { CartItem } from "./schemas/cart";
+import { cartLineUnitTotal, sumAddonPrices } from "./lib/product-addons";
 
 export type ShopCurrency = "USD" | "INR";
 
@@ -40,12 +41,22 @@ export function convertCartItemsToCurrency(
     ...item,
     price: roundForCurrency(convertCurrencyAmount(item.price, from, to, rate), to),
     currency: to,
+    ...(item.addons?.length
+      ? {
+          addons: item.addons.map((a) => ({
+            ...a,
+            price: roundForCurrency(convertCurrencyAmount(a.price, from, to, rate), to),
+          })),
+        }
+      : {}),
   }));
 }
 
 export function cartSubtotal(items: CartItem[]): number {
-  return items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  return items.reduce((sum, item) => sum + cartLineUnitTotal(item) * item.quantity, 0);
 }
+
+export { cartLineUnitTotal, sumAddonPrices };
 
 export function resolveUsdInrRate(envRate?: string | number): number {
   const parsed = Number(envRate);

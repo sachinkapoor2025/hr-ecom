@@ -23,6 +23,11 @@ export const productSchema = z.object({
   vendorSlug: z.string().min(1).max(80).optional(),
   /** Wholesale cost from vendor — never expose on public storefront APIs. */
   vendorCost: z.number().positive().optional(),
+  /**
+   * Public storefront flag: show dry-fruit / chocolate add-on picker.
+   * Set by API after stripping vendorSlug (true for UsaRakhi, false for OC).
+   */
+  allowsAddons: z.boolean().optional(),
   seoTitle: z.string().optional(),
   seoDescription: z.string().optional(),
   published: z.boolean().default(true),
