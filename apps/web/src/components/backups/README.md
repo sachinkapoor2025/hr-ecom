@@ -1,10 +1,11 @@
 /**
- * Early Bird UI backups
+ * Promo UI backups (not mounted)
  *
- * Live UI: `../EarlyBirdPromoMarquee.tsx` (sticky moving text + logo claim panel in HeaderShell)
+ * Live UI: Discount of the Day spin wheel — `../ExitIntentPopup.tsx`
+ * mounted from `ClientDeferredWidgets`.
  *
- * To restore the modal popup instead:
- *   import { EarlyBirdDiscountPopup } from "@/components/backups/EarlyBirdDiscountPopup";
- *   // in HeaderShell (or ClientDeferredWidgets): <EarlyBirdDiscountPopup />
- *   // and remove or keep <EarlyBirdPromoMarquee /> as desired
+ * Early Bird (15% fixed) kept here if you need to restore later:
+ *   import { EarlyBirdPromoMarquee } from "@/components/backups/EarlyBirdPromoMarquee";
+ *   // in HeaderShell: <EarlyBirdPromoMarquee />
+ *   // and remove <ExitIntentPopup /> from ClientDeferredWidgets
  */

@@ -1,15 +1,11 @@
 import { z } from "zod";
-import {
-  EARLY_BIRD_DISCOUNT_PERCENT,
-  WELCOME_COUPON_HOURS,
-  calendarDayKeyAmericaNy,
-} from "../lib/early-bird";
+import { calendarDayKeyAmericaNy } from "../lib/early-bird";
 
+/** Re-export schedule-delivery helpers (still used on PDP / checkout). */
 export {
   EARLY_BIRD_DISCOUNT_PERCENT,
   EARLY_BIRD_ENDS_DATE,
   SCHEDULE_DELIVERY_MAX_DATE,
-  WELCOME_COUPON_HOURS,
   isEarlyBirdPromoActive,
   isValidScheduleDeliveryDate,
   preferredDeliveryDateToIso,
@@ -17,31 +13,59 @@ export {
   calendarDayKeyAmericaNy,
 } from "../lib/early-bird";
 
-/** @deprecated Use EARLY_BIRD_DISCOUNT_PERCENT. */
-export const WELCOME_DISCOUNT_PERCENT = EARLY_BIRD_DISCOUNT_PERCENT;
+/** Discount-of-the-day coupon validity window. */
+export const WELCOME_COUPON_HOURS = 1;
 
-/** @deprecated Spin wheel removed — Early Bird is a fixed 15%. */
-export const DAILY_DEAL_SEGMENTS = [EARLY_BIRD_DISCOUNT_PERCENT] as const;
-/** @deprecated */
-export const DAILY_DEAL_WHEEL_LABELS = ["Early Bird"] as const;
-/** @deprecated */
-export type DailyDealPercent = typeof EARLY_BIRD_DISCOUNT_PERCENT;
+/** @deprecated Prefer weighted spin; kept as fallback average. */
+export const WELCOME_DISCOUNT_PERCENT = 10;
 
-/** @deprecated */
+/** Underlying discount values for each wheel slice (not shown on the wheel). */
+export const DAILY_DEAL_SEGMENTS = [6, 7, 8, 10, 6, 7, 8, 10] as const;
+
+/**
+ * Mystery labels shown on the wheel — never reveal the % until the prize reveal.
+ * Length must match DAILY_DEAL_SEGMENTS.
+ */
+export const DAILY_DEAL_WHEEL_LABELS = [
+  "Lucky",
+  "Surprise",
+  "Bonus",
+  "Mystery",
+  "Lucky",
+  "Surprise",
+  "Bonus",
+  "Mystery",
+] as const;
+
+export type DailyDealPercent = 6 | 7 | 8 | 10;
+
+/**
+ * Spin odds:
+ * 20% → 6% off, 40% → 7% off, 20% → 8% off, 20% → 10% off
+ */
 export const DAILY_DEAL_WEIGHTS: ReadonlyArray<{ percent: DailyDealPercent; weight: number }> = [
-  { percent: EARLY_BIRD_DISCOUNT_PERCENT, weight: 100 },
+  { percent: 6, weight: 20 },
+  { percent: 7, weight: 40 },
+  { percent: 8, weight: 20 },
+  { percent: 10, weight: 20 },
 ];
 
 export function isValidDailyDealPercent(n: unknown): n is DailyDealPercent {
-  return n === EARLY_BIRD_DISCOUNT_PERCENT;
+  return n === 6 || n === 7 || n === 8 || n === 10;
 }
 
-/** Always returns the Early Bird fixed discount (spin wheel removed). */
+/** Pick a random discount using configured weights. */
 export function pickDailyDealDiscount(): DailyDealPercent {
-  return EARLY_BIRD_DISCOUNT_PERCENT;
+  const total = DAILY_DEAL_WEIGHTS.reduce((sum, row) => sum + row.weight, 0);
+  let roll = Math.random() * total;
+  for (const row of DAILY_DEAL_WEIGHTS) {
+    roll -= row.weight;
+    if (roll <= 0) return row.percent;
+  }
+  return 7;
 }
 
-/** Calendar day key in America/New_York for one-claim-per-phone-per-day. */
+/** Calendar day key in America/New_York for one-spin-per-phone-per-day. */
 export function dailyDealDayKey(date = new Date()): string {
   return calendarDayKeyAmericaNy(date);
 }

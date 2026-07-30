@@ -153,7 +153,7 @@ export async function sendNewsletterEmails(input: {
   }
 
   const adminText = [
-    "Source: Early Bird Discount",
+    "Source: Discount of the Day spin",
     `Email: ${input.email}`,
     input.metadata?.phone ? `Phone: ${input.metadata.phone}` : null,
     coupon.code ? `Coupon: ${coupon.code} (${pct}% off)` : null,
@@ -166,7 +166,7 @@ export async function sendNewsletterEmails(input: {
 
   const admin = await sendEmail({
     to: adminNotifyAddresses(),
-    subject: `[${SITE_NAME}] Early Bird Discount — ${input.email} (${pct}% off)`,
+    subject: `[${SITE_NAME}] Discount of the Day — ${input.email} (${pct}% off)`,
     text: adminText,
     replyTo: input.email,
   });
@@ -178,21 +178,18 @@ export async function sendNewsletterEmails(input: {
 
   const customer = await sendEmail({
     to: input.email,
-    subject: `Your Early Bird code: ${pct}% off — ${SITE_NAME}`,
-    text: `Your Early Bird discount at UsaRakhi is ready!
+    subject: `Your Discount of the Day: ${pct}% off — ${SITE_NAME}`,
+    text: `You spun the Discount of the Day wheel at UsaRakhi!
 
 Your exclusive code:
 
   Coupon code: ${coupon.code}
   Discount: ${pct}% off
-  Valid until: ${expiryLabel} (1 hour from claim)
+  Valid until: ${expiryLabel} (1 hour from spin)
 
 Enter this code at checkout on https://www.usarakhi.com/checkout
 
-You can schedule delivery on the product page or at checkout (through 28 August).
-One Early Bird code per mobile number per day. Offer ends 10 August 2026.
-
-Shop premium Rakhis with delivery to all 50 US states:
+One spin per mobile number per day. Shop premium Rakhis with delivery to all 50 US states:
 https://www.usarakhi.com/products
 
 Raksha Bandhan 2026 is August 28 — order early for on-time delivery.
@@ -215,7 +212,7 @@ order@usarakhi.com`,
   }
 
   if (!customer.ok) {
-    console.error("Early Bird email failed:", customer.error);
+    console.error("Discount of the Day email failed:", customer.error);
     return customer;
   }
 
@@ -381,7 +378,7 @@ export async function notifyAdminLead(lead: LeadCaptureInput): Promise<EmailSend
         coupon,
       });
     }
-    // Phone-only legacy path — Early Bird requires email; keep for older leads.
+    // Phone-only spin — WhatsApp customer + admin email (no customer email).
     const pct = coupon?.discountPercent ?? WELCOME_DISCOUNT_PERCENT;
     const alreadyClaimed = lead.metadata?.alreadyClaimedToday === "true";
     if (!alreadyClaimed && lead.phone && coupon?.code && coupon.expiresAt) {
@@ -398,9 +395,9 @@ export async function notifyAdminLead(lead: LeadCaptureInput): Promise<EmailSend
     if (!smtpConfigured()) return { ok: true, skipped: true };
     return sendEmail({
       to: adminNotifyAddresses(),
-      subject: `[${SITE_NAME}] Early Bird — phone ${lead.phone ?? "unknown"} (${pct}% off)`,
+      subject: `[${SITE_NAME}] Discount of the Day — phone ${lead.phone ?? "unknown"} (${pct}% off)`,
       text: [
-        "Source: Early Bird Discount (phone only)",
+        "Source: Discount of the Day spin (phone only)",
         lead.phone ? `Phone: ${lead.phone}` : null,
         coupon?.code ? `Coupon: ${coupon.code} (${pct}% off)` : null,
         coupon?.expiresAt ? `Expires: ${coupon.expiresAt}` : null,

@@ -107,9 +107,9 @@ export default function AdminWelcomeLeadsPage() {
     <div className="max-w-6xl mx-auto px-4 py-8">
       <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-primary">Early Bird Discount</h1>
+          <h1 className="text-2xl font-bold text-primary">Discount of the Day</h1>
           <p className="text-sm text-slate-600 mt-1">
-            Early Bird signups (15% off, 1-hour validity, one claim per mobile per day, through 10 Aug 2026).
+            Spin-the-wheel signups (mystery 6–10% off, 1-hour validity, one spin per mobile per day).
           </p>
         </div>
         <button

@@ -102,17 +102,17 @@ export async function captureLead(event: APIGatewayProxyEventV2) {
   let leadPayload = parsed.data;
   if (parsed.data.source === "newsletter") {
     const phone = parsed.data.phone?.trim();
-    if (!phone) return badRequest("Enter a valid mobile number");
-    if (!email) return badRequest("Enter a valid email address");
+    if (!phone) return badRequest("Enter a valid mobile number to spin");
+    const requested = Number(parsed.data.metadata?.discountPercent);
     try {
       welcomeCoupon = await issueWelcomeCoupon({
         phone,
         email,
         sessionId,
-        discountPercent: 15,
+        discountPercent: Number.isFinite(requested) ? requested : undefined,
       });
     } catch (err) {
-      return badRequest(err instanceof Error ? err.message : "Could not issue Early Bird coupon");
+      return badRequest(err instanceof Error ? err.message : "Could not issue discount coupon");
     }
     leadPayload = {
       ...parsed.data,
@@ -122,7 +122,7 @@ export async function captureLead(event: APIGatewayProxyEventV2) {
         couponExpiresAt: welcomeCoupon.expiresAt,
         discountPercent: String(welcomeCoupon.discountPercent),
         alreadyClaimedToday: welcomeCoupon.alreadyClaimedToday ? "true" : "false",
-        offer: "early_bird",
+        offer: "discount_of_the_day",
       },
     };
   }
@@ -152,11 +152,11 @@ export async function captureLead(event: APIGatewayProxyEventV2) {
   });
 
   const emailResult = await notifyAdminLead(leadPayload);
-  // Early Bird requires email — SMTP needed for newsletter claims.
+  // Newsletter spins are phone-first — only require SMTP when an email was provided.
   const emailRequired =
     leadPayload.source === "contact" ||
     leadPayload.source === "review" ||
-    leadPayload.source === "newsletter";
+    (leadPayload.source === "newsletter" && Boolean(email));
 
   if (emailRequired && emailResult.skipped) {
     console.error("Email skipped — SMTP not configured:", leadPayload.source);
