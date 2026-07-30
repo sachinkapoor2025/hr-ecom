@@ -793,8 +793,68 @@ ${unsubUrl}`;
   return emailResult;
 }
 
+function statusLabelForAdmin(status: string): string {
+  return status.replace(/_/g, " ");
+}
+
+/** Internal inbox copy when fulfillment status changes (order@usarakhi + NOTIFY_EMAIL list). */
+async function notifyAdminOrderStatusChange(order: Order): Promise<EmailSendResult> {
+  const shortId = order.orderId.slice(0, 8).toUpperCase();
+  const statusLabel = statusLabelForAdmin(order.status);
+  const trackingLines = [
+    order.carrier ? `Carrier: ${order.carrier}` : null,
+    order.trackingNumber ? `Tracking: ${order.trackingNumber}` : null,
+    order.estimatedDeliveryAt
+      ? `Estimated delivery: ${new Date(order.estimatedDeliveryAt).toLocaleDateString("en-US", {
+          dateStyle: "medium",
+          timeZone: "America/New_York",
+        })}`
+      : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const text = [
+    `Order status updated to: ${statusLabel}`,
+    "",
+    `Order ID: ${order.orderId} (#${shortId})`,
+    `Total: ${order.currency} ${order.total.toFixed(2)}`,
+    `Payment: ${order.paymentProvider ?? "—"}`,
+    "",
+    "Customer:",
+    `  ${order.shippingAddress?.name ?? "—"}`,
+    `  ${order.shippingAddress?.email ?? "—"}`,
+    `  ${order.shippingAddress?.phone ?? "—"}`,
+    "",
+    "Items:",
+    formatOrderItems(order),
+    "",
+    "Ship to:",
+    formatAddress(order),
+    trackingLines ? `\n${trackingLines}` : "",
+    "",
+    `Admin: ${siteUrl()}/admin/orders/${order.orderId}`,
+    `Updated: ${order.updatedAt ?? nowIsoFallback()}`,
+  ]
+    .filter((line) => line !== "")
+    .join("\n");
+
+  return sendEmail({
+    to: adminNotifyAddresses(),
+    subject: adminOrderSubject(`Status → ${statusLabel}`, order),
+    text,
+    replyTo: order.shippingAddress?.email,
+  });
+}
+
+function nowIsoFallback(): string {
+  return new Date().toISOString();
+}
+
 /**
- * Transactional customer email on admin order-status change.
+ * Transactional emails on order-status change (admin portal or vendor tracking).
+ * Sends to the customer AND order@usarakhi / NOTIFY_EMAIL so the team sees updates
+ * without opening the admin portal.
  * Uses SMTP via sendEmail() (same path as paid confirmation / review request).
  * Do NOT use SES here — SES is reserved for marketing campaigns (/ses-email/*).
  * Skips pending_payment and unknown statuses. Status update still succeeds if SMTP is down.
@@ -804,14 +864,21 @@ export async function notifyCustomerOrderStatusChange(order: Order): Promise<Ema
     return { ok: false, skipped: true, error: "SMTP not configured" };
   }
 
-  const customerEmail = order.shippingAddress?.email?.trim();
-  if (!customerEmail?.includes("@")) {
-    return { ok: false, skipped: true, error: "No customer email" };
-  }
-
   const content = customerStatusEmailContent(order);
   if (!content) {
     return { ok: true, skipped: true };
+  }
+
+  const adminResult = await notifyAdminOrderStatusChange(order);
+  if (!adminResult.ok && !adminResult.skipped) {
+    console.error("Admin order status email failed:", adminResult.error);
+  }
+
+  const customerEmail = order.shippingAddress?.email?.trim();
+  if (!customerEmail?.includes("@")) {
+    return adminResult.ok
+      ? { ok: true, skipped: true, error: "No customer email" }
+      : { ok: false, skipped: true, error: "No customer email" };
   }
 
   const emailResult = await sendEmail({
