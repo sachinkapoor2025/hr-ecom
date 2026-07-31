@@ -59,6 +59,7 @@ const STATUS_TABS: { id: string; label: string }[] = [
   { id: "all", label: "All" },
   { id: ORDER_STATUS.PENDING_PAYMENT, label: "Pending payment" },
   { id: ORDER_STATUS.PAID, label: "Paid" },
+  { id: ORDER_STATUS.ON_HOLD, label: "On hold" },
   { id: ORDER_STATUS.PROCESSING, label: "Processing" },
   { id: ORDER_STATUS.SHIPPED, label: "Shipped" },
   { id: ORDER_STATUS.DELIVERED, label: "Delivered" },

@@ -104,6 +104,7 @@ export function paymentStatusClass(status: string): string {
 export function shippingStatusLabel(status: string): string {
   if (status === ORDER_STATUS.SHIPPED) return "Shipped";
   if (status === ORDER_STATUS.DELIVERED || status === ORDER_STATUS.COMPLETE) return "Delivered";
+  if (status === ORDER_STATUS.ON_HOLD) return "On hold";
   if (status === ORDER_STATUS.CANCELLED || status === ORDER_STATUS.REFUNDED) return "—";
   if (status === ORDER_STATUS.PENDING_PAYMENT) return "—";
   return "Pending";

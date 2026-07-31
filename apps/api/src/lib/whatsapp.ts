@@ -137,6 +137,8 @@ export function orderStatusWhatsAppMessage(input: {
       });
     case "accepted":
       return `${hi}! We've accepted your Rakhi order #${shortId}.${total}\n\nTrack: ${orderUrl}`;
+    case "on_hold":
+      return `${hi}! Order #${shortId} is temporarily on hold while we review it.${total}\n\nWe'll update you soon. ${orderUrl}`;
     case "processing":
       return `${hi}! Order #${shortId} is being packed at our warehouse.${total}\n\nTrack: ${orderUrl}`;
     case "shipped": {

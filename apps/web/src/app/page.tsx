@@ -72,10 +72,20 @@ export default async function HomePage() {
     ];
   }
 
-  const categoryMap = new Map(categories.map((c) => [c.slug, c]));
+  // Home-page-only display labels under category product sections.
+  // Does not change category names, URLs, slugs, nav, or SEO elsewhere.
+  const homeCategoryDisplayNames: Record<(typeof homeCategoryOrder)[number], string> = {
+    "single-rakhi": "Single Rakhi To USA",
+    "rakhi-hampers": "Rakhi Hamper To USA",
+    "rakhi-combo": "Rakhi Combo To USA",
+    "kids-rakhi": "Kids Rakhi To USA",
+    "bhaiya-bhabhi-rakhi": "Bhaiya Bhabhi Rakhi To USA",
+    "lumba-rakhi": "Lumba Rakhi To USA",
+  };
+
   const productsByCategory = homeCategoryOrder.map((slug) => ({
     slug,
-    name: categoryMap.get(slug)?.name ?? slug.replace(/-/g, " "),
+    name: homeCategoryDisplayNames[slug],
     products: products.filter(
       (p) => p.categorySlug === slug || p.additionalCategorySlugs?.includes(slug)
     ),

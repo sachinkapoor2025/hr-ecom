@@ -659,6 +659,17 @@ Order total: ${total}
 
 We'll email you again when packing starts and when your package ships.${footer}`,
       };
+    case ORDER_STATUS.ON_HOLD:
+      return {
+        subject: `Order on hold — #${shortId} | ${SITE_NAME}`,
+        body: `Hi ${name},
+
+Your order #${shortId} is temporarily on hold while our team reviews it.
+
+Order total: ${total}
+
+No action is needed from you right now. We'll email you as soon as fulfillment resumes or if we need anything.${footer}`,
+      };
     case ORDER_STATUS.PROCESSING:
       return {
         subject: `Order packing — #${shortId} | ${SITE_NAME}`,

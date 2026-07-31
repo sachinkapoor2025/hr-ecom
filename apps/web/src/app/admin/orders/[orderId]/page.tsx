@@ -280,6 +280,8 @@ export default function AdminOrderDetailPage() {
     (transitions.length === 0 &&
       (order.status === ORDER_STATUS.PROCESSING || order.status === ORDER_STATUS.SHIPPED));
   const isAcceptOnly = newStatus === ORDER_STATUS.ACCEPTED;
+  const isOnHoldOnly = newStatus === ORDER_STATUS.ON_HOLD;
+  const isReviveFromCancelled = order.status === ORDER_STATUS.CANCELLED;
   const canBuyLabel =
     (order.status === ORDER_STATUS.PAID ||
       order.status === ORDER_STATUS.ACCEPTED ||
@@ -750,7 +752,14 @@ export default function AdminOrderDetailPage() {
                 </label>
               )}
 
-              {isAcceptOnly && (
+              {isReviveFromCancelled && transitions.length > 0 && (
+                <p className="text-xs text-amber-800 bg-amber-50 border border-amber-100 rounded-md px-2 py-1.5">
+                  This order was cancelled. Moving it to On hold, Accepted, or Processing revives it for
+                  fulfillment.
+                </p>
+              )}
+
+              {isAcceptOnly && !isReviveFromCancelled && (
                 <p className="text-xs text-slate-500">
                   Accept confirms the order for fulfillment. Add tracking when you move it to Processing or Shipped.
                 </p>
@@ -807,9 +816,17 @@ export default function AdminOrderDetailPage() {
               >
                 {saving
                   ? "Saving…"
-                  : isAcceptOnly
-                    ? "Accept order"
-                    : "Save update"}
+                  : isReviveFromCancelled
+                    ? isOnHoldOnly
+                      ? "Revive → on hold"
+                      : isAcceptOnly
+                        ? "Revive → accepted"
+                        : "Revive order"
+                    : isAcceptOnly
+                      ? "Accept order"
+                      : isOnHoldOnly
+                        ? "Put on hold"
+                        : "Save update"}
               </button>
             </form>
             {message && <p className="text-green-600 text-xs mt-2">{message}</p>}
