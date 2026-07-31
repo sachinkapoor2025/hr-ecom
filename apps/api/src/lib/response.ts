@@ -39,7 +39,8 @@ export function ok(body: unknown, extraHeaders?: Record<string, string>) {
 /** Cacheable catalog responses (browser / CDN). Keep short so admin edits show up soon. */
 export function okCached(body: unknown, maxAgeSeconds = 30) {
   return ok(body, {
-    "Cache-Control": `public, max-age=${maxAgeSeconds}, s-maxage=${maxAgeSeconds}, stale-while-revalidate=60`,
+    // Avoid long stale-while-revalidate — it kept listing prices at old values while PDPs were fresh.
+    "Cache-Control": `public, max-age=${maxAgeSeconds}, s-maxage=${maxAgeSeconds}, stale-while-revalidate=${Math.min(30, maxAgeSeconds)}`,
   });
 }
 

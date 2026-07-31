@@ -15,10 +15,8 @@ import { IndiaBuyerBanner } from "@/components/IndiaBuyerBanner";
 import { WhyTrustUsSection } from "@/components/WhyTrustUsSection";
 import { JsonLd } from "@/components/JsonLd";
 import { site, homeBanners, homeCategoryOrder, faqs } from "@/lib/site";
-import {
-  getCatalogProductsByCategory,
-  mergeProductsPreferExisting,
-} from "@/lib/catalog-fallback";
+import { getCatalogProductsByCategory, mergeProductsPreferExisting } from "@/lib/catalog-fallback";
+import { loadProducts } from "@/lib/product-loader";
 import { faqJsonLd, howToSendRakhiJsonLd, pageMetadata } from "@/lib/seo";
 import type { Product, Category } from "@hr-ecom/shared";
 
@@ -31,19 +29,20 @@ export const metadata: Metadata = pageMetadata({
     "send rakhi to usa, rakhi delivery usa, buy rakhi online usa, send rakhi to usa from india, order rakhi from india to usa, rakhi store usa, usa rakhi shop online, rakhi gifts to usa, nationwide rakhi delivery usa, pay inr rakhi usa",
 });
 
-export const dynamic = "force-static";
-export const revalidate = 60;
+/** Same as PDP: always render from live product API so listing prices cannot drift. */
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function HomePage() {
   let products: Product[] = [];
   let categories: Category[] = [];
 
   try {
-    const [productsData, categoriesData] = await Promise.all([
-      api<{ products: Product[] }>("/products", { revalidate: 60 }),
-      api<{ categories: Category[] }>("/categories", { revalidate: 60 }),
+    const [liveProducts, categoriesData] = await Promise.all([
+      loadProducts(),
+      api<{ categories: Category[] }>("/categories", { revalidate: false }),
     ]);
-    products = productsData.products;
+    products = liveProducts;
     categories = categoriesData.categories;
   } catch {
     products = [];
