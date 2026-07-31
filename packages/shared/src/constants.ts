@@ -56,7 +56,12 @@ export const ORDER_STATUS_TRANSITIONS: Record<string, string[]> = {
   ],
   [ORDER_STATUS.DELIVERED]: [ORDER_STATUS.COMPLETE, ORDER_STATUS.REFUNDED],
   [ORDER_STATUS.COMPLETE]: [ORDER_STATUS.REFUNDED],
-  [ORDER_STATUS.CANCELLED]: [],
+  /** Admin can revive a cancelled (non-refunded) order for fulfillment. */
+  [ORDER_STATUS.CANCELLED]: [
+    ORDER_STATUS.ON_HOLD,
+    ORDER_STATUS.ACCEPTED,
+    ORDER_STATUS.PROCESSING,
+  ],
   [ORDER_STATUS.REFUNDED]: [],
 };
 
