@@ -2,7 +2,7 @@ import {
   SESv2Client,
   SendEmailCommand,
 } from "@aws-sdk/client-sesv2";
-import { GetCommand } from "@aws-sdk/lib-dynamodb";
+import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import nodemailer from "nodemailer";
 import type SMTPTransport from "nodemailer/lib/smtp-transport";
 import { sesEmailKeys, sesSettingsSchema, type SesSettings } from "@hr-ecom/shared";
@@ -162,21 +162,38 @@ export function clearMarketingTransportCache() {
  * Transactional order mail uses apps/api/src/lib/email.ts (smtp.usarakhi.com).
  * Marketing campaigns use Mailercloud (smtp-prod.mailrcld.com) via MARKETING_SMTP_* / admin settings.
  */
+function envMarketingSmtpPass(): string {
+  return process.env.MARKETING_SMTP_PASS?.trim() || "";
+}
+
 function envMarketingSmtp(): MarketingSmtp | null {
-  const host = process.env.MARKETING_SMTP_HOST?.trim() || "";
-  const user = process.env.MARKETING_SMTP_USER?.trim() || "";
-  const pass = process.env.MARKETING_SMTP_PASS?.trim() || "";
-  if (!host || !user || !pass) return null;
+  const pass = envMarketingSmtpPass();
+  if (!pass) return null;
+  // Host/user default to Mailercloud so only MARKETING_SMTP_PASS is required in Lambda env.
+  const host = process.env.MARKETING_SMTP_HOST?.trim() || "smtp-prod.mailrcld.com";
+  const user = process.env.MARKETING_SMTP_USER?.trim() || "order@usarakhi.com";
+  if (/^(smtp|mail)\.usarakhi\.com$/i.test(host)) return null;
   const port = Number(process.env.MARKETING_SMTP_PORT ?? "587");
-  const secureRaw = process.env.MARKETING_SMTP_SECURE?.trim().toLowerCase();
-  const secure = secureRaw === "true" || secureRaw === "1" || port === 465;
+  const resolvedPort = Number.isFinite(port) && port > 0 ? port : 587;
   return {
     host,
-    port: Number.isFinite(port) && port > 0 ? port : 587,
-    secure,
+    port: resolvedPort,
+    // Port 587 = STARTTLS; never SMTPS (avoids TLS "wrong version number").
+    secure: resolvedPort === 465,
     user,
     pass,
   };
+}
+
+function storedMarketingPassword(stored: Partial<SesSettings>): string {
+  const raw = stored.smtpPassword?.trim() || "";
+  if (!raw || raw === PASSWORD_REDACTED) return "";
+  return raw;
+}
+
+/** True when Dynamo and/or MARKETING_SMTP_PASS can authenticate Mailercloud. */
+export function isMarketingSmtpPasswordAvailable(stored?: Partial<SesSettings>): boolean {
+  return Boolean(storedMarketingPassword(stored ?? {}) || envMarketingSmtpPass());
 }
 
 async function loadStoredSettings(): Promise<Partial<SesSettings>> {
@@ -194,13 +211,75 @@ async function loadStoredSettings(): Promise<Partial<SesSettings>> {
   }
 }
 
+/**
+ * If Lambda has MARKETING_SMTP_PASS but Dynamo settings have no password, persist
+ * Mailercloud defaults once so Admin → Settings and campaign sends stay aligned.
+ */
+async function seedMarketingSmtpPasswordIfNeeded(stored: Partial<SesSettings>): Promise<Partial<SesSettings>> {
+  const envPass = envMarketingSmtpPass();
+  if (!envPass || storedMarketingPassword(stored)) return stored;
+
+  const port = Number(stored.smtpPort ?? process.env.MARKETING_SMTP_PORT ?? 587);
+  const resolvedPort = Number.isFinite(port) && port > 0 ? port : 587;
+  const seeded = sesSettingsSchema.parse({
+    awsRegion: process.env.SES_AWS_REGION || process.env.AWS_REGION || "us-east-1",
+    defaultSenderName: stored.defaultSenderName || "UsaRakhi",
+    defaultSenderEmail:
+      stored.defaultSenderEmail ||
+      process.env.MARKETING_FROM_EMAIL ||
+      process.env.SES_FROM_EMAIL ||
+      "email@usarakhi.com",
+    defaultReplyTo:
+      stored.defaultReplyTo ||
+      process.env.MARKETING_FROM_EMAIL ||
+      process.env.SES_REPLY_TO ||
+      "email@usarakhi.com",
+    dailyLimit: stored.dailyLimit ?? 50_000,
+    maxSendRatePerMinute: stored.maxSendRatePerMinute ?? 600,
+    batchSize: stored.batchSize ?? 50,
+    delayBetweenBatchesMs: stored.delayBetweenBatchesMs ?? 5000,
+    concurrentWorkers: stored.concurrentWorkers ?? 5,
+    companyName: stored.companyName,
+    companyAddress: stored.companyAddress,
+    contactEmail: stored.contactEmail,
+    privacyUrl: stored.privacyUrl,
+    adminNotifyEmail: stored.adminNotifyEmail,
+    marketingTransport: "smtp",
+    smtpHost: stored.smtpHost?.trim() || process.env.MARKETING_SMTP_HOST || "smtp-prod.mailrcld.com",
+    smtpPort: resolvedPort,
+    smtpSecure: resolvedPort === 465,
+    smtpUser: stored.smtpUser?.trim() || process.env.MARKETING_SMTP_USER || "order@usarakhi.com",
+    smtpPassword: envPass,
+  });
+
+  try {
+    await docClient.send(
+      new PutCommand({
+        TableName: EMAIL_CAMPAIGNS_TABLE,
+        Item: {
+          PK: sesEmailKeys.settingsPk(),
+          SK: sesEmailKeys.settingsSk(),
+          settings: seeded,
+          updatedAt: new Date().toISOString(),
+        },
+      })
+    );
+    console.log("[Marketing SMTP] Seeded Mailercloud password from MARKETING_SMTP_PASS into settings");
+    return seeded;
+  } catch (err) {
+    console.error("[Marketing SMTP] Failed to seed settings from env", err);
+    return { ...stored, smtpPassword: envPass };
+  }
+}
+
 async function resolveTransport(): Promise<ResolvedTransport> {
   const nowMs = Date.now();
   if (transportCache && nowMs - transportCache.at < CACHE_MS) {
     return transportCache.value;
   }
 
-  const stored = await loadStoredSettings();
+  let stored = await loadStoredSettings();
+  stored = await seedMarketingSmtpPasswordIfNeeded(stored);
   const mode = (stored.marketingTransport ||
     process.env.MARKETING_TRANSPORT?.trim() ||
     "smtp") as "smtp" | "ses";
@@ -211,19 +290,15 @@ async function resolveTransport(): Promise<ResolvedTransport> {
     process.env.MARKETING_SMTP_HOST?.trim() ||
     "smtp-prod.mailrcld.com";
   const port = Number(stored.smtpPort ?? process.env.MARKETING_SMTP_PORT ?? 587);
+  const resolvedPort = Number.isFinite(port) && port > 0 ? port : 587;
   // Never use SMTPS on 587 — that yields TLS "wrong version number" with Mailercloud.
-  const secure = port === 465;
+  const secure = resolvedPort === 465;
   const user =
     stored.smtpUser?.trim() ||
     process.env.MARKETING_SMTP_USER?.trim() ||
     "order@usarakhi.com";
   // Prefer admin-stored marketing password; else MARKETING_SMTP_PASS only (never SMTP_PASS).
-  const pass =
-    (stored.smtpPassword && stored.smtpPassword !== PASSWORD_REDACTED
-      ? stored.smtpPassword.trim()
-      : "") ||
-    envSmtp?.pass ||
-    "";
+  const pass = storedMarketingPassword(stored) || envMarketingSmtpPass();
 
   // Refuse transactional hosts for marketing — order mail uses smtp.usarakhi.com separately.
   const isTransactionalHost = /^(smtp|mail)\.usarakhi\.com$/i.test(host);
@@ -240,13 +315,13 @@ async function resolveTransport(): Promise<ResolvedTransport> {
       mode: "smtp",
       smtp: {
         host,
-        port: Number.isFinite(port) && port > 0 ? port : 587,
+        port: resolvedPort,
         secure,
         user,
         pass,
       },
     };
-  } else if (mode === "smtp" && envSmtp && !/^(smtp|mail)\.usarakhi\.com$/i.test(envSmtp.host)) {
+  } else if (mode === "smtp" && envSmtp) {
     value = { mode: "smtp", smtp: envSmtp };
   } else if (mode === "smtp") {
     value = {
@@ -256,6 +331,17 @@ async function resolveTransport(): Promise<ResolvedTransport> {
     };
   } else {
     value = { mode: "ses" };
+  }
+
+  if (value.mode === "misconfigured") {
+    console.error("[Marketing SMTP] misconfigured", {
+      mode,
+      host,
+      user,
+      hasStoredPassword: Boolean(storedMarketingPassword(stored)),
+      hasEnvPassword: Boolean(envMarketingSmtpPass()),
+      table: EMAIL_CAMPAIGNS_TABLE,
+    });
   }
 
   transportCache = { at: nowMs, value };

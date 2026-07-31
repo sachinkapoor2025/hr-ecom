@@ -42,6 +42,7 @@ import {
   clearMarketingTransportCache,
   redactSettingsForAdmin,
   isRedactedPassword,
+  isMarketingSmtpPasswordAvailable,
 } from "../lib/ses";
 import {
   getSuppression,
@@ -58,6 +59,7 @@ const ORDERS_TABLE = process.env.ORDERS_TABLE ?? `hr-ecom-orders-${process.env.E
 const SITE_URL = (process.env.SITE_URL ?? "https://www.usarakhi.com").replace(/\/$/, "");
 
 function defaultSettings(): SesSettings {
+  const port = Number(process.env.MARKETING_SMTP_PORT || 587);
   return sesSettingsSchema.parse({
     awsRegion: process.env.SES_AWS_REGION || process.env.AWS_REGION || "us-east-1",
     defaultSenderName: "UsaRakhi",
@@ -77,11 +79,13 @@ function defaultSettings(): SesSettings {
     privacyUrl: DEFAULT_SENDER_MESSAGE_FOOTER.privacyUrl,
     marketingTransport: "smtp",
     smtpHost: process.env.MARKETING_SMTP_HOST || "smtp-prod.mailrcld.com",
-    smtpPort: Number(process.env.MARKETING_SMTP_PORT || 587),
-    smtpSecure: process.env.MARKETING_SMTP_SECURE === "true",
+    smtpPort: Number.isFinite(port) && port > 0 ? port : 587,
+    // Port 587 = STARTTLS; ignore MARKETING_SMTP_SECURE=true mistakes on 587.
+    smtpSecure: (Number.isFinite(port) && port > 0 ? port : 587) === 465,
     // Marketing login/from defaults — never transactional order@ SMTP host.
     smtpUser: process.env.MARKETING_SMTP_USER || "order@usarakhi.com",
-    smtpPassword: "",
+    // Prefer Lambda env so sends work even before Admin saves a password.
+    smtpPassword: process.env.MARKETING_SMTP_PASS?.trim() || "",
   });
 }
 
@@ -93,11 +97,25 @@ async function loadSettings(): Promise<SesSettings> {
         Key: { PK: sesEmailKeys.settingsPk(), SK: sesEmailKeys.settingsSk() },
       })
     );
-    if (!res.Item) return defaultSettings();
-    const parsed = sesSettingsSchema.safeParse({ ...defaultSettings(), ...res.Item.settings });
+    const defaults = defaultSettings();
+    if (!res.Item) return defaults;
+    const fromDb = (res.Item.settings ?? {}) as Partial<SesSettings>;
+    // Never let an empty Dynamo password wipe the env-backed Mailercloud password.
+    const smtpPassword =
+      (fromDb.smtpPassword && fromDb.smtpPassword !== "********"
+        ? fromDb.smtpPassword.trim()
+        : "") || defaults.smtpPassword;
+    const merged = {
+      ...defaults,
+      ...fromDb,
+      smtpPassword,
+      smtpHost: fromDb.smtpHost?.trim() || defaults.smtpHost,
+      smtpUser: fromDb.smtpUser?.trim() || defaults.smtpUser,
+    };
+    const parsed = sesSettingsSchema.safeParse(merged);
     if (!parsed.success) {
       console.error("[SES] Invalid settings in DynamoDB; using defaults", parsed.error.message);
-      return defaultSettings();
+      return defaults;
     }
     return parsed.data;
   } catch (err) {
@@ -848,9 +866,18 @@ export async function deleteTemplate(event: APIGatewayProxyEventV2) {
 export async function getSettings(event: APIGatewayProxyEventV2) {
   if (!requireAdmin(event)) return unauthorized("Admin access required");
   const settings = await loadSettings();
+  const smtpPasswordSet = isMarketingSmtpPasswordAvailable(settings);
   return ok({
     settings: redactSettingsForAdmin(settings),
-    smtpPasswordSet: Boolean(settings.smtpPassword && !isRedactedPassword(settings.smtpPassword)),
+    smtpPasswordSet,
+    smtpPasswordSource: settings.smtpPassword
+      ? process.env.MARKETING_SMTP_PASS?.trim() &&
+        settings.smtpPassword === process.env.MARKETING_SMTP_PASS.trim()
+        ? "env"
+        : "settings"
+      : process.env.MARKETING_SMTP_PASS?.trim()
+        ? "env"
+        : "none",
   });
 }
 
@@ -860,13 +887,17 @@ export async function updateSettings(event: APIGatewayProxyEventV2) {
   const existing = await loadSettings();
   const incomingPassword =
     typeof body.smtpPassword === "string" ? body.smtpPassword : undefined;
+  // Empty / redacted / omitted password means "keep existing" (incl. env-hydrated value).
   const keepPassword =
     incomingPassword === undefined || isRedactedPassword(incomingPassword);
+  const nextPassword = keepPassword
+    ? existing.smtpPassword || process.env.MARKETING_SMTP_PASS?.trim() || ""
+    : String(incomingPassword ?? "").trim();
 
   const merged = {
     ...existing,
     ...body,
-    smtpPassword: keepPassword ? existing.smtpPassword || "" : incomingPassword,
+    smtpPassword: nextPassword,
   };
   const parsed = sesSettingsSchema.safeParse(merged);
   if (!parsed.success) return badRequest(parsed.error.message);
@@ -876,10 +907,18 @@ export async function updateSettings(event: APIGatewayProxyEventV2) {
       "Marketing SMTP must use Mailercloud (smtp-prod.mailrcld.com). smtp.usarakhi.com is reserved for transactional order emails only."
     );
   }
+  if (parsed.data.marketingTransport === "smtp" && !nextPassword) {
+    return badRequest(
+      "Marketing SMTP password is required. Paste your Mailercloud password, or set the MARKETING_SMTP_PASS / GitHub secret MARKETING_SMTP_PASS for deploy."
+    );
+  }
   // Coerce TLS mode from port so Mailercloud 587 never saves as SMTPS (causes wrong version number).
   const settingsToSave = {
     ...parsed.data,
+    smtpHost: parsed.data.smtpHost?.trim() || "smtp-prod.mailrcld.com",
+    smtpUser: parsed.data.smtpUser?.trim() || "order@usarakhi.com",
     smtpSecure: Number(parsed.data.smtpPort) === 465,
+    smtpPassword: nextPassword,
   };
   await docClient.send(
     new PutCommand({
@@ -896,6 +935,7 @@ export async function updateSettings(event: APIGatewayProxyEventV2) {
   return ok({
     settings: redactSettingsForAdmin(settingsToSave),
     smtpPasswordSet: Boolean(settingsToSave.smtpPassword),
+    smtpPasswordSource: "settings",
   });
 }
 
