@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { quoteFreeShippingThreshold } from "@hr-ecom/shared";
 import { useCart } from "@/lib/cart-context";
 import { useCurrency } from "@/lib/currency-context";
 import { SecureCheckoutBadge } from "@/components/SecureCheckoutBadge";
@@ -10,6 +11,7 @@ import { CheckoutLegalNotice } from "@/components/CheckoutLegalNotice";
 import { TrustBadges } from "@/components/TrustBadges";
 import { resolveImageUrl } from "@/lib/images";
 import { EstimatedDeliveryNote } from "@/components/EstimatedDeliveryNote";
+import { FreeShippingNotice } from "@/components/FreeShippingNotice";
 import type { DisplayCurrency } from "@/lib/currency-context";
 
 function TrashIcon() {
@@ -74,14 +76,24 @@ function CartQuantityControls({ productSlug, quantity }: { productSlug: string; 
 
 export default function CartPage() {
   const { cart, loading } = useCart();
-  const { format } = useCurrency();
+  const { format, convert, displayCurrency, usdInrRate } = useCurrency();
 
   if (loading) return <div className="p-10 text-center text-slate-600">Loading cart...</div>;
 
   const items = cart?.items ?? [];
   const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
-  const total = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
-  const currency = (items[0]?.currency ?? "USD") as DisplayCurrency;
+  const cartCurrency = (items[0]?.currency ?? "USD") as DisplayCurrency;
+  const total = items.reduce((sum, i) => {
+    const lineCurrency = (i.currency ?? cartCurrency) as DisplayCurrency;
+    return sum + convert(i.price * i.quantity, lineCurrency);
+  }, 0);
+  const currency = displayCurrency;
+  const shippingQuote = quoteFreeShippingThreshold({
+    subtotal: total,
+    currency,
+    usdInrRate,
+  });
+  const estimatedTotal = total + shippingQuote.charge;
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 sm:py-10">
@@ -160,11 +172,24 @@ export default function CartPage() {
               </div>
               <div className="flex items-center justify-between gap-4">
                 <span className="text-slate-700">Shipping fee</span>
-                <span className="font-bold text-accent">FREE</span>
+                <span
+                  className={
+                    shippingQuote.charge > 0
+                      ? "font-medium text-slate-900"
+                      : "font-bold text-accent"
+                  }
+                >
+                  {shippingQuote.charge > 0 ? format(shippingQuote.charge, currency) : "FREE"}
+                </span>
               </div>
+              <FreeShippingNotice
+                quote={shippingQuote}
+                formatMoney={format}
+                currency={currency}
+              />
               <div className="flex items-center justify-between gap-4 pt-2 border-t border-slate-100">
                 <span className="font-bold text-slate-900">Estimated total</span>
-                <span className="font-bold text-accent text-base">{format(total, currency)}</span>
+                <span className="font-bold text-accent text-base">{format(estimatedTotal, currency)}</span>
               </div>
             </div>
 

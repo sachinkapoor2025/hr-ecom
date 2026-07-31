@@ -3,13 +3,17 @@ import type { APIGatewayProxyEventV2 } from "aws-lambda";
 import { z } from "zod";
 import {
   addressSchema,
+  cartSubtotal,
+  DEFAULT_USD_INR_RATE,
   orderKeys,
   productHasShippingDims,
   productKeys,
   shippingSettingsSchema,
+  type CartItem,
   type Order,
   type Product,
   type RateQuote,
+  type ShopCurrency,
 } from "@hr-ecom/shared";
 import { docClient, PRODUCTS_TABLE, ORDERS_TABLE, now } from "../lib/db";
 import { ok, badRequest, forbidden, notFound, unauthorized } from "../lib/response";
@@ -76,12 +80,19 @@ export async function getShippingRates(event: APIGatewayProxyEventV2) {
   const cart = cartBody.cart;
   if (!cart?.items?.length) return badRequest("Cart is empty");
 
+  const items = cart.items as CartItem[];
+  const currency = (items[0]?.currency ?? "USD") as ShopCurrency;
+  const subtotal = cartSubtotal(items);
+
   const result = await resolveShippingForCheckout({
     destination: parsed.data,
-    cartItems: cart.items.map((i: { productSlug: string; quantity: number }) => ({
+    cartItems: items.map((i) => ({
       productSlug: i.productSlug,
       quantity: i.quantity,
     })),
+    subtotal,
+    currency,
+    usdInrRate: DEFAULT_USD_INR_RATE,
     shippingServiceCode: parsed.data.shippingServiceCode,
     shippingRateId: parsed.data.shippingRateId,
   });
@@ -89,6 +100,7 @@ export async function getShippingRates(event: APIGatewayProxyEventV2) {
   return ok({
     rates: result.rates,
     selected: result.selected,
+    customerShippingCharge: result.customerShippingCharge,
     settingsSnapshot: result.settingsSnapshot,
     fallbackUsed: result.fallbackUsed,
     warning: result.warning,

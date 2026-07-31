@@ -178,7 +178,9 @@ export default function AdminShippingSettingsPage() {
               }
               className="mt-1 w-full border rounded-lg px-3 py-2"
             >
-              <option value="free">Free shipping (absorb label cost)</option>
+              <option value="free">
+                Free shipping above $7 (charge $6.99 below; absorb label cost)
+              </option>
               <option value="pass_through">Pass through selected rate to customer</option>
             </select>
           </label>

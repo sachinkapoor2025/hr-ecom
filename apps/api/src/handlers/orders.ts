@@ -196,13 +196,10 @@ export async function checkout(event: APIGatewayProxyEventV2) {
     return badRequest("Stripe checkout requires USD. Switch currency to USD or pay with Razorpay.");
   }
 
+  const usdInrRate = await resolveCheckoutUsdInrRate(parsed.data.usdInrRate);
   const orderItems =
     checkoutCurrency !== cartCurrency
-      ? convertCartItemsToCurrency(
-          cart.items,
-          checkoutCurrency,
-          await resolveCheckoutUsdInrRate(parsed.data.usdInrRate)
-        )
+      ? convertCartItemsToCurrency(cart.items, checkoutCurrency, usdInrRate)
       : cart.items;
 
   const stockError = await validateOrderInventory(orderItems);
@@ -220,6 +217,9 @@ export async function checkout(event: APIGatewayProxyEventV2) {
       country: parsed.data.shippingAddress.country,
     },
     cartItems: orderItems.map((i: CartItem) => ({ productSlug: i.productSlug, quantity: i.quantity })),
+    subtotal,
+    currency: checkoutCurrency as "USD" | "INR",
+    usdInrRate,
     shippingServiceCode: parsed.data.shippingServiceCode,
     shippingRateId: parsed.data.shippingRateId,
   });

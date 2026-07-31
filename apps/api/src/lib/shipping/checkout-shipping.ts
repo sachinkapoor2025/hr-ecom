@@ -1,10 +1,15 @@
 import { GetCommand } from "@aws-sdk/lib-dynamodb";
 import {
+  BELOW_THRESHOLD_SHIPPING_USD,
   DEFAULT_PACKAGE,
+  DEFAULT_USD_INR_RATE,
   estimatePackageFromItems,
+  FREE_SHIPPING_MIN_SUBTOTAL_USD,
+  quoteFreeShippingThreshold,
   selectRate,
   type RateQuote,
   type ShippingSettings,
+  type ShopCurrency,
 } from "@hr-ecom/shared";
 import { productKeys, type Product } from "@hr-ecom/shared";
 import { docClient, PRODUCTS_TABLE } from "../db";
@@ -22,6 +27,12 @@ export interface ShippingQuoteResult {
   settingsSnapshot: {
     mode: "free" | "pass_through";
     festivalActive?: string;
+    freeShipping?: {
+      qualifies: boolean;
+      thresholdUsd: number;
+      belowThresholdFeeUsd: number;
+      amountAway: number;
+    };
   };
   packageDetails: typeof DEFAULT_PACKAGE;
 }
@@ -73,9 +84,52 @@ export interface ResolveShippingInput {
     country: string;
   };
   cartItems: Array<{ productSlug: string; quantity: number }>;
+  /** Pre-discount cart subtotal in `currency` — drives free-shipping threshold. */
+  subtotal?: number;
+  currency?: ShopCurrency;
+  usdInrRate?: number;
   shippingServiceCode?: string;
   shippingRateId?: string;
   settings?: ShippingSettings;
+}
+
+function freeModeCustomerCharge(input: ResolveShippingInput): {
+  charge: number;
+  freeShipping?: ShippingQuoteResult["settingsSnapshot"]["freeShipping"];
+} {
+  if (input.subtotal == null || !Number.isFinite(input.subtotal)) {
+    return { charge: 0 };
+  }
+  const currency = input.currency ?? "USD";
+  const usdInrRate = input.usdInrRate ?? DEFAULT_USD_INR_RATE;
+  const quote = quoteFreeShippingThreshold({
+    subtotal: input.subtotal,
+    currency,
+    usdInrRate,
+  });
+  return {
+    charge: quote.charge,
+    freeShipping: {
+      qualifies: quote.qualifiesForFreeShipping,
+      thresholdUsd: FREE_SHIPPING_MIN_SUBTOTAL_USD,
+      belowThresholdFeeUsd: BELOW_THRESHOLD_SHIPPING_USD,
+      amountAway: quote.amountAwayFromFreeShipping,
+    },
+  };
+}
+
+function resolveCustomerCharge(
+  settings: ShippingSettings,
+  input: ResolveShippingInput,
+  passThroughCharge: number
+): {
+  charge: number;
+  freeShipping?: ShippingQuoteResult["settingsSnapshot"]["freeShipping"];
+} {
+  if (settings.customerShippingMode === "pass_through") {
+    return { charge: passThroughCharge };
+  }
+  return freeModeCustomerCharge(input);
 }
 
 export async function resolveShippingForCheckout(
@@ -84,6 +138,7 @@ export async function resolveShippingForCheckout(
   const settings = input.settings ?? (await loadShippingSettings());
   const origin = settings.originAddress;
   const pkg = await estimatePackageForCartItems(input.cartItems);
+  const festivalActive = activeFestivalName(settings);
 
   if (isLoadTestMode()) {
     const fake: RateQuote = {
@@ -94,14 +149,16 @@ export async function resolveShippingForCheckout(
       currency: "USD",
       estimatedDeliveryDate: new Date(Date.now() + 5 * 86400000).toISOString().slice(0, 10),
     };
+    const { charge, freeShipping } = resolveCustomerCharge(settings, input, 0);
     return {
       rates: [fake],
       selected: fake,
-      customerShippingCharge: 0,
+      customerShippingCharge: charge,
       estimatedLabelCost: 0,
       settingsSnapshot: {
         mode: settings.customerShippingMode,
-        festivalActive: activeFestivalName(settings),
+        festivalActive,
+        freeShipping,
       },
       packageDetails: pkg,
       labelStatus: "queued",
@@ -110,12 +167,16 @@ export async function resolveShippingForCheckout(
   }
 
   if (!origin.line1 || !origin.postalCode) {
+    const { charge, freeShipping } = resolveCustomerCharge(settings, input, settings.flatRateFallbackUsd);
     return {
       rates: [],
-      customerShippingCharge: 0,
+      customerShippingCharge: charge,
       warning: "Shipping origin address not configured in admin settings",
       labelStatus: "queued",
-      settingsSnapshot: { mode: settings.customerShippingMode },
+      settingsSnapshot: {
+        mode: settings.customerShippingMode,
+        freeShipping,
+      },
       packageDetails: DEFAULT_PACKAGE,
     };
   }
@@ -144,19 +205,21 @@ export async function resolveShippingForCheckout(
         labelStatus: "queued",
         settingsSnapshot: {
           mode: settings.customerShippingMode,
-          festivalActive: activeFestivalName(settings),
+          festivalActive,
         },
         packageDetails: pkg,
       };
     }
+    const { charge, freeShipping } = freeModeCustomerCharge(input);
     return {
       rates: [],
-      customerShippingCharge: 0,
+      customerShippingCharge: charge,
       warning,
       labelStatus: "queued",
       settingsSnapshot: {
         mode: settings.customerShippingMode,
-        festivalActive: activeFestivalName(settings),
+        festivalActive,
+        freeShipping,
       },
       packageDetails: pkg,
     };
@@ -175,11 +238,16 @@ export async function resolveShippingForCheckout(
   }
 
   const estimatedLabelCost = selected?.price;
-  let customerShippingCharge = 0;
+  let passThroughCharge = 0;
   if (settings.customerShippingMode === "pass_through") {
-    customerShippingCharge = selected?.price ?? settings.flatRateFallbackUsd;
+    passThroughCharge = selected?.price ?? settings.flatRateFallbackUsd;
     if (!selected) fallbackUsed = true;
   }
+  const { charge: customerShippingCharge, freeShipping } = resolveCustomerCharge(
+    settings,
+    input,
+    passThroughCharge
+  );
 
   return {
     rates,
@@ -191,7 +259,8 @@ export async function resolveShippingForCheckout(
     labelStatus: selected ? undefined : "queued",
     settingsSnapshot: {
       mode: settings.customerShippingMode,
-      festivalActive: activeFestivalName(settings),
+      festivalActive,
+      freeShipping,
     },
     packageDetails: pkg,
   };

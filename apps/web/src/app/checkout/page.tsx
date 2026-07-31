@@ -19,6 +19,7 @@ import { CouponInput } from "@/components/CouponInput";
 import { StripePaymentForm } from "@/components/StripePaymentForm";
 import { RazorpayQrPanel } from "@/components/RazorpayQrPanel";
 import { EstimatedDeliveryNote } from "@/components/EstimatedDeliveryNote";
+import { FreeShippingNotice } from "@/components/FreeShippingNotice";
 import { loadWelcomeCoupon } from "@/lib/welcome-coupon";
 import {
   emptyShippingAddress,
@@ -26,7 +27,15 @@ import {
   saveShippingAddress,
 } from "@/lib/shipping-address";
 import { fetchAccount, createAccountAddress } from "@/lib/account";
-import { ORDER_STATUS, isValidShippingPhone, DEFAULT_SENDER_MESSAGE, type Order, type RateQuote, type ShippingAddress } from "@hr-ecom/shared";
+import {
+  ORDER_STATUS,
+  isValidShippingPhone,
+  DEFAULT_SENDER_MESSAGE,
+  quoteFreeShippingThreshold,
+  type Order,
+  type RateQuote,
+  type ShippingAddress,
+} from "@hr-ecom/shared";
 
 declare global {
   interface Window {
@@ -127,13 +136,16 @@ function CheckoutPageInner() {
       void apiClient<{
         rates: RateQuote[];
         selected?: RateQuote;
+        customerShippingCharge?: number;
         settingsSnapshot?: { mode: "free" | "pass_through" };
       }>(`/shipping/rates?${params.toString()}`)
         .then((data) => {
           const mode = data.settingsSnapshot?.mode ?? "free";
           const selected = data.selected;
           const customerCharge =
-            mode === "pass_through" && selected ? selected.price : 0;
+            mode === "pass_through"
+              ? (data.customerShippingCharge ?? selected?.price ?? 0)
+              : (data.customerShippingCharge ?? 0);
           setShippingQuote({ selected, settingsMode: mode, customerCharge });
         })
         .catch(() => {
@@ -673,9 +685,20 @@ function CheckoutPageInner() {
         return sum + convert(item.price * item.quantity, lineCurrency);
       }, 0);
   const itemCount = checkoutItems.reduce((sum, i) => sum + i.quantity, 0);
+  const freeShippingQuote = quoteFreeShippingThreshold({
+    subtotal: displaySubtotal,
+    currency: displayCurrency,
+    usdInrRate,
+  });
+  /** Prefer threshold rule for free mode so shipping shows before address rates load. */
+  const shippingCharge = isRetry
+    ? retryOrder!.shipping
+    : shippingQuote.settingsMode === "pass_through"
+      ? shippingQuote.customerCharge
+      : freeShippingQuote.charge;
   const orderTotal = isRetry
     ? retryOrder!.total
-    : Math.max(0, displaySubtotal - discount + shippingQuote.customerCharge);
+    : Math.max(0, displaySubtotal - discount + shippingCharge);
 
   const shippingDetailLine = isRetry
     ? null
@@ -688,7 +711,7 @@ function CheckoutPageInner() {
               day: "numeric",
             })}`
           : "";
-        if (shippingQuote.settingsMode === "free" || shippingQuote.customerCharge <= 0) {
+        if (shippingCharge <= 0) {
           return `${serviceName}${deliveryHint} (FREE)`;
         }
         return `${serviceName}${deliveryHint}`;
@@ -771,16 +794,23 @@ function CheckoutPageInner() {
                 </span>
                 <span
                   className={
-                    !isRetry && shippingQuote.customerCharge > 0
+                    shippingCharge > 0
                       ? "font-medium text-slate-900"
                       : "font-bold text-accent"
                   }
                 >
-                  {!isRetry && shippingQuote.customerCharge > 0
-                    ? format(shippingQuote.customerCharge, displayCurrency)
+                  {shippingCharge > 0
+                    ? format(shippingCharge, displayCurrency)
                     : "FREE"}
                 </span>
               </div>
+              {!isRetry && shippingQuote.settingsMode !== "pass_through" && (
+                <FreeShippingNotice
+                  quote={freeShippingQuote}
+                  formatMoney={format}
+                  currency={displayCurrency}
+                />
+              )}
               <div className="flex justify-between gap-4 pt-2 border-t border-slate-200">
                 <span className="font-bold text-slate-900">Total</span>
                 <span className="font-bold text-nav text-base">
