@@ -20,22 +20,32 @@ import { StripePaymentForm } from "@/components/StripePaymentForm";
 import { RazorpayQrPanel } from "@/components/RazorpayQrPanel";
 import { EstimatedDeliveryNote } from "@/components/EstimatedDeliveryNote";
 import { FreeShippingNotice } from "@/components/FreeShippingNotice";
+import { RecipientAddressFields } from "@/components/RecipientAddressFields";
 import { loadWelcomeCoupon } from "@/lib/welcome-coupon";
 import {
   emptyShippingAddress,
   loadSavedAddresses,
   saveShippingAddress,
 } from "@/lib/shipping-address";
+import {
+  buildCheckoutShipmentsFromUnits,
+  expandCartToDeliveryUnits,
+  shipmentSubtotalsFromUnits,
+  validateDeliveryUnits,
+  type DeliveryUnit,
+} from "@/lib/checkout-shipments";
 import { fetchAccount, createAccountAddress } from "@/lib/account";
 import {
   ORDER_STATUS,
   isValidShippingPhone,
   DEFAULT_SENDER_MESSAGE,
   quoteFreeShippingThreshold,
+  quoteShipmentsShipping,
   type Order,
   type RateQuote,
   type ShippingAddress,
 } from "@hr-ecom/shared";
+import { resolveImageUrl } from "@/lib/images";
 
 declare global {
   interface Window {
@@ -88,9 +98,16 @@ function CheckoutPageInner() {
   const [retryLoading, setRetryLoading] = useState(Boolean(retryOrderId));
   const [address, setAddress] = useState<ShippingAddress>(emptyShippingAddress);
   const [saveForLater, setSaveForLater] = useState(true);
+  const [deliveryUnits, setDeliveryUnits] = useState<DeliveryUnit[]>([]);
   const addressPrefilled = useRef(false);
   const addressRef = useRef(address);
   addressRef.current = address;
+
+  useEffect(() => {
+    if (retryOrderId || cartLoading) return;
+    const items = cart?.items ?? [];
+    setDeliveryUnits((prev) => expandCartToDeliveryUnits(items, prev));
+  }, [cart?.items, cartLoading, retryOrderId]);
 
   type ShippingQuoteState = {
     selected?: RateQuote;
@@ -592,6 +609,11 @@ function CheckoutPageInner() {
         ...(address.line2?.trim() ? { line2: address.line2.trim() } : { line2: undefined }),
       };
 
+      const unitsError = validateDeliveryUnits(deliveryUnits, payload);
+      if (unitsError) throw new Error(unitsError);
+
+      const shipments = buildCheckoutShipmentsFromUnits(deliveryUnits, payload);
+
       await captureLeadNow({
         name: payload.name,
         email: payload.email,
@@ -615,6 +637,7 @@ function CheckoutPageInner() {
           checkoutCurrency: displayCurrency,
           ...(displayCurrency === "INR" ? { usdInrRate } : {}),
           shippingAddress: payload,
+          shipments,
           ...(appliedCouponCode ? { couponCode: appliedCouponCode } : {}),
           ...(shippingQuote.selected
             ? {
@@ -685,20 +708,40 @@ function CheckoutPageInner() {
         return sum + convert(item.price * item.quantity, lineCurrency);
       }, 0);
   const itemCount = checkoutItems.reduce((sum, i) => sum + i.quantity, 0);
-  const freeShippingQuote = quoteFreeShippingThreshold({
-    subtotal: displaySubtotal,
+  const unitSubtotalsForShipping = isRetry
+    ? []
+    : (() => {
+        const unitsInDisplay = deliveryUnits.map((u) => ({
+          ...u,
+          price: convert(u.price, cartCurrency),
+        }));
+        return shipmentSubtotalsFromUnits(unitsInDisplay, address);
+      })();
+  const multiShippingQuote = quoteShipmentsShipping({
+    shipmentSubtotals:
+      unitSubtotalsForShipping.length > 0 ? unitSubtotalsForShipping : [displaySubtotal],
     currency: displayCurrency,
     usdInrRate,
   });
-  /** Prefer threshold rule for free mode so shipping shows before address rates load. */
+  const freeShippingQuote =
+    multiShippingQuote.perShipment.find((q) => !q.qualifiesForFreeShipping) ??
+    multiShippingQuote.perShipment[0] ??
+    quoteFreeShippingThreshold({
+      subtotal: displaySubtotal,
+      currency: displayCurrency,
+      usdInrRate,
+    });
+  /** Prefer per-delivery threshold for free mode so shipping shows before address rates load. */
   const shippingCharge = isRetry
     ? retryOrder!.shipping
     : shippingQuote.settingsMode === "pass_through"
       ? shippingQuote.customerCharge
-      : freeShippingQuote.charge;
+      : multiShippingQuote.totalCharge;
   const orderTotal = isRetry
     ? retryOrder!.total
     : Math.max(0, displaySubtotal - discount + shippingCharge);
+  const showSplitDelivery = !isRetry && deliveryUnits.length > 1;
+  const chargedShipmentCount = multiShippingQuote.perShipment.filter((q) => q.charge > 0).length;
 
   const shippingDetailLine = isRetry
     ? null
@@ -751,6 +794,95 @@ function CheckoutPageInner() {
               saveForLater={saveForLater}
               onSaveForLaterChange={setSaveForLater}
             />
+
+            {showSplitDelivery && (
+              <section className="rounded-lg border border-slate-200 bg-white p-5 sm:p-6 space-y-4">
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900">Deliver each Rakhi</h2>
+                  <p className="text-sm text-slate-600 mt-1">
+                    By default every Rakhi ships to the address above. Uncheck “Same address” to send
+                    a Rakhi to a different US location. Shipping under $7 is $6.99 per delivery
+                    address.
+                  </p>
+                </div>
+                <ul className="space-y-4">
+                  {deliveryUnits.map((unit, index) => (
+                    <li
+                      key={unit.key}
+                      className="rounded-lg border border-slate-200 p-4 space-y-3"
+                    >
+                      <div className="flex gap-3 items-start">
+                        {unit.image ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={resolveImageUrl(unit.image)}
+                            alt=""
+                            className="w-14 h-14 rounded-md object-cover border border-slate-100 shrink-0"
+                          />
+                        ) : (
+                          <div className="w-14 h-14 rounded-md bg-slate-100 shrink-0" />
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-medium text-slate-500">
+                            Rakhi {index + 1} of {deliveryUnits.length}
+                          </p>
+                          <p className="font-semibold text-slate-900 line-clamp-2">{unit.name}</p>
+                          <p className="text-sm text-accent font-medium mt-0.5">
+                            {format(convert(unit.price, cartCurrency), displayCurrency)}
+                          </p>
+                        </div>
+                      </div>
+                      <label className="flex items-start gap-2 text-sm text-slate-700 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={unit.useSameAddress}
+                          onChange={(e) => {
+                            const checked = e.target.checked;
+                            setDeliveryUnits((prev) =>
+                              prev.map((u) =>
+                                u.key === unit.key
+                                  ? {
+                                      ...u,
+                                      useSameAddress: checked,
+                                      address: checked
+                                        ? u.address
+                                        : {
+                                            ...emptyShippingAddress(),
+                                            email: address.email,
+                                            phone: address.phone,
+                                            senderName: address.senderName,
+                                            senderMessage: address.senderMessage,
+                                          },
+                                    }
+                                  : u
+                              )
+                            );
+                          }}
+                          className="mt-0.5 rounded border-slate-300 text-nav focus:ring-accent"
+                        />
+                        <span>
+                          Send this Rakhi to the same address
+                          <span className="block text-xs text-slate-500 mt-0.5">
+                            Uncheck to enter a different delivery address
+                          </span>
+                        </span>
+                      </label>
+                      {!unit.useSameAddress && (
+                        <RecipientAddressFields
+                          value={unit.address}
+                          onChange={(next) =>
+                            setDeliveryUnits((prev) =>
+                              prev.map((u) => (u.key === unit.key ? { ...u, address: next } : u))
+                            )
+                          }
+                          title={`Address for Rakhi ${index + 1}`}
+                        />
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
           </div>
 
           <aside className="border border-slate-200 rounded-lg bg-white p-5 sm:p-6 lg:sticky lg:top-24 space-y-5">
@@ -805,11 +937,29 @@ function CheckoutPageInner() {
                 </span>
               </div>
               {!isRetry && shippingQuote.settingsMode !== "pass_through" && (
-                <FreeShippingNotice
-                  quote={freeShippingQuote}
-                  formatMoney={format}
-                  currency={displayCurrency}
-                />
+                <>
+                  {showSplitDelivery && multiShippingQuote.perShipment.length > 1 ? (
+                    <p className="text-xs text-amber-900 bg-amber-50 border border-amber-100 rounded-md px-3 py-2">
+                      Shipping is calculated per delivery address. Cart under $7 for an address adds
+                      $6.99 for that delivery.
+                      {chargedShipmentCount > 0 ? (
+                        <>
+                          {" "}
+                          {chargedShipmentCount} of {multiShippingQuote.perShipment.length} deliveries
+                          include shipping ({format(shippingCharge, displayCurrency)} total).
+                        </>
+                      ) : (
+                        <> All deliveries qualify for free shipping.</>
+                      )}
+                    </p>
+                  ) : (
+                    <FreeShippingNotice
+                      quote={freeShippingQuote}
+                      formatMoney={format}
+                      currency={displayCurrency}
+                    />
+                  )}
+                </>
               )}
               <div className="flex justify-between gap-4 pt-2 border-t border-slate-200">
                 <span className="font-bold text-slate-900">Total</span>

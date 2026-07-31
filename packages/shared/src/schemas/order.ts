@@ -51,8 +51,24 @@ export const checkoutShippingAddressSchema = shippingAddressSchema.extend({
     .max(500, "Message is too long (max 500 characters)"),
 });
 
+/** Line assignment for a checkout shipment (must partition the cart). */
+export const checkoutShipmentItemSchema = z.object({
+  productSlug: z.string().min(1),
+  quantity: z.number().int().positive(),
+});
+
+export const checkoutShipmentSchema = z.object({
+  shippingAddress: checkoutShippingAddressSchema,
+  items: z.array(checkoutShipmentItemSchema).min(1),
+});
+
 export const checkoutSchema = z.object({
   shippingAddress: checkoutShippingAddressSchema,
+  /**
+   * Optional multi-address split. When omitted, the whole cart ships to
+   * `shippingAddress`. When present, must cover every cart line exactly once.
+   */
+  shipments: z.array(checkoutShipmentSchema).min(1).max(40).optional(),
   paymentMethod: z.enum(["stripe", "razorpay"]),
   /** Customer-selected display/checkout currency (from currency switcher). */
   checkoutCurrency: z.enum(["USD", "INR"]).optional(),
@@ -63,6 +79,25 @@ export const checkoutSchema = z.object({
   /** Customer override — must match a returned rate. */
   shippingServiceCode: z.string().optional(),
   shippingRateId: z.string().optional(),
+});
+
+/** Persisted per-delivery package on an order. */
+export const orderShipmentSchema = z.object({
+  shipmentId: z.string(),
+  shippingAddress: shippingAddressSchema,
+  items: z.array(cartItemSchema).min(1),
+  subtotal: z.number(),
+  shipping: z.number().default(0),
+  trackingNumber: z.string().optional(),
+  carrier: z.string().optional(),
+  shippingServiceCode: z.string().optional(),
+  shippingServiceName: z.string().optional(),
+  shippingRateId: z.string().optional(),
+  estimatedLabelCost: z.number().optional(),
+  labelCost: z.number().optional(),
+  labelPdfUrl: z.string().optional(),
+  labelStatus: z.enum(["none", "queued", "purchased", "failed"]).optional(),
+  labelError: z.string().optional(),
 });
 
 const orderStatusEnum = z.enum([
@@ -100,7 +135,10 @@ export const orderSchema = z.object({
   vendorSlugs: z.array(z.string()).optional(),
   status: orderStatusEnum,
   statusHistory: z.array(orderStatusHistoryEntrySchema).optional(),
+  /** Primary / first delivery address (always set; mirrors shipments[0] when multi). */
   shippingAddress: shippingAddressSchema,
+  /** Multi-address deliveries. Omitted on older single-address orders. */
+  shipments: z.array(orderShipmentSchema).optional(),
   paymentProvider: z.enum(["stripe", "razorpay"]).optional(),
   paymentIntentId: z.string().optional(),
   razorpayOrderId: z.string().optional(),
@@ -154,6 +192,8 @@ export const orderStatusUpdateSchema = z.object({
 });
 
 export type ShippingAddress = z.infer<typeof shippingAddressSchema>;
+export type CheckoutShipment = z.infer<typeof checkoutShipmentSchema>;
+export type OrderShipment = z.infer<typeof orderShipmentSchema>;
 export type CheckoutInput = z.infer<typeof checkoutSchema>;
 export type OrderStatusUpdate = z.infer<typeof orderStatusUpdateSchema>;
 export type OrderStatusHistoryEntry = z.infer<typeof orderStatusHistoryEntrySchema>;

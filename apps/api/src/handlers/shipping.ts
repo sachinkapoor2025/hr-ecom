@@ -141,6 +141,68 @@ export async function buyLabelForOrder(event: APIGatewayProxyEventV2) {
     });
   }
 
+  const multiShipments = order.shipments?.filter((s) => s.items?.length) ?? [];
+  if (multiShipments.length > 1) {
+    try {
+      const timestamp = now();
+      let totalLabelCost = 0;
+      const updatedShipments = [];
+      for (const shipment of multiShipments) {
+        if (shipment.labelStatus === "purchased" && shipment.trackingNumber) {
+          updatedShipments.push(shipment);
+          totalLabelCost += shipment.labelCost ?? 0;
+          continue;
+        }
+        const label = await purchaseLabelForOrder({
+          orderId: `${order.orderId}:${shipment.shipmentId}`,
+          shippingAddress: shipment.shippingAddress,
+          items: shipment.items,
+          shippingRateId: shipment.shippingRateId ?? order.shippingRateId,
+          shippingServiceCode: shipment.shippingServiceCode ?? order.shippingServiceCode,
+        });
+        totalLabelCost += label.labelCost ?? 0;
+        updatedShipments.push({
+          ...shipment,
+          trackingNumber: label.trackingNumber,
+          carrier: "USPS",
+          labelPdfUrl: label.labelPdfUrl,
+          labelCost: label.labelCost,
+          labelStatus: "purchased" as const,
+          labelError: undefined,
+          shippingServiceName: label.shippingServiceName ?? shipment.shippingServiceName,
+          shippingServiceCode: label.shippingServiceCode ?? shipment.shippingServiceCode,
+        });
+      }
+      const first = updatedShipments[0];
+      const updated = {
+        ...order,
+        shipments: updatedShipments,
+        trackingNumber: first?.trackingNumber,
+        carrier: "USPS",
+        labelPdfUrl: first?.labelPdfUrl,
+        labelCost: totalLabelCost || undefined,
+        labelStatus: "purchased" as const,
+        labelError: undefined,
+        shippingServiceName: first?.shippingServiceName ?? order.shippingServiceName,
+        shippingServiceCode: first?.shippingServiceCode ?? order.shippingServiceCode,
+        updatedAt: timestamp,
+      };
+      await docClient.send(new PutCommand({ TableName: ORDERS_TABLE, Item: updated }));
+      return ok({ order: updated, message: `Purchased ${updatedShipments.length} USPS labels` });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Label purchase failed";
+      const timestamp = now();
+      const updated = {
+        ...order,
+        labelStatus: "failed" as const,
+        labelError: message,
+        updatedAt: timestamp,
+      };
+      await docClient.send(new PutCommand({ TableName: ORDERS_TABLE, Item: updated }));
+      return badRequest(message);
+    }
+  }
+
   try {
     const label = await purchaseLabelForOrder({
       orderId: order.orderId,

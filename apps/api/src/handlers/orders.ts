@@ -13,6 +13,8 @@ import {
   ORDER_STATUS_TRANSITIONS,
   convertCartItemsToCurrency,
   cartSubtotal,
+  buildOrderShipments,
+  singleCheckoutShipment,
   type Order,
   type OrderStatusHistoryEntry,
   type CartItem,
@@ -197,38 +199,70 @@ export async function checkout(event: APIGatewayProxyEventV2) {
   }
 
   const usdInrRate = await resolveCheckoutUsdInrRate(parsed.data.usdInrRate);
-  const orderItems =
+  const orderItems: CartItem[] =
     checkoutCurrency !== cartCurrency
       ? convertCartItemsToCurrency(cart.items, checkoutCurrency, usdInrRate)
-      : cart.items;
+      : (cart.items as CartItem[]);
 
   const stockError = await validateOrderInventory(orderItems);
   if (stockError) return badRequest(stockError);
 
   const subtotal = cartSubtotal(orderItems);
+  const checkoutShipments =
+    parsed.data.shipments?.length
+      ? parsed.data.shipments
+      : [singleCheckoutShipment(parsed.data.shippingAddress, orderItems)];
 
+  const shippingSettings = await loadShippingSettings();
+  const primaryDestination = checkoutShipments[0].shippingAddress;
+  const primaryLines = checkoutShipments[0].items;
+  const cartBySlug = new Map<string, CartItem>(
+    orderItems.map((i) => [i.productSlug, i])
+  );
+  const primarySubtotal = primaryLines.reduce((sum, line) => {
+    const item = cartBySlug.get(line.productSlug);
+    return sum + (item ? item.price * line.quantity : 0);
+  }, 0);
+
+  /** Rate-shop primary package for label metadata; customer charge uses per-shipment threshold. */
   const shippingResult = await resolveShippingForCheckout({
     destination: {
-      line1: parsed.data.shippingAddress.line1,
-      line2: parsed.data.shippingAddress.line2,
-      city: parsed.data.shippingAddress.city,
-      state: parsed.data.shippingAddress.state,
-      postalCode: parsed.data.shippingAddress.postalCode,
-      country: parsed.data.shippingAddress.country,
+      line1: primaryDestination.line1,
+      line2: primaryDestination.line2,
+      city: primaryDestination.city,
+      state: primaryDestination.state,
+      postalCode: primaryDestination.postalCode,
+      country: primaryDestination.country,
     },
-    cartItems: orderItems.map((i: CartItem) => ({ productSlug: i.productSlug, quantity: i.quantity })),
-    subtotal,
+    cartItems: primaryLines.map((i) => ({
+      productSlug: i.productSlug,
+      quantity: i.quantity,
+    })),
+    subtotal: primarySubtotal,
     currency: checkoutCurrency as "USD" | "INR",
     usdInrRate,
     shippingServiceCode: parsed.data.shippingServiceCode,
     shippingRateId: parsed.data.shippingRateId,
+    settings: shippingSettings,
   });
 
   if (shippingResult.warning) {
     console.warn("Checkout shipping rate lookup:", shippingResult.warning);
   }
 
-  const shipping = shippingResult.customerShippingCharge;
+  const built = buildOrderShipments({
+    cartItems: orderItems,
+    checkoutShipments,
+    currency: checkoutCurrency as "USD" | "INR",
+    usdInrRate,
+    ...(shippingSettings.customerShippingMode === "pass_through"
+      ? { passThroughShipping: shippingResult.customerShippingCharge }
+      : {}),
+  });
+  if ("error" in built) return badRequest(built.error);
+
+  const shipping = built.shippingTotal;
+  const orderShipments = built.shipments;
   const tax = 0;
 
   let discount = 0;
@@ -288,7 +322,8 @@ export async function checkout(event: APIGatewayProxyEventV2) {
     ...(vendorSlugs.length ? { vendorSlugs } : {}),
     status: ORDER_STATUS.PENDING_PAYMENT,
     statusHistory: [{ status: ORDER_STATUS.PENDING_PAYMENT, at: timestamp }],
-    shippingAddress: parsed.data.shippingAddress,
+    shippingAddress: orderShipments[0]?.shippingAddress ?? parsed.data.shippingAddress,
+    shipments: orderShipments,
     ...(shippingResult.selected && {
       shippingServiceCode: shippingResult.selected.mailClass,
       shippingServiceName: shippingResult.selected.serviceName,

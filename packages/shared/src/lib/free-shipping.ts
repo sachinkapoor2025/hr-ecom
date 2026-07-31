@@ -78,3 +78,29 @@ export function quoteFreeShippingThreshold(input: {
     belowThresholdFeeInCurrency,
   };
 }
+
+/**
+ * Per-delivery-address free shipping: each shipment's subtotal is evaluated
+ * independently ($7 → free, else $6.99). Total charge is the sum.
+ */
+export function quoteShipmentsShipping(input: {
+  shipmentSubtotals: number[];
+  currency: ShopCurrency;
+  usdInrRate: number;
+}): {
+  totalCharge: number;
+  perShipment: FreeShippingQuote[];
+} {
+  const perShipment = input.shipmentSubtotals.map((subtotal) =>
+    quoteFreeShippingThreshold({
+      subtotal,
+      currency: input.currency,
+      usdInrRate: input.usdInrRate,
+    })
+  );
+  const totalCharge = roundForCurrency(
+    perShipment.reduce((sum, q) => sum + q.charge, 0),
+    input.currency
+  );
+  return { totalCharge, perShipment };
+}

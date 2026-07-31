@@ -503,17 +503,61 @@ export default function AdminOrderDetailPage() {
                 “{addr.senderMessage}”
               </p>
             )}
-            <p className="font-medium">{addr.name}</p>
-            <p className="text-slate-500">{addr.email}</p>
-            {addr.phone && <p className="text-slate-500">{addr.phone}</p>}
-            <div className="mt-3 text-slate-600">
-              <p>{addr.line1}</p>
-              {addr.line2 && <p>{addr.line2}</p>}
-              <p>
-                {addr.city}, {addr.state} {addr.postalCode}
-              </p>
-              <p>{addr.country}</p>
-            </div>
+            {order.shipments && order.shipments.length > 1 ? (
+              <div className="space-y-4">
+                <p className="text-xs font-medium text-amber-800 bg-amber-50 border border-amber-100 rounded-md px-2 py-1.5">
+                  Multi-address order · {order.shipments.length} deliveries · shipping{" "}
+                  {formatMoney(order.shipping, order.currency)} total
+                </p>
+                {order.shipments.map((shipment, idx) => (
+                  <div
+                    key={shipment.shipmentId}
+                    className="border-t border-slate-100 pt-3 first:border-0 first:pt-0"
+                  >
+                    <p className="text-xs font-semibold text-slate-500 mb-1">
+                      Delivery {idx + 1} ·{" "}
+                      {shipment.items.map((i) => `${i.name} ×${i.quantity}`).join(", ")}
+                    </p>
+                    <p className="text-xs text-slate-500 mb-1">
+                      Subtotal {formatMoney(shipment.subtotal, order.currency)}
+                      {" · "}
+                      Shipping{" "}
+                      {shipment.shipping > 0
+                        ? formatMoney(shipment.shipping, order.currency)
+                        : "FREE"}
+                    </p>
+                    <p className="font-medium">{shipment.shippingAddress.name}</p>
+                    <p className="text-slate-500">{shipment.shippingAddress.email}</p>
+                    {shipment.shippingAddress.phone && (
+                      <p className="text-slate-500">{shipment.shippingAddress.phone}</p>
+                    )}
+                    <div className="mt-2 text-slate-600">
+                      <p>{shipment.shippingAddress.line1}</p>
+                      {shipment.shippingAddress.line2 && <p>{shipment.shippingAddress.line2}</p>}
+                      <p>
+                        {shipment.shippingAddress.city}, {shipment.shippingAddress.state}{" "}
+                        {shipment.shippingAddress.postalCode}
+                      </p>
+                      <p>{shipment.shippingAddress.country}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <>
+                <p className="font-medium">{addr.name}</p>
+                <p className="text-slate-500">{addr.email}</p>
+                {addr.phone && <p className="text-slate-500">{addr.phone}</p>}
+                <div className="mt-3 text-slate-600">
+                  <p>{addr.line1}</p>
+                  {addr.line2 && <p>{addr.line2}</p>}
+                  <p>
+                    {addr.city}, {addr.state} {addr.postalCode}
+                  </p>
+                  <p>{addr.country}</p>
+                </div>
+              </>
+            )}
           </section>
 
           <section className="bg-white border rounded-xl p-5 text-sm">

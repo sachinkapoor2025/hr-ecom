@@ -4,6 +4,7 @@ import {
   BELOW_THRESHOLD_SHIPPING_USD,
   FREE_SHIPPING_MIN_SUBTOTAL_USD,
   quoteFreeShippingThreshold,
+  quoteShipmentsShipping,
 } from "./free-shipping";
 
 describe("quoteFreeShippingThreshold", () => {
@@ -39,5 +40,19 @@ describe("quoteFreeShippingThreshold", () => {
     assert.equal(quote.qualifiesForFreeShipping, false);
     assert.equal(quote.charge, Math.round(BELOW_THRESHOLD_SHIPPING_USD * rate));
     assert.equal(quote.thresholdInCurrency, FREE_SHIPPING_MIN_SUBTOTAL_USD * rate);
+  });
+});
+
+describe("quoteShipmentsShipping", () => {
+  it("charges $6.99 only for under-$7 deliveries", () => {
+    const { totalCharge, perShipment } = quoteShipmentsShipping({
+      shipmentSubtotals: [10, 12, 3],
+      currency: "USD",
+      usdInrRate: 96,
+    });
+    assert.equal(perShipment[0].charge, 0);
+    assert.equal(perShipment[1].charge, 0);
+    assert.equal(perShipment[2].charge, BELOW_THRESHOLD_SHIPPING_USD);
+    assert.equal(totalCharge, BELOW_THRESHOLD_SHIPPING_USD);
   });
 });

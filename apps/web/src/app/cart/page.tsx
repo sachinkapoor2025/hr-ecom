@@ -187,6 +187,12 @@ export default function CartPage() {
                 formatMoney={format}
                 currency={currency}
               />
+              {itemCount > 1 && (
+                <p className="text-xs text-slate-500">
+                  At checkout you can ship each Rakhi to a different US address. Shipping under $7 is
+                  $6.99 per delivery address.
+                </p>
+              )}
               <div className="flex items-center justify-between gap-4 pt-2 border-t border-slate-100">
                 <span className="font-bold text-slate-900">Estimated total</span>
                 <span className="font-bold text-accent text-base">{format(estimatedTotal, currency)}</span>
