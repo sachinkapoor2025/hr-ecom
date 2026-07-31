@@ -15,6 +15,8 @@ import {
   cartSubtotal,
   buildOrderShipments,
   singleCheckoutShipment,
+  isValidScheduleDeliveryDate,
+  preferredDeliveryDateToIso,
   type Order,
   type OrderStatusHistoryEntry,
   type CartItem,
@@ -307,6 +309,11 @@ export async function checkout(event: APIGatewayProxyEventV2) {
     ),
   ];
 
+  const preferredDeliveryDate = parsed.data.preferredDeliveryDate?.trim();
+  if (preferredDeliveryDate && !isValidScheduleDeliveryDate(preferredDeliveryDate)) {
+    return badRequest("Scheduled delivery must be today through 28 August 2026");
+  }
+
   const order: Order = {
     orderId,
     userId: auth?.userId,
@@ -324,6 +331,9 @@ export async function checkout(event: APIGatewayProxyEventV2) {
     statusHistory: [{ status: ORDER_STATUS.PENDING_PAYMENT, at: timestamp }],
     shippingAddress: orderShipments[0]?.shippingAddress ?? parsed.data.shippingAddress,
     shipments: orderShipments,
+    ...(preferredDeliveryDate
+      ? { estimatedDeliveryAt: preferredDeliveryDateToIso(preferredDeliveryDate) }
+      : {}),
     ...(shippingResult.selected && {
       shippingServiceCode: shippingResult.selected.mailClass,
       shippingServiceName: shippingResult.selected.serviceName,

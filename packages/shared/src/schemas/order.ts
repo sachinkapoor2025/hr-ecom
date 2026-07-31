@@ -76,6 +76,11 @@ export const checkoutSchema = z.object({
   usdInrRate: z.number().positive().max(200).optional(),
   /** Welcome or promo coupon (e.g. RAKHI-ABC123). */
   couponCode: z.string().min(4).max(32).optional(),
+  /** Customer-requested delivery date (YYYY-MM-DD), max 2026-08-28. */
+  preferredDeliveryDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD")
+    .optional(),
   /** Customer override — must match a returned rate. */
   shippingServiceCode: z.string().optional(),
   shippingRateId: z.string().optional(),
