@@ -358,57 +358,90 @@ export default function AdminProductsPage() {
         rows={3}
       />
       <div className="grid sm:grid-cols-2 gap-3">
-        <input
-          placeholder="Regular price *"
-          type="number"
-          step="0.01"
-          value={form.price}
-          onChange={(e) => setForm({ ...form, price: e.target.value })}
-          className="border rounded-lg px-3 py-2"
-          required
-        />
-        <input
-          placeholder="Sale price (compare at)"
-          type="number"
-          step="0.01"
-          value={form.compareAtPrice}
-          onChange={(e) => setForm({ ...form, compareAtPrice: e.target.value })}
-          className="border rounded-lg px-3 py-2"
-        />
-        <input
-          placeholder="SKU"
-          value={form.sku}
-          onChange={(e) => setForm({ ...form, sku: e.target.value })}
-          className="border rounded-lg px-3 py-2"
-        />
-        <input
-          placeholder="Inventory"
-          type="number"
-          value={form.inventory}
-          onChange={(e) => setForm({ ...form, inventory: e.target.value })}
-          className="border rounded-lg px-3 py-2"
-        />
-        <select
-          value={form.categorySlug}
-          onChange={(e) => setForm({ ...form, categorySlug: e.target.value })}
-          className="border rounded-lg px-3 py-2"
-          required
-        >
-          <option value="">Select category</option>
-          {categories.map((c) => (
-            <option key={c.slug} value={c.slug}>
-              {c.name}
-            </option>
-          ))}
-        </select>
-        <select
-          value={form.currency}
-          onChange={(e) => setForm({ ...form, currency: e.target.value as "USD" | "INR" })}
-          className="border rounded-lg px-3 py-2"
-        >
-          <option value="USD">USD</option>
-          <option value="INR">INR</option>
-        </select>
+        <label className="block">
+          <span className="block text-sm font-medium text-slate-700 mb-1">
+            Price <span className="text-red-600">*</span>
+          </span>
+          <input
+            type="text"
+            inputMode="decimal"
+            autoComplete="off"
+            placeholder="e.g. 9.99"
+            value={form.price}
+            onChange={(e) => setForm({ ...form, price: e.target.value.replace(/[^0-9.]/g, "") })}
+            className="w-full border rounded-lg px-3 py-2"
+            required
+          />
+          <span className="mt-1 block text-xs text-slate-500">Selling price customers pay</span>
+        </label>
+        <label className="block">
+          <span className="block text-sm font-medium text-slate-700 mb-1">Compare-at price</span>
+          <input
+            type="text"
+            inputMode="decimal"
+            autoComplete="off"
+            placeholder="e.g. 10.99 (optional)"
+            value={form.compareAtPrice}
+            onChange={(e) =>
+              setForm({ ...form, compareAtPrice: e.target.value.replace(/[^0-9.]/g, "") })
+            }
+            className="w-full border rounded-lg px-3 py-2"
+          />
+          <span className="mt-1 block text-xs text-slate-500">
+            List / MRP shown with strikethrough when higher than price
+          </span>
+        </label>
+        <label className="block">
+          <span className="block text-sm font-medium text-slate-700 mb-1">SKU</span>
+          <input
+            type="text"
+            placeholder="Optional"
+            value={form.sku}
+            onChange={(e) => setForm({ ...form, sku: e.target.value })}
+            className="w-full border rounded-lg px-3 py-2"
+          />
+        </label>
+        <label className="block">
+          <span className="block text-sm font-medium text-slate-700 mb-1">Inventory</span>
+          <input
+            type="text"
+            inputMode="numeric"
+            autoComplete="off"
+            placeholder="e.g. 200"
+            value={form.inventory}
+            onChange={(e) => setForm({ ...form, inventory: e.target.value.replace(/[^0-9]/g, "") })}
+            className="w-full border rounded-lg px-3 py-2"
+          />
+        </label>
+        <label className="block">
+          <span className="block text-sm font-medium text-slate-700 mb-1">
+            Category <span className="text-red-600">*</span>
+          </span>
+          <select
+            value={form.categorySlug}
+            onChange={(e) => setForm({ ...form, categorySlug: e.target.value })}
+            className="w-full border rounded-lg px-3 py-2"
+            required
+          >
+            <option value="">Select category</option>
+            {categories.map((c) => (
+              <option key={c.slug} value={c.slug}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="block">
+          <span className="block text-sm font-medium text-slate-700 mb-1">Currency</span>
+          <select
+            value={form.currency}
+            onChange={(e) => setForm({ ...form, currency: e.target.value as "USD" | "INR" })}
+            className="w-full border rounded-lg px-3 py-2"
+          >
+            <option value="USD">USD</option>
+            <option value="INR">INR</option>
+          </select>
+        </label>
       </div>
       <div>
         <p className="text-sm font-medium text-slate-700 mb-2">Shipping dimensions (required)</p>
