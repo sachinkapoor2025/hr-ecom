@@ -16,6 +16,18 @@ export const categoryPageInlineLinks: Record<string, readonly { phrase: string; 
     { phrase: "Single Rakhi", href: categoryHref("single-rakhi") },
     { phrase: "Kids Rakhi", href: categoryHref("kids-rakhi") },
   ],
+  "2-set-rakhi": [
+    { phrase: "Set of 3 Rakhis", href: categoryHref("3-set-rakhi") },
+    { phrase: "Set of 4 Rakhis", href: categoryHref("4-set-rakhi") },
+  ],
+  "3-set-rakhi": [
+    { phrase: "Set of 2 Rakhis", href: categoryHref("2-set-rakhi") },
+    { phrase: "Set of 4 Rakhis", href: categoryHref("4-set-rakhi") },
+  ],
+  "4-set-rakhi": [
+    { phrase: "Set of 2 Rakhis", href: categoryHref("2-set-rakhi") },
+    { phrase: "Set of 3 Rakhis", href: categoryHref("3-set-rakhi") },
+  ],
 };
 
 export const rakshaBandhanInlineLinks = [

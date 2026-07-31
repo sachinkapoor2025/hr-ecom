@@ -23,6 +23,9 @@ export interface CategoryRichContent {
 
 const relatedAll = [
   { slug: "single-rakhi", label: "Single Rakhi to USA", text: "Traditional and designer rakhis with roli chawal." },
+  { slug: "2-set-rakhi", label: "Set of 2 Rakhis to USA", text: "Two-piece designer rakhi sets for brothers." },
+  { slug: "3-set-rakhi", label: "Set of 3 Rakhis to USA", text: "Three-piece rakhi sets for multiple brothers." },
+  { slug: "4-set-rakhi", label: "Set of 4 Rakhis to USA", text: "Four-piece rakhi sets for larger families." },
   { slug: "rakhi-combo", label: "Rakhi Combos to USA", text: "Rakhi with Ferrero Rocher, Lindt, Hershey's." },
   { slug: "rakhi-hampers", label: "Rakhi Hampers to USA", text: "Festive gift boxes with sweets and dry fruits." },
   { slug: "bhaiya-bhabhi-rakhi", label: "Bhaiya Bhabhi Rakhi to USA", text: "Matching sets for brother and Bhabhi." },
@@ -32,6 +35,23 @@ const relatedAll = [
 
 function relatedExcept(slug: string) {
   return relatedAll.filter((c) => c.slug !== slug);
+}
+
+function relatedForSetPage(slug: string) {
+  const preferred = [
+    "single-rakhi",
+    "2-set-rakhi",
+    "3-set-rakhi",
+    "4-set-rakhi",
+    "rakhi-combo",
+    "rakhi-hampers",
+    "bhaiya-bhabhi-rakhi",
+    "kids-rakhi",
+  ];
+  return preferred
+    .filter((s) => s !== slug)
+    .map((s) => relatedAll.find((c) => c.slug === s))
+    .filter((c): c is (typeof relatedAll)[number] => Boolean(c));
 }
 
 export const categoryRichContent: Record<string, CategoryRichContent> = {
@@ -347,6 +367,213 @@ export const categoryRichContent: Record<string, CategoryRichContent> = {
       },
     ],
     relatedCategories: relatedExcept("rakhi-combo"),
+  },
+  "2-set-rakhi": {
+    slug: "2-set-rakhi",
+    headline: "Set of 2 Rakhis for USA Delivery — Designer Twin Rakhi Sets",
+    intro: [
+      "A Set of 2 Rakhis is the perfect choice when you want to send two coordinated designer rakhis in one order — ideal for sisters with two brothers, cousins celebrating together, or anyone who prefers a matching pair rather than a single thread.",
+      "Each two-piece set is curated for Raksha Bandhan with premium threads, beads, and motifs so both rakhis feel special. Most listings include complimentary roli and chawal so the tilak ceremony can happen at your brother's US home even when you order from India, the UK, Canada, or elsewhere.",
+      "Browse the Set of 2 Rakhis collection above, choose a design your brothers will love, and we deliver domestically across America in 5–7 business days — no international customs delays at the doorstep. Need rakhis for more brothers? Explore our Set of 3 Rakhis and Set of 4 Rakhis packs as well.",
+    ],
+    delivery: {
+      heading: "Set of 2 Rakhis Delivery Across the USA",
+      paragraphs: [
+        "UsaRakhi ships two-piece rakhi sets to all 50 US states — homes, apartments, offices, and university campuses — with reliable domestic carriers and tracking.",
+        "Popular destinations include California, New York, New Jersey, Texas, Florida, Illinois, and Washington. Order in July or early August for Raksha Bandhan 2026 (August 28) so both rakhis arrive before festival day.",
+      ],
+    },
+    highlights: {
+      heading: "Why Choose a Set of 2 Rakhis",
+      items: [],
+      paragraphs: [
+        "Two-piece sets save you from placing separate orders when you have two brothers or want a spare matching rakhi. Designs often pair traditional and contemporary styles in one pack — pearl with stone, Om with floral, or coordinated colorways — so both recipients feel equally celebrated. Every Set of 2 Rakhis ships domestically across all 50 states in 5–7 business days.",
+      ],
+    },
+    tradition: {
+      heading: "When a Twin Rakhi Set Makes Sense",
+      paragraphs: [
+        "Families with two brothers often share one Raksha Bandhan video call from India. Sending a Set of 2 Rakhis means both wrists are ready for the ceremony on the same day — one gift box, one delivery, one shared celebration across miles.",
+      ],
+    },
+    whyUs: {
+      heading: "Why Order Set of 2 Rakhis from UsaRakhi",
+      bullets: [
+        "Two coordinated rakhis in one festival-ready pack",
+        "Roli and chawal included on most set listings",
+        "Domestic USA shipping — order from India worldwide",
+        "5–7 business day delivery to all 50 states",
+        "Secure checkout in USD or INR",
+        "WhatsApp and email order support",
+      ],
+    },
+    howTo: {
+      heading: "How to Send a Set of 2 Rakhis to the USA",
+      steps: [
+        "Choose a two-piece set from the collection above.",
+        "Add to cart and enter your brother's full US shipping address.",
+        "Pay with Stripe (USD) or Razorpay (INR).",
+        "We gift-pack both rakhis and ship within America.",
+        "Your brothers receive the set in 5–7 business days.",
+      ],
+    },
+    faqs: [
+      {
+        q: "What is included in a Set of 2 Rakhis?",
+        a: "Each listing includes two designer rakhis in one pack. Most also include complimentary roli and chawal — check the product page for exact contents.",
+      },
+      {
+        q: "Can I send a Set of 2 Rakhis from India to the USA?",
+        a: "Yes. Order on UsaRakhi.com from India, enter the US delivery address, and pay in INR via Razorpay. We ship domestically within America.",
+      },
+      {
+        q: "Who should buy a Set of 2 Rakhis?",
+        a: "Sisters with two brothers, families sending matching rakhis to cousins, or anyone who wants a coordinated pair instead of ordering singles separately.",
+      },
+      {
+        q: "How long does Set of 2 Rakhis delivery take?",
+        a: "Typically 5–7 business days after dispatch to any US state.",
+      },
+    ],
+    relatedCategories: relatedForSetPage("2-set-rakhi"),
+  },
+  "3-set-rakhi": {
+    slug: "3-set-rakhi",
+    headline: "Set of 3 Rakhis for USA Delivery — Multi-Brother Rakhi Packs",
+    intro: [
+      "A Set of 3 Rakhis is designed for sisters who celebrate Raksha Bandhan with three brothers — or who want a generous multi-piece pack that covers brothers of different ages in one beautifully coordinated gift.",
+      "Three-piece sets mix traditional, designer, and festive styles so each brother gets a rakhi that feels personal while still belonging to the same collection. Many packs include roli and chawal for the full tilak ritual at the US address.",
+      "Order a Set of 3 Rakhis online from India, the UK, Canada, or anywhere worldwide. Enter one US shipping address at checkout and UsaRakhi delivers domestically across America in 5–7 business days. Prefer a smaller or larger pack? See our Set of 2 Rakhis and Set of 4 Rakhis collections.",
+    ],
+    delivery: {
+      heading: "Set of 3 Rakhis Delivery to All 50 US States",
+      paragraphs: [
+        "Whether your brothers live together in one household or you are shipping to a primary US address for family gathering day, we fulfill three-piece sets with the same reliable domestic shipping used for our full catalog.",
+        "Sisters in India order Set of 3 Rakhis most often in July and August ahead of Raksha Bandhan 2026 (August 28). Order early to avoid the last-minute rush.",
+      ],
+    },
+    highlights: {
+      heading: "What's Special About a Set of 3 Rakhis",
+      items: [],
+      paragraphs: [
+        "Three-piece packs are a practical middle ground between a twin set and a large family pack — enough variety for older and younger brothers without ordering four or more separately. Look for assortments that balance classic thread designs with pearl, stone, or Om motifs. Every Set of 3 Rakhis ships domestically across all 50 states in 5–7 business days.",
+      ],
+    },
+    tradition: {
+      heading: "Celebrating Multiple Brothers from Afar",
+      paragraphs: [
+        "When three brothers share one home in America, a Set of 3 Rakhis turns a single delivery into a complete family ceremony. Sisters joining on video from India can see each brother tie his rakhi — one order that keeps the whole sibling bond intact across continents.",
+      ],
+    },
+    whyUs: {
+      heading: "Why Order Set of 3 Rakhis from UsaRakhi",
+      bullets: [
+        "Three designer rakhis in one coordinated pack",
+        "Ideal for multi-brother households in the USA",
+        "Domestic fulfillment — no customs for your brothers",
+        "Festival-ready packaging",
+        "Pay securely in USD or INR",
+        "5–7 business day delivery nationwide",
+      ],
+    },
+    howTo: {
+      heading: "How to Send a Set of 3 Rakhis to the USA",
+      steps: [
+        "Pick a three-piece set from the product grid above.",
+        "Confirm all three rakhis in the photos and description.",
+        "Enter the US delivery address at checkout.",
+        "Pay with Stripe (USD) or Razorpay (INR).",
+        "We pack and ship within America for 5–7 day delivery.",
+      ],
+    },
+    faqs: [
+      {
+        q: "Is a Set of 3 Rakhis good for brothers of different ages?",
+        a: "Yes. Many three-piece sets mix classic and contemporary designs so older and younger brothers each get a style they'll enjoy wearing.",
+      },
+      {
+        q: "Can I send a Set of 3 Rakhis from India?",
+        a: "Yes. Enter the US address at checkout and pay in INR. We ship domestically within the USA.",
+      },
+      {
+        q: "Do Set of 3 Rakhis include roli and chawal?",
+        a: "Most multi-rakhi set listings include complimentary roli and chawal. Check each product page for details.",
+      },
+      {
+        q: "When should I order for Raksha Bandhan 2026?",
+        a: "Raksha Bandhan 2026 is August 28, 2026. Order in July or early August for stress-free delivery to any US state.",
+      },
+    ],
+    relatedCategories: relatedForSetPage("3-set-rakhi"),
+  },
+  "4-set-rakhi": {
+    slug: "4-set-rakhi",
+    headline: "Set of 4 Rakhis for USA Delivery — Family-Size Rakhi Packs",
+    intro: [
+      "A Set of 4 Rakhis is built for larger sibling groups and joint-family celebrations — four designer rakhis in one pack so you can honor every brother (or close cousin) without juggling multiple checkouts.",
+      "Four-piece sets typically offer the widest style mix in our Rakhi Sets USA collection: traditional threads, pearl accents, spiritual motifs, and festive colorways packed together for gift-ready presentation.",
+      "Send a Set of 4 Rakhis to any US address from India or worldwide. UsaRakhi fulfills domestically inside America with 5–7 business day delivery — reliable for Raksha Bandhan when the whole family is waiting for the ceremony. For smaller packs, browse our Set of 2 Rakhis and Set of 3 Rakhis pages.",
+    ],
+    delivery: {
+      heading: "Set of 4 Rakhis Delivery Across America",
+      paragraphs: [
+        "UsaRakhi ships family-size four-piece sets to all 50 US states with domestic carriers and tracking. One shipping address covers the entire pack.",
+        "Plan ahead for Raksha Bandhan 2026 (August 28): larger families often order Set of 4 Rakhis in July so every brother has his rakhi before festival day.",
+      ],
+    },
+    highlights: {
+      heading: "Who a Set of 4 Rakhis Is Perfect For",
+      items: [],
+      paragraphs: [
+        "Choose a four-piece set when you have four brothers, when cousins celebrate together under one roof, or when you want extras for guests joining the tilak ceremony. Assorted packs make it easy to match preferences without buying singles à la carte. Every Set of 4 Rakhis ships domestically across all 50 states in 5–7 business days.",
+      ],
+    },
+    tradition: {
+      heading: "Keeping Large Sibling Bonds Strong Across Miles",
+      paragraphs: [
+        "For sisters abroad or in India with a big brother group in the USA, a Set of 4 Rakhis is a single act of love that reaches everyone at once. The shared unboxing and ceremony — even on a video call — become the highlight of Raksha Bandhan for the whole family.",
+      ],
+    },
+    whyUs: {
+      heading: "Why Order Set of 4 Rakhis from UsaRakhi",
+      bullets: [
+        "Four designer rakhis in one family-size pack",
+        "Best value for multi-brother celebrations",
+        "Domestic USA shipping from sisters worldwide",
+        "Premium festive packaging",
+        "Secure Stripe and Razorpay checkout",
+        "WhatsApp and email support",
+      ],
+    },
+    howTo: {
+      heading: "How to Send a Set of 4 Rakhis to the USA",
+      steps: [
+        "Select a four-piece set from the collection above.",
+        "Review the product photos so you know all four designs.",
+        "Add to cart and enter the full US shipping address.",
+        "Pay securely in USD or INR.",
+        "We pack the full set and deliver in 5–7 business days.",
+      ],
+    },
+    faqs: [
+      {
+        q: "What is included in a Set of 4 Rakhis?",
+        a: "Four designer rakhis in one pack. Many listings also include roli and chawal — see each product page for the exact contents.",
+      },
+      {
+        q: "Can I send a Set of 4 Rakhis from India to the USA?",
+        a: "Yes. Order on UsaRakhi.com, enter the US delivery address, and pay in INR via Razorpay. We fulfill domestically in America.",
+      },
+      {
+        q: "Is a Set of 4 Rakhis better value than four single rakhis?",
+        a: "Usually yes — multi-piece packs are curated as one gift with coordinated packaging and often better per-rakhi value than buying four singles separately.",
+      },
+      {
+        q: "How long does Set of 4 Rakhis delivery take?",
+        a: "Typically 5–7 business days after dispatch to any US state.",
+      },
+    ],
+    relatedCategories: relatedForSetPage("4-set-rakhi"),
   },
   "rakhi-hampers": {
     slug: "rakhi-hampers",

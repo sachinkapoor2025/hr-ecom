@@ -10,7 +10,6 @@ import { JsonLd } from "@/components/JsonLd";
 import { getCategoryContent } from "@/lib/content/category-content";
 import { getCategoryPageSeo } from "@/lib/content/category-seo";
 import { getCategoryRichContent } from "@/lib/content/category-rich-content";
-import { CategoryProductLinks } from "@/components/CategoryProductLinks";
 import { categoryHref } from "@/lib/category-urls";
 import { loadProductsByCategory } from "@/lib/product-loader";
 import { categoryOrder } from "@/lib/site";
@@ -158,8 +157,6 @@ export default async function CategoryPage({ params, searchParams }: Props) {
           </Link>
         </p>
       )}
-
-      <CategoryProductLinks products={products} categoryName={name} />
 
       {rich ? (
         <CategoryContentSection content={rich} categoryName={name} />
