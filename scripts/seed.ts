@@ -52,6 +52,7 @@ async function seed() {
   console.log(`Seeding ${categories.length} categories, ${products.length} products...`);
 
   for (const cat of categories) {
+    const sortOrder = typeof cat.sortOrder === "number" ? cat.sortOrder : 0;
     await docClient.send(
       new PutCommand({
         TableName: PRODUCTS_TABLE,
@@ -60,6 +61,8 @@ async function seed() {
           published: true,
           PK: categoryKeys.pk(cat.slug),
           SK: categoryKeys.sk(),
+          GSI1PK: categoryKeys.gsi1pk(),
+          GSI1SK: categoryKeys.gsi1sk(sortOrder, cat.slug),
           createdAt: timestamp,
           updatedAt: timestamp,
         },

@@ -4,9 +4,12 @@ import { createCategorySchema, updateCategorySchema, categoryKeys, type Category
 import { docClient, PRODUCTS_TABLE, now, slugify } from "../lib/db";
 import { ok, okCached, created, badRequest, notFound, forbidden } from "../lib/response";
 import { getAuth } from "../lib/auth";
+import { ensureUsarakhiCategoriesInDb } from "../lib/usarakhi-catalog";
 
 const CATEGORY_CACHE_TTL_MS = 60_000;
 let categoryCache: { at: number; items: Category[] } | null = null;
+/** Once per Lambda instance: repair categories missing GSI1 (legacy WooCommerce/seed imports). */
+let categoryIndexRepaired = false;
 
 function invalidateCategoryCache() {
   categoryCache = null;
@@ -41,20 +44,29 @@ async function queryAllCategories(): Promise<Category[]> {
   return items;
 }
 
-/** One-time / sparse backfill for categories created before GSI1 indexing. */
+/** Scan all CATEGORY# rows and write missing GSI1 keys so list queries stay complete. */
 async function scanAndBackfillCategories(): Promise<Category[]> {
-  const result = await docClient.send(
-    new ScanCommand({
-      TableName: PRODUCTS_TABLE,
-      FilterExpression: "begins_with(PK, :prefix) AND SK = :sk",
-      ExpressionAttributeValues: { ":prefix": "CATEGORY#", ":sk": "META" },
-    })
-  );
-  const items = (result.Items ?? []) as Array<Category & Record<string, unknown>>;
-  await Promise.all(
-    items
-      .filter((item) => item.GSI1PK !== categoryKeys.gsi1pk())
-      .map((item) =>
+  const items: Array<Category & Record<string, unknown>> = [];
+  let ExclusiveStartKey: Record<string, unknown> | undefined;
+  do {
+    const result = await docClient.send(
+      new ScanCommand({
+        TableName: PRODUCTS_TABLE,
+        FilterExpression: "begins_with(PK, :prefix) AND SK = :sk",
+        ExpressionAttributeValues: { ":prefix": "CATEGORY#", ":sk": "META" },
+        ExclusiveStartKey,
+      })
+    );
+    if (result.Items?.length) {
+      items.push(...(result.Items as Array<Category & Record<string, unknown>>));
+    }
+    ExclusiveStartKey = result.LastEvaluatedKey as Record<string, unknown> | undefined;
+  } while (ExclusiveStartKey);
+
+  const missingIndex = items.filter((item) => item.GSI1PK !== categoryKeys.gsi1pk());
+  if (missingIndex.length > 0) {
+    await Promise.all(
+      missingIndex.map((item) =>
         docClient.send(
           new PutCommand({
             TableName: PRODUCTS_TABLE,
@@ -62,7 +74,8 @@ async function scanAndBackfillCategories(): Promise<Category[]> {
           })
         )
       )
-  );
+    );
+  }
   return items.map((item) => withCategoryIndex(item) as Category);
 }
 
@@ -73,8 +86,16 @@ async function loadCategories(): Promise<Category[]> {
   }
 
   let items = await queryAllCategories();
-  if (items.length === 0) {
-    items = await scanAndBackfillCategories();
+  // Legacy imports wrote CATEGORY# rows without GSI1. If only indexed rows (e.g. Rakhi
+  // Hamper) exist, length > 0 and the old empty-only backfill never ran — repair once.
+  if (items.length === 0 || !categoryIndexRepaired) {
+    const scanned = await scanAndBackfillCategories();
+    await ensureUsarakhiCategoriesInDb();
+    items = await queryAllCategories();
+    if (items.length === 0 && scanned.length > 0) {
+      items = scanned;
+    }
+    categoryIndexRepaired = true;
   }
 
   categoryCache = { at: nowMs, items };
