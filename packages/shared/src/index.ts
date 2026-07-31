@@ -37,6 +37,7 @@ export * from "./lib/rakhi-set-size";
 export * from "./lib/free-shipping";
 export * from "./lib/order-shipments";
 export * from "./lib/schedule-delivery";
+export * from "./lib/marketing-email-html";
 export * from "./db/keys";
 export * from "./constants";
 export * from "./currency";

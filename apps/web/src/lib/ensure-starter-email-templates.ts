@@ -1,12 +1,31 @@
 import type { SesTemplate } from "@hr-ecom/shared";
-import { STARTER_EMAIL_TEMPLATES } from "@/lib/starter-email-templates";
+import { PREMIUM_MARKETING_EMAIL_LAYOUT } from "@hr-ecom/shared";
+import {
+  STARTER_EMAIL_TEMPLATES,
+  resolveStarterHtmlBody,
+  type StarterEmailTemplateMeta,
+} from "@/lib/starter-email-templates";
 
 type ApiClient = <T>(path: string, init?: RequestInit) => Promise<T>;
 
+async function loadStarterHtml(starter: StarterEmailTemplateMeta): Promise<string> {
+  if (starter.contentFields) {
+    return resolveStarterHtmlBody(starter);
+  }
+  if (!starter.htmlPath) {
+    throw new Error(`Starter template ${starter.templateId} has no htmlPath or contentFields`);
+  }
+  const htmlRes = await fetch(starter.htmlPath);
+  if (!htmlRes.ok) {
+    throw new Error(`Failed to load starter template HTML (${starter.name})`);
+  }
+  return resolveStarterHtmlBody(starter, await htmlRes.text());
+}
+
 /**
  * Ensures packaged starter templates exist in Admin → Templates.
- * Creates missing starters and refreshes HTML for existing starter ids
- * so design updates (banner, product images) ship to the Templates list.
+ * HTML-file starters refresh when the file changes.
+ * Structured (contentFields) starters install once and preserve Admin edits.
  */
 export async function ensureStarterEmailTemplates(api: ApiClient): Promise<{
   templates: SesTemplate[];
@@ -19,12 +38,9 @@ export async function ensureStarterEmailTemplates(api: ApiClient): Promise<{
   const updated: string[] = [];
 
   for (const starter of STARTER_EMAIL_TEMPLATES) {
-    const htmlRes = await fetch(starter.htmlPath);
-    if (!htmlRes.ok) {
-      throw new Error(`Failed to load starter template HTML (${starter.name})`);
-    }
-    const htmlBody = await htmlRes.text();
+    const htmlBody = await loadStarterHtml(starter);
     const existing = byId.get(starter.templateId);
+    const isStructured = Boolean(starter.contentFields && starter.layout === PREMIUM_MARKETING_EMAIL_LAYOUT);
 
     if (!existing) {
       const created = await api<{ template: SesTemplate; existed?: boolean }>("/ses-email/templates", {
@@ -34,6 +50,8 @@ export async function ensureStarterEmailTemplates(api: ApiClient): Promise<{
           name: starter.name,
           subject: starter.subject,
           htmlBody,
+          ...(starter.layout ? { layout: starter.layout } : {}),
+          ...(starter.contentFields ? { contentFields: starter.contentFields } : {}),
         }),
       });
       if (!created.existed) installed.push(created.template.templateId);
@@ -41,7 +59,26 @@ export async function ensureStarterEmailTemplates(api: ApiClient): Promise<{
       continue;
     }
 
-    // Refresh packaged starter content when the HTML file changes.
+    // Structured templates: only migrate layout/contentFields if missing; never clobber edits.
+    if (isStructured && starter.preserveAdminEdits !== false) {
+      if (!existing.contentFields || existing.layout !== PREMIUM_MARKETING_EMAIL_LAYOUT) {
+        const res = await api<{ template: SesTemplate }>(`/ses-email/templates/${starter.templateId}`, {
+          method: "PUT",
+          body: JSON.stringify({
+            name: existing.name || starter.name,
+            subject: existing.subject || starter.subject,
+            layout: starter.layout,
+            contentFields: existing.contentFields ?? starter.contentFields,
+            htmlBody,
+          }),
+        });
+        updated.push(res.template.templateId);
+        byId.set(res.template.templateId, res.template);
+      }
+      continue;
+    }
+
+    // Legacy file-based starters: refresh when packaged HTML changes.
     if (existing.htmlBody !== htmlBody || existing.subject !== starter.subject || existing.name !== starter.name) {
       const res = await api<{ template: SesTemplate }>(`/ses-email/templates/${starter.templateId}`, {
         method: "PUT",
