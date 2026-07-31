@@ -280,6 +280,7 @@ export default function AdminOrderDetailPage() {
     (transitions.length === 0 &&
       (order.status === ORDER_STATUS.PROCESSING || order.status === ORDER_STATUS.SHIPPED));
   const isAcceptOnly = newStatus === ORDER_STATUS.ACCEPTED;
+  const isOnHoldOnly = newStatus === ORDER_STATUS.ON_HOLD;
   const canBuyLabel =
     (order.status === ORDER_STATUS.PAID ||
       order.status === ORDER_STATUS.ACCEPTED ||
@@ -790,7 +791,9 @@ export default function AdminOrderDetailPage() {
                   ? "Saving…"
                   : isAcceptOnly
                     ? "Accept order"
-                    : "Save update"}
+                    : isOnHoldOnly
+                      ? "Put on hold"
+                      : "Save update"}
               </button>
             </form>
             {message && <p className="text-green-600 text-xs mt-2">{message}</p>}
