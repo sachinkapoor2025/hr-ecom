@@ -115,6 +115,9 @@ export default function CartPage() {
   const shippingCharge = multiVendorShipping.totalCharge;
   const estimatedTotal = total + shippingCharge;
   const mixedVendors = new Set(items.map((i) => i.vendorSlug?.trim() || "usarakhi")).size > 1;
+  /** Mixed sellers + at least one under $7: shipping fee applies to that seller only. */
+  const showMixedVendorShippingException =
+    mixedVendors && multiVendorShipping.perShipment.some((q) => q.charge > 0);
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 sm:py-10">
@@ -203,13 +206,12 @@ export default function CartPage() {
                   {shippingCharge > 0 ? format(shippingCharge, currency) : "FREE"}
                 </span>
               </div>
-              {mixedVendors || multiVendorShipping.perShipment.length > 1 ? (
+              {showMixedVendorShippingException ? (
                 <p className="text-xs text-amber-900 bg-amber-50 border border-amber-100 rounded-md px-3 py-2">
-                  Free shipping is $7+ per seller (and per delivery address at checkout). Under $7
-                  adds $6.99 for that seller
-                  {shippingCharge > 0
-                    ? ` — estimated shipping ${format(shippingCharge, currency)}.`
-                    : "."}
+                  Your items ship from different sellers, so free shipping is checked separately for
+                  each — not on the cart total. The {format(shippingCharge, currency)} shipping fee
+                  applies only to the seller under $7; the other seller ships free when their items
+                  are $7+.
                 </p>
               ) : (
                 <FreeShippingNotice
@@ -220,8 +222,8 @@ export default function CartPage() {
               )}
               {itemCount > 1 && (
                 <p className="text-xs text-slate-500">
-                  At checkout you can ship each Rakhi to a different US address. Under $7 shipping is
-                  $6.99 per delivery address and per seller when cart mixes catalog and Rakhi Hampers.
+                  At checkout you can ship each Rakhi to a different US address. Shipping under $7 is
+                  $6.99 per delivery address.
                 </p>
               )}
               <div className="flex items-center justify-between gap-4 pt-2 border-t border-slate-100">
