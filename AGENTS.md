@@ -72,3 +72,10 @@ Push to `main` triggers GitHub Actions. Do not manually deploy unless fixing CI.
 - "Add abandoned cart email using SES"
 
 Always preserve backward compatibility for existing orders and cart sessions.
+
+## Product images (peak season)
+
+- Never overwrite a product’s `images[]` with a shorter list during imports or bulk upserts.
+- Use `resolveProductImagesForUpsert()` from `@hr-ecom/shared` (merges; keeps existing gallery by default).
+- Intentional gallery replace only with `--replace-images` / `REPLACE_IMAGES=1` / `replaceImages: true`.
+- Prefer Admin **Add images** for extra photos; do not re-run catalog import just to “refresh” media.
