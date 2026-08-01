@@ -7,6 +7,7 @@ import {
   FREE_SHIPPING_MIN_SUBTOTAL_USD,
   quoteFreeShippingThreshold,
   selectRate,
+  USPS_MAIL_CLASSES,
   type RateQuote,
   type ShippingSettings,
   type ShopCurrency,
@@ -266,6 +267,18 @@ export async function resolveShippingForCheckout(
   };
 }
 
+/** True when Admin → Shipping origin is filled enough for USPS rates/labels. */
+export function shippingOriginConfigured(settings: ShippingSettings): boolean {
+  const o = settings.originAddress;
+  return Boolean(
+    o.line1?.trim() && o.city?.trim() && o.state?.trim() && o.postalCode?.trim()
+  );
+}
+
+export function shippingOriginMissingMessage(): string {
+  return "USPS origin address is not configured. Open Admin → Shipping and save a complete From address (street, city, state, ZIP), then try again.";
+}
+
 export async function purchaseLabelForOrder(order: {
   orderId: string;
   shippingAddress: {
@@ -290,12 +303,21 @@ export async function purchaseLabelForOrder(order: {
   shippingServiceCode?: string;
 }> {
   const settings = await loadShippingSettings();
+  if (!shippingOriginConfigured(settings)) {
+    throw new Error(shippingOriginMissingMessage());
+  }
   const provider = await getShippingProvider(settings);
   const pkg = await estimatePackageForCartItems(order.items);
 
+  // Admin "Buy USPS label" often has no service saved (free-shipping checkout).
+  // Default to Ground Advantage so purchase can proceed without a prior Load rates step.
+  const mailClass =
+    order.shippingServiceCode?.trim() ||
+    (order.shippingRateId ? undefined : USPS_MAIL_CLASSES.GROUND_ADVANTAGE);
+
   const result = await provider.buyLabel({
     rateId: order.shippingRateId,
-    mailClass: order.shippingServiceCode,
+    mailClass,
     pkg,
     origin: settings.originAddress,
     destination: {

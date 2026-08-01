@@ -23,6 +23,8 @@ import {
   estimatePackageForCartItems,
   purchaseLabelForOrder,
   resolveShippingForCheckout,
+  shippingOriginConfigured,
+  shippingOriginMissingMessage,
 } from "../lib/shipping/checkout-shipping";
 import { getShippingProvider, loadShippingSettings, saveShippingSettings } from "../lib/shipping";
 
@@ -252,6 +254,10 @@ export async function getOrderShippingRates(event: APIGatewayProxyEventV2) {
   if (!order) return notFound("Order not found");
 
   const settings = await loadShippingSettings();
+  if (!shippingOriginConfigured(settings)) {
+    return badRequest(shippingOriginMissingMessage());
+  }
+
   const pkg = await estimatePackageForCartItems(order.items);
   const destination = {
     name: order.shippingAddress.name,
@@ -272,10 +278,15 @@ export async function getOrderShippingRates(event: APIGatewayProxyEventV2) {
       settings.originAddress,
       destination
     );
+    if (!rates.length) {
+      return badRequest(
+        "USPS returned no rates for this package/destination. Check product weights and the ship-to address, then try again."
+      );
+    }
     return ok({ rates, packageDetails: pkg });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Rate lookup failed";
-    return ok({ rates: [], warning: message, packageDetails: pkg });
+    return badRequest(message);
   }
 }
 
