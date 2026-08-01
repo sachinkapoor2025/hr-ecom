@@ -128,16 +128,28 @@ export class USPSProvider implements ShippingProvider {
     }
 
     const creds = await resolveCredentials();
-    const body = new URLSearchParams({
+    // USPS OAuth v3 examples use JSON body (not form-urlencoded).
+    // See https://github.com/USPS/api-examples — Content-Type: application/json
+    const tokenBody: Record<string, string> = {
       grant_type: "client_credentials",
       client_id: creds.clientId,
       client_secret: creds.clientSecret,
-    });
+    };
+    // Some USPS accounts require CRID/MID on the token request (Ship / Labels apps).
+    if (creds.crid?.trim()) {
+      tokenBody.customer_registration_id = creds.crid.trim();
+    }
+    if (creds.mid?.trim()) {
+      tokenBody.mailer_id = creds.mid.trim();
+    }
 
     const res = await this.fetchWithRetry(`${this.baseUrl()}/oauth2/v3/token`, {
       method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: body.toString(),
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify(tokenBody),
     });
 
     if (!res.ok) {
