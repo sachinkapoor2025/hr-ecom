@@ -10,7 +10,7 @@ X-Vendor-Api-Key: <ORANGE_COUNTY_VENDOR_API_KEY>
 
 Base URL (prod example):
 
-`https://hou08enf2k.execute-api.us-east-1.amazonaws.com/prod`
+`https://foqu2ap4qi.execute-api.us-east-1.amazonaws.com/prod`
 
 ---
 
@@ -71,7 +71,7 @@ Keep calling while `hasMore === true`. You can also use `limit=200` for fewer ro
 ```bash
 curl -sS \
   -H "X-Vendor-Api-Key: YOUR_KEY" \
-  "https://hou08enf2k.execute-api.us-east-1.amazonaws.com/prod/vendors/orange-county/orders?days=15&limit=50"
+  "https://foqu2ap4qi.execute-api.us-east-1.amazonaws.com/prod/vendors/orange-county/orders?days=15&limit=50"
 ```
 
 ### Response fields (order)
@@ -162,7 +162,7 @@ curl -sS -X POST \
   -H "X-Vendor-Api-Key: YOUR_KEY" \
   -H "Content-Type: application/json" \
   -d '{"orderNumber":"OC10001","courierName":"USPS","awb":"9400111899223344556677"}' \
-  "https://hou08enf2k.execute-api.us-east-1.amazonaws.com/prod/vendors/orange-county/shipment"
+  "https://foqu2ap4qi.execute-api.us-east-1.amazonaws.com/prod/vendors/orange-county/shipment"
 ```
 
 ---
@@ -208,7 +208,7 @@ curl -sS -X POST \
   -H "X-Vendor-Api-Key: YOUR_KEY" \
   -H "Content-Type: application/json" \
   -d '{"orderNumber":"OC10001","currentShipmentStatus":"delivered"}' \
-  "https://hou08enf2k.execute-api.us-east-1.amazonaws.com/prod/vendors/orange-county/tracking"
+  "https://foqu2ap4qi.execute-api.us-east-1.amazonaws.com/prod/vendors/orange-county/tracking"
 ```
 
 ---
