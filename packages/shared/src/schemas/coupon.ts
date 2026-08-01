@@ -1,16 +1,11 @@
 import { z } from "zod";
 import { calendarDayKeyAmericaNy } from "../lib/early-bird";
 
-/** Re-export schedule-delivery helpers (still used on PDP / checkout). */
+/** Early Bird promo helpers (schedule-delivery lives in `lib/schedule-delivery`). */
 export {
   EARLY_BIRD_DISCOUNT_PERCENT,
   EARLY_BIRD_ENDS_DATE,
-  SCHEDULE_DELIVERY_MAX_DATE,
   isEarlyBirdPromoActive,
-  isValidScheduleDeliveryDate,
-  preferredDeliveryDateToIso,
-  scheduleDeliveryMinDate,
-  calendarDayKeyAmericaNy,
 } from "../lib/early-bird";
 
 /** Discount-of-the-day coupon validity window. */
