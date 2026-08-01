@@ -808,8 +808,8 @@ function CheckoutPageInner() {
                   <h2 className="text-lg font-bold text-slate-900">Deliver each Rakhi</h2>
                   <p className="text-sm text-slate-600 mt-1">
                     By default every Rakhi ships to the address above. Uncheck “Same address” to send
-                    a Rakhi to a different US location. Shipping under $7 is $6.99 per delivery
-                    address.
+                    a Rakhi to a different US location. Under $7 shipping is $6.99 per delivery
+                    address and per seller (catalog vs Rakhi Hampers).
                   </p>
                 </div>
                 <ul className="space-y-4">
@@ -945,18 +945,18 @@ function CheckoutPageInner() {
               </div>
               {!isRetry && shippingQuote.settingsMode !== "pass_through" && (
                 <>
-                  {showSplitDelivery && multiShippingQuote.perShipment.length > 1 ? (
+                  {multiShippingQuote.perShipment.length > 1 ? (
                     <p className="text-xs text-amber-900 bg-amber-50 border border-amber-100 rounded-md px-3 py-2">
-                      Shipping is calculated per delivery address. Cart under $7 for an address adds
-                      $6.99 for that delivery.
+                      Shipping is calculated per delivery address and per seller. Under $7 for a
+                      seller at an address adds $6.99 for that group.
                       {chargedShipmentCount > 0 ? (
                         <>
                           {" "}
-                          {chargedShipmentCount} of {multiShippingQuote.perShipment.length} deliveries
+                          {chargedShipmentCount} of {multiShippingQuote.perShipment.length} groups
                           include shipping ({format(shippingCharge, displayCurrency)} total).
                         </>
                       ) : (
-                        <> All deliveries qualify for free shipping.</>
+                        <> All groups qualify for free shipping.</>
                       )}
                     </p>
                   ) : (

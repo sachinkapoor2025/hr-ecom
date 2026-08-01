@@ -2,7 +2,11 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { quoteFreeShippingThreshold } from "@hr-ecom/shared";
+import {
+  quoteFreeShippingThreshold,
+  quoteShipmentsShipping,
+  vendorSubtotalsForItems,
+} from "@hr-ecom/shared";
 import { useCart } from "@/lib/cart-context";
 import { useCurrency } from "@/lib/currency-context";
 import { SecureCheckoutBadge } from "@/components/SecureCheckoutBadge";
@@ -88,12 +92,29 @@ export default function CartPage() {
     return sum + convert(i.price * i.quantity, lineCurrency);
   }, 0);
   const currency = displayCurrency;
-  const shippingQuote = quoteFreeShippingThreshold({
-    subtotal: total,
+  const vendorSubtotals = vendorSubtotalsForItems(
+    items.map((i) => ({
+      price: convert(i.price, (i.currency ?? cartCurrency) as DisplayCurrency),
+      quantity: i.quantity,
+      vendorSlug: i.vendorSlug,
+    }))
+  );
+  const multiVendorShipping = quoteShipmentsShipping({
+    shipmentSubtotals: vendorSubtotals.length > 0 ? vendorSubtotals : [total],
     currency,
     usdInrRate,
   });
-  const estimatedTotal = total + shippingQuote.charge;
+  const shippingQuote =
+    multiVendorShipping.perShipment.find((q) => !q.qualifiesForFreeShipping) ??
+    multiVendorShipping.perShipment[0] ??
+    quoteFreeShippingThreshold({
+      subtotal: total,
+      currency,
+      usdInrRate,
+    });
+  const shippingCharge = multiVendorShipping.totalCharge;
+  const estimatedTotal = total + shippingCharge;
+  const mixedVendors = new Set(items.map((i) => i.vendorSlug?.trim() || "usarakhi")).size > 1;
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 sm:py-10">
@@ -174,23 +195,33 @@ export default function CartPage() {
                 <span className="text-slate-700">Shipping fee</span>
                 <span
                   className={
-                    shippingQuote.charge > 0
+                    shippingCharge > 0
                       ? "font-medium text-slate-900"
                       : "font-bold text-accent"
                   }
                 >
-                  {shippingQuote.charge > 0 ? format(shippingQuote.charge, currency) : "FREE"}
+                  {shippingCharge > 0 ? format(shippingCharge, currency) : "FREE"}
                 </span>
               </div>
-              <FreeShippingNotice
-                quote={shippingQuote}
-                formatMoney={format}
-                currency={currency}
-              />
+              {mixedVendors || multiVendorShipping.perShipment.length > 1 ? (
+                <p className="text-xs text-amber-900 bg-amber-50 border border-amber-100 rounded-md px-3 py-2">
+                  Free shipping is $7+ per seller (and per delivery address at checkout). Under $7
+                  adds $6.99 for that seller
+                  {shippingCharge > 0
+                    ? ` — estimated shipping ${format(shippingCharge, currency)}.`
+                    : "."}
+                </p>
+              ) : (
+                <FreeShippingNotice
+                  quote={shippingQuote}
+                  formatMoney={format}
+                  currency={currency}
+                />
+              )}
               {itemCount > 1 && (
                 <p className="text-xs text-slate-500">
-                  At checkout you can ship each Rakhi to a different US address. Shipping under $7 is
-                  $6.99 per delivery address.
+                  At checkout you can ship each Rakhi to a different US address. Under $7 shipping is
+                  $6.99 per delivery address and per seller when cart mixes catalog and Rakhi Hampers.
                 </p>
               )}
               <div className="flex items-center justify-between gap-4 pt-2 border-t border-slate-100">

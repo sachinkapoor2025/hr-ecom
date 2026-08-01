@@ -1,6 +1,7 @@
 import {
   addressFingerprint,
   isValidShippingPhone,
+  shippingVendorKey,
   type CartItem,
   type CheckoutShipment,
   type ShippingAddress,
@@ -13,6 +14,8 @@ export type DeliveryUnit = {
   name: string;
   price: number;
   image?: string;
+  /** Copied from cart — drives per-vendor free-shipping buckets. */
+  vendorSlug?: string;
   useSameAddress: boolean;
   address: ShippingAddress;
 };
@@ -35,6 +38,7 @@ export function expandCartToDeliveryUnits(
         name: item.name,
         price: item.price,
         image: item.image,
+        vendorSlug: item.vendorSlug,
         useSameAddress: prev?.useSameAddress ?? true,
         address: prev?.address ?? emptyShippingAddress(),
       });
@@ -113,15 +117,25 @@ export function buildCheckoutShipmentsFromUnits(
   }));
 }
 
+/**
+ * Chargeable shipping group subtotals: one bucket per (delivery address × vendor).
+ * UsaRakhi and Orange County on the same address are evaluated separately for the $7 rule.
+ */
 export function shipmentSubtotalsFromUnits(
   units: DeliveryUnit[],
   primary: ShippingAddress
 ): number[] {
-  const shipments = buildCheckoutShipmentsFromUnits(units, primary);
-  return shipments.map((shipment) =>
-    shipment.items.reduce((sum, line) => {
-      const unit = units.find((u) => u.productSlug === line.productSlug);
-      return sum + (unit?.price ?? 0) * line.quantity;
-    }, 0)
-  );
+  const groups = new Map<string, number>();
+
+  for (const unit of units) {
+    const address = unit.useSameAddress
+      ? withSender(primary, primary)
+      : withSender(unit.address, primary);
+    const addressKey = unit.useSameAddress ? "__primary__" : addressFingerprint(address);
+    const vendorKey = shippingVendorKey(unit);
+    const groupKey = `${addressKey}::${vendorKey}`;
+    groups.set(groupKey, (groups.get(groupKey) ?? 0) + unit.price);
+  }
+
+  return [...groups.values()];
 }

@@ -44,6 +44,39 @@ describe("buildOrderShipments", () => {
     assert.equal(built.shippingTotal, BELOW_THRESHOLD_SHIPPING_USD);
   });
 
+  it("charges per vendor when mixed vendors share one address", () => {
+    const cart: CartItem[] = [
+      { productSlug: "a", name: "A", price: 2.75, currency: "USD", quantity: 1 },
+      {
+        productSlug: "hamper",
+        name: "Hamper",
+        price: 2.75,
+        currency: "USD",
+        quantity: 1,
+        vendorSlug: "orange-county",
+      },
+    ];
+    const shipments: CheckoutShipment[] = [
+      {
+        shippingAddress: addr("One"),
+        items: [
+          { productSlug: "a", quantity: 1 },
+          { productSlug: "hamper", quantity: 1 },
+        ],
+      },
+    ];
+    const built = buildOrderShipments({
+      cartItems: cart,
+      checkoutShipments: shipments,
+      currency: "USD",
+      usdInrRate: 96,
+    });
+    assert.ok(!("error" in built));
+    if ("error" in built) return;
+    assert.equal(built.shippingTotal, BELOW_THRESHOLD_SHIPPING_USD * 2);
+    assert.equal(built.shipments[0].shipping, BELOW_THRESHOLD_SHIPPING_USD * 2);
+  });
+
   it("rejects incomplete partitions", () => {
     const cart: CartItem[] = [
       { productSlug: "a", name: "A", price: 10, currency: "USD", quantity: 2 },

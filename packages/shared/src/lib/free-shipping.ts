@@ -79,9 +79,18 @@ export function quoteFreeShippingThreshold(input: {
   };
 }
 
+/** Default vendor bucket for catalog SKUs without `vendorSlug` (UsaRakhi). */
+export const SHIPPING_VENDOR_USARAKHI = "usarakhi";
+
+/** Normalize cart/product vendor for per-vendor free-shipping buckets. */
+export function shippingVendorKey(item: { vendorSlug?: string }): string {
+  const slug = item.vendorSlug?.trim();
+  return slug || SHIPPING_VENDOR_USARAKHI;
+}
+
 /**
- * Per-delivery-address free shipping: each shipment's subtotal is evaluated
- * independently ($7 → free, else $6.99). Total charge is the sum.
+ * Free-shipping groups: each subtotal is one chargeable bucket
+ * (delivery address × vendor). Under $7 → $6.99; $7+ → free. Total = sum.
  */
 export function quoteShipmentsShipping(input: {
   shipmentSubtotals: number[];
@@ -103,4 +112,36 @@ export function quoteShipmentsShipping(input: {
     input.currency
   );
   return { totalCharge, perShipment };
+}
+
+/** Subtotals keyed by vendor within one delivery address. */
+export function vendorSubtotalsForItems(
+  items: Array<{ price: number; quantity: number; vendorSlug?: string }>
+): number[] {
+  const byVendor = new Map<string, number>();
+  for (const item of items) {
+    const key = shippingVendorKey(item);
+    byVendor.set(key, (byVendor.get(key) ?? 0) + item.price * item.quantity);
+  }
+  return [...byVendor.values()];
+}
+
+/**
+ * Shipping for one delivery address: evaluate the $7 / $6.99 rule per vendor
+ * inside that address (UsaRakhi vs Orange County, etc.), then sum.
+ */
+export function quoteAddressShipmentShipping(input: {
+  items: Array<{ price: number; quantity: number; vendorSlug?: string }>;
+  currency: ShopCurrency;
+  usdInrRate: number;
+}): {
+  totalCharge: number;
+  perVendor: FreeShippingQuote[];
+} {
+  const { totalCharge, perShipment } = quoteShipmentsShipping({
+    shipmentSubtotals: vendorSubtotalsForItems(input.items),
+    currency: input.currency,
+    usdInrRate: input.usdInrRate,
+  });
+  return { totalCharge, perVendor: perShipment };
 }

@@ -6,7 +6,7 @@ import type {
 } from "../schemas/order";
 import { cartSubtotal } from "../currency";
 import type { ShopCurrency } from "../currency";
-import { quoteShipmentsShipping } from "./free-shipping";
+import { quoteAddressShipmentShipping } from "./free-shipping";
 
 export function addressFingerprint(address: ShippingAddress): string {
   return [
@@ -109,17 +109,21 @@ export function buildOrderShipments(input: {
     };
   }
 
-  const { totalCharge, perShipment } = quoteShipmentsShipping({
-    shipmentSubtotals: built.map((s) => s.subtotal),
-    currency: input.currency,
-    usdInrRate: input.usdInrRate,
-  });
+  /** Per address: $6.99 for each vendor bucket under $7 (UsaRakhi vs Orange County, etc.). */
+  const perAddress = built.map((s) =>
+    quoteAddressShipmentShipping({
+      items: s.items,
+      currency: input.currency,
+      usdInrRate: input.usdInrRate,
+    })
+  );
+  const shippingTotal = perAddress.reduce((sum, q) => sum + q.totalCharge, 0);
 
   return {
-    shippingTotal: totalCharge,
+    shippingTotal,
     shipments: built.map((s, idx) => ({
       ...s,
-      shipping: perShipment[idx]?.charge ?? 0,
+      shipping: perAddress[idx]?.totalCharge ?? 0,
     })),
   };
 }
