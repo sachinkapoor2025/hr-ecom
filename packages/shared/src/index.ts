@@ -39,6 +39,7 @@ export * from "./lib/free-shipping";
 export * from "./lib/order-shipments";
 export * from "./lib/schedule-delivery";
 export * from "./lib/marketing-email-html";
+export * from "./lib/marketing-campaign-emails";
 export * from "./lib/order-number";
 export * from "./lib/product-addons";
 export * from "./db/keys";

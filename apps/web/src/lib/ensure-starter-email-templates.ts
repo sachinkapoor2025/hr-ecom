@@ -9,11 +9,11 @@ import {
 type ApiClient = <T>(path: string, init?: RequestInit) => Promise<T>;
 
 async function loadStarterHtml(starter: StarterEmailTemplateMeta): Promise<string> {
-  if (starter.contentFields) {
+  if (starter.buildHtml || starter.contentFields) {
     return resolveStarterHtmlBody(starter);
   }
   if (!starter.htmlPath) {
-    throw new Error(`Starter template ${starter.templateId} has no htmlPath or contentFields`);
+    throw new Error(`Starter template ${starter.templateId} has no htmlPath, buildHtml, or contentFields`);
   }
   const htmlRes = await fetch(starter.htmlPath);
   if (!htmlRes.ok) {
@@ -24,7 +24,7 @@ async function loadStarterHtml(starter: StarterEmailTemplateMeta): Promise<strin
 
 /**
  * Ensures packaged starter templates exist in Admin → Templates.
- * HTML-file starters refresh when the file changes.
+ * HTML-file / buildHtml starters refresh when packaged content changes.
  * Structured (contentFields) starters install once and preserve Admin edits.
  */
 export async function ensureStarterEmailTemplates(api: ApiClient): Promise<{
@@ -78,7 +78,7 @@ export async function ensureStarterEmailTemplates(api: ApiClient): Promise<{
       continue;
     }
 
-    // Legacy file-based starters: refresh when packaged HTML changes.
+    // File / buildHtml starters: refresh when packaged HTML or metadata changes.
     if (existing.htmlBody !== htmlBody || existing.subject !== starter.subject || existing.name !== starter.name) {
       const res = await api<{ template: SesTemplate }>(`/ses-email/templates/${starter.templateId}`, {
         method: "PUT",
