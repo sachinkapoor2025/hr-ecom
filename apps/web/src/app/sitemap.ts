@@ -6,6 +6,7 @@ import { categoryHref } from "@/lib/category-urls";
 import { getCatalogProducts } from "@/lib/catalog-fallback";
 import { categoryOrder } from "@/lib/site";
 import { listAllBlogPosts } from "@/lib/content/blog-posts";
+import { allCollectionSlugs } from "@/lib/collections";
 import { allSeoLocationSlugs, locationPublicPath } from "@/lib/content/seo-data";
 
 function mergeProducts(apiProducts: Product[]): Product[] {
@@ -64,6 +65,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.7,
   }));
 
+  const collectionRoutes = allCollectionSlugs().map((slug) => ({
+    url: `${siteUrl}/collections/${slug}`,
+    lastModified: now,
+    changeFrequency: "weekly" as const,
+    priority: 0.75,
+  }));
+
   let apiProducts: Product[] = [];
   try {
     const productsData = await api<{ products: Product[] }>("/products");
@@ -79,5 +87,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: p.categorySlug === "rakhi-hampers" ? 0.85 : 0.8,
   }));
 
-  return [...staticRoutes, ...categoryRoutes, ...locationRoutes, ...blogRoutes, ...productRoutes];
+  return [
+    ...staticRoutes,
+    ...categoryRoutes,
+    ...locationRoutes,
+    ...blogRoutes,
+    ...collectionRoutes,
+    ...productRoutes,
+  ];
 }
