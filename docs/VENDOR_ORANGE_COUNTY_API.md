@@ -1,6 +1,8 @@
 # Orange County vendor order API
 
-Dedicated API Gateway (`VendorApiUrl`) — **not** the storefront API.
+Dedicated API Gateway (`VendorApiUrl`) — also mirrored on the storefront API host for stability.
+
+**Infra note:** `VendorHttpApi` / `VendorApiFunction` use CloudFormation `DeletionPolicy: Retain` and `UpdateReplacePolicy: Retain` so a stack update does not wipe the vendor API Gateway. Do not rename those logical IDs in `infrastructure/template.yaml`.
 
 Auth header on every request:
 
