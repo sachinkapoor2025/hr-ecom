@@ -186,7 +186,7 @@ export default function SettingsPage() {
           <p className="text-xs text-emerald-700">
             {smtpPasswordSource === "env"
               ? "SMTP password is available from server env (MARKETING_SMTP_PASS). Saving settings will store it for campaigns."
-              : "SMTP password is saved."}
+              : "A password is stored — that does not prove Mailercloud still accepts it. If Send test returns 535, generate a new Mailercloud SMTP password, paste it here, and Save."}
           </p>
         )}
         {!smtpPasswordSet && (
@@ -195,6 +195,10 @@ export default function SettingsPage() {
             secret <code>MARKETING_SMTP_PASS</code> and redeploy.
           </p>
         )}
+        <p className="text-xs text-slate-500">
+          Use the SMTP username shown in Mailercloud (often <code>order@usarakhi.com</code>). Do not use
+          the transactional <code>smtp.usarakhi.com</code> mailbox password here.
+        </p>
       </div>
 
       <div className="rounded-xl border bg-white p-5 space-y-3">

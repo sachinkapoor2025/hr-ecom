@@ -695,9 +695,16 @@ Resources:
 
   # Separate API Gateway + Lambda for Orange County vendor order feed only.
   # Storefront/admin traffic stays on HttpApi — vendors cannot reach those routes here.
+  #
+  # Retain policies: do NOT delete this API if the stack is updated/replaced or this
+  # resource is temporarily removed — keeps the vendor Base URL stable.
+  # Never rename the logical ID `VendorHttpApi` (that forces a new API id / URL).
   VendorHttpApi:
     Type: AWS::Serverless::HttpApi
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Properties:
+      Name: !Sub hr-ecom-vendor-http-api-${Environment}
       StageName: !Ref Environment
       CorsConfiguration:
         AllowMethods: ["GET", "POST", "OPTIONS"]
@@ -706,6 +713,8 @@ Resources:
 
   VendorApiFunction:
     Type: AWS::Serverless::Function
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Properties:
       FunctionName: !Sub hr-ecom-vendor-api-${Environment}
       Handler: vendor-api.handler
@@ -750,6 +759,18 @@ Resources:
           Properties:
             ApiId: !Ref VendorHttpApi
             Path: /vendors/orange-county/orders/{orderId}/tracking
+            Method: POST
+        VendorPostShipmentByBody:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref VendorHttpApi
+            Path: /vendors/orange-county/shipment
+            Method: POST
+        VendorPostTrackingByBody:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref VendorHttpApi
+            Path: /vendors/orange-county/tracking
             Method: POST
         VendorHealth:
           Type: HttpApi

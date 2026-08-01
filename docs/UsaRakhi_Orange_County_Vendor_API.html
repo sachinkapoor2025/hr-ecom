@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>UsaRakhi — Orange County Vendor API</title>
+  <style>
+    @page { size: A4; margin: 18mm 16mm; }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+      font-size: 11px;
+      line-height: 1.45;
+      color: #1e293b;
+      margin: 0;
+    }
+    h1 {
+      font-size: 20px;
+      color: #183a68;
+      margin: 0 0 4px;
+    }
+    h2 {
+      font-size: 13px;
+      color: #183a68;
+      margin: 18px 0 8px;
+      border-bottom: 1px solid #cbd5e1;
+      padding-bottom: 4px;
+    }
+    h3 {
+      font-size: 11.5px;
+      color: #0f172a;
+      margin: 12px 0 6px;
+    }
+    p { margin: 0 0 8px; }
+    .sub { color: #475569; margin-bottom: 14px; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 8px 0 12px;
+    }
+    th, td {
+      border: 1px solid #e2e8f0;
+      padding: 6px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { background: #f1f5f9; color: #183a68; width: 28%; }
+    code, pre {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 9.5px;
+    }
+    pre {
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 10px 12px;
+      border-radius: 6px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+      margin: 6px 0 12px;
+    }
+    ul { margin: 4px 0 10px 18px; padding: 0; }
+    li { margin-bottom: 3px; }
+    .note {
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: 6px;
+      padding: 8px 10px;
+      margin: 8px 0 12px;
+    }
+    .ok {
+      background: #ecfdf5;
+      border: 1px solid #a7f3d0;
+      border-radius: 6px;
+      padding: 8px 10px;
+      margin: 8px 0 12px;
+    }
+    .footer {
+      margin-top: 20px;
+      padding-top: 8px;
+      border-top: 1px solid #cbd5e1;
+      color: #64748b;
+      font-size: 10px;
+    }
+    .badge {
+      display: inline-block;
+      background: #183a68;
+      color: #fff;
+      font-size: 9px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-right: 4px;
+    }
+  </style>
+</head>
+<body>
+  <h1>UsaRakhi → Orange County</h1>
+  <p class="sub"><strong>Order API Integration Guide</strong> — for Orange County fulfillment partners. Pull hamper orders, post AWB when shipped, and push tracking status updates. Selling prices are not included. Match products by your SKU codes.</p>
+
+  <h2>1. Credentials</h2>
+  <table>
+    <tr><th>Base URL</th><td><code>https://foqu2ap4qi.execute-api.us-east-1.amazonaws.com/prod</code></td></tr>
+    <tr><th>API Key</th><td><code>4bf361b07a50b6346046b8b446fbbe6f5151c404bad6e46431c94bd1172d2673</code></td></tr>
+    <tr><th>Auth header</th><td><code>X-Vendor-Api-Key: &lt;API Key&gt;</code></td></tr>
+  </table>
+    <div class="ok">
+    <strong>Base URL (current):</strong> use <code>https://foqu2ap4qi.execute-api.us-east-1.amazonaws.com/prod</code>.
+    The older host <code>hou08enf2k…</code> was retired (DNS NXDOMAIN) after API redeploy — do not use it.
+  </div>
+
+  <div class="note">Keep the API key private. Do not post it publicly or commit it to public repositories.</div>
+
+  <h2>2. Environment variables</h2>
+  <pre>USARAKHI_VENDOR_API_URL=https://foqu2ap4qi.execute-api.us-east-1.amazonaws.com/prod
+USARAKHI_VENDOR_API_KEY=4bf361b07a50b6346046b8b446fbbe6f5151c404bad6e46431c94bd1172d2673</pre>
+
+  <h2>3. How to fulfill vendor requirements (end-to-end)</h2>
+  <ol>
+    <li><strong>Import orders</strong> — poll <code>GET /vendors/orange-county/orders</code> (default last <strong>15 days</strong>). Use pagination if more than 50 orders.</li>
+    <li><strong>Match SKUs</strong> — use <code>items[].sku</code> / <code>productCode</code> (e.g. <code>TFUSRH2026-16</code>).</li>
+    <li><strong>Ship</strong> — use recipient address fields + gift message; store <code>orderNumber</code> (<code>OC10001</code>…) as your external reference.</li>
+    <li><strong>When shipped</strong> — call AWB API with <code>orderNumber</code>, <code>courierName</code>, <code>awb</code>.</li>
+    <li><strong>When status changes</strong> — call tracking API with <code>orderNumber</code> and <code>currentShipmentStatus</code>.</li>
+    <li><strong>Avoid duplicates</strong> — keep imported <code>orderNumber</code>s locally; use <code>updatedSince</code> for incremental sync.</li>
+  </ol>
+  <div class="ok">Do <strong>not</strong> use the public website API host — only the Base URL above (Vendor API).</div>
+
+  <h2>4. Curl tests (each step)</h2>
+
+  <h3><span class="badge">STEP A</span> Health check</h3>
+  <pre>curl -sS \
+  "https://foqu2ap4qi.execute-api.us-east-1.amazonaws.com/prod/health"</pre>
+  <p>Expected: <code>{"ok":true,"service":"orange-county-vendor-api"}</code></p>
+
+  <h3><span class="badge">STEP B</span> List orders (page 1)</h3>
+  <pre>curl -sS \
+  -H "X-Vendor-Api-Key: 4bf361b07a50b6346046b8b446fbbe6f5151c404bad6e46431c94bd1172d2673" \
+  "https://foqu2ap4qi.execute-api.us-east-1.amazonaws.com/prod/vendors/orange-county/orders?days=15&amp;limit=50"</pre>
+  <p>Expected: HTTP 200 JSON with <code>"vendorSlug":"orange-county"</code>, <code>orders</code> array, plus <code>hasMore</code> / <code>nextCursor</code> when more pages exist.</p>
+
+  <h3><span class="badge">STEP C</span> List orders (next page — more than 50)</h3>
+  <p>Yes — pagination is supported. Copy <code>nextCursor</code> from the previous response:</p>
+  <pre>curl -sS \
+  -H "X-Vendor-Api-Key: 4bf361b07a50b6346046b8b446fbbe6f5151c404bad6e46431c94bd1172d2673" \
+  "https://foqu2ap4qi.execute-api.us-east-1.amazonaws.com/prod/vendors/orange-county/orders?days=15&amp;limit=50&amp;cursor=PASTE_NEXT_CURSOR_HERE"</pre>
+  <p>Keep calling while <code>hasMore === true</code>. Max <code>limit</code> per page = <strong>200</strong>.</p>
+
+  <h3><span class="badge">STEP D</span> Get a single order</h3>
+  <pre>curl -sS \
+  -H "X-Vendor-Api-Key: 4bf361b07a50b6346046b8b446fbbe6f5151c404bad6e46431c94bd1172d2673" \
+  "https://foqu2ap4qi.execute-api.us-east-1.amazonaws.com/prod/vendors/orange-county/orders/OC10001"</pre>
+  <p>Replace <code>OC10001</code> with a real <code>orderNumber</code> from the list response. Internal UUID also works.</p>
+
+  <h3><span class="badge">STEP E</span> Update AWB when shipped</h3>
+  <p>Required fields: <code>orderNumber</code>, <code>courierName</code>, <code>awb</code>.</p>
+  <pre>curl -sS -X POST \
+  -H "X-Vendor-Api-Key: 4bf361b07a50b6346046b8b446fbbe6f5151c404bad6e46431c94bd1172d2673" \
+  -H "Content-Type: application/json" \
+  -d '{"orderNumber":"OC10001","courierName":"USPS","awb":"9400111899223344556677"}' \
+  "https://foqu2ap4qi.execute-api.us-east-1.amazonaws.com/prod/vendors/orange-county/shipment"</pre>
+  <p>Also supported (same body):</p>
+  <pre>POST .../vendors/orange-county/orders/OC10001/shipment</pre>
+  <p>Effect: saves tracking number + courier; moves order to <code>shipped</code> when allowed; notifies customer.</p>
+
+  <h3><span class="badge">STEP F</span> Update tracking / shipment status</h3>
+  <p>Required fields: <code>orderNumber</code>, <code>currentShipmentStatus</code> (alias: <code>currentStatus</code>).</p>
+  <pre>curl -sS -X POST \
+  -H "X-Vendor-Api-Key: 4bf361b07a50b6346046b8b446fbbe6f5151c404bad6e46431c94bd1172d2673" \
+  -H "Content-Type: application/json" \
+  -d '{"orderNumber":"OC10001","currentShipmentStatus":"in_transit"}' \
+  "https://foqu2ap4qi.execute-api.us-east-1.amazonaws.com/prod/vendors/orange-county/tracking"</pre>
+  <p>Also supported:</p>
+  <pre>POST .../vendors/orange-county/orders/OC10001/tracking</pre>
+  <p>Accepted status examples (case-insensitive): <code>processing</code>, <code>packed</code>, <code>shipped</code>, <code>in_transit</code>, <code>dispatched</code>, <code>out_for_delivery</code>, <code>delivered</code>, <code>complete</code>.</p>
+
+  <h2>5. List query parameters</h2>
+  <table>
+    <tr><th>days</th><td>Default <strong>15</strong> — only orders created in the last N days (max 90)</td></tr>
+    <tr><th>limit</th><td>Page size — default <strong>50</strong>, max <strong>200</strong></td></tr>
+    <tr><th>cursor</th><td>Opaque token from previous <code>nextCursor</code> (next page)</td></tr>
+    <tr><th>since</th><td>ISO timestamp — createdAt lower bound override</td></tr>
+    <tr><th>updatedSince</th><td>ISO — only orders with updatedAt ≥ this time (incremental sync)</td></tr>
+    <tr><th>status</th><td>Exact status filter, e.g. <code>paid</code>, <code>processing</code>, <code>shipped</code></td></tr>
+  </table>
+  <p>Without <code>status</code>, unpaid / cancelled / refunded orders are hidden.</p>
+
+  <h2>6. Response fields (order)</h2>
+  <ul>
+    <li><code>orderId</code> / <code>orderNumber</code> — human-readable <strong>OC10001</strong>, <strong>OC10002</strong>, …</li>
+    <li><code>internalOrderId</code> — internal UUID (support only; prefer <code>orderNumber</code>)</li>
+    <li><code>orderDate</code> / <code>createdAt</code> / <code>updatedAt</code> / <code>status</code></li>
+    <li><code>senderName</code>, <code>giftMessage</code></li>
+    <li><code>recipientName</code>, <code>recipientAddressLine1</code>, <code>recipientAddressLine2</code>, <code>city</code>, <code>state</code>, <code>country</code>, <code>zipCode</code>, <code>recipientPhoneNumber</code></li>
+    <li><code>orderValue</code> — total fulfill / purchase amount (USD vendor cost × qty). <strong>Not retail.</strong></li>
+    <li><code>deliveryDate</code>, <code>trackingNumber</code>, <code>carrier</code>, <code>shippingServiceName</code></li>
+  </ul>
+  <h3>Item fields</h3>
+  <ul>
+    <li><code>sku</code> / <code>productCode</code> — your product SKU</li>
+    <li><code>productName</code>, <code>quantity</code></li>
+    <li><code>price</code> — vendor unit cost (not website selling price)</li>
+    <li><code>productImageUrl</code>, <code>weight</code>, <code>weightUnit</code> (oz)</li>
+  </ul>
+  <p><strong>Not included:</strong> retail selling price, discounts, or other vendors’ products.</p>
+
+  <h2>7. HTTP status codes</h2>
+  <table>
+    <tr><th>200</th><td>Success</td></tr>
+    <tr><th>401</th><td>Missing or wrong API key</td></tr>
+    <tr><th>403</th><td>Order not found for your vendor</td></tr>
+    <tr><th>404</th><td>Wrong URL</td></tr>
+    <tr><th>400</th><td>Invalid body / validation error</td></tr>
+    <tr><th>500</th><td>Temporary server error — retry later</td></tr>
+  </table>
+
+  <h2>8. Checklist</h2>
+  <ul>
+    <li>[ ] Stored Base URL + API key securely</li>
+    <li>[ ] Health + list curl tests return 200</li>
+    <li>[ ] Automation sends <code>X-Vendor-Api-Key</code> on every request</li>
+    <li>[ ] Orders matched by <code>items[].sku</code></li>
+    <li>[ ] Pagination loop uses <code>nextCursor</code> when <code>hasMore</code> is true</li>
+    <li>[ ] AWB posted on ship (<code>orderNumber</code>, <code>courierName</code>, <code>awb</code>)</li>
+    <li>[ ] Tracking posted on status change (<code>currentShipmentStatus</code>)</li>
+    <li>[ ] Polling / <code>updatedSince</code> configured</li>
+  </ul>
+
+  <div class="footer">
+    Confidential — for Orange County fulfillment only. Contact UsaRakhi ops/tech for access issues or key rotation.<br />
+    Document updated to match current Vendor API capabilities (list + pagination, AWB shipment, tracking status).
+  </div>
+</body>
+</html>

@@ -25,6 +25,7 @@ import {
   verifyRazorpayPayment,
   syncAdminOrderPayment,
 } from "./handlers/payments/razorpay";
+import * as vendorOrders from "./handlers/vendor-orders";
 
 type RouteHandler = (event: APIGatewayProxyEventV2) => Promise<APIGatewayProxyResultV2>;
 
@@ -81,7 +82,37 @@ const routes: Route[] = [
   { method: "GET", pattern: /^\/admin\/shipping\/products-missing-dims$/, handler: shipping.listProductsMissingDims },
   { method: "GET", pattern: /^\/admin\/load-test$/, handler: loadTest.getLoadTestInfo },
   { method: "POST", pattern: /^\/admin\/load-test\/run$/, handler: loadTest.runLoadTest },
-  // Vendor order feed lives on a separate VendorHttpApi (vendor-api.ts) — not here.
+  // Orange County vendor feed — also on dedicated VendorHttpApi (vendor-api.ts).
+  // Served here so the stable storefront API host works if VendorApiUrl is rotated.
+  { method: "GET", pattern: /^\/vendors\/orange-county\/orders$/, handler: vendorOrders.listOrangeCountyOrders },
+  {
+    method: "GET",
+    pattern: /^\/vendors\/orange-county\/orders\/([^/]+)$/,
+    handler: vendorOrders.getOrangeCountyOrder,
+    params: ["orderId"],
+  },
+  {
+    method: "POST",
+    pattern: /^\/vendors\/orange-county\/orders\/([^/]+)\/shipment$/,
+    handler: vendorOrders.postOrangeCountyShipment,
+    params: ["orderId"],
+  },
+  {
+    method: "POST",
+    pattern: /^\/vendors\/orange-county\/orders\/([^/]+)\/tracking$/,
+    handler: vendorOrders.postOrangeCountyTracking,
+    params: ["orderId"],
+  },
+  {
+    method: "POST",
+    pattern: /^\/vendors\/orange-county\/shipment$/,
+    handler: vendorOrders.postOrangeCountyShipmentByBody,
+  },
+  {
+    method: "POST",
+    pattern: /^\/vendors\/orange-county\/tracking$/,
+    handler: vendorOrders.postOrangeCountyTrackingByBody,
+  },
   { method: "GET", pattern: /^\/orders$/, handler: orders.listOrders },
   { method: "GET", pattern: /^\/orders\/([^/]+)$/, handler: orders.getOrder, params: ["orderId"] },
   { method: "POST", pattern: /^\/orders\/([^/]+)\/retry-payment$/, handler: orders.retryOrderPayment, params: ["orderId"] },

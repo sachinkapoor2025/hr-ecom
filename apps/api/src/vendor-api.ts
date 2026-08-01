@@ -8,6 +8,8 @@ import {
   getOrangeCountyOrder,
   postOrangeCountyShipment,
   postOrangeCountyTracking,
+  postOrangeCountyShipmentByBody,
+  postOrangeCountyTrackingByBody,
 } from "./handlers/vendor-orders";
 
 type Handler = (event: APIGatewayProxyEventV2) => Promise<APIGatewayProxyResultV2>;
@@ -40,6 +42,16 @@ const routes: Array<{
     pattern: /^\/vendors\/orange-county\/orders\/([^/]+)\/tracking$/,
     handler: postOrangeCountyTracking,
     params: ["orderId"],
+  },
+  {
+    method: "POST",
+    pattern: /^\/vendors\/orange-county\/shipment$/,
+    handler: postOrangeCountyShipmentByBody,
+  },
+  {
+    method: "POST",
+    pattern: /^\/vendors\/orange-county\/tracking$/,
+    handler: postOrangeCountyTrackingByBody,
   },
   {
     method: "GET",

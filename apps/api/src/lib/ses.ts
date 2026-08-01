@@ -396,6 +396,12 @@ async function sendViaMarketingSmtp(
         { code: "MarketingSmtpInvalidSender", cause: err }
       );
     }
+    if (/535|invalid (login|credentials)|authentication failed/i.test(raw)) {
+      throw new SesSendError(
+        `Marketing SMTP failed: Invalid login (535). The password saved in Admin is not accepted by Mailercloud for user "${smtp.user}". In Mailercloud → SMTP, click Generate New Password, paste it into Admin → Email → Settings → SMTP password (replace the saved one), confirm the SMTP username matches Mailercloud exactly, Save, then retry Send test. Host: ${smtp.host}:${smtp.port}`,
+        { code: "MarketingSmtpAuthFailed", cause: err }
+      );
+    }
     throw new SesSendError(`Marketing SMTP failed: ${raw}`, {
       code: "MarketingSmtpError",
       cause: err,
