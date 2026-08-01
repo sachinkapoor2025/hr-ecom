@@ -22,6 +22,8 @@ import { TableControls } from "@/components/admin/TableControls";
 
 interface Order {
   orderId: string;
+  /** Human-readable OC##### / US##### when assigned. */
+  orderNumber?: string;
   status: string;
   total: number;
   currency: string;
@@ -445,7 +447,7 @@ export default function AdminOrdersPage() {
                     className="py-3 px-3 font-mono text-xs text-nav cursor-pointer"
                     onClick={() => router.push(`/admin/orders/${o.orderId}`)}
                   >
-                    {o.orderId.slice(0, 8)}…
+                    {o.orderNumber ?? `${o.orderId.slice(0, 8)}…`}
                   </td>
                   <td
                     className="py-3 px-3 cursor-pointer"

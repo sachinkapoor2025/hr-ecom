@@ -8,6 +8,7 @@ import {
   DEFAULT_PRODUCT_INVENTORY,
   withCompetitiveStorefrontPricing,
   stripVendorPrivateFields,
+  productAllowsAddons,
   isRakhiSetSizeCategory,
   productMatchesRakhiSetCategory,
   type Product,
@@ -20,9 +21,11 @@ import { syncInventoryAlertState } from "../lib/inventory";
 import { ensureProductInDb } from "../lib/ensure-product";
 
 function forStorefront(product: Product): Product {
-  return stripVendorPrivateFields(
+  const allowsAddons = productAllowsAddons(product);
+  const stripped = stripVendorPrivateFields(
     withCompetitiveStorefrontPricing(withResolvedProductImages(product))
-  ) as Product;
+  );
+  return { ...stripped, allowsAddons } as Product;
 }
 
 function isKidsComboProduct(product: Product): boolean {

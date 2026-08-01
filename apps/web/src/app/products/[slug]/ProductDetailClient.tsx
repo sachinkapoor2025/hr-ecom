@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { api } from "@/lib/api";
 import { AddToCartControl } from "@/components/AddToCartControl";
+import { ProductAddonsPicker } from "@/components/ProductAddonsPicker";
 import { ProductImageGallery } from "@/components/ProductImageGallery";
 import { WishlistButton } from "@/components/WishlistButton";
 import { TrustBadges } from "@/components/TrustBadges";
@@ -19,10 +20,10 @@ import { HomeProductCard } from "@/components/HomeProductCard";
 import { useCart } from "@/lib/cart-context";
 import { productPageFaqs } from "@/lib/content/product-faqs";
 import { testimonials } from "@/lib/site";
-import { LOW_STOCK_THRESHOLD, isFastSelling, getUnitsSold, estimatedDeliveryLabel } from "@hr-ecom/shared";
+import { LOW_STOCK_THRESHOLD, isFastSelling, getUnitsSold, estimatedDeliveryLabel, sumAddonPrices, getProductAddon } from "@hr-ecom/shared";
 import { EstimatedDeliveryNote } from "@/components/EstimatedDeliveryNote";
 import { ScheduleDeliveryPicker } from "@/components/ScheduleDeliveryPicker";
-import type { Product } from "@hr-ecom/shared";
+import type { Product, ProductAddonSelection } from "@hr-ecom/shared";
 import { FastSellingBanner } from "@/components/FastSellingBadge";
 import { looksLikeHtml, shortPlainDescription } from "@/lib/html-text";
 import { getProductIncludes } from "@/lib/product-includes";
@@ -104,10 +105,15 @@ export function ProductDetailClient({
   const [tab, setTab] = useState<Tab>("description");
   const [productUrl, setProductUrl] = useState("");
   const [galleryImages, setGalleryImages] = useState(product.images ?? []);
+  const [addons, setAddons] = useState<ProductAddonSelection[]>([]);
 
   useEffect(() => {
     setGalleryImages(product.images ?? []);
   }, [product.slug, product.images]);
+
+  useEffect(() => {
+    setAddons([]);
+  }, [product.slug]);
 
   useEffect(() => {
     trackProductView(product.slug);
@@ -132,6 +138,24 @@ export function ProductDetailClient({
   }, [product.slug]);
 
   const price = format(product.price, product.currency);
+  const addonsUsdTotal = sumAddonPrices(
+    addons.map((s) => {
+      const def = getProductAddon(s.id);
+      return {
+        id: s.id,
+        name: def?.name ?? s.id,
+        price: def?.priceUsd ?? 0,
+        quantity: s.quantity,
+      };
+    })
+  );
+  /** Add-on catalog is USD; show combined display when shopper has extras selected. */
+  const displayTotal =
+    addonsUsdTotal > 0 && product.currency === "USD"
+      ? format(product.price + addonsUsdTotal, product.currency)
+      : addonsUsdTotal > 0
+        ? format(product.price, product.currency)
+        : price;
   const comparePrice =
     product.compareAtPrice && product.compareAtPrice > product.price
       ? format(product.compareAtPrice, product.currency)
@@ -139,8 +163,10 @@ export function ProductDetailClient({
   const discount = getDiscountPercent(product.price, product.compareAtPrice);
   const summary = shortPlainDescription(product.description);
   const descriptionIsHtml = looksLikeHtml(product.description);
-  const cartQuantity = cart?.items.find((i) => i.productSlug === product.slug)?.quantity ?? 0;
+  const cartQuantity =
+    cart?.items.filter((i) => i.productSlug === product.slug).reduce((s, i) => s + i.quantity, 0) ?? 0;
   const inCart = cartQuantity > 0;
+  const showAddons = product.allowsAddons === true;
   const lowStock = product.inventory > 0 && product.inventory <= LOW_STOCK_THRESHOLD;
   const fastSelling = isFastSelling(product);
   const unitsSold = getUnitsSold(product);
@@ -180,7 +206,12 @@ export function ProductDetailClient({
 
           <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 mb-4">
             {comparePrice && <span className="text-lg text-slate-400 line-through">{comparePrice}</span>}
-            <span className="text-2xl sm:text-3xl font-bold text-primary">{price}</span>
+            <span className="text-2xl sm:text-3xl font-bold text-primary">{displayTotal}</span>
+            {addonsUsdTotal > 0 && product.currency === "USD" ? (
+              <span className="text-sm text-slate-500">
+                includes +{format(addonsUsdTotal, "USD")} add-ons
+              </span>
+            ) : null}
             {discount !== null && (
               <span className="text-sm font-semibold text-green-600">{discount}% OFF</span>
             )}
@@ -204,6 +235,10 @@ export function ProductDetailClient({
           <EstimatedDeliveryNote variant="banner" prefix="Estimated delivery:" className="mb-4" />
 
           <TrustBadges variant="compact" className="mb-5" />
+
+          {showAddons ? (
+            <ProductAddonsPicker selected={addons} onChange={setAddons} className="mb-4" />
+          ) : null}
 
           {inCart ? (
             <div className="mb-3">
@@ -229,6 +264,7 @@ export function ProductDetailClient({
                     fullWidth
                     variant="detail"
                     getContact={getContact}
+                    addons={addons}
                   />
                 </div>
 
@@ -254,18 +290,21 @@ export function ProductDetailClient({
               </div>
             </div>
           ) : (
-            <div className="flex items-stretch gap-2 mb-3">
-              <div className="flex-1 min-w-0">
-                <AddToCartControl
-                  productSlug={product.slug}
-                  disabled={product.inventory <= 0}
-                  fullWidth
-                  variant="detail"
-                  getContact={getContact}
-                />
+            <div className="mb-3">
+              <div className="flex items-stretch gap-2 mb-3">
+                <div className="flex-1 min-w-0">
+                  <AddToCartControl
+                    productSlug={product.slug}
+                    disabled={product.inventory <= 0}
+                    fullWidth
+                    variant="detail"
+                    getContact={getContact}
+                    addons={addons}
+                  />
+                </div>
+                <WishlistButton product={product} variant="toolbar" />
+                {productUrl ? <ShareButton title={product.name} url={productUrl} /> : <div className="w-12 shrink-0" />}
               </div>
-              <WishlistButton product={product} variant="toolbar" />
-              {productUrl ? <ShareButton title={product.name} url={productUrl} /> : <div className="w-12 shrink-0" />}
             </div>
           )}
 
@@ -430,7 +469,7 @@ export function ProductDetailClient({
         </dl>
       </section>
     </div>
-    <StickyAddToCartBar product={product} getContact={getContact} />
+    <StickyAddToCartBar product={product} getContact={getContact} addons={addons} />
     </>
   );
 }

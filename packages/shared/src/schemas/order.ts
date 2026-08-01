@@ -126,6 +126,12 @@ export const orderStatusHistoryEntrySchema = z.object({
 
 export const orderSchema = z.object({
   orderId: z.string(),
+  /**
+   * Human-readable order number for staff, customers, and vendors.
+   * Orange County fulfill orders: OC10001…
+   * All other UsaRakhi orders: US10001…
+   */
+  orderNumber: z.string().optional(),
   userId: z.string().optional(),
   sessionId: z.string().optional(),
   items: z.array(cartItemSchema),

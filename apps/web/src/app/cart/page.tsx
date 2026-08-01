@@ -16,6 +16,7 @@ import { TrustBadges } from "@/components/TrustBadges";
 import { resolveImageUrl } from "@/lib/images";
 import { EstimatedDeliveryNote } from "@/components/EstimatedDeliveryNote";
 import { FreeShippingNotice } from "@/components/FreeShippingNotice";
+import { cartLineUnitTotal, type CartItem } from "@hr-ecom/shared";
 import type { DisplayCurrency } from "@/lib/currency-context";
 
 function TrashIcon() {
@@ -27,7 +28,17 @@ function TrashIcon() {
   );
 }
 
-function CartQuantityControls({ productSlug, quantity }: { productSlug: string; quantity: number }) {
+function CartQuantityControls({
+  lineId,
+  productSlug,
+  quantity,
+  addons,
+}: {
+  lineId: string;
+  productSlug: string;
+  quantity: number;
+  addons?: { id: string; quantity: number }[];
+}) {
   const { addItem, updateItem, removeItem } = useCart();
   const [busy, setBusy] = useState(false);
 
@@ -47,7 +58,7 @@ function CartQuantityControls({ productSlug, quantity }: { productSlug: string; 
           type="button"
           disabled={busy}
           aria-label="Decrease quantity"
-          onClick={() => void run(() => (quantity <= 1 ? removeItem(productSlug) : updateItem(productSlug, quantity - 1)))}
+          onClick={() => void run(() => (quantity <= 1 ? removeItem(lineId) : updateItem(lineId, quantity - 1)))}
           className="px-3 py-2 text-primary font-bold hover:bg-violet-200/60 disabled:opacity-50 transition"
         >
           −
@@ -59,7 +70,7 @@ function CartQuantityControls({ productSlug, quantity }: { productSlug: string; 
           type="button"
           disabled={busy}
           aria-label="Increase quantity"
-          onClick={() => void run(() => addItem(productSlug, 1))}
+          onClick={() => void run(() => addItem(productSlug, 1, undefined, addons))}
           className="px-3 py-2 text-primary font-bold hover:bg-violet-200/60 disabled:opacity-50 transition"
         >
           +
@@ -69,12 +80,32 @@ function CartQuantityControls({ productSlug, quantity }: { productSlug: string; 
         type="button"
         disabled={busy}
         aria-label="Remove item"
-        onClick={() => void run(() => removeItem(productSlug))}
+        onClick={() => void run(() => removeItem(lineId))}
         className="text-red-500 hover:text-red-600 p-1 disabled:opacity-50 transition"
       >
         <TrashIcon />
       </button>
     </div>
+  );
+}
+
+function AddonList({ item, format }: { item: CartItem; format: (n: number, c: DisplayCurrency) => string }) {
+  if (!item.addons?.length) return null;
+  const lineCurrency = (item.currency ?? "USD") as DisplayCurrency;
+  return (
+    <ul className="mt-2 space-y-1 text-xs text-slate-600">
+      {item.addons.map((a) => (
+        <li key={a.id} className="flex justify-between gap-3">
+          <span>
+            + {a.quantity > 1 ? `${a.quantity}× ` : ""}
+            {a.name}
+          </span>
+          <span className="shrink-0 font-medium text-slate-800">
+            {format(a.price * a.quantity * item.quantity, lineCurrency)}
+          </span>
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -89,12 +120,12 @@ export default function CartPage() {
   const cartCurrency = (items[0]?.currency ?? "USD") as DisplayCurrency;
   const total = items.reduce((sum, i) => {
     const lineCurrency = (i.currency ?? cartCurrency) as DisplayCurrency;
-    return sum + convert(i.price * i.quantity, lineCurrency);
+    return sum + convert(cartLineUnitTotal(i) * i.quantity, lineCurrency);
   }, 0);
   const currency = displayCurrency;
   const vendorSubtotals = vendorSubtotalsForItems(
     items.map((i) => ({
-      price: convert(i.price, (i.currency ?? cartCurrency) as DisplayCurrency),
+      price: convert(cartLineUnitTotal(i), (i.currency ?? cartCurrency) as DisplayCurrency),
       quantity: i.quantity,
       vendorSlug: i.vendorSlug,
     }))
@@ -139,11 +170,13 @@ export default function CartPage() {
             <ul className="space-y-6">
               {items.map((item) => {
                 const lineCurrency = (item.currency ?? currency) as DisplayCurrency;
-                const lineTotal = item.price * item.quantity;
+                const unit = cartLineUnitTotal(item);
+                const lineTotal = unit * item.quantity;
+                const lineKey = item.lineId ?? item.productSlug;
 
                 return (
                   <li
-                    key={item.productSlug}
+                    key={lineKey}
                     className="flex gap-4 pb-6 border-b border-slate-200 last:border-0 last:pb-0"
                   >
                     <Link
@@ -166,7 +199,13 @@ export default function CartPage() {
                         >
                           {item.name}
                         </Link>
-                        <CartQuantityControls productSlug={item.productSlug} quantity={item.quantity} />
+                        <AddonList item={item} format={format} />
+                        <CartQuantityControls
+                          lineId={lineKey}
+                          productSlug={item.productSlug}
+                          quantity={item.quantity}
+                          addons={item.addons?.map((a) => ({ id: a.id, quantity: a.quantity }))}
+                        />
                       </div>
 
                       <div className="sm:text-right shrink-0">
@@ -175,7 +214,7 @@ export default function CartPage() {
                         </p>
                         {item.quantity > 1 && (
                           <p className="text-xs text-slate-500 mt-0.5">
-                            {format(item.price, lineCurrency)} each
+                            {format(unit, lineCurrency)} each
                           </p>
                         )}
                       </div>

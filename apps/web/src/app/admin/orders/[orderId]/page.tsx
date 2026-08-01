@@ -301,7 +301,12 @@ export default function AdminOrderDetailPage() {
 
       <div className="flex flex-wrap items-center justify-between gap-3 mt-3 mb-6">
         <div>
-          <h1 className="text-2xl font-bold">Order {order.orderId}</h1>
+          <h1 className="text-2xl font-bold">
+            Order {order.orderNumber ?? order.orderId}
+          </h1>
+          {order.orderNumber ? (
+            <p className="text-xs text-slate-400 font-mono mt-0.5">ID {order.orderId}</p>
+          ) : null}
           <p className="text-sm text-slate-500">
             Placed {new Date(order.createdAt).toLocaleString()} · Updated{" "}
             {new Date(order.updatedAt).toLocaleString()}
@@ -359,7 +364,7 @@ export default function AdminOrderDetailPage() {
       </div>
 
       <div id="invoice-print" className="hidden print:block mb-8">
-        <h2 className="text-xl font-bold">Invoice — {order.orderId}</h2>
+        <h2 className="text-xl font-bold">Invoice — {order.orderNumber ?? order.orderId}</h2>
         <p className="text-sm">{addr.name} · {addr.email}</p>
         <p className="text-sm mt-4 font-bold">Total: {formatMoney(order.total, order.currency)}</p>
       </div>
@@ -446,9 +451,23 @@ export default function AdminOrderDetailPage() {
                       Qty {item.quantity}
                       {item.sku ? ` · SKU ${item.sku}` : ""}
                     </p>
+                    {item.addons?.length ? (
+                      <ul className="mt-1 space-y-0.5 text-xs text-slate-600">
+                        {item.addons.map((a) => (
+                          <li key={a.id}>
+                            + {a.quantity > 1 ? `${a.quantity}× ` : ""}
+                            {a.name} ({formatMoney(a.price * a.quantity * item.quantity, order.currency)})
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
                   </div>
                   <span className="text-sm shrink-0">
-                    {formatMoney(item.price * item.quantity, order.currency)}
+                    {formatMoney(
+                      (item.price + (item.addons?.reduce((s, a) => s + a.price * a.quantity, 0) ?? 0)) *
+                        item.quantity,
+                      order.currency
+                    )}
                   </span>
                 </li>
               ))}

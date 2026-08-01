@@ -8,6 +8,7 @@ import {
   WELCOME_DISCOUNT_PERCENT,
   LOW_STOCK_ALERT_EMAIL,
   ABANDONED_CART_DISCOUNT_PERCENT,
+  isAdminExtremeDiscount,
 } from "@hr-ecom/shared";
 import {
   abandonedCartWhatsAppMessage,
@@ -443,7 +444,19 @@ export async function notifyAdminLead(lead: LeadCaptureInput): Promise<EmailSend
 
 function formatOrderItems(order: Order): string {
   return order.items
-    .map((i) => `- ${i.name} × ${i.quantity} — ${order.currency} ${(i.price * i.quantity).toFixed(2)}`)
+    .map((i) => {
+      const unit = i.price + (i.addons?.reduce((s, a) => s + a.price * a.quantity, 0) ?? 0);
+      const lines = [
+        `- ${i.name} × ${i.quantity} — ${order.currency} ${(unit * i.quantity).toFixed(2)}`,
+      ];
+      for (const a of i.addons ?? []) {
+        const qtyLabel = a.quantity > 1 ? `${a.quantity}× ` : "";
+        lines.push(
+          `    + ${qtyLabel}${a.name} (${order.currency} ${(a.price * a.quantity * i.quantity).toFixed(2)})`
+        );
+      }
+      return lines.join("\n");
+    })
     .join("\n");
 }
 
@@ -791,8 +804,68 @@ ${unsubUrl}`;
   return emailResult;
 }
 
+function statusLabelForAdmin(status: string): string {
+  return status.replace(/_/g, " ");
+}
+
+/** Internal inbox copy when fulfillment status changes (order@usarakhi + NOTIFY_EMAIL list). */
+async function notifyAdminOrderStatusChange(order: Order): Promise<EmailSendResult> {
+  const shortId = order.orderId.slice(0, 8).toUpperCase();
+  const statusLabel = statusLabelForAdmin(order.status);
+  const trackingLines = [
+    order.carrier ? `Carrier: ${order.carrier}` : null,
+    order.trackingNumber ? `Tracking: ${order.trackingNumber}` : null,
+    order.estimatedDeliveryAt
+      ? `Estimated delivery: ${new Date(order.estimatedDeliveryAt).toLocaleDateString("en-US", {
+          dateStyle: "medium",
+          timeZone: "America/New_York",
+        })}`
+      : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const text = [
+    `Order status updated to: ${statusLabel}`,
+    "",
+    `Order ID: ${order.orderId} (#${shortId})`,
+    `Total: ${order.currency} ${order.total.toFixed(2)}`,
+    `Payment: ${order.paymentProvider ?? "—"}`,
+    "",
+    "Customer:",
+    `  ${order.shippingAddress?.name ?? "—"}`,
+    `  ${order.shippingAddress?.email ?? "—"}`,
+    `  ${order.shippingAddress?.phone ?? "—"}`,
+    "",
+    "Items:",
+    formatOrderItems(order),
+    "",
+    "Ship to:",
+    formatAddress(order),
+    trackingLines ? `\n${trackingLines}` : "",
+    "",
+    `Admin: ${siteUrl()}/admin/orders/${order.orderId}`,
+    `Updated: ${order.updatedAt ?? nowIsoFallback()}`,
+  ]
+    .filter((line) => line !== "")
+    .join("\n");
+
+  return sendEmail({
+    to: adminNotifyAddresses(),
+    subject: adminOrderSubject(`Status → ${statusLabel}`, order),
+    text,
+    replyTo: order.shippingAddress?.email,
+  });
+}
+
+function nowIsoFallback(): string {
+  return new Date().toISOString();
+}
+
 /**
- * Transactional customer email on admin order-status change.
+ * Transactional emails on order-status change (admin portal or vendor tracking).
+ * Sends to the customer AND order@usarakhi / NOTIFY_EMAIL so the team sees updates
+ * without opening the admin portal.
  * Uses SMTP via sendEmail() (same path as paid confirmation / review request).
  * Do NOT use SES here — SES is reserved for marketing campaigns (/ses-email/*).
  * Skips pending_payment and unknown statuses. Status update still succeeds if SMTP is down.
@@ -802,14 +875,21 @@ export async function notifyCustomerOrderStatusChange(order: Order): Promise<Ema
     return { ok: false, skipped: true, error: "SMTP not configured" };
   }
 
-  const customerEmail = order.shippingAddress?.email?.trim();
-  if (!customerEmail?.includes("@")) {
-    return { ok: false, skipped: true, error: "No customer email" };
-  }
-
   const content = customerStatusEmailContent(order);
   if (!content) {
     return { ok: true, skipped: true };
+  }
+
+  const adminResult = await notifyAdminOrderStatusChange(order);
+  if (!adminResult.ok && !adminResult.skipped) {
+    console.error("Admin order status email failed:", adminResult.error);
+  }
+
+  const customerEmail = order.shippingAddress?.email?.trim();
+  if (!customerEmail?.includes("@")) {
+    return adminResult.ok
+      ? { ok: true, skipped: true, error: "No customer email" }
+      : { ok: false, skipped: true, error: "No customer email" };
   }
 
   const emailResult = await sendEmail({
@@ -983,7 +1063,12 @@ export async function sendAdminAbandonedCouponEmails(input: {
   });
   const hours = input.hours ?? 1;
   const hoursLabel = hours === 1 ? "1 hour" : `${hours} hours`;
-  const saleTag = input.confirmedSale ? "Confirmed sale · " : "";
+  const extreme = isAdminExtremeDiscount(input.discountPercent);
+  const saleTag = extreme
+    ? "Special offer · "
+    : input.confirmedSale
+      ? "Confirmed sale · "
+      : "";
   const checkoutUrl = `${siteUrl()}/checkout`;
   const bindLines = [
     input.customerEmail ? `Email at checkout: ${input.customerEmail}` : null,
@@ -995,13 +1080,13 @@ export async function sendAdminAbandonedCouponEmails(input: {
   const customerText = `Hi,
 
 ${
-  input.confirmedSale
+  input.confirmedSale || extreme
     ? "Thank you for confirming your UsaRakhi order. Here is your reserved discount:"
     : "Thank you for considering UsaRakhi. We've reserved a personal discount for you:"
 }
 
 Coupon code: ${input.code}
-Discount: ${input.discountPercent}% off${input.confirmedSale ? " (Confirmed sale)" : ""}
+Discount: ${input.discountPercent}% off${extreme ? " (Special offer)" : input.confirmedSale ? " (Confirmed sale)" : ""}
 Valid for: ${hoursLabel} (until ${expiryLabel} ET)
 ${bindLines}
 
@@ -1014,6 +1099,7 @@ Questions? Reply to this email or WhatsApp us.
 ${siteUrl()}`;
 
   // Same inbox list as order/contact alerts (order@usarakhi.com + team) — not marketing SMTP.
+  // Always include the admin who generated the coupon (especially for extreme discounts).
   const notifyTo = [
     ...adminNotifyAddresses()
       .split(",")
@@ -1030,12 +1116,18 @@ ${siteUrl()}`;
     ? `\nOpen WhatsApp to customer:\n${input.whatsappDeepLink}\n`
     : "";
 
-  const notifyText = `Admin ${input.confirmedSale ? "CONFIRMED SALE" : "abandoned-cart"} coupon generated
+  const kindLabel = extreme
+    ? "EXTREME DISCOUNT"
+    : input.confirmedSale
+      ? "CONFIRMED SALE"
+      : "abandoned-cart";
+
+  const notifyText = `Admin ${kindLabel} coupon generated
 
 Customer email: ${input.customerEmail ?? "(none)"}
 Phone: ${input.phone ?? "(none)"}
 Coupon: ${input.code}
-Discount: ${input.discountPercent}%${input.confirmedSale ? " (Confirmed sale)" : ""}
+Discount: ${input.discountPercent}%${extreme ? " (Extreme / special offer)" : input.confirmedSale ? " (Confirmed sale)" : ""}
 Expires: ${expiryLabel} ET (${hoursLabel})
 Generated by: ${input.createdByAdminEmail}
 ${waLine}
@@ -1053,9 +1145,12 @@ ${input.customerEmail ? "Customer was emailed this coupon." : "No customer email
     : { ok: false, error: "No customer email provided" };
 
   const notifySubjectTarget = input.customerEmail ?? input.phone ?? "customer";
+  const notifySubject = extreme
+    ? `Extreme discount offered — ${input.discountPercent}% ${input.code} by ${input.createdByAdminEmail} → ${notifySubjectTarget}`
+    : `[Coupon]${input.confirmedSale ? " Confirmed sale" : ""} ${input.discountPercent}% ${input.code} → ${notifySubjectTarget}`;
   const notify = await sendEmail({
     to: notifyTo,
-    subject: `[Coupon]${input.confirmedSale ? " Confirmed sale" : ""} ${input.discountPercent}% ${input.code} → ${notifySubjectTarget}`,
+    subject: notifySubject,
     text: notifyText,
   });
 

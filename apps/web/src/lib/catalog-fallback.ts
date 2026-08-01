@@ -2,6 +2,7 @@ import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import {
   isRakhiSetSizeCategory,
+  productAllowsAddons,
   productMatchesRakhiSetCategory,
   resolveProductImageUrls,
   stripVendorPrivateFields,
@@ -40,7 +41,9 @@ export function getCatalogProducts(): Product[] {
     ...loadCatalogFile("orange-county-hampers.json"),
   ]) {
     // Never expose vendorCost / vendorSlug to the browser via SSR props.
+    const allowsAddons = productAllowsAddons(product);
     const publicProduct = stripVendorPrivateFields(product) as Product;
+    publicProduct.allowsAddons = allowsAddons;
     // Rewrite legacy WordPress / non-www media hosts to CloudFront.
     publicProduct.images = resolveProductImageUrls(publicProduct.images);
     bySlug.set(product.slug, withCompetitiveStorefrontPricing(publicProduct));

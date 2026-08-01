@@ -71,7 +71,7 @@ leads/sessions; products re-seed via `import:usarakhi`).
 |-----|----------|---------|
 | `ReviewEmailsCronFunction` | Every hour | Email customers 1 day after order is marked **Delivered** or **Complete**, linking to `/reviews` |
 
-When admin changes order status (accepted, processing, shipped, delivered, complete, cancelled, refunded, or paid), the API emails the customer at `shippingAddress.email` via **SMTP** (`notifyCustomerOrderStatusChange` in `apps/api/src/lib/email.ts` — same transactional path as paid confirmation). **Marketing campaigns** (`/ses-email/*`, admin Email) send via **marketing SMTP** (default Mailercloud `smtp-prod.mailrcld.com:587`) configured under Admin → Email → Settings; Amazon SES API remains an optional legacy transport if `marketingTransport=ses`. Transactional `SMTP_*` env is separate and unchanged. Shipped emails include carrier/tracking when present. `pending_payment` → `cancelled` skips the customer email (admin payment-failed alert only). Separately, **Delivered** or **Complete** also sets `reviewEmailDueAt` (delivery + 1 day); the cron sends one review-request email per order (`reviewEmailSentAt`).
+When admin (or Orange County vendor tracking) changes order status (accepted, processing, shipped, delivered, complete, cancelled, refunded, or paid), the API emails **both** the customer at `shippingAddress.email` and the ops inbox (`order@usarakhi.com` / `NOTIFY_EMAIL`) via **SMTP** (`notifyCustomerOrderStatusChange` in `apps/api/src/lib/email.ts` — same transactional path as paid confirmation). Admin copy includes customer contact, items, tracking, and an admin order link so the team need not open the portal for every update. **Marketing campaigns** (`/ses-email/*`, admin Email) send via **marketing SMTP** (default Mailercloud `smtp-prod.mailrcld.com:587`) configured under Admin → Email → Settings; Amazon SES API remains an optional legacy transport if `marketingTransport=ses`. Transactional `SMTP_*` env is separate and unchanged. Shipped emails include carrier/tracking when present. `pending_payment` → `cancelled` skips the customer/status pair (admin payment-failed alert only). Separately, **Delivered** or **Complete** also sets `reviewEmailDueAt` (delivery + 1 day); the cron sends one review-request email per order (`reviewEmailSentAt`).
 
 **WhatsApp (optional, additive):** When Meta Cloud API (`WHATSAPP_TOKEN` + `WHATSAPP_PHONE_NUMBER_ID`) and/or Twilio (`TWILIO_*`) env vars are set, the same customer notifications also send via WhatsApp (`apps/api/src/lib/whatsapp.ts` → `notifyCustomerWhatsApp`): welcome/admin/abandoned coupons, order paid + status updates, pending-payment reminders, review requests, contact ack, abandoned-cart recovery. Email remains primary — WhatsApp failures never block checkout or SMTP. Admin abandoned coupons still return a `wa.me` deep link when APIs are unset. For Meta out-of-session sends, set an approved `WHATSAPP_TEMPLATE_NAME` (freeform text only works inside the 24h customer-care window).
 
@@ -94,8 +94,9 @@ When admin changes order status (accepted, processing, shipped, delivered, compl
 | GET | `/categories` | List categories |
 | POST | `/categories` | Admin: create |
 | GET | `/cart` | Get cart |
-| POST | `/cart/items` | Add to cart |
-| DELETE | `/cart/items/{id}` | Remove item |
+| POST | `/cart/items` | Add to cart (optional `addons[]` as catalog ids or `{ id, quantity }` for UsaRakhi products) |
+| PUT | `/cart/items/{lineId}` | Update quantity by cart line id |
+| DELETE | `/cart/items/{lineId}` | Remove cart line |
 | POST | `/checkout` | Create order + payment intent |
 | GET | `/shipping/rates` | Session: USPS rate quotes for cart + destination address |
 | GET | `/admin/shipping/settings` | Admin: shipping config (origin, festival mode, services) |
@@ -105,9 +106,13 @@ When admin changes order status (accepted, processing, shipped, delivered, compl
 | GET | `/admin/shipping/products-missing-dims` | Admin: products without weight/dimensions |
 | GET | `/admin/load-test` | Super admin: load-test presets + LOAD_TEST_MODE status |
 | POST | `/admin/load-test/run` | Super admin: prefer UI browser runner (`smoke` / `u100`…`u1000`). UI: `/admin/load-test` |
-| GET | `/vendors/orange-county/orders` | **Vendor API only** (`VendorApiUrl`, not storefront `ApiUrl`). `X-Vendor-Api-Key`; OC hamper lines only; no selling prices. See `docs/VENDOR_ORANGE_COUNTY_API.md` |
-| GET | `/vendors/orange-county/orders/{orderId}` | Same vendor API + auth; single order, vendor line items + SKU only |
+| GET | `/vendors/orange-county/orders` | **Vendor API only** (`VendorApiUrl`). Last **15 days** by default; human `orderId`=`OC#####`; OC fulfill fields + vendorCost (not retail). See `docs/VENDOR_ORANGE_COUNTY_API.md` |
+| GET | `/vendors/orange-county/orders/{orderId}` | Same vendor API; `{orderId}` accepts `OC10001` or internal UUID |
+| POST | `/vendors/orange-county/orders/{orderId}/shipment` | Vendor posts AWB + courier name |
+| POST | `/vendors/orange-county/orders/{orderId}/tracking` | Vendor posts tracking status updates |
 | POST | `/webhooks/stripe` | Stripe webhook |
+
+**Product add-ons (UsaRakhi only):** Fixed dry-fruit / chocolate extras (`packages/shared/src/lib/product-addons.ts`). Shown on PDP when `allowsAddons` is true (non–Orange County). Shoppers pick quantity per add-on (1–10); nested on `CartItem.addons` with `quantity`; line totals include `price × quantity`. Merge key includes quantities. OC products reject addons server-side.
 
 ### Scale notes (catalog / concurrency)
 
@@ -125,7 +130,7 @@ When admin changes order status (accepted, processing, shipped, delivered, compl
 | GET | `/orders/{orderId}` | Order detail (owner/admin) |
 | GET | `/admin/orders` | Admin: list orders (filter `?status=`) |
 | GET | `/admin/orders/{orderId}` | Admin: order detail |
-| PATCH | `/admin/orders/{orderId}` | Admin: update status + tracking; emails customer on each status step; schedules review email 1 day after delivered |
+| PATCH | `/admin/orders/{orderId}` | Admin: update status + tracking; emails customer + order@usarakhi on each status step; schedules review email 1 day after delivered |
 | DELETE | `/admin/orders/{orderId}` | Super admin: permanently delete order |
 | POST | `/admin/orders/bulk-delete` | Super admin: bulk delete orders (`{ orderIds: string[] }`) |
 | GET | `/admin/analytics/sales` | Admin: day/week/month payments received (excludes refunds) |

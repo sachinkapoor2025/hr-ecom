@@ -49,7 +49,7 @@ export function AccountOrdersPanel({
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <p className="font-semibold text-slate-900">
-                  Order #{order.orderId.slice(0, 8).toUpperCase()}
+                  Order #{order.orderNumber ?? order.orderId.slice(0, 8).toUpperCase()}
                 </p>
                 <p className="text-sm text-slate-500 mt-0.5">
                   {new Date(order.createdAt).toLocaleDateString(undefined, {

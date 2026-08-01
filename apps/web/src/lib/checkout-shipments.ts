@@ -1,5 +1,6 @@
 import {
   addressFingerprint,
+  cartLineUnitTotal,
   isValidShippingPhone,
   shippingVendorKey,
   type CartItem,
@@ -29,14 +30,16 @@ export function expandCartToDeliveryUnits(
   const units: DeliveryUnit[] = [];
 
   for (const item of items) {
+    const unitPrice = cartLineUnitTotal(item);
+    const lineBase = item.lineId ?? item.productSlug;
     for (let i = 0; i < item.quantity; i++) {
-      const key = `${item.productSlug}#${i}`;
+      const key = `${lineBase}#${i}`;
       const prev = prevByKey.get(key);
       units.push({
         key,
         productSlug: item.productSlug,
         name: item.name,
-        price: item.price,
+        price: unitPrice,
         image: item.image,
         vendorSlug: item.vendorSlug,
         useSameAddress: prev?.useSameAddress ?? true,
