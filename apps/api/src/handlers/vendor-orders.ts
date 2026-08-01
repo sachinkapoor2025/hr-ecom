@@ -5,6 +5,8 @@
  * GET  /vendors/orange-county/orders/{orderId}
  * POST /vendors/orange-county/orders/{orderId}/shipment   (AWB + courier)
  * POST /vendors/orange-county/orders/{orderId}/tracking   (status updates)
+ * POST /vendors/orange-county/shipment                   (body-only: orderNumber + AWB)
+ * POST /vendors/orange-county/tracking                   (body-only: orderNumber + status)
  *
  * Auth: X-Vendor-Api-Key
  *
@@ -16,6 +18,8 @@ import type { APIGatewayProxyEventV2 } from "aws-lambda";
 import {
   VENDOR_ORANGE_COUNTY,
   VENDOR_ORDERS_DEFAULT_DAYS,
+  VENDOR_ORDERS_DEFAULT_LIMIT,
+  VENDOR_ORDERS_MAX_LIMIT,
   orderKeys,
   productKeys,
   ORDER_STATUS,
@@ -35,8 +39,8 @@ import { notifyCustomerOrderStatusChange } from "../lib/email";
 import { applyDeliveryReviewSchedule } from "./review-emails";
 import { resolveOrderByIdOrNumber } from "../lib/order-numbers";
 
-const DEFAULT_LIMIT = 50;
-const MAX_LIMIT = 100;
+/** Hard cap on Dynamo rows scanned per list request (across pages). */
+const MAX_SCAN_PER_REQUEST = 5000;
 
 type StoredOrder = Order & {
   PK: string;
@@ -230,6 +234,31 @@ function mapVendorStatus(raw: string): string | null {
   return aliases[s] ?? null;
 }
 
+function encodeCursor(key: Record<string, unknown>): string {
+  return Buffer.from(JSON.stringify(key), "utf8").toString("base64url");
+}
+
+function decodeCursor(raw: string): Record<string, unknown> | null {
+  try {
+    const parsed = JSON.parse(Buffer.from(raw, "base64url").toString("utf8")) as unknown;
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
+    return parsed as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
+/** Dynamo ExclusiveStartKey for GSI2 after this order row. */
+function gsi2CursorFromOrder(order: StoredOrder): Record<string, unknown> | null {
+  if (!order.PK || !order.SK || !order.GSI2PK || !order.GSI2SK) return null;
+  return {
+    PK: order.PK,
+    SK: order.SK,
+    GSI2PK: order.GSI2PK,
+    GSI2SK: order.GSI2SK,
+  };
+}
+
 async function persistVendorOrderUpdate(
   order: StoredOrder,
   patch: {
@@ -294,13 +323,31 @@ async function persistVendorOrderUpdate(
   return updated;
 }
 
+function orderNumberMatches(
+  provided: string | undefined,
+  pathOrderId: string | undefined,
+  order: StoredOrder
+): string | null {
+  if (!provided) return null;
+  const human = displayOrderRef(order);
+  const ok =
+    provided === pathOrderId ||
+    provided === order.orderId ||
+    provided === human ||
+    provided.toUpperCase() === human.toUpperCase();
+  return ok ? null : "orderNumber does not match the order being updated";
+}
+
 export async function listOrangeCountyOrders(event: APIGatewayProxyEventV2) {
   if (!vendorApiKeyOk(event)) {
     return unauthorized("Valid X-Vendor-Api-Key required");
   }
 
   const qs = event.queryStringParameters ?? {};
-  const limit = Math.min(MAX_LIMIT, Math.max(1, Number(qs.limit ?? DEFAULT_LIMIT) || DEFAULT_LIMIT));
+  const limit = Math.min(
+    VENDOR_ORDERS_MAX_LIMIT,
+    Math.max(1, Number(qs.limit ?? VENDOR_ORDERS_DEFAULT_LIMIT) || VENDOR_ORDERS_DEFAULT_LIMIT)
+  );
   const statusFilter = qs.status?.trim();
   const daysRaw = Number(qs.days ?? VENDOR_ORDERS_DEFAULT_DAYS);
   const days =
@@ -310,15 +357,22 @@ export async function listOrangeCountyOrders(event: APIGatewayProxyEventV2) {
   // Default: only last 15 days — avoids re-importing the full order history.
   const since = qs.since?.trim() || defaultSinceIso(days);
   const updatedSince = qs.updatedSince?.trim();
+  const cursorRaw = qs.cursor?.trim();
+  let ExclusiveStartKey: Record<string, unknown> | undefined;
+  if (cursorRaw) {
+    const decoded = decodeCursor(cursorRaw);
+    if (!decoded) return badRequest("Invalid cursor");
+    ExclusiveStartKey = decoded;
+  }
 
   const vendorSlug = VENDOR_ORANGE_COUNTY;
-  const collected: Order[] = [];
-  let ExclusiveStartKey: Record<string, unknown> | undefined;
+  const collected: StoredOrder[] = [];
   let scanned = 0;
-  const maxScan = 800;
+  let nextCursorKey: Record<string, unknown> | null = null;
+  let hitScanCap = false;
 
-  while (collected.length < limit && scanned < maxScan) {
-    const pageSize = Math.min(50, maxScan - scanned);
+  while (collected.length < limit && scanned < MAX_SCAN_PER_REQUEST) {
+    const pageSize = Math.min(100, MAX_SCAN_PER_REQUEST - scanned);
     const result = await docClient.send(
       new QueryCommand({
         TableName: ORDERS_TABLE,
@@ -331,7 +385,7 @@ export async function listOrangeCountyOrders(event: APIGatewayProxyEventV2) {
       })
     );
 
-    const page = (result.Items ?? []) as Order[];
+    const page = (result.Items ?? []) as StoredOrder[];
     scanned += page.length;
     ExclusiveStartKey = result.LastEvaluatedKey as Record<string, unknown> | undefined;
 
@@ -353,21 +407,37 @@ export async function listOrangeCountyOrders(event: APIGatewayProxyEventV2) {
       if (!items.length) continue;
 
       collected.push({ ...order, items, vendorSlugs: [vendorSlug] });
-      if (collected.length >= limit) break;
+      if (collected.length >= limit) {
+        nextCursorKey = gsi2CursorFromOrder(order) ?? ExclusiveStartKey ?? null;
+        break;
+      }
     }
 
+    if (collected.length >= limit) break;
     if (!ExclusiveStartKey) break;
     // Older than window — GSI2 is newest-first, so we can stop.
     const oldest = page[page.length - 1];
     if (oldest && oldest.createdAt < since) break;
   }
 
+  if (scanned >= MAX_SCAN_PER_REQUEST && ExclusiveStartKey && !nextCursorKey) {
+    hitScanCap = true;
+    nextCursorKey = ExclusiveStartKey;
+  } else if (!nextCursorKey && ExclusiveStartKey && collected.length >= limit) {
+    nextCursorKey = ExclusiveStartKey;
+  }
+
+  const hasMore = Boolean(nextCursorKey);
   return ok({
     vendorSlug,
     count: collected.length,
+    limit,
     since,
     days,
     updatedSince: updatedSince ?? null,
+    hasMore,
+    nextCursor: hasMore && nextCursorKey ? encodeCursor(nextCursorKey) : null,
+    ...(hitScanCap ? { truncatedScan: true } : {}),
     orders: await Promise.all(collected.map((o) => toVendorOrder(o, o.items))),
   });
 }
@@ -390,42 +460,24 @@ export async function getOrangeCountyOrder(event: APIGatewayProxyEventV2) {
   });
 }
 
-/** POST AWB + courier when Orange County ships. */
-export async function postOrangeCountyShipment(event: APIGatewayProxyEventV2) {
-  if (!vendorApiKeyOk(event)) {
-    return unauthorized("Valid X-Vendor-Api-Key required");
-  }
-  const orderId = event.pathParameters?.orderId;
-  if (!orderId) return badRequest("orderId required");
-
-  let body: unknown;
-  try {
-    body = JSON.parse(event.body ?? "{}");
-  } catch {
-    return badRequest("Invalid JSON");
-  }
+async function applyShipmentUpdate(
+  orderRef: string,
+  body: unknown,
+  pathOrderId?: string
+) {
   const parsed = vendorShipmentUpdateSchema.safeParse(body);
   if (!parsed.success) {
     return badRequest(parsed.error.issues[0]?.message ?? parsed.error.message);
   }
 
-  const order = await loadVendorOrder(orderId);
+  const order = await loadVendorOrder(orderRef);
   if (!order) return notFound("Order not found");
   if (!orderTouchesVendor(order, VENDOR_ORANGE_COUNTY)) {
     return forbidden("Order not found for this vendor");
   }
 
-  if (parsed.data.orderNumber) {
-    const human = displayOrderRef(order);
-    if (
-      parsed.data.orderNumber !== orderId &&
-      parsed.data.orderNumber !== order.orderId &&
-      parsed.data.orderNumber !== human &&
-      parsed.data.orderNumber.toUpperCase() !== human.toUpperCase()
-    ) {
-      return badRequest("orderNumber does not match URL orderId");
-    }
-  }
+  const mismatch = orderNumberMatches(parsed.data.orderNumber, pathOrderId, order);
+  if (mismatch) return badRequest(mismatch);
 
   try {
     const nextStatus =
@@ -456,47 +508,29 @@ export async function postOrangeCountyShipment(event: APIGatewayProxyEventV2) {
   }
 }
 
-/** POST tracking status changes from Orange County. */
-export async function postOrangeCountyTracking(event: APIGatewayProxyEventV2) {
-  if (!vendorApiKeyOk(event)) {
-    return unauthorized("Valid X-Vendor-Api-Key required");
-  }
-  const orderId = event.pathParameters?.orderId;
-  if (!orderId) return badRequest("orderId required");
-
-  let body: unknown;
-  try {
-    body = JSON.parse(event.body ?? "{}");
-  } catch {
-    return badRequest("Invalid JSON");
-  }
+async function applyTrackingUpdate(
+  orderRef: string,
+  body: unknown,
+  pathOrderId?: string
+) {
   const parsed = vendorTrackingUpdateSchema.safeParse(body);
   if (!parsed.success) {
     return badRequest(parsed.error.issues[0]?.message ?? parsed.error.message);
   }
 
-  const order = await loadVendorOrder(orderId);
+  const order = await loadVendorOrder(orderRef);
   if (!order) return notFound("Order not found");
   if (!orderTouchesVendor(order, VENDOR_ORANGE_COUNTY)) {
     return forbidden("Order not found for this vendor");
   }
 
-  if (parsed.data.orderNumber) {
-    const human = displayOrderRef(order);
-    if (
-      parsed.data.orderNumber !== orderId &&
-      parsed.data.orderNumber !== order.orderId &&
-      parsed.data.orderNumber !== human &&
-      parsed.data.orderNumber.toUpperCase() !== human.toUpperCase()
-    ) {
-      return badRequest("orderNumber does not match URL orderId");
-    }
-  }
+  const mismatch = orderNumberMatches(parsed.data.orderNumber, pathOrderId, order);
+  if (mismatch) return badRequest(mismatch);
 
-  const mapped = mapVendorStatus(parsed.data.currentStatus);
+  const statusRaw = parsed.data.currentShipmentStatus || parsed.data.currentStatus;
+  const mapped = mapVendorStatus(statusRaw);
   const note =
-    parsed.data.note?.trim() ||
-    `Vendor tracking update: ${parsed.data.currentStatus.trim()}`;
+    parsed.data.note?.trim() || `Vendor tracking update: ${statusRaw}`;
 
   try {
     const updated = await persistVendorOrderUpdate(order, {
@@ -509,11 +543,84 @@ export async function postOrangeCountyTracking(event: APIGatewayProxyEventV2) {
       orderNumber: displayOrderRef(updated),
       internalOrderId: updated.orderId,
       status: updated.status,
-      currentStatusReceived: parsed.data.currentStatus.trim(),
+      currentShipmentStatus: statusRaw,
+      currentStatusReceived: statusRaw,
       statusMapped: mapped,
       updatedAt: updated.updatedAt,
     });
   } catch (err) {
     return badRequest(err instanceof Error ? err.message : "Could not update tracking");
   }
+}
+
+function parseJsonBody(event: APIGatewayProxyEventV2): { ok: true; body: unknown } | { ok: false; error: string } {
+  try {
+    return { ok: true, body: JSON.parse(event.body ?? "{}") };
+  } catch {
+    return { ok: false, error: "Invalid JSON" };
+  }
+}
+
+/** POST AWB + courier when Orange County ships (path includes order id). */
+export async function postOrangeCountyShipment(event: APIGatewayProxyEventV2) {
+  if (!vendorApiKeyOk(event)) {
+    return unauthorized("Valid X-Vendor-Api-Key required");
+  }
+  const orderId = event.pathParameters?.orderId;
+  if (!orderId) return badRequest("orderId required");
+
+  const parsedBody = parseJsonBody(event);
+  if (!parsedBody.ok) return badRequest(parsedBody.error);
+  return applyShipmentUpdate(orderId, parsedBody.body, orderId);
+}
+
+/** POST tracking status changes from Orange County (path includes order id). */
+export async function postOrangeCountyTracking(event: APIGatewayProxyEventV2) {
+  if (!vendorApiKeyOk(event)) {
+    return unauthorized("Valid X-Vendor-Api-Key required");
+  }
+  const orderId = event.pathParameters?.orderId;
+  if (!orderId) return badRequest("orderId required");
+
+  const parsedBody = parseJsonBody(event);
+  if (!parsedBody.ok) return badRequest(parsedBody.error);
+  return applyTrackingUpdate(orderId, parsedBody.body, orderId);
+}
+
+/**
+ * Body-only AWB update — vendor can call without putting order number in the URL.
+ * Body: { orderNumber, courierName, awb }
+ */
+export async function postOrangeCountyShipmentByBody(event: APIGatewayProxyEventV2) {
+  if (!vendorApiKeyOk(event)) {
+    return unauthorized("Valid X-Vendor-Api-Key required");
+  }
+  const parsedBody = parseJsonBody(event);
+  if (!parsedBody.ok) return badRequest(parsedBody.error);
+  const body = parsedBody.body;
+  const orderNumber =
+    body && typeof body === "object" && "orderNumber" in body
+      ? String((body as { orderNumber?: unknown }).orderNumber ?? "").trim()
+      : "";
+  if (!orderNumber) return badRequest("orderNumber is required");
+  return applyShipmentUpdate(orderNumber, body);
+}
+
+/**
+ * Body-only tracking update.
+ * Body: { orderNumber, currentShipmentStatus } (currentStatus also accepted)
+ */
+export async function postOrangeCountyTrackingByBody(event: APIGatewayProxyEventV2) {
+  if (!vendorApiKeyOk(event)) {
+    return unauthorized("Valid X-Vendor-Api-Key required");
+  }
+  const parsedBody = parseJsonBody(event);
+  if (!parsedBody.ok) return badRequest(parsedBody.error);
+  const body = parsedBody.body;
+  const orderNumber =
+    body && typeof body === "object" && "orderNumber" in body
+      ? String((body as { orderNumber?: unknown }).orderNumber ?? "").trim()
+      : "";
+  if (!orderNumber) return badRequest("orderNumber is required");
+  return applyTrackingUpdate(orderNumber, body);
 }

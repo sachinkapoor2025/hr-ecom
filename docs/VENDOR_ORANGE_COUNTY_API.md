@@ -14,7 +14,7 @@ Base URL (prod example):
 
 ---
 
-## 1. List orders (import feed)
+## 1. List orders (import feed) — with pagination
 
 ```http
 GET {VENDOR_API_URL}/vendors/orange-county/orders
@@ -27,10 +27,36 @@ GET {VENDOR_API_URL}/vendors/orange-county/orders
 | `days` | **15** | Only orders with `createdAt` in the last N days (max 90). Prevents re-importing old history. |
 | `since` | *(derived from `days`)* | ISO timestamp override for createdAt lower bound |
 | `updatedSince` | — | Optional ISO — only orders with `updatedAt >= updatedSince` (incremental sync) |
-| `limit` | 50 | Max orders (max 100) |
+| `limit` | **50** | Page size (max **200**) |
+| `cursor` | — | Opaque token from previous response `nextCursor` for the next page |
 | `status` | — | Exact status filter, e.g. `paid` |
 
 Unpaid / cancelled / refunded are hidden unless `status` is set.
+
+### Pagination (more than 50 orders)
+
+Yes — use cursor pagination. Each response includes:
+
+| Field | Meaning |
+|-------|---------|
+| `count` | Orders in this page |
+| `limit` | Page size used |
+| `hasMore` | `true` if another page exists |
+| `nextCursor` | Pass as `?cursor=` on the next request (null when done) |
+
+**Example loop:**
+
+```bash
+# Page 1
+curl -sS -H "X-Vendor-Api-Key: YOUR_KEY" \
+  "$BASE/vendors/orange-county/orders?days=15&limit=50"
+
+# Page 2 (use nextCursor from previous JSON)
+curl -sS -H "X-Vendor-Api-Key: YOUR_KEY" \
+  "$BASE/vendors/orange-county/orders?days=15&limit=50&cursor=OPAQUE_CURSOR"
+```
+
+Keep calling while `hasMore === true`. You can also use `limit=200` for fewer round-trips.
 
 ### Duplicate prevention (recommended)
 
@@ -38,7 +64,7 @@ Unpaid / cancelled / refunded are hidden unless `status` is set.
 2. Store each `orderId` / `orderNumber` (e.g. `OC10001`) locally; skip ids you already imported.
 3. For incremental sync, pass `updatedSince` = last successful poll time.
 
-> **Note (2026-07-29):** `orderId` in this API is the human-readable number (`OC#####`). Older UUID-only feeds are superseded — re-import using `orderNumber` / `orderId` from the latest response. `internalOrderId` remains the UUID if you need a stable internal key.
+> **Note:** `orderId` in this API is the human-readable number (`OC#####`). `internalOrderId` remains the UUID if you need a stable internal key.
 
 ### Example
 
@@ -87,12 +113,18 @@ curl -sS \
 GET {VENDOR_API_URL}/vendors/orange-county/orders/{orderId}
 ```
 
+`{orderId}` accepts `OC10001` or the internal UUID.
+
 ---
 
-## 3. Post AWB when shipped
+## 3. Update AWB when shipped
+
+Call either style (same body fields).
+
+### Option A — body only (recommended for your system)
 
 ```http
-POST {VENDOR_API_URL}/vendors/orange-county/orders/{orderId}/shipment
+POST {VENDOR_API_URL}/vendors/orange-county/shipment
 Content-Type: application/json
 X-Vendor-Api-Key: YOUR_KEY
 ```
@@ -105,9 +137,19 @@ X-Vendor-Api-Key: YOUR_KEY
 }
 ```
 
-Use the human-readable `orderId` / `orderNumber` from the list feed in the URL:
+### Option B — order number in the URL
 
-`POST .../vendors/orange-county/orders/OC10001/shipment`
+```http
+POST {VENDOR_API_URL}/vendors/orange-county/orders/OC10001/shipment
+```
+
+```json
+{
+  "orderNumber": "OC10001",
+  "courierName": "USPS",
+  "awb": "9400111899223344556677"
+}
+```
 
 Effects:
 
@@ -119,24 +161,41 @@ Effects:
 curl -sS -X POST \
   -H "X-Vendor-Api-Key: YOUR_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"courierName":"USPS","awb":"9400111899223344556677"}' \
-  "https://hou08enf2k.execute-api.us-east-1.amazonaws.com/prod/vendors/orange-county/orders/ORDER_ID/shipment"
+  -d '{"orderNumber":"OC10001","courierName":"USPS","awb":"9400111899223344556677"}' \
+  "https://hou08enf2k.execute-api.us-east-1.amazonaws.com/prod/vendors/orange-county/shipment"
 ```
 
 ---
 
-## 4. Post tracking status updates
+## 4. Update tracking / shipment status
+
+### Option A — body only (recommended)
 
 ```http
-POST {VENDOR_API_URL}/vendors/orange-county/orders/{orderId}/tracking
+POST {VENDOR_API_URL}/vendors/orange-county/tracking
 Content-Type: application/json
 X-Vendor-Api-Key: YOUR_KEY
 ```
 
 ```json
 {
-  "orderNumber": "same-as-orderId-optional",
-  "currentStatus": "in_transit",
+  "orderNumber": "OC10001",
+  "currentShipmentStatus": "in_transit"
+}
+```
+
+`currentStatus` is also accepted as an alias of `currentShipmentStatus`.
+
+### Option B — order number in the URL
+
+```http
+POST {VENDOR_API_URL}/vendors/orange-county/orders/OC10001/tracking
+```
+
+```json
+{
+  "orderNumber": "OC10001",
+  "currentShipmentStatus": "delivered",
   "note": "optional free text"
 }
 ```
@@ -148,8 +207,8 @@ Accepted status examples (case-insensitive):
 curl -sS -X POST \
   -H "X-Vendor-Api-Key: YOUR_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"currentStatus":"delivered"}' \
-  "https://hou08enf2k.execute-api.us-east-1.amazonaws.com/prod/vendors/orange-county/orders/ORDER_ID/tracking"
+  -d '{"orderNumber":"OC10001","currentShipmentStatus":"delivered"}' \
+  "https://hou08enf2k.execute-api.us-east-1.amazonaws.com/prod/vendors/orange-county/tracking"
 ```
 
 ---

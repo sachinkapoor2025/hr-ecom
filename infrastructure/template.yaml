@@ -751,6 +751,18 @@ Resources:
             ApiId: !Ref VendorHttpApi
             Path: /vendors/orange-county/orders/{orderId}/tracking
             Method: POST
+        VendorPostShipmentByBody:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref VendorHttpApi
+            Path: /vendors/orange-county/shipment
+            Method: POST
+        VendorPostTrackingByBody:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref VendorHttpApi
+            Path: /vendors/orange-county/tracking
+            Method: POST
         VendorHealth:
           Type: HttpApi
           Properties:

@@ -106,10 +106,12 @@ When admin (or Orange County vendor tracking) changes order status (accepted, pr
 | GET | `/admin/shipping/products-missing-dims` | Admin: products without weight/dimensions |
 | GET | `/admin/load-test` | Super admin: load-test presets + LOAD_TEST_MODE status |
 | POST | `/admin/load-test/run` | Super admin: prefer UI browser runner (`smoke` / `u100`…`u1000`). UI: `/admin/load-test` |
-| GET | `/vendors/orange-county/orders` | **Vendor API only** (`VendorApiUrl`). Last **15 days** by default; human `orderId`=`OC#####`; OC fulfill fields + vendorCost (not retail). See `docs/VENDOR_ORANGE_COUNTY_API.md` |
+| GET | `/vendors/orange-county/orders` | **Vendor API only** (`VendorApiUrl`). Last **15 days** by default; paginated (`limit`/`cursor`/`nextCursor`); human `orderId`=`OC#####`; vendorCost (not retail). See `docs/VENDOR_ORANGE_COUNTY_API.md` |
 | GET | `/vendors/orange-county/orders/{orderId}` | Same vendor API; `{orderId}` accepts `OC10001` or internal UUID |
-| POST | `/vendors/orange-county/orders/{orderId}/shipment` | Vendor posts AWB + courier name |
-| POST | `/vendors/orange-county/orders/{orderId}/tracking` | Vendor posts tracking status updates |
+| POST | `/vendors/orange-county/shipment` | Vendor posts AWB + courier (`orderNumber`, `courierName`, `awb`) |
+| POST | `/vendors/orange-county/orders/{orderId}/shipment` | Same AWB update with order id in path |
+| POST | `/vendors/orange-county/tracking` | Vendor posts tracking (`orderNumber`, `currentShipmentStatus`) |
+| POST | `/vendors/orange-county/orders/{orderId}/tracking` | Same tracking update with order id in path |
 | POST | `/webhooks/stripe` | Stripe webhook |
 
 **Product add-ons (UsaRakhi only):** Fixed dry-fruit / chocolate extras (`packages/shared/src/lib/product-addons.ts`). Shown on PDP when `allowsAddons` is true (non–Orange County). Shoppers pick quantity per add-on (1–10); nested on `CartItem.addons` with `quantity`; line totals include `price × quantity`. Merge key includes quantities. OC products reject addons server-side.
