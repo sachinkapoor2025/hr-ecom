@@ -11,9 +11,9 @@ const SET_SIZE_BY_CATEGORY: Record<RakhiSetSizeCategory, RakhiSetSize> = {
 };
 
 const SET_CATEGORY_LABELS: Record<RakhiSetSizeCategory, string> = {
-  "2-set-rakhi": "2 Set Rakhi",
-  "3-set-rakhi": "3 Set Rakhi",
-  "4-set-rakhi": "4 Set Rakhi",
+  "2-set-rakhi": "Set of 2 Rakhis",
+  "3-set-rakhi": "Set of 3 Rakhis",
+  "4-set-rakhi": "Set of 4 Rakhis",
 };
 
 export function isRakhiSetSizeCategory(slug: string): slug is RakhiSetSizeCategory {

@@ -153,7 +153,9 @@ export function OrderConfirmation({ order, paid }: OrderConfirmationProps) {
             )}
             <div className="flex justify-between text-slate-600">
               <span>Shipping</span>
-              <span className="font-semibold text-accent">FREE</span>
+              <span className={order.shipping > 0 ? "font-medium text-slate-900" : "font-semibold text-accent"}>
+                {order.shipping > 0 ? formatMoney(order.shipping, order.currency) : "FREE"}
+              </span>
             </div>
             <div className="flex justify-between pt-2 border-t border-slate-100 text-base">
               <span className="font-bold text-slate-900">Total paid</span>
@@ -166,23 +168,49 @@ export function OrderConfirmation({ order, paid }: OrderConfirmationProps) {
             )}
           </div>
 
-          {/* Shipping address */}
-          {addr && (
-            <div className="border-t border-slate-100 px-5 sm:px-6 py-4 bg-slate-50/50">
-              <p className="text-xs uppercase tracking-wider text-slate-500 font-semibold mb-2">
-                Delivering to
+          {/* Shipping address(es) */}
+          {order.shipments && order.shipments.length > 1 ? (
+            <div className="border-t border-slate-100 px-5 sm:px-6 py-4 bg-slate-50/50 space-y-4">
+              <p className="text-xs uppercase tracking-wider text-slate-500 font-semibold">
+                Delivering to {order.shipments.length} addresses
               </p>
-              <p className="font-semibold text-slate-900">{addr.name}</p>
-              <p className="text-sm text-slate-600 mt-1 leading-relaxed">
-                {addr.line1}
-                {addr.line2 ? `, ${addr.line2}` : ""}
-                <br />
-                {addr.city}, {addr.state} {addr.postalCode}
-                <br />
-                {addr.country}
-              </p>
-              {addr.email && <p className="text-sm text-slate-500 mt-2">{addr.email}</p>}
+              {order.shipments.map((shipment, idx) => {
+                const a = shipment.shippingAddress;
+                return (
+                  <div key={shipment.shipmentId} className="text-sm">
+                    <p className="text-xs font-semibold text-slate-500 mb-1">
+                      Delivery {idx + 1} ·{" "}
+                      {shipment.items.map((i) => `${i.name} ×${i.quantity}`).join(", ")}
+                    </p>
+                    <p className="font-semibold text-slate-900">{a.name}</p>
+                    <p className="text-slate-600 mt-1 leading-relaxed">
+                      {a.line1}
+                      {a.line2 ? `, ${a.line2}` : ""}
+                      <br />
+                      {a.city}, {a.state} {a.postalCode}
+                    </p>
+                  </div>
+                );
+              })}
             </div>
+          ) : (
+            addr && (
+              <div className="border-t border-slate-100 px-5 sm:px-6 py-4 bg-slate-50/50">
+                <p className="text-xs uppercase tracking-wider text-slate-500 font-semibold mb-2">
+                  Delivering to
+                </p>
+                <p className="font-semibold text-slate-900">{addr.name}</p>
+                <p className="text-sm text-slate-600 mt-1 leading-relaxed">
+                  {addr.line1}
+                  {addr.line2 ? `, ${addr.line2}` : ""}
+                  <br />
+                  {addr.city}, {addr.state} {addr.postalCode}
+                  <br />
+                  {addr.country}
+                </p>
+                {addr.email && <p className="text-sm text-slate-500 mt-2">{addr.email}</p>}
+              </div>
+            )
           )}
         </div>
 

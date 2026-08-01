@@ -40,9 +40,7 @@ export function ScheduleDeliveryPicker({
   };
 
   return (
-    <div
-      className={`rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 ${className}`}
-    >
+    <div className={`rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 ${className}`}>
       <label htmlFor="schedule-delivery-date" className="block text-sm font-semibold text-primary mb-1">
         Schedule delivery
       </label>
@@ -62,7 +60,9 @@ export function ScheduleDeliveryPicker({
         className="w-full max-w-xs rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-nav"
       />
       {value ? (
-        <p className="text-xs text-green-700 mt-2 font-medium">Preferred delivery: {formatLong(value)}</p>
+        <p className="text-xs text-green-700 mt-2 font-medium">
+          Preferred delivery: {formatLong(value)}
+        </p>
       ) : (
         <p className="text-xs text-slate-500 mt-2">Optional — you can also set this at checkout.</p>
       )}

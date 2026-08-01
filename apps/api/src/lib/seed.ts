@@ -43,6 +43,7 @@ export async function seedIfEmpty() {
   console.log(`Seeding in-memory DB: ${catalog.products.length} UsaRakhi products...`);
 
   for (const cat of catalog.categories) {
+    const sortOrder = typeof cat.sortOrder === "number" ? cat.sortOrder : 0;
     await docClient.send(
       new PutCommand({
         TableName: PRODUCTS_TABLE,
@@ -51,6 +52,8 @@ export async function seedIfEmpty() {
           published: true,
           PK: categoryKeys.pk(cat.slug),
           SK: categoryKeys.sk(),
+          GSI1PK: categoryKeys.gsi1pk(),
+          GSI1SK: categoryKeys.gsi1sk(sortOrder, cat.slug),
           createdAt: timestamp,
           updatedAt: timestamp,
         },

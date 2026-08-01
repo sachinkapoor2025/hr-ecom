@@ -5,9 +5,16 @@
  * Same pattern as orange-county-catalog.ts for hampers.
  */
 import { PutCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
-import { productKeys, DEFAULT_PRODUCT_INVENTORY } from "@hr-ecom/shared";
+import { productKeys, categoryKeys, DEFAULT_PRODUCT_INVENTORY } from "@hr-ecom/shared";
 import { docClient, PRODUCTS_TABLE, now } from "./db";
 import catalogJson from "../data/usarakhi-catalog.json";
+
+type CatalogCategory = {
+  name: string;
+  slug: string;
+  description?: string;
+  sortOrder?: number;
+};
 
 type CatalogProduct = {
   name: string;
@@ -27,11 +34,82 @@ type CatalogProduct = {
   published?: boolean;
 };
 
+const categories = (catalogJson as { categories?: CatalogCategory[] }).categories ?? [];
 const products = (catalogJson as { products: CatalogProduct[] }).products ?? [];
 const bySlug = new Map(products.map((p) => [p.slug, p]));
 
 export function getBundledUsarakhiProduct(slug: string): CatalogProduct | undefined {
   return bySlug.get(slug);
+}
+
+/**
+ * Ensure WooCommerce/catalog categories exist in Dynamo with GSI1 list keys.
+ * Creates missing rows only — does not overwrite admin edits.
+ */
+export async function ensureUsarakhiCategoriesInDb(): Promise<number> {
+  if (categories.length === 0) return 0;
+  const ts = now();
+  let created = 0;
+
+  await Promise.all(
+    categories.map(async (cat) => {
+      const existing = await docClient.send(
+        new GetCommand({
+          TableName: PRODUCTS_TABLE,
+          Key: { PK: categoryKeys.pk(cat.slug), SK: categoryKeys.sk() },
+        })
+      );
+      if (existing.Item) {
+        // Repair list index if a prior import wrote CATEGORY# without GSI1.
+        if (existing.Item.GSI1PK !== categoryKeys.gsi1pk()) {
+          const sortOrder =
+            typeof existing.Item.sortOrder === "number"
+              ? existing.Item.sortOrder
+              : typeof cat.sortOrder === "number"
+                ? cat.sortOrder
+                : 0;
+          await docClient.send(
+            new PutCommand({
+              TableName: PRODUCTS_TABLE,
+              Item: {
+                ...existing.Item,
+                GSI1PK: categoryKeys.gsi1pk(),
+                GSI1SK: categoryKeys.gsi1sk(sortOrder, cat.slug),
+                updatedAt: ts,
+              },
+            })
+          );
+        }
+        return;
+      }
+
+      const sortOrder = typeof cat.sortOrder === "number" ? cat.sortOrder : 0;
+      await docClient.send(
+        new PutCommand({
+          TableName: PRODUCTS_TABLE,
+          Item: {
+            name: cat.name,
+            slug: cat.slug,
+            description: cat.description ?? "",
+            published: true,
+            sortOrder,
+            PK: categoryKeys.pk(cat.slug),
+            SK: categoryKeys.sk(),
+            GSI1PK: categoryKeys.gsi1pk(),
+            GSI1SK: categoryKeys.gsi1sk(sortOrder, cat.slug),
+            createdAt: ts,
+            updatedAt: ts,
+          },
+        })
+      );
+      created += 1;
+    })
+  );
+
+  if (created > 0) {
+    console.log(`ensured ${created} usarakhi catalog categories`);
+  }
+  return created;
 }
 
 /**

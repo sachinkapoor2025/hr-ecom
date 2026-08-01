@@ -81,7 +81,11 @@ jobs:
           [ -n "${TWILIO_ACCOUNT_SID:-}" ] && EXTRA="$EXTRA TwilioAccountSid=${TWILIO_ACCOUNT_SID}"
           [ -n "${TWILIO_AUTH_TOKEN:-}" ] && EXTRA="$EXTRA TwilioAuthToken=${TWILIO_AUTH_TOKEN}"
           [ -n "${TWILIO_WHATSAPP_FROM:-}" ] && EXTRA="$EXTRA TwilioWhatsAppFrom=${TWILIO_WHATSAPP_FROM}"
-          [ -n "${MARKETING_SMTP_PASS:-}" ] && EXTRA="$EXTRA MarketingSmtpPassword=${MARKETING_SMTP_PASS}"
+          if [ -n "${MARKETING_SMTP_PASS:-}" ]; then
+            EXTRA="$EXTRA MarketingSmtpPassword=${MARKETING_SMTP_PASS}"
+          else
+            echo "::warning::MARKETING_SMTP_PASS secret is empty — marketing campaigns need Mailercloud credentials in Admin → Email → Settings (or set the GitHub secret)."
+          fi
           [ -n "${RAZORPAY_WEBHOOK_SECRET:-}" ] && EXTRA="$EXTRA RazorpayWebhookSecret=${RAZORPAY_WEBHOOK_SECRET}"
           sam build && sam deploy --no-confirm-changeset --no-fail-on-empty-changeset --config-env prod \
             --parameter-overrides "\

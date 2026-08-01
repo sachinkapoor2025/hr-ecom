@@ -8,16 +8,20 @@ export default function SettingsPage() {
   const api = useApiClient();
   const [settings, setSettings] = useState<SesSettings | null>(null);
   const [smtpPasswordSet, setSmtpPasswordSet] = useState(false);
+  const [smtpPasswordSource, setSmtpPasswordSource] = useState<"settings" | "env" | "none">("none");
   const [passwordDirty, setPasswordDirty] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
   const load = useCallback(async () => {
-    const res = await api<{ settings: SesSettings; smtpPasswordSet?: boolean }>(
-      "/ses-email/settings"
-    );
+    const res = await api<{
+      settings: SesSettings;
+      smtpPasswordSet?: boolean;
+      smtpPasswordSource?: "settings" | "env" | "none";
+    }>("/ses-email/settings");
     setSettings(res.settings);
     setSmtpPasswordSet(Boolean(res.smtpPasswordSet));
+    setSmtpPasswordSource(res.smtpPasswordSource ?? (res.smtpPasswordSet ? "settings" : "none"));
     setPasswordDirty(false);
   }, [api]);
 
@@ -30,20 +34,26 @@ export default function SettingsPage() {
     setError("");
     setMessage("");
     try {
-      const payload: SesSettings = {
+      const payload: Record<string, unknown> = {
         ...settings,
-        // Keep existing password unless the admin typed a new one.
-        smtpPassword: passwordDirty ? settings.smtpPassword || "" : "",
       };
-      const res = await api<{ settings: SesSettings; smtpPasswordSet?: boolean }>(
-        "/ses-email/settings",
-        {
-          method: "PUT",
-          body: JSON.stringify(payload),
-        }
-      );
+      // Omit password when unchanged so the API keeps Dynamo/env credentials.
+      if (passwordDirty) {
+        payload.smtpPassword = settings.smtpPassword || "";
+      } else {
+        delete payload.smtpPassword;
+      }
+      const res = await api<{
+        settings: SesSettings;
+        smtpPasswordSet?: boolean;
+        smtpPasswordSource?: "settings" | "env" | "none";
+      }>("/ses-email/settings", {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      });
       setSettings(res.settings);
       setSmtpPasswordSet(Boolean(res.smtpPasswordSet));
+      setSmtpPasswordSource(res.smtpPasswordSource ?? (res.smtpPasswordSet ? "settings" : "none"));
       setPasswordDirty(false);
       setMessage("Settings saved. Marketing emails will use these SMTP credentials.");
     } catch (err) {
@@ -173,7 +183,17 @@ export default function SettingsPage() {
           />
         </label>
         {smtpPasswordSet && !passwordDirty && (
-          <p className="text-xs text-emerald-700">SMTP password is saved.</p>
+          <p className="text-xs text-emerald-700">
+            {smtpPasswordSource === "env"
+              ? "SMTP password is available from server env (MARKETING_SMTP_PASS). Saving settings will store it for campaigns."
+              : "SMTP password is saved."}
+          </p>
+        )}
+        {!smtpPasswordSet && (
+          <p className="text-xs text-red-600">
+            Marketing SMTP password is missing. Paste your Mailercloud password here and Save, or set GitHub
+            secret <code>MARKETING_SMTP_PASS</code> and redeploy.
+          </p>
         )}
       </div>
 

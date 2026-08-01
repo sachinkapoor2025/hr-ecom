@@ -163,9 +163,9 @@ export async function listProducts(event: APIGatewayProxyEventV2) {
     );
   }
 
-  // Search results are personalized-ish; skip shared cache headers.
+  // Short CDN TTL only — listing + PDP must not drift for minutes after price edits.
   if (search) return ok({ products: items.map(forStorefront) });
-  return okCached({ products: items.map(forStorefront) }, 30);
+  return okCached({ products: items.map(forStorefront) }, 10);
 }
 
 export async function getProduct(event: APIGatewayProxyEventV2) {
@@ -199,7 +199,7 @@ export async function getProduct(event: APIGatewayProxyEventV2) {
   const product = item;
   if (product.published === false) return notFound("Product not found");
   productGetCache.set(slug, { at: nowMs, product });
-  return okCached({ product: forStorefront(product) }, 30);
+  return okCached({ product: forStorefront(product) }, 10);
 }
 
 export async function createProduct(event: APIGatewayProxyEventV2) {

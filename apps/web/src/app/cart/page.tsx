@@ -2,6 +2,11 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import {
+  quoteFreeShippingThreshold,
+  quoteShipmentsShipping,
+  vendorSubtotalsForItems,
+} from "@hr-ecom/shared";
 import { useCart } from "@/lib/cart-context";
 import { useCurrency } from "@/lib/currency-context";
 import { SecureCheckoutBadge } from "@/components/SecureCheckoutBadge";
@@ -10,6 +15,7 @@ import { CheckoutLegalNotice } from "@/components/CheckoutLegalNotice";
 import { TrustBadges } from "@/components/TrustBadges";
 import { resolveImageUrl } from "@/lib/images";
 import { EstimatedDeliveryNote } from "@/components/EstimatedDeliveryNote";
+import { FreeShippingNotice } from "@/components/FreeShippingNotice";
 import { cartLineUnitTotal, type CartItem } from "@hr-ecom/shared";
 import type { DisplayCurrency } from "@/lib/currency-context";
 
@@ -105,14 +111,44 @@ function AddonList({ item, format }: { item: CartItem; format: (n: number, c: Di
 
 export default function CartPage() {
   const { cart, loading } = useCart();
-  const { format } = useCurrency();
+  const { format, convert, displayCurrency, usdInrRate } = useCurrency();
 
   if (loading) return <div className="p-10 text-center text-slate-600">Loading cart...</div>;
 
   const items = cart?.items ?? [];
   const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
-  const total = items.reduce((sum, i) => sum + cartLineUnitTotal(i) * i.quantity, 0);
-  const currency = (items[0]?.currency ?? "USD") as DisplayCurrency;
+  const cartCurrency = (items[0]?.currency ?? "USD") as DisplayCurrency;
+  const total = items.reduce((sum, i) => {
+    const lineCurrency = (i.currency ?? cartCurrency) as DisplayCurrency;
+    return sum + convert(cartLineUnitTotal(i) * i.quantity, lineCurrency);
+  }, 0);
+  const currency = displayCurrency;
+  const vendorSubtotals = vendorSubtotalsForItems(
+    items.map((i) => ({
+      price: convert(cartLineUnitTotal(i), (i.currency ?? cartCurrency) as DisplayCurrency),
+      quantity: i.quantity,
+      vendorSlug: i.vendorSlug,
+    }))
+  );
+  const multiVendorShipping = quoteShipmentsShipping({
+    shipmentSubtotals: vendorSubtotals.length > 0 ? vendorSubtotals : [total],
+    currency,
+    usdInrRate,
+  });
+  const shippingQuote =
+    multiVendorShipping.perShipment.find((q) => !q.qualifiesForFreeShipping) ??
+    multiVendorShipping.perShipment[0] ??
+    quoteFreeShippingThreshold({
+      subtotal: total,
+      currency,
+      usdInrRate,
+    });
+  const shippingCharge = multiVendorShipping.totalCharge;
+  const estimatedTotal = total + shippingCharge;
+  const mixedVendors = new Set(items.map((i) => i.vendorSlug?.trim() || "usarakhi")).size > 1;
+  /** Mixed sellers + at least one under $7: shipping fee applies to that seller only. */
+  const showMixedVendorShippingException =
+    mixedVendors && multiVendorShipping.perShipment.some((q) => q.charge > 0);
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 sm:py-10">
@@ -199,11 +235,39 @@ export default function CartPage() {
               </div>
               <div className="flex items-center justify-between gap-4">
                 <span className="text-slate-700">Shipping fee</span>
-                <span className="font-bold text-accent">FREE</span>
+                <span
+                  className={
+                    shippingCharge > 0
+                      ? "font-medium text-slate-900"
+                      : "font-bold text-accent"
+                  }
+                >
+                  {shippingCharge > 0 ? format(shippingCharge, currency) : "FREE"}
+                </span>
               </div>
+              {showMixedVendorShippingException ? (
+                <p className="text-xs text-amber-900 bg-amber-50 border border-amber-100 rounded-md px-3 py-2">
+                  Your items ship from different sellers, so free shipping is checked separately for
+                  each — not on the cart total. The {format(shippingCharge, currency)} shipping fee
+                  applies only to the seller under $7; the other seller ships free when their items
+                  are $7+.
+                </p>
+              ) : (
+                <FreeShippingNotice
+                  quote={shippingQuote}
+                  formatMoney={format}
+                  currency={currency}
+                />
+              )}
+              {itemCount > 1 && (
+                <p className="text-xs text-slate-500">
+                  At checkout you can ship each Rakhi to a different US address. Shipping under $7 is
+                  $6.99 per delivery address.
+                </p>
+              )}
               <div className="flex items-center justify-between gap-4 pt-2 border-t border-slate-100">
                 <span className="font-bold text-slate-900">Estimated total</span>
-                <span className="font-bold text-accent text-base">{format(total, currency)}</span>
+                <span className="font-bold text-accent text-base">{format(estimatedTotal, currency)}</span>
               </div>
             </div>
 

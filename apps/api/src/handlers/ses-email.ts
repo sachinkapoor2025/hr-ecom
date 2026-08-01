@@ -19,6 +19,8 @@ import {
   suppressEmailSchema,
   sendTestEmailSchema,
   renderSesTemplate,
+  resolveSesTemplateHtml,
+  PREMIUM_MARKETING_EMAIL_LAYOUT,
   DEFAULT_SENDER_MESSAGE_FOOTER,
   sesEmailKeys,
   orderKeys,
@@ -27,6 +29,7 @@ import {
   type SesRecipient,
   type SesTemplate,
   type SesRecipientActivity,
+  type MarketingEmailContentInput,
 } from "@hr-ecom/shared";
 import { docClient, now, dayBucket } from "../lib/db";
 import { ok, created, badRequest, notFound, forbidden, unauthorized, serverError, badGateway } from "../lib/response";
@@ -39,6 +42,7 @@ import {
   clearMarketingTransportCache,
   redactSettingsForAdmin,
   isRedactedPassword,
+  isMarketingSmtpPasswordAvailable,
 } from "../lib/ses";
 import {
   getSuppression,
@@ -55,6 +59,7 @@ const ORDERS_TABLE = process.env.ORDERS_TABLE ?? `hr-ecom-orders-${process.env.E
 const SITE_URL = (process.env.SITE_URL ?? "https://www.usarakhi.com").replace(/\/$/, "");
 
 function defaultSettings(): SesSettings {
+  const port = Number(process.env.MARKETING_SMTP_PORT || 587);
   return sesSettingsSchema.parse({
     awsRegion: process.env.SES_AWS_REGION || process.env.AWS_REGION || "us-east-1",
     defaultSenderName: "UsaRakhi",
@@ -74,11 +79,13 @@ function defaultSettings(): SesSettings {
     privacyUrl: DEFAULT_SENDER_MESSAGE_FOOTER.privacyUrl,
     marketingTransport: "smtp",
     smtpHost: process.env.MARKETING_SMTP_HOST || "smtp-prod.mailrcld.com",
-    smtpPort: Number(process.env.MARKETING_SMTP_PORT || 587),
-    smtpSecure: process.env.MARKETING_SMTP_SECURE === "true",
+    smtpPort: Number.isFinite(port) && port > 0 ? port : 587,
+    // Port 587 = STARTTLS; ignore MARKETING_SMTP_SECURE=true mistakes on 587.
+    smtpSecure: (Number.isFinite(port) && port > 0 ? port : 587) === 465,
     // Marketing login/from defaults — never transactional order@ SMTP host.
     smtpUser: process.env.MARKETING_SMTP_USER || "order@usarakhi.com",
-    smtpPassword: "",
+    // Prefer Lambda env so sends work even before Admin saves a password.
+    smtpPassword: process.env.MARKETING_SMTP_PASS?.trim() || "",
   });
 }
 
@@ -90,11 +97,25 @@ async function loadSettings(): Promise<SesSettings> {
         Key: { PK: sesEmailKeys.settingsPk(), SK: sesEmailKeys.settingsSk() },
       })
     );
-    if (!res.Item) return defaultSettings();
-    const parsed = sesSettingsSchema.safeParse({ ...defaultSettings(), ...res.Item.settings });
+    const defaults = defaultSettings();
+    if (!res.Item) return defaults;
+    const fromDb = (res.Item.settings ?? {}) as Partial<SesSettings>;
+    // Never let an empty Dynamo password wipe the env-backed Mailercloud password.
+    const smtpPassword =
+      (fromDb.smtpPassword && fromDb.smtpPassword !== "********"
+        ? fromDb.smtpPassword.trim()
+        : "") || defaults.smtpPassword;
+    const merged = {
+      ...defaults,
+      ...fromDb,
+      smtpPassword,
+      smtpHost: fromDb.smtpHost?.trim() || defaults.smtpHost,
+      smtpUser: fromDb.smtpUser?.trim() || defaults.smtpUser,
+    };
+    const parsed = sesSettingsSchema.safeParse(merged);
     if (!parsed.success) {
       console.error("[SES] Invalid settings in DynamoDB; using defaults", parsed.error.message);
-      return defaultSettings();
+      return defaults;
     }
     return parsed.data;
   } catch (err) {
@@ -661,14 +682,7 @@ async function getTemplate(templateId: string): Promise<SesTemplate | null> {
     })
   );
   if (!res.Item) return null;
-  return {
-    templateId: String(res.Item.templateId),
-    name: String(res.Item.name ?? ""),
-    subject: String(res.Item.subject ?? ""),
-    htmlBody: String(res.Item.htmlBody ?? ""),
-    createdAt: String(res.Item.createdAt ?? ""),
-    updatedAt: String(res.Item.updatedAt ?? ""),
-  };
+  return toTemplateResponse(res.Item as Record<string, unknown>);
 }
 
 function looksLikeDefaultCampaignHtml(html: string): boolean {
@@ -699,11 +713,24 @@ async function resolveCampaignEmailContent(campaign: SesCampaign): Promise<{
 }
 
 function toTemplateResponse(item: Record<string, unknown>): SesTemplate {
+  const layout =
+    item.layout === PREMIUM_MARKETING_EMAIL_LAYOUT ? PREMIUM_MARKETING_EMAIL_LAYOUT : undefined;
+  const contentFields =
+    item.contentFields && typeof item.contentFields === "object"
+      ? (item.contentFields as MarketingEmailContentInput)
+      : undefined;
+  const htmlBody = resolveSesTemplateHtml({
+    htmlBody: String(item.htmlBody ?? ""),
+    layout,
+    contentFields,
+  });
   return {
     templateId: String(item.templateId),
     name: String(item.name ?? ""),
     subject: String(item.subject ?? ""),
-    htmlBody: String(item.htmlBody ?? ""),
+    htmlBody,
+    ...(layout ? { layout } : {}),
+    ...(contentFields ? { contentFields } : {}),
     createdAt: String(item.createdAt ?? ""),
     updatedAt: String(item.updatedAt ?? ""),
   };
@@ -740,7 +767,7 @@ export async function createTemplate(event: APIGatewayProxyEventV2) {
   const body = JSON.parse(event.body ?? "{}");
   const parsed = createSesTemplateSchema.safeParse(body);
   if (!parsed.success) return badRequest(parsed.error.message);
-  const { templateId: requestedId, name, subject, htmlBody } = parsed.data;
+  const { templateId: requestedId, name, subject, layout, contentFields } = parsed.data;
   const templateId = requestedId ?? randomUUID();
 
   if (requestedId) {
@@ -748,6 +775,11 @@ export async function createTemplate(event: APIGatewayProxyEventV2) {
     if (existing) return ok({ template: existing, existed: true });
   }
 
+  const htmlBody = resolveSesTemplateHtml({
+    htmlBody: parsed.data.htmlBody,
+    layout,
+    contentFields,
+  });
   const ts = now();
   const item = {
     PK: sesEmailKeys.templatePk(templateId),
@@ -758,6 +790,8 @@ export async function createTemplate(event: APIGatewayProxyEventV2) {
     name,
     subject,
     htmlBody,
+    ...(layout ? { layout } : {}),
+    ...(contentFields ? { contentFields } : {}),
     createdAt: ts,
     updatedAt: ts,
   };
@@ -777,10 +811,22 @@ export async function updateTemplate(event: APIGatewayProxyEventV2) {
   const parsed = updateSesTemplateSchema.safeParse(body);
   if (!parsed.success) return badRequest(parsed.error.message);
 
+  const layout = parsed.data.layout ?? existing.layout;
+  const contentFields =
+    parsed.data.contentFields !== undefined ? parsed.data.contentFields : existing.contentFields;
+  const htmlBody = resolveSesTemplateHtml({
+    htmlBody: parsed.data.htmlBody ?? existing.htmlBody,
+    layout,
+    contentFields,
+  });
+
   const updated: SesTemplate = {
-    ...existing,
-    ...parsed.data,
     templateId: existing.templateId,
+    name: parsed.data.name ?? existing.name,
+    subject: parsed.data.subject ?? existing.subject,
+    htmlBody,
+    ...(layout ? { layout } : {}),
+    ...(contentFields ? { contentFields } : {}),
     createdAt: existing.createdAt,
     updatedAt: now(),
   };
@@ -820,9 +866,18 @@ export async function deleteTemplate(event: APIGatewayProxyEventV2) {
 export async function getSettings(event: APIGatewayProxyEventV2) {
   if (!requireAdmin(event)) return unauthorized("Admin access required");
   const settings = await loadSettings();
+  const smtpPasswordSet = isMarketingSmtpPasswordAvailable(settings);
   return ok({
     settings: redactSettingsForAdmin(settings),
-    smtpPasswordSet: Boolean(settings.smtpPassword && !isRedactedPassword(settings.smtpPassword)),
+    smtpPasswordSet,
+    smtpPasswordSource: settings.smtpPassword
+      ? process.env.MARKETING_SMTP_PASS?.trim() &&
+        settings.smtpPassword === process.env.MARKETING_SMTP_PASS.trim()
+        ? "env"
+        : "settings"
+      : process.env.MARKETING_SMTP_PASS?.trim()
+        ? "env"
+        : "none",
   });
 }
 
@@ -832,13 +887,17 @@ export async function updateSettings(event: APIGatewayProxyEventV2) {
   const existing = await loadSettings();
   const incomingPassword =
     typeof body.smtpPassword === "string" ? body.smtpPassword : undefined;
+  // Empty / redacted / omitted password means "keep existing" (incl. env-hydrated value).
   const keepPassword =
     incomingPassword === undefined || isRedactedPassword(incomingPassword);
+  const nextPassword = keepPassword
+    ? existing.smtpPassword || process.env.MARKETING_SMTP_PASS?.trim() || ""
+    : String(incomingPassword ?? "").trim();
 
   const merged = {
     ...existing,
     ...body,
-    smtpPassword: keepPassword ? existing.smtpPassword || "" : incomingPassword,
+    smtpPassword: nextPassword,
   };
   const parsed = sesSettingsSchema.safeParse(merged);
   if (!parsed.success) return badRequest(parsed.error.message);
@@ -848,10 +907,18 @@ export async function updateSettings(event: APIGatewayProxyEventV2) {
       "Marketing SMTP must use Mailercloud (smtp-prod.mailrcld.com). smtp.usarakhi.com is reserved for transactional order emails only."
     );
   }
+  if (parsed.data.marketingTransport === "smtp" && !nextPassword) {
+    return badRequest(
+      "Marketing SMTP password is required. Paste your Mailercloud password, or set the MARKETING_SMTP_PASS / GitHub secret MARKETING_SMTP_PASS for deploy."
+    );
+  }
   // Coerce TLS mode from port so Mailercloud 587 never saves as SMTPS (causes wrong version number).
   const settingsToSave = {
     ...parsed.data,
+    smtpHost: parsed.data.smtpHost?.trim() || "smtp-prod.mailrcld.com",
+    smtpUser: parsed.data.smtpUser?.trim() || "order@usarakhi.com",
     smtpSecure: Number(parsed.data.smtpPort) === 465,
+    smtpPassword: nextPassword,
   };
   await docClient.send(
     new PutCommand({
@@ -868,6 +935,7 @@ export async function updateSettings(event: APIGatewayProxyEventV2) {
   return ok({
     settings: redactSettingsForAdmin(settingsToSave),
     smtpPasswordSet: Boolean(settingsToSave.smtpPassword),
+    smtpPasswordSource: "settings",
   });
 }
 

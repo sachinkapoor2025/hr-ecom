@@ -3,13 +3,17 @@ import type { APIGatewayProxyEventV2 } from "aws-lambda";
 import { z } from "zod";
 import {
   addressSchema,
+  cartSubtotal,
+  DEFAULT_USD_INR_RATE,
   orderKeys,
   productHasShippingDims,
   productKeys,
   shippingSettingsSchema,
+  type CartItem,
   type Order,
   type Product,
   type RateQuote,
+  type ShopCurrency,
 } from "@hr-ecom/shared";
 import { docClient, PRODUCTS_TABLE, ORDERS_TABLE, now } from "../lib/db";
 import { ok, badRequest, forbidden, notFound, unauthorized } from "../lib/response";
@@ -76,12 +80,19 @@ export async function getShippingRates(event: APIGatewayProxyEventV2) {
   const cart = cartBody.cart;
   if (!cart?.items?.length) return badRequest("Cart is empty");
 
+  const items = cart.items as CartItem[];
+  const currency = (items[0]?.currency ?? "USD") as ShopCurrency;
+  const subtotal = cartSubtotal(items);
+
   const result = await resolveShippingForCheckout({
     destination: parsed.data,
-    cartItems: cart.items.map((i: { productSlug: string; quantity: number }) => ({
+    cartItems: items.map((i) => ({
       productSlug: i.productSlug,
       quantity: i.quantity,
     })),
+    subtotal,
+    currency,
+    usdInrRate: DEFAULT_USD_INR_RATE,
     shippingServiceCode: parsed.data.shippingServiceCode,
     shippingRateId: parsed.data.shippingRateId,
   });
@@ -89,6 +100,7 @@ export async function getShippingRates(event: APIGatewayProxyEventV2) {
   return ok({
     rates: result.rates,
     selected: result.selected,
+    customerShippingCharge: result.customerShippingCharge,
     settingsSnapshot: result.settingsSnapshot,
     fallbackUsed: result.fallbackUsed,
     warning: result.warning,
@@ -127,6 +139,68 @@ export async function buyLabelForOrder(event: APIGatewayProxyEventV2) {
       order,
       message: "Label already purchased",
     });
+  }
+
+  const multiShipments = order.shipments?.filter((s) => s.items?.length) ?? [];
+  if (multiShipments.length > 1) {
+    try {
+      const timestamp = now();
+      let totalLabelCost = 0;
+      const updatedShipments = [];
+      for (const shipment of multiShipments) {
+        if (shipment.labelStatus === "purchased" && shipment.trackingNumber) {
+          updatedShipments.push(shipment);
+          totalLabelCost += shipment.labelCost ?? 0;
+          continue;
+        }
+        const label = await purchaseLabelForOrder({
+          orderId: `${order.orderId}:${shipment.shipmentId}`,
+          shippingAddress: shipment.shippingAddress,
+          items: shipment.items,
+          shippingRateId: shipment.shippingRateId ?? order.shippingRateId,
+          shippingServiceCode: shipment.shippingServiceCode ?? order.shippingServiceCode,
+        });
+        totalLabelCost += label.labelCost ?? 0;
+        updatedShipments.push({
+          ...shipment,
+          trackingNumber: label.trackingNumber,
+          carrier: "USPS",
+          labelPdfUrl: label.labelPdfUrl,
+          labelCost: label.labelCost,
+          labelStatus: "purchased" as const,
+          labelError: undefined,
+          shippingServiceName: label.shippingServiceName ?? shipment.shippingServiceName,
+          shippingServiceCode: label.shippingServiceCode ?? shipment.shippingServiceCode,
+        });
+      }
+      const first = updatedShipments[0];
+      const updated = {
+        ...order,
+        shipments: updatedShipments,
+        trackingNumber: first?.trackingNumber,
+        carrier: "USPS",
+        labelPdfUrl: first?.labelPdfUrl,
+        labelCost: totalLabelCost || undefined,
+        labelStatus: "purchased" as const,
+        labelError: undefined,
+        shippingServiceName: first?.shippingServiceName ?? order.shippingServiceName,
+        shippingServiceCode: first?.shippingServiceCode ?? order.shippingServiceCode,
+        updatedAt: timestamp,
+      };
+      await docClient.send(new PutCommand({ TableName: ORDERS_TABLE, Item: updated }));
+      return ok({ order: updated, message: `Purchased ${updatedShipments.length} USPS labels` });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Label purchase failed";
+      const timestamp = now();
+      const updated = {
+        ...order,
+        labelStatus: "failed" as const,
+        labelError: message,
+        updatedAt: timestamp,
+      };
+      await docClient.send(new PutCommand({ TableName: ORDERS_TABLE, Item: updated }));
+      return badRequest(message);
+    }
   }
 
   try {

@@ -7,11 +7,14 @@ import type { ProductSort } from "@/components/ProductSortBar";
 import { SearchTracker } from "@/components/SearchTracker";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { pageMetadata } from "@/lib/seo";
+import { loadProducts } from "@/lib/product-loader";
 import type { Product, Category } from "@hr-ecom/shared";
 import { categoryHref } from "@/lib/category-urls";
 import { homeCategoryOrder, orderCategories } from "@/lib/site";
 
-export const revalidate = 60;
+/** Match PDP: no ISR HTML with stale product prices. */
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 interface Props {
   searchParams: Promise<{ search?: string; category?: string; sort?: string }>;
@@ -93,16 +96,11 @@ export default async function ProductsPage({ searchParams }: Props) {
   let categories: Category[] = [];
 
   try {
-    const query = new URLSearchParams();
-    if (search) query.set("search", search);
-    if (category) query.set("category", category);
-    const qs = query.toString() ? `?${query.toString()}` : "";
-
-    const [productsData, categoriesData] = await Promise.all([
-      api<{ products: Product[] }>(`/products${qs}`, { revalidate: 60 }),
-      api<{ categories: Category[] }>("/categories"),
+    const [liveProducts, categoriesData] = await Promise.all([
+      loadProducts({ search, category }),
+      api<{ categories: Category[] }>("/categories", { revalidate: false }),
     ]);
-    products = productsData.products;
+    products = liveProducts;
     categories = categoriesData.categories;
   } catch {
     products = [];

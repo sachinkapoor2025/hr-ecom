@@ -258,21 +258,21 @@ export function ProductDetailClient({
                 </Link>
 
                 <div className="flex-1 min-w-[13rem] max-w-[18rem]">
-                <AddToCartControl
-                  productSlug={product.slug}
-                  disabled={product.inventory <= 0}
-                  fullWidth
-                  variant="detail"
-                  getContact={getContact}
-                  addons={addons}
-                />
-              </div>
+                  <AddToCartControl
+                    productSlug={product.slug}
+                    disabled={product.inventory <= 0}
+                    fullWidth
+                    variant="detail"
+                    getContact={getContact}
+                    addons={addons}
+                  />
+                </div>
 
-              <div className="flex items-center gap-2 sm:ml-auto">
-                <WishlistButton product={product} variant="toolbar" />
-                {productUrl ? <ShareButton title={product.name} url={productUrl} /> : null}
+                <div className="flex items-center gap-2 sm:ml-auto">
+                  <WishlistButton product={product} variant="toolbar" />
+                  {productUrl ? <ShareButton title={product.name} url={productUrl} /> : null}
+                </div>
               </div>
-            </div>
 
               <div className="grid grid-cols-2 gap-2 max-w-md">
                 <Link
@@ -285,7 +285,7 @@ export function ProductDetailClient({
                   href="/checkout"
                   className="inline-flex items-center justify-center rounded-md bg-accent text-white font-bold text-sm uppercase tracking-wide py-3 hover:opacity-90 transition"
                 >
-                  Proceed to Pay
+                  Proceed to Checkout
                 </Link>
               </div>
             </div>

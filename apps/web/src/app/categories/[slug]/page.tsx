@@ -10,12 +10,8 @@ import { JsonLd } from "@/components/JsonLd";
 import { getCategoryContent } from "@/lib/content/category-content";
 import { getCategoryPageSeo } from "@/lib/content/category-seo";
 import { getCategoryRichContent } from "@/lib/content/category-rich-content";
-import { CategoryProductLinks } from "@/components/CategoryProductLinks";
 import { categoryHref } from "@/lib/category-urls";
-import {
-  getCatalogProductsByCategory,
-  mergeProductsPreferExisting,
-} from "@/lib/catalog-fallback";
+import { loadProductsByCategory } from "@/lib/product-loader";
 import { categoryOrder } from "@/lib/site";
 import { breadcrumbJsonLd, faqJsonLd, itemListJsonLd, pageMetadata } from "@/lib/seo";
 import {
@@ -44,7 +40,9 @@ export function generateStaticParams() {
   return categoryOrder.map((slug) => ({ slug }));
 }
 
-export const revalidate = 60;
+/** Match PDP: always use live product prices (no stale ISR listing HTML). */
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
@@ -91,14 +89,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   let products: Product[] = [];
 
   if (isRakhiSetSizeCategory(slug)) {
-    try {
-      const prodData = await api<{ products: Product[] }>(`/products?category=${slug}`, {
-        revalidate: 60,
-      });
-      products = prodData.products;
-    } catch {
-      products = getCatalogProductsByCategory(slug);
-    }
+    products = await loadProductsByCategory(slug);
     const label = rakhiSetCategoryLabel(slug) ?? slug;
     const now = new Date().toISOString();
     category = {
@@ -112,20 +103,16 @@ export default async function CategoryPage({ params, searchParams }: Props) {
     };
   } else {
     try {
-      const [catData, prodData] = await Promise.all([
-        api<{ category: Category }>(`/categories/${slug}`, { revalidate: 3600 }),
-        api<{ products: Product[] }>(`/products?category=${slug}`, { revalidate: 60 }),
+      const [catData, categoryProducts] = await Promise.all([
+        api<{ category: Category }>(`/categories/${slug}`, { revalidate: false }),
+        loadProductsByCategory(slug),
       ]);
       category = catData.category;
-      products = prodData.products;
+      products = categoryProducts;
     } catch {
-      products = getCatalogProductsByCategory(slug);
+      products = await loadProductsByCategory(slug);
     }
   }
-
-  // Merge bundled catalog (includes Orange County hampers listed in additional categories).
-  // Prefer live API prices — catalog JSON can be stale for shared slugs.
-  products = mergeProductsPreferExisting(products, getCatalogProductsByCategory(slug));
 
   const name =
     category?.name ??
@@ -170,8 +157,6 @@ export default async function CategoryPage({ params, searchParams }: Props) {
           </Link>
         </p>
       )}
-
-      <CategoryProductLinks products={products} categoryName={name} />
 
       {rich ? (
         <CategoryContentSection content={rich} categoryName={name} />
