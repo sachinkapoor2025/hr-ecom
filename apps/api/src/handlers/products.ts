@@ -11,6 +11,7 @@ import {
   productAllowsAddons,
   isRakhiSetSizeCategory,
   productMatchesRakhiSetCategory,
+  resolveProductImagesForUpsert,
   type Product,
 } from "@hr-ecom/shared";
 import { docClient, PRODUCTS_TABLE, now, slugify } from "../lib/db";
@@ -250,9 +251,18 @@ export async function updateProduct(event: APIGatewayProxyEventV2) {
   const parsed = updateProductSchema.safeParse(body);
   if (!parsed.success) return badRequest(parsed.error.message);
 
+  const allowShrinkImages = body?.replaceImages === true;
+  const imageUpdate =
+    parsed.data.images !== undefined
+      ? resolveProductImagesForUpsert(parsed.data.images, previous.images, {
+          allowShrink: allowShrinkImages,
+        })
+      : null;
+
   const updated = {
     ...previous,
     ...parsed.data,
+    ...(imageUpdate ? { images: imageUpdate.images } : {}),
     updatedAt: now(),
   } as Product & { PK: string; SK: string; GSI1PK: string; GSI1SK: string };
 
@@ -330,6 +340,21 @@ export async function bulkUploadProducts(event: APIGatewayProxyEventV2) {
     const tags = parsed.data.tags
       ? parsed.data.tags.split(",").map((t) => t.trim()).filter(Boolean)
       : [];
+
+    const existing = await docClient.send(
+      new GetCommand({
+        TableName: PRODUCTS_TABLE,
+        Key: { PK: productKeys.pk(slug), SK: productKeys.sk() },
+      })
+    );
+    // Never wipe galleries on bulk re-upload of an existing product.
+    if (existing.Item) {
+      errors.push({
+        row: i + 1,
+        error: `Product already exists (slug=${slug}); bulk upload will not overwrite images/inventory. Edit the product instead.`,
+      });
+      continue;
+    }
 
     const item = {
       ...parsed.data,

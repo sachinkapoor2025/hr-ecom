@@ -16,6 +16,7 @@ import { trackProductView } from "@/lib/track";
 import { useCurrency } from "@/lib/currency-context";
 import { getDiscountPercent } from "@/lib/pricing";
 import { LeadCaptureInput } from "@/components/LeadCaptureInput";
+import { ExploreMoreSection } from "@/components/ExploreMoreSection";
 import { HomeProductCard } from "@/components/HomeProductCard";
 import { useCart } from "@/lib/cart-context";
 import { productPageFaqs } from "@/lib/content/product-faqs";
@@ -378,6 +379,9 @@ export function ProductDetailClient({
               </div>
             )}
 
+            {/* Explore More sits immediately after Related searches for description-tab readers. */}
+            <ExploreMoreSection />
+
             <div className="max-w-md space-y-3">
               <LeadCaptureInput
                 label="Your name (helps us assist you)"
@@ -444,6 +448,9 @@ export function ProductDetailClient({
             ))}
           </dl>
         )}
+
+        {/* Always in the document (not tab-gated) so crawlers and other tabs still get internal links. */}
+        {tab !== "description" ? <ExploreMoreSection /> : null}
       </section>
 
       {relatedProducts.length > 0 && (

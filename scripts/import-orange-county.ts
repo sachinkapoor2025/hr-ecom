@@ -26,6 +26,7 @@ import {
   categoryKeys,
   productKeys,
   metaDescription,
+  resolveProductImagesForUpsert,
 } from "@hr-ecom/shared";
 
 const ENV = process.env.ENVIRONMENT ?? "prod";
@@ -247,9 +248,12 @@ async function main() {
       if (existing.Item.unitsSold != null) {
         (item as { unitsSold?: number }).unitsSold = existing.Item.unitsSold as number;
       }
-      if (!imageUrls.length && Array.isArray(existing.Item.images)) {
-        item.images = existing.Item.images as string[];
-      }
+      const { images } = resolveProductImagesForUpsert(
+        imageUrls,
+        existing.Item.images as string[] | undefined,
+        { allowShrink: process.env.REPLACE_IMAGES === "1" || process.env.REPLACE_IMAGES === "true" }
+      );
+      item.images = images;
     }
 
     await ddb.send(new PutCommand({ TableName: PRODUCTS_TABLE, Item: item }));

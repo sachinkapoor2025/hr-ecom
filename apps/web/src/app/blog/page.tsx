@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { BlogShowMoreProducts } from "@/components/BlogShowMoreProducts";
 import { loadBlogPostsWithImages } from "@/lib/blog-images";
 import { pageMetadata } from "@/lib/seo";
 
@@ -63,6 +64,8 @@ export default async function BlogPage() {
           </article>
         ))}
       </div>
+
+      <BlogShowMoreProducts />
     </div>
   );
 }

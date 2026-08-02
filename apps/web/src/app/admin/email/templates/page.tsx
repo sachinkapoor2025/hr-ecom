@@ -5,8 +5,10 @@ import { useApiClient } from "@/lib/auth-context";
 import { PremiumMarketingEmailEditor } from "@/components/admin/PremiumMarketingEmailEditor";
 import { ensureStarterEmailTemplates } from "@/lib/ensure-starter-email-templates";
 import {
+  FREE_SHIPPING_TEMPLATE_ID,
   PREMIUM_RAKSHA_BANDHAN_TEMPLATE_ID,
   RAKSHA_BANDHAN_TEMPLATE_ID,
+  STARTING_PRICE_TEMPLATE_ID,
 } from "@/lib/starter-email-templates";
 import {
   DEFAULT_PREMIUM_MARKETING_EMAIL_CONTENT,
@@ -48,7 +50,17 @@ export default function TemplatesPage() {
   const load = useCallback(async () => {
     const { templates: list, installed, updated } = await ensureStarterEmailTemplates(api);
     setTemplates(list);
-    if (installed.includes(PREMIUM_RAKSHA_BANDHAN_TEMPLATE_ID)) {
+    if (
+      installed.includes(FREE_SHIPPING_TEMPLATE_ID) ||
+      installed.includes(STARTING_PRICE_TEMPLATE_ID)
+    ) {
+      setMessage("Campaign templates installed: Free Shipping Above $7 and Rakhi Starting at ₹265.");
+    } else if (
+      updated.includes(FREE_SHIPPING_TEMPLATE_ID) ||
+      updated.includes(STARTING_PRICE_TEMPLATE_ID)
+    ) {
+      setMessage("Campaign templates updated from latest marketing email configs.");
+    } else if (installed.includes(PREMIUM_RAKSHA_BANDHAN_TEMPLATE_ID)) {
       setMessage("Premium Raksha Bandhan template installed — edit images, categories, and CTAs below.");
     } else if (updated.includes(PREMIUM_RAKSHA_BANDHAN_TEMPLATE_ID)) {
       setMessage("Premium Raksha Bandhan template upgraded with visual editor fields.");

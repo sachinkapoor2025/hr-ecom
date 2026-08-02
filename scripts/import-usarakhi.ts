@@ -16,7 +16,7 @@ import {
   configKeys,
   defaultPaymentConfig,
   metaDescription,
-  mergeProductImages,
+  resolveProductImagesForUpsert,
 } from "@hr-ecom/shared";
 
 const CATALOG_PATH = join(process.cwd(), "scripts/data/usarakhi-catalog.json");
@@ -318,8 +318,15 @@ async function importToDb(catalog: { categories: CatalogCategory[]; products: Ca
     );
     const prev = existing.Item as Record<string, unknown> | undefined;
     const previousImages = (prev?.images as string[] | undefined) ?? [];
-    const mergedImages = mergeProductImages(p.images ?? [], previousImages);
+    const { images: mergedImages, preservedExisting } = resolveProductImagesForUpsert(
+      p.images ?? [],
+      previousImages,
+      { allowShrink: process.argv.includes("--replace-images") }
+    );
     if (mergedImages.length > previousImages.length) mergedImageCount++;
+    if (preservedExisting) {
+      console.warn(`  keeping existing gallery for ${p.slug} (import would have reduced images)`);
+    }
 
     await docClient.send(
       new PutCommand({

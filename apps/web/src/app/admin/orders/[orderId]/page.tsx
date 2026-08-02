@@ -48,6 +48,7 @@ export default function AdminOrderDetailPage() {
   const [message, setMessage] = useState("");
   const [buyingLabel, setBuyingLabel] = useState(false);
   const [syncingPayment, setSyncingPayment] = useState(false);
+  const [ratesWarning, setRatesWarning] = useState("");
   const [loadingRates, setLoadingRates] = useState(false);
   const [savingService, setSavingService] = useState(false);
   const [rateOptions, setRateOptions] = useState<RateQuote[]>([]);
@@ -164,18 +165,34 @@ export default function AdminOrderDetailPage() {
   const loadRates = async () => {
     setLoadingRates(true);
     setError("");
+    setRatesWarning("");
+    setMessage("");
     try {
-      const data = await apiClient<{ rates: RateQuote[] }>(`/admin/orders/${orderId}/rates`, {
-        method: "POST",
-      });
-      setRateOptions(data.rates);
-      if (data.rates.length) {
+      const data = await apiClient<{ rates: RateQuote[]; warning?: string }>(
+        `/admin/orders/${orderId}/rates`,
+        { method: "POST" }
+      );
+      setRateOptions(data.rates ?? []);
+      if (data.warning) {
+        setRatesWarning(data.warning);
+        setError(data.warning);
+      }
+      if (data.rates?.length) {
         const current = order?.shippingRateId;
         const match = current ? data.rates.find((r) => r.rateId === current) : undefined;
         setSelectedRateId(match?.rateId ?? data.rates[0].rateId);
+        setMessage(`Loaded ${data.rates.length} USPS rate${data.rates.length === 1 ? "" : "s"}.`);
+      } else if (!data.warning) {
+        const msg =
+          "No USPS rates returned. Set Admin → Shipping origin address, then try Load rates again.";
+        setRatesWarning(msg);
+        setError(msg);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not load rates.");
+      setRateOptions([]);
+      const msg = err instanceof Error ? err.message : "Could not load rates.";
+      setRatesWarning(msg);
+      setError(msg);
     } finally {
       setLoadingRates(false);
     }
@@ -631,6 +648,12 @@ export default function AdminOrderDetailPage() {
             {order.labelError && (
               <p className="text-red-600 text-xs mt-1">Label error: {order.labelError}</p>
             )}
+            {error && !ratesWarning && (
+              <p className="text-red-600 text-xs mt-1 whitespace-pre-wrap">{error}</p>
+            )}
+            {message && (
+              <p className="text-green-600 text-xs mt-1">{message}</p>
+            )}
             {labelMargin != null && (
               <p className="text-xs text-slate-500 mt-2 border-t pt-2">
                 Customer shipping charged {formatMoney(order.shipping, order.currency)} vs label{" "}
@@ -693,6 +716,14 @@ export default function AdminOrderDetailPage() {
 
             <div className="mt-4 pt-4 border-t border-slate-100">
               <p className="text-xs font-medium text-slate-500 mb-2">USPS service override</p>
+              <p className="text-[11px] text-slate-400 mb-2">
+                If Buy USPS label fails, load rates here, pick a service, save, then buy again.
+                Origin address must be set under{" "}
+                <Link href="/admin/shipping" className="text-nav underline">
+                  Admin → Shipping
+                </Link>
+                .
+              </p>
               <div className="flex flex-wrap gap-2 mb-2">
                 <button
                   type="button"
@@ -703,6 +734,9 @@ export default function AdminOrderDetailPage() {
                   {loadingRates ? "Loading rates…" : "Load rates"}
                 </button>
               </div>
+              {ratesWarning && (
+                <p className="text-red-600 text-xs mb-2 whitespace-pre-wrap">{ratesWarning}</p>
+              )}
               {rateOptions.length > 0 && (
                 <>
                   <select

@@ -17,6 +17,7 @@ import { WhyTrustUsSection } from "@/components/WhyTrustUsSection";
 import { JsonLd } from "@/components/JsonLd";
 import { site, homeBanners, homeCategoryOrder, faqs } from "@/lib/site";
 import { getCatalogProductsByCategory, mergeProductsPreferExisting } from "@/lib/catalog-fallback";
+import { pickHomeCategoryProducts } from "@/lib/home-category-products";
 import { loadProducts } from "@/lib/product-loader";
 import { faqJsonLd, howToSendRakhiJsonLd, pageMetadata } from "@/lib/seo";
 import type { Product, Category } from "@hr-ecom/shared";
@@ -82,12 +83,11 @@ export default async function HomePage() {
     "lumba-rakhi": "Lumba Rakhi To USA",
   };
 
+  // Home-only curated lists + order (does not change category/shop/search pages).
   const productsByCategory = homeCategoryOrder.map((slug) => ({
     slug,
     name: homeCategoryDisplayNames[slug],
-    products: products.filter(
-      (p) => p.categorySlug === slug || p.additionalCategorySlugs?.includes(slug)
-    ),
+    products: pickHomeCategoryProducts(products, slug),
   }));
   const googleReviews = await getGoogleReviews();
 
@@ -110,7 +110,7 @@ export default async function HomePage() {
               </Link>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 items-stretch">
-              {section.products.slice(0, 10).map((p) => (
+              {section.products.map((p) => (
                 <HomeProductCard key={p.slug} product={p} />
               ))}
             </div>
