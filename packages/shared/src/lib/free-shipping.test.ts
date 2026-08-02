@@ -13,13 +13,15 @@ import {
 describe("quoteFreeShippingThreshold", () => {
   it("charges $6.99 when cart is under $7", () => {
     const quote = quoteFreeShippingThreshold({
-      subtotal: 6.99,
+      subtotal: 3.99,
       currency: "USD",
       usdInrRate: 96,
     });
     assert.equal(quote.qualifiesForFreeShipping, false);
+    assert.equal(quote.tier, "low");
     assert.equal(quote.charge, BELOW_THRESHOLD_SHIPPING_USD);
-    assert.ok(Math.abs(quote.amountAwayFromFreeShipping - 4) < 0.001);
+    assert.ok(Math.abs(quote.amountAwayFromFreeShipping - 7) < 0.001);
+    assert.ok(Math.abs(quote.amountAwayFromReducedShipping - 3.01) < 0.001);
   });
 
   it("charges $2.99 from $7 up to under $10.99", () => {
@@ -29,7 +31,9 @@ describe("quoteFreeShippingThreshold", () => {
       usdInrRate: 96,
     });
     assert.equal(atSeven.qualifiesForFreeShipping, false);
+    assert.equal(atSeven.tier, "mid");
     assert.equal(atSeven.charge, REDUCED_SHIPPING_USD);
+    assert.equal(atSeven.amountAwayFromReducedShipping, 0);
 
     const justUnderFree = quoteFreeShippingThreshold({
       subtotal: 10.98,

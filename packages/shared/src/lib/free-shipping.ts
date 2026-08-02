@@ -19,14 +19,26 @@ export const BELOW_THRESHOLD_SHIPPING_USD = 6.99;
 /** Flat shipping when bucket is $7+ but under $10.99. */
 export const REDUCED_SHIPPING_USD = 2.99;
 
+export type FreeShippingTier = "low" | "mid" | "free";
+
 export type FreeShippingQuote = {
   /** Shipping charged to the customer in `currency`. */
   charge: number;
   qualifiesForFreeShipping: boolean;
   /** How much more cart value (in `currency`) is needed for free shipping. */
   amountAwayFromFreeShipping: number;
+  /** How much more cart value (in `currency`) is needed to reach the $2.99 tier. */
+  amountAwayFromReducedShipping: number;
   /** Free-shipping threshold expressed in `currency`. */
   thresholdInCurrency: number;
+  /** Reduced-shipping ($2.99) threshold expressed in `currency`. */
+  reducedThresholdInCurrency: number;
+  /** $6.99 tier fee in `currency`. */
+  lowTierFeeInCurrency: number;
+  /** $2.99 tier fee in `currency`. */
+  midTierFeeInCurrency: number;
+  /** Current tier for this bucket. */
+  tier: FreeShippingTier;
   /** Shipping fee for the current bucket tier, in `currency`. */
   belowThresholdFeeInCurrency: number;
 };
@@ -70,30 +82,48 @@ export function quoteFreeShippingThreshold(input: {
     currency,
     usdInrRate
   );
+  const reducedThresholdInCurrency = toCurrency(
+    REDUCED_SHIPPING_MIN_SUBTOTAL_USD,
+    currency,
+    usdInrRate
+  );
   const lowTierFee = toCurrency(BELOW_THRESHOLD_SHIPPING_USD, currency, usdInrRate);
   const midTierFee = toCurrency(REDUCED_SHIPPING_USD, currency, usdInrRate);
   const subtotalUsd = toUsd(subtotal, currency, usdInrRate);
 
   let charge = 0;
   let qualifiesForFreeShipping = false;
+  let tier: FreeShippingTier = "low";
   if (subtotalUsd >= FREE_SHIPPING_MIN_SUBTOTAL_USD) {
     qualifiesForFreeShipping = true;
+    tier = "free";
     charge = 0;
   } else if (subtotalUsd >= REDUCED_SHIPPING_MIN_SUBTOTAL_USD) {
+    tier = "mid";
     charge = midTierFee;
   } else {
+    tier = "low";
     charge = lowTierFee;
   }
 
   const amountAwayFromFreeShipping = qualifiesForFreeShipping
     ? 0
     : Math.max(0, roundForCurrency(thresholdInCurrency - subtotal, currency));
+  const amountAwayFromReducedShipping =
+    tier === "low"
+      ? Math.max(0, roundForCurrency(reducedThresholdInCurrency - subtotal, currency))
+      : 0;
 
   return {
     charge,
     qualifiesForFreeShipping,
     amountAwayFromFreeShipping,
+    amountAwayFromReducedShipping,
     thresholdInCurrency,
+    reducedThresholdInCurrency,
+    lowTierFeeInCurrency: lowTierFee,
+    midTierFeeInCurrency: midTierFee,
+    tier,
     belowThresholdFeeInCurrency: charge,
   };
 }
