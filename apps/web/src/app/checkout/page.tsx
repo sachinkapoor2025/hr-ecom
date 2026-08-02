@@ -817,8 +817,8 @@ function CheckoutPageInner() {
                   <h2 className="text-lg font-bold text-slate-900">Deliver each Rakhi</h2>
                   <p className="text-sm text-slate-600 mt-1">
                     By default every Rakhi ships to the address above. Uncheck “Same address” to send
-                    a Rakhi to a different US location. Shipping under $7 is $6.99 per delivery
-                    address.
+                    a Rakhi to a different US location. Per address: under $7 is $6.99, $7–$10.98 is
+                    $2.99, and $10.99+ ships free.
                   </p>
                 </div>
                 <ul className="space-y-4">
@@ -969,15 +969,15 @@ function CheckoutPageInner() {
                 <>
                   {showMixedVendorShippingException ? (
                     <p className="text-xs text-amber-900 bg-amber-50 border border-amber-100 rounded-md px-3 py-2">
-                      Your items ship from different sellers, so free shipping is checked separately
-                      for each — not on the order total. The{" "}
-                      {format(shippingCharge, displayCurrency)} shipping fee applies only to the
-                      seller under $7; the other seller ships free when their items are $7+.
+                      Your items ship from different sellers, so shipping is checked separately for
+                      each — not on the order total. Under $7 is $6.99, $7–$10.98 is $2.99, and
+                      $10.99+ is free per seller. Current shipping fee:{" "}
+                      {format(shippingCharge, displayCurrency)}.
                     </p>
                   ) : showMultiGroupShippingNotice ? (
                     <p className="text-xs text-amber-900 bg-amber-50 border border-amber-100 rounded-md px-3 py-2">
-                      Shipping is calculated per delivery address. Cart under $7 for an address adds
-                      $6.99 for that delivery.
+                      Shipping is calculated per delivery address. Under $7 is $6.99, $7–$10.98 is
+                      $2.99, and $10.99+ is free for that delivery.
                       {chargedShipmentCount > 0 ? (
                         <>
                           {" "}

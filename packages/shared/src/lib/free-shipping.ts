@@ -5,10 +5,19 @@ import {
 } from "../currency";
 
 /** Cart subtotal at or above this (USD) unlocks free shipping. */
-export const FREE_SHIPPING_MIN_SUBTOTAL_USD = 7;
+export const FREE_SHIPPING_MIN_SUBTOTAL_USD = 10.99;
 
-/** Flat shipping charged when cart is below the free-shipping threshold. */
+/**
+ * At or above this (USD) and below free-shipping threshold → reduced $2.99 shipping.
+ * Below this → $6.99 shipping.
+ */
+export const REDUCED_SHIPPING_MIN_SUBTOTAL_USD = 7;
+
+/** Flat shipping when bucket is under $7. */
 export const BELOW_THRESHOLD_SHIPPING_USD = 6.99;
+
+/** Flat shipping when bucket is $7+ but under $10.99. */
+export const REDUCED_SHIPPING_USD = 2.99;
 
 export type FreeShippingQuote = {
   /** Shipping charged to the customer in `currency`. */
@@ -18,7 +27,7 @@ export type FreeShippingQuote = {
   amountAwayFromFreeShipping: number;
   /** Free-shipping threshold expressed in `currency`. */
   thresholdInCurrency: number;
-  /** Shipping fee when below threshold, in `currency`. */
+  /** Shipping fee for the current bucket tier, in `currency`. */
   belowThresholdFeeInCurrency: number;
 };
 
@@ -44,7 +53,10 @@ function toUsd(
 }
 
 /**
- * Free-shipping threshold rule: cart under $7 → $6.99 shipping; $7+ → free.
+ * Shipping tiers (per address × vendor bucket, in USD):
+ * - under $7 → $6.99
+ * - $7 to under $10.99 → $2.99
+ * - $10.99+ → free
  * Evaluated in USD, then converted when the shopper currency is INR.
  */
 export function quoteFreeShippingThreshold(input: {
@@ -58,14 +70,21 @@ export function quoteFreeShippingThreshold(input: {
     currency,
     usdInrRate
   );
-  const belowThresholdFeeInCurrency = toCurrency(
-    BELOW_THRESHOLD_SHIPPING_USD,
-    currency,
-    usdInrRate
-  );
+  const lowTierFee = toCurrency(BELOW_THRESHOLD_SHIPPING_USD, currency, usdInrRate);
+  const midTierFee = toCurrency(REDUCED_SHIPPING_USD, currency, usdInrRate);
   const subtotalUsd = toUsd(subtotal, currency, usdInrRate);
-  const qualifiesForFreeShipping = subtotalUsd >= FREE_SHIPPING_MIN_SUBTOTAL_USD;
-  const charge = qualifiesForFreeShipping ? 0 : belowThresholdFeeInCurrency;
+
+  let charge = 0;
+  let qualifiesForFreeShipping = false;
+  if (subtotalUsd >= FREE_SHIPPING_MIN_SUBTOTAL_USD) {
+    qualifiesForFreeShipping = true;
+    charge = 0;
+  } else if (subtotalUsd >= REDUCED_SHIPPING_MIN_SUBTOTAL_USD) {
+    charge = midTierFee;
+  } else {
+    charge = lowTierFee;
+  }
+
   const amountAwayFromFreeShipping = qualifiesForFreeShipping
     ? 0
     : Math.max(0, roundForCurrency(thresholdInCurrency - subtotal, currency));
@@ -75,7 +94,7 @@ export function quoteFreeShippingThreshold(input: {
     qualifiesForFreeShipping,
     amountAwayFromFreeShipping,
     thresholdInCurrency,
-    belowThresholdFeeInCurrency,
+    belowThresholdFeeInCurrency: charge,
   };
 }
 
@@ -90,7 +109,7 @@ export function shippingVendorKey(item: { vendorSlug?: string }): string {
 
 /**
  * Free-shipping groups: each subtotal is one chargeable bucket
- * (delivery address × vendor). Under $7 → $6.99; $7+ → free. Total = sum.
+ * (delivery address × vendor). Tiers apply per bucket; total = sum.
  */
 export function quoteShipmentsShipping(input: {
   shipmentSubtotals: number[];
@@ -127,8 +146,8 @@ export function vendorSubtotalsForItems(
 }
 
 /**
- * Shipping for one delivery address: evaluate the $7 / $6.99 rule per vendor
- * inside that address (UsaRakhi vs Orange County, etc.), then sum.
+ * Shipping for one delivery address: evaluate tiers per vendor inside that
+ * address (UsaRakhi vs Orange County, etc.), then sum.
  */
 export function quoteAddressShipmentShipping(input: {
   items: Array<{ price: number; quantity: number; vendorSlug?: string }>;

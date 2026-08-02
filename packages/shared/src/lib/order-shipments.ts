@@ -109,7 +109,7 @@ export function buildOrderShipments(input: {
     };
   }
 
-  /** Per address: $6.99 for each vendor bucket under $7 (UsaRakhi vs Orange County, etc.). */
+  /** Per address × vendor: under $7 → $6.99; $7–$10.98 → $2.99; $10.99+ → free. */
   const perAddress = built.map((s) =>
     quoteAddressShipmentShipping({
       items: s.items,
