@@ -113,21 +113,21 @@ export const FREE_SHIPPING_EMAIL_CONFIG = {
   unsubscribeLabel: "Unsubscribe",
 } as const;
 
-/** ═══════════════ TEMPLATE 2 — Starting at ₹265 / $2.75 ═══════════════ */
+/** ═══════════════ TEMPLATE 2 — Starting at ₹343 / $3.99 ═══════════════ */
 export const STARTING_PRICE_EMAIL_CONFIG = {
   templateId: "rakhi-starting-265",
-  name: "Rakhi Starting at ₹265",
-  subject: "Beautiful Rakhi Starting at Only ₹265 ($2.75) — Limited Time",
-  preheader: "Limited time: beautiful Rakhis from ₹265 ($2.75). Grab this Raksha Bandhan offer.",
+  name: "Rakhi Starting at ₹343",
+  subject: "Beautiful Rakhi Starting at Only ₹343 ($3.99) — Limited Time",
+  preheader: "Limited time: beautiful Rakhis from ₹343 ($3.99). Grab this Raksha Bandhan offer.",
   logoUrl: LOGO,
   logoHref: SITE,
   heroImageUrl: HERO,
   heroImageHref: SHOP,
-  heroImageAlt: "Beautiful Rakhi starting at ₹265 ($2.75) — UsaRakhi",
+  heroImageAlt: "Beautiful Rakhi starting at ₹343 ($3.99) — UsaRakhi",
   urgencyText: "⚡ Limited Time Offer",
   offerEyebrow: "FESTIVE DEAL",
   offerHeadline: "Beautiful Rakhi",
-  offerSubhead: "Starting at Only ₹265 ($2.75)",
+  offerSubhead: "Starting at Only ₹343 ($3.99)",
   offerBody:
     "Celebrate Raksha Bandhan without stretching your budget. Explore premium designs — singles, sets, kids styles, and Bhaiya-Bhabhi pairs — with festive packaging and USA delivery.",
   ctaText: "Grab This Offer",
@@ -144,7 +144,7 @@ export const STARTING_PRICE_EMAIL_CONFIG = {
           href: `${SITE}/single-rakhi-to-usa`,
           buttonText: "Shop Now",
           badge: "BEST SELLER",
-          priceLabel: "From $2.75",
+          priceLabel: "From $3.99",
         },
         {
           name: "Om Designer Rakhi",
@@ -153,7 +153,7 @@ export const STARTING_PRICE_EMAIL_CONFIG = {
           href: `${SITE}/single-rakhi-to-usa`,
           buttonText: "Shop Now",
           badge: "HOT",
-          priceLabel: "From $2.75",
+          priceLabel: "From $3.99",
         },
       ] satisfies CampaignCard[],
     },
@@ -192,7 +192,7 @@ export const STARTING_PRICE_EMAIL_CONFIG = {
           href: `${SITE}/kids-rakhi-to-usa`,
           buttonText: "Shop Kids",
           badge: "KIDS",
-          priceLabel: "From $2.75",
+          priceLabel: "From $3.99",
         },
         {
           name: "Chhota Bheem Kids",
@@ -231,7 +231,7 @@ export const STARTING_PRICE_EMAIL_CONFIG = {
     },
   ],
   midCtaHeading: "Don't Miss This Festive Deal",
-  midCtaBody: "Beautiful Rakhis from ₹265 ($2.75). Limited-time pricing — order for USA delivery today.",
+  midCtaBody: "Beautiful Rakhis from ₹343 ($3.99). Limited-time pricing — order for USA delivery today.",
   midCtaText: "Grab This Offer",
   midCtaHref: SHOP,
   footerTagline: "Connecting Hearts Across Borders",
@@ -807,7 +807,7 @@ export function buildFreeShippingEmailHtml(
   });
 }
 
-/** Template 2 HTML — Starting at ₹265 / $2.75. */
+/** Template 2 HTML — Starting at ₹343 / $3.99. */
 export function buildStartingPriceEmailHtml(
   cfg: typeof STARTING_PRICE_EMAIL_CONFIG = STARTING_PRICE_EMAIL_CONFIG
 ): string {
