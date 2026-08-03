@@ -8,17 +8,22 @@ export const FLASH_COMBO_SALE_STARTED_AT = "2026-08-03T20:17:00.000Z";
 /** Sale length from start. */
 export const FLASH_COMBO_SALE_DURATION_MS = 24 * 60 * 60 * 1000;
 
+/** Flat shipping for flash-combo-only vendor buckets (USD). */
+export const FLASH_COMBO_SHIPPING_USD = 1;
+
 export const FLASH_COMBO_SALE = {
   slug: FLASH_COMBO_SALE_SLUG,
   title: "24-Hour Flash Sale",
   headline: "Grab Your Offer",
-  priceUsd: 3.99,
+  priceUsd: 12.97,
   compareAtUsd: 24.99,
+  shippingUsd: FLASH_COMBO_SHIPPING_USD,
   includes: [
     "Blue Beads Pearl Single Rakhi",
-    "Om Rakhi with Roli Chawal for Brother",
+    "Om Rakhi for Brother",
+    "1 packet Roli",
+    "1 packet Chawal",
     "Wonderful Pistachios No Shells — 0.75 oz (21 g)",
-    "Roli & Chawal packet",
   ],
 } as const;
 

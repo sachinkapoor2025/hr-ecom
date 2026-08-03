@@ -2,10 +2,13 @@ import {
   addressFingerprint,
   cartLineUnitTotal,
   isValidShippingPhone,
+  quoteAddressShipmentShipping,
   shippingVendorKey,
   type CartItem,
   type CheckoutShipment,
+  type FreeShippingQuote,
   type ShippingAddress,
+  type ShopCurrency,
 } from "@hr-ecom/shared";
 import { emptyShippingAddress } from "@/lib/shipping-address";
 
@@ -141,4 +144,49 @@ export function shipmentSubtotalsFromUnits(
   }
 
   return [...groups.values()];
+}
+
+/**
+ * Per (address × vendor) shipping quotes — includes flash-combo flat $1 shipping.
+ */
+export function quoteShippingFromDeliveryUnits(
+  units: DeliveryUnit[],
+  primary: ShippingAddress,
+  currency: ShopCurrency,
+  usdInrRate: number
+): { totalCharge: number; perShipment: FreeShippingQuote[] } {
+  const groups = new Map<
+    string,
+    Array<{ price: number; quantity: number; vendorSlug?: string; productSlug: string }>
+  >();
+
+  for (const unit of units) {
+    const address = unit.useSameAddress
+      ? withSender(primary, primary)
+      : withSender(unit.address, primary);
+    const addressKey = unit.useSameAddress ? "__primary__" : addressFingerprint(address);
+    const vendorKey = shippingVendorKey(unit);
+    const groupKey = `${addressKey}::${vendorKey}`;
+    const list = groups.get(groupKey) ?? [];
+    list.push({
+      price: unit.price,
+      quantity: 1,
+      vendorSlug: unit.vendorSlug,
+      productSlug: unit.productSlug,
+    });
+    groups.set(groupKey, list);
+  }
+
+  if (groups.size === 0) {
+    return { totalCharge: 0, perShipment: [] };
+  }
+
+  const perShipment: FreeShippingQuote[] = [];
+  let totalCharge = 0;
+  for (const items of groups.values()) {
+    const quote = quoteAddressShipmentShipping({ items, currency, usdInrRate });
+    perShipment.push(...quote.perVendor);
+    totalCharge += quote.totalCharge;
+  }
+  return { totalCharge, perShipment };
 }

@@ -3,6 +3,10 @@ import {
   roundForCurrency,
   type ShopCurrency,
 } from "../currency";
+import {
+  FLASH_COMBO_SHIPPING_USD,
+  isFlashComboProduct,
+} from "./flash-sale";
 
 /** Cart subtotal at or above this (USD) unlocks free shipping. */
 export const FREE_SHIPPING_MIN_SUBTOTAL_USD = 10.99;
@@ -175,22 +179,85 @@ export function vendorSubtotalsForItems(
   return [...byVendor.values()];
 }
 
+function flashComboShippingQuote(
+  currency: ShopCurrency,
+  usdInrRate: number
+): FreeShippingQuote {
+  const charge = toCurrency(FLASH_COMBO_SHIPPING_USD, currency, usdInrRate);
+  const thresholdInCurrency = toCurrency(
+    FREE_SHIPPING_MIN_SUBTOTAL_USD,
+    currency,
+    usdInrRate
+  );
+  const reducedThresholdInCurrency = toCurrency(
+    REDUCED_SHIPPING_MIN_SUBTOTAL_USD,
+    currency,
+    usdInrRate
+  );
+  return {
+    charge,
+    qualifiesForFreeShipping: false,
+    amountAwayFromFreeShipping: 0,
+    amountAwayFromReducedShipping: 0,
+    thresholdInCurrency,
+    reducedThresholdInCurrency,
+    lowTierFeeInCurrency: toCurrency(BELOW_THRESHOLD_SHIPPING_USD, currency, usdInrRate),
+    midTierFeeInCurrency: toCurrency(REDUCED_SHIPPING_USD, currency, usdInrRate),
+    tier: "low",
+    belowThresholdFeeInCurrency: charge,
+  };
+}
+
 /**
  * Shipping for one delivery address: evaluate tiers per vendor inside that
  * address (UsaRakhi vs Orange County, etc.), then sum.
+ * Flash-combo-only buckets use a flat $1 shipping fee.
  */
 export function quoteAddressShipmentShipping(input: {
-  items: Array<{ price: number; quantity: number; vendorSlug?: string }>;
+  items: Array<{
+    price: number;
+    quantity: number;
+    vendorSlug?: string;
+    productSlug?: string;
+  }>;
   currency: ShopCurrency;
   usdInrRate: number;
 }): {
   totalCharge: number;
   perVendor: FreeShippingQuote[];
 } {
-  const { totalCharge, perShipment } = quoteShipmentsShipping({
-    shipmentSubtotals: vendorSubtotalsForItems(input.items),
-    currency: input.currency,
-    usdInrRate: input.usdInrRate,
+  const byVendor = new Map<
+    string,
+    Array<{ price: number; quantity: number; productSlug?: string }>
+  >();
+  for (const item of input.items) {
+    const key = shippingVendorKey(item);
+    const list = byVendor.get(key) ?? [];
+    list.push(item);
+    byVendor.set(key, list);
+  }
+
+  const perVendor = [...byVendor.values()].map((vendorItems) => {
+    const flashOnly =
+      vendorItems.length > 0 &&
+      vendorItems.every((i) => isFlashComboProduct(i.productSlug));
+    if (flashOnly) {
+      return flashComboShippingQuote(input.currency, input.usdInrRate);
+    }
+    const subtotal = vendorItems.reduce(
+      (sum, i) => sum + i.price * i.quantity,
+      0
+    );
+    return quoteFreeShippingThreshold({
+      subtotal,
+      currency: input.currency,
+      usdInrRate: input.usdInrRate,
+    });
   });
-  return { totalCharge, perVendor: perShipment };
+
+  const totalCharge = roundForCurrency(
+    perVendor.reduce((sum, q) => sum + q.charge, 0),
+    input.currency
+  );
+  return { totalCharge, perVendor };
 }

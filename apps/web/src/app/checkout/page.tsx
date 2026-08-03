@@ -32,7 +32,7 @@ import {
 import {
   buildCheckoutShipmentsFromUnits,
   expandCartToDeliveryUnits,
-  shipmentSubtotalsFromUnits,
+  quoteShippingFromDeliveryUnits,
   validateDeliveryUnits,
   type DeliveryUnit,
 } from "@/lib/checkout-shipments";
@@ -42,7 +42,6 @@ import {
   isValidShippingPhone,
   DEFAULT_SENDER_MESSAGE,
   quoteFreeShippingThreshold,
-  quoteShipmentsShipping,
   shippingVendorKey,
   cartLineUnitTotal,
   cartHasCouponExcludedItems,
@@ -727,21 +726,17 @@ function CheckoutPageInner() {
   const hasCouponExcludedLines =
     !isRetry && cartHasCouponExcludedItems(checkoutItems);
   const itemCount = checkoutItems.reduce((sum, i) => sum + i.quantity, 0);
-  const unitSubtotalsForShipping = isRetry
-    ? []
-    : (() => {
-        const unitsInDisplay = deliveryUnits.map((u) => ({
+  const multiShippingQuote = isRetry
+    ? { totalCharge: retryOrder!.shipping, perShipment: [] as ReturnType<typeof quoteShippingFromDeliveryUnits>["perShipment"] }
+    : quoteShippingFromDeliveryUnits(
+        deliveryUnits.map((u) => ({
           ...u,
           price: convert(u.price, cartCurrency),
-        }));
-        return shipmentSubtotalsFromUnits(unitsInDisplay, address);
-      })();
-  const multiShippingQuote = quoteShipmentsShipping({
-    shipmentSubtotals:
-      unitSubtotalsForShipping.length > 0 ? unitSubtotalsForShipping : [displaySubtotal],
-    currency: displayCurrency,
-    usdInrRate,
-  });
+        })),
+        address,
+        displayCurrency,
+        usdInrRate
+      );
   const freeShippingQuote =
     multiShippingQuote.perShipment.find((q) => !q.qualifiesForFreeShipping) ??
     multiShippingQuote.perShipment[0] ??

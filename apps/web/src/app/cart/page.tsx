@@ -3,9 +3,8 @@
 import Link from "next/link";
 import { useState } from "react";
 import {
+  quoteAddressShipmentShipping,
   quoteFreeShippingThreshold,
-  quoteShipmentsShipping,
-  vendorSubtotalsForItems,
 } from "@hr-ecom/shared";
 import { useCart } from "@/lib/cart-context";
 import { useCurrency } from "@/lib/currency-context";
@@ -123,21 +122,19 @@ export default function CartPage() {
     return sum + convert(cartLineUnitTotal(i) * i.quantity, lineCurrency);
   }, 0);
   const currency = displayCurrency;
-  const vendorSubtotals = vendorSubtotalsForItems(
-    items.map((i) => ({
+  const multiVendorShipping = quoteAddressShipmentShipping({
+    items: items.map((i) => ({
       price: convert(cartLineUnitTotal(i), (i.currency ?? cartCurrency) as DisplayCurrency),
       quantity: i.quantity,
       vendorSlug: i.vendorSlug,
-    }))
-  );
-  const multiVendorShipping = quoteShipmentsShipping({
-    shipmentSubtotals: vendorSubtotals.length > 0 ? vendorSubtotals : [total],
+      productSlug: i.productSlug,
+    })),
     currency,
     usdInrRate,
   });
   const shippingQuote =
-    multiVendorShipping.perShipment.find((q) => !q.qualifiesForFreeShipping) ??
-    multiVendorShipping.perShipment[0] ??
+    multiVendorShipping.perVendor.find((q) => !q.qualifiesForFreeShipping) ??
+    multiVendorShipping.perVendor[0] ??
     quoteFreeShippingThreshold({
       subtotal: total,
       currency,
@@ -148,7 +145,7 @@ export default function CartPage() {
   const mixedVendors = new Set(items.map((i) => i.vendorSlug?.trim() || "usarakhi")).size > 1;
   /** Mixed sellers + at least one paid shipping bucket: fee applies to that seller only. */
   const showMixedVendorShippingException =
-    mixedVendors && multiVendorShipping.perShipment.some((q) => q.charge > 0);
+    mixedVendors && multiVendorShipping.perVendor.some((q) => q.charge > 0);
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 sm:py-10">

@@ -28,6 +28,21 @@ function remainingUntil(endsAt: Date, now: Date): Remaining | null {
   return { h: pad(h), m: pad(m), s: pad(s) };
 }
 
+function TimerBlock({ value, label }: { value: string; label: string }) {
+  return (
+    <div className="flex flex-col items-center">
+      <div className="relative min-w-[3.25rem] sm:min-w-[3.75rem] rounded-xl bg-gradient-to-b from-[#1f4b82] to-primary px-2.5 py-2 sm:px-3 sm:py-2.5 shadow-[0_8px_20px_rgba(24,58,104,0.35)] ring-1 ring-white/15">
+        <span className="block font-mono text-2xl sm:text-3xl font-bold tabular-nums text-white leading-none tracking-wider animate-pulse">
+          {value}
+        </span>
+      </div>
+      <span className="mt-1.5 text-[10px] sm:text-xs font-bold uppercase tracking-[0.18em] text-primary/80">
+        {label}
+      </span>
+    </div>
+  );
+}
+
 export function FlashSaleSection({ product }: { product: Product | null }) {
   const { format } = useCurrency();
   const [remaining, setRemaining] = useState<Remaining | null>(null);
@@ -47,6 +62,7 @@ export function FlashSaleSection({ product }: { product: Product | null }) {
   if (!product || !active || !remaining) return null;
 
   const images = (product.images ?? []).slice(0, 3).map((src) => resolveImageUrl(src));
+  const shippingLabel = format(FLASH_COMBO_SALE.shippingUsd, "USD");
 
   return (
     <section className="relative overflow-hidden border-y border-rose-200/80 bg-gradient-to-br from-rose-50 via-white to-amber-50">
@@ -98,8 +114,8 @@ export function FlashSaleSection({ product }: { product: Product | null }) {
               {FLASH_COMBO_SALE.headline}
             </h2>
             <p className="text-slate-600 text-sm sm:text-base mb-4 max-w-xl">
-              Blue Beads Pearl Single + Om Rakhi with Roli Chawal + Wonderful Pistachios 21g pack —
-              one limited combo. No coupon codes on this offer.
+              Blue Beads Pearl Single + Om Rakhi + Roli packet + Chawal packet + Wonderful
+              Pistachios 21g — limited 24-hour combo. No coupon codes on this offer.
             </p>
 
             <ul className="text-sm text-slate-700 space-y-1.5 mb-5">
@@ -111,7 +127,7 @@ export function FlashSaleSection({ product }: { product: Product | null }) {
               ))}
             </ul>
 
-            <div className="flex flex-wrap items-end gap-4 mb-5">
+            <div className="flex flex-wrap items-end gap-5 mb-5">
               <div>
                 <p className="text-xs uppercase tracking-wide text-slate-500 mb-1">Flash price</p>
                 <div className="flex items-baseline gap-2">
@@ -124,17 +140,21 @@ export function FlashSaleSection({ product }: { product: Product | null }) {
                     </span>
                   )}
                 </div>
+                <p className="text-sm font-semibold text-primary mt-1">
+                  + {shippingLabel} shipping
+                </p>
               </div>
-              <div className="rounded-xl bg-primary text-white px-4 py-3 shadow-md">
-                <p className="text-[10px] uppercase tracking-wider text-white/70 mb-1">
+
+              <div className="rounded-2xl border border-rose-200/80 bg-white/80 backdrop-blur-sm px-4 py-3 sm:px-5 sm:py-4 shadow-sm">
+                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-accent mb-2.5 text-center">
                   Offer ends in
                 </p>
-                <div className="flex gap-2 font-mono text-xl font-bold tabular-nums">
-                  <span>{remaining.h}</span>
-                  <span className="opacity-60">:</span>
-                  <span>{remaining.m}</span>
-                  <span className="opacity-60">:</span>
-                  <span>{remaining.s}</span>
+                <div className="flex items-end gap-2 sm:gap-2.5">
+                  <TimerBlock value={remaining.h} label="Hrs" />
+                  <span className="pb-6 text-xl font-bold text-accent/70">:</span>
+                  <TimerBlock value={remaining.m} label="Min" />
+                  <span className="pb-6 text-xl font-bold text-accent/70">:</span>
+                  <TimerBlock value={remaining.s} label="Sec" />
                 </div>
               </div>
             </div>
