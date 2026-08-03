@@ -21,16 +21,16 @@ export const FLASH_COMBO_SALE = {
   includes: [
     "Blue Beads Pearl Single Rakhi",
     "Om Rakhi for Brother",
+    "Wonderful Pistachios No Shells — 0.75 oz (21 g)",
     "1 packet Roli",
     "1 packet Chawal",
-    "Wonderful Pistachios No Shells — 0.75 oz (21 g)",
   ],
   /** Canonical gallery — overrides stale Dynamo images on storefront. */
   images: [
     "https://usarakhi.com/wp-content/uploads/2026/03/50dada5d-eb61-454a-8fe4-51eb5e420753-e1775488586506.webp",
     "https://usarakhi.com/wp-content/uploads/2026/05/WhatsApp-Image-2026-05-06-at-10.36.39-PM-2.jpeg",
-    "https://d301af4ndyn9qx.cloudfront.net/uploads/flash-sale/roli-chawal-packets.jpeg",
     "https://d301af4ndyn9qx.cloudfront.net/uploads/flash-sale/wonderful-pistachios-21g-v3.png",
+    "https://d301af4ndyn9qx.cloudfront.net/uploads/flash-sale/roli-chawal-packets.jpeg",
   ],
 } as const;
 
