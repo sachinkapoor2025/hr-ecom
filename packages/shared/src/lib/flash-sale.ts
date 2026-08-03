@@ -15,7 +15,7 @@ export const FLASH_COMBO_SALE = {
   slug: FLASH_COMBO_SALE_SLUG,
   title: "24-Hour Flash Sale",
   headline: "Grab Your Offer",
-  priceUsd: 12.97,
+  priceUsd: 12.96,
   compareAtUsd: 24.99,
   shippingUsd: FLASH_COMBO_SHIPPING_USD,
   includes: [
@@ -54,6 +54,27 @@ export function productUsesFixedStorefrontPrice(product: {
   if (isFlashComboProduct(product.slug)) return true;
   const tags = product.tags ?? [];
   return tags.includes("fixed-price") || tags.includes("flash-sale");
+}
+
+/** Force flash-combo list price from code (ignores stale Dynamo/catalog price). */
+export function withFlashComboStorefrontPricing<
+  T extends { slug?: string; price: number; compareAtPrice?: number; couponExcluded?: boolean }
+>(product: T): T {
+  if (!isFlashComboProduct(product.slug)) return product;
+  return {
+    ...product,
+    price: FLASH_COMBO_SALE.priceUsd,
+    compareAtPrice: Math.max(
+      product.compareAtPrice ?? 0,
+      FLASH_COMBO_SALE.compareAtUsd
+    ),
+    couponExcluded: true,
+  };
+}
+
+/** Unit price charged for the flash combo (cart / checkout). */
+export function flashComboUnitPriceUsd(): number {
+  return FLASH_COMBO_SALE.priceUsd;
 }
 
 type CouponLine = {

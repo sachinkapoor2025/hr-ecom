@@ -12,6 +12,7 @@ import {
   resolveProductAddons,
   isFlashComboProduct,
   isFlashComboSaleActive,
+  flashComboUnitPriceUsd,
   productUsesFixedStorefrontPrice,
   type Cart,
   type CartItem,
@@ -163,9 +164,11 @@ export async function addToCart(event: APIGatewayProxyEventV2) {
     Boolean(product.vendorSlug) ||
     product.categorySlug === "rakhi-hampers" ||
     productUsesFixedStorefrontPrice(product);
-  const unitPrice = skipCompetitive
-    ? product.price
-    : applyCompetitivePriceReduction(product.price, product.currency);
+  const unitPrice = isFlashComboProduct(product.slug)
+    ? flashComboUnitPriceUsd()
+    : skipCompetitive
+      ? product.price
+      : applyCompetitivePriceReduction(product.price, product.currency);
   const couponExcluded =
     Boolean(product.couponExcluded) || isFlashComboProduct(product.slug);
 

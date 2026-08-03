@@ -1,5 +1,8 @@
 import { roundForCurrency, type ShopCurrency } from "../currency";
-import { productUsesFixedStorefrontPrice } from "./flash-sale";
+import {
+  productUsesFixedStorefrontPrice,
+  withFlashComboStorefrontPricing,
+} from "./flash-sale";
 
 /**
  * Competitive storefront price cuts (applied to catalog selling price before FX).
@@ -54,12 +57,15 @@ type VendorPriced = Priced & {
  * Safe to call more than once — never stacks competitive cuts.
  */
 export function withCompetitiveStorefrontPricing<T extends VendorPriced>(product: T): T {
+  // Flash combo price is owned by code — never show a stale Dynamo $3.99.
+  const priced = withFlashComboStorefrontPricing(product);
   // Already has intentional list vs sale pricing from the vendor catalog.
-  if (product.vendorSlug || product.categorySlug === "rakhi-hampers") return product;
+  if (priced.vendorSlug || priced.categorySlug === "rakhi-hampers") return priced;
   // Flash / fixed-price deals must stay at the exact listed price.
-  if (productUsesFixedStorefrontPrice(product)) {
-    return { ...product, storefrontPricingApplied: true };
+  if (productUsesFixedStorefrontPrice(priced)) {
+    return { ...priced, storefrontPricingApplied: true };
   }
+  product = priced;
   if (product.storefrontPricingApplied) return product;
 
   const currency = product.currency ?? "USD";
