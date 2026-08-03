@@ -1,4 +1,5 @@
 import { roundForCurrency, type ShopCurrency } from "../currency";
+import { productUsesFixedStorefrontPrice } from "./flash-sale";
 
 /**
  * Competitive storefront price cuts (applied to catalog selling price before FX).
@@ -38,7 +39,13 @@ type Priced = {
  * so the original catalog price still shows as strikethrough.
  * Does not mutate DynamoDB — admin continues to see stored prices.
  */
-type VendorPriced = Priced & { vendorSlug?: string; categorySlug?: string };
+type VendorPriced = Priced & {
+  vendorSlug?: string;
+  categorySlug?: string;
+  couponExcluded?: boolean;
+  tags?: string[];
+  slug?: string;
+};
 
 /**
  * Storefront view of a product: lower selling price + keep/raise compare-at
@@ -49,6 +56,10 @@ type VendorPriced = Priced & { vendorSlug?: string; categorySlug?: string };
 export function withCompetitiveStorefrontPricing<T extends VendorPriced>(product: T): T {
   // Already has intentional list vs sale pricing from the vendor catalog.
   if (product.vendorSlug || product.categorySlug === "rakhi-hampers") return product;
+  // Flash / fixed-price deals must stay at the exact listed price.
+  if (productUsesFixedStorefrontPrice(product)) {
+    return { ...product, storefrontPricingApplied: true };
+  }
   if (product.storefrontPricingApplied) return product;
 
   const currency = product.currency ?? "USD";

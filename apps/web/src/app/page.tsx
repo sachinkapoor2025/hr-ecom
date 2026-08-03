@@ -9,6 +9,7 @@ import { GoogleReviews } from "@/components/GoogleReviews";
 import { getGoogleReviews } from "@/lib/google-reviews";
 import { HomeProductCard } from "@/components/HomeProductCard";
 import { FastSellingSection } from "@/components/FastSellingSection";
+import { FlashSaleSection } from "@/components/FlashSaleSection";
 import { HomeSeoSection } from "@/components/HomeSeoSection";
 import { HomeRakshaBandhan2026Section } from "@/components/HomeRakshaBandhan2026Section";
 import { TrustStrip } from "@/components/TrustStrip";
@@ -16,11 +17,15 @@ import { IndiaBuyerBanner } from "@/components/IndiaBuyerBanner";
 import { WhyTrustUsSection } from "@/components/WhyTrustUsSection";
 import { JsonLd } from "@/components/JsonLd";
 import { site, homeBanners, homeCategoryOrder, faqs } from "@/lib/site";
-import { getCatalogProductsByCategory, mergeProductsPreferExisting } from "@/lib/catalog-fallback";
+import {
+  getCatalogProduct,
+  getCatalogProductsByCategory,
+  mergeProductsPreferExisting,
+} from "@/lib/catalog-fallback";
 import { pickHomeCategoryProducts } from "@/lib/home-category-products";
 import { loadProducts } from "@/lib/product-loader";
 import { faqJsonLd, howToSendRakhiJsonLd, pageMetadata } from "@/lib/seo";
-import type { Product, Category } from "@hr-ecom/shared";
+import { FLASH_COMBO_SALE_SLUG, isFlashComboSaleActive, type Product, type Category } from "@hr-ecom/shared";
 
 export const metadata: Metadata = pageMetadata({
   title: "Send Rakhi to USA Online | Rakhi Delivery USA | UsaRakhi",
@@ -90,11 +95,17 @@ export default async function HomePage() {
     products: pickHomeCategoryProducts(products, slug),
   }));
   const googleReviews = await getGoogleReviews();
+  const flashCombo = isFlashComboSaleActive()
+    ? products.find((p) => p.slug === FLASH_COMBO_SALE_SLUG && p.published !== false) ??
+      getCatalogProduct(FLASH_COMBO_SALE_SLUG) ??
+      null
+    : null;
 
   return (
     <div>
       <JsonLd data={[faqJsonLd(faqs), howToSendRakhiJsonLd()]} />
       <HomeHero banners={homeBanners} />
+      <FlashSaleSection product={flashCombo} />
       <TrustStrip />
       <IndiaBuyerBanner />
 

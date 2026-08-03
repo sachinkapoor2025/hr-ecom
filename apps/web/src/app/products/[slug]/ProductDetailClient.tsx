@@ -21,7 +21,17 @@ import { HomeProductCard } from "@/components/HomeProductCard";
 import { useCart } from "@/lib/cart-context";
 import { productPageFaqs } from "@/lib/content/product-faqs";
 import { testimonials } from "@/lib/site";
-import { LOW_STOCK_THRESHOLD, isFastSelling, getUnitsSold, estimatedDeliveryLabel, sumAddonPrices, getProductAddon } from "@hr-ecom/shared";
+import {
+  LOW_STOCK_THRESHOLD,
+  isFastSelling,
+  getUnitsSold,
+  estimatedDeliveryLabel,
+  sumAddonPrices,
+  getProductAddon,
+  isFlashComboProduct,
+  isFlashComboSaleActive,
+  flashComboSaleEndsAt,
+} from "@hr-ecom/shared";
 import { EstimatedDeliveryNote } from "@/components/EstimatedDeliveryNote";
 import { ScheduleDeliveryPicker } from "@/components/ScheduleDeliveryPicker";
 import type { Product, ProductAddonSelection } from "@hr-ecom/shared";
@@ -205,6 +215,18 @@ export function ProductDetailClient({
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-primary mb-3 leading-tight">{product.name}</h1>
 
+          {isFlashComboProduct(product.slug) && isFlashComboSaleActive() && (
+            <p className="text-sm font-semibold text-accent bg-rose-50 border border-rose-100 rounded-md px-3 py-2 mb-3">
+              24-hour flash sale — ends {flashComboSaleEndsAt().toLocaleString()}. Coupon codes do
+              not apply to this combo.
+            </p>
+          )}
+          {isFlashComboProduct(product.slug) && !isFlashComboSaleActive() && (
+            <p className="text-sm font-semibold text-slate-700 bg-slate-50 border border-slate-200 rounded-md px-3 py-2 mb-3">
+              This 24-hour flash offer has ended.
+            </p>
+          )}
+
           <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 mb-4">
             {comparePrice && <span className="text-lg text-slate-400 line-through">{comparePrice}</span>}
             <span className="text-2xl sm:text-3xl font-bold text-primary">{displayTotal}</span>
@@ -261,7 +283,10 @@ export function ProductDetailClient({
                 <div className="flex-1 min-w-[13rem] max-w-[18rem]">
                   <AddToCartControl
                     productSlug={product.slug}
-                    disabled={product.inventory <= 0}
+                    disabled={
+                      product.inventory <= 0 ||
+                      (isFlashComboProduct(product.slug) && !isFlashComboSaleActive())
+                    }
                     fullWidth
                     variant="detail"
                     getContact={getContact}
@@ -296,7 +321,10 @@ export function ProductDetailClient({
                 <div className="flex-1 min-w-0">
                   <AddToCartControl
                     productSlug={product.slug}
-                    disabled={product.inventory <= 0}
+                    disabled={
+                      product.inventory <= 0 ||
+                      (isFlashComboProduct(product.slug) && !isFlashComboSaleActive())
+                    }
                     fullWidth
                     variant="detail"
                     getContact={getContact}

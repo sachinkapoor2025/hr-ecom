@@ -10,6 +10,9 @@ import {
   cartLineUnitTotal,
   productAllowsAddons,
   resolveProductAddons,
+  isFlashComboProduct,
+  isFlashComboSaleActive,
+  productUsesFixedStorefrontPrice,
   type Cart,
   type CartItem,
 } from "@hr-ecom/shared";
@@ -133,10 +136,17 @@ export async function addToCart(event: APIGatewayProxyEventV2) {
     inventory: number;
     vendorSlug?: string;
     sku?: string;
+    couponExcluded?: boolean;
+    tags?: string[];
+    categorySlug?: string;
   };
 
   if (product.inventory < parsed.data.quantity) {
     return badRequest("Insufficient inventory");
+  }
+
+  if (isFlashComboProduct(product.slug) && !isFlashComboSaleActive()) {
+    return badRequest("This 24-hour flash offer has ended");
   }
 
   const requestedAddons = parsed.data.addons ?? [];
@@ -148,13 +158,16 @@ export async function addToCart(event: APIGatewayProxyEventV2) {
   const addons = resolved.addons;
   const signature = cartAddonSignature(addons);
 
-  // Vendor / hamper catalogs already include sale pricing — do not stack competitive cuts.
+  // Vendor / hamper / flash fixed-price deals — do not stack competitive cuts.
   const skipCompetitive =
     Boolean(product.vendorSlug) ||
-    (productItem as { categorySlug?: string }).categorySlug === "rakhi-hampers";
+    product.categorySlug === "rakhi-hampers" ||
+    productUsesFixedStorefrontPrice(product);
   const unitPrice = skipCompetitive
     ? product.price
     : applyCompetitivePriceReduction(product.price, product.currency);
+  const couponExcluded =
+    Boolean(product.couponExcluded) || isFlashComboProduct(product.slug);
 
   const existingIdx = cart.items.findIndex(
     (i) =>
@@ -172,6 +185,7 @@ export async function addToCart(event: APIGatewayProxyEventV2) {
     image: resolveProductImageUrl(product.images?.[0]),
     ...(product.vendorSlug ? { vendorSlug: product.vendorSlug } : {}),
     ...(product.sku ? { sku: product.sku } : {}),
+    ...(couponExcluded ? { couponExcluded: true } : {}),
     ...(addons.length ? { addons } : {}),
   };
 

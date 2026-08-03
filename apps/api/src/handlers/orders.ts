@@ -13,6 +13,7 @@ import {
   ORDER_STATUS_TRANSITIONS,
   convertCartItemsToCurrency,
   cartSubtotal,
+  couponEligibleSubtotal,
   buildOrderShipments,
   singleCheckoutShipment,
   isValidScheduleDeliveryDate,
@@ -281,12 +282,16 @@ export async function checkout(event: APIGatewayProxyEventV2) {
     if (!checkoutEmail && !checkoutPhone) {
       return badRequest("Phone or email is required to apply a coupon");
     }
+    const eligibleSubtotal = couponEligibleSubtotal(orderItems as CartItem[]);
+    if (eligibleSubtotal <= 0) {
+      return badRequest("Coupons cannot be applied to flash sale items");
+    }
     const coupon = await validateCouponRecord(parsed.data.couponCode, {
       email: checkoutEmail,
       phone: checkoutPhone,
     });
     if (!coupon.valid) return badRequest(coupon.error ?? "Invalid coupon code");
-    discount = applyPercentDiscount(subtotal, coupon.discountPercent!);
+    discount = applyPercentDiscount(eligibleSubtotal, coupon.discountPercent!);
     couponCode = coupon.code;
   }
 
