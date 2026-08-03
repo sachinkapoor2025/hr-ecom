@@ -14,7 +14,7 @@ export const FLASH_COMBO_SHIPPING_USD = 0.99;
 export const FLASH_COMBO_SALE = {
   slug: FLASH_COMBO_SALE_SLUG,
   title: "24-Hour Flash Sale",
-  headline: "Grab Your Offer",
+  headline: "Grab Your Offer (5 product combo)",
   priceUsd: 12.96,
   compareAtUsd: 24.99,
   shippingUsd: FLASH_COMBO_SHIPPING_USD,
