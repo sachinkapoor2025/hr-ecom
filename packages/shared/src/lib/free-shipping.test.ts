@@ -119,7 +119,7 @@ describe("quoteAddressShipmentShipping", () => {
     assert.equal(totalCharge, REDUCED_SHIPPING_USD);
   });
 
-  it("charges flat $1 shipping for flash-combo-only buckets", () => {
+  it("charges flat $0.99 shipping for flash-combo-only buckets", () => {
     const { totalCharge, perVendor } = quoteAddressShipmentShipping({
       items: [
         {
@@ -131,7 +131,7 @@ describe("quoteAddressShipmentShipping", () => {
       currency: "USD",
       usdInrRate: 96,
     });
-    assert.equal(totalCharge, 1);
-    assert.equal(perVendor[0]?.charge, 1);
+    assert.equal(totalCharge, 0.99);
+    assert.equal(perVendor[0]?.charge, 0.99);
   });
 });

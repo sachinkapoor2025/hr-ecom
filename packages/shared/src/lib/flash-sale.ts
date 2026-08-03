@@ -9,7 +9,7 @@ export const FLASH_COMBO_SALE_STARTED_AT = "2026-08-03T20:17:00.000Z";
 export const FLASH_COMBO_SALE_DURATION_MS = 24 * 60 * 60 * 1000;
 
 /** Flat shipping for flash-combo-only vendor buckets (USD). */
-export const FLASH_COMBO_SHIPPING_USD = 1;
+export const FLASH_COMBO_SHIPPING_USD = 0.99;
 
 export const FLASH_COMBO_SALE = {
   slug: FLASH_COMBO_SALE_SLUG,

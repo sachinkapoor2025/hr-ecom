@@ -31,6 +31,7 @@ import {
   isFlashComboProduct,
   isFlashComboSaleActive,
   flashComboSaleEndsAt,
+  FLASH_COMBO_SHIPPING_USD,
 } from "@hr-ecom/shared";
 import { EstimatedDeliveryNote } from "@/components/EstimatedDeliveryNote";
 import { ScheduleDeliveryPicker } from "@/components/ScheduleDeliveryPicker";
@@ -218,7 +219,8 @@ export function ProductDetailClient({
           {isFlashComboProduct(product.slug) && isFlashComboSaleActive() && (
             <p className="text-sm font-semibold text-accent bg-rose-50 border border-rose-100 rounded-md px-3 py-2 mb-3">
               24-hour flash sale — ends {flashComboSaleEndsAt().toLocaleString()}. Includes 1
-              packet Roli + 1 packet Chawal. Shipping {format(1, "USD")}. Coupon codes do not apply.
+              packet Roli + 1 packet Chawal. Shipping{" "}
+              {format(FLASH_COMBO_SHIPPING_USD, "USD")}. Coupon codes do not apply.
             </p>
           )}
           {isFlashComboProduct(product.slug) && !isFlashComboSaleActive() && (
