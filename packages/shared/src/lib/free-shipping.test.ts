@@ -118,4 +118,20 @@ describe("quoteAddressShipmentShipping", () => {
     });
     assert.equal(totalCharge, REDUCED_SHIPPING_USD);
   });
+
+  it("charges flat $0.99 shipping for flash-combo-only buckets", () => {
+    const { totalCharge, perVendor } = quoteAddressShipmentShipping({
+      items: [
+        {
+          price: 12.97,
+          quantity: 1,
+          productSlug: "blue-beads-om-pista-flash-combo",
+        },
+      ],
+      currency: "USD",
+      usdInrRate: 96,
+    });
+    assert.equal(totalCharge, 0.99);
+    assert.equal(perVendor[0]?.charge, 0.99);
+  });
 });

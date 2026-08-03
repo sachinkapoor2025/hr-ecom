@@ -20,6 +20,8 @@ export const cartItemSchema = z.object({
   /** Copied from product at add-to-cart for vendor order feeds. */
   vendorSlug: z.string().min(1).max(80).optional(),
   sku: z.string().optional(),
+  /** Copied from product — flash / fixed deals are not coupon-eligible. */
+  couponExcluded: z.boolean().optional(),
   /** Optional UsaRakhi dry-fruit / chocolate extras on this line. */
   addons: z.array(cartItemAddonSchema).max(20).optional(),
 });

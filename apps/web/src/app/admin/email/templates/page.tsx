@@ -54,7 +54,7 @@ export default function TemplatesPage() {
       installed.includes(FREE_SHIPPING_TEMPLATE_ID) ||
       installed.includes(STARTING_PRICE_TEMPLATE_ID)
     ) {
-      setMessage("Campaign templates installed: Free Shipping Above $7 and Rakhi Starting at ₹265.");
+      setMessage("Campaign templates installed: Free Shipping Above $7 and Rakhi Starting at ₹343 ($3.99).");
     } else if (
       updated.includes(FREE_SHIPPING_TEMPLATE_ID) ||
       updated.includes(STARTING_PRICE_TEMPLATE_ID)

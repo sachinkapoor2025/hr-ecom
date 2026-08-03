@@ -28,6 +28,11 @@ export const productSchema = z.object({
    * Set by API after stripping vendorSlug (true for UsaRakhi, false for OC).
    */
   allowsAddons: z.boolean().optional(),
+  /**
+   * When true, coupons cannot discount this product (flash / fixed-price deals).
+   * Also skips competitive storefront price cuts so the listed price stays exact.
+   */
+  couponExcluded: z.boolean().optional(),
   seoTitle: z.string().optional(),
   seoDescription: z.string().optional(),
   published: z.boolean().default(true),

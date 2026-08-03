@@ -32,7 +32,7 @@ import {
 import {
   buildCheckoutShipmentsFromUnits,
   expandCartToDeliveryUnits,
-  shipmentSubtotalsFromUnits,
+  quoteShippingFromDeliveryUnits,
   validateDeliveryUnits,
   type DeliveryUnit,
 } from "@/lib/checkout-shipments";
@@ -42,9 +42,10 @@ import {
   isValidShippingPhone,
   DEFAULT_SENDER_MESSAGE,
   quoteFreeShippingThreshold,
-  quoteShipmentsShipping,
   shippingVendorKey,
   cartLineUnitTotal,
+  cartHasCouponExcludedItems,
+  isFlashComboProduct,
   type Order,
   type RateQuote,
   type ShippingAddress,
@@ -715,22 +716,27 @@ function CheckoutPageInner() {
         const lineCurrency = (item.currency ?? cartCurrency) as DisplayCurrency;
         return sum + convert(cartLineUnitTotal(item) * item.quantity, lineCurrency);
       }, 0);
+  const couponEligibleDisplaySubtotal = isRetry
+    ? displaySubtotal
+    : checkoutItems.reduce((sum, item) => {
+        if (item.couponExcluded || isFlashComboProduct(item.productSlug)) return sum;
+        const lineCurrency = (item.currency ?? cartCurrency) as DisplayCurrency;
+        return sum + convert(cartLineUnitTotal(item) * item.quantity, lineCurrency);
+      }, 0);
+  const hasCouponExcludedLines =
+    !isRetry && cartHasCouponExcludedItems(checkoutItems);
   const itemCount = checkoutItems.reduce((sum, i) => sum + i.quantity, 0);
-  const unitSubtotalsForShipping = isRetry
-    ? []
-    : (() => {
-        const unitsInDisplay = deliveryUnits.map((u) => ({
+  const multiShippingQuote = isRetry
+    ? { totalCharge: retryOrder!.shipping, perShipment: [] as ReturnType<typeof quoteShippingFromDeliveryUnits>["perShipment"] }
+    : quoteShippingFromDeliveryUnits(
+        deliveryUnits.map((u) => ({
           ...u,
           price: convert(u.price, cartCurrency),
-        }));
-        return shipmentSubtotalsFromUnits(unitsInDisplay, address);
-      })();
-  const multiShippingQuote = quoteShipmentsShipping({
-    shipmentSubtotals:
-      unitSubtotalsForShipping.length > 0 ? unitSubtotalsForShipping : [displaySubtotal],
-    currency: displayCurrency,
-    usdInrRate,
-  });
+        })),
+        address,
+        displayCurrency,
+        usdInrRate
+      );
   const freeShippingQuote =
     multiShippingQuote.perShipment.find((q) => !q.qualifiesForFreeShipping) ??
     multiShippingQuote.perShipment[0] ??
@@ -1009,9 +1015,10 @@ function CheckoutPageInner() {
               <CouponInput
                 email={address.email}
                 phone={address.phone}
-                subtotal={displaySubtotal}
+                subtotal={couponEligibleDisplaySubtotal}
                 currency={displayCurrency}
                 formatMoney={format}
+                hasCouponExcludedItems={hasCouponExcludedLines}
                 initialCode={savedCouponCode}
                 onApplied={(amount, code) => {
                   setDiscount(amount);

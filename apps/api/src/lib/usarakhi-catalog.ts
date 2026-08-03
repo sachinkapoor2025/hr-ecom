@@ -29,6 +29,7 @@ type CatalogProduct = {
   sku?: string;
   inventory?: number;
   tags?: string[];
+  couponExcluded?: boolean;
   seoTitle?: string;
   seoDescription?: string;
   published?: boolean;
@@ -146,6 +147,7 @@ export async function ensureUsarakhiCatalogProductInDb(
     sku: bundled.sku,
     inventory: bundled.inventory ?? DEFAULT_PRODUCT_INVENTORY,
     tags: bundled.tags ?? [],
+    ...(bundled.couponExcluded ? { couponExcluded: true } : {}),
     seoTitle: bundled.seoTitle,
     seoDescription: bundled.seoDescription,
     published: bundled.published !== false,

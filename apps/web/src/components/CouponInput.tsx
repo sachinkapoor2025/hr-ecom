@@ -8,10 +8,13 @@ import { formatCouponExpiry } from "@/lib/welcome-coupon";
 type Props = {
   email: string;
   phone?: string;
+  /** Subtotal coupons may discount (excludes flash-sale / couponExcluded lines). */
   subtotal: number;
   currency: "USD" | "INR";
   formatMoney: (amount: number, currency: "USD" | "INR") => string;
   initialCode?: string;
+  /** When true, flash-sale lines are in the cart — coupons skip those lines. */
+  hasCouponExcludedItems?: boolean;
   onApplied: (discount: number, code: string) => void;
   onCleared: () => void;
 };
@@ -23,6 +26,7 @@ export function CouponInput({
   currency,
   formatMoney,
   initialCode = "",
+  hasCouponExcludedItems = false,
   onApplied,
   onCleared,
 }: Props) {
@@ -40,6 +44,10 @@ export function CouponInput({
   const apply = async () => {
     const trimmed = code.trim().toUpperCase();
     if (!trimmed) return;
+    if (subtotal <= 0) {
+      setError("Coupons cannot be applied to flash sale items");
+      return;
+    }
     const hasEmail = Boolean(email.trim() && email.includes("@"));
     const hasPhone = phone.replace(/\D/g, "").length >= 7;
     if (!hasEmail && !hasPhone) {
@@ -95,7 +103,12 @@ export function CouponInput({
   return (
     <div className="border border-slate-200 rounded-lg p-4 bg-slate-50 space-y-3">
       <p className="text-sm font-semibold text-slate-900">Coupon code</p>
-      <p className="text-xs text-slate-500">One coupon can be applied per order.</p>
+      <p className="text-xs text-slate-500">
+        One coupon can be applied per order.
+        {hasCouponExcludedItems
+          ? " Flash sale items are excluded from coupon discounts."
+          : ""}
+      </p>
       {applied ? (
         <div className="text-sm space-y-1">
           <p className="text-green-700 font-medium">
