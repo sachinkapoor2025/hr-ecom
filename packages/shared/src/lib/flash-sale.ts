@@ -25,6 +25,13 @@ export const FLASH_COMBO_SALE = {
     "1 packet Chawal",
     "Wonderful Pistachios No Shells — 0.75 oz (21 g)",
   ],
+  /** Canonical gallery — overrides stale Dynamo images on storefront. */
+  images: [
+    "https://usarakhi.com/wp-content/uploads/2026/03/50dada5d-eb61-454a-8fe4-51eb5e420753-e1775488586506.webp",
+    "https://usarakhi.com/wp-content/uploads/2026/05/WhatsApp-Image-2026-05-06-at-10.36.39-PM-2.jpeg",
+    "https://d301af4ndyn9qx.cloudfront.net/uploads/flash-sale/roli-chawal-packets.jpeg",
+    "https://d301af4ndyn9qx.cloudfront.net/uploads/flash-sale/wonderful-pistachios-21g-v3.png",
+  ],
 } as const;
 
 export function flashComboSaleEndsAt(): Date {
@@ -56,9 +63,15 @@ export function productUsesFixedStorefrontPrice(product: {
   return tags.includes("fixed-price") || tags.includes("flash-sale");
 }
 
-/** Force flash-combo list price from code (ignores stale Dynamo/catalog price). */
+/** Force flash-combo list price + gallery from code (ignores stale Dynamo data). */
 export function withFlashComboStorefrontPricing<
-  T extends { slug?: string; price: number; compareAtPrice?: number; couponExcluded?: boolean }
+  T extends {
+    slug?: string;
+    price: number;
+    compareAtPrice?: number;
+    couponExcluded?: boolean;
+    images?: string[];
+  }
 >(product: T): T {
   if (!isFlashComboProduct(product.slug)) return product;
   return {
@@ -68,6 +81,7 @@ export function withFlashComboStorefrontPricing<
       product.compareAtPrice ?? 0,
       FLASH_COMBO_SALE.compareAtUsd
     ),
+    images: [...FLASH_COMBO_SALE.images],
     couponExcluded: true,
   };
 }

@@ -61,7 +61,7 @@ export function FlashSaleSection({ product }: { product: Product | null }) {
 
   if (!product || !active || !remaining) return null;
 
-  const images = (product.images ?? []).slice(0, 3).map((src) => resolveImageUrl(src));
+  const images = (product.images ?? []).slice(0, 4).map((src) => resolveImageUrl(src));
   const shippingLabel = format(FLASH_COMBO_SALE.shippingUsd, "USD");
 
   return (
@@ -90,7 +90,7 @@ export function FlashSaleSection({ product }: { product: Product | null }) {
                 />
               </Link>
             )}
-            {images.slice(1, 3).map((src, i) => (
+            {images.slice(1).map((src, i) => (
               <Link
                 key={`${src}-${i}`}
                 href={`/products/${product.slug}`}
