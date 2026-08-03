@@ -10,6 +10,7 @@
 import { cdnUploadUrl } from "./image-url";
 
 const SITE = "https://www.usarakhi.com";
+const SITE_SHORT = "https://usarakhi.com";
 const SHOP = `${SITE}/products`;
 const LOGO = `${SITE}/logo.png`;
 const HERO = `${SITE}/banners/banner-1-usa-rakhi-delivery.png`;
@@ -245,6 +246,157 @@ export const STARTING_PRICE_EMAIL_CONFIG = {
   unsubscribeLabel: "Unsubscribe",
 } as const;
 
+/** ═══════════════ TEMPLATE 3 — Shop More, Save More ($10.99 / ₹899) ═══════════════ */
+export const SHOP_MORE_SAVE_MORE_EMAIL_CONFIG = {
+  templateId: "shop-more-save-more",
+  name: "Shop More, Save More",
+  subject: "Make Your Bond Extra Special — Shop More, Save More | UsaRakhi",
+  preheader:
+    "Make your bond extra special. Shop more, save more on cart value above $10.99 / ₹899. Premium Rakhis with USA delivery.",
+  logoUrl: LOGO,
+  logoHref: SITE_SHORT,
+  logoTagline: "Connecting Hearts Across Borders",
+  heroImageUrl: HERO,
+  heroImageHref: SITE_SHORT,
+  heroImageAlt: "Make Your Bond Extra Special — Shop More, Save More | UsaRakhi",
+  offerEyebrow: "RAKSHA BANDHAN SPECIAL",
+  offerHeadline: "Make Your Bond Extra Special",
+  offerSubhead: "Shop More, Save More",
+  offerThreshold: "Cart Value Above $10.99 / ₹899",
+  offerBody:
+    "Celebrate Raksha Bandhan with premium designer Rakhis, combos, and hampers — delivered across America from our California warehouse. Add more to your cart and unlock festive savings.",
+  ctaText: "Shop Now",
+  ctaHref: SITE_SHORT,
+  categoriesHeading: "Shop by Category",
+  categoriesSubheading: "Tap a collection to find the perfect Rakhi for every bond.",
+  categories: [
+    {
+      name: "Single Rakhi",
+      description: "Classic & designer threads for brother.",
+      imageUrl: cdnUploadUrl("2026/05/pink-multi-stone-rakhi-to-usa.jpeg"),
+      href: `${SITE}/single-rakhi-to-usa`,
+      buttonText: "Shop Now",
+    },
+    {
+      name: "Bhaiya Bhabhi Rakhi",
+      description: "Matching sets for brother & bhabhi.",
+      imageUrl: cdnUploadUrl("2026/05/bhaiya-bhabhi-rakhi-to-usa-e1779468666580.jpeg"),
+      href: `${SITE}/bhaiya-bhabhi-rakhi-to-usa`,
+      buttonText: "Shop Now",
+    },
+    {
+      name: "Kids Rakhi",
+      description: "Fun designs little brothers love.",
+      imageUrl: cdnUploadUrl("2026/04/BRO-Kids-Rakhi-e1775564401163.jpg"),
+      href: `${SITE}/kids-rakhi-to-usa`,
+      buttonText: "Shop Now",
+    },
+    {
+      name: "Lumba Rakhi",
+      description: "Elegant bracelet styles for bhabhi.",
+      imageUrl: cdnUploadUrl("2026/04/Unique-pink-Lumba-Rakhi-e1779468035922.jpg"),
+      href: `${SITE}/lumba-rakhi-to-usa`,
+      buttonText: "Shop Now",
+    },
+    {
+      name: "Rakhi Sets",
+      description: "Multi-piece packs & chocolate combos.",
+      imageUrl: cdnUploadUrl("2026/05/fercho.png"),
+      href: `${SITE}/rakhi-combo-to-usa`,
+      buttonText: "Shop Now",
+    },
+    {
+      name: "Rakhi Hampers",
+      description: "Premium gift boxes with sweets & dry fruits.",
+      imageUrl: cdnUploadUrl("2026/03/Om-Single-Rakhi-1-e1779466859856.png"),
+      href: `${SITE}/rakhi-hampers-to-usa`,
+      buttonText: "Shop Now",
+    },
+  ] satisfies CampaignCard[],
+  productsHeading: "Featured Rakhis",
+  productsSubheading: "Handpicked bestsellers — tap Shop Now to order for USA delivery.",
+  products: [
+    {
+      name: "Blue Sapphire Pearl Single Rakhi",
+      description: "Royal blue stone & pearl elegance.",
+      imageUrl: cdnUploadUrl("2026/03/eecdbc61-da5a-4470-b8d8-5333b07a3f55-e1775488275697.webp"),
+      href: `${SITE}/products/blue-sapphire-pearl-single-rakhi`,
+      buttonText: "Shop Now",
+      priceLabel: "$28.00",
+      badge: "BESTSELLER",
+    },
+    {
+      name: "Pearl Single Rakhi",
+      description: "Timeless pearl design with roli chawal.",
+      imageUrl: cdnUploadUrl("2026/03/pearl-single-rakhi-e1779467005952.webp"),
+      href: `${SITE}/products/pearl-single-rakhi`,
+      buttonText: "Shop Now",
+      priceLabel: "$17.00",
+      badge: "CLASSIC",
+    },
+    {
+      name: "Bhai & Bhabhi Lumba Set",
+      description: "Coordinated set with chocolates.",
+      imageUrl: cdnUploadUrl("2026/04/Bhai-Bhabhi-Lumba-Rakhi-Set-e1776082926101.jpg"),
+      href: `${SITE}/products/bhai-bhabhi-lumba-rakhi-set`,
+      buttonText: "Shop Now",
+      priceLabel: "$39.00",
+      badge: "SET",
+    },
+    {
+      name: "BRO Kids Rakhi",
+      description: "Playful design for little brother.",
+      imageUrl: cdnUploadUrl("2026/04/BRO-Kids-Rakhi-e1775564401163.jpg"),
+      href: `${SITE}/products/bro-kids-rakhi-for-little-brother`,
+      buttonText: "Shop Now",
+      priceLabel: "$25.00",
+      badge: "KIDS",
+    },
+    {
+      name: "Designer Peach Lumba",
+      description: "Soft pastel elegance for bhabhi.",
+      imageUrl: cdnUploadUrl("2026/04/Designer-Peach-Lumba-Rakhi-for-Bhabhi-1-e1775832500515.jpg"),
+      href: `${SITE}/products/designer-peach-lumba-rakhi-for-bhabhi`,
+      buttonText: "Shop Now",
+      priceLabel: "From $2.99",
+      badge: "LUMBA",
+    },
+    {
+      name: "Festive Om Shree Gift Set",
+      description: "Spiritual rakhi with chocolate treats.",
+      imageUrl: cdnUploadUrl("2026/03/Om-Single-Rakhi-1-e1779466859856.png"),
+      href: `${SITE}/products/festive-om-shree-rakhi-chocolate-gift-set`,
+      buttonText: "Shop Now",
+      priceLabel: "Combo deal",
+      badge: "COMBO",
+    },
+  ] satisfies CampaignCard[],
+  whyHeading: "Why Choose UsaRakhi",
+  whySubheading: "Trusted by sisters worldwide for Raksha Bandhan USA delivery.",
+  whyBenefits: [
+    { icon: "🚚", title: "Fast USA Delivery", description: "5–7 day domestic shipping to all 50 states." },
+    { icon: "🔒", title: "Secure Payments", description: "Safe checkout with Stripe & Razorpay." },
+    { icon: "✨", title: "Premium Quality", description: "Designer rakhis with roli & chawal." },
+    { icon: "🤝", title: "Trusted Service", description: "WhatsApp support before & after delivery." },
+  ] satisfies CampaignBenefit[],
+  midCtaHeading: "Don't Miss This Festive Offer",
+  midCtaBody:
+    "Shop more, save more when your cart is above $10.99 / ₹899. Send love across borders — order your Rakhi today.",
+  midCtaText: "Shop Now",
+  midCtaHref: SITE_SHORT,
+  footerTagline: "Connecting Hearts Across Borders",
+  footerLogoUrl: LOGO,
+  websiteUrl: SITE_SHORT,
+  websiteLabel: "usarakhi.com",
+  orderEmail: "order@usarakhi.com",
+  facebookUrl: "https://www.facebook.com/usarakhi/",
+  facebookIconUrl: FB,
+  instagramUrl: "https://www.instagram.com/usarakhi/",
+  instagramIconUrl: IG,
+  copyrightText: "© 2026 UsaRakhi. All Rights Reserved.",
+  unsubscribeLabel: "Unsubscribe",
+} as const;
+
 // ─── Shared HTML helpers ───────────────────────────────────────────────────
 
 function escapeHtml(value: string): string {
@@ -381,6 +533,8 @@ function emailShell(opts: {
   preheader: string;
   logoUrl: string;
   logoHref: string;
+  /** Optional brand tagline under the header logo. */
+  logoTagline?: string;
   bodyRows: string;
   footer: {
     tagline: string;
@@ -393,9 +547,26 @@ function emailShell(opts: {
     instagramIconUrl: string;
     copyrightText: string;
     unsubscribeLabel: string;
+    logoUrl?: string;
   };
 }): string {
   const f = opts.footer;
+  const logoTagline = opts.logoTagline
+    ? `
+              <div style="font-family:Georgia,'Times New Roman',serif;font-size:13px;line-height:18px;font-style:italic;color:${NAVY};padding-top:10px;">
+                ${escapeHtml(opts.logoTagline)}
+              </div>`
+    : "";
+  const footerLogo = f.logoUrl
+    ? `
+                <tr>
+                  <td align="center" style="padding:0 0 14px 0;">
+                    <a href="${escAttr(f.websiteUrl)}" target="_blank" style="text-decoration:none;">
+                      <img src="${escAttr(f.logoUrl)}" width="140" alt="UsaRakhi" style="display:block;width:140px;max-width:55%;height:auto;border:0;margin:0 auto;background-color:#ffffff;border-radius:8px;padding:8px;" />
+                    </a>
+                  </td>
+                </tr>`
+    : "";
   return `<!DOCTYPE html>
 <html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
@@ -444,8 +615,9 @@ function emailShell(opts: {
           <tr>
             <td align="center" bgcolor="#fffdf8" style="padding:20px 24px 14px 24px;background-color:#fffdf8;">
               <a href="${escAttr(opts.logoHref)}" target="_blank" style="text-decoration:none;">
-                <img src="${escAttr(opts.logoUrl)}" width="168" alt="UsaRakhi" style="display:block;width:168px;max-width:70%;height:auto;border:0;margin:0 auto;" />
+                <img src="${escAttr(opts.logoUrl)}" width="168" alt="UsaRakhi — Connecting Hearts Across Borders" style="display:block;width:168px;max-width:70%;height:auto;border:0;margin:0 auto;" />
               </a>
+              ${logoTagline}
             </td>
           </tr>
           <tr>
@@ -463,6 +635,7 @@ function emailShell(opts: {
           <tr>
             <td class="mobile-pad" style="padding:32px 28px 36px 28px;background-color:${NAVY};text-align:center;">
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
+                ${footerLogo}
                 <tr>
                   <td align="center" style="padding:0 0 14px 0;font-family:Georgia,'Times New Roman',serif;font-size:14px;line-height:20px;color:#f0d78c;">
                     ${escapeHtml(f.tagline)}
@@ -535,6 +708,7 @@ function footerFrom(cfg: {
   instagramIconUrl: string;
   copyrightText: string;
   unsubscribeLabel: string;
+  footerLogoUrl?: string;
 }) {
   return {
     tagline: cfg.footerTagline,
@@ -547,6 +721,7 @@ function footerFrom(cfg: {
     instagramIconUrl: cfg.instagramIconUrl,
     copyrightText: cfg.copyrightText,
     unsubscribeLabel: cfg.unsubscribeLabel,
+    logoUrl: cfg.footerLogoUrl,
   };
 }
 
@@ -716,6 +891,121 @@ export function buildStartingPriceEmailHtml(
     preheader: cfg.preheader,
     logoUrl: cfg.logoUrl,
     logoHref: cfg.logoHref,
+    bodyRows,
+    footer: footerFrom(cfg),
+  });
+}
+
+/** Template 3 HTML — Shop More, Save More (cart above $10.99 / ₹899). */
+export function buildShopMoreSaveMoreEmailHtml(
+  cfg: typeof SHOP_MORE_SAVE_MORE_EMAIL_CONFIG = SHOP_MORE_SAVE_MORE_EMAIL_CONFIG
+): string {
+  const categoryBlocks = [
+    twoColCards([cfg.categories[0], cfg.categories[1]]),
+    twoColCards([cfg.categories[2], cfg.categories[3]]),
+    twoColCards([cfg.categories[4], cfg.categories[5]]),
+  ].join("");
+
+  const productBlocks = [
+    twoColCards([cfg.products[0], cfg.products[1]]),
+    twoColCards([cfg.products[2], cfg.products[3]]),
+    twoColCards([cfg.products[4], cfg.products[5]]),
+  ].join("");
+
+  const bodyRows = `
+          <!-- Hero image -->
+          <tr>
+            <td align="center" style="padding:0;line-height:0;font-size:0;">
+              <a href="${escAttr(cfg.heroImageHref)}" target="_blank" style="text-decoration:none;">
+                <img class="fluid" src="${escAttr(cfg.heroImageUrl)}" width="600" alt="${escAttr(cfg.heroImageAlt)}" style="display:block;width:100%;max-width:600px;height:auto;border:0;" />
+              </a>
+            </td>
+          </tr>
+          <!-- Offer hero -->
+          <tr>
+            <td class="mobile-pad" align="center" bgcolor="${CREAM}" style="padding:36px 28px 34px 28px;background-color:${CREAM};border-bottom:1px solid #efe6d6;">
+              <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:16px;letter-spacing:2px;text-transform:uppercase;color:${GOLD};font-weight:bold;padding-bottom:10px;">
+                ${escapeHtml(cfg.offerEyebrow)}
+              </div>
+              <div class="hero-title" style="font-family:Georgia,'Times New Roman',serif;font-size:34px;line-height:40px;font-weight:bold;color:${NAVY};padding-bottom:8px;">
+                ${escapeHtml(cfg.offerHeadline)}
+              </div>
+              <div style="font-family:Georgia,'Times New Roman',serif;font-size:24px;line-height:32px;font-weight:bold;color:${RED};padding-bottom:10px;">
+                ${escapeHtml(cfg.offerSubhead)}
+              </div>
+              <div style="display:inline-block;padding:8px 16px;margin-bottom:14px;background-color:${NAVY};border-radius:999px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:18px;font-weight:bold;color:#ffffff;">
+                ${escapeHtml(cfg.offerThreshold)}
+              </div>
+              <div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#5c5348;padding:0 8px 22px 8px;max-width:480px;margin:0 auto;">
+                ${escapeHtml(cfg.offerBody)}
+              </div>
+              ${ctaButton(cfg.ctaHref, cfg.ctaText, { fill: RED, width: 200, pad: "16px 36px", fontSize: "17px" })}
+            </td>
+          </tr>
+          <!-- Categories -->
+          <tr>
+            <td class="mobile-pad" style="padding:28px 20px 8px 20px;background-color:#ffffff;">
+              <div class="section-title" style="font-family:Georgia,'Times New Roman',serif;font-size:24px;line-height:30px;font-weight:bold;color:${NAVY};text-align:center;padding-bottom:6px;">
+                ${escapeHtml(cfg.categoriesHeading)}
+              </div>
+              <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:20px;color:#6b5e4e;text-align:center;padding-bottom:18px;">
+                ${escapeHtml(cfg.categoriesSubheading)}
+              </div>
+              ${categoryBlocks}
+            </td>
+          </tr>
+          <!-- Featured products -->
+          <tr>
+            <td class="mobile-pad" style="padding:16px 20px 8px 20px;background-color:#ffffff;">
+              <div class="section-title" style="font-family:Georgia,'Times New Roman',serif;font-size:24px;line-height:30px;font-weight:bold;color:${NAVY};text-align:center;padding-bottom:6px;">
+                ${escapeHtml(cfg.productsHeading)}
+              </div>
+              <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:20px;color:#6b5e4e;text-align:center;padding-bottom:18px;">
+                ${escapeHtml(cfg.productsSubheading)}
+              </div>
+              ${productBlocks}
+            </td>
+          </tr>
+          <!-- Why Choose -->
+          <tr>
+            <td class="mobile-pad" style="padding:24px 20px 12px 20px;background-color:#ffffff;">
+              <div class="section-title" style="font-family:Georgia,'Times New Roman',serif;font-size:24px;line-height:30px;font-weight:bold;color:${NAVY};text-align:center;padding-bottom:6px;">
+                ${escapeHtml(cfg.whyHeading)}
+              </div>
+              <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:20px;color:#6b5e4e;text-align:center;padding-bottom:18px;">
+                ${escapeHtml(cfg.whySubheading)}
+              </div>
+              ${benefitsRow(cfg.whyBenefits)}
+            </td>
+          </tr>
+          <!-- Festive mid CTA -->
+          <tr>
+            <td class="mobile-pad" style="padding:12px 24px 36px 24px;background-color:#ffffff;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;background:linear-gradient(135deg, ${NAVY} 0%, #2a5080 100%);background-color:${NAVY};border-radius:14px;">
+                <tr>
+                  <td align="center" style="padding:34px 22px;">
+                    <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:#f0d78c;font-weight:bold;padding-bottom:8px;">
+                      ${escapeHtml(cfg.offerThreshold)}
+                    </div>
+                    <div class="section-title" style="font-family:Georgia,'Times New Roman',serif;font-size:22px;line-height:28px;font-weight:bold;color:#ffffff;padding-bottom:8px;">
+                      ${escapeHtml(cfg.midCtaHeading)}
+                    </div>
+                    <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:22px;color:#e8e0d0;padding-bottom:18px;">
+                      ${escapeHtml(cfg.midCtaBody)}
+                    </div>
+                    ${ctaButton(cfg.midCtaHref, cfg.midCtaText, { fill: GOLD, textColor: NAVY, width: 200 })}
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>`;
+
+  return emailShell({
+    title: `${cfg.offerHeadline} | UsaRakhi`,
+    preheader: cfg.preheader,
+    logoUrl: cfg.logoUrl,
+    logoHref: cfg.logoHref,
+    logoTagline: cfg.logoTagline,
     bodyRows,
     footer: footerFrom(cfg),
   });
