@@ -6,7 +6,14 @@ import { site, whatsappChatUrl } from "@/lib/site";
 import { SiteLogoLink } from "@/components/SiteLogo";
 import { TrustBadges } from "@/components/TrustBadges";
 import { resolveImageUrl } from "@/lib/images";
-import type { Order } from "@hr-ecom/shared";
+import { carrierTrackingUrl } from "@/lib/tracking-url";
+import {
+  formatOrderStatusLabel,
+  isOrderAwaitingPayment,
+  orderConfirmationHeadline,
+  orderConfirmationSubcopy,
+  type Order,
+} from "@hr-ecom/shared";
 
 function formatMoney(amount: number, currency: string) {
   return new Intl.NumberFormat(undefined, { style: "currency", currency }).format(amount);
@@ -42,12 +49,18 @@ function TruckIcon() {
 
 type OrderConfirmationProps = {
   order: Order;
+  /** True when payment is settled (paid / shipped / delivered / …), not only status === "paid". */
   paid: boolean;
 };
 
 export function OrderConfirmation({ order, paid }: OrderConfirmationProps) {
   const addr = order.shippingAddress;
   const shortOrderId = order.orderId.slice(0, 8).toUpperCase();
+  const awaitingPayment = isOrderAwaitingPayment(order.status) && !paid;
+  const statusLabel = formatOrderStatusLabel(order.status);
+  const trackingUrl = order.trackingNumber
+    ? carrierTrackingUrl(order.trackingNumber, order.carrier)
+    : "";
 
   return (
     <div className="min-h-[70vh] bg-gradient-to-b from-slate-50 to-white">
@@ -67,12 +80,10 @@ export function OrderConfirmation({ order, paid }: OrderConfirmationProps) {
           </div>
 
           <h1 className="text-2xl sm:text-3xl font-bold mb-2">
-            {paid ? "Thank you — your order is confirmed!" : "Awaiting payment"}
+            {orderConfirmationHeadline(awaitingPayment ? "pending_payment" : order.status)}
           </h1>
           <p className="text-white/85 text-sm sm:text-base max-w-md mx-auto leading-relaxed">
-            {paid
-              ? "Your Rakhi gift is on its way. We've sent a confirmation email and our team will dispatch your order soon."
-              : "Complete payment to confirm your order and start USA delivery."}
+            {orderConfirmationSubcopy(awaitingPayment ? "pending_payment" : order.status)}
           </p>
 
           {paid && (
@@ -97,7 +108,7 @@ export function OrderConfirmation({ order, paid }: OrderConfirmationProps) {
                 paid ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
               }`}
             >
-              {paid ? "Paid" : order.status.replace(/_/g, " ")}
+              {statusLabel}
             </span>
           </div>
 
@@ -158,15 +169,50 @@ export function OrderConfirmation({ order, paid }: OrderConfirmationProps) {
               </span>
             </div>
             <div className="flex justify-between pt-2 border-t border-slate-100 text-base">
-              <span className="font-bold text-slate-900">Total paid</span>
+              <span className="font-bold text-slate-900">{paid ? "Total paid" : "Order total"}</span>
               <span className="font-bold text-nav text-lg">{formatMoney(order.total, order.currency)}</span>
             </div>
-            {order.paymentProvider && (
+            {order.paymentProvider && paid && (
               <p className="text-xs text-slate-400 pt-1 capitalize">
                 Paid via {order.paymentProvider === "stripe" ? "Stripe (USD)" : "Razorpay (INR)"}
               </p>
             )}
           </div>
+
+          {/* Shipment tracking — shown whenever admin saved a tracking number */}
+          {order.trackingNumber && (
+            <div className="border-t border-slate-100 px-5 sm:px-6 py-5 bg-emerald-50/60">
+              <div className="flex gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-800">
+                  <TruckIcon />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs uppercase tracking-wider text-emerald-800 font-semibold mb-1">
+                    Shipment tracking
+                  </p>
+                  {order.carrier && (
+                    <p className="text-sm text-slate-700 mb-1">
+                      Carrier: <span className="font-semibold">{order.carrier}</span>
+                    </p>
+                  )}
+                  <p className="text-sm text-slate-700">
+                    Tracking number:{" "}
+                    <span className="font-mono font-semibold break-all">{order.trackingNumber}</span>
+                  </p>
+                  {trackingUrl && (
+                    <a
+                      href={trackingUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex mt-3 text-sm font-bold text-nav hover:underline"
+                    >
+                      Track shipment →
+                    </a>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Shipping address(es) */}
           {order.shipments && order.shipments.length > 1 ? (
@@ -259,13 +305,23 @@ export function OrderConfirmation({ order, paid }: OrderConfirmationProps) {
         )}
 
         <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
-          {!paid && (
+          {awaitingPayment && (
             <Link
               href={`/checkout?orderId=${order.orderId}`}
               className="inline-flex items-center justify-center rounded-lg bg-amber-600 text-white font-bold text-sm px-8 py-3.5 hover:bg-amber-700 transition shadow-md"
             >
               Retry payment
             </Link>
+          )}
+          {trackingUrl && (
+            <a
+              href={trackingUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center rounded-lg bg-nav text-white font-bold text-sm px-8 py-3.5 hover:bg-nav/90 transition shadow-md"
+            >
+              Track shipment
+            </a>
           )}
           <Link
             href="/products"

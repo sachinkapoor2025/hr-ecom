@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import type { Order } from "@hr-ecom/shared";
+import { carrierTrackingUrl } from "@/lib/tracking-url";
 
 const STATUS_COLORS: Record<string, string> = {
   pending_payment: "bg-amber-100 text-amber-800",
@@ -79,6 +80,15 @@ export function AccountOrdersPanel({
               <p className="text-sm text-slate-600 mt-3">
                 Tracking: <span className="font-mono">{order.trackingNumber}</span>
                 {order.carrier ? ` · ${order.carrier}` : ""}
+                {" · "}
+                <a
+                  href={carrierTrackingUrl(order.trackingNumber, order.carrier)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold text-nav hover:underline"
+                >
+                  Track package
+                </a>
               </p>
             )}
 
