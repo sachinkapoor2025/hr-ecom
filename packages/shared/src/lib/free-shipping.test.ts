@@ -134,4 +134,20 @@ describe("quoteAddressShipmentShipping", () => {
     assert.equal(totalCharge, 0.99);
     assert.equal(perVendor[0]?.charge, 0.99);
   });
+
+  it("counts add-ons toward free-shipping threshold", () => {
+    const { totalCharge } = quoteAddressShipmentShipping({
+      items: [
+        {
+          price: 3.99,
+          quantity: 1,
+          addons: [{ price: 20, quantity: 1 }],
+        },
+      ],
+      currency: "USD",
+      usdInrRate: 96,
+    });
+    // $3.99 alone would ship for $6.99; with $20 addon → free
+    assert.equal(totalCharge, 0);
+  });
 });

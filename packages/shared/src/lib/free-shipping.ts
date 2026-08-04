@@ -7,6 +7,7 @@ import {
   FLASH_COMBO_SHIPPING_USD,
   isFlashComboProduct,
 } from "./flash-sale";
+import { cartLineUnitTotal } from "./product-addons";
 
 /** Cart subtotal at or above this (USD) unlocks free shipping. */
 export const FREE_SHIPPING_MIN_SUBTOTAL_USD = 10.99;
@@ -167,14 +168,22 @@ export function quoteShipmentsShipping(input: {
   return { totalCharge, perShipment };
 }
 
-/** Subtotals keyed by vendor within one delivery address. */
+/** Subtotals keyed by vendor within one delivery address (includes add-ons). */
 export function vendorSubtotalsForItems(
-  items: Array<{ price: number; quantity: number; vendorSlug?: string }>
+  items: Array<{
+    price: number;
+    quantity: number;
+    vendorSlug?: string;
+    addons?: Array<{ price: number; quantity: number }>;
+  }>
 ): number[] {
   const byVendor = new Map<string, number>();
   for (const item of items) {
     const key = shippingVendorKey(item);
-    byVendor.set(key, (byVendor.get(key) ?? 0) + item.price * item.quantity);
+    byVendor.set(
+      key,
+      (byVendor.get(key) ?? 0) + cartLineUnitTotal(item) * item.quantity
+    );
   }
   return [...byVendor.values()];
 }
@@ -219,6 +228,7 @@ export function quoteAddressShipmentShipping(input: {
     quantity: number;
     vendorSlug?: string;
     productSlug?: string;
+    addons?: Array<{ price: number; quantity: number }>;
   }>;
   currency: ShopCurrency;
   usdInrRate: number;
@@ -228,7 +238,12 @@ export function quoteAddressShipmentShipping(input: {
 } {
   const byVendor = new Map<
     string,
-    Array<{ price: number; quantity: number; productSlug?: string }>
+    Array<{
+      price: number;
+      quantity: number;
+      productSlug?: string;
+      addons?: Array<{ price: number; quantity: number }>;
+    }>
   >();
   for (const item of input.items) {
     const key = shippingVendorKey(item);
@@ -244,8 +259,9 @@ export function quoteAddressShipmentShipping(input: {
     if (flashOnly) {
       return flashComboShippingQuote(input.currency, input.usdInrRate);
     }
+    // Must include add-ons — otherwise Razorpay totals diverge from checkout UI.
     const subtotal = vendorItems.reduce(
-      (sum, i) => sum + i.price * i.quantity,
+      (sum, i) => sum + cartLineUnitTotal(i) * i.quantity,
       0
     );
     return quoteFreeShippingThreshold({

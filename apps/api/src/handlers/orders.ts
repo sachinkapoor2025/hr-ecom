@@ -371,7 +371,7 @@ export async function checkout(event: APIGatewayProxyEventV2) {
     order.paymentIntentId = payment.paymentIntentId;
     await docClient.send(new PutCommand({ TableName: ORDERS_TABLE, Item: buildOrderItem(order, userKey) }));
     await putOrderNumberPointer(orderNumber, orderId);
-    await clearCartForUser(userKey);
+    // Keep cart until payment succeeds so cancel/retry still has items.
     const emailResult = await notifyAdminOrderPlaced(order);
     if (!emailResult.ok) console.error("Order placed email failed:", emailResult.error);
     return created({ order, clientSecret: payment.clientSecret });
@@ -382,7 +382,7 @@ export async function checkout(event: APIGatewayProxyEventV2) {
   order.razorpayOrderId = payment.razorpayOrderId;
   await docClient.send(new PutCommand({ TableName: ORDERS_TABLE, Item: buildOrderItem(order, userKey) }));
   await putOrderNumberPointer(orderNumber, orderId);
-  await clearCartForUser(userKey);
+  // Keep cart until payment succeeds so cancel/retry still has items.
   const emailResult = await notifyAdminOrderPlaced(order);
   if (!emailResult.ok) console.error("Order placed email failed:", emailResult.error);
   return created({
@@ -654,6 +654,15 @@ export async function markOrderPaid(
     await markCouponUsed(order.couponCode, order.orderId);
   }
   await markCartConverted(order.sessionId, order.orderId);
+  // Clear cart only after successful payment (not when opening Razorpay/Stripe).
+  const cartOwner = order.userId || order.sessionId;
+  if (cartOwner) {
+    try {
+      await clearCartForUser(cartOwner);
+    } catch (err) {
+      console.error("clearCart after pay failed:", orderId, err);
+    }
+  }
   await decrementInventoryForOrder(updated);
 
   const settings = await loadShippingSettings();

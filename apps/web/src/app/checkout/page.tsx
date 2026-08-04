@@ -658,6 +658,13 @@ function CheckoutPageInner() {
       });
 
       await persistAddressIfNeeded();
+      // Keep pending order for retry if Razorpay/Stripe is dismissed (avoids "Cart is empty").
+      setRetryOrder(data.order);
+      if (typeof window !== "undefined") {
+        const url = new URL(window.location.href);
+        url.searchParams.set("orderId", data.order.orderId);
+        window.history.replaceState({}, "", url.toString());
+      }
 
       if (paymentMethod === "stripe") {
         const stripeKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.trim();
@@ -684,7 +691,10 @@ function CheckoutPageInner() {
         data.razorpayQrImageUrl
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Checkout failed");
+      const message = err instanceof Error ? err.message : "Checkout failed";
+      setError(message);
+      // After cancel/fail, reload cart so items stay visible for another attempt.
+      void refresh();
     } finally {
       setLoading(false);
     }
