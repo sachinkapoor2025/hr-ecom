@@ -117,7 +117,9 @@ export type CartAddonLike = {
   quantity: number;
 };
 
-export function sumAddonPrices(addons: CartAddonLike[] | undefined | null): number {
+export function sumAddonPrices(
+  addons: Array<{ price: number; quantity: number }> | undefined | null
+): number {
   if (!addons?.length) return 0;
   return addons.reduce((sum, a) => sum + a.price * a.quantity, 0);
 }
@@ -139,7 +141,7 @@ export function cartAddonSignature(
 
 export function cartLineUnitTotal(item: {
   price: number;
-  addons?: CartAddonLike[] | null;
+  addons?: Array<{ price: number; quantity: number }> | null;
 }): number {
   return item.price + sumAddonPrices(item.addons);
 }
