@@ -112,7 +112,7 @@ When admin (or Orange County vendor tracking) changes order status (accepted, pr
 | GET | `/admin/vendor-api/orders/{orderId}` | Admin: proxy get one vendor order (`OC#####` or UUID) |
 | POST | `/admin/vendor-api/shipment` | Admin: proxy AWB update (`orderNumber`, `courierName`, `awb`) |
 | POST | `/admin/vendor-api/tracking` | Admin: proxy tracking status (`orderNumber`, `currentShipmentStatus`) |
-| GET | `/vendors/orange-county/orders` | **Dedicated Vendor API only** (`VendorApiUrl` = xp9lzxeg40…; not storefront ApiUrl). Last **15 days** by default; paginated (`limit`/`cursor`/`nextCursor`); human `orderId`=`OC#####`; vendorCost (not retail). See `docs/VENDOR_ORANGE_COUNTY_API.md` |
+| GET | `/vendors/orange-county/orders` | **Dedicated Vendor API only** (`VendorApiUrl` / `orange-county.usarakhi.com`). Last **15 days**, **`paid` only** by default; paginated (`limit`/`cursor`/`nextCursor`); human `orderId`=`OC#####`; vendorCost (not retail). Override with `?status=`. See `docs/VENDOR_ORANGE_COUNTY_API.md` |
 | GET | `/vendors/orange-county/orders/{orderId}` | Same vendor API; `{orderId}` accepts `OC10001` or internal UUID |
 | POST | `/vendors/orange-county/shipment` | Vendor posts AWB + courier (`orderNumber`, `courierName`, `awb`) |
 | POST | `/vendors/orange-county/orders/{orderId}/shipment` | Same AWB update with order id in path |
