@@ -185,12 +185,12 @@ export default function AdminVendorApiPage() {
   const vendorStatus = result?.data?.statusCode;
   const statusTone =
     vendorStatus == null
-      ? "text-slate-700"
+      ? "text-slate-300"
       : vendorStatus >= 200 && vendorStatus < 300
-        ? "text-emerald-700"
+        ? "text-emerald-300"
         : vendorStatus >= 400 && vendorStatus < 500
-          ? "text-amber-700"
-          : "text-red-700";
+          ? "text-amber-300"
+          : "text-red-300";
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10">
