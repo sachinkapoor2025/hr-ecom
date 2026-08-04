@@ -18,6 +18,7 @@ import * as reminderEmails from "./handlers/reminder-emails";
 import * as pendingPaymentUnsub from "./handlers/pending-payment-unsub";
 import * as shipping from "./handlers/shipping";
 import * as loadTest from "./handlers/load-test";
+import * as adminVendorApi from "./handlers/admin-vendor-api";
 import * as reviews from "./handlers/reviews";
 import { stripeWebhook } from "./handlers/payments/stripe";
 import {
@@ -81,6 +82,18 @@ const routes: Route[] = [
   { method: "GET", pattern: /^\/admin\/shipping\/products-missing-dims$/, handler: shipping.listProductsMissingDims },
   { method: "GET", pattern: /^\/admin\/load-test$/, handler: loadTest.getLoadTestInfo },
   { method: "POST", pattern: /^\/admin\/load-test\/run$/, handler: loadTest.runLoadTest },
+  // Admin console for Orange County Vendor API (proxies vendor handlers; key stays server-side).
+  { method: "GET", pattern: /^\/admin\/vendor-api\/health$/, handler: adminVendorApi.adminVendorHealth },
+  { method: "GET", pattern: /^\/admin\/vendor-api\/auth-check$/, handler: adminVendorApi.adminVendorAuthCheck },
+  { method: "GET", pattern: /^\/admin\/vendor-api\/orders$/, handler: adminVendorApi.adminVendorListOrders },
+  {
+    method: "GET",
+    pattern: /^\/admin\/vendor-api\/orders\/([^/]+)$/,
+    handler: adminVendorApi.adminVendorGetOrder,
+    params: ["orderId"],
+  },
+  { method: "POST", pattern: /^\/admin\/vendor-api\/shipment$/, handler: adminVendorApi.adminVendorPostShipment },
+  { method: "POST", pattern: /^\/admin\/vendor-api\/tracking$/, handler: adminVendorApi.adminVendorPostTracking },
   // Orange County vendor feed is ONLY on dedicated VendorHttpApi (vendor-api.ts / VendorApiUrl).
   { method: "GET", pattern: /^\/orders$/, handler: orders.listOrders },
   { method: "GET", pattern: /^\/orders\/([^/]+)$/, handler: orders.getOrder, params: ["orderId"] },

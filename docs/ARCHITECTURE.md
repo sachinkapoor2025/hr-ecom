@@ -106,6 +106,12 @@ When admin (or Orange County vendor tracking) changes order status (accepted, pr
 | GET | `/admin/shipping/products-missing-dims` | Admin: products without weight/dimensions |
 | GET | `/admin/load-test` | Super admin: load-test presets + LOAD_TEST_MODE status |
 | POST | `/admin/load-test/run` | Super admin: prefer UI browser runner (`smoke` / `u100`…`u1000`). UI: `/admin/load-test` |
+| GET | `/admin/vendor-api/health` | Admin: Orange County Vendor API health console (UI: `/admin/vendor-api`) |
+| GET | `/admin/vendor-api/auth-check` | Admin: prove missing vendor key returns 401 |
+| GET | `/admin/vendor-api/orders` | Admin: proxy list/search vendor orders (`days`/`limit`/`cursor`/`status`/`updatedSince`) |
+| GET | `/admin/vendor-api/orders/{orderId}` | Admin: proxy get one vendor order (`OC#####` or UUID) |
+| POST | `/admin/vendor-api/shipment` | Admin: proxy AWB update (`orderNumber`, `courierName`, `awb`) |
+| POST | `/admin/vendor-api/tracking` | Admin: proxy tracking status (`orderNumber`, `currentShipmentStatus`) |
 | GET | `/vendors/orange-county/orders` | **Dedicated Vendor API only** (`VendorApiUrl` = xp9lzxeg40…; not storefront ApiUrl). Last **15 days** by default; paginated (`limit`/`cursor`/`nextCursor`); human `orderId`=`OC#####`; vendorCost (not retail). See `docs/VENDOR_ORANGE_COUNTY_API.md` |
 | GET | `/vendors/orange-county/orders/{orderId}` | Same vendor API; `{orderId}` accepts `OC10001` or internal UUID |
 | POST | `/vendors/orange-county/shipment` | Vendor posts AWB + courier (`orderNumber`, `courierName`, `awb`) |
