@@ -33,9 +33,9 @@ GET {VENDOR_API_URL}/vendors/orange-county/orders
 | `updatedSince` | — | Optional ISO — only orders with `updatedAt >= updatedSince` (incremental sync) |
 | `limit` | **50** | Page size (max **200**) |
 | `cursor` | — | Opaque token from previous response `nextCursor` for the next page |
-| `status` | — | Exact status filter, e.g. `paid` |
+| `status` | — | Exact status filter. Default (omit) = **`paid` only**. Use e.g. `status=shipped` to include other statuses. |
 
-Unpaid / cancelled / refunded are hidden unless `status` is set.
+By default the import feed returns **paid** orders only (ready to fulfill). Shipped / delivered / cancelled / unpaid are excluded unless you pass `status`.
 
 ### Pagination (more than 50 orders)
 

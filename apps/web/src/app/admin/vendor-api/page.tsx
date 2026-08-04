@@ -239,7 +239,7 @@ export default function AdminVendorApiPage() {
         <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm md:col-span-2">
           <h2 className="text-sm font-semibold text-slate-900">C — List / search orders</h2>
           <p className="mt-1 text-xs text-slate-500">
-            GET /vendors/orange-county/orders — default last 15 days
+            GET /vendors/orange-county/orders — default last 15 days, <strong>paid only</strong>
           </p>
           <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
             <label className="text-xs text-slate-600">

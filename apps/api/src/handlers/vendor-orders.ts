@@ -393,13 +393,10 @@ export async function listOrangeCountyOrders(event: APIGatewayProxyEventV2) {
       if (!orderTouchesVendor(order, vendorSlug)) continue;
       if (order.createdAt < since) continue;
       if (updatedSince && (order.updatedAt ?? order.createdAt) < updatedSince) continue;
-      if (statusFilter && order.status !== statusFilter) continue;
-      if (
-        !statusFilter &&
-        (order.status === "pending_payment" ||
-          order.status === "cancelled" ||
-          order.status === "refunded")
-      ) {
+      // Default feed = paid only (ready to fulfill). Pass ?status= to override.
+      if (statusFilter) {
+        if (order.status !== statusFilter) continue;
+      } else if (order.status !== ORDER_STATUS.PAID) {
         continue;
       }
 
