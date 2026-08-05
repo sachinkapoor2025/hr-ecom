@@ -108,7 +108,7 @@
   <p class="tag">Integration guide with live curl commands and response evidence for every feature.</p>
   <div class="cover-grid">
     <div><strong>Base URL</strong><code style="color:#fff">https://orange-county.usarakhi.com</code></div>
-    <div><strong>Verified (UTC)</strong>2026-08-04T19:28:02Z</div>
+    <div><strong>Verified (UTC)</strong>2026-08-05T04:49:29Z</div>
     <div><strong>Auth header</strong>X-Vendor-Api-Key</div>
     <div><strong>Service</strong>orange-county-vendor-api (dedicated)</div>
   </div>
@@ -142,7 +142,7 @@ Every curl below is a full copy-paste command (no export / variables required).<
 <strong>Fulfillment notes:</strong> <code>orderValue</code> / item <code>price</code> are vendor cost (not website retail).
 Match products by <code>sku</code> / <code>productCode</code>.
 Store <code>orderNumber</code> (e.g. <code>OC10003</code>) as your external reference.
-Phone/email in screenshots below are partially masked for this shareable PDF; live API returns full values.
+List and get both return full <code>recipientPhoneNumber</code> and <code>country</code> (never masked — required for USPS).
 </div>
 
 <h2>3. End-to-end workflow</h2>
@@ -156,7 +156,7 @@ Phone/email in screenshots below are partially masked for this shareable PDF; li
 </ol>
 
 <h2>4. Live evidence — curl + response screenshots</h2>
-<p>Each panel below is a live capture from production (2026-08-04T19:28:02Z UTC).
+<p>Each panel below is a live capture from production (2026-08-05T04:49:29Z UTC).
 Green = success path; amber = expected validation / auth error proving the route is live.</p>
 
 <div class="feat"><h3><span class="num">A</span> Health check</h3>
@@ -217,7 +217,7 @@ Green = success path; amber = expected validation / auth error proving the route
       <div class="cmd">$ curl -sS  -H &quot;X-Vendor-Api-Key: 4bf361b07a50b6346046b8b446fbbe6f5151c404bad6e46431c94bd1172d2673&quot;  &quot;https://orange-county.usarakhi.com/vendors/orange-county/orders?days=15&amp;limit=2&quot;</div>
       <pre>{
   &quot;vendorSlug&quot;: &quot;orange-county&quot;,
-  &quot;count&quot;: 3,
+  &quot;count&quot;: 1,
   &quot;limit&quot;: 50,
   &quot;days&quot;: 15,
   &quot;hasMore&quot;: false,
@@ -231,35 +231,18 @@ Green = success path; amber = expected validation / auth error proving the route
       &quot;orderValueCurrency&quot;: &quot;USD&quot;,
       &quot;senderName&quot;: &quot;vandana sharma&quot;,
       &quot;recipientName&quot;: &quot;Puneet Bhardwaj&quot;,
+      &quot;recipientAddressLine1&quot;: &quot;44 Murphy Dr., Hillsborough, NJ.&quot;,
+      &quot;recipientAddressLine2&quot;: &quot;44 Murphy Dr., Hillsborough, NJ.&quot;,
       &quot;city&quot;: &quot;Hillsborough&quot;,
       &quot;state&quot;: &quot;NJ&quot;,
+      &quot;country&quot;: &quot;US&quot;,
       &quot;zipCode&quot;: &quot;08844&quot;,
+      &quot;recipientPhoneNumber&quot;: &quot;+9112013601417&quot;,
       &quot;itemCount&quot;: 1,
       &quot;items&quot;: [
         {
           &quot;sku&quot;: &quot;TFPRD00306&quot;,
           &quot;productName&quot;: &quot;Elegant Pearl Designer Single Rakhi&quot;,
-          &quot;quantity&quot;: 1,
-          &quot;price&quot;: 9.75
-        }
-      ]
-    },
-    {
-      &quot;orderNumber&quot;: &quot;D26EDAB5&quot;,
-      &quot;internalOrderId&quot;: &quot;d26edab5-5662-426b-b48a-ae1e39790e25&quot;,
-      &quot;status&quot;: &quot;shipped&quot;,
-      &quot;orderValue&quot;: 9.75,
-      &quot;orderValueCurrency&quot;: &quot;USD&quot;,
-      &quot;senderName&quot;: &quot;Sonam&quot;,
-      &quot;recipientName&quot;: &quot;Abhishek Singh &quot;,
-      &quot;city&quot;: &quot;Sparks&quot;,
-      &quot;state&quot;: &quot;NV&quot;,
-      &quot;zipCode&quot;: &quot;89431&quot;,
-      &quot;itemCount&quot;: 1,
-      &quot;items&quot;: [
-        {
-          &quot;sku&quot;: &quot;TFPRD00313&quot;,
-          &quot;productName&quot;: &quot;Silver Bead Traditional Single Rakhi&quot;,
           &quot;quantity&quot;: 1,
           &quot;price&quot;: 9.75
         }
@@ -307,9 +290,13 @@ curl -sS \
       &quot;orderValueCurrency&quot;: &quot;USD&quot;,
       &quot;senderName&quot;: &quot;vandana sharma&quot;,
       &quot;recipientName&quot;: &quot;Puneet Bhardwaj&quot;,
+      &quot;recipientAddressLine1&quot;: &quot;44 Murphy Dr., Hillsborough, NJ.&quot;,
+      &quot;recipientAddressLine2&quot;: &quot;44 Murphy Dr., Hillsborough, NJ.&quot;,
       &quot;city&quot;: &quot;Hillsborough&quot;,
       &quot;state&quot;: &quot;NJ&quot;,
+      &quot;country&quot;: &quot;US&quot;,
       &quot;zipCode&quot;: &quot;08844&quot;,
+      &quot;recipientPhoneNumber&quot;: &quot;+9112013601417&quot;,
       &quot;itemCount&quot;: 1,
       &quot;items&quot;: [
         {
@@ -336,34 +323,12 @@ curl -sS \
       <div class="cmd">$ curl -sS  -H &quot;X-Vendor-Api-Key: 4bf361b07a50b6346046b8b446fbbe6f5151c404bad6e46431c94bd1172d2673&quot;  &quot;https://orange-county.usarakhi.com/vendors/orange-county/orders?days=15&amp;limit=1&amp;cursor=eyJQSyI6Ik9SREVSI2U2NDdkNjMwLTEzMjItNGExYy1hYTdiLWVjZGJiNjVjYzVmNiIsIlNLIjoiTUVUQSIsIkdTSTJQSyI6IkVOVElUWSNPUkRFUiIsIkdTSTJTSyI6IjIwMjYtMDgtMDRUMTI6MjM6NDQuNDkzWiJ9&quot;</div>
       <pre>{
   &quot;vendorSlug&quot;: &quot;orange-county&quot;,
-  &quot;count&quot;: 1,
+  &quot;count&quot;: 0,
   &quot;limit&quot;: 1,
   &quot;days&quot;: 15,
-  &quot;hasMore&quot;: true,
-  &quot;nextCursor&quot;: &quot;eyJQSyI6Ik9SREVSI2QyNmVk\u2026&quot;,
-  &quot;orders&quot;: [
-    {
-      &quot;orderNumber&quot;: &quot;D26EDAB5&quot;,
-      &quot;internalOrderId&quot;: &quot;d26edab5-5662-426b-b48a-ae1e39790e25&quot;,
-      &quot;status&quot;: &quot;shipped&quot;,
-      &quot;orderValue&quot;: 9.75,
-      &quot;orderValueCurrency&quot;: &quot;USD&quot;,
-      &quot;senderName&quot;: &quot;Sonam&quot;,
-      &quot;recipientName&quot;: &quot;Abhishek Singh &quot;,
-      &quot;city&quot;: &quot;Sparks&quot;,
-      &quot;state&quot;: &quot;NV&quot;,
-      &quot;zipCode&quot;: &quot;89431&quot;,
-      &quot;itemCount&quot;: 1,
-      &quot;items&quot;: [
-        {
-          &quot;sku&quot;: &quot;TFPRD00313&quot;,
-          &quot;productName&quot;: &quot;Silver Bead Traditional Single Rakhi&quot;,
-          &quot;quantity&quot;: 1,
-          &quot;price&quot;: 9.75
-        }
-      ]
-    }
-  ]
+  &quot;hasMore&quot;: false,
+  &quot;nextCursor&quot;: null,
+  &quot;orders&quot;: []
 }</pre>
     </div>
     <p class="ev-note">Evidence: page 2 returns a different order after cursor from page 1 (sample used: OC10011).</p>
@@ -378,7 +343,7 @@ curl -sS \
   <div class="shot">
     <div class="shot-bar">
       <span class="dots"><i></i><i></i><i></i></span>
-      <span class="shot-title">Terminal — GET order OC10011 (PII partially masked in PDF)</span>
+      <span class="shot-title">Terminal — GET order OC10011 (full phone + country)</span>
       <span class="http ok">HTTP 200</span>
     </div>
     <div class="shot-body">
@@ -392,11 +357,12 @@ curl -sS \
   &quot;senderName&quot;: &quot;vandana sharma&quot;,
   &quot;recipientName&quot;: &quot;Puneet Bhardwaj&quot;,
   &quot;recipientAddressLine1&quot;: &quot;44 Murphy Dr., Hillsborough, NJ.&quot;,
+  &quot;recipientAddressLine2&quot;: &quot;44 Murphy Dr., Hillsborough, NJ.&quot;,
   &quot;city&quot;: &quot;Hillsborough&quot;,
   &quot;state&quot;: &quot;NJ&quot;,
   &quot;zipCode&quot;: &quot;08844&quot;,
   &quot;country&quot;: &quot;US&quot;,
-  &quot;recipientPhoneNumber&quot;: &quot;***1417&quot;,
+  &quot;recipientPhoneNumber&quot;: &quot;+9112013601417&quot;,
   &quot;orderValue&quot;: 9.75,
   &quot;orderValueCurrency&quot;: &quot;USD&quot;,
   &quot;giftMessage&quot;: &quot;Although we are far away from each other, this distance will not affect the stro&quot;,
@@ -514,7 +480,7 @@ curl -sS -X POST \
   &quot;status&quot;: &quot;shipped&quot;,
   &quot;awb&quot;: &quot;9400111899223344556677&quot;,
   &quot;courierName&quot;: &quot;USPS&quot;,
-  &quot;updatedAt&quot;: &quot;2026-08-04T19:28:18.000Z&quot;
+  &quot;updatedAt&quot;: &quot;2026-08-05T04:49:44.000Z&quot;
 }</pre>
     </div>
     <p class="ev-note">Effect: saves trackingNumber=awb, carrier=courierName; moves to shipped when allowed; notifies customer.</p>
@@ -595,7 +561,7 @@ curl -sS -X POST \
   &quot;internalOrderId&quot;: &quot;e647d630-1322-4a1c-aa7b-ecdbb65cc5f6&quot;,
   &quot;status&quot;: &quot;in_transit&quot;,
   &quot;currentShipmentStatus&quot;: &quot;in_transit&quot;,
-  &quot;updatedAt&quot;: &quot;2026-08-04T19:28:18.000Z&quot;
+  &quot;updatedAt&quot;: &quot;2026-08-05T04:49:44.000Z&quot;
 }</pre>
     </div>
     
@@ -671,7 +637,7 @@ curl -sS -X POST \
 
 <div class="footer">
   Confidential — Orange County fulfillment partner document.<br/>
-  Live evidence captured against dedicated Vendor API <code>https://orange-county.usarakhi.com</code> at 2026-08-04T19:28:02Z UTC.<br/>
+  Live evidence captured against dedicated Vendor API <code>https://orange-county.usarakhi.com</code> at 2026-08-05T04:49:29Z UTC.<br/>
   Contact UsaRakhi ops/tech for access issues or key rotation.<br/>
   Document: UsaRakhi_Orange_County_Vendor_API.pdf
 </div>

@@ -266,7 +266,7 @@ Every curl below is a full copy-paste command (no export / variables required).<
 <strong>Fulfillment notes:</strong> <code>orderValue</code> / item <code>price</code> are vendor cost (not website retail).
 Match products by <code>sku</code> / <code>productCode</code>.
 Store <code>orderNumber</code> (e.g. <code>OC10003</code>) as your external reference.
-Phone/email in screenshots below are partially masked for this shareable PDF; live API returns full values.
+List and get both return full <code>recipientPhoneNumber</code> and <code>country</code> (never masked — required for USPS).
 </div>
 
 <h2>3. End-to-end workflow</h2>
@@ -365,7 +365,7 @@ Green = success path; amber = expected validation / auth error proving the route
     parts.append(f'<pre class="cmdblock">{esc(get_cmd)}</pre>')
     parts.append(
         terminal(
-            f"Terminal — GET order {sample_order} (PII partially masked in PDF)",
+            f"Terminal — GET order {sample_order} (full phone + country)",
             "200",
             get_cmd.replace("\\\n  ", " "),
             get_order,

@@ -89,8 +89,8 @@ curl -sS \
 | `recipientName` | Ship-to name |
 | `recipientAddressLine1` | Street |
 | `recipientAddressLine2` | Apt / suite (nullable) |
-| `city` / `state` / `country` / `zipCode` | Address |
-| `recipientPhoneNumber` | Recipient phone |
+| `city` / `state` / `country` / `zipCode` | Address (same fields on **list** and **get**) |
+| `recipientPhoneNumber` | **Full** recipient phone (never masked — required for USPS). Same on list and get. |
 | `orderValue` | **Total fulfill** = sum of item vendor costs × qty (USD). Not retail. |
 | `orderValueCurrency` | `USD` |
 | `deliveryDate` | Requested / estimated delivery (nullable) |

@@ -14,9 +14,13 @@
       "orderValueCurrency": "USD",
       "senderName": "vandana sharma",
       "recipientName": "Puneet Bhardwaj",
+      "recipientAddressLine1": "44 Murphy Dr., Hillsborough, NJ.",
+      "recipientAddressLine2": "44 Murphy Dr., Hillsborough, NJ.",
       "city": "Hillsborough",
       "state": "NJ",
+      "country": "US",
       "zipCode": "08844",
+      "recipientPhoneNumber": "+9112013601417",
       "itemCount": 1,
       "items": [
         {

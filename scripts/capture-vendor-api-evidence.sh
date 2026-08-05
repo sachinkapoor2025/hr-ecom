@@ -193,31 +193,12 @@ now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.000Z")
 print("wrote sample success shapes")
 PY
 
-# Compact previews for PDF (mask phone/email lightly)
+# Compact previews for PDF — keep full phone/country (USPS needs unmasked phone).
 python3 - <<'PY'
-import json, re
+import json
 from pathlib import Path
 
 ev = Path("docs/vendor-api-evidence")
-
-def mask(obj):
-    if isinstance(obj, dict):
-        out = {}
-        for k, v in obj.items():
-            lk = k.lower()
-            if lk in ("recipientphonenumber", "phone", "email") and isinstance(v, str) and v:
-                if "@" in v:
-                    local, _, domain = v.partition("@")
-                    out[k] = (local[:2] + "***@" + domain) if local else "***@" + domain
-                else:
-                    digits = re.sub(r"\D", "", v)
-                    out[k] = ("***" + digits[-4:]) if len(digits) >= 4 else "***"
-            else:
-                out[k] = mask(v)
-        return out
-    if isinstance(obj, list):
-        return [mask(x) for x in obj]
-    return obj
 
 def compact_list(src, dest, limit_orders=2):
     d = json.loads((ev / src).read_text())
@@ -231,7 +212,7 @@ def compact_list(src, dest, limit_orders=2):
         "orders": [],
     }
     for o in (d.get("orders") or [])[:limit_orders]:
-        preview["orders"].append(mask({
+        preview["orders"].append({
             "orderNumber": o.get("orderNumber"),
             "internalOrderId": o.get("internalOrderId"),
             "status": o.get("status"),
@@ -239,9 +220,13 @@ def compact_list(src, dest, limit_orders=2):
             "orderValueCurrency": o.get("orderValueCurrency"),
             "senderName": o.get("senderName"),
             "recipientName": o.get("recipientName"),
+            "recipientAddressLine1": o.get("recipientAddressLine1"),
+            "recipientAddressLine2": o.get("recipientAddressLine2"),
             "city": o.get("city"),
             "state": o.get("state"),
+            "country": o.get("country"),
             "zipCode": o.get("zipCode"),
+            "recipientPhoneNumber": o.get("recipientPhoneNumber"),
             "itemCount": len(o.get("items") or []),
             "items": [
                 {
@@ -252,13 +237,13 @@ def compact_list(src, dest, limit_orders=2):
                 }
                 for i in (o.get("items") or [])[:3]
             ],
-        }))
+        })
     (ev / dest).write_text(json.dumps(preview, indent=2) + "\n")
 
 def compact_order(src, dest):
     d = json.loads((ev / src).read_text())
     o = d.get("order") or d
-    compact = mask({
+    compact = {
         "orderNumber": o.get("orderNumber"),
         "orderId": o.get("orderId"),
         "internalOrderId": o.get("internalOrderId"),
@@ -267,6 +252,7 @@ def compact_order(src, dest):
         "senderName": o.get("senderName"),
         "recipientName": o.get("recipientName"),
         "recipientAddressLine1": o.get("recipientAddressLine1"),
+        "recipientAddressLine2": o.get("recipientAddressLine2"),
         "city": o.get("city"),
         "state": o.get("state"),
         "zipCode": o.get("zipCode"),
@@ -286,7 +272,7 @@ def compact_order(src, dest):
             }
             for i in (o.get("items") or [])
         ],
-    })
+    }
     (ev / dest).write_text(json.dumps(compact, indent=2) + "\n")
 
 compact_list("03_list_orders_page1.json", "03_list_orders_page1_compact.json", 2)

@@ -171,6 +171,10 @@ async function toVendorOrder(order: Order, items: CartItem[]) {
   const hasAllCosts = mappedItems.every((i) => i.price != null);
   const humanNumber = displayOrderRef(order);
 
+  // List and get share this mapper — phone/country are never masked (USPS needs full number).
+  const phone = typeof addr.phone === "string" ? addr.phone.trim() : "";
+  const country = (typeof addr.country === "string" && addr.country.trim()) || "US";
+
   return {
     /** Human-readable id for vendor systems (OC10001…). */
     orderId: humanNumber,
@@ -187,9 +191,10 @@ async function toVendorOrder(order: Order, items: CartItem[]) {
     recipientAddressLine2: addr.line2 ?? null,
     city: addr.city,
     state: addr.state,
-    country: addr.country,
+    country,
     zipCode: addr.postalCode,
-    recipientPhoneNumber: addr.phone,
+    /** Full E.164 / dialed number — not masked (required for USPS labels). */
+    recipientPhoneNumber: phone || null,
     recipientEmail: addr.email ?? null,
     /** Total fulfill / purchase amount for OC lines (vendorCost × qty). Not retail. */
     orderValue: hasAllCosts ? Number(orderValue.toFixed(2)) : null,
