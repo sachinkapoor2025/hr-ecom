@@ -104,6 +104,10 @@ export const HOME_CATEGORY_PRODUCTS: Record<HomeCategorySlug, HomeProductRef[]> 
   ],
   "rakhi-combo": [
     {
+      name: "Om Rakhi & Pearl Single Rakhi Combo",
+      slug: "om-pearl-single-rakhi-combo",
+    },
+    {
       name: "Blue Beads Pearl Gold & Crystal Rakhi Set of 4 | Premium Designer Rakhi for Brother",
     },
     {
