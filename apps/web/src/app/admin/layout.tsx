@@ -20,6 +20,7 @@ const links: AdminNavLink[] = [
   { href: "/admin/products", label: "Products" },
   { href: "/admin/categories", label: "Categories" },
   { href: "/admin/shipping", label: "Shipping" },
+  { href: "/admin/vendor-api", label: "Vendor API" },
   { href: "/admin/email", label: "Marketing Email" },
   { href: "/admin/leads", label: "Leads" },
   { href: "/admin/payments", label: "Payments" },

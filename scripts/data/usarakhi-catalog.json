@@ -60,6 +60,29 @@
       "published": true
     },
     {
+      "name": "Om Rakhi & Pearl Single Rakhi Combo",
+      "slug": "om-pearl-single-rakhi-combo",
+      "description": "Value combo for Raksha Bandhan: Om Rakhi with Roli Chawal for Brother plus Pearl Single Rakhi — two beautiful rakhis in one pack at $6.99. Perfect when you want to send more than one rakhi to the USA with complimentary roli and chawal for the traditional ceremony.",
+      "price": 6.99,
+      "compareAtPrice": 13.99,
+      "currency": "USD",
+      "categorySlug": "rakhi-combo",
+      "images": [
+        "https://d301af4ndyn9qx.cloudfront.net/uploads/2026/05/WhatsApp-Image-2026-05-06-at-10.36.39-PM-2.jpeg",
+        "https://d301af4ndyn9qx.cloudfront.net/uploads/2026/03/pearl-single-rakhi-e1779467005952.webp",
+        "https://d301af4ndyn9qx.cloudfront.net/products/39239027-c8f8-4883-bee3-8805409d45e1.jpeg",
+        "https://d301af4ndyn9qx.cloudfront.net/products/06f2f390-ae1c-4959-8547-39f20bf8b5d8.jpeg"
+      ],
+      "sku": "COMBO-OM-PEARL",
+      "inventory": 200,
+      "unitsSold": 28,
+      "weightOz": 12,
+      "tags": ["fixed-price", "combo", "fast-selling"],
+      "seoTitle": "Om Rakhi & Pearl Single Rakhi Combo $6.99 | UsaRakhi USA",
+      "seoDescription": "Shop the Om Rakhi and Pearl Single Rakhi combo for $6.99. Two rakhis with roli chawal — fast USA delivery from UsaRakhi.",
+      "published": true
+    },
+    {
       "name": "Single Rakhi with Roli Chawal for Brother",
       "slug": "single-rakhi-with-roli-chawal-for-brother-to-usa",
       "description": "Celebrate the beautiful bond of love and protection with this elegant Single Rakhi for your brother. Designed with attractive detailing and a premium thread, this rakhi adds a traditional and festive touch to your Raksha Bandhan celebration. It is the perfect rakhi for brother to express your love, care, and blessings. This rakhi comes with traditional roli chawal, making your Raksha Bandhan rituals complete and meaningful. Thoughtfully crafted to symbolize love, blessings, and togetherness, it is an ideal choice to make your brother feel special on this auspicious occasion. Looking to send rakhi to USA? This beautiful single rakhi with roli chawal is a perfect way to celebrate Raksha Bandhan across the miles. Whether you want to send rakhi to brother in USA, buy rakhi online for USA delivery, or surprise your loved one with a traditional Raksha Bandhan gift, this rakhi is a thoughtful choice. Order online and send rakhi to USA with fast and reliable delivery. Celebrate the festival with love, emotions, and tradition, and make your brother feel cherished no matter where he lives. Buy rakhi for brother online and enjoy hassle-free USA rakhi delivery.",
@@ -1179,8 +1202,9 @@
       "name": "Designer Peach Lumba Rakhi for Bhabhi",
       "slug": "designer-peach-lumba-rakhi-for-bhabhi",
       "description": "Make Raksha Bandhan extra special with this beautifully designed peach Lumba Rakhi for bhabhi , crafted to add elegance and festive charm to your celebration. Its soft pastel shade, delicate beadwork, and graceful tassels create a stylish and traditional look that perfectly complements the occasion. Perfect for lumba rakhi to USA online , this thoughtfully crafted Rakhi combines beauty, comfort, and durability, making it ideal for all-day festive wear. The elegant detailing and premium finish make it a meaningful expression of love, warmth, and respect for your bhabhi. This Rakhi also comes with traditional Roli and Chawal , ensuring you have everything needed for a complete Raksha Bandhan ceremony. A graceful and heartfelt way to celebrate love, tradition, and togetherness on this auspicious occasion.",
-      "price": 4.34,
-      "compareAtPrice": 35,
+      "price": 6.99,
+      "compareAtPrice": 9.99,
+      "tags": ["fixed-price"],
       "currency": "USD",
       "categorySlug": "lumba-rakhi",
       "images": [

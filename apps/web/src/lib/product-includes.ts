@@ -191,6 +191,15 @@ export function getProductIncludes(product: ProductLike): string[] {
     if (fromHtml.length > 0) return [...fromHtml, ...shippingIncludeLines()];
   }
 
+  if (product.slug === "om-pearl-single-rakhi-combo") {
+    return [
+      "1 Om Rakhi for Brother",
+      "1 Pearl Single Rakhi",
+      ...ritualPackets(),
+      ...shippingIncludeLines(),
+    ];
+  }
+
   const blob = [name, description, ...(tags ?? [])].join(" ");
   const plain = looksLikeHtml(blob) ? stripHtml(blob) : blob;
 

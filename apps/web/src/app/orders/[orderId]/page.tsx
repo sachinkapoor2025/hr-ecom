@@ -9,7 +9,7 @@ import { useAuth } from "@/lib/auth-context";
 import { trackPurchase } from "@/lib/track";
 import { OrderConfirmation } from "@/components/OrderConfirmation";
 import { SiteLogoLink } from "@/components/SiteLogo";
-import type { Order } from "@hr-ecom/shared";
+import { isOrderPaymentSettled, type Order } from "@hr-ecom/shared";
 
 function OrderDetailInner({ orderId }: { orderId: string }) {
   const searchParams = useSearchParams();
@@ -44,8 +44,10 @@ function OrderDetailInner({ orderId }: { orderId: string }) {
 
   useEffect(() => {
     if (!order || purchaseTracked.current) return;
-    const paid = order.status === "paid" || redirectStatus === "succeeded" || isDev;
-    if (!paid) return;
+    // Any post-payment status (paid → shipped → delivered…) counts as a purchase.
+    const settled =
+      isOrderPaymentSettled(order.status) || redirectStatus === "succeeded" || isDev;
+    if (!settled) return;
     purchaseTracked.current = true;
     trackPurchase(order.total, {
       orderId: order.orderId,
@@ -79,7 +81,9 @@ function OrderDetailInner({ orderId }: { orderId: string }) {
     );
   }
 
-  const paid = order.status === "paid" || redirectStatus === "succeeded" || isDev;
+  // Must include shipped/processing/delivered — not only the literal "paid" status.
+  const paid =
+    isOrderPaymentSettled(order.status) || redirectStatus === "succeeded" || isDev;
 
   return <OrderConfirmation order={order} paid={paid} />;
 }

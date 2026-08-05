@@ -10,9 +10,11 @@ Auth header on every request:
 X-Vendor-Api-Key: <ORANGE_COUNTY_VENDOR_API_KEY>
 ```
 
-Base URL (prod example):
+Base URL (prod custom domain):
 
-`https://xp9lzxeg40.execute-api.us-east-1.amazonaws.com/prod`
+`https://orange-county.usarakhi.com`
+
+(Legacy execute-api URL still works: `https://xp9lzxeg40.execute-api.us-east-1.amazonaws.com/prod`)
 
 ---
 
@@ -31,9 +33,9 @@ GET {VENDOR_API_URL}/vendors/orange-county/orders
 | `updatedSince` | — | Optional ISO — only orders with `updatedAt >= updatedSince` (incremental sync) |
 | `limit` | **50** | Page size (max **200**) |
 | `cursor` | — | Opaque token from previous response `nextCursor` for the next page |
-| `status` | — | Exact status filter, e.g. `paid` |
+| `status` | — | Exact status filter. Default (omit) = **`paid` only**. Use e.g. `status=shipped` to include other statuses. |
 
-Unpaid / cancelled / refunded are hidden unless `status` is set.
+By default the import feed returns **paid** orders only (ready to fulfill). Shipped / delivered / cancelled / unpaid are excluded unless you pass `status`.
 
 ### Pagination (more than 50 orders)
 
@@ -73,7 +75,7 @@ Keep calling while `hasMore === true`. You can also use `limit=200` for fewer ro
 ```bash
 curl -sS \
   -H "X-Vendor-Api-Key: YOUR_KEY" \
-  "https://xp9lzxeg40.execute-api.us-east-1.amazonaws.com/prod/vendors/orange-county/orders?days=15&limit=50"
+  "https://orange-county.usarakhi.com/vendors/orange-county/orders?days=15&limit=50"
 ```
 
 ### Response fields (order)
@@ -87,8 +89,8 @@ curl -sS \
 | `recipientName` | Ship-to name |
 | `recipientAddressLine1` | Street |
 | `recipientAddressLine2` | Apt / suite (nullable) |
-| `city` / `state` / `country` / `zipCode` | Address |
-| `recipientPhoneNumber` | Recipient phone |
+| `city` / `state` / `country` / `zipCode` | Address (same fields on **list** and **get**) |
+| `recipientPhoneNumber` | **Full** recipient phone (never masked — required for USPS). Same on list and get. |
 | `orderValue` | **Total fulfill** = sum of item vendor costs × qty (USD). Not retail. |
 | `orderValueCurrency` | `USD` |
 | `deliveryDate` | Requested / estimated delivery (nullable) |
@@ -164,7 +166,7 @@ curl -sS -X POST \
   -H "X-Vendor-Api-Key: YOUR_KEY" \
   -H "Content-Type: application/json" \
   -d '{"orderNumber":"OC10001","courierName":"USPS","awb":"9400111899223344556677"}' \
-  "https://xp9lzxeg40.execute-api.us-east-1.amazonaws.com/prod/vendors/orange-county/shipment"
+  "https://orange-county.usarakhi.com/vendors/orange-county/shipment"
 ```
 
 ---
@@ -210,7 +212,7 @@ curl -sS -X POST \
   -H "X-Vendor-Api-Key: YOUR_KEY" \
   -H "Content-Type: application/json" \
   -d '{"orderNumber":"OC10001","currentShipmentStatus":"delivered"}' \
-  "https://xp9lzxeg40.execute-api.us-east-1.amazonaws.com/prod/vendors/orange-county/tracking"
+  "https://orange-county.usarakhi.com/vendors/orange-county/tracking"
 ```
 
 ---

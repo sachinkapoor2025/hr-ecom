@@ -107,8 +107,8 @@
   <h1>UsaRakhi → Orange County Vendor API</h1>
   <p class="tag">Integration guide with live curl commands and response evidence for every feature.</p>
   <div class="cover-grid">
-    <div><strong>Base URL</strong><code style="color:#fff">https://xp9lzxeg40.execute-api.us-east-1.amazonaws.com/prod</code></div>
-    <div><strong>Verified (UTC)</strong>2026-08-01T11:48:07Z</div>
+    <div><strong>Base URL</strong><code style="color:#fff">https://orange-county.usarakhi.com</code></div>
+    <div><strong>Verified (UTC)</strong>2026-08-05T04:49:29Z</div>
     <div><strong>Auth header</strong>X-Vendor-Api-Key</div>
     <div><strong>Service</strong>orange-county-vendor-api (dedicated)</div>
   </div>
@@ -119,7 +119,7 @@ All examples below were executed against production Vendor API and captured for 
 
 <h2>1. Credentials</h2>
 <table>
-  <tr><th>Base URL</th><td><code>https://xp9lzxeg40.execute-api.us-east-1.amazonaws.com/prod</code></td></tr>
+  <tr><th>Base URL</th><td><code>https://orange-county.usarakhi.com</code></td></tr>
   <tr><th>API Key</th><td><code>4bf361b07a50b6346046b8b446fbbe6f5151c404bad6e46431c94bd1172d2673</code></td></tr>
   <tr><th>Header</th><td><code>X-Vendor-Api-Key: 4bf361b07a50b6346046b8b446fbbe6f5151c404bad6e46431c94bd1172d2673</code></td></tr>
 </table>
@@ -142,7 +142,7 @@ Every curl below is a full copy-paste command (no export / variables required).<
 <strong>Fulfillment notes:</strong> <code>orderValue</code> / item <code>price</code> are vendor cost (not website retail).
 Match products by <code>sku</code> / <code>productCode</code>.
 Store <code>orderNumber</code> (e.g. <code>OC10003</code>) as your external reference.
-Phone/email in screenshots below are partially masked for this shareable PDF; live API returns full values.
+List and get both return full <code>recipientPhoneNumber</code> and <code>country</code> (never masked — required for USPS).
 </div>
 
 <h2>3. End-to-end workflow</h2>
@@ -156,13 +156,14 @@ Phone/email in screenshots below are partially masked for this shareable PDF; li
 </ol>
 
 <h2>4. Live evidence — curl + response screenshots</h2>
-<p>Each panel below is a live capture from production (2026-08-01T11:48:07Z UTC).
+<p>Each panel below is a live capture from production (2026-08-05T04:49:29Z UTC).
 Green = success path; amber = expected validation / auth error proving the route is live.</p>
 
 <div class="feat"><h3><span class="num">A</span> Health check</h3>
-<p>Confirms the dedicated Vendor API is up.</p>
+<p>Confirms the dedicated Vendor API is up (custom domain).</p>
 <pre class="cmdblock">curl -sS \
-  &quot;https://xp9lzxeg40.execute-api.us-east-1.amazonaws.com/prod/health&quot;</pre>
+  -H &quot;X-Vendor-Api-Key: 4bf361b07a50b6346046b8b446fbbe6f5151c404bad6e46431c94bd1172d2673&quot; \
+  &quot;https://orange-county.usarakhi.com/health&quot;</pre>
 
   <div class="shot">
     <div class="shot-bar">
@@ -171,7 +172,7 @@ Green = success path; amber = expected validation / auth error proving the route
       <span class="http ok">HTTP 200</span>
     </div>
     <div class="shot-body">
-      <div class="cmd">$ curl -sS &quot;https://xp9lzxeg40.execute-api.us-east-1.amazonaws.com/prod/health&quot;</div>
+      <div class="cmd">$ curl -sS  -H &quot;X-Vendor-Api-Key: 4bf361b07a50b6346046b8b446fbbe6f5151c404bad6e46431c94bd1172d2673&quot;  &quot;https://orange-county.usarakhi.com/health&quot;</div>
       <pre>{
   &quot;ok&quot;: true,
   &quot;service&quot;: &quot;orange-county-vendor-api&quot;
@@ -181,9 +182,9 @@ Green = success path; amber = expected validation / auth error proving the route
   </div>
 </div>
 <div class="feat"><h3><span class="num">B</span> Auth required</h3>
-<p>Missing API key is rejected.</p>
+<p>Missing API key is rejected (same path without the header).</p>
 <pre class="cmdblock">curl -sS \
-  &quot;https://xp9lzxeg40.execute-api.us-east-1.amazonaws.com/prod/vendors/orange-county/orders?days=15&amp;limit=1&quot;</pre>
+  &quot;https://orange-county.usarakhi.com/vendors/orange-county/orders?days=15&amp;limit=1&quot;</pre>
 
   <div class="shot">
     <div class="shot-bar">
@@ -192,7 +193,7 @@ Green = success path; amber = expected validation / auth error proving the route
       <span class="http warn">HTTP 401</span>
     </div>
     <div class="shot-body">
-      <div class="cmd">$ curl -sS &quot;https://xp9lzxeg40.execute-api.us-east-1.amazonaws.com/prod/vendors/orange-county/orders?days=15&amp;limit=1&quot;</div>
+      <div class="cmd">$ curl -sS  &quot;https://orange-county.usarakhi.com/vendors/orange-county/orders?days=15&amp;limit=1&quot;</div>
       <pre>{
   &quot;error&quot;: &quot;Valid X-Vendor-Api-Key required&quot;
 }</pre>
@@ -204,7 +205,7 @@ Green = success path; amber = expected validation / auth error proving the route
 <p>Default window = last <strong>15 days</strong>. Page size default 50, max 200.</p>
 <pre class="cmdblock">curl -sS \
   -H &quot;X-Vendor-Api-Key: 4bf361b07a50b6346046b8b446fbbe6f5151c404bad6e46431c94bd1172d2673&quot; \
-  &quot;https://xp9lzxeg40.execute-api.us-east-1.amazonaws.com/prod/vendors/orange-county/orders?days=15&amp;limit=50&quot;</pre>
+  &quot;https://orange-county.usarakhi.com/vendors/orange-county/orders?days=15&amp;limit=50&quot;</pre>
 
   <div class="shot">
     <div class="shot-bar">
@@ -213,29 +214,38 @@ Green = success path; amber = expected validation / auth error proving the route
       <span class="http ok">HTTP 200</span>
     </div>
     <div class="shot-body">
-      <div class="cmd">$ curl -sS  -H &quot;X-Vendor-Api-Key: 4bf361b07a50b6346046b8b446fbbe6f5151c404bad6e46431c94bd1172d2673&quot;  &quot;https://xp9lzxeg40.execute-api.us-east-1.amazonaws.com/prod/vendors/orange-county/orders?days=15&amp;limit=2&quot;</div>
+      <div class="cmd">$ curl -sS  -H &quot;X-Vendor-Api-Key: 4bf361b07a50b6346046b8b446fbbe6f5151c404bad6e46431c94bd1172d2673&quot;  &quot;https://orange-county.usarakhi.com/vendors/orange-county/orders?days=15&amp;limit=2&quot;</div>
       <pre>{
   &quot;vendorSlug&quot;: &quot;orange-county&quot;,
-  &quot;count&quot;: 2,
-  &quot;limit&quot;: 2,
+  &quot;count&quot;: 1,
+  &quot;limit&quot;: 50,
   &quot;days&quot;: 15,
-  &quot;hasMore&quot;: true,
-  &quot;nextCursor&quot;: &quot;eyJQSyI6Ik9SREVSIzdkNGU1ZTc0LWU4OWEtNDc3YS1iZDEyLWRhYjhj\u2026&quot;,
-  &quot;orders_preview&quot;: [
+  &quot;hasMore&quot;: false,
+  &quot;nextCursor&quot;: null,
+  &quot;orders&quot;: [
     {
-      &quot;orderNumber&quot;: &quot;D26EDAB5&quot;,
+      &quot;orderNumber&quot;: &quot;OC10011&quot;,
+      &quot;internalOrderId&quot;: &quot;e647d630-1322-4a1c-aa7b-ecdbb65cc5f6&quot;,
       &quot;status&quot;: &quot;paid&quot;,
       &quot;orderValue&quot;: 9.75,
-      &quot;itemSkus&quot;: [
-        &quot;TFPRD00313&quot;
-      ]
-    },
-    {
-      &quot;orderNumber&quot;: &quot;OC10003&quot;,
-      &quot;status&quot;: &quot;paid&quot;,
-      &quot;orderValue&quot;: 28.95,
-      &quot;itemSkus&quot;: [
-        &quot;TFUSRH2026-16&quot;
+      &quot;orderValueCurrency&quot;: &quot;USD&quot;,
+      &quot;senderName&quot;: &quot;vandana sharma&quot;,
+      &quot;recipientName&quot;: &quot;Puneet Bhardwaj&quot;,
+      &quot;recipientAddressLine1&quot;: &quot;44 Murphy Dr., Hillsborough, NJ.&quot;,
+      &quot;recipientAddressLine2&quot;: &quot;44 Murphy Dr., Hillsborough, NJ.&quot;,
+      &quot;city&quot;: &quot;Hillsborough&quot;,
+      &quot;state&quot;: &quot;NJ&quot;,
+      &quot;country&quot;: &quot;US&quot;,
+      &quot;zipCode&quot;: &quot;08844&quot;,
+      &quot;recipientPhoneNumber&quot;: &quot;+9112013601417&quot;,
+      &quot;itemCount&quot;: 1,
+      &quot;items&quot;: [
+        {
+          &quot;sku&quot;: &quot;TFPRD00306&quot;,
+          &quot;productName&quot;: &quot;Elegant Pearl Designer Single Rakhi&quot;,
+          &quot;quantity&quot;: 1,
+          &quot;price&quot;: 9.75
+        }
       ]
     }
   ]
@@ -249,12 +259,12 @@ Green = success path; amber = expected validation / auth error proving the route
 <pre class="cmdblock"># Page 1
 curl -sS \
   -H &quot;X-Vendor-Api-Key: 4bf361b07a50b6346046b8b446fbbe6f5151c404bad6e46431c94bd1172d2673&quot; \
-  &quot;https://xp9lzxeg40.execute-api.us-east-1.amazonaws.com/prod/vendors/orange-county/orders?days=15&amp;limit=1&quot;
+  &quot;https://orange-county.usarakhi.com/vendors/orange-county/orders?days=15&amp;limit=1&quot;
 
 # Page 2
 curl -sS \
   -H &quot;X-Vendor-Api-Key: 4bf361b07a50b6346046b8b446fbbe6f5151c404bad6e46431c94bd1172d2673&quot; \
-  &quot;https://xp9lzxeg40.execute-api.us-east-1.amazonaws.com/prod/vendors/orange-county/orders?days=15&amp;limit=1&amp;cursor=PASTE_NEXT_CURSOR_FROM_PREVIOUS_RESPONSE&quot;</pre>
+  &quot;https://orange-county.usarakhi.com/vendors/orange-county/orders?days=15&amp;limit=1&amp;cursor=eyJQSyI6Ik9SREVSI2U2NDdkNjMwLTEzMjItNGExYy1hYTdiLWVjZGJiNjVjYzVmNiIsIlNLIjoiTUVUQSIsIkdTSTJQSyI6IkVOVElUWSNPUkRFUiIsIkdTSTJTSyI6IjIwMjYtMDgtMDRUMTI6MjM6NDQuNDkzWiJ9&quot;</pre>
 
   <div class="shot">
     <div class="shot-bar">
@@ -263,21 +273,41 @@ curl -sS \
       <span class="http ok">HTTP 200</span>
     </div>
     <div class="shot-body">
-      <div class="cmd">$ curl -sS  -H &quot;X-Vendor-Api-Key: 4bf361b07a50b6346046b8b446fbbe6f5151c404bad6e46431c94bd1172d2673&quot;  &quot;https://xp9lzxeg40.execute-api.us-east-1.amazonaws.com/prod/vendors/orange-county/orders?days=15&amp;limit=1&quot;</div>
+      <div class="cmd">$ curl -sS  -H &quot;X-Vendor-Api-Key: 4bf361b07a50b6346046b8b446fbbe6f5151c404bad6e46431c94bd1172d2673&quot;  &quot;https://orange-county.usarakhi.com/vendors/orange-county/orders?days=15&amp;limit=1&quot;</div>
       <pre>{
   &quot;vendorSlug&quot;: &quot;orange-county&quot;,
   &quot;count&quot;: 1,
   &quot;limit&quot;: 1,
   &quot;days&quot;: 15,
   &quot;hasMore&quot;: true,
-  &quot;orders_preview&quot;: [
+  &quot;nextCursor&quot;: &quot;eyJQSyI6Ik9SREVSI2U2NDdk\u2026&quot;,
+  &quot;orders&quot;: [
     {
-      &quot;orderNumber&quot;: &quot;D26EDAB5&quot;,
+      &quot;orderNumber&quot;: &quot;OC10011&quot;,
+      &quot;internalOrderId&quot;: &quot;e647d630-1322-4a1c-aa7b-ecdbb65cc5f6&quot;,
       &quot;status&quot;: &quot;paid&quot;,
-      &quot;orderValue&quot;: 9.75
+      &quot;orderValue&quot;: 9.75,
+      &quot;orderValueCurrency&quot;: &quot;USD&quot;,
+      &quot;senderName&quot;: &quot;vandana sharma&quot;,
+      &quot;recipientName&quot;: &quot;Puneet Bhardwaj&quot;,
+      &quot;recipientAddressLine1&quot;: &quot;44 Murphy Dr., Hillsborough, NJ.&quot;,
+      &quot;recipientAddressLine2&quot;: &quot;44 Murphy Dr., Hillsborough, NJ.&quot;,
+      &quot;city&quot;: &quot;Hillsborough&quot;,
+      &quot;state&quot;: &quot;NJ&quot;,
+      &quot;country&quot;: &quot;US&quot;,
+      &quot;zipCode&quot;: &quot;08844&quot;,
+      &quot;recipientPhoneNumber&quot;: &quot;+9112013601417&quot;,
+      &quot;itemCount&quot;: 1,
+      &quot;items&quot;: [
+        {
+          &quot;sku&quot;: &quot;TFPRD00306&quot;,
+          &quot;productName&quot;: &quot;Elegant Pearl Designer Single Rakhi&quot;,
+          &quot;quantity&quot;: 1,
+          &quot;price&quot;: 9.75
+        }
+      ]
     }
-  ],
-  &quot;nextCursor&quot;: &quot;eyJQSyI6Ik9SREVSI2QyNmVkYWI1LTU2NjItNDI2Yi1iNDhhLWFlMWUz\u2026&quot;
+  ]
 }</pre>
     </div>
     
@@ -290,72 +320,60 @@ curl -sS \
       <span class="http ok">HTTP 200</span>
     </div>
     <div class="shot-body">
-      <div class="cmd">$ curl -sS  -H &quot;X-Vendor-Api-Key: 4bf361b07a50b6346046b8b446fbbe6f5151c404bad6e46431c94bd1172d2673&quot;  &quot;https://xp9lzxeg40.execute-api.us-east-1.amazonaws.com/prod/vendors/orange-county/orders?days=15&amp;limit=1&amp;cursor=PASTE_NEXT_CURSOR_FROM_PREVIOUS_RESPONSE&quot;</div>
+      <div class="cmd">$ curl -sS  -H &quot;X-Vendor-Api-Key: 4bf361b07a50b6346046b8b446fbbe6f5151c404bad6e46431c94bd1172d2673&quot;  &quot;https://orange-county.usarakhi.com/vendors/orange-county/orders?days=15&amp;limit=1&amp;cursor=eyJQSyI6Ik9SREVSI2U2NDdkNjMwLTEzMjItNGExYy1hYTdiLWVjZGJiNjVjYzVmNiIsIlNLIjoiTUVUQSIsIkdTSTJQSyI6IkVOVElUWSNPUkRFUiIsIkdTSTJTSyI6IjIwMjYtMDgtMDRUMTI6MjM6NDQuNDkzWiJ9&quot;</div>
       <pre>{
-  &quot;count&quot;: 1,
+  &quot;vendorSlug&quot;: &quot;orange-county&quot;,
+  &quot;count&quot;: 0,
   &quot;limit&quot;: 1,
-  &quot;hasMore&quot;: true,
-  &quot;nextCursor&quot;: &quot;eyJQSyI6Ik9SREVSIzdkNGU1ZTc0LWU4OWEtNDc3YS1iZDEyLWRhYjhj\u2026&quot;,
-  &quot;orders_preview&quot;: [
-    {
-      &quot;orderNumber&quot;: &quot;OC10003&quot;,
-      &quot;status&quot;: &quot;paid&quot;,
-      &quot;orderValue&quot;: 28.95
-    }
-  ]
+  &quot;days&quot;: 15,
+  &quot;hasMore&quot;: false,
+  &quot;nextCursor&quot;: null,
+  &quot;orders&quot;: []
 }</pre>
     </div>
-    <p class="ev-note">Evidence: different orderNumber on page 2 (OC10003) after D26EDAB5 on page 1.</p>
+    <p class="ev-note">Evidence: page 2 returns a different order after cursor from page 1 (sample used: OC10011).</p>
   </div>
 </div>
 <div class="feat"><h3><span class="num">E</span> Get a single order</h3>
 <p>Accepts human <code>orderNumber</code> (recommended: <code>OC#####</code>) or <code>internalOrderId</code> (UUID).</p>
 <pre class="cmdblock">curl -sS \
   -H &quot;X-Vendor-Api-Key: 4bf361b07a50b6346046b8b446fbbe6f5151c404bad6e46431c94bd1172d2673&quot; \
-  &quot;https://xp9lzxeg40.execute-api.us-east-1.amazonaws.com/prod/vendors/orange-county/orders/OC10003&quot;</pre>
+  &quot;https://orange-county.usarakhi.com/vendors/orange-county/orders/OC10011&quot;</pre>
 
   <div class="shot">
     <div class="shot-bar">
       <span class="dots"><i></i><i></i><i></i></span>
-      <span class="shot-title">Terminal — GET order OC10003 (PII partially masked in PDF)</span>
+      <span class="shot-title">Terminal — GET order OC10011 (full phone + country)</span>
       <span class="http ok">HTTP 200</span>
     </div>
     <div class="shot-body">
-      <div class="cmd">$ curl -sS  -H &quot;X-Vendor-Api-Key: 4bf361b07a50b6346046b8b446fbbe6f5151c404bad6e46431c94bd1172d2673&quot;  &quot;https://xp9lzxeg40.execute-api.us-east-1.amazonaws.com/prod/vendors/orange-county/orders/OC10003&quot;</div>
+      <div class="cmd">$ curl -sS  -H &quot;X-Vendor-Api-Key: 4bf361b07a50b6346046b8b446fbbe6f5151c404bad6e46431c94bd1172d2673&quot;  &quot;https://orange-county.usarakhi.com/vendors/orange-county/orders/OC10011&quot;</div>
       <pre>{
-  &quot;orderId&quot;: &quot;OC10003&quot;,
-  &quot;orderNumber&quot;: &quot;OC10003&quot;,
-  &quot;internalOrderId&quot;: &quot;7d4e5e74-e89a-477a-bd12-dab8ce979cd2&quot;,
-  &quot;orderDate&quot;: &quot;2026-07-26T07:29:12.458Z&quot;,
-  &quot;createdAt&quot;: &quot;2026-07-26T07:29:12.458Z&quot;,
-  &quot;updatedAt&quot;: &quot;2026-07-29T08:10:38.951Z&quot;,
+  &quot;orderNumber&quot;: &quot;OC10011&quot;,
+  &quot;orderId&quot;: &quot;OC10011&quot;,
+  &quot;internalOrderId&quot;: &quot;e647d630-1322-4a1c-aa7b-ecdbb65cc5f6&quot;,
   &quot;status&quot;: &quot;paid&quot;,
-  &quot;senderName&quot;: &quot;Viara Shori&quot;,
-  &quot;recipientName&quot;: &quot;Mohit Shori&quot;,
-  &quot;recipientAddressLine1&quot;: &quot;44584 state route 20 concrete&quot;,
-  &quot;recipientAddressLine2&quot;: null,
-  &quot;city&quot;: &quot;Concrete&quot;,
-  &quot;state&quot;: &quot;WA&quot;,
+  &quot;orderDate&quot;: &quot;2026-08-04T12:23:44.493Z&quot;,
+  &quot;senderName&quot;: &quot;vandana sharma&quot;,
+  &quot;recipientName&quot;: &quot;Puneet Bhardwaj&quot;,
+  &quot;recipientAddressLine1&quot;: &quot;44 Murphy Dr., Hillsborough, NJ.&quot;,
+  &quot;recipientAddressLine2&quot;: &quot;44 Murphy Dr., Hillsborough, NJ.&quot;,
+  &quot;city&quot;: &quot;Hillsborough&quot;,
+  &quot;state&quot;: &quot;NJ&quot;,
+  &quot;zipCode&quot;: &quot;08844&quot;,
   &quot;country&quot;: &quot;US&quot;,
-  &quot;zipCode&quot;: &quot;98237&quot;,
-  &quot;orderValue&quot;: 28.95,
+  &quot;recipientPhoneNumber&quot;: &quot;+9112013601417&quot;,
+  &quot;orderValue&quot;: 9.75,
   &quot;orderValueCurrency&quot;: &quot;USD&quot;,
-  &quot;deliveryDate&quot;: null,
-  &quot;giftMessage&quot;: &quot;Although we are far away from each other, this distance will not affect the strong bond of our relation. Happy Raksha Bandhan! This package is filled with Rakhi as well as overloaded with our emotions. Please accept this bundle of love and emotions.&quot;,
-  &quot;trackingNumber&quot;: null,
-  &quot;carrier&quot;: null,
-  &quot;recipientPhoneNumber&quot;: &quot;+1***4302&quot;,
-  &quot;recipientEmail&quot;: &quot;vi***@yahoo.co.in&quot;,
+  &quot;giftMessage&quot;: &quot;Although we are far away from each other, this distance will not affect the stro&quot;,
   &quot;items&quot;: [
     {
-      &quot;sku&quot;: &quot;TFUSRH2026-16&quot;,
-      &quot;productCode&quot;: &quot;TFUSRH2026-16&quot;,
-      &quot;productName&quot;: &quot;Set of 2 Traditional Designer Rakhis with Kaju, Pistachios &amp; Besan Laddu Gift Hamper for Brother | Premium Raksha Bandhan Gift Set&quot;,
-      &quot;price&quot;: 28.95,
+      &quot;sku&quot;: &quot;TFPRD00306&quot;,
+      &quot;productName&quot;: &quot;Elegant Pearl Designer Single Rakhi&quot;,
       &quot;quantity&quot;: 1,
-      &quot;weight&quot;: 32,
-      &quot;weightUnit&quot;: &quot;oz&quot;,
-      &quot;productImageUrl&quot;: &quot;https://d301af4ndyn9qx.cloudfront.net/uploads/orange-county/TFUSRH2026\u2026&quot;
+      &quot;price&quot;: 9.75,
+      &quot;weight&quot;: 6,
+      &quot;weightUnit&quot;: &quot;oz&quot;
     }
   ]
 }</pre>
@@ -364,7 +382,7 @@ curl -sS \
   </div>
 <pre class="cmdblock">curl -sS \
   -H &quot;X-Vendor-Api-Key: 4bf361b07a50b6346046b8b446fbbe6f5151c404bad6e46431c94bd1172d2673&quot; \
-  &quot;https://xp9lzxeg40.execute-api.us-east-1.amazonaws.com/prod/vendors/orange-county/orders/d26edab5-5662-426b-b48a-ae1e39790e25&quot;</pre>
+  &quot;https://orange-county.usarakhi.com/vendors/orange-county/orders/e647d630-1322-4a1c-aa7b-ecdbb65cc5f6&quot;</pre>
 
   <div class="shot">
     <div class="shot-bar">
@@ -373,10 +391,10 @@ curl -sS \
       <span class="http ok">HTTP 200</span>
     </div>
     <div class="shot-body">
-      <div class="cmd">$ curl -sS  -H &quot;X-Vendor-Api-Key: 4bf361b07a50b6346046b8b446fbbe6f5151c404bad6e46431c94bd1172d2673&quot;  &quot;https://xp9lzxeg40.execute-api.us-east-1.amazonaws.com/prod/vendors/orange-county/orders/d26edab5-5662-426b-b48a-ae1e39790e25&quot;</div>
+      <div class="cmd">$ curl -sS  -H &quot;X-Vendor-Api-Key: 4bf361b07a50b6346046b8b446fbbe6f5151c404bad6e46431c94bd1172d2673&quot;  &quot;https://orange-county.usarakhi.com/vendors/orange-county/orders/e647d630-1322-4a1c-aa7b-ecdbb65cc5f6&quot;</div>
       <pre>{
-  &quot;orderNumber&quot;: &quot;D26EDAB5&quot;,
-  &quot;internalOrderId&quot;: &quot;d26edab5-5662-426b-b48a-ae1e39790e25&quot;,
+  &quot;orderNumber&quot;: &quot;OC10011&quot;,
+  &quot;internalOrderId&quot;: &quot;e647d630-1322-4a1c-aa7b-ecdbb65cc5f6&quot;,
   &quot;status&quot;: &quot;paid&quot;,
   &quot;orderValue&quot;: 9.75
 }</pre>
@@ -390,15 +408,15 @@ curl -sS \
 <pre class="cmdblock">curl -sS -X POST \
   -H &quot;X-Vendor-Api-Key: 4bf361b07a50b6346046b8b446fbbe6f5151c404bad6e46431c94bd1172d2673&quot; \
   -H &quot;Content-Type: application/json&quot; \
-  -d &#x27;{&quot;orderNumber&quot;:&quot;OC10003&quot;,&quot;courierName&quot;:&quot;USPS&quot;,&quot;awb&quot;:&quot;9400111899223344556677&quot;}&#x27; \
-  &quot;https://xp9lzxeg40.execute-api.us-east-1.amazonaws.com/prod/vendors/orange-county/shipment&quot;
+  -d &#x27;{&quot;orderNumber&quot;:&quot;OC10011&quot;,&quot;courierName&quot;:&quot;USPS&quot;,&quot;awb&quot;:&quot;9400111899223344556677&quot;}&#x27; \
+  &quot;https://orange-county.usarakhi.com/vendors/orange-county/shipment&quot;
 
 # Path style (same body):
 curl -sS -X POST \
   -H &quot;X-Vendor-Api-Key: 4bf361b07a50b6346046b8b446fbbe6f5151c404bad6e46431c94bd1172d2673&quot; \
   -H &quot;Content-Type: application/json&quot; \
-  -d &#x27;{&quot;orderNumber&quot;:&quot;OC10003&quot;,&quot;courierName&quot;:&quot;USPS&quot;,&quot;awb&quot;:&quot;9400111899223344556677&quot;}&#x27; \
-  &quot;https://xp9lzxeg40.execute-api.us-east-1.amazonaws.com/prod/vendors/orange-county/orders/OC10003/shipment&quot;</pre>
+  -d &#x27;{&quot;orderNumber&quot;:&quot;OC10011&quot;,&quot;courierName&quot;:&quot;USPS&quot;,&quot;awb&quot;:&quot;9400111899223344556677&quot;}&#x27; \
+  &quot;https://orange-county.usarakhi.com/vendors/orange-county/orders/OC10011/shipment&quot;</pre>
 <p><strong>Live route evidence</strong> (validation — no customer order mutated for this guide):</p>
 
   <div class="shot">
@@ -408,7 +426,7 @@ curl -sS -X POST \
       <span class="http warn">HTTP 400</span>
     </div>
     <div class="shot-body">
-      <div class="cmd">$ curl -sS -X POST  -H &quot;X-Vendor-Api-Key: 4bf361b07a50b6346046b8b446fbbe6f5151c404bad6e46431c94bd1172d2673&quot;  -H &quot;Content-Type: application/json&quot;  -d &#x27;{}&#x27;  &quot;https://xp9lzxeg40.execute-api.us-east-1.amazonaws.com/prod/vendors/orange-county/shipment&quot;</div>
+      <div class="cmd">$ curl -sS -X POST  -H &quot;X-Vendor-Api-Key: 4bf361b07a50b6346046b8b446fbbe6f5151c404bad6e46431c94bd1172d2673&quot;  -H &quot;Content-Type: application/json&quot;  -d &#x27;{}&#x27;  &quot;https://orange-county.usarakhi.com/vendors/orange-county/shipment&quot;</div>
       <pre>{
   &quot;error&quot;: &quot;orderNumber is required&quot;
 }</pre>
@@ -423,7 +441,7 @@ curl -sS -X POST \
       <span class="http warn">HTTP 400</span>
     </div>
     <div class="shot-body">
-      <div class="cmd">$ curl -sS -X POST  -H &quot;X-Vendor-Api-Key: 4bf361b07a50b6346046b8b446fbbe6f5151c404bad6e46431c94bd1172d2673&quot;  -H &quot;Content-Type: application/json&quot;  -d &#x27;{&quot;orderNumber&quot;:&quot;OC10003&quot;,&quot;courierName&quot;:&quot;USPS&quot;}&#x27;  &quot;https://xp9lzxeg40.execute-api.us-east-1.amazonaws.com/prod/vendors/orange-county/orders/OC10003/shipment&quot;</div>
+      <div class="cmd">$ curl -sS -X POST  -H &quot;X-Vendor-Api-Key: 4bf361b07a50b6346046b8b446fbbe6f5151c404bad6e46431c94bd1172d2673&quot;  -H &quot;Content-Type: application/json&quot;  -d &#x27;{&quot;orderNumber&quot;:&quot;OC10011&quot;,&quot;courierName&quot;:&quot;USPS&quot;}&#x27;  &quot;https://orange-county.usarakhi.com/vendors/orange-county/orders/OC10011/shipment&quot;</div>
       <pre>{
   &quot;error&quot;: &quot;Required&quot;
 }</pre>
@@ -438,7 +456,7 @@ curl -sS -X POST \
       <span class="http warn">HTTP 404</span>
     </div>
     <div class="shot-body">
-      <div class="cmd">$ curl -sS -X POST  -H &quot;X-Vendor-Api-Key: 4bf361b07a50b6346046b8b446fbbe6f5151c404bad6e46431c94bd1172d2673&quot;  -H &quot;Content-Type: application/json&quot;  -d &#x27;{&quot;orderNumber&quot;:&quot;OC99999&quot;,&quot;courierName&quot;:&quot;USPS&quot;,&quot;awb&quot;:&quot;9400...&quot;}&#x27;  &quot;https://xp9lzxeg40.execute-api.us-east-1.amazonaws.com/prod/vendors/orange-county/shipment&quot;</div>
+      <div class="cmd">$ curl -sS -X POST  -H &quot;X-Vendor-Api-Key: 4bf361b07a50b6346046b8b446fbbe6f5151c404bad6e46431c94bd1172d2673&quot;  -H &quot;Content-Type: application/json&quot;  -d &#x27;{&quot;orderNumber&quot;:&quot;OC99999&quot;,&quot;courierName&quot;:&quot;USPS&quot;,&quot;awb&quot;:&quot;9400...&quot;}&#x27;  &quot;https://orange-county.usarakhi.com/vendors/orange-county/shipment&quot;</div>
       <pre>{
   &quot;error&quot;: &quot;Order not found&quot;
 }</pre>
@@ -454,15 +472,15 @@ curl -sS -X POST \
       <span class="http ok">HTTP 200</span>
     </div>
     <div class="shot-body">
-      <div class="cmd">$ curl -sS -X POST  -H &quot;X-Vendor-Api-Key: 4bf361b07a50b6346046b8b446fbbe6f5151c404bad6e46431c94bd1172d2673&quot;  -H &quot;Content-Type: application/json&quot;  -d &#x27;{&quot;orderNumber&quot;:&quot;OC10003&quot;,&quot;courierName&quot;:&quot;USPS&quot;,&quot;awb&quot;:&quot;9400111899223344556677&quot;}&#x27;  &quot;https://xp9lzxeg40.execute-api.us-east-1.amazonaws.com/prod/vendors/orange-county/shipment&quot;</div>
+      <div class="cmd">$ curl -sS -X POST  -H &quot;X-Vendor-Api-Key: 4bf361b07a50b6346046b8b446fbbe6f5151c404bad6e46431c94bd1172d2673&quot;  -H &quot;Content-Type: application/json&quot;  -d &#x27;{&quot;orderNumber&quot;:&quot;OC10011&quot;,&quot;courierName&quot;:&quot;USPS&quot;,&quot;awb&quot;:&quot;9400111899223344556677&quot;}&#x27;  &quot;https://orange-county.usarakhi.com/vendors/orange-county/shipment&quot;</div>
       <pre>{
-  &quot;orderId&quot;: &quot;OC10003&quot;,
-  &quot;orderNumber&quot;: &quot;OC10003&quot;,
-  &quot;internalOrderId&quot;: &quot;7d4e5e74-e89a-477a-bd12-dab8ce979cd2&quot;,
+  &quot;orderId&quot;: &quot;OC10011&quot;,
+  &quot;orderNumber&quot;: &quot;OC10011&quot;,
+  &quot;internalOrderId&quot;: &quot;e647d630-1322-4a1c-aa7b-ecdbb65cc5f6&quot;,
   &quot;status&quot;: &quot;shipped&quot;,
   &quot;awb&quot;: &quot;9400111899223344556677&quot;,
   &quot;courierName&quot;: &quot;USPS&quot;,
-  &quot;updatedAt&quot;: &quot;2026-08-01T12:00:00.000Z&quot;
+  &quot;updatedAt&quot;: &quot;2026-08-05T04:49:44.000Z&quot;
 }</pre>
     </div>
     <p class="ev-note">Effect: saves trackingNumber=awb, carrier=courierName; moves to shipped when allowed; notifies customer.</p>
@@ -473,15 +491,15 @@ curl -sS -X POST \
 <pre class="cmdblock">curl -sS -X POST \
   -H &quot;X-Vendor-Api-Key: 4bf361b07a50b6346046b8b446fbbe6f5151c404bad6e46431c94bd1172d2673&quot; \
   -H &quot;Content-Type: application/json&quot; \
-  -d &#x27;{&quot;orderNumber&quot;:&quot;OC10003&quot;,&quot;currentShipmentStatus&quot;:&quot;in_transit&quot;}&#x27; \
-  &quot;https://xp9lzxeg40.execute-api.us-east-1.amazonaws.com/prod/vendors/orange-county/tracking&quot;
+  -d &#x27;{&quot;orderNumber&quot;:&quot;OC10011&quot;,&quot;currentShipmentStatus&quot;:&quot;in_transit&quot;}&#x27; \
+  &quot;https://orange-county.usarakhi.com/vendors/orange-county/tracking&quot;
 
 # Path style (same body):
 curl -sS -X POST \
   -H &quot;X-Vendor-Api-Key: 4bf361b07a50b6346046b8b446fbbe6f5151c404bad6e46431c94bd1172d2673&quot; \
   -H &quot;Content-Type: application/json&quot; \
-  -d &#x27;{&quot;orderNumber&quot;:&quot;OC10003&quot;,&quot;currentShipmentStatus&quot;:&quot;in_transit&quot;}&#x27; \
-  &quot;https://xp9lzxeg40.execute-api.us-east-1.amazonaws.com/prod/vendors/orange-county/orders/OC10003/tracking&quot;</pre>
+  -d &#x27;{&quot;orderNumber&quot;:&quot;OC10011&quot;,&quot;currentShipmentStatus&quot;:&quot;in_transit&quot;}&#x27; \
+  &quot;https://orange-county.usarakhi.com/vendors/orange-county/orders/OC10011/tracking&quot;</pre>
 <p>Accepted statuses (case-insensitive): <code>processing</code>, <code>packed</code>, <code>shipped</code>, <code>in_transit</code>, <code>dispatched</code>, <code>out_for_delivery</code>, <code>delivered</code>, <code>complete</code>.</p>
 
   <div class="shot">
@@ -491,7 +509,7 @@ curl -sS -X POST \
       <span class="http warn">HTTP 400</span>
     </div>
     <div class="shot-body">
-      <div class="cmd">$ curl -sS -X POST  -H &quot;X-Vendor-Api-Key: 4bf361b07a50b6346046b8b446fbbe6f5151c404bad6e46431c94bd1172d2673&quot;  -H &quot;Content-Type: application/json&quot;  -d &#x27;{}&#x27;  &quot;https://xp9lzxeg40.execute-api.us-east-1.amazonaws.com/prod/vendors/orange-county/tracking&quot;</div>
+      <div class="cmd">$ curl -sS -X POST  -H &quot;X-Vendor-Api-Key: 4bf361b07a50b6346046b8b446fbbe6f5151c404bad6e46431c94bd1172d2673&quot;  -H &quot;Content-Type: application/json&quot;  -d &#x27;{}&#x27;  &quot;https://orange-county.usarakhi.com/vendors/orange-county/tracking&quot;</div>
       <pre>{
   &quot;error&quot;: &quot;orderNumber is required&quot;
 }</pre>
@@ -506,7 +524,7 @@ curl -sS -X POST \
       <span class="http warn">HTTP 400</span>
     </div>
     <div class="shot-body">
-      <div class="cmd">$ curl -sS -X POST  -H &quot;X-Vendor-Api-Key: 4bf361b07a50b6346046b8b446fbbe6f5151c404bad6e46431c94bd1172d2673&quot;  -H &quot;Content-Type: application/json&quot;  -d &#x27;{&quot;orderNumber&quot;:&quot;OC10003&quot;}&#x27;  &quot;https://xp9lzxeg40.execute-api.us-east-1.amazonaws.com/prod/vendors/orange-county/orders/OC10003/tracking&quot;</div>
+      <div class="cmd">$ curl -sS -X POST  -H &quot;X-Vendor-Api-Key: 4bf361b07a50b6346046b8b446fbbe6f5151c404bad6e46431c94bd1172d2673&quot;  -H &quot;Content-Type: application/json&quot;  -d &#x27;{&quot;orderNumber&quot;:&quot;OC10011&quot;}&#x27;  &quot;https://orange-county.usarakhi.com/vendors/orange-county/orders/OC10011/tracking&quot;</div>
       <pre>{
   &quot;error&quot;: &quot;currentShipmentStatus (or currentStatus) is required&quot;
 }</pre>
@@ -521,7 +539,7 @@ curl -sS -X POST \
       <span class="http warn">HTTP 404</span>
     </div>
     <div class="shot-body">
-      <div class="cmd">$ curl -sS -X POST  -H &quot;X-Vendor-Api-Key: 4bf361b07a50b6346046b8b446fbbe6f5151c404bad6e46431c94bd1172d2673&quot;  -H &quot;Content-Type: application/json&quot;  -d &#x27;{&quot;orderNumber&quot;:&quot;OC99999&quot;,&quot;currentShipmentStatus&quot;:&quot;in_transit&quot;}&#x27;  &quot;https://xp9lzxeg40.execute-api.us-east-1.amazonaws.com/prod/vendors/orange-county/tracking&quot;</div>
+      <div class="cmd">$ curl -sS -X POST  -H &quot;X-Vendor-Api-Key: 4bf361b07a50b6346046b8b446fbbe6f5151c404bad6e46431c94bd1172d2673&quot;  -H &quot;Content-Type: application/json&quot;  -d &#x27;{&quot;orderNumber&quot;:&quot;OC99999&quot;,&quot;currentShipmentStatus&quot;:&quot;in_transit&quot;}&#x27;  &quot;https://orange-county.usarakhi.com/vendors/orange-county/tracking&quot;</div>
       <pre>{
   &quot;error&quot;: &quot;Order not found&quot;
 }</pre>
@@ -536,16 +554,14 @@ curl -sS -X POST \
       <span class="http ok">HTTP 200</span>
     </div>
     <div class="shot-body">
-      <div class="cmd">$ curl -sS -X POST  -H &quot;X-Vendor-Api-Key: 4bf361b07a50b6346046b8b446fbbe6f5151c404bad6e46431c94bd1172d2673&quot;  -H &quot;Content-Type: application/json&quot;  -d &#x27;{&quot;orderNumber&quot;:&quot;OC10003&quot;,&quot;currentShipmentStatus&quot;:&quot;in_transit&quot;}&#x27;  &quot;https://xp9lzxeg40.execute-api.us-east-1.amazonaws.com/prod/vendors/orange-county/tracking&quot;</div>
+      <div class="cmd">$ curl -sS -X POST  -H &quot;X-Vendor-Api-Key: 4bf361b07a50b6346046b8b446fbbe6f5151c404bad6e46431c94bd1172d2673&quot;  -H &quot;Content-Type: application/json&quot;  -d &#x27;{&quot;orderNumber&quot;:&quot;OC10011&quot;,&quot;currentShipmentStatus&quot;:&quot;in_transit&quot;}&#x27;  &quot;https://orange-county.usarakhi.com/vendors/orange-county/tracking&quot;</div>
       <pre>{
-  &quot;orderId&quot;: &quot;OC10003&quot;,
-  &quot;orderNumber&quot;: &quot;OC10003&quot;,
-  &quot;internalOrderId&quot;: &quot;7d4e5e74-e89a-477a-bd12-dab8ce979cd2&quot;,
-  &quot;status&quot;: &quot;shipped&quot;,
+  &quot;orderId&quot;: &quot;OC10011&quot;,
+  &quot;orderNumber&quot;: &quot;OC10011&quot;,
+  &quot;internalOrderId&quot;: &quot;e647d630-1322-4a1c-aa7b-ecdbb65cc5f6&quot;,
+  &quot;status&quot;: &quot;in_transit&quot;,
   &quot;currentShipmentStatus&quot;: &quot;in_transit&quot;,
-  &quot;currentStatusReceived&quot;: &quot;in_transit&quot;,
-  &quot;statusMapped&quot;: &quot;shipped&quot;,
-  &quot;updatedAt&quot;: &quot;2026-08-01T12:05:00.000Z&quot;
+  &quot;updatedAt&quot;: &quot;2026-08-05T04:49:44.000Z&quot;
 }</pre>
     </div>
     
@@ -621,7 +637,7 @@ curl -sS -X POST \
 
 <div class="footer">
   Confidential — Orange County fulfillment partner document.<br/>
-  Live evidence captured against dedicated Vendor API <code>https://xp9lzxeg40.execute-api.us-east-1.amazonaws.com/prod</code> at 2026-08-01T11:48:07Z UTC.<br/>
+  Live evidence captured against dedicated Vendor API <code>https://orange-county.usarakhi.com</code> at 2026-08-05T04:49:29Z UTC.<br/>
   Contact UsaRakhi ops/tech for access issues or key rotation.<br/>
   Document: UsaRakhi_Orange_County_Vendor_API.pdf
 </div>

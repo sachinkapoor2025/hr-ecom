@@ -7,6 +7,11 @@ import { trustFacts } from "@/lib/trust";
 const FACEBOOK_URL = "https://www.facebook.com/usarakhi/";
 const INSTAGRAM_URL = "https://www.instagram.com/usarakhi/";
 
+/** Footer Shop Rakhi labels only — append "to USA" without changing shared nav/URLs. */
+function shopRakhiFooterLabel(label: string): string {
+  return /to\s+usa$/i.test(label.trim()) ? label : `${label} to USA`;
+}
+
 export function Footer() {
   return (
     <footer className="border-t border-slate-200 bg-primary text-white mt-auto">
@@ -80,7 +85,7 @@ export function Footer() {
               {rakhiSetsMenu.items.map((n) => (
                 <li key={n.href}>
                   <Link href={n.href} className="hover:text-white hover:underline">
-                    {n.label}
+                    {shopRakhiFooterLabel(n.label)}
                   </Link>
                 </li>
               ))}
@@ -89,7 +94,7 @@ export function Footer() {
                 .map((n) => (
                   <li key={n.href}>
                     <Link href={n.href} className="hover:text-white hover:underline">
-                      {n.label}
+                      {shopRakhiFooterLabel(n.label)}
                     </Link>
                   </li>
                 ))}

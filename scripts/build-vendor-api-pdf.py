@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 EVIDENCE = ROOT / "docs" / "vendor-api-evidence"
 HTML_OUT = ROOT / "docs" / "UsaRakhi_Orange_County_Vendor_API.html"
 PDF_OUT = ROOT / "UsaRakhi_Orange_County_Vendor_API.pdf"
-BASE_URL = "https://xp9lzxeg40.execute-api.us-east-1.amazonaws.com/prod"
+BASE_URL = "https://orange-county.usarakhi.com"
 KEY = "4bf361b07a50b6346046b8b446fbbe6f5151c404bad6e46431c94bd1172d2673"
 CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 
@@ -87,15 +87,26 @@ def build_html() -> str:
     track_404 = dumps(loadj("13_tracking_unknown_order.json"))
     ship_ok = dumps(loadj("sample_shipment_success.json"))
     track_ok = dumps(loadj("sample_tracking_success.json"))
+    sample_order = ""
+    if (EVIDENCE / "sample_order_number.txt").exists():
+        sample_order = (EVIDENCE / "sample_order_number.txt").read_text().strip()
+    if not sample_order:
+        sample_order = str(loadj("06_get_order_compact.json").get("orderNumber") or "OC10011")
 
     empty_json = "{}"
-    ship_missing = '{"orderNumber":"OC10003","courierName":"USPS"}'
-    track_missing = '{"orderNumber":"OC10003"}'
+    ship_missing = f'{{"orderNumber":"{sample_order}","courierName":"USPS"}}'
+    track_missing = f'{{"orderNumber":"{sample_order}"}}'
     ship_unknown = '{"orderNumber":"OC99999","courierName":"USPS","awb":"9400..."}'
     track_unknown = '{"orderNumber":"OC99999","currentShipmentStatus":"in_transit"}'
-    ship_success_body = '{"orderNumber":"OC10003","courierName":"USPS","awb":"9400111899223344556677"}'
-    track_success_body = '{"orderNumber":"OC10003","currentShipmentStatus":"in_transit"}'
-    sample_uuid = uuid_meta.get("internalOrderId") or "d26edab5-5662-426b-b48a-ae1e39790e25"
+    ship_success_body = (
+        f'{{"orderNumber":"{sample_order}","courierName":"USPS","awb":"9400111899223344556677"}}'
+    )
+    track_success_body = f'{{"orderNumber":"{sample_order}","currentShipmentStatus":"in_transit"}}'
+    sample_uuid = uuid_meta.get("internalOrderId") or (
+        (EVIDENCE / "sample_internal_id.txt").read_text().strip()
+        if (EVIDENCE / "sample_internal_id.txt").exists()
+        else "e647d630-1322-4a1c-aa7b-ecdbb65cc5f6"
+    )
     auth_h = f'X-Vendor-Api-Key: {KEY}'
 
     def curl_get(path_qs: str) -> str:
@@ -255,7 +266,7 @@ Every curl below is a full copy-paste command (no export / variables required).<
 <strong>Fulfillment notes:</strong> <code>orderValue</code> / item <code>price</code> are vendor cost (not website retail).
 Match products by <code>sku</code> / <code>productCode</code>.
 Store <code>orderNumber</code> (e.g. <code>OC10003</code>) as your external reference.
-Phone/email in screenshots below are partially masked for this shareable PDF; live API returns full values.
+List and get both return full <code>recipientPhoneNumber</code> and <code>country</code> (never masked — required for USPS).
 </div>
 
 <h2>3. End-to-end workflow</h2>
@@ -274,21 +285,21 @@ Green = success path; amber = expected validation / auth error proving the route
 """)
 
     parts.append('<div class="feat"><h3><span class="num">A</span> Health check</h3>')
-    parts.append("<p>Confirms the dedicated Vendor API is up.</p>")
-    health_cmd = f'curl -sS \\\n  "{BASE_URL}/health"'
+    parts.append("<p>Confirms the dedicated Vendor API is up (custom domain).</p>")
+    health_cmd = curl_get("/health")
     parts.append(f'<pre class="cmdblock">{esc(health_cmd)}</pre>')
-    parts.append(terminal("Terminal — Health", "200", health_cmd.replace("\\\n  ", ""), health))
+    parts.append(terminal("Terminal — Health", "200", health_cmd.replace("\\\n  ", " "), health))
     parts.append("</div>")
 
     parts.append('<div class="feat"><h3><span class="num">B</span> Auth required</h3>')
-    parts.append("<p>Missing API key is rejected.</p>")
+    parts.append("<p>Missing API key is rejected (same path without the header).</p>")
     auth_cmd = f'curl -sS \\\n  "{BASE_URL}/vendors/orange-county/orders?days=15&limit=1"'
     parts.append(f'<pre class="cmdblock">{esc(auth_cmd)}</pre>')
     parts.append(
         terminal(
             "Terminal — Auth (no key)",
             "401",
-            auth_cmd.replace("\\\n  ", ""),
+            auth_cmd.replace("\\\n  ", " "),
             auth,
         )
     )
@@ -314,8 +325,14 @@ Green = success path; amber = expected validation / auth error proving the route
         "<p>Use <code>nextCursor</code> from the previous response. Keep calling while <code>hasMore === true</code>.</p>"
     )
     page1_cmd = curl_get("/vendors/orange-county/orders?days=15&limit=1")
+    live_cursor = (
+        (EVIDENCE / "next_cursor.txt").read_text().strip()
+        if (EVIDENCE / "next_cursor.txt").exists()
+        else ""
+    )
     page2_cmd = curl_get(
-        "/vendors/orange-county/orders?days=15&limit=1&cursor=PASTE_NEXT_CURSOR_FROM_PREVIOUS_RESPONSE"
+        "/vendors/orange-county/orders?days=15&limit=1&cursor="
+        + (live_cursor or "PASTE_NEXT_CURSOR_FROM_PREVIOUS_RESPONSE")
     )
     parts.append(
         f'<pre class="cmdblock"># Page 1\n{esc(page1_cmd)}\n\n# Page 2\n{esc(page2_cmd)}</pre>'
@@ -334,7 +351,7 @@ Green = success path; amber = expected validation / auth error proving the route
             "200",
             page2_cmd.replace("\\\n  ", " "),
             list2,
-            "Evidence: different orderNumber on page 2 (OC10003) after D26EDAB5 on page 1.",
+            f"Evidence: page 2 returns a different order after cursor from page 1 (sample used: {sample_order}).",
         )
     )
     parts.append("</div>")
@@ -343,12 +360,12 @@ Green = success path; amber = expected validation / auth error proving the route
     parts.append(
         "<p>Accepts human <code>orderNumber</code> (recommended: <code>OC#####</code>) or <code>internalOrderId</code> (UUID).</p>"
     )
-    get_cmd = curl_get("/vendors/orange-county/orders/OC10003")
+    get_cmd = curl_get(f"/vendors/orange-county/orders/{sample_order}")
     get_uuid_cmd = curl_get(f"/vendors/orange-county/orders/{sample_uuid}")
     parts.append(f'<pre class="cmdblock">{esc(get_cmd)}</pre>')
     parts.append(
         terminal(
-            "Terminal — GET order OC10003 (PII partially masked in PDF)",
+            f"Terminal — GET order {sample_order} (full phone + country)",
             "200",
             get_cmd.replace("\\\n  ", " "),
             get_order,
@@ -375,7 +392,7 @@ Green = success path; amber = expected validation / auth error proving the route
         "<p><strong>Required JSON:</strong> <code>orderNumber</code>, <code>courierName</code>, <code>awb</code>.</p>"
     )
     ship_cmd = curl_post("/vendors/orange-county/shipment", ship_success_body)
-    ship_path_cmd = curl_post("/vendors/orange-county/orders/OC10003/shipment", ship_success_body)
+    ship_path_cmd = curl_post(f"/vendors/orange-county/orders/{sample_order}/shipment", ship_success_body)
     parts.append(
         f'<pre class="cmdblock">{esc(ship_cmd)}\n\n# Path style (same body):\n{esc(ship_path_cmd)}</pre>'
     )
@@ -383,7 +400,7 @@ Green = success path; amber = expected validation / auth error proving the route
         "<p><strong>Live route evidence</strong> (validation — no customer order mutated for this guide):</p>"
     )
     ship_empty_cmd = curl_post("/vendors/orange-county/shipment", empty_json)
-    ship_path_val_cmd = curl_post("/vendors/orange-county/orders/OC10003/shipment", ship_missing)
+    ship_path_val_cmd = curl_post(f"/vendors/orange-county/orders/{sample_order}/shipment", ship_missing)
     ship_unknown_cmd = curl_post("/vendors/orange-county/shipment", ship_unknown)
     parts.append(
         terminal(
@@ -427,7 +444,7 @@ Green = success path; amber = expected validation / auth error proving the route
         "(alias: <code>currentStatus</code>). Optional: <code>note</code>.</p>"
     )
     track_cmd = curl_post("/vendors/orange-county/tracking", track_success_body)
-    track_path_cmd = curl_post("/vendors/orange-county/orders/OC10003/tracking", track_success_body)
+    track_path_cmd = curl_post(f"/vendors/orange-county/orders/{sample_order}/tracking", track_success_body)
     parts.append(
         f'<pre class="cmdblock">{esc(track_cmd)}\n\n# Path style (same body):\n{esc(track_path_cmd)}</pre>'
     )
@@ -437,7 +454,7 @@ Green = success path; amber = expected validation / auth error proving the route
         "<code>out_for_delivery</code>, <code>delivered</code>, <code>complete</code>.</p>"
     )
     track_empty_cmd = curl_post("/vendors/orange-county/tracking", empty_json)
-    track_path_val_cmd = curl_post("/vendors/orange-county/orders/OC10003/tracking", track_missing)
+    track_path_val_cmd = curl_post(f"/vendors/orange-county/orders/{sample_order}/tracking", track_missing)
     track_unknown_cmd = curl_post("/vendors/orange-county/tracking", track_unknown)
     parts.append(
         terminal(
