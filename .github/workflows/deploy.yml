@@ -1,12 +1,17 @@
 name: Deploy
 
+# Trigger: push to main/dev/feature/* or manual workflow_dispatch.
 on:
   push:
     branches:
       - main
-      - feature/*
       - dev
+      - "feature/**"
   workflow_dispatch:
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   AWS_REGION: us-east-1

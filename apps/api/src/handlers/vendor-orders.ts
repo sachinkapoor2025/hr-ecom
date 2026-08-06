@@ -398,8 +398,8 @@ export async function listOrangeCountyOrders(event: APIGatewayProxyEventV2) {
       if (!orderTouchesVendor(order, vendorSlug)) continue;
       if (order.createdAt < since) continue;
       if (updatedSince && (order.updatedAt ?? order.createdAt) < updatedSince) continue;
-      // Default: all fulfillment stages after payment (paid → complete).
-      // Exclude unpaid / cancelled / refunded unless ?status= is set.
+      // Default: all post-payment stages (paid → processing → shipped → delivered → complete).
+      // Matches Admin Portal OC visibility. Exclude unpaid / cancelled / refunded unless ?status=.
       if (statusFilter) {
         if (order.status !== statusFilter) continue;
       } else if (
