@@ -106,13 +106,21 @@ When admin (or Orange County vendor tracking) changes order status (accepted, pr
 | GET | `/admin/shipping/products-missing-dims` | Admin: products without weight/dimensions |
 | GET | `/admin/load-test` | Super admin: load-test presets + LOAD_TEST_MODE status |
 | POST | `/admin/load-test/run` | Super admin: prefer UI browser runner (`smoke` / `u100`…`u1000`). UI: `/admin/load-test` |
+| GET | `/admin/expenses` | Super admin: list business expenses. UI: `/admin/expenses` |
+| POST | `/admin/expenses` | Super admin: create expense (`amount`, `expenseType`, `expenseDate`, optional `description` / `billImageUrl`) |
+| PUT | `/admin/expenses/{expenseId}` | Super admin: update expense |
+| DELETE | `/admin/expenses/{expenseId}` | Super admin: delete expense |
+| GET | `/admin/payment-ledger` | Super admin: list gateway payment receipts. UI: `/admin/payment-tracking` |
+| POST | `/admin/payment-ledger` | Super admin: record payment (`amount`, `receivedDate`, `paymentSource`, optional `notes`) |
+| PUT | `/admin/payment-ledger/{paymentId}` | Super admin: update payment record |
+| DELETE | `/admin/payment-ledger/{paymentId}` | Super admin: delete payment record |
 | GET | `/admin/vendor-api/health` | Admin: Orange County Vendor API health console (UI: `/admin/vendor-api`) |
 | GET | `/admin/vendor-api/auth-check` | Admin: prove missing vendor key returns 401 |
 | GET | `/admin/vendor-api/orders` | Admin: proxy list/search vendor orders (`days`/`limit`/`cursor`/`status`/`updatedSince`) |
 | GET | `/admin/vendor-api/orders/{orderId}` | Admin: proxy get one vendor order (`OC#####` or UUID) |
 | POST | `/admin/vendor-api/shipment` | Admin: proxy AWB update (`orderNumber`, `courierName`, `awb`) |
 | POST | `/admin/vendor-api/tracking` | Admin: proxy tracking status (`orderNumber`, `currentShipmentStatus`) |
-| GET | `/vendors/orange-county/orders` | **Dedicated Vendor API only** (`VendorApiUrl` / `orange-county.usarakhi.com`). Last **15 days**, **`paid` only** by default; paginated (`limit`/`cursor`/`nextCursor`); human `orderId`=`OC#####`; vendorCost (not retail). Override with `?status=`. See `docs/VENDOR_ORANGE_COUNTY_API.md` |
+| GET | `/vendors/orange-county/orders` | **Dedicated Vendor API only** (`VendorApiUrl` / `orange-county.usarakhi.com`). Last **15 days**; default = post-payment statuses (`paid`…`complete`); paginated (`limit`/`cursor`/`nextCursor`); human `orderId`=`OC#####`; vendorCost (not retail). Override with `?status=`. See `docs/VENDOR_ORANGE_COUNTY_API.md` |
 | GET | `/vendors/orange-county/orders/{orderId}` | Same vendor API; `{orderId}` accepts `OC10001` or internal UUID |
 | POST | `/vendors/orange-county/shipment` | Vendor posts AWB + courier (`orderNumber`, `courierName`, `awb`) |
 | POST | `/vendors/orange-county/orders/{orderId}/shipment` | Same AWB update with order id in path |

@@ -46,6 +46,34 @@ function orderHasVendor(o: Order, vendor: string): boolean {
   return o.items?.some((i) => i.vendorSlug === vendor) ?? false;
 }
 
+/** Known labels + title-case fallback for future vendor slugs discovered on orders. */
+function vendorFilterLabel(slug: string): string {
+  const known: Record<string, string> = {
+    "orange-county": "Orange County",
+    usarakhi: "UsaRakhi",
+  };
+  if (known[slug]) return known[slug];
+  return slug
+    .split("-")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
+
+function collectVendorSlugs(orders: Order[]): string[] {
+  const set = new Set<string>();
+  for (const o of orders) {
+    for (const s of o.vendorSlugs ?? []) {
+      if (s.trim()) set.add(s.trim());
+    }
+    for (const item of o.items ?? []) {
+      if (item.vendorSlug?.trim()) set.add(item.vendorSlug.trim());
+    }
+  }
+  // Always offer baseline vendors even when no matching orders yet.
+  set.add("orange-county");
+  return Array.from(set).sort((a, b) => a.localeCompare(b));
+}
+
 function abbreviateServiceName(name?: string): string | null {
   if (!name) return null;
   const trimmed = name.replace(/^USPS\s+/i, "").trim();
@@ -84,7 +112,7 @@ export default function AdminOrdersPage() {
   const [tab, setTab] = useState("all");
   const [paymentFilter, setPaymentFilter] = useState("all");
   const [paymentMethod, setPaymentMethod] = useState("all");
-  const [vendorFilter, setVendorFilter] = useState<"all" | "orange-county" | "usarakhi">("all");
+  const [vendorFilter, setVendorFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -117,8 +145,15 @@ export default function AdminOrdersPage() {
       if (!matchesOrderStatusTab(o.status, tab)) return false;
       if (!matchesPaymentFilter(o.status, paymentFilter)) return false;
       if (paymentMethod !== "all" && o.paymentProvider !== paymentMethod) return false;
-      if (vendorFilter === "orange-county" && !orderHasVendor(o, "orange-county")) return false;
-      if (vendorFilter === "usarakhi" && orderHasVendor(o, "orange-county")) return false;
+      if (vendorFilter === "usarakhi") {
+        // UsaRakhi = no external vendorSlug on the order.
+        const hasExternalVendor =
+          (o.vendorSlugs?.length ?? 0) > 0 ||
+          (o.items ?? []).some((i) => Boolean(i.vendorSlug?.trim()));
+        if (hasExternalVendor) return false;
+      } else if (vendorFilter !== "all" && !orderHasVendor(o, vendorFilter)) {
+        return false;
+      }
       if (dateFrom && o.createdAt.slice(0, 10) < dateFrom) return false;
       if (dateTo && o.createdAt.slice(0, 10) > dateTo) return false;
       if (!q) return true;
@@ -142,6 +177,8 @@ export default function AdminOrdersPage() {
     list = sortItems(list, sorter, sortDir);
     return list;
   }, [orders, tab, paymentFilter, paymentMethod, vendorFilter, search, dateFrom, dateTo, sortKey, sortDir]);
+
+  const vendorOptions = useMemo(() => collectVendorSlugs(orders), [orders]);
 
   const { items: pageItems, totalPages, total } = paginate(filtered, page, pageSize);
 
@@ -320,13 +357,17 @@ export default function AdminOrdersPage() {
         </select>
         <select
           value={vendorFilter}
-          onChange={(e) => setVendorFilter(e.target.value as typeof vendorFilter)}
+          onChange={(e) => setVendorFilter(e.target.value)}
           className="border border-slate-300 rounded-lg px-3 py-2 text-sm"
           title="Filter by fulfillment vendor"
         >
           <option value="all">All vendors</option>
-          <option value="orange-county">Orange County only</option>
-          <option value="usarakhi">UsaRakhi only (no OC)</option>
+          <option value="usarakhi">UsaRakhi</option>
+          {vendorOptions.map((slug) => (
+            <option key={slug} value={slug}>
+              {vendorFilterLabel(slug)}
+            </option>
+          ))}
         </select>
         <div className="flex gap-2">
           <input

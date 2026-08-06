@@ -19,6 +19,8 @@ import * as pendingPaymentUnsub from "./handlers/pending-payment-unsub";
 import * as shipping from "./handlers/shipping";
 import * as loadTest from "./handlers/load-test";
 import * as adminVendorApi from "./handlers/admin-vendor-api";
+import * as expenses from "./handlers/expenses";
+import * as paymentLedger from "./handlers/payment-ledger";
 import * as reviews from "./handlers/reviews";
 import { stripeWebhook } from "./handlers/payments/stripe";
 import {
@@ -82,6 +84,36 @@ const routes: Route[] = [
   { method: "GET", pattern: /^\/admin\/shipping\/products-missing-dims$/, handler: shipping.listProductsMissingDims },
   { method: "GET", pattern: /^\/admin\/load-test$/, handler: loadTest.getLoadTestInfo },
   { method: "POST", pattern: /^\/admin\/load-test\/run$/, handler: loadTest.runLoadTest },
+  // Super admin: business expense ledger
+  { method: "GET", pattern: /^\/admin\/expenses$/, handler: expenses.listExpenses },
+  { method: "POST", pattern: /^\/admin\/expenses$/, handler: expenses.createExpense },
+  {
+    method: "PUT",
+    pattern: /^\/admin\/expenses\/([^/]+)$/,
+    handler: expenses.updateExpense,
+    params: ["expenseId"],
+  },
+  {
+    method: "DELETE",
+    pattern: /^\/admin\/expenses\/([^/]+)$/,
+    handler: expenses.deleteExpense,
+    params: ["expenseId"],
+  },
+  // Super admin: payment gateway receipts ledger
+  { method: "GET", pattern: /^\/admin\/payment-ledger$/, handler: paymentLedger.listPaymentLedger },
+  { method: "POST", pattern: /^\/admin\/payment-ledger$/, handler: paymentLedger.createPaymentLedgerEntry },
+  {
+    method: "PUT",
+    pattern: /^\/admin\/payment-ledger\/([^/]+)$/,
+    handler: paymentLedger.updatePaymentLedgerEntry,
+    params: ["paymentId"],
+  },
+  {
+    method: "DELETE",
+    pattern: /^\/admin\/payment-ledger\/([^/]+)$/,
+    handler: paymentLedger.deletePaymentLedgerEntry,
+    params: ["paymentId"],
+  },
   // Admin console for Orange County Vendor API (proxies vendor handlers; key stays server-side).
   { method: "GET", pattern: /^\/admin\/vendor-api\/health$/, handler: adminVendorApi.adminVendorHealth },
   { method: "GET", pattern: /^\/admin\/vendor-api\/auth-check$/, handler: adminVendorApi.adminVendorAuthCheck },

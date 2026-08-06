@@ -26,7 +26,11 @@ const links: AdminNavLink[] = [
   { href: "/admin/payments", label: "Payments" },
 ];
 
-const superAdminLinks: AdminNavLink[] = [{ href: "/admin/load-test", label: "Load Test" }];
+const superAdminLinks: AdminNavLink[] = [
+  { href: "/admin/expenses", label: "Expenses" },
+  { href: "/admin/payment-tracking", label: "Payment Tracking" },
+  { href: "/admin/load-test", label: "Load Test" },
+];
 
 function isActive(pathname: string, href: string, exact?: boolean) {
   return exact ? pathname === href : pathname.startsWith(href);
