@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
+  EXPENSE_MAX_BILL_IMAGES,
   EXPENSE_TYPES,
   EXPENSE_TYPE_LABELS,
   LEDGER_CURRENCIES,
@@ -21,6 +22,12 @@ function formatMoney(amount: number, currency: LedgerCurrency) {
   return `${symbol}${amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
 }
 
+function expenseBillUrls(ex: Expense): string[] {
+  if (ex.billImageUrls?.length) return ex.billImageUrls;
+  if (ex.billImageUrl) return [ex.billImageUrl];
+  return [];
+}
+
 export default function AdminExpensesPage() {
   const { isSuperAdmin, loading: authLoading } = useAuth();
   const api = useApiClient();
@@ -37,7 +44,8 @@ export default function AdminExpensesPage() {
   const [expenseType, setExpenseType] = useState<ExpenseType>("shipping_charges");
   const [description, setDescription] = useState("");
   const [expenseDate, setExpenseDate] = useState(todayYmd());
-  const [billFile, setBillFile] = useState<File | null>(null);
+  const [noBill, setNoBill] = useState(false);
+  const [billFiles, setBillFiles] = useState<File[]>([]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -72,7 +80,18 @@ export default function AdminExpensesPage() {
     return expenses.filter((e) => (e.currency ?? "USD") === listCurrency);
   }, [expenses, listCurrency]);
 
-  const uploadBill = async (file: File): Promise<string | undefined> => {
+  const onBillFilesChange = (fileList: FileList | null) => {
+    const next = Array.from(fileList ?? []);
+    if (next.length > EXPENSE_MAX_BILL_IMAGES) {
+      setError(`You can upload at most ${EXPENSE_MAX_BILL_IMAGES} bills`);
+      setBillFiles(next.slice(0, EXPENSE_MAX_BILL_IMAGES));
+      return;
+    }
+    setError("");
+    setBillFiles(next);
+  };
+
+  const uploadBill = async (file: File): Promise<string> => {
     const contentType = file.type || "image/jpeg";
     const presign = await api<{ uploadUrl: string; publicUrl: string }>("/uploads/presign", {
       method: "POST",
@@ -87,7 +106,7 @@ export default function AdminExpensesPage() {
       body: file,
       headers: { "Content-Type": contentType },
     });
-    if (!uploadRes.ok) throw new Error("Bill image upload failed");
+    if (!uploadRes.ok) throw new Error(`Bill upload failed: ${file.name}`);
     return presign.publicUrl;
   };
 
@@ -99,8 +118,21 @@ export default function AdminExpensesPage() {
     try {
       const value = Number(amount);
       if (!Number.isFinite(value) || value <= 0) throw new Error("Enter a valid amount");
-      let billImageUrl: string | undefined;
-      if (billFile) billImageUrl = await uploadBill(billFile);
+
+      if (!noBill && billFiles.length === 0) {
+        throw new Error("Upload at least one bill, or check “This purchase doesn’t have a bill”");
+      }
+      if (billFiles.length > EXPENSE_MAX_BILL_IMAGES) {
+        throw new Error(`Maximum ${EXPENSE_MAX_BILL_IMAGES} bills allowed`);
+      }
+
+      let billImageUrls: string[] = [];
+      if (!noBill) {
+        billImageUrls = [];
+        for (const file of billFiles) {
+          billImageUrls.push(await uploadBill(file));
+        }
+      }
 
       await api("/admin/expenses", {
         method: "POST",
@@ -110,7 +142,8 @@ export default function AdminExpensesPage() {
           expenseType,
           description: description.trim() || undefined,
           expenseDate,
-          ...(billImageUrl ? { billImageUrl } : {}),
+          noBill,
+          billImageUrls: noBill ? [] : billImageUrls,
         }),
       });
       setAmount("");
@@ -118,7 +151,8 @@ export default function AdminExpensesPage() {
       setExpenseDate(todayYmd());
       setExpenseType("shipping_charges");
       setCurrency("USD");
-      setBillFile(null);
+      setNoBill(false);
+      setBillFiles([]);
       setMessage("Expense saved");
       await load();
     } catch (err) {
@@ -161,7 +195,8 @@ export default function AdminExpensesPage() {
     <div className="max-w-5xl mx-auto px-4 py-10">
       <h1 className="text-2xl font-bold mb-1">Expense Management</h1>
       <p className="text-slate-600 text-sm mb-6">
-        Track business expenses. Bill/invoice upload is optional for now.
+        Track business expenses. Upload up to {EXPENSE_MAX_BILL_IMAGES} bills, or mark purchases with
+        no bill.
       </p>
 
       <form onSubmit={create} className="rounded-xl border border-slate-200 bg-white p-5 mb-8 space-y-4">
@@ -217,15 +252,46 @@ export default function AdminExpensesPage() {
               className="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2"
             />
           </label>
-          <label className="block text-sm">
-            <span className="text-slate-700 font-medium">Bill / invoice image (optional)</span>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => setBillFile(e.target.files?.[0] ?? null)}
-              className="mt-1 w-full text-sm"
-            />
-          </label>
+          <div className="block text-sm space-y-2">
+            <label className="inline-flex items-start gap-2 text-slate-700">
+              <input
+                type="checkbox"
+                className="mt-0.5"
+                checked={noBill}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setNoBill(checked);
+                  if (checked) setBillFiles([]);
+                }}
+              />
+              <span>This purchase doesn’t have a bill</span>
+            </label>
+            <div>
+              <span className="text-slate-700 font-medium">
+                Bill / invoice images {noBill ? "(not required)" : "(required, max 10)"}
+              </span>
+              <input
+                type="file"
+                accept="image/*,.pdf,application/pdf"
+                multiple
+                disabled={noBill}
+                onChange={(e) => onBillFilesChange(e.target.files)}
+                className="mt-1 w-full text-sm disabled:opacity-50"
+              />
+              {!noBill && billFiles.length > 0 && (
+                <ul className="mt-2 text-xs text-slate-600 space-y-0.5">
+                  {billFiles.map((f) => (
+                    <li key={`${f.name}-${f.size}`}>{f.name}</li>
+                  ))}
+                </ul>
+              )}
+              {!noBill && (
+                <p className="mt-1 text-xs text-slate-500">
+                  Select up to {EXPENSE_MAX_BILL_IMAGES} files in one upload.
+                </p>
+              )}
+            </div>
+          </div>
         </div>
         <label className="block text-sm">
           <span className="text-slate-700 font-medium">Description (optional)</span>
@@ -297,46 +363,54 @@ export default function AdminExpensesPage() {
                 <th className="py-3 px-3">Type</th>
                 <th className="py-3 px-3">Amount</th>
                 <th className="py-3 px-3">Description</th>
-                <th className="py-3 px-3">Bill</th>
+                <th className="py-3 px-3">Bills</th>
                 <th className="py-3 px-3">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {visibleExpenses.map((ex) => (
-                <tr key={ex.expenseId} className="border-t border-slate-100">
-                  <td className="py-3 px-3 whitespace-nowrap">{ex.expenseDate}</td>
-                  <td className="py-3 px-3">{EXPENSE_TYPE_LABELS[ex.expenseType]}</td>
-                  <td className="py-3 px-3 font-medium">
-                    {formatMoney(ex.amount, ex.currency ?? "USD")}
-                  </td>
-                  <td className="py-3 px-3 text-slate-600 max-w-xs truncate">
-                    {ex.description || "—"}
-                  </td>
-                  <td className="py-3 px-3">
-                    {ex.billImageUrl ? (
-                      <a
-                        href={ex.billImageUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-accent hover:underline"
+              {visibleExpenses.map((ex) => {
+                const urls = expenseBillUrls(ex);
+                return (
+                  <tr key={ex.expenseId} className="border-t border-slate-100">
+                    <td className="py-3 px-3 whitespace-nowrap">{ex.expenseDate}</td>
+                    <td className="py-3 px-3">{EXPENSE_TYPE_LABELS[ex.expenseType]}</td>
+                    <td className="py-3 px-3 font-medium">
+                      {formatMoney(ex.amount, ex.currency ?? "USD")}
+                    </td>
+                    <td className="py-3 px-3 text-slate-600 max-w-xs truncate">
+                      {ex.description || "—"}
+                    </td>
+                    <td className="py-3 px-3">
+                      {ex.noBill || urls.length === 0 ? (
+                        <span className="text-slate-500">No bill</span>
+                      ) : (
+                        <span className="inline-flex flex-wrap gap-2">
+                          {urls.map((url, i) => (
+                            <a
+                              key={url}
+                              href={url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-accent hover:underline"
+                            >
+                              View {urls.length > 1 ? i + 1 : ""}
+                            </a>
+                          ))}
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-3 px-3">
+                      <button
+                        type="button"
+                        onClick={() => void remove(ex.expenseId)}
+                        className="text-red-600 hover:underline"
                       >
-                        View
-                      </a>
-                    ) : (
-                      "—"
-                    )}
-                  </td>
-                  <td className="py-3 px-3">
-                    <button
-                      type="button"
-                      onClick={() => void remove(ex.expenseId)}
-                      className="text-red-600 hover:underline"
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

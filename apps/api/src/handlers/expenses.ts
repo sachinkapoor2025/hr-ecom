@@ -5,6 +5,7 @@ import {
   createExpenseSchema,
   updateExpenseSchema,
   expenseKeys,
+  EXPENSE_MAX_BILL_IMAGES,
   type Expense,
   type LedgerCurrency,
 } from "@hr-ecom/shared";
@@ -22,7 +23,30 @@ function roundMoney(n: number) {
   return Math.round(n * 100) / 100;
 }
 
+function normalizeBillUrls(item: {
+  billImageUrls?: string[];
+  billImageUrl?: string;
+  noBill?: boolean;
+}): { noBill: boolean; billImageUrls: string[]; billImageUrl?: string } {
+  const noBill = Boolean(item.noBill);
+  if (noBill) return { noBill: true, billImageUrls: [] };
+  const urls = Array.from(
+    new Set(
+      [
+        ...(item.billImageUrls ?? []),
+        ...(item.billImageUrl?.trim() ? [item.billImageUrl.trim()] : []),
+      ].filter(Boolean)
+    )
+  ).slice(0, EXPENSE_MAX_BILL_IMAGES);
+  return {
+    noBill: false,
+    billImageUrls: urls,
+    ...(urls[0] ? { billImageUrl: urls[0] } : {}),
+  };
+}
+
 function toPublic(item: StoredExpense): Expense {
+  const bills = normalizeBillUrls(item);
   return {
     expenseId: item.expenseId,
     amount: item.amount,
@@ -30,10 +54,36 @@ function toPublic(item: StoredExpense): Expense {
     expenseType: item.expenseType,
     description: item.description,
     expenseDate: item.expenseDate,
-    billImageUrl: item.billImageUrl,
+    noBill: bills.noBill,
+    billImageUrls: bills.billImageUrls,
+    billImageUrl: bills.billImageUrl,
     createdBy: item.createdBy,
     createdAt: item.createdAt,
     updatedAt: item.updatedAt,
+  };
+}
+
+function resolveBillFields(input: {
+  noBill?: boolean;
+  billImageUrls?: string[];
+  billImageUrl?: string;
+}): Pick<Expense, "noBill" | "billImageUrls" | "billImageUrl"> {
+  const noBill = Boolean(input.noBill);
+  if (noBill) {
+    return { noBill: true, billImageUrls: [] };
+  }
+  const urls = Array.from(
+    new Set(
+      [
+        ...(input.billImageUrls ?? []),
+        ...(input.billImageUrl?.trim() ? [input.billImageUrl.trim()] : []),
+      ].filter(Boolean)
+    )
+  ).slice(0, EXPENSE_MAX_BILL_IMAGES);
+  return {
+    noBill: false,
+    billImageUrls: urls,
+    ...(urls[0] ? { billImageUrl: urls[0] } : {}),
   };
 }
 
@@ -78,7 +128,6 @@ export async function listExpenses(event: APIGatewayProxyEventV2) {
     expenses,
     count: expenses.length,
     totalByCurrency,
-    /** @deprecated use totalByCurrency */
     totalAmount: totalByCurrency.USD,
     currency: "USD",
   });
@@ -93,18 +142,17 @@ export async function createExpense(event: APIGatewayProxyEventV2) {
 
   const expenseId = uuidv4();
   const timestamp = now();
-  const billImageUrl = parsed.data.billImageUrl?.trim() || undefined;
-  const currency = normalizeCurrency(parsed.data.currency);
+  const bills = resolveBillFields(parsed.data);
   const item: StoredExpense = {
     PK: expenseKeys.pk(expenseId),
     SK: expenseKeys.sk(),
     expenseId,
     amount: parsed.data.amount,
-    currency,
+    currency: normalizeCurrency(parsed.data.currency),
     expenseType: parsed.data.expenseType,
     description: parsed.data.description?.trim() || undefined,
     expenseDate: parsed.data.expenseDate,
-    ...(billImageUrl ? { billImageUrl } : {}),
+    ...bills,
     createdBy: auth.email || auth.userId,
     createdAt: timestamp,
     updatedAt: timestamp,
@@ -133,13 +181,25 @@ export async function updateExpense(event: APIGatewayProxyEventV2) {
   if (!existing.Item) return notFound("Expense not found");
 
   const prev = existing.Item as StoredExpense;
-  const billRaw = parsed.data.billImageUrl;
-  const billImageUrl =
-    billRaw === undefined
-      ? prev.billImageUrl
-      : billRaw.trim()
-        ? billRaw.trim()
-        : undefined;
+  const billsTouched =
+    parsed.data.noBill !== undefined ||
+    parsed.data.billImageUrls !== undefined ||
+    parsed.data.billImageUrl !== undefined;
+
+  const bills = billsTouched
+    ? resolveBillFields({
+        noBill: parsed.data.noBill ?? prev.noBill,
+        billImageUrls: parsed.data.billImageUrls ?? prev.billImageUrls,
+        billImageUrl:
+          parsed.data.billImageUrl !== undefined
+            ? parsed.data.billImageUrl
+            : prev.billImageUrl,
+      })
+    : resolveBillFields(prev);
+
+  if (!bills.noBill && (bills.billImageUrls?.length ?? 0) === 0) {
+    return badRequest("Upload at least one bill, or mark purchase as having no bill");
+  }
 
   const updated: StoredExpense = {
     ...prev,
@@ -149,13 +209,18 @@ export async function updateExpense(event: APIGatewayProxyEventV2) {
       ? { description: parsed.data.description.trim() || undefined }
       : {}),
     ...(parsed.data.expenseDate !== undefined ? { expenseDate: parsed.data.expenseDate } : {}),
-    billImageUrl,
     currency:
       parsed.data.currency !== undefined
         ? normalizeCurrency(parsed.data.currency)
         : normalizeCurrency(prev.currency),
+    ...bills,
     updatedAt: now(),
   };
+
+  // Drop legacy single URL when no-bill
+  if (bills.noBill) {
+    delete (updated as { billImageUrl?: string }).billImageUrl;
+  }
 
   await docClient.send(new PutCommand({ TableName: CONFIG_TABLE, Item: updated }));
   return ok({ expense: toPublic(updated) });
