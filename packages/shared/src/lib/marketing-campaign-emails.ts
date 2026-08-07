@@ -249,10 +249,10 @@ export const STARTING_PRICE_EMAIL_CONFIG = {
 /** ═══════════════ TEMPLATE 3 — Shop More, Save More ($10.99 / ₹899) ═══════════════ */
 export const SHOP_MORE_SAVE_MORE_EMAIL_CONFIG = {
   templateId: "shop-more-save-more",
-  name: "Shop More, Save More",
-  subject: "Make Your Bond Extra Special — Shop More, Save More | UsaRakhi",
+  name: "Are you Looking to Send Rakhi to USA?",
+  subject: "Are you Looking to Send Rakhi to USA? 💝✨",
   preheader:
-    "Make your bond extra special. Shop more, save more on cart value above $10.99 / ₹899. Premium Rakhis with USA delivery.",
+    "Are you looking to send Rakhi to USA? Shop more, save more on cart value above $10.99 / ₹899. Premium Rakhis with USA delivery.",
   logoUrl: LOGO,
   logoHref: SITE_SHORT,
   logoTagline: "Connecting Hearts Across Borders",
