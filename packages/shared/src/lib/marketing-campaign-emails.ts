@@ -256,7 +256,7 @@ export const SHOP_MORE_SAVE_MORE_EMAIL_CONFIG = {
   logoUrl: LOGO,
   logoHref: SITE_SHORT,
   logoTagline: "Connecting Hearts Across Borders",
-  heroImageUrl: `${SITE}/email-templates/shop-more-save-more-banner.png`,
+  heroImageUrl: `${SITE}/email-templates/shop-more-save-more-hero-1046.png`,
   heroImageHref: SITE_SHORT,
   heroImageAlt: "Are you Looking to Send Rakhi to USA? Shop More, Save More — Cart value above $10.99 / ₹1,046",
   offerEyebrow: "RAKSHA BANDHAN SPECIAL",
