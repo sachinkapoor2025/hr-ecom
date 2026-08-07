@@ -21,6 +21,7 @@ import * as loadTest from "./handlers/load-test";
 import * as adminVendorApi from "./handlers/admin-vendor-api";
 import * as expenses from "./handlers/expenses";
 import * as paymentLedger from "./handlers/payment-ledger";
+import * as paymentReconciliation from "./handlers/payment-reconciliation";
 import * as reviews from "./handlers/reviews";
 import { stripeWebhook } from "./handlers/payments/stripe";
 import {
@@ -113,6 +114,11 @@ const routes: Route[] = [
     pattern: /^\/admin\/payment-ledger\/([^/]+)$/,
     handler: paymentLedger.deletePaymentLedgerEntry,
     params: ["paymentId"],
+  },
+  {
+    method: "GET",
+    pattern: /^\/admin\/payment-reconciliation$/,
+    handler: paymentReconciliation.getPaymentReconciliation,
   },
   // Admin console for Orange County Vendor API (proxies vendor handlers; key stays server-side).
   { method: "GET", pattern: /^\/admin\/vendor-api\/health$/, handler: adminVendorApi.adminVendorHealth },

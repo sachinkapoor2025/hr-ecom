@@ -22,10 +22,15 @@ import {
 } from "./whatsapp";
 
 const DEFAULT_NOTIFY = "order@usarakhi.com";
+/** High-volume transactional mailbox (reminders / operational). Same SMTP password as order@. */
+const DEFAULT_ORDERS_MAILBOX = "orders@usarakhi.com";
 /** Admin inbox for new orders + contact form (comma-separated). */
 const DEFAULT_ADMIN_NOTIFY =
   "order@usarakhi.com,priya.yadav@mydgv.com";
 const SITE_NAME = "UsaRakhi";
+
+/** order@ = order notifications; orders@ = reminders / high-volume transactional. */
+export type TransactionalMailbox = "order" | "orders";
 
 export type EmailSendResult = {
   ok: boolean;
@@ -46,8 +51,26 @@ function smtpConfigured(): boolean {
   return Boolean(user && smtpPassword());
 }
 
-function smtpUser(): string {
+function smtpUser(mailbox: TransactionalMailbox = "order"): string {
+  if (mailbox === "orders") {
+    return (
+      process.env.SMTP_ORDERS_USER?.trim() ||
+      process.env.SMTP_USER_ORDERS?.trim() ||
+      DEFAULT_ORDERS_MAILBOX
+    );
+  }
   return process.env.SMTP_USER?.trim() || DEFAULT_NOTIFY;
+}
+
+function fromAddressFor(mailbox: TransactionalMailbox = "order"): string {
+  if (mailbox === "orders") {
+    return (
+      process.env.SMTP_ORDERS_FROM?.trim() ||
+      process.env.SMTP_FROM_ORDERS?.trim() ||
+      smtpUser("orders")
+    );
+  }
+  return process.env.SMTP_FROM?.trim() || smtpUser("order") || notifyAddress();
 }
 
 function smtpHosts(): string[] {
@@ -60,8 +83,18 @@ function smtpHosts(): string[] {
   return [...new Set(all)];
 }
 
-function transportConfigs(host: string): SMTPTransport.Options[] {
-  const user = smtpUser();
+function transportConfigs(
+  host: string,
+  mailbox: TransactionalMailbox = "order"
+): SMTPTransport.Options[] {
+  // Prefer mailbox-specific auth; fall back to primary SMTP_USER (same password for both).
+  const user = smtpUser(mailbox);
+  const authUser =
+    mailbox === "orders"
+      ? process.env.SMTP_ORDERS_USER?.trim() ||
+        process.env.SMTP_USER?.trim() ||
+        user
+      : process.env.SMTP_USER?.trim() || user;
   const pass = smtpPassword()!;
   const portEnv = process.env.SMTP_PORT?.trim();
 
@@ -70,21 +103,21 @@ function transportConfigs(host: string): SMTPTransport.Options[] {
     const secure = process.env.SMTP_SECURE?.trim()
       ? process.env.SMTP_SECURE === "true"
       : port === 465;
-    return [{ host, port, secure, auth: { user, pass } }];
+    return [{ host, port, secure, auth: { user: authUser, pass } }];
   }
 
   return [
-    { host, port: 465, secure: true, auth: { user, pass } },
-    { host, port: 587, secure: false, auth: { user, pass }, requireTLS: true },
+    { host, port: 465, secure: true, auth: { user: authUser, pass } },
+    { host, port: 587, secure: false, auth: { user: authUser, pass }, requireTLS: true },
   ];
 }
 
-async function createWorkingTransporter() {
+async function createWorkingTransporter(mailbox: TransactionalMailbox = "order") {
   const hosts = smtpHosts();
   let lastError: unknown;
 
   for (const host of hosts) {
-    for (const config of transportConfigs(host)) {
+    for (const config of transportConfigs(host, mailbox)) {
       const transporter = nodemailer.createTransport({
         ...config,
         connectionTimeout: 15000,
@@ -98,7 +131,7 @@ async function createWorkingTransporter() {
         return transporter;
       } catch (err) {
         lastError = err;
-        console.error("SMTP verify failed", { host, port: config.port, err });
+        console.error("SMTP verify failed", { host, port: config.port, mailbox, err });
       }
     }
   }
@@ -118,7 +151,7 @@ function adminNotifyAddresses(): string {
 }
 
 function fromAddress(): string {
-  return process.env.SMTP_FROM?.trim() || smtpUser() || notifyAddress();
+  return fromAddressFor("order");
 }
 
 export async function sendNewsletterEmails(input: {
@@ -169,6 +202,7 @@ export async function sendNewsletterEmails(input: {
     subject: `[${SITE_NAME}] Discount of the Day — ${input.email} (${pct}% off)`,
     text: adminText,
     replyTo: input.email,
+    mailbox: "orders",
   });
   if (!admin.ok) return admin;
 
@@ -179,6 +213,7 @@ export async function sendNewsletterEmails(input: {
   const customer = await sendEmail({
     to: input.email,
     subject: `Your Discount of the Day: ${pct}% off — ${SITE_NAME}`,
+    mailbox: "orders",
     text: `You spun the Discount of the Day wheel at UsaRakhi!
 
 Your exclusive code:
@@ -225,6 +260,8 @@ export async function sendEmail(opts: {
   text: string;
   html?: string;
   replyTo?: string;
+  /** Default order@ for order alerts; use orders@ for reminders / high volume. */
+  mailbox?: TransactionalMailbox;
 }): Promise<EmailSendResult> {
   const { isLoadTestMode } = await import("./load-test");
   if (isLoadTestMode()) {
@@ -236,10 +273,12 @@ export async function sendEmail(opts: {
     return { ok: false, skipped: true, error: "SMTP not configured on server" };
   }
 
+  const mailbox = opts.mailbox ?? "order";
   try {
-    const transporter = await createWorkingTransporter();
+    const transporter = await createWorkingTransporter(mailbox);
+    const from = fromAddressFor(mailbox);
     await transporter.sendMail({
-      from: `"${SITE_NAME}" <${fromAddress()}>`,
+      from: `"${SITE_NAME}" <${from}>`,
       to: opts.to,
       subject: opts.subject,
       text: opts.text,
@@ -250,13 +289,14 @@ export async function sendEmail(opts: {
         "Auto-Submitted": "auto-generated",
       },
     });
+    console.info("sendEmail.ok", { mailbox, from, to: opts.to, subject: opts.subject });
     return { ok: true };
   } catch (err) {
     const raw = err instanceof Error ? err.message : String(err);
     const message = /Daily send limit/i.test(raw)
-      ? `${raw} — transactional mailbox order@usarakhi.com hit its daily cap (shared hosting). Marketing campaigns must use Mailercloud only; ask the host to raise the limit or wait for daily reset.`
+      ? `${raw} — transactional mailbox (${mailbox === "orders" ? DEFAULT_ORDERS_MAILBOX : DEFAULT_NOTIFY}) hit its daily cap (shared hosting). Marketing campaigns must use Mailercloud only; ask the host to raise the limit or wait for daily reset.`
       : raw;
-    console.error("sendEmail failed:", message);
+    console.error("sendEmail failed:", { mailbox, message });
     return { ok: false, error: message };
   }
 }
@@ -786,6 +826,7 @@ ${unsubUrl}`;
 
   const emailResult = await sendEmail({
     to: customerEmail,
+    mailbox: "orders",
     subject: `Payment reminder — order #${shortId} | ${SITE_NAME}`,
     text,
     replyTo: notifyAddress(),
@@ -948,6 +989,7 @@ WhatsApp / support: ${notifyAddress()}`;
 
   const emailResult = await sendEmail({
     to: customerEmail,
+    mailbox: "orders",
     subject: `How was your Rakhi delivery? — ${SITE_NAME}`,
     text,
     replyTo: notifyAddress(),
@@ -1022,6 +1064,7 @@ order@usarakhi.com`;
 
   const emailResult = await sendEmail({
     to: input.email,
+    mailbox: "orders",
     subject:
       input.reminder === 1
         ? `You left items in your cart — ${ABANDONED_CART_DISCOUNT_PERCENT}% off inside`

@@ -3,9 +3,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
-  LEDGER_CURRENCIES,
   PAYMENT_LEDGER_SOURCES,
   PAYMENT_LEDGER_SOURCE_LABELS,
+  currencyForPaymentSource,
+  recordedByLabel,
   type LedgerCurrency,
   type PaymentLedgerEntry,
   type PaymentLedgerSource,
@@ -33,10 +34,12 @@ export default function AdminPaymentTrackingPage() {
   const [message, setMessage] = useState("");
 
   const [amount, setAmount] = useState("");
-  const [currency, setCurrency] = useState<LedgerCurrency>("USD");
+  const [gatewayFee, setGatewayFee] = useState("");
   const [receivedDate, setReceivedDate] = useState(todayYmd());
   const [paymentSource, setPaymentSource] = useState<PaymentLedgerSource>("stripe");
   const [notes, setNotes] = useState("");
+
+  const currency = currencyForPaymentSource(paymentSource);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -79,22 +82,27 @@ export default function AdminPaymentTrackingPage() {
     try {
       const value = Number(amount);
       if (!Number.isFinite(value) || value <= 0) throw new Error("Enter a valid amount");
+      const feeRaw = gatewayFee.trim();
+      const fee = feeRaw === "" ? undefined : Number(feeRaw);
+      if (fee !== undefined && (!Number.isFinite(fee) || fee < 0)) {
+        throw new Error("Gateway fee must be a non-negative number");
+      }
 
       await api("/admin/payment-ledger", {
         method: "POST",
         body: JSON.stringify({
           amount: value,
-          currency,
           receivedDate,
           paymentSource,
+          ...(fee !== undefined ? { gatewayFee: fee } : {}),
           notes: notes.trim() || undefined,
         }),
       });
       setAmount("");
+      setGatewayFee("");
       setNotes("");
       setReceivedDate(todayYmd());
       setPaymentSource("stripe");
-      setCurrency("USD");
       setMessage("Payment recorded");
       await load();
     } catch (err) {
@@ -135,51 +143,23 @@ export default function AdminPaymentTrackingPage() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-10">
-      <h1 className="text-2xl font-bold mb-1">Payment Tracking</h1>
-      <p className="text-slate-600 text-sm mb-6">
-        Manual ledger of amounts received from payment gateways. Use this for reconciliation with
-        orders and expenses.
-      </p>
+      <div className="flex flex-wrap items-start justify-between gap-3 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold mb-1">Payment Tracking</h1>
+          <p className="text-slate-600 text-sm">
+            Record net settlements from gateways. Stripe settlements are USD; Razorpay are INR.
+          </p>
+        </div>
+        <Link
+          href="/admin/payment-reconciliation"
+          className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+        >
+          Reconciliation dashboard →
+        </Link>
+      </div>
 
       <form onSubmit={create} className="rounded-xl border border-slate-200 bg-white p-5 mb-8 space-y-4">
         <div className="grid gap-4 sm:grid-cols-3">
-          <div className="block text-sm">
-            <span className="text-slate-700 font-medium">Amount received</span>
-            <div className="mt-1 flex items-center gap-4 mb-2">
-              {LEDGER_CURRENCIES.map((c) => (
-                <label key={c} className="inline-flex items-center gap-1.5 text-sm text-slate-700">
-                  <input
-                    type="radio"
-                    name="payment-currency"
-                    value={c}
-                    checked={currency === c}
-                    onChange={() => setCurrency(c)}
-                  />
-                  {c}
-                </label>
-              ))}
-            </div>
-            <input
-              type="number"
-              min="0.01"
-              step="0.01"
-              required
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder={currency === "INR" ? "Amount in ₹" : "Amount in $"}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2"
-            />
-          </div>
-          <label className="block text-sm">
-            <span className="text-slate-700 font-medium">Date received</span>
-            <input
-              type="date"
-              required
-              value={receivedDate}
-              onChange={(e) => setReceivedDate(e.target.value)}
-              className="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2"
-            />
-          </label>
           <label className="block text-sm">
             <span className="text-slate-700 font-medium">Payment source</span>
             <select
@@ -193,8 +173,48 @@ export default function AdminPaymentTrackingPage() {
                 </option>
               ))}
             </select>
+            <p className="mt-1 text-xs text-slate-500">
+              Currency: <strong>{currency}</strong> (auto)
+            </p>
+          </label>
+          <label className="block text-sm">
+            <span className="text-slate-700 font-medium">
+              Net amount received ({currency === "INR" ? "₹" : "$"})
+            </span>
+            <input
+              type="number"
+              min="0.01"
+              step="0.01"
+              required
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder={currency === "INR" ? "Amount in ₹" : "Amount in $"}
+              className="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2"
+            />
+          </label>
+          <label className="block text-sm">
+            <span className="text-slate-700 font-medium">Date received</span>
+            <input
+              type="date"
+              required
+              value={receivedDate}
+              onChange={(e) => setReceivedDate(e.target.value)}
+              className="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2"
+            />
           </label>
         </div>
+        <label className="block text-sm max-w-sm">
+          <span className="text-slate-700 font-medium">Gateway fee (optional)</span>
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            value={gatewayFee}
+            onChange={(e) => setGatewayFee(e.target.value)}
+            placeholder="Fee deducted by Stripe/Razorpay"
+            className="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2"
+          />
+        </label>
         <label className="block text-sm">
           <span className="text-slate-700 font-medium">Notes (optional)</span>
           <textarea
@@ -220,16 +240,7 @@ export default function AdminPaymentTrackingPage() {
         <h2 className="text-lg font-semibold">All payments</h2>
         <div className="flex flex-wrap items-center gap-4 text-sm">
           <div className="flex items-center gap-3">
-            <label className="inline-flex items-center gap-1.5 text-slate-700">
-              <input
-                type="radio"
-                name="payment-list-currency"
-                checked={listCurrency === "ALL"}
-                onChange={() => setListCurrency("ALL")}
-              />
-              All
-            </label>
-            {LEDGER_CURRENCIES.map((c) => (
+            {(["ALL", "USD", "INR"] as const).map((c) => (
               <label key={c} className="inline-flex items-center gap-1.5 text-slate-700">
                 <input
                   type="radio"
@@ -237,7 +248,7 @@ export default function AdminPaymentTrackingPage() {
                   checked={listCurrency === c}
                   onChange={() => setListCurrency(c)}
                 />
-                {c}
+                {c === "ALL" ? "All" : c}
               </label>
             ))}
           </div>
@@ -264,7 +275,9 @@ export default function AdminPaymentTrackingPage() {
                 <th className="py-3 px-3">Date</th>
                 <th className="py-3 px-3">Source</th>
                 <th className="py-3 px-3">Amount</th>
+                <th className="py-3 px-3">Fee</th>
                 <th className="py-3 px-3">Notes</th>
+                <th className="py-3 px-3">Recorded by</th>
                 <th className="py-3 px-3">Actions</th>
               </tr>
             </thead>
@@ -276,7 +289,15 @@ export default function AdminPaymentTrackingPage() {
                   <td className="py-3 px-3 font-medium">
                     {formatMoney(p.amount, p.currency ?? "USD")}
                   </td>
+                  <td className="py-3 px-3 text-slate-600">
+                    {typeof p.gatewayFee === "number"
+                      ? formatMoney(p.gatewayFee, p.currency ?? "USD")
+                      : "—"}
+                  </td>
                   <td className="py-3 px-3 text-slate-600 max-w-xs truncate">{p.notes || "—"}</td>
+                  <td className="py-3 px-3 text-slate-600 text-xs max-w-[10rem]">
+                    {p.createdBy ? recordedByLabel(p.createdBy, "settlement") : "—"}
+                  </td>
                   <td className="py-3 px-3">
                     <button
                       type="button"

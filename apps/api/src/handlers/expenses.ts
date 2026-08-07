@@ -6,7 +6,10 @@ import {
   updateExpenseSchema,
   expenseKeys,
   EXPENSE_MAX_BILL_IMAGES,
+  resolveBillStatus,
+  collectBillUrls,
   type Expense,
+  type ExpenseBillStatus,
   type LedgerCurrency,
 } from "@hr-ecom/shared";
 import { requireSuperAdmin } from "../lib/auth";
@@ -23,22 +26,19 @@ function roundMoney(n: number) {
   return Math.round(n * 100) / 100;
 }
 
-function normalizeBillUrls(item: {
+function billFieldsFromInput(input: {
+  billStatus?: ExpenseBillStatus;
+  noBill?: boolean;
   billImageUrls?: string[];
   billImageUrl?: string;
-  noBill?: boolean;
-}): { noBill: boolean; billImageUrls: string[]; billImageUrl?: string } {
-  const noBill = Boolean(item.noBill);
-  if (noBill) return { noBill: true, billImageUrls: [] };
-  const urls = Array.from(
-    new Set(
-      [
-        ...(item.billImageUrls ?? []),
-        ...(item.billImageUrl?.trim() ? [item.billImageUrl.trim()] : []),
-      ].filter(Boolean)
-    )
-  ).slice(0, EXPENSE_MAX_BILL_IMAGES);
+}): Pick<Expense, "billStatus" | "noBill" | "billImageUrls" | "billImageUrl"> {
+  const billStatus = resolveBillStatus(input);
+  if (billStatus === "no_bill") {
+    return { billStatus: "no_bill", noBill: true, billImageUrls: [] };
+  }
+  const urls = collectBillUrls(input).slice(0, EXPENSE_MAX_BILL_IMAGES);
   return {
+    billStatus,
     noBill: false,
     billImageUrls: urls,
     ...(urls[0] ? { billImageUrl: urls[0] } : {}),
@@ -46,7 +46,7 @@ function normalizeBillUrls(item: {
 }
 
 function toPublic(item: StoredExpense): Expense {
-  const bills = normalizeBillUrls(item);
+  const bills = billFieldsFromInput(item);
   return {
     expenseId: item.expenseId,
     amount: item.amount,
@@ -54,36 +54,10 @@ function toPublic(item: StoredExpense): Expense {
     expenseType: item.expenseType,
     description: item.description,
     expenseDate: item.expenseDate,
-    noBill: bills.noBill,
-    billImageUrls: bills.billImageUrls,
-    billImageUrl: bills.billImageUrl,
+    ...bills,
     createdBy: item.createdBy,
     createdAt: item.createdAt,
     updatedAt: item.updatedAt,
-  };
-}
-
-function resolveBillFields(input: {
-  noBill?: boolean;
-  billImageUrls?: string[];
-  billImageUrl?: string;
-}): Pick<Expense, "noBill" | "billImageUrls" | "billImageUrl"> {
-  const noBill = Boolean(input.noBill);
-  if (noBill) {
-    return { noBill: true, billImageUrls: [] };
-  }
-  const urls = Array.from(
-    new Set(
-      [
-        ...(input.billImageUrls ?? []),
-        ...(input.billImageUrl?.trim() ? [input.billImageUrl.trim()] : []),
-      ].filter(Boolean)
-    )
-  ).slice(0, EXPENSE_MAX_BILL_IMAGES);
-  return {
-    noBill: false,
-    billImageUrls: urls,
-    ...(urls[0] ? { billImageUrl: urls[0] } : {}),
   };
 }
 
@@ -142,7 +116,7 @@ export async function createExpense(event: APIGatewayProxyEventV2) {
 
   const expenseId = uuidv4();
   const timestamp = now();
-  const bills = resolveBillFields(parsed.data);
+  const bills = billFieldsFromInput(parsed.data);
   const item: StoredExpense = {
     PK: expenseKeys.pk(expenseId),
     SK: expenseKeys.sk(),
@@ -159,6 +133,13 @@ export async function createExpense(event: APIGatewayProxyEventV2) {
   };
 
   await docClient.send(new PutCommand({ TableName: CONFIG_TABLE, Item: item }));
+  console.info("expense.create", {
+    expenseId,
+    amount: item.amount,
+    currency: item.currency,
+    billStatus: item.billStatus,
+    createdBy: item.createdBy,
+  });
   return created({ expense: toPublic(item) });
 }
 
@@ -182,23 +163,23 @@ export async function updateExpense(event: APIGatewayProxyEventV2) {
 
   const prev = existing.Item as StoredExpense;
   const billsTouched =
+    parsed.data.billStatus !== undefined ||
     parsed.data.noBill !== undefined ||
     parsed.data.billImageUrls !== undefined ||
     parsed.data.billImageUrl !== undefined;
 
   const bills = billsTouched
-    ? resolveBillFields({
+    ? billFieldsFromInput({
+        billStatus: parsed.data.billStatus ?? prev.billStatus,
         noBill: parsed.data.noBill ?? prev.noBill,
         billImageUrls: parsed.data.billImageUrls ?? prev.billImageUrls,
         billImageUrl:
-          parsed.data.billImageUrl !== undefined
-            ? parsed.data.billImageUrl
-            : prev.billImageUrl,
+          parsed.data.billImageUrl !== undefined ? parsed.data.billImageUrl : prev.billImageUrl,
       })
-    : resolveBillFields(prev);
+    : billFieldsFromInput(prev);
 
-  if (!bills.noBill && (bills.billImageUrls?.length ?? 0) === 0) {
-    return badRequest("Upload at least one bill, or mark purchase as having no bill");
+  if (bills.billStatus !== "no_bill" && (bills.billImageUrls?.length ?? 0) === 0) {
+    return badRequest("Upload at least one bill, or mark expense as having no bill");
   }
 
   const updated: StoredExpense = {
@@ -217,12 +198,12 @@ export async function updateExpense(event: APIGatewayProxyEventV2) {
     updatedAt: now(),
   };
 
-  // Drop legacy single URL when no-bill
-  if (bills.noBill) {
+  if (bills.billStatus === "no_bill") {
     delete (updated as { billImageUrl?: string }).billImageUrl;
   }
 
   await docClient.send(new PutCommand({ TableName: CONFIG_TABLE, Item: updated }));
+  console.info("expense.update", { expenseId, updatedBy: auth.email || auth.userId });
   return ok({ expense: toPublic(updated) });
 }
 

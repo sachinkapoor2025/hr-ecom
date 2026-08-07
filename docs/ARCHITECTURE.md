@@ -111,9 +111,10 @@ When admin (or Orange County vendor tracking) changes order status (accepted, pr
 | PUT | `/admin/expenses/{expenseId}` | Super admin: update expense |
 | DELETE | `/admin/expenses/{expenseId}` | Super admin: delete expense |
 | GET | `/admin/payment-ledger` | Super admin: list gateway payment receipts. UI: `/admin/payment-tracking` |
-| POST | `/admin/payment-ledger` | Super admin: record payment (`amount`, `receivedDate`, `paymentSource`, optional `notes`) |
+| POST | `/admin/payment-ledger` | Super admin: record payment (`amount`, `receivedDate`, `paymentSource`; currency auto Stripe→USD / Razorpay→INR; optional `gatewayFee` / `notes`) |
 | PUT | `/admin/payment-ledger/{paymentId}` | Super admin: update payment record |
 | DELETE | `/admin/payment-ledger/{paymentId}` | Super admin: delete payment record |
+| GET | `/admin/payment-reconciliation` | Super admin: expected paid orders vs recorded settlements. UI: `/admin/payment-reconciliation` |
 | GET | `/admin/vendor-api/health` | Admin: Orange County Vendor API health console (UI: `/admin/vendor-api`) |
 | GET | `/admin/vendor-api/auth-check` | Admin: prove missing vendor key returns 401 |
 | GET | `/admin/vendor-api/orders` | Admin: proxy list/search vendor orders (`days`/`limit`/`cursor`/`status`/`updatedSince`) |

@@ -5,6 +5,7 @@ import {
   createPaymentLedgerSchema,
   updatePaymentLedgerSchema,
   paymentLedgerKeys,
+  currencyForPaymentSource,
   type PaymentLedgerEntry,
   type LedgerCurrency,
 } from "@hr-ecom/shared";
@@ -29,6 +30,7 @@ function toPublic(item: StoredPayment): PaymentLedgerEntry {
     currency: normalizeCurrency(item.currency),
     receivedDate: item.receivedDate,
     paymentSource: item.paymentSource,
+    gatewayFee: item.gatewayFee,
     notes: item.notes,
     createdBy: item.createdBy,
     createdAt: item.createdAt,
@@ -77,7 +79,6 @@ export async function listPaymentLedger(event: APIGatewayProxyEventV2) {
     payments,
     count: payments.length,
     totalByCurrency,
-    /** @deprecated use totalByCurrency */
     totalAmount: totalByCurrency.USD,
     currency: "USD",
   });
@@ -92,14 +93,16 @@ export async function createPaymentLedgerEntry(event: APIGatewayProxyEventV2) {
 
   const paymentId = uuidv4();
   const timestamp = now();
+  const currency = currencyForPaymentSource(parsed.data.paymentSource, parsed.data.currency);
   const item: StoredPayment = {
     PK: paymentLedgerKeys.pk(paymentId),
     SK: paymentLedgerKeys.sk(),
     paymentId,
     amount: parsed.data.amount,
-    currency: normalizeCurrency(parsed.data.currency),
+    currency,
     receivedDate: parsed.data.receivedDate,
     paymentSource: parsed.data.paymentSource,
+    ...(typeof parsed.data.gatewayFee === "number" ? { gatewayFee: parsed.data.gatewayFee } : {}),
     notes: parsed.data.notes?.trim() || undefined,
     createdBy: auth.email || auth.userId,
     createdAt: timestamp,
@@ -107,6 +110,13 @@ export async function createPaymentLedgerEntry(event: APIGatewayProxyEventV2) {
   };
 
   await docClient.send(new PutCommand({ TableName: CONFIG_TABLE, Item: item }));
+  console.info("payment-ledger.create", {
+    paymentId,
+    amount: item.amount,
+    currency: item.currency,
+    source: item.paymentSource,
+    createdBy: item.createdBy,
+  });
   return created({ payment: toPublic(item) });
 }
 
@@ -129,19 +139,19 @@ export async function updatePaymentLedgerEntry(event: APIGatewayProxyEventV2) {
   if (!existing.Item) return notFound("Payment record not found");
 
   const prev = existing.Item as StoredPayment;
+  const nextSource = parsed.data.paymentSource ?? prev.paymentSource;
   const updated: StoredPayment = {
     ...prev,
     ...(parsed.data.amount !== undefined ? { amount: parsed.data.amount } : {}),
-    ...(parsed.data.currency !== undefined
-      ? { currency: normalizeCurrency(parsed.data.currency) }
-      : { currency: normalizeCurrency(prev.currency) }),
     ...(parsed.data.receivedDate !== undefined ? { receivedDate: parsed.data.receivedDate } : {}),
     ...(parsed.data.paymentSource !== undefined
       ? { paymentSource: parsed.data.paymentSource }
       : {}),
+    ...(parsed.data.gatewayFee !== undefined ? { gatewayFee: parsed.data.gatewayFee } : {}),
     ...(parsed.data.notes !== undefined
       ? { notes: parsed.data.notes.trim() || undefined }
       : {}),
+    currency: currencyForPaymentSource(nextSource, parsed.data.currency ?? prev.currency),
     updatedAt: now(),
   };
 

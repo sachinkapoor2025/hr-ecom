@@ -29,6 +29,7 @@ const links: AdminNavLink[] = [
 const superAdminLinks: AdminNavLink[] = [
   { href: "/admin/expenses", label: "Expenses" },
   { href: "/admin/payment-tracking", label: "Payment Tracking" },
+  { href: "/admin/payment-reconciliation", label: "Reconciliation" },
   { href: "/admin/load-test", label: "Load Test" },
 ];
 

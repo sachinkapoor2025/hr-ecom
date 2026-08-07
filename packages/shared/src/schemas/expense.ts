@@ -8,6 +8,7 @@ export const EXPENSE_MAX_BILL_IMAGES = 10;
 
 export const EXPENSE_TYPES = [
   "shipping_charges",
+  "inventory_purchase",
   "bills",
   "marketing",
   "office_expense",
@@ -18,13 +19,47 @@ export type ExpenseType = (typeof EXPENSE_TYPES)[number];
 
 export const EXPENSE_TYPE_LABELS: Record<ExpenseType, string> = {
   shipping_charges: "Shipping Charges",
+  inventory_purchase: "Inventory Purchase",
   bills: "Bills",
   marketing: "Marketing",
   office_expense: "Office Expense",
   other: "Other",
 };
 
+/** Bill availability for an expense. */
+export const EXPENSE_BILL_STATUSES = ["all_bills", "partial_bills", "no_bill"] as const;
+export type ExpenseBillStatus = (typeof EXPENSE_BILL_STATUSES)[number];
+
+export const EXPENSE_BILL_STATUS_LABELS: Record<ExpenseBillStatus, string> = {
+  all_bills: "I have all bills",
+  partial_bills: "I have partial bills",
+  no_bill: "This expense has no bill",
+};
+
 const billUrlSchema = z.string().url();
+
+function collectBillUrls(data: {
+  billImageUrls?: string[];
+  billImageUrl?: string;
+}): string[] {
+  return Array.from(
+    new Set(
+      [
+        ...(data.billImageUrls ?? []),
+        ...(data.billImageUrl?.trim() ? [data.billImageUrl.trim()] : []),
+      ].filter(Boolean)
+    )
+  );
+}
+
+function resolveBillStatus(data: {
+  billStatus?: ExpenseBillStatus;
+  noBill?: boolean;
+}): ExpenseBillStatus {
+  if (data.billStatus) return data.billStatus;
+  if (data.noBill) return "no_bill";
+  return "all_bills";
+}
 
 export const createExpenseSchema = z
   .object({
@@ -35,31 +70,27 @@ export const createExpenseSchema = z
     expenseDate: z
       .string()
       .regex(/^\d{4}-\d{2}-\d{2}$/, "expenseDate must be YYYY-MM-DD"),
-    /** True when this purchase has no bill/invoice. */
-    noBill: z.boolean().default(false),
-    /** Up to 10 bill/invoice image URLs (presigned upload). */
+    billStatus: z.enum(EXPENSE_BILL_STATUSES).optional(),
+    /** @deprecated use billStatus === "no_bill" */
+    noBill: z.boolean().optional(),
     billImageUrls: z.array(billUrlSchema).max(EXPENSE_MAX_BILL_IMAGES).optional(),
-    /** @deprecated use billImageUrls */
     billImageUrl: z.string().url().optional().or(z.literal("")),
   })
   .superRefine((data, ctx) => {
-    const urls = [
-      ...(data.billImageUrls ?? []),
-      ...(data.billImageUrl && data.billImageUrl.trim() ? [data.billImageUrl.trim()] : []),
-    ];
-    const unique = Array.from(new Set(urls));
-    if (!data.noBill && unique.length === 0) {
+    const status = resolveBillStatus(data);
+    const unique = collectBillUrls(data);
+    if (status === "no_bill" && unique.length > 0) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Upload at least one bill, or check “This purchase doesn’t have a bill”",
-        path: ["billImageUrls"],
+        message: "Clear bill uploads when marking expense as having no bill",
+        path: ["billStatus"],
       });
     }
-    if (data.noBill && unique.length > 0) {
+    if (status !== "no_bill" && unique.length === 0) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Clear bill uploads when marking purchase as having no bill",
-        path: ["noBill"],
+        message: "Upload at least one bill, or select “This expense has no bill”",
+        path: ["billImageUrls"],
       });
     }
     if (unique.length > EXPENSE_MAX_BILL_IMAGES) {
@@ -80,6 +111,7 @@ export const updateExpenseSchema = z.object({
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, "expenseDate must be YYYY-MM-DD")
     .optional(),
+  billStatus: z.enum(EXPENSE_BILL_STATUSES).optional(),
   noBill: z.boolean().optional(),
   billImageUrls: z.array(billUrlSchema).max(EXPENSE_MAX_BILL_IMAGES).optional(),
   billImageUrl: z.string().url().optional().or(z.literal("")),
@@ -95,11 +127,14 @@ export type Expense = {
   expenseType: ExpenseType;
   description?: string;
   expenseDate: string;
+  billStatus?: ExpenseBillStatus;
+  /** @deprecated use billStatus */
   noBill?: boolean;
   billImageUrls?: string[];
-  /** First bill URL (legacy / convenience). */
   billImageUrl?: string;
   createdBy?: string;
   createdAt: string;
   updatedAt: string;
 };
+
+export { resolveBillStatus, collectBillUrls };
