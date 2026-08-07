@@ -1,12 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   EXPENSE_TYPES,
   EXPENSE_TYPE_LABELS,
+  LEDGER_CURRENCIES,
   type Expense,
   type ExpenseType,
+  type LedgerCurrency,
 } from "@hr-ecom/shared";
 import { useAuth, useApiClient } from "@/lib/auth-context";
 
@@ -14,17 +16,24 @@ function todayYmd() {
   return new Date().toISOString().slice(0, 10);
 }
 
+function formatMoney(amount: number, currency: LedgerCurrency) {
+  const symbol = currency === "INR" ? "₹" : "$";
+  return `${symbol}${amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
+}
+
 export default function AdminExpensesPage() {
   const { isSuperAdmin, loading: authLoading } = useAuth();
   const api = useApiClient();
   const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [totalAmount, setTotalAmount] = useState(0);
+  const [totalByCurrency, setTotalByCurrency] = useState({ USD: 0, INR: 0 });
+  const [listCurrency, setListCurrency] = useState<LedgerCurrency | "ALL">("ALL");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
   const [amount, setAmount] = useState("");
+  const [currency, setCurrency] = useState<LedgerCurrency>("USD");
   const [expenseType, setExpenseType] = useState<ExpenseType>("shipping_charges");
   const [description, setDescription] = useState("");
   const [expenseDate, setExpenseDate] = useState(todayYmd());
@@ -34,9 +43,18 @@ export default function AdminExpensesPage() {
     setLoading(true);
     setError("");
     try {
-      const res = await api<{ expenses: Expense[]; totalAmount: number }>("/admin/expenses");
+      const res = await api<{
+        expenses: Expense[];
+        totalByCurrency?: { USD: number; INR: number };
+        totalAmount?: number;
+      }>("/admin/expenses");
       setExpenses(res.expenses ?? []);
-      setTotalAmount(res.totalAmount ?? 0);
+      setTotalByCurrency(
+        res.totalByCurrency ?? {
+          USD: res.totalAmount ?? 0,
+          INR: 0,
+        }
+      );
     } catch (err) {
       setExpenses([]);
       setError(err instanceof Error ? err.message : "Failed to load expenses");
@@ -48,6 +66,11 @@ export default function AdminExpensesPage() {
   useEffect(() => {
     if (!authLoading && isSuperAdmin) void load();
   }, [authLoading, isSuperAdmin, load]);
+
+  const visibleExpenses = useMemo(() => {
+    if (listCurrency === "ALL") return expenses;
+    return expenses.filter((e) => (e.currency ?? "USD") === listCurrency);
+  }, [expenses, listCurrency]);
 
   const uploadBill = async (file: File): Promise<string | undefined> => {
     const contentType = file.type || "image/jpeg";
@@ -83,6 +106,7 @@ export default function AdminExpensesPage() {
         method: "POST",
         body: JSON.stringify({
           amount: value,
+          currency,
           expenseType,
           description: description.trim() || undefined,
           expenseDate,
@@ -93,6 +117,7 @@ export default function AdminExpensesPage() {
       setDescription("");
       setExpenseDate(todayYmd());
       setExpenseType("shipping_charges");
+      setCurrency("USD");
       setBillFile(null);
       setMessage("Expense saved");
       await load();
@@ -141,8 +166,22 @@ export default function AdminExpensesPage() {
 
       <form onSubmit={create} className="rounded-xl border border-slate-200 bg-white p-5 mb-8 space-y-4">
         <div className="grid gap-4 sm:grid-cols-2">
-          <label className="block text-sm">
-            <span className="text-slate-700 font-medium">Expense amount (USD)</span>
+          <div className="block text-sm">
+            <span className="text-slate-700 font-medium">Expense amount</span>
+            <div className="mt-1 flex items-center gap-4 mb-2">
+              {LEDGER_CURRENCIES.map((c) => (
+                <label key={c} className="inline-flex items-center gap-1.5 text-sm text-slate-700">
+                  <input
+                    type="radio"
+                    name="expense-currency"
+                    value={c}
+                    checked={currency === c}
+                    onChange={() => setCurrency(c)}
+                  />
+                  {c}
+                </label>
+              ))}
+            </div>
             <input
               type="number"
               min="0.01"
@@ -150,9 +189,10 @@ export default function AdminExpensesPage() {
               required
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              className="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2"
+              placeholder={currency === "INR" ? "Amount in ₹" : "Amount in $"}
+              className="w-full border border-slate-300 rounded-lg px-3 py-2"
             />
-          </label>
+          </div>
           <label className="block text-sm">
             <span className="text-slate-700 font-medium">Expense type</span>
             <select
@@ -208,19 +248,45 @@ export default function AdminExpensesPage() {
       {error && <p className="text-sm text-red-600 mb-3">{error}</p>}
       {message && <p className="text-sm text-emerald-700 mb-3">{message}</p>}
 
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-3">
         <h2 className="text-lg font-semibold">All expenses</h2>
-        <p className="text-sm text-slate-600">
-          Total:{" "}
-          <span className="font-semibold text-slate-900">
-            ${totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-          </span>
-        </p>
+        <div className="flex flex-wrap items-center gap-4 text-sm">
+          <div className="flex items-center gap-3">
+            <label className="inline-flex items-center gap-1.5 text-slate-700">
+              <input
+                type="radio"
+                name="expense-list-currency"
+                checked={listCurrency === "ALL"}
+                onChange={() => setListCurrency("ALL")}
+              />
+              All
+            </label>
+            {LEDGER_CURRENCIES.map((c) => (
+              <label key={c} className="inline-flex items-center gap-1.5 text-slate-700">
+                <input
+                  type="radio"
+                  name="expense-list-currency"
+                  checked={listCurrency === c}
+                  onChange={() => setListCurrency(c)}
+                />
+                {c}
+              </label>
+            ))}
+          </div>
+          <p className="text-slate-600">
+            Total:{" "}
+            <span className="font-semibold text-slate-900">
+              {listCurrency === "ALL"
+                ? `${formatMoney(totalByCurrency.USD, "USD")} · ${formatMoney(totalByCurrency.INR, "INR")}`
+                : formatMoney(totalByCurrency[listCurrency], listCurrency)}
+            </span>
+          </p>
+        </div>
       </div>
 
       {loading ? (
         <p className="text-slate-500 text-sm">Loading…</p>
-      ) : expenses.length === 0 ? (
+      ) : visibleExpenses.length === 0 ? (
         <p className="text-slate-500 text-sm">No expenses recorded yet.</p>
       ) : (
         <div className="overflow-x-auto rounded-xl border border-slate-200">
@@ -236,12 +302,12 @@ export default function AdminExpensesPage() {
               </tr>
             </thead>
             <tbody>
-              {expenses.map((ex) => (
+              {visibleExpenses.map((ex) => (
                 <tr key={ex.expenseId} className="border-t border-slate-100">
                   <td className="py-3 px-3 whitespace-nowrap">{ex.expenseDate}</td>
                   <td className="py-3 px-3">{EXPENSE_TYPE_LABELS[ex.expenseType]}</td>
                   <td className="py-3 px-3 font-medium">
-                    ${ex.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    {formatMoney(ex.amount, ex.currency ?? "USD")}
                   </td>
                   <td className="py-3 px-3 text-slate-600 max-w-xs truncate">
                     {ex.description || "—"}

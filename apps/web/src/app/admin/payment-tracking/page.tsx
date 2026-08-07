@@ -1,10 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
+  LEDGER_CURRENCIES,
   PAYMENT_LEDGER_SOURCES,
   PAYMENT_LEDGER_SOURCE_LABELS,
+  type LedgerCurrency,
   type PaymentLedgerEntry,
   type PaymentLedgerSource,
 } from "@hr-ecom/shared";
@@ -14,17 +16,24 @@ function todayYmd() {
   return new Date().toISOString().slice(0, 10);
 }
 
+function formatMoney(amount: number, currency: LedgerCurrency) {
+  const symbol = currency === "INR" ? "₹" : "$";
+  return `${symbol}${amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
+}
+
 export default function AdminPaymentTrackingPage() {
   const { isSuperAdmin, loading: authLoading } = useAuth();
   const api = useApiClient();
   const [payments, setPayments] = useState<PaymentLedgerEntry[]>([]);
-  const [totalAmount, setTotalAmount] = useState(0);
+  const [totalByCurrency, setTotalByCurrency] = useState({ USD: 0, INR: 0 });
+  const [listCurrency, setListCurrency] = useState<LedgerCurrency | "ALL">("ALL");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
   const [amount, setAmount] = useState("");
+  const [currency, setCurrency] = useState<LedgerCurrency>("USD");
   const [receivedDate, setReceivedDate] = useState(todayYmd());
   const [paymentSource, setPaymentSource] = useState<PaymentLedgerSource>("stripe");
   const [notes, setNotes] = useState("");
@@ -33,11 +42,18 @@ export default function AdminPaymentTrackingPage() {
     setLoading(true);
     setError("");
     try {
-      const res = await api<{ payments: PaymentLedgerEntry[]; totalAmount: number }>(
-        "/admin/payment-ledger"
-      );
+      const res = await api<{
+        payments: PaymentLedgerEntry[];
+        totalByCurrency?: { USD: number; INR: number };
+        totalAmount?: number;
+      }>("/admin/payment-ledger");
       setPayments(res.payments ?? []);
-      setTotalAmount(res.totalAmount ?? 0);
+      setTotalByCurrency(
+        res.totalByCurrency ?? {
+          USD: res.totalAmount ?? 0,
+          INR: 0,
+        }
+      );
     } catch (err) {
       setPayments([]);
       setError(err instanceof Error ? err.message : "Failed to load payments");
@@ -49,6 +65,11 @@ export default function AdminPaymentTrackingPage() {
   useEffect(() => {
     if (!authLoading && isSuperAdmin) void load();
   }, [authLoading, isSuperAdmin, load]);
+
+  const visiblePayments = useMemo(() => {
+    if (listCurrency === "ALL") return payments;
+    return payments.filter((p) => (p.currency ?? "USD") === listCurrency);
+  }, [payments, listCurrency]);
 
   const create = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,6 +84,7 @@ export default function AdminPaymentTrackingPage() {
         method: "POST",
         body: JSON.stringify({
           amount: value,
+          currency,
           receivedDate,
           paymentSource,
           notes: notes.trim() || undefined,
@@ -72,6 +94,7 @@ export default function AdminPaymentTrackingPage() {
       setNotes("");
       setReceivedDate(todayYmd());
       setPaymentSource("stripe");
+      setCurrency("USD");
       setMessage("Payment recorded");
       await load();
     } catch (err) {
@@ -120,8 +143,22 @@ export default function AdminPaymentTrackingPage() {
 
       <form onSubmit={create} className="rounded-xl border border-slate-200 bg-white p-5 mb-8 space-y-4">
         <div className="grid gap-4 sm:grid-cols-3">
-          <label className="block text-sm">
-            <span className="text-slate-700 font-medium">Amount received (USD)</span>
+          <div className="block text-sm">
+            <span className="text-slate-700 font-medium">Amount received</span>
+            <div className="mt-1 flex items-center gap-4 mb-2">
+              {LEDGER_CURRENCIES.map((c) => (
+                <label key={c} className="inline-flex items-center gap-1.5 text-sm text-slate-700">
+                  <input
+                    type="radio"
+                    name="payment-currency"
+                    value={c}
+                    checked={currency === c}
+                    onChange={() => setCurrency(c)}
+                  />
+                  {c}
+                </label>
+              ))}
+            </div>
             <input
               type="number"
               min="0.01"
@@ -129,9 +166,10 @@ export default function AdminPaymentTrackingPage() {
               required
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              className="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2"
+              placeholder={currency === "INR" ? "Amount in ₹" : "Amount in $"}
+              className="w-full border border-slate-300 rounded-lg px-3 py-2"
             />
-          </label>
+          </div>
           <label className="block text-sm">
             <span className="text-slate-700 font-medium">Date received</span>
             <input
@@ -178,19 +216,45 @@ export default function AdminPaymentTrackingPage() {
       {error && <p className="text-sm text-red-600 mb-3">{error}</p>}
       {message && <p className="text-sm text-emerald-700 mb-3">{message}</p>}
 
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-3">
         <h2 className="text-lg font-semibold">All payments</h2>
-        <p className="text-sm text-slate-600">
-          Total:{" "}
-          <span className="font-semibold text-slate-900">
-            ${totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-          </span>
-        </p>
+        <div className="flex flex-wrap items-center gap-4 text-sm">
+          <div className="flex items-center gap-3">
+            <label className="inline-flex items-center gap-1.5 text-slate-700">
+              <input
+                type="radio"
+                name="payment-list-currency"
+                checked={listCurrency === "ALL"}
+                onChange={() => setListCurrency("ALL")}
+              />
+              All
+            </label>
+            {LEDGER_CURRENCIES.map((c) => (
+              <label key={c} className="inline-flex items-center gap-1.5 text-slate-700">
+                <input
+                  type="radio"
+                  name="payment-list-currency"
+                  checked={listCurrency === c}
+                  onChange={() => setListCurrency(c)}
+                />
+                {c}
+              </label>
+            ))}
+          </div>
+          <p className="text-slate-600">
+            Total:{" "}
+            <span className="font-semibold text-slate-900">
+              {listCurrency === "ALL"
+                ? `${formatMoney(totalByCurrency.USD, "USD")} · ${formatMoney(totalByCurrency.INR, "INR")}`
+                : formatMoney(totalByCurrency[listCurrency], listCurrency)}
+            </span>
+          </p>
+        </div>
       </div>
 
       {loading ? (
         <p className="text-slate-500 text-sm">Loading…</p>
-      ) : payments.length === 0 ? (
+      ) : visiblePayments.length === 0 ? (
         <p className="text-slate-500 text-sm">No payment records yet.</p>
       ) : (
         <div className="overflow-x-auto rounded-xl border border-slate-200">
@@ -205,12 +269,12 @@ export default function AdminPaymentTrackingPage() {
               </tr>
             </thead>
             <tbody>
-              {payments.map((p) => (
+              {visiblePayments.map((p) => (
                 <tr key={p.paymentId} className="border-t border-slate-100">
                   <td className="py-3 px-3 whitespace-nowrap">{p.receivedDate}</td>
                   <td className="py-3 px-3">{PAYMENT_LEDGER_SOURCE_LABELS[p.paymentSource]}</td>
                   <td className="py-3 px-3 font-medium">
-                    ${p.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    {formatMoney(p.amount, p.currency ?? "USD")}
                   </td>
                   <td className="py-3 px-3 text-slate-600 max-w-xs truncate">{p.notes || "—"}</td>
                   <td className="py-3 px-3">

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { LEDGER_CURRENCIES, type LedgerCurrency } from "./expense";
 
 export const PAYMENT_LEDGER_SOURCES = ["stripe", "razorpay", "other"] as const;
 
@@ -12,6 +13,7 @@ export const PAYMENT_LEDGER_SOURCE_LABELS: Record<PaymentLedgerSource, string> =
 
 export const createPaymentLedgerSchema = z.object({
   amount: z.number().positive(),
+  currency: z.enum(LEDGER_CURRENCIES).default("USD"),
   receivedDate: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, "receivedDate must be YYYY-MM-DD"),
@@ -27,7 +29,7 @@ export type UpdatePaymentLedgerInput = z.infer<typeof updatePaymentLedgerSchema>
 export type PaymentLedgerEntry = {
   paymentId: string;
   amount: number;
-  currency: "USD";
+  currency: LedgerCurrency;
   receivedDate: string;
   paymentSource: PaymentLedgerSource;
   notes?: string;

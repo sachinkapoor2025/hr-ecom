@@ -6,6 +6,7 @@ import {
   updateExpenseSchema,
   expenseKeys,
   type Expense,
+  type LedgerCurrency,
 } from "@hr-ecom/shared";
 import { requireSuperAdmin } from "../lib/auth";
 import { docClient, CONFIG_TABLE, now } from "../lib/db";
@@ -13,11 +14,19 @@ import { ok, created, badRequest, forbidden, notFound } from "../lib/response";
 
 type StoredExpense = Expense & { PK: string; SK: string };
 
+function normalizeCurrency(value: unknown): LedgerCurrency {
+  return value === "INR" ? "INR" : "USD";
+}
+
+function roundMoney(n: number) {
+  return Math.round(n * 100) / 100;
+}
+
 function toPublic(item: StoredExpense): Expense {
   return {
     expenseId: item.expenseId,
     amount: item.amount,
-    currency: "USD",
+    currency: normalizeCurrency(item.currency),
     expenseType: item.expenseType,
     description: item.description,
     expenseDate: item.expenseDate,
@@ -57,8 +66,22 @@ async function listExpenseItems(): Promise<StoredExpense[]> {
 export async function listExpenses(event: APIGatewayProxyEventV2) {
   if (!requireSuperAdmin(event)) return forbidden("Super admin access required");
   const expenses = (await listExpenseItems()).map(toPublic);
-  const totalAmount = Math.round(expenses.reduce((sum, e) => sum + e.amount, 0) * 100) / 100;
-  return ok({ expenses, count: expenses.length, totalAmount, currency: "USD" });
+  const totalByCurrency = {
+    USD: roundMoney(
+      expenses.filter((e) => e.currency === "USD").reduce((sum, e) => sum + e.amount, 0)
+    ),
+    INR: roundMoney(
+      expenses.filter((e) => e.currency === "INR").reduce((sum, e) => sum + e.amount, 0)
+    ),
+  };
+  return ok({
+    expenses,
+    count: expenses.length,
+    totalByCurrency,
+    /** @deprecated use totalByCurrency */
+    totalAmount: totalByCurrency.USD,
+    currency: "USD",
+  });
 }
 
 export async function createExpense(event: APIGatewayProxyEventV2) {
@@ -71,12 +94,13 @@ export async function createExpense(event: APIGatewayProxyEventV2) {
   const expenseId = uuidv4();
   const timestamp = now();
   const billImageUrl = parsed.data.billImageUrl?.trim() || undefined;
+  const currency = normalizeCurrency(parsed.data.currency);
   const item: StoredExpense = {
     PK: expenseKeys.pk(expenseId),
     SK: expenseKeys.sk(),
     expenseId,
     amount: parsed.data.amount,
-    currency: "USD",
+    currency,
     expenseType: parsed.data.expenseType,
     description: parsed.data.description?.trim() || undefined,
     expenseDate: parsed.data.expenseDate,
@@ -126,6 +150,10 @@ export async function updateExpense(event: APIGatewayProxyEventV2) {
       : {}),
     ...(parsed.data.expenseDate !== undefined ? { expenseDate: parsed.data.expenseDate } : {}),
     billImageUrl,
+    currency:
+      parsed.data.currency !== undefined
+        ? normalizeCurrency(parsed.data.currency)
+        : normalizeCurrency(prev.currency),
     updatedAt: now(),
   };
 

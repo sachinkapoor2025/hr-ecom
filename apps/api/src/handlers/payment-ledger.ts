@@ -6,6 +6,7 @@ import {
   updatePaymentLedgerSchema,
   paymentLedgerKeys,
   type PaymentLedgerEntry,
+  type LedgerCurrency,
 } from "@hr-ecom/shared";
 import { requireSuperAdmin } from "../lib/auth";
 import { docClient, CONFIG_TABLE, now } from "../lib/db";
@@ -13,11 +14,19 @@ import { ok, created, badRequest, forbidden, notFound } from "../lib/response";
 
 type StoredPayment = PaymentLedgerEntry & { PK: string; SK: string };
 
+function normalizeCurrency(value: unknown): LedgerCurrency {
+  return value === "INR" ? "INR" : "USD";
+}
+
+function roundMoney(n: number) {
+  return Math.round(n * 100) / 100;
+}
+
 function toPublic(item: StoredPayment): PaymentLedgerEntry {
   return {
     paymentId: item.paymentId,
     amount: item.amount,
-    currency: "USD",
+    currency: normalizeCurrency(item.currency),
     receivedDate: item.receivedDate,
     paymentSource: item.paymentSource,
     notes: item.notes,
@@ -56,8 +65,22 @@ async function listPaymentItems(): Promise<StoredPayment[]> {
 export async function listPaymentLedger(event: APIGatewayProxyEventV2) {
   if (!requireSuperAdmin(event)) return forbidden("Super admin access required");
   const payments = (await listPaymentItems()).map(toPublic);
-  const totalAmount = Math.round(payments.reduce((sum, p) => sum + p.amount, 0) * 100) / 100;
-  return ok({ payments, count: payments.length, totalAmount, currency: "USD" });
+  const totalByCurrency = {
+    USD: roundMoney(
+      payments.filter((p) => p.currency === "USD").reduce((sum, p) => sum + p.amount, 0)
+    ),
+    INR: roundMoney(
+      payments.filter((p) => p.currency === "INR").reduce((sum, p) => sum + p.amount, 0)
+    ),
+  };
+  return ok({
+    payments,
+    count: payments.length,
+    totalByCurrency,
+    /** @deprecated use totalByCurrency */
+    totalAmount: totalByCurrency.USD,
+    currency: "USD",
+  });
 }
 
 export async function createPaymentLedgerEntry(event: APIGatewayProxyEventV2) {
@@ -74,7 +97,7 @@ export async function createPaymentLedgerEntry(event: APIGatewayProxyEventV2) {
     SK: paymentLedgerKeys.sk(),
     paymentId,
     amount: parsed.data.amount,
-    currency: "USD",
+    currency: normalizeCurrency(parsed.data.currency),
     receivedDate: parsed.data.receivedDate,
     paymentSource: parsed.data.paymentSource,
     notes: parsed.data.notes?.trim() || undefined,
@@ -109,6 +132,9 @@ export async function updatePaymentLedgerEntry(event: APIGatewayProxyEventV2) {
   const updated: StoredPayment = {
     ...prev,
     ...(parsed.data.amount !== undefined ? { amount: parsed.data.amount } : {}),
+    ...(parsed.data.currency !== undefined
+      ? { currency: normalizeCurrency(parsed.data.currency) }
+      : { currency: normalizeCurrency(prev.currency) }),
     ...(parsed.data.receivedDate !== undefined ? { receivedDate: parsed.data.receivedDate } : {}),
     ...(parsed.data.paymentSource !== undefined
       ? { paymentSource: parsed.data.paymentSource }

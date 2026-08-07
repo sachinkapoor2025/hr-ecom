@@ -1,5 +1,9 @@
 import { z } from "zod";
 
+export const LEDGER_CURRENCIES = ["USD", "INR"] as const;
+
+export type LedgerCurrency = (typeof LEDGER_CURRENCIES)[number];
+
 export const EXPENSE_TYPES = [
   "shipping_charges",
   "bills",
@@ -20,6 +24,7 @@ export const EXPENSE_TYPE_LABELS: Record<ExpenseType, string> = {
 
 export const createExpenseSchema = z.object({
   amount: z.number().positive(),
+  currency: z.enum(LEDGER_CURRENCIES).default("USD"),
   expenseType: z.enum(EXPENSE_TYPES),
   description: z.string().trim().max(2000).optional(),
   expenseDate: z
@@ -37,7 +42,7 @@ export type UpdateExpenseInput = z.infer<typeof updateExpenseSchema>;
 export type Expense = {
   expenseId: string;
   amount: number;
-  currency: "USD";
+  currency: LedgerCurrency;
   expenseType: ExpenseType;
   description?: string;
   expenseDate: string;
