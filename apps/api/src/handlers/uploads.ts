@@ -76,7 +76,13 @@ export async function getUploadUrl(event: APIGatewayProxyEventV2) {
 
   const ext = path.extname(filename) || ".jpg";
   const prefix =
-    folder === "blog" ? "blog" : productSlug ? `products/${productSlug}` : "products";
+    folder === "blog"
+      ? "blog"
+      : folder === "expenses"
+        ? "expenses"
+        : productSlug
+          ? `products/${productSlug}`
+          : "products";
   const key = `${prefix}/${uuidv4()}${ext}`;
 
   const s3 = getS3();

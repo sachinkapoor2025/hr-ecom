@@ -3,6 +3,7 @@ import { processDueReviewEmails } from "./handlers/review-emails";
 import { processAbandonedCartEmails } from "./handlers/abandoned-cart-emails";
 import { processPendingPaymentReminders } from "./handlers/pending-payment-reminders";
 import { reconcilePendingRazorpayPayments } from "./handlers/payments/razorpay";
+import { runPaymentReconciliationJob } from "./handlers/payment-reconciliation";
 
 type CronEvent = {
   task?: string;
@@ -16,6 +17,16 @@ export async function handler(event: CronEvent, _context: Context) {
       return { razorpayReconcile };
     } catch (err) {
       console.error("Razorpay reconcile cron failed:", err);
+      throw err;
+    }
+  }
+
+  if (event?.task === "paymentReconciliation") {
+    try {
+      const paymentReconciliation = await runPaymentReconciliationJob();
+      return { paymentReconciliation };
+    } catch (err) {
+      console.error("Payment reconciliation cron failed:", err);
       throw err;
     }
   }
@@ -41,6 +52,14 @@ export async function handler(event: CronEvent, _context: Context) {
   } catch (err) {
     console.error("Pending payment reminders cron failed:", err);
     results.pendingPaymentRemindersError = err instanceof Error ? err.message : String(err);
+  }
+
+  // Best-effort reconciliation snapshot log (does not fail the email cron).
+  try {
+    results.paymentReconciliation = await runPaymentReconciliationJob();
+  } catch (err) {
+    console.error("Payment reconciliation (inline) failed:", err);
+    results.paymentReconciliationError = err instanceof Error ? err.message : String(err);
   }
 
   if (

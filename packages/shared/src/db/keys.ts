@@ -116,6 +116,20 @@ export const couponKeys = {
   abandonedEmailSk: () => "ACTIVE" as const,
 };
 
+/** Business expenses (config table). */
+export const expenseKeys = {
+  pk: (expenseId: string) => `EXPENSE#${expenseId}`,
+  sk: () => "META" as const,
+  pkPrefix: () => "EXPENSE#" as const,
+};
+
+/** Manual payment-gateway ledger entries (config table). */
+export const paymentLedgerKeys = {
+  pk: (paymentId: string) => `PAYLEDGER#${paymentId}`,
+  sk: () => "META" as const,
+  pkPrefix: () => "PAYLEDGER#" as const,
+};
+
 // ---- email campaigns table (SES bulk marketing) ----
 export const sesEmailKeys = {
   campaignPk: (campaignId: string) => `CAMPAIGN#${campaignId}`,

@@ -47,9 +47,12 @@ async function claimReminderSlot(orderId: string, sentAt: string, dateKey: strin
         Key: { PK: orderKeys.pk(orderId), SK: orderKeys.sk() },
         UpdateExpression:
           "SET pendingPaymentReminderLastSentAt = :sent, pendingPaymentReminderLastDateKey = :day, pendingPaymentReminderCount = if_not_exists(pendingPaymentReminderCount, :zero) + :one, updatedAt = :sent",
+        // Only claim if still unpaid — prevents reminders after payment races.
         ConditionExpression:
-          "attribute_not_exists(pendingPaymentReminderLastDateKey) OR pendingPaymentReminderLastDateKey <> :day",
+          "#status = :pending AND (attribute_not_exists(pendingPaymentReminderLastDateKey) OR pendingPaymentReminderLastDateKey <> :day)",
+        ExpressionAttributeNames: { "#status": "status" },
         ExpressionAttributeValues: {
+          ":pending": ORDER_STATUS.PENDING_PAYMENT,
           ":sent": sentAt,
           ":day": dateKey,
           ":zero": 0,
