@@ -164,7 +164,6 @@ export function VendorExpensePanel() {
       { label: "Sold USD", value: s.soldUsd ?? s.soldByCurrency.USD },
       { label: "Vendor cost", value: s.vendorCostTotal },
       { label: "Paid vendor", value: s.paidToVendor },
-      { label: "Pending", value: Math.max(0, s.pendingToVendor) },
       { label: "Profit est.", value: Math.max(0, s.estimatedProfitUsd) },
     ];
   }, [report]);
@@ -285,7 +284,7 @@ export function VendorExpensePanel() {
         <p className="text-slate-500">Loading vendor report…</p>
       ) : s ? (
         <>
-          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
             <Kpi
               label="Paid orders"
               value={String(s.orderCount)}
@@ -306,16 +305,6 @@ export function VendorExpensePanel() {
               hint="Wholesale we owe vendor"
             />
             <Kpi label="Paid to vendor" value={formatMoney(s.paidToVendor)} tone="good" />
-            <Kpi
-              label="Pending to vendor"
-              value={formatMoney(s.pendingToVendor)}
-              tone={s.pendingToVendor > 0 ? "warn" : "good"}
-              hint={
-                s.unallocatedPaid > 0
-                  ? `${formatMoney(s.unallocatedPaid)} paid without order link`
-                  : undefined
-              }
-            />
             <Kpi
               label="Est. profit (USD)"
               value={formatMoney(s.estimatedProfitUsd)}
@@ -499,22 +488,28 @@ export function VendorExpensePanel() {
               </div>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-sm min-w-[900px]">
+              <table className="w-full text-sm min-w-[980px]">
                 <thead>
                   <tr className="text-left text-slate-500 border-b">
                     <th className="py-2 pr-2">Order</th>
+                    <th className="py-2 pr-2">Product</th>
                     <th className="py-2 pr-2">Status</th>
                     <th className="py-2 pr-2">Sell (cart)</th>
                     <th className="py-2 pr-2">Vendor cost</th>
                     <th className="py-2 pr-2">Paid vendor</th>
-                    <th className="py-2 pr-2">Pending</th>
                     <th className="py-2 pr-2">Profit</th>
+                    <th className="py-2 pr-2">Profit %</th>
                     <th className="py-2 pr-2">Tracking</th>
                     <th className="py-2">Date</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {visibleOrders.map((o) => (
+                  {visibleOrders.map((o) => {
+                    const profitPct =
+                      o.profitEstimate != null && o.sellTotalUsd > 0
+                        ? (o.profitEstimate / o.sellTotalUsd) * 100
+                        : null;
+                    return (
                     <tr key={o.orderId} className="border-b border-slate-100 align-top">
                       <td className="py-2 pr-2">
                         <Link
@@ -525,6 +520,38 @@ export function VendorExpensePanel() {
                         </Link>
                         {o.recipientName && (
                           <p className="text-xs text-slate-500">{o.recipientName}</p>
+                        )}
+                      </td>
+                      <td className="py-2 pr-2 max-w-[220px]">
+                        {o.items?.length ? (
+                          <ul className="space-y-1">
+                            {o.items.map((line, idx) => (
+                              <li key={`${o.orderId}-${line.productSlug}-${idx}`} className="text-xs leading-snug">
+                                <span className="font-medium text-slate-800 line-clamp-2">
+                                  {line.name}
+                                </span>
+                                <span className="text-slate-500">
+                                  {" "}
+                                  ×{line.quantity}
+                                  {line.productSlug ? (
+                                    <>
+                                      {" · "}
+                                      <Link
+                                        href={`/products/${line.productSlug}`}
+                                        className="text-nav hover:underline"
+                                        target="_blank"
+                                        rel="noreferrer"
+                                      >
+                                        view
+                                      </Link>
+                                    </>
+                                  ) : null}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <span className="text-slate-400">—</span>
                         )}
                       </td>
                       <td className="py-2 pr-2">
@@ -551,11 +578,22 @@ export function VendorExpensePanel() {
                       <td className="py-2 pr-2 whitespace-nowrap">
                         {formatMoney(o.paidToVendor)}
                       </td>
-                      <td className="py-2 pr-2 whitespace-nowrap font-medium">
-                        {o.pendingToVendor == null ? "—" : formatMoney(o.pendingToVendor)}
-                      </td>
                       <td className="py-2 pr-2 whitespace-nowrap">
                         {o.profitEstimate == null ? "—" : formatMoney(o.profitEstimate)}
+                      </td>
+                      <td
+                        className={`py-2 pr-2 whitespace-nowrap font-medium ${
+                          profitPct == null
+                            ? ""
+                            : profitPct < 0
+                              ? "text-red-600"
+                              : profitPct < 28.6
+                                ? "text-amber-700"
+                                : "text-emerald-700"
+                        }`}
+                        title="Profit ÷ sell (cart USD)"
+                      >
+                        {profitPct == null ? "—" : `${profitPct.toFixed(1)}%`}
                       </td>
                       <td className="py-2 pr-2 text-xs max-w-[120px] truncate" title={o.trackingNumber ?? ""}>
                         {o.trackingNumber || "—"}
@@ -564,7 +602,8 @@ export function VendorExpensePanel() {
                         {o.createdAt.slice(0, 10)}
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
               {!visibleOrders.length && (
