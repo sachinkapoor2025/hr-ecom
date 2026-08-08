@@ -496,7 +496,6 @@ export function VendorExpensePanel() {
                     <th className="py-2 pr-2">Status</th>
                     <th className="py-2 pr-2">Sell (cart)</th>
                     <th className="py-2 pr-2">Vendor cost</th>
-                    <th className="py-2 pr-2">Paid vendor</th>
                     <th className="py-2 pr-2">Profit</th>
                     <th className="py-2 pr-2">Profit %</th>
                     <th className="py-2 pr-2">Tracking</th>
@@ -574,9 +573,6 @@ export function VendorExpensePanel() {
                       </td>
                       <td className="py-2 pr-2 whitespace-nowrap">
                         {o.vendorCostTotal == null ? "—" : formatMoney(o.vendorCostTotal)}
-                      </td>
-                      <td className="py-2 pr-2 whitespace-nowrap">
-                        {formatMoney(o.paidToVendor)}
                       </td>
                       <td className="py-2 pr-2 whitespace-nowrap">
                         {o.profitEstimate == null ? "—" : formatMoney(o.profitEstimate)}
