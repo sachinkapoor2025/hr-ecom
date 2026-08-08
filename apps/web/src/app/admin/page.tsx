@@ -154,13 +154,10 @@ export default function AdminDashboard() {
         {[
           { href: "/admin/orders", title: "Orders", desc: "Fulfill & track orders" },
           { href: "/admin/analytics", title: "Analytics", desc: "Top products & searches" },
-          { href: "/admin/visitors", title: "Visitors", desc: "Session journeys" },
-          { href: "/admin/carts", title: "Abandoned Carts", desc: "Recover lost sales" },
+          { href: "/admin/boost-sales", title: "Boost Sales", desc: "Leads, carts & coupons" },
           { href: "/admin/products", title: "Products", desc: "Add, edit, bulk upload" },
           { href: "/admin/categories", title: "Categories", desc: "Organize catalog" },
-          { href: "/admin/leads", title: "Customer Leads", desc: "Partial captures" },
-          { href: "/admin/welcome-leads", title: "Discount of the Day", desc: "Spin-wheel coupon signups" },
-          { href: "/admin/payments", title: "Payment Config", desc: "Stripe / Razorpay" },
+          { href: "/admin/expense-settlement", title: "Expense & Settlement", desc: "Expenses & settlements" },
           { href: "/admin/blog-images", title: "Blog Images", desc: "Hero images per article" },
         ].map((item) => (
           <Link

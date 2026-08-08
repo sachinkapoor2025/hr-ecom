@@ -4,7 +4,16 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useApiClient } from "@/lib/auth-context";
-import { ORDER_STATUS } from "@hr-ecom/shared";
+import {
+  ORDER_STATUS,
+  orderHasVendor,
+  orderVendorKeys,
+  vendorDisplayLabel,
+  VENDOR_ORANGE_COUNTY,
+  VENDOR_USARAKHI,
+  ensureVendorFulfillments,
+  type VendorFulfillment,
+} from "@hr-ecom/shared";
 import { statusLabel, badgeClass } from "@/lib/order-status";
 import {
   downloadCsv,
@@ -30,6 +39,7 @@ interface Order {
   createdAt: string;
   updatedAt: string;
   trackingNumber?: string;
+  carrier?: string;
   paymentProvider?: string;
   shippingAddress: { name: string; email: string; phone?: string };
   estimatedDeliveryAt?: string;
@@ -38,40 +48,42 @@ interface Order {
   shippingServiceName?: string;
   /** Set at checkout when cart has vendor-sourced lines (e.g. orange-county). */
   vendorSlugs?: string[];
+  vendorFulfillments?: VendorFulfillment[];
   items?: { vendorSlug?: string; sku?: string; name?: string }[];
 }
 
-function orderHasVendor(o: Order, vendor: string): boolean {
-  if (o.vendorSlugs?.includes(vendor)) return true;
-  return o.items?.some((i) => i.vendorSlug === vendor) ?? false;
-}
-
-/** Known labels + title-case fallback for future vendor slugs discovered on orders. */
 function vendorFilterLabel(slug: string): string {
-  const known: Record<string, string> = {
-    "orange-county": "Orange County",
-    usarakhi: "UsaRakhi",
-  };
-  if (known[slug]) return known[slug];
-  return slug
-    .split("-")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ");
+  return vendorDisplayLabel(slug);
 }
 
 function collectVendorSlugs(orders: Order[]): string[] {
   const set = new Set<string>();
   for (const o of orders) {
-    for (const s of o.vendorSlugs ?? []) {
-      if (s.trim()) set.add(s.trim());
-    }
-    for (const item of o.items ?? []) {
-      if (item.vendorSlug?.trim()) set.add(item.vendorSlug.trim());
-    }
+    for (const s of orderVendorKeys(o)) set.add(s);
   }
-  // Always offer baseline vendors even when no matching orders yet.
-  set.add("orange-county");
+  set.add(VENDOR_ORANGE_COUNTY);
+  set.add(VENDOR_USARAKHI);
   return Array.from(set).sort((a, b) => a.localeCompare(b));
+}
+
+function VendorBadges({ order }: { order: Order }) {
+  const keys = orderVendorKeys(order);
+  return (
+    <div className="flex flex-col gap-1">
+      {keys.map((slug) => (
+        <span
+          key={slug}
+          className={
+            slug === VENDOR_ORANGE_COUNTY
+              ? "inline-flex w-fit items-center rounded-full bg-orange-100 text-orange-800 px-2 py-0.5 text-[11px] font-semibold"
+              : "inline-flex w-fit items-center rounded-full bg-slate-100 text-slate-700 px-2 py-0.5 text-[11px] font-semibold"
+          }
+        >
+          {vendorDisplayLabel(slug)}
+        </span>
+      ))}
+    </div>
+  );
 }
 
 function abbreviateServiceName(name?: string): string | null {
@@ -143,13 +155,7 @@ export default function AdminOrdersPage() {
       if (!matchesOrderStatusTab(o.status, tab)) return false;
       if (!matchesPaymentFilter(o.status, paymentFilter)) return false;
       if (paymentMethod !== "all" && o.paymentProvider !== paymentMethod) return false;
-      if (vendorFilter === "usarakhi") {
-        // UsaRakhi = no external vendorSlug on the order.
-        const hasExternalVendor =
-          (o.vendorSlugs?.length ?? 0) > 0 ||
-          (o.items ?? []).some((i) => Boolean(i.vendorSlug?.trim()));
-        if (hasExternalVendor) return false;
-      } else if (vendorFilter !== "all" && !orderHasVendor(o, vendorFilter)) {
+      if (vendorFilter !== "all" && !orderHasVendor(o, vendorFilter)) {
         return false;
       }
       if (dateFrom && o.createdAt.slice(0, 10) < dateFrom) return false;
@@ -220,8 +226,17 @@ export default function AdminOrdersPage() {
         shippingStatusLabel(o.status),
         String(o.total),
         o.currency,
-        o.trackingNumber ?? "",
-        orderHasVendor(o, "orange-county") ? "orange-county" : "usarakhi",
+        ensureVendorFulfillments(o)
+          .map((f) =>
+            f.trackingNumber
+              ? `${vendorDisplayLabel(f.vendorSlug)}:${f.trackingNumber}`
+              : ""
+          )
+          .filter(Boolean)
+          .join(" | ") ||
+          o.trackingNumber ||
+          "",
+        orderVendorKeys(o).join("+"),
         o.updatedAt,
       ]),
     ];
@@ -425,7 +440,6 @@ export default function AdminOrdersPage() {
                 const isStale =
                   hoursSinceUpdate >= 48 &&
                   (o.status === ORDER_STATUS.PENDING_PAYMENT || o.status === ORDER_STATUS.PROCESSING);
-                const isOrangeCounty = orderHasVendor(o, "orange-county");
                 return (
                 <tr
                   key={o.orderId}
@@ -450,13 +464,7 @@ export default function AdminOrdersPage() {
                     className="py-3 px-3 cursor-pointer"
                     onClick={() => router.push(`/admin/orders/${o.orderId}`)}
                   >
-                    {isOrangeCounty ? (
-                      <span className="inline-flex items-center rounded-full bg-orange-100 text-orange-800 px-2 py-0.5 text-[11px] font-semibold">
-                        Orange County
-                      </span>
-                    ) : (
-                      <span className="text-[11px] text-slate-400">UsaRakhi</span>
-                    )}
+                    <VendorBadges order={o} />
                   </td>
                   <td
                     className="py-3 px-3 text-slate-500 whitespace-nowrap cursor-pointer"
@@ -513,11 +521,25 @@ export default function AdminOrdersPage() {
                         {abbreviateServiceName(o.shippingServiceName)}
                       </div>
                     )}
-                    {o.trackingNumber && (
+                    {ensureVendorFulfillments(o).some((f) => f.trackingNumber) ? (
+                      <div className="mt-1 space-y-0.5">
+                        {ensureVendorFulfillments(o)
+                          .filter((f) => f.trackingNumber)
+                          .map((f) => (
+                            <div
+                              key={f.vendorSlug}
+                              className="text-slate-400 truncate max-w-[140px]"
+                              title={`${vendorDisplayLabel(f.vendorSlug)}: ${f.trackingNumber}`}
+                            >
+                              {vendorDisplayLabel(f.vendorSlug).slice(0, 2)}: {f.trackingNumber}
+                            </div>
+                          ))}
+                      </div>
+                    ) : o.trackingNumber ? (
                       <div className="text-slate-400 truncate max-w-[100px]" title={o.trackingNumber}>
                         {o.trackingNumber}
                       </div>
-                    )}
+                    ) : null}
                   </td>
                   <td className="py-3 px-3 font-medium whitespace-nowrap">
                     {formatMoney(o.total, o.currency)}

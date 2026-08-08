@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useApiClient } from "@/lib/auth-context";
 import { HorizontalBarChart, AreaChart, ChartLegend } from "@/components/admin/Charts";
 import { SalesReportPanel } from "@/components/admin/SalesReportPanel";
 import { VisitorAnalyticsPanel } from "@/components/admin/VisitorAnalyticsPanel";
 import { LiveVisitorsPanel } from "@/components/admin/LiveVisitorsPanel";
+import { VisitorsPanel } from "@/components/admin/VisitorsPanel";
 import { downloadCsv, downloadPdfReport, formatMoney } from "@/lib/admin-utils";
 
 interface ProductStat {
@@ -52,12 +54,30 @@ interface Insights {
   ordersByDay: { day: string; orders: number; pageViews: number }[];
 }
 
-type AnalyticsTab = "overview" | "visitors" | "live";
+type AnalyticsTab = "overview" | "visitor-analytics" | "live" | "sessions";
 
-export default function AdminAnalyticsPage() {
+function parseAnalyticsTab(raw: string | null): AnalyticsTab {
+  if (raw === "live" || raw === "sessions" || raw === "overview" || raw === "visitor-analytics") {
+    return raw;
+  }
+  // Back-compat: old ?tab=visitors meant visitor analytics
+  if (raw === "visitors") return "visitor-analytics";
+  return "overview";
+}
+
+function AdminAnalyticsPageInner() {
   const apiClient = useApiClient();
-  const [tab, setTab] = useState<AnalyticsTab>("overview");
+  const searchParams = useSearchParams();
+  const initialTab = useMemo(
+    () => parseAnalyticsTab(searchParams.get("tab")),
+    [searchParams]
+  );
+  const [tab, setTab] = useState<AnalyticsTab>(initialTab);
   const [days, setDays] = useState(7);
+
+  useEffect(() => {
+    setTab(initialTab);
+  }, [initialTab]);
   const [products, setProducts] = useState<ProductStat[]>([]);
   const [searches, setSearches] = useState<SearchStat[]>([]);
   const [zeroResult, setZeroResult] = useState<SearchStat[]>([]);
@@ -193,8 +213,9 @@ export default function AdminAnalyticsPage() {
           {(
             [
               { id: "overview" as const, label: "Overview" },
-              { id: "visitors" as const, label: "Visitor analytics" },
+              { id: "visitor-analytics" as const, label: "Visitor analytics" },
               { id: "live" as const, label: "Live visitor" },
+              { id: "sessions" as const, label: "Visitors" },
             ] as const
           ).map((t) => (
             <button
@@ -246,8 +267,10 @@ export default function AdminAnalyticsPage() {
 
       {tab === "live" ? (
         <LiveVisitorsPanel />
-      ) : tab === "visitors" ? (
+      ) : tab === "visitor-analytics" ? (
         <VisitorAnalyticsPanel />
+      ) : tab === "sessions" ? (
+        <VisitorsPanel />
       ) : loading ? (
         <p className="text-slate-500">Loading…</p>
       ) : error ? (
@@ -470,5 +493,13 @@ export default function AdminAnalyticsPage() {
         </>
       )}
     </div>
+  );
+}
+
+export default function AdminAnalyticsPage() {
+  return (
+    <Suspense fallback={<p className="text-slate-500 p-6">Loading…</p>}>
+      <AdminAnalyticsPageInner />
+    </Suspense>
   );
 }

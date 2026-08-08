@@ -109,6 +109,9 @@ export const ORANGE_COUNTY_PRODUCT_INVENTORY = 500;
  */
 export const VENDOR_ORANGE_COUNTY = "orange-county" as const;
 
+/** Default UsaRakhi fulfillment key (catalog lines without product.vendorSlug). */
+export const VENDOR_USARAKHI = "usarakhi" as const;
+
 /** Public category slug (display name: "Rakhi Hamper"). */
 export const ORANGE_COUNTY_CATEGORY_SLUG = "rakhi-hampers" as const;
 
