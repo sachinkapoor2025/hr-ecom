@@ -156,6 +156,8 @@ export const orderSchema = z.object({
   razorpayPaymentId: z.string().optional(),
   trackingNumber: z.string().optional(),
   carrier: z.string().optional(),
+  /** Last shipment status string received from vendor tracking API (e.g. in_transit). */
+  vendorShipmentStatus: z.string().max(80).optional(),
   adminNotes: z.string().max(2000).optional(),
   estimatedDeliveryAt: z.string().optional(),
   deliveredAt: z.string().optional(),

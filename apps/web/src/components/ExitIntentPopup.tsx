@@ -296,8 +296,13 @@ export function ExitIntentPopup() {
             </div>
           ) : phase === "done" && coupon ? (
             <div className="text-center py-2">
-              <p className="text-sm uppercase tracking-wide text-accent font-bold mb-1">You won!</p>
-              <p className="text-4xl font-bold text-primary mb-2">{coupon.discountPercent}% off</p>
+              <p className="text-sm uppercase tracking-wide text-accent font-bold mb-1">
+                It&apos;s your lucky day!
+              </p>
+              <p className="text-4xl font-bold text-primary mb-1">{coupon.discountPercent}% off</p>
+              <p className="text-sm font-semibold text-primary mb-2">
+                You got the maximum discount
+              </p>
               <p className="text-sm text-slate-600 mb-3">
                 {coupon.reused
                   ? "Here’s your active Discount of the Day code:"
@@ -396,8 +401,9 @@ export function ExitIntentPopup() {
               {celebrating && wonPercent != null ? (
                 <div className="text-center space-y-3 mb-1">
                   <p className="text-lg sm:text-xl font-bold text-primary animate-bounce">
-                    You won {wonPercent}% discount!
+                    It&apos;s your lucky day — you got the maximum discount!
                   </p>
+                  <p className="text-2xl font-bold text-accent">{wonPercent}% off</p>
                   <p className="text-sm text-slate-600">Generating your discount coupon…</p>
                   <div className="mx-auto h-1.5 w-40 overflow-hidden rounded-full bg-slate-100">
                     <div className="h-full w-1/2 animate-pulse rounded-full bg-accent" />

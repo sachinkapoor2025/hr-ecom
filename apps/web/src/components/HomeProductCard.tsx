@@ -23,18 +23,17 @@ export function HomeProductCard({
 
   return (
     <div className="border border-slate-200 rounded-xl overflow-hidden bg-white hover:shadow-md transition-shadow relative flex h-full flex-col">
-      {discount !== null && (
-        <span className="absolute top-3 left-3 z-10 bg-accent text-white text-xs font-bold px-2 py-1 rounded">
-          {discount}% OFF
-        </span>
-      )}
-      {fastSelling && (
-        <div className={`absolute top-3 z-10 ${discount !== null ? "right-3" : "left-3"}`}>
-          <FastSellingBadge />
-        </div>
-      )}
       <div className="relative aspect-square w-full shrink-0 overflow-hidden bg-slate-50">
-        <WishlistButton product={product} />
+        {/* Badges stacked top-left; wishlist alone top-right — no overlap on mobile */}
+        <div className="absolute top-2 left-2 z-10 flex flex-col items-start gap-1 max-w-[70%] pointer-events-none">
+          {discount !== null && (
+            <span className="bg-accent text-white text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded shadow-sm">
+              {discount}% OFF
+            </span>
+          )}
+          {fastSelling && <FastSellingBadge className="!text-[10px] sm:!text-xs" />}
+        </div>
+        <WishlistButton product={product} className="!top-2 !right-2 z-20" />
         <Link href={`/products/${product.slug}`} className="absolute inset-0 block">
           <ProductImageRotator
             images={product.images ?? []}

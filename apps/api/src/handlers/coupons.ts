@@ -12,7 +12,6 @@ import {
   isAdminConfirmedSaleDiscount,
   pickDailyDealDiscount,
   dailyDealDayKey,
-  isValidDailyDealPercent,
   normalizePhone,
   type CouponValidationResult,
   type WelcomeCoupon,
@@ -212,9 +211,8 @@ export async function issueWelcomeCoupon(input: {
     return { ...existingActive, alreadyClaimedToday: false };
   }
 
-  const discountPercent: DailyDealPercent = isValidDailyDealPercent(input.discountPercent)
-    ? input.discountPercent
-    : pickDailyDealDiscount();
+  // Always issue maximum Discount of the Day (10%), regardless of client spin hint.
+  const discountPercent: DailyDealPercent = pickDailyDealDiscount();
   const expiresAt = welcomeExpiresAt();
   const code = generateCode();
   const coupon: WelcomeCoupon & { PK: string; SK: string } = {
