@@ -14,8 +14,9 @@ import { VENDOR_ORANGE_COUNTY } from "../constants";
 
 describe("product-addons", () => {
   it("lists catalog with expected prices", () => {
-    assert.equal(PRODUCT_ADDONS.length, 10);
-    assert.equal(getProductAddon("kaju-katli-200g")?.priceUsd, 11.99);
+    assert.equal(PRODUCT_ADDONS.length, 9);
+    assert.equal(getProductAddon("kaju-katli-200g"), undefined);
+    assert.equal(getProductAddon("badam-100g")?.priceUsd, 9);
     assert.equal(getProductAddon("hershey-2pc")?.priceUsd, 5);
     assert.equal(getProductAddon("lindt-5pc")?.priceUsd, 6);
     assert.equal(getProductAddon("ferrero-3pc")?.priceUsd, 5);
@@ -41,8 +42,8 @@ describe("product-addons", () => {
     assert.equal(cartAddonSignature([{ id: "b", quantity: 1 }, { id: "a", quantity: 2 }]), "a:2,b:1");
     assert.equal(cartAddonSignature([]), "");
     assert.notEqual(
-      cartAddonSignature([{ id: "kaju-katli-200g", quantity: 1 }]),
-      cartAddonSignature([{ id: "kaju-katli-200g", quantity: 2 }])
+      cartAddonSignature([{ id: "badam-100g", quantity: 1 }]),
+      cartAddonSignature([{ id: "badam-100g", quantity: 2 }])
     );
   });
 
@@ -65,7 +66,7 @@ describe("product-addons", () => {
     }
     const bad = resolveProductAddons([{ id: "not-a-real-addon", quantity: 1 }]);
     assert.equal(bad.ok, false);
-    const tooMany = resolveProductAddons([{ id: "kaju-katli-200g", quantity: 99 }]);
+    const tooMany = resolveProductAddons([{ id: "badam-100g", quantity: 99 }]);
     assert.equal(tooMany.ok, false);
   });
 });

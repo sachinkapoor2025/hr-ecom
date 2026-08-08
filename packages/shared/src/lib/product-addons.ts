@@ -17,13 +17,6 @@ export const MAX_PRODUCT_ADDON_QUANTITY = 10;
 /** Fixed UsaRakhi PDP add-on catalog (USD). Not Dynamo SKUs. */
 export const PRODUCT_ADDONS: readonly ProductAddonDef[] = [
   {
-    id: "kaju-katli-200g",
-    name: "Kaju Katli — 200 g",
-    priceUsd: 11.99,
-    group: "dry-fruits",
-    detail: "200 g",
-  },
-  {
     id: "badam-100g",
     name: "Badam (Almonds) — 100 g",
     priceUsd: 9,
@@ -126,8 +119,8 @@ export function sumAddonPrices(
 
 /**
  * Stable merge key: sorted `id:qty` pairs.
- * Empty string = no add-ons. Quantity is part of the signature so 2× Kaju Katli
- * does not merge with 1× Kaju Katli.
+ * Empty string = no add-ons. Quantity is part of the signature so 2× of an add-on
+ * does not merge with 1× of the same add-on.
  */
 export function cartAddonSignature(
   addons: Array<{ id: string; quantity?: number }> | undefined | null
