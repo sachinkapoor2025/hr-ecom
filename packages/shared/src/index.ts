@@ -21,6 +21,8 @@ export * from "./schemas/expense";
 export * from "./schemas/payment-ledger";
 export * from "./schemas/payment-reconciliation";
 export * from "./schemas/vendor-payments";
+export * from "./schemas/live-visitors";
+export * from "./lib/geo-coords";
 export * from "./lib/ledger-display";
 export * from "./schemas/load-test";
 export * from "./lib/currency-display";

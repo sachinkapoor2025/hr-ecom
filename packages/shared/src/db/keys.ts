@@ -89,6 +89,12 @@ export const eventKeys = {
   // daily rollup counters (kept long-term)
   rollupPk: (day: string) => `ROLLUP#${day}`,
   rollupSk: (metric: string) => metric,
+  /**
+   * Live presence partition — Query PK=PRESENCE#LIVE for active visitors.
+   * Items carry DynamoDB TTL (`expiresAt`) so idle sessions drop off automatically.
+   */
+  presencePk: () => "PRESENCE#LIVE" as const,
+  presenceSk: (sessionId: string) => `SESSION#${sessionId}`,
 };
 
 // ---- config table ----

@@ -158,6 +158,7 @@ When admin (or Orange County vendor tracking) changes order status (accepted, pr
 | GET | `/admin/analytics/products` | Admin: most-viewed products |
 | GET | `/admin/analytics/searches` | Admin: top + zero-result searches |
 | GET | `/admin/analytics/visitors` | Admin: visitor analytics (`?days=` or `?from=&to=` YYYY-MM-DD); totals, byDay (unique sessions/day), by-country, session list |
+| GET | `/admin/live-visitors` | Admin: currently active storefront visitors (presence TTL ~3 min; geo map + detail list in Visitor analytics UI) |
 | GET | `/admin/sessions` | Admin: recent visitor sessions (`?days=` or `?from=&to=` & `identity=all|known|anonymous`) |
 | GET | `/admin/sessions/{sessionId}` | Admin: full visitor journey |
 | GET | `/admin/customers/{email}` | Admin: unified customer profile (orders, leads, carts, sessions) |

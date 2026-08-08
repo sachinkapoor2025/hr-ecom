@@ -6,12 +6,92 @@ import {
   eventKeys,
   EVENT_TYPES,
   EVENT_TTL_DAYS,
+  LIVE_VISITOR_TTL_SECONDS,
   mergeViewerGeo,
   parseViewerGeoFromHeaders,
   type TrackEventInput,
 } from "@hr-ecom/shared";
 import { docClient, EVENTS_TABLE, now, ttlInDays, dayBucket } from "../lib/db";
 import { ok, badRequest } from "../lib/response";
+
+const PRESENCE_EVENT_TYPES = new Set<string>([
+  EVENT_TYPES.PAGE_VIEW,
+  EVENT_TYPES.SESSION_PING,
+  EVENT_TYPES.PRODUCT_VIEW,
+  EVENT_TYPES.CART_ADD,
+  EVENT_TYPES.CHECKOUT_START,
+]);
+
+async function upsertLivePresence(
+  e: TrackEventInput,
+  geoFields: Record<string, string>,
+  timestamp: string
+) {
+  if (!PRESENCE_EVENT_TYPES.has(e.type)) return;
+  const path = (e.path ?? "").trim() || "/";
+  // Don't show staff browsing /admin as storefront live customers.
+  if (path.startsWith("/admin") || path.startsWith("/ses-email")) return;
+
+  const meta = (e.metadata ?? {}) as Record<string, string | undefined>;
+  const expiresAt = Math.floor(Date.now() / 1000) + LIVE_VISITOR_TTL_SECONDS;
+
+  const names: Record<string, string> = {
+    "#path": "path",
+    "#entity": "entityType",
+  };
+  const values: Record<string, unknown> = {
+    ":path": path,
+    ":ls": timestamp,
+    ":exp": expiresAt,
+    ":sid": e.sessionId,
+    ":entity": "live_presence",
+  };
+  const sets = [
+    "#entity = :entity",
+    "sessionId = :sid",
+    "#path = :path",
+    "lastSeen = :ls",
+    "firstSeen = if_not_exists(firstSeen, :ls)",
+    "expiresAt = :exp",
+  ];
+
+  const optional: Array<[string, string | undefined]> = [
+    ["country", geoFields.country],
+    ["city", geoFields.city],
+    ["region", geoFields.region],
+    ["regionName", geoFields.regionName],
+    ["timezone", meta.timezone],
+    ["locale", meta.locale],
+    ["deviceType", meta.deviceType],
+    ["browser", meta.browser],
+    ["os", meta.os],
+    ["referrer", e.referrer],
+    ["name", meta.name?.trim()],
+    ["email", meta.email?.trim()],
+    ["phone", meta.phone?.trim()],
+    ["productSlug", e.productSlug],
+  ];
+  let i = 0;
+  for (const [field, value] of optional) {
+    if (!value) continue;
+    const nk = `#o${i}`;
+    const vk = `:o${i}`;
+    names[nk] = field;
+    values[vk] = value;
+    sets.push(`${nk} = ${vk}`);
+    i += 1;
+  }
+
+  await docClient.send(
+    new UpdateCommand({
+      TableName: EVENTS_TABLE,
+      Key: { PK: eventKeys.presencePk(), SK: eventKeys.presenceSk(e.sessionId) },
+      UpdateExpression: `SET ${sets.join(", ")}`,
+      ExpressionAttributeNames: names,
+      ExpressionAttributeValues: values,
+    })
+  );
+}
 
 /** Atomically increment one or more counters on a daily rollup item. */
 async function incrementRollup(
@@ -100,6 +180,11 @@ async function persistEvent(e: TrackEventInput, edgeGeo: ReturnType<typeof viewe
   // Skip hot-key rollup writes under load tests; still persist the event row.
   const { isLoadTestMode } = await import("../lib/load-test");
   if (isLoadTestMode()) return;
+
+  // Keep a short-TTL presence row for the live visitors map (best-effort).
+  void upsertLivePresence(e, geoFields, timestamp).catch((err) => {
+    console.warn("live presence upsert failed", err);
+  });
 
   // page_view dominates traffic — sample TYPE rollups to protect ROLLUP#day partition under spikes.
   // Raw events remain complete for session timelines / rebuilds.

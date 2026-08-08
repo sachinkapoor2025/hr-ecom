@@ -19,7 +19,11 @@ import {
   businessDaysBetween,
   utcDayBucketsForBusinessDays,
   instantToBusinessDay,
+  LIVE_VISITOR_TTL_SECONDS,
+  approxGeoCoords,
   type Order,
+  type LiveVisitor,
+  type LiveVisitorsResponse,
 } from "@hr-ecom/shared";
 import { docClient, EVENTS_TABLE, CUSTOMERS_TABLE, CARTS_TABLE, ORDERS_TABLE, dayBucket, now } from "../lib/db";
 import { ok, forbidden, badRequest } from "../lib/response";
@@ -564,6 +568,88 @@ export async function listSessions(event: APIGatewayProxyEventV2) {
     identity: { known: knownCount, anonymous: anonymousCount },
     total: list.length,
   });
+}
+
+/** Active storefront visitors (presence TTL rows on the events table). */
+export async function listLiveVisitors(event: APIGatewayProxyEventV2) {
+  if (!requireAdmin(event)) return forbidden();
+
+  const items: Record<string, unknown>[] = [];
+  let ExclusiveStartKey: Record<string, unknown> | undefined;
+  do {
+    const res = await docClient.send(
+      new QueryCommand({
+        TableName: EVENTS_TABLE,
+        KeyConditionExpression: "PK = :pk",
+        ExpressionAttributeValues: { ":pk": eventKeys.presencePk() },
+        ExclusiveStartKey,
+        Limit: 200,
+      })
+    );
+    items.push(...((res.Items ?? []) as Record<string, unknown>[]));
+    ExclusiveStartKey = res.LastEvaluatedKey as Record<string, unknown> | undefined;
+  } while (ExclusiveStartKey);
+
+  const cutoffMs = Date.now() - LIVE_VISITOR_TTL_SECONDS * 1000;
+  const nowIso = now();
+  const visitors: LiveVisitor[] = [];
+
+  for (const item of items) {
+    const lastSeen = typeof item.lastSeen === "string" ? item.lastSeen : "";
+    if (!lastSeen) continue;
+    const lastMs = Date.parse(lastSeen);
+    if (!Number.isFinite(lastMs) || lastMs < cutoffMs) continue;
+    const path = typeof item.path === "string" ? item.path : "/";
+    if (path.startsWith("/admin") || path.startsWith("/ses-email")) continue;
+
+    const country = typeof item.country === "string" ? item.country : undefined;
+    const city = typeof item.city === "string" ? item.city : undefined;
+    const region = typeof item.region === "string" ? item.region : undefined;
+    const { lat, lng } = approxGeoCoords({ country, city, region });
+
+    visitors.push({
+      sessionId: String(item.sessionId ?? ""),
+      lastSeen,
+      firstSeen: typeof item.firstSeen === "string" ? item.firstSeen : undefined,
+      path,
+      country,
+      city,
+      region,
+      regionName: typeof item.regionName === "string" ? item.regionName : undefined,
+      timezone: typeof item.timezone === "string" ? item.timezone : undefined,
+      locale: typeof item.locale === "string" ? item.locale : undefined,
+      deviceType: typeof item.deviceType === "string" ? item.deviceType : undefined,
+      browser: typeof item.browser === "string" ? item.browser : undefined,
+      os: typeof item.os === "string" ? item.os : undefined,
+      referrer: typeof item.referrer === "string" ? item.referrer : undefined,
+      name: typeof item.name === "string" ? item.name : undefined,
+      email: typeof item.email === "string" ? item.email : undefined,
+      phone: typeof item.phone === "string" ? item.phone : undefined,
+      lat,
+      lng,
+      secondsAgo: Math.max(0, Math.round((Date.now() - lastMs) / 1000)),
+    });
+  }
+
+  visitors.sort((a, b) => b.lastSeen.localeCompare(a.lastSeen));
+
+  const countryCounts = new Map<string, number>();
+  for (const v of visitors) {
+    const key = (v.country || "??").toUpperCase();
+    countryCounts.set(key, (countryCounts.get(key) ?? 0) + 1);
+  }
+  const byCountry = [...countryCounts.entries()]
+    .map(([country, count]) => ({ country, count }))
+    .sort((a, b) => b.count - a.count);
+
+  const payload: LiveVisitorsResponse = {
+    generatedAt: nowIso,
+    activeWithinSeconds: LIVE_VISITOR_TTL_SECONDS,
+    activeCount: visitors.length,
+    visitors,
+    byCountry,
+  };
+  return ok(payload);
 }
 
 export async function getVisitorAnalytics(event: APIGatewayProxyEventV2) {

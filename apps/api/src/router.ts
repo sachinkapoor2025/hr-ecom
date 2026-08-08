@@ -174,6 +174,7 @@ const routes: Route[] = [
   { method: "GET", pattern: /^\/admin\/analytics\/searches$/, handler: analytics.getTopSearches },
   { method: "GET", pattern: /^\/admin\/analytics\/insights$/, handler: analytics.getAnalyticsInsights },
   { method: "GET", pattern: /^\/admin\/analytics\/visitors$/, handler: analytics.getVisitorAnalytics },
+  { method: "GET", pattern: /^\/admin\/live-visitors$/, handler: analytics.listLiveVisitors },
   { method: "GET", pattern: /^\/admin\/sessions$/, handler: analytics.listSessions },
   { method: "GET", pattern: /^\/admin\/sessions\/([^/]+)$/, handler: analytics.getSessionTimeline, params: ["sessionId"] },
   { method: "GET", pattern: /^\/admin\/carts\/abandoned$/, handler: adminCarts.getAbandonedCarts },

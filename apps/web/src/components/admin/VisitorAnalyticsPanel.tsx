@@ -1,8 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { formatViewerLocation, ADMIN_ANALYTICS_TIMEZONE, businessDayKey } from "@hr-ecom/shared";
+import {
+  formatViewerLocation,
+  ADMIN_ANALYTICS_TIMEZONE,
+  businessDayKey,
+  type LiveVisitorsResponse,
+} from "@hr-ecom/shared";
 import { useApiClient } from "@/lib/auth-context";
 import {
   downloadCsv,
@@ -14,6 +19,7 @@ import {
 import { TableControls } from "@/components/admin/TableControls";
 import { CountryPie3D, type CountrySlice } from "@/components/admin/CountryPie3D";
 import { ChartLegend, DailyVisitorsChart, type DailyVisitorPoint } from "@/components/admin/Charts";
+import { LiveVisitorsMap } from "@/components/admin/LiveVisitorsMap";
 
 interface SessionSummary {
   sessionId: string;
@@ -111,11 +117,26 @@ export function VisitorAnalyticsPanel() {
   const [customTo, setCustomTo] = useState(todayIso());
   const [appliedCustom, setAppliedCustom] = useState({ from: daysAgoIso(7), to: todayIso() });
   const [data, setData] = useState<VisitorAnalyticsResponse | null>(null);
+  const [live, setLive] = useState<LiveVisitorsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
+
+  const loadLive = useCallback(() => {
+    apiClient<LiveVisitorsResponse>("/admin/live-visitors")
+      .then(setLive)
+      .catch(() => {
+        /* keep last snapshot on transient errors */
+      });
+  }, [apiClient]);
+
+  useEffect(() => {
+    loadLive();
+    const id = window.setInterval(loadLive, 15_000);
+    return () => window.clearInterval(id);
+  }, [loadLive]);
 
   const query = useMemo(() => {
     if (preset === "custom") {
@@ -224,6 +245,11 @@ export function VisitorAnalyticsPanel() {
 
   return (
     <div className="space-y-6">
+      <LiveVisitorsMap
+        visitors={live?.visitors ?? []}
+        activeWithinSeconds={live?.activeWithinSeconds ?? 180}
+      />
+
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold">Visitor analytics</h2>
