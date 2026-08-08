@@ -156,6 +156,21 @@ export const orderSchema = z.object({
   razorpayPaymentId: z.string().optional(),
   trackingNumber: z.string().optional(),
   carrier: z.string().optional(),
+  /**
+   * Per-vendor fulfillment (tracking) for mixed Orange County + UsaRakhi carts.
+   * Legacy single-vendor orders may only have top-level trackingNumber/carrier.
+   */
+  vendorFulfillments: z
+    .array(
+      z.object({
+        vendorSlug: z.string().min(1).max(80),
+        trackingNumber: z.string().optional(),
+        carrier: z.string().optional(),
+        status: z.enum(["pending", "processing", "shipped", "delivered"]).optional(),
+        updatedAt: z.string().optional(),
+      })
+    )
+    .optional(),
   /** Last shipment status string received from vendor tracking API (e.g. in_transit). */
   vendorShipmentStatus: z.string().max(80).optional(),
   adminNotes: z.string().max(2000).optional(),
@@ -188,6 +203,17 @@ export const orderStatusUpdateSchema = z.object({
   status: orderStatusEnum.optional(),
   trackingNumber: z.string().optional(),
   carrier: z.string().optional(),
+  /** Upsert per-vendor tracking (mixed OC + UsaRakhi orders). */
+  vendorFulfillments: z
+    .array(
+      z.object({
+        vendorSlug: z.string().min(1).max(80),
+        trackingNumber: z.string().optional(),
+        carrier: z.string().optional(),
+        status: z.enum(["pending", "processing", "shipped", "delivered"]).optional(),
+      })
+    )
+    .optional(),
   note: z.string().max(500).optional(),
   adminNotes: z.string().max(2000).optional(),
   estimatedDeliveryAt: z.string().optional(),

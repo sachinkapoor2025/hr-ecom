@@ -9,6 +9,10 @@ import {
   productHasShippingDims,
   productKeys,
   shippingSettingsSchema,
+  ensureVendorFulfillments,
+  upsertVendorFulfillment,
+  VENDOR_USARAKHI,
+  orderHasVendor,
   type CartItem,
   type Order,
   type Product,
@@ -215,6 +219,17 @@ export async function buyLabelForOrder(event: APIGatewayProxyEventV2) {
     });
 
     const timestamp = now();
+    let vendorFulfillments = ensureVendorFulfillments(order);
+    // USPS labels are purchased by UsaRakhi for our own inventory lines.
+    if (orderHasVendor(order, VENDOR_USARAKHI)) {
+      vendorFulfillments = upsertVendorFulfillment(vendorFulfillments, {
+        vendorSlug: VENDOR_USARAKHI,
+        trackingNumber: label.trackingNumber,
+        carrier: "USPS",
+        status: "shipped",
+        updatedAt: timestamp,
+      });
+    }
     const updated = {
       ...order,
       trackingNumber: label.trackingNumber,
@@ -225,6 +240,7 @@ export async function buyLabelForOrder(event: APIGatewayProxyEventV2) {
       labelError: undefined,
       shippingServiceName: label.shippingServiceName ?? order.shippingServiceName,
       shippingServiceCode: label.shippingServiceCode ?? order.shippingServiceCode,
+      vendorFulfillments,
       updatedAt: timestamp,
     };
 

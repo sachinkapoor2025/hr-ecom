@@ -5,7 +5,17 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useApiClient } from "@/lib/auth-context";
 import type { Order, RateQuote } from "@hr-ecom/shared";
-import { ORDER_STATUS } from "@hr-ecom/shared";
+import {
+  ORDER_STATUS,
+  VENDOR_ORANGE_COUNTY,
+  VENDOR_USARAKHI,
+  ensureVendorFulfillments,
+  isMultiVendorOrder,
+  lineVendorKey,
+  orderHasOrangeCounty,
+  orderHasUsarakhi,
+  vendorDisplayLabel,
+} from "@hr-ecom/shared";
 import {
   statusLabel,
   badgeClass,
@@ -38,6 +48,9 @@ export default function AdminOrderDetailPage() {
   const [newStatus, setNewStatus] = useState("");
   const [trackingNumber, setTrackingNumber] = useState("");
   const [carrier, setCarrier] = useState("");
+  const [vendorTracking, setVendorTracking] = useState<
+    Record<string, { trackingNumber: string; carrier: string }>
+  >({});
   const [note, setNote] = useState("");
   const [adminNotes, setAdminNotes] = useState("");
   const [estimatedDeliveryAt, setEstimatedDeliveryAt] = useState("");
@@ -51,13 +64,28 @@ export default function AdminOrderDetailPage() {
   const [rateOptions, setRateOptions] = useState<RateQuote[]>([]);
   const [selectedRateId, setSelectedRateId] = useState("");
 
+  const syncVendorTrackingState = (o: AdminOrder) => {
+    const rows = ensureVendorFulfillments(o);
+    const map: Record<string, { trackingNumber: string; carrier: string }> = {};
+    for (const f of rows) {
+      map[f.vendorSlug] = {
+        trackingNumber: f.trackingNumber ?? "",
+        carrier: f.carrier ?? "",
+      };
+    }
+    setVendorTracking(map);
+    // Keep legacy single fields in sync with UsaRakhi lane (or sole vendor).
+    const us = rows.find((r) => r.vendorSlug === VENDOR_USARAKHI) ?? rows[0];
+    setTrackingNumber(us?.trackingNumber ?? o.trackingNumber ?? "");
+    setCarrier(us?.carrier ?? o.carrier ?? "");
+  };
+
   const load = useCallback(async () => {
     setLoading(true);
     try {
       const data = await apiClient<{ order: AdminOrder }>(`/admin/orders/${orderId}`);
       setOrder(data.order);
-      setTrackingNumber(data.order.trackingNumber ?? "");
-      setCarrier(data.order.carrier ?? "");
+      syncVendorTrackingState(data.order);
       setAdminNotes(data.order.adminNotes ?? "");
       setEstimatedDeliveryAt(data.order.estimatedDeliveryAt?.slice(0, 10) ?? "");
       setSelectedRateId(data.order.shippingRateId ?? "");
@@ -86,17 +114,27 @@ export default function AdminOrderDetailPage() {
         order?.status === ORDER_STATUS.PROCESSING ||
         order?.status === ORDER_STATUS.SHIPPED;
 
-      const payload: Record<string, string | undefined> = {
+      const multi = order ? isMultiVendorOrder(order) : false;
+      const payload: Record<string, unknown> = {
         note: note || undefined,
         adminNotes,
       };
 
       if (shippingFieldsRelevant) {
-        payload.trackingNumber = trackingNumber || undefined;
-        payload.carrier = carrier || undefined;
         payload.estimatedDeliveryAt = estimatedDeliveryAt
           ? new Date(estimatedDeliveryAt).toISOString()
           : undefined;
+        if (multi) {
+          const lanes = ensureVendorFulfillments(order!);
+          payload.vendorFulfillments = lanes.map((f) => ({
+            vendorSlug: f.vendorSlug,
+            trackingNumber: vendorTracking[f.vendorSlug]?.trackingNumber?.trim() || undefined,
+            carrier: vendorTracking[f.vendorSlug]?.carrier?.trim() || undefined,
+          }));
+        } else {
+          payload.trackingNumber = trackingNumber || undefined;
+          payload.carrier = carrier || undefined;
+        }
       }
 
       const allowed = order ? nextStatuses(order.status) : [];
@@ -108,6 +146,7 @@ export default function AdminOrderDetailPage() {
         body: JSON.stringify(payload),
       });
       setOrder(data.order);
+      syncVendorTrackingState(data.order);
       setNote("");
       setMessage("Order updated.");
       const next = nextStatuses(data.order.status);
@@ -212,8 +251,7 @@ export default function AdminOrderDetailPage() {
         method: "POST",
       });
       setOrder(data.order);
-      setTrackingNumber(data.order.trackingNumber ?? "");
-      setCarrier(data.order.carrier ?? "");
+      syncVendorTrackingState(data.order);
       setMessage("USPS label purchased.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Label purchase failed.");
@@ -284,9 +322,10 @@ export default function AdminOrderDetailPage() {
     order.labelStatus !== "purchased";
   const labelMargin =
     order.labelCost != null ? order.shipping - order.labelCost : null;
-  const isOrangeCounty =
-    order.vendorSlugs?.includes("orange-county") ||
-    order.items?.some((i) => i.vendorSlug === "orange-county");
+  const hasOc = orderHasOrangeCounty(order);
+  const hasUs = orderHasUsarakhi(order);
+  const multiVendor = isMultiVendorOrder(order);
+  const fulfillments = ensureVendorFulfillments(order);
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
@@ -308,9 +347,14 @@ export default function AdminOrderDetailPage() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {isOrangeCounty && (
+          {hasOc && (
             <span className="px-3 py-1 rounded-full text-sm font-semibold bg-orange-100 text-orange-800">
               Orange County
+            </span>
+          )}
+          {hasUs && (
+            <span className="px-3 py-1 rounded-full text-sm font-semibold bg-slate-100 text-slate-700">
+              UsaRakhi
             </span>
           )}
           <span className={`px-3 py-1 rounded-full text-sm font-medium ${badgeClass(order.status)}`}>
@@ -426,9 +470,13 @@ export default function AdminOrderDetailPage() {
                       >
                         {item.name}
                       </Link>
-                      {item.vendorSlug === "orange-county" && (
+                      {lineVendorKey(item) === VENDOR_ORANGE_COUNTY ? (
                         <span className="rounded-full bg-orange-100 text-orange-800 px-2 py-0.5 text-[10px] font-semibold">
                           Orange County
+                        </span>
+                      ) : (
+                        <span className="rounded-full bg-slate-100 text-slate-700 px-2 py-0.5 text-[10px] font-semibold">
+                          UsaRakhi
                         </span>
                       )}
                     </div>
@@ -656,12 +704,34 @@ export default function AdminOrderDetailPage() {
                 {buyingLabel ? "Purchasing label…" : "Buy USPS label"}
               </button>
             )}
-            {order.trackingNumber && (
-              <p className="text-slate-600 mt-1">
-                Tracking: {order.trackingNumber}
-                {order.carrier ? ` (${order.carrier})` : ""}
+            <div className="mt-3 space-y-2 border-t border-slate-100 pt-3">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                Vendor shipping
               </p>
-            )}
+              {fulfillments.map((f) => (
+                <div key={f.vendorSlug} className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
+                  <p className="text-xs font-semibold text-slate-700">
+                    {vendorDisplayLabel(f.vendorSlug)}
+                    {f.status ? (
+                      <span className="ml-2 font-normal text-slate-500 capitalize">
+                        · {f.status}
+                      </span>
+                    ) : null}
+                  </p>
+                  <p className="text-slate-600 mt-0.5 text-sm">
+                    {f.trackingNumber
+                      ? `${f.trackingNumber}${f.carrier ? ` (${f.carrier})` : ""}`
+                      : "No tracking yet"}
+                  </p>
+                </div>
+              ))}
+              {multiVendor && (
+                <p className="text-[11px] text-slate-500">
+                  Mixed cart: Orange County and UsaRakhi each get their own AWB. Order becomes Shipped
+                  when both are filled.
+                </p>
+              )}
+            </div>
             {order.estimatedDeliveryAt && (
               <p className="text-slate-600 mt-1">
                 Est. delivery: {new Date(order.estimatedDeliveryAt).toLocaleDateString()}
@@ -823,25 +893,80 @@ export default function AdminOrderDetailPage() {
                     />
                   </label>
 
-                  <label className="block text-xs font-medium text-slate-500">
-                    Tracking number
-                    <input
-                      value={trackingNumber}
-                      onChange={(e) => setTrackingNumber(e.target.value)}
-                      className="mt-1 w-full border border-slate-300 rounded-lg px-2 py-2 text-sm"
-                      placeholder="e.g. 1Z999…"
-                    />
-                  </label>
+                  {multiVendor ? (
+                    <div className="space-y-3">
+                      {fulfillments.map((f) => (
+                        <div
+                          key={f.vendorSlug}
+                          className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-2"
+                        >
+                          <p className="text-xs font-semibold text-slate-700">
+                            {vendorDisplayLabel(f.vendorSlug)} tracking
+                          </p>
+                          <label className="block text-xs font-medium text-slate-500">
+                            Tracking number
+                            <input
+                              value={vendorTracking[f.vendorSlug]?.trackingNumber ?? ""}
+                              onChange={(e) =>
+                                setVendorTracking((prev) => ({
+                                  ...prev,
+                                  [f.vendorSlug]: {
+                                    trackingNumber: e.target.value,
+                                    carrier: prev[f.vendorSlug]?.carrier ?? "",
+                                  },
+                                }))
+                              }
+                              className="mt-1 w-full border border-slate-300 rounded-lg px-2 py-2 text-sm bg-white"
+                              placeholder={
+                                f.vendorSlug === VENDOR_ORANGE_COUNTY
+                                  ? "OC / vendor AWB"
+                                  : "e.g. USPS / FedEx"
+                              }
+                            />
+                          </label>
+                          <label className="block text-xs font-medium text-slate-500">
+                            Carrier
+                            <input
+                              value={vendorTracking[f.vendorSlug]?.carrier ?? ""}
+                              onChange={(e) =>
+                                setVendorTracking((prev) => ({
+                                  ...prev,
+                                  [f.vendorSlug]: {
+                                    trackingNumber: prev[f.vendorSlug]?.trackingNumber ?? "",
+                                    carrier: e.target.value,
+                                  },
+                                }))
+                              }
+                              className="mt-1 w-full border border-slate-300 rounded-lg px-2 py-2 text-sm bg-white"
+                              placeholder="e.g. FedEx, DHL, USPS"
+                            />
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <>
+                      <label className="block text-xs font-medium text-slate-500">
+                        Tracking number
+                        <input
+                          value={trackingNumber}
+                          onChange={(e) => setTrackingNumber(e.target.value)}
+                          className="mt-1 w-full border border-slate-300 rounded-lg px-2 py-2 text-sm"
+                          placeholder="e.g. 1Z999…"
+                        />
+                      </label>
 
-                  <label className="block text-xs font-medium text-slate-500">
-                    Carrier
-                    <input
-                      value={carrier}
-                      onChange={(e) => setCarrier(e.target.value)}
-                      className="mt-1 w-full border border-slate-300 rounded-lg px-2 py-2 text-sm"
-                      placeholder="e.g. FedEx, DHL"
-                    />
-                  </label>
+                      <label className="block text-xs font-medium text-slate-500">
+                        Carrier
+                        <input
+                          value={carrier}
+                          onChange={(e) => setCarrier(e.target.value)}
+                          className="mt-1 w-full border border-slate-300 rounded-lg px-2 py-2 text-sm"
+                          placeholder="e.g. FedEx, DHL"
+                        />
+                      </label>
+                    </>
+                  )}
                 </>
               )}
 

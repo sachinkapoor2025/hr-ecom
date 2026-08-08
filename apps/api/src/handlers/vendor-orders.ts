@@ -28,9 +28,16 @@ import {
   vendorShipmentUpdateSchema,
   vendorTrackingUpdateSchema,
   displayOrderRef,
+  ensureVendorFulfillments,
+  upsertVendorFulfillment,
+  primaryTrackingFromFulfillments,
+  allVendorsHaveTracking,
+  anyVendorHasTracking,
+  isMultiVendorOrder,
   type Order,
   type CartItem,
   type OrderStatusHistoryEntry,
+  type VendorFulfillment,
 } from "@hr-ecom/shared";
 import { docClient, ORDERS_TABLE, PRODUCTS_TABLE, now } from "../lib/db";
 import { ok, unauthorized, badRequest, forbidden, notFound } from "../lib/response";
@@ -274,11 +281,52 @@ async function persistVendorOrderUpdate(
     carrier?: string;
     vendorShipmentStatus?: string;
     note?: string;
+    /** When set, AWB is stored on this vendor lane (does not wipe other vendors). */
+    fulfillmentVendorSlug?: string;
   }
 ) {
   const timestamp = now();
-  const nextStatus = patch.status ?? order.status;
-  const statusChanged = Boolean(patch.status && patch.status !== order.status);
+
+  let vendorFulfillments: VendorFulfillment[] = ensureVendorFulfillments(order);
+  if (patch.fulfillmentVendorSlug && (patch.trackingNumber !== undefined || patch.carrier !== undefined)) {
+    vendorFulfillments = upsertVendorFulfillment(vendorFulfillments, {
+      vendorSlug: patch.fulfillmentVendorSlug,
+      trackingNumber: patch.trackingNumber,
+      carrier: patch.carrier,
+      status: patch.trackingNumber?.trim() ? "shipped" : undefined,
+      updatedAt: timestamp,
+    });
+  }
+
+  const primary = primaryTrackingFromFulfillments(vendorFulfillments);
+  const multi = isMultiVendorOrder(order);
+  const terminal =
+    order.status === ORDER_STATUS.SHIPPED ||
+    order.status === ORDER_STATUS.DELIVERED ||
+    order.status === ORDER_STATUS.COMPLETE;
+
+  let nextStatus = patch.status ?? order.status;
+
+  // Mixed carts: only advance to shipped when every vendor has tracking.
+  if (multi && patch.fulfillmentVendorSlug && !terminal) {
+    const allowed = ORDER_STATUS_TRANSITIONS[order.status] ?? [];
+    if (allVendorsHaveTracking(vendorFulfillments) && allowed.includes(ORDER_STATUS.SHIPPED)) {
+      nextStatus = ORDER_STATUS.SHIPPED;
+    } else if (anyVendorHasTracking(vendorFulfillments)) {
+      if (patch.status === ORDER_STATUS.SHIPPED || patch.status === ORDER_STATUS.DELIVERED) {
+        nextStatus = allowed.includes(ORDER_STATUS.PROCESSING)
+          ? ORDER_STATUS.PROCESSING
+          : order.status;
+      } else if (
+        (order.status === ORDER_STATUS.PAID || order.status === ORDER_STATUS.ACCEPTED) &&
+        allowed.includes(ORDER_STATUS.PROCESSING)
+      ) {
+        nextStatus = ORDER_STATUS.PROCESSING;
+      }
+    }
+  }
+
+  const statusChanged = nextStatus !== order.status;
 
   if (statusChanged) {
     const allowed = ORDER_STATUS_TRANSITIONS[order.status] ?? [];
@@ -287,11 +335,19 @@ async function persistVendorOrderUpdate(
     }
   }
 
+  const historyNote =
+    patch.note ??
+    (multi &&
+    patch.fulfillmentVendorSlug === VENDOR_ORANGE_COUNTY &&
+    !allVendorsHaveTracking(vendorFulfillments)
+      ? "Orange County shipped; UsaRakhi fulfillment still pending"
+      : "Updated by Orange County vendor API");
+
   const historyEntry: OrderStatusHistoryEntry | null = statusChanged
     ? {
         status: nextStatus as OrderStatusHistoryEntry["status"],
         at: timestamp,
-        note: patch.note ?? "Updated by Orange County vendor API",
+        note: historyNote,
       }
     : patch.note
       ? {
@@ -307,8 +363,9 @@ async function persistVendorOrderUpdate(
     statusHistory: historyEntry
       ? [...(order.statusHistory ?? []), historyEntry]
       : order.statusHistory,
-    ...(patch.trackingNumber !== undefined ? { trackingNumber: patch.trackingNumber } : {}),
-    ...(patch.carrier !== undefined ? { carrier: patch.carrier } : {}),
+    vendorFulfillments,
+    ...(primary.trackingNumber ? { trackingNumber: primary.trackingNumber } : {}),
+    ...(primary.carrier ? { carrier: primary.carrier } : {}),
     ...(patch.vendorShipmentStatus !== undefined
       ? { vendorShipmentStatus: patch.vendorShipmentStatus }
       : {}),
@@ -493,28 +550,42 @@ async function applyShipmentUpdate(
   if (mismatch) return badRequest(mismatch);
 
   try {
+    const multi = isMultiVendorOrder(order);
     const nextStatus =
       order.status === ORDER_STATUS.SHIPPED ||
       order.status === ORDER_STATUS.DELIVERED ||
       order.status === ORDER_STATUS.COMPLETE
         ? order.status
-        : ORDER_STATUS.SHIPPED;
+        : multi
+          ? ORDER_STATUS.PROCESSING
+          : ORDER_STATUS.SHIPPED;
 
     const updated = await persistVendorOrderUpdate(order, {
       status: nextStatus,
       trackingNumber: parsed.data.awb.trim(),
       carrier: parsed.data.courierName.trim(),
+      fulfillmentVendorSlug: VENDOR_ORANGE_COUNTY,
       note: `AWB ${parsed.data.awb.trim()} via ${parsed.data.courierName.trim()} (Orange County)`,
     });
+
+    const ocLane = ensureVendorFulfillments(updated).find(
+      (f) => f.vendorSlug === VENDOR_ORANGE_COUNTY
+    );
 
     return ok({
       orderId: displayOrderRef(updated),
       orderNumber: displayOrderRef(updated),
       internalOrderId: updated.orderId,
       status: updated.status,
-      awb: updated.trackingNumber,
-      courierName: updated.carrier,
+      awb: ocLane?.trackingNumber ?? updated.trackingNumber,
+      courierName: ocLane?.carrier ?? updated.carrier,
       updatedAt: updated.updatedAt,
+      multiVendor: multi,
+      vendorFulfillments: ensureVendorFulfillments(updated).map((f) => ({
+        vendorSlug: f.vendorSlug,
+        trackingNumber: f.trackingNumber ?? null,
+        status: f.status ?? null,
+      })),
     });
   } catch (err) {
     return badRequest(err instanceof Error ? err.message : "Could not update shipment");
@@ -548,6 +619,7 @@ async function applyTrackingUpdate(
   try {
     const updated = await persistVendorOrderUpdate(order, {
       ...(mapped && mapped !== order.status ? { status: mapped } : {}),
+      fulfillmentVendorSlug: VENDOR_ORANGE_COUNTY,
       vendorShipmentStatus: statusRaw,
       note,
     });

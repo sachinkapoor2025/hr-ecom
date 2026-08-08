@@ -17,9 +17,17 @@ import {
   singleCheckoutShipment,
   isValidScheduleDeliveryDate,
   preferredDeliveryDateToIso,
+  buildInitialVendorFulfillments,
+  ensureVendorFulfillments,
+  upsertVendorFulfillment,
+  primaryTrackingFromFulfillments,
+  allVendorsHaveTracking,
+  anyVendorHasTracking,
+  isMultiVendorOrder,
   type Order,
   type OrderStatusHistoryEntry,
   type CartItem,
+  type VendorFulfillment,
 } from "@hr-ecom/shared";
 import { resolveCheckoutUsdInrRate } from "../lib/exchange-rate";
 import { docClient, ORDERS_TABLE, CUSTOMERS_TABLE, now } from "../lib/db";
@@ -317,6 +325,7 @@ export async function checkout(event: APIGatewayProxyEventV2) {
         .filter((v): v is string => Boolean(v))
     ),
   ];
+  const vendorFulfillments = buildInitialVendorFulfillments(orderItems as CartItem[]);
 
   const orderNumber = await allocateOrderNumberForCart(orderItems as CartItem[], vendorSlugs);
 
@@ -339,6 +348,7 @@ export async function checkout(event: APIGatewayProxyEventV2) {
     total,
     currency,
     ...(vendorSlugs.length ? { vendorSlugs } : {}),
+    vendorFulfillments,
     status: ORDER_STATUS.PENDING_PAYMENT,
     statusHistory: [{ status: ORDER_STATUS.PENDING_PAYMENT, at: timestamp }],
     shippingAddress: orderShipments[0]?.shippingAddress ?? parsed.data.shippingAddress,
@@ -496,12 +506,84 @@ export async function updateOrderStatus(event: APIGatewayProxyEventV2) {
   }
 
   const timestamp = now();
+
+  let vendorFulfillments: VendorFulfillment[] = ensureVendorFulfillments(order);
+  if (parsed.data.vendorFulfillments?.length) {
+    for (const row of parsed.data.vendorFulfillments) {
+      vendorFulfillments = upsertVendorFulfillment(vendorFulfillments, {
+        vendorSlug: row.vendorSlug,
+        trackingNumber: row.trackingNumber,
+        carrier: row.carrier,
+        status: row.status,
+        updatedAt: timestamp,
+      });
+    }
+  } else if (parsed.data.trackingNumber !== undefined || parsed.data.carrier !== undefined) {
+    // Legacy single tracking field → apply to sole vendor (or UsaRakhi when mixed if no OC patch).
+    const target =
+      vendorFulfillments.length === 1
+        ? vendorFulfillments[0]!.vendorSlug
+        : vendorFulfillments.find((f) => f.vendorSlug !== "orange-county")?.vendorSlug ??
+          vendorFulfillments[0]!.vendorSlug;
+    vendorFulfillments = upsertVendorFulfillment(vendorFulfillments, {
+      vendorSlug: target,
+      trackingNumber: parsed.data.trackingNumber,
+      carrier: parsed.data.carrier,
+      updatedAt: timestamp,
+    });
+  }
+
+  const primary = primaryTrackingFromFulfillments(vendorFulfillments);
+
+  // Mixed carts: do not mark whole order shipped until every vendor has an AWB,
+  // unless admin explicitly chose shipped (still allowed for override).
+  let resolvedStatus = nextStatus;
+  if (
+    parsed.data.status === ORDER_STATUS.SHIPPED &&
+    isMultiVendorOrder(order) &&
+    !allVendorsHaveTracking(vendorFulfillments)
+  ) {
+    return badRequest(
+      "This order has multiple vendors. Add tracking for Orange County and UsaRakhi before marking Shipped, or save each vendor tracking first."
+    );
+  }
+  if (
+    !parsed.data.status &&
+    isMultiVendorOrder(order) &&
+    allVendorsHaveTracking(vendorFulfillments) &&
+    order.status !== ORDER_STATUS.SHIPPED &&
+    order.status !== ORDER_STATUS.DELIVERED &&
+    order.status !== ORDER_STATUS.COMPLETE
+  ) {
+    const allowed = ORDER_STATUS_TRANSITIONS[order.status] ?? [];
+    if (allowed.includes(ORDER_STATUS.SHIPPED)) {
+      resolvedStatus = ORDER_STATUS.SHIPPED;
+    } else if (allowed.includes(ORDER_STATUS.PROCESSING) && anyVendorHasTracking(vendorFulfillments)) {
+      resolvedStatus = ORDER_STATUS.PROCESSING;
+    }
+  } else if (
+    !parsed.data.status &&
+    isMultiVendorOrder(order) &&
+    anyVendorHasTracking(vendorFulfillments) &&
+    !allVendorsHaveTracking(vendorFulfillments) &&
+    (order.status === ORDER_STATUS.PAID || order.status === ORDER_STATUS.ACCEPTED)
+  ) {
+    const allowed = ORDER_STATUS_TRANSITIONS[order.status] ?? [];
+    if (allowed.includes(ORDER_STATUS.PROCESSING)) {
+      resolvedStatus = ORDER_STATUS.PROCESSING;
+    }
+  }
+
   const historyEntry: OrderStatusHistoryEntry | null =
-    parsed.data.status && parsed.data.status !== order.status
+    resolvedStatus !== order.status
       ? {
-          status: parsed.data.status,
+          status: resolvedStatus,
           at: timestamp,
-          ...(parsed.data.note ? { note: parsed.data.note } : {}),
+          ...(parsed.data.note
+            ? { note: parsed.data.note }
+            : resolvedStatus === ORDER_STATUS.SHIPPED && isMultiVendorOrder(order)
+              ? { note: "All vendors shipped — order marked shipped" }
+              : {}),
         }
       : parsed.data.note
         ? { status: order.status, at: timestamp, note: parsed.data.note }
@@ -509,12 +591,13 @@ export async function updateOrderStatus(event: APIGatewayProxyEventV2) {
 
   const updated: StoredOrder = {
     ...order,
-    status: nextStatus,
+    status: resolvedStatus,
     statusHistory: historyEntry
       ? [...(order.statusHistory ?? []), historyEntry]
       : order.statusHistory,
-    ...(parsed.data.trackingNumber !== undefined && { trackingNumber: parsed.data.trackingNumber }),
-    ...(parsed.data.carrier !== undefined && { carrier: parsed.data.carrier }),
+    vendorFulfillments,
+    ...(primary.trackingNumber ? { trackingNumber: primary.trackingNumber } : {}),
+    ...(primary.carrier ? { carrier: primary.carrier } : {}),
     ...(parsed.data.adminNotes !== undefined && { adminNotes: parsed.data.adminNotes }),
     ...(parsed.data.estimatedDeliveryAt !== undefined && {
       estimatedDeliveryAt: parsed.data.estimatedDeliveryAt,
@@ -533,22 +616,21 @@ export async function updateOrderStatus(event: APIGatewayProxyEventV2) {
     }),
     ...(parsed.data.labelStatus !== undefined && { labelStatus: parsed.data.labelStatus }),
     ...(parsed.data.labelError !== undefined && { labelError: parsed.data.labelError }),
-    ...applyDeliveryReviewSchedule(order, nextStatus, timestamp),
+    ...applyDeliveryReviewSchedule(order, resolvedStatus, timestamp),
     updatedAt: timestamp,
-    ...(parsed.data.status &&
-      parsed.data.status !== order.status && {
-        GSI3PK: orderKeys.gsi3pk(nextStatus),
-        GSI3SK: orderKeys.gsi3sk(order.createdAt),
-      }),
+    ...(resolvedStatus !== order.status && {
+      GSI3PK: orderKeys.gsi3pk(resolvedStatus),
+      GSI3SK: orderKeys.gsi3sk(order.createdAt),
+    }),
   };
 
   await docClient.send(new PutCommand({ TableName: ORDERS_TABLE, Item: updated }));
 
-  const statusChanged = Boolean(parsed.data.status && parsed.data.status !== order.status);
+  const statusChanged = resolvedStatus !== order.status;
 
   if (
     order.status === ORDER_STATUS.PENDING_PAYMENT &&
-    nextStatus === ORDER_STATUS.CANCELLED
+    resolvedStatus === ORDER_STATUS.CANCELLED
   ) {
     const emailResult = await notifyAdminOrderPaymentFailed(updated);
     if (!emailResult.ok) console.error("Order payment failed email failed:", emailResult.error);
@@ -560,7 +642,7 @@ export async function updateOrderStatus(event: APIGatewayProxyEventV2) {
     statusChanged &&
     !(
       order.status === ORDER_STATUS.PENDING_PAYMENT &&
-      nextStatus === ORDER_STATUS.CANCELLED
+      resolvedStatus === ORDER_STATUS.CANCELLED
     )
   ) {
     const statusEmailResult = await notifyCustomerOrderStatusChange(updated);
