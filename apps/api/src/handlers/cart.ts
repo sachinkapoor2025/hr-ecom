@@ -136,6 +136,7 @@ export async function addToCart(event: APIGatewayProxyEventV2) {
     images?: string[];
     inventory: number;
     vendorSlug?: string;
+    vendorCost?: number;
     sku?: string;
     couponExcluded?: boolean;
     tags?: string[];
@@ -187,6 +188,9 @@ export async function addToCart(event: APIGatewayProxyEventV2) {
     quantity: parsed.data.quantity,
     image: resolveProductImageUrl(product.images?.[0]),
     ...(product.vendorSlug ? { vendorSlug: product.vendorSlug } : {}),
+    ...(typeof product.vendorCost === "number" && product.vendorCost >= 0
+      ? { vendorCost: product.vendorCost }
+      : {}),
     ...(product.sku ? { sku: product.sku } : {}),
     ...(couponExcluded ? { couponExcluded: true } : {}),
     ...(addons.length ? { addons } : {}),

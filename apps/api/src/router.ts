@@ -22,6 +22,7 @@ import * as adminVendorApi from "./handlers/admin-vendor-api";
 import * as expenses from "./handlers/expenses";
 import * as paymentLedger from "./handlers/payment-ledger";
 import * as paymentReconciliation from "./handlers/payment-reconciliation";
+import * as vendorManagement from "./handlers/vendor-management";
 import * as reviews from "./handlers/reviews";
 import { stripeWebhook } from "./handlers/payments/stripe";
 import {
@@ -119,6 +120,26 @@ const routes: Route[] = [
     method: "GET",
     pattern: /^\/admin\/payment-reconciliation$/,
     handler: paymentReconciliation.getPaymentReconciliation,
+  },
+  // Super admin: vendor order economics + payout ledger (website API, not vendor API)
+  {
+    method: "GET",
+    pattern: /^\/admin\/vendor-management$/,
+    handler: vendorManagement.getVendorManagement,
+  },
+  { method: "GET", pattern: /^\/admin\/vendor-payouts$/, handler: vendorManagement.listVendorPayouts },
+  { method: "POST", pattern: /^\/admin\/vendor-payouts$/, handler: vendorManagement.createVendorPayout },
+  {
+    method: "PUT",
+    pattern: /^\/admin\/vendor-payouts\/([^/]+)$/,
+    handler: vendorManagement.updateVendorPayout,
+    params: ["payoutId"],
+  },
+  {
+    method: "DELETE",
+    pattern: /^\/admin\/vendor-payouts\/([^/]+)$/,
+    handler: vendorManagement.deleteVendorPayout,
+    params: ["payoutId"],
   },
   // Admin console for Orange County Vendor API (proxies vendor handlers; key stays server-side).
   { method: "GET", pattern: /^\/admin\/vendor-api\/health$/, handler: adminVendorApi.adminVendorHealth },

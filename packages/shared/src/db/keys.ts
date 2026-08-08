@@ -130,6 +130,13 @@ export const paymentLedgerKeys = {
   pkPrefix: () => "PAYLEDGER#" as const,
 };
 
+/** Vendor payout ledger entries (config table) — amounts paid to fulfill vendors. */
+export const vendorPayoutKeys = {
+  pk: (payoutId: string) => `VENDORPAY#${payoutId}`,
+  sk: () => "META" as const,
+  pkPrefix: () => "VENDORPAY#" as const,
+};
+
 // ---- email campaigns table (SES bulk marketing) ----
 export const sesEmailKeys = {
   campaignPk: (campaignId: string) => `CAMPAIGN#${campaignId}`,
