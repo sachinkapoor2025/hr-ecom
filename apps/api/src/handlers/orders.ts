@@ -1,4 +1,4 @@
-import { PutCommand, GetCommand, QueryCommand, DeleteCommand } from "@aws-sdk/lib-dynamodb";
+import { PutCommand, GetCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import type { APIGatewayProxyEventV2 } from "aws-lambda";
 import { v4 as uuidv4 } from "uuid";
 import {
@@ -6,7 +6,6 @@ import {
   leadCaptureSchema,
   updateLeadSchema,
   orderStatusUpdateSchema,
-  bulkDeleteOrdersSchema,
   orderKeys,
   customerKeys,
   ORDER_STATUS,
@@ -25,7 +24,7 @@ import {
 import { resolveCheckoutUsdInrRate } from "../lib/exchange-rate";
 import { docClient, ORDERS_TABLE, CUSTOMERS_TABLE, now } from "../lib/db";
 import { ok, created, badRequest, unauthorized, forbidden, notFound } from "../lib/response";
-import { getAuth, getSessionId, getUserOrSessionKey, requireAdmin, requireSuperAdmin } from "../lib/auth";
+import { getAuth, getSessionId, getUserOrSessionKey, requireAdmin } from "../lib/auth";
 import { getCartHandler, clearCartForUser } from "./cart";
 import {
   notifyAdminLead,
@@ -571,52 +570,6 @@ export async function updateOrderStatus(event: APIGatewayProxyEventV2) {
   }
 
   return ok({ order: updated });
-}
-
-export async function deleteAdminOrder(event: APIGatewayProxyEventV2) {
-  if (!requireSuperAdmin(event)) return forbidden();
-
-  const orderId = event.pathParameters?.orderId;
-  if (!orderId) return badRequest("Order ID required");
-
-  const order = await fetchOrder(orderId);
-  if (!order) return notFound("Order not found");
-
-  await docClient.send(
-    new DeleteCommand({
-      TableName: ORDERS_TABLE,
-      Key: { PK: orderKeys.pk(orderId), SK: orderKeys.sk() },
-    })
-  );
-  return ok({ deleted: true, orderId });
-}
-
-export async function bulkDeleteAdminOrders(event: APIGatewayProxyEventV2) {
-  if (!requireSuperAdmin(event)) return forbidden();
-
-  const body = JSON.parse(event.body ?? "{}");
-  const parsed = bulkDeleteOrdersSchema.safeParse(body);
-  if (!parsed.success) return badRequest(parsed.error.message);
-
-  const deleted: string[] = [];
-  const notFound: string[] = [];
-
-  for (const orderId of parsed.data.orderIds) {
-    const order = await fetchOrder(orderId);
-    if (!order) {
-      notFound.push(orderId);
-      continue;
-    }
-    await docClient.send(
-      new DeleteCommand({
-        TableName: ORDERS_TABLE,
-        Key: { PK: orderKeys.pk(orderId), SK: orderKeys.sk() },
-      })
-    );
-    deleted.push(orderId);
-  }
-
-  return ok({ deleted, notFound });
 }
 
 /** Mark an order paid (called by Stripe/Razorpay webhooks + Razorpay verify). */

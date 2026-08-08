@@ -27,6 +27,7 @@ const links: AdminNavLink[] = [
 ];
 
 const superAdminLinks: AdminNavLink[] = [
+  { href: "/admin/vendor-management", label: "Vendor Management" },
   { href: "/admin/expenses", label: "Expenses" },
   { href: "/admin/payment-tracking", label: "Payment Tracking" },
   { href: "/admin/payment-reconciliation", label: "Reconciliation" },

@@ -115,6 +115,11 @@ When admin (or Orange County vendor tracking) changes order status (accepted, pr
 | PUT | `/admin/payment-ledger/{paymentId}` | Super admin: update payment record |
 | DELETE | `/admin/payment-ledger/{paymentId}` | Super admin: delete payment record |
 | GET | `/admin/payment-reconciliation` | Super admin: expected paid orders vs recorded settlements. UI: `/admin/payment-reconciliation` |
+| GET | `/admin/vendor-management` | Super admin: vendor order economics (sell vs vendor cost), payout balance, charts. Query `?vendor=orange-county`. UI: `/admin/vendor-management` |
+| GET | `/admin/vendor-payouts` | Super admin: list vendor payout ledger (`VENDORPAY#` on config table) |
+| POST | `/admin/vendor-payouts` | Super admin: record payment to vendor (`amount`, `paidDate`, `paymentMethod`, optional `orderIds` / `notes`) |
+| PUT | `/admin/vendor-payouts/{payoutId}` | Super admin: update payout |
+| DELETE | `/admin/vendor-payouts/{payoutId}` | Super admin: delete payout |
 | GET | `/admin/vendor-api/health` | Admin: Orange County Vendor API health console (UI: `/admin/vendor-api`) |
 | GET | `/admin/vendor-api/auth-check` | Admin: prove missing vendor key returns 401 |
 | GET | `/admin/vendor-api/orders` | Admin: proxy list/search vendor orders (`days`/`limit`/`cursor`/`status`/`updatedSince`) |
@@ -148,13 +153,12 @@ When admin (or Orange County vendor tracking) changes order status (accepted, pr
 | GET | `/admin/orders` | Admin: list orders (filter `?status=`) |
 | GET | `/admin/orders/{orderId}` | Admin: order detail |
 | PATCH | `/admin/orders/{orderId}` | Admin: update status + tracking; emails customer + order@usarakhi on each status step; schedules review email 1 day after delivered |
-| DELETE | `/admin/orders/{orderId}` | Super admin: permanently delete order |
-| POST | `/admin/orders/bulk-delete` | Super admin: bulk delete orders (`{ orderIds: string[] }`) |
 | GET | `/admin/analytics/sales` | Admin: day/week/month payments received (excludes refunds) |
 | GET | `/admin/analytics/overview` | Admin: traffic + funnel (`?days=`) |
 | GET | `/admin/analytics/products` | Admin: most-viewed products |
 | GET | `/admin/analytics/searches` | Admin: top + zero-result searches |
 | GET | `/admin/analytics/visitors` | Admin: visitor analytics (`?days=` or `?from=&to=` YYYY-MM-DD); totals, byDay (unique sessions/day), by-country, session list |
+| GET | `/admin/live-visitors` | Admin: currently active storefront visitors (presence TTL ~3 min; geo map + detail list in Visitor analytics UI) |
 | GET | `/admin/sessions` | Admin: recent visitor sessions (`?days=` or `?from=&to=` & `identity=all|known|anonymous`) |
 | GET | `/admin/sessions/{sessionId}` | Admin: full visitor journey |
 | GET | `/admin/customers/{email}` | Admin: unified customer profile (orders, leads, carts, sessions) |

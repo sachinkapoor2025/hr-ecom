@@ -89,6 +89,12 @@ export const eventKeys = {
   // daily rollup counters (kept long-term)
   rollupPk: (day: string) => `ROLLUP#${day}`,
   rollupSk: (metric: string) => metric,
+  /**
+   * Live presence partition — Query PK=PRESENCE#LIVE for active visitors.
+   * Items carry DynamoDB TTL (`expiresAt`) so idle sessions drop off automatically.
+   */
+  presencePk: () => "PRESENCE#LIVE" as const,
+  presenceSk: (sessionId: string) => `SESSION#${sessionId}`,
 };
 
 // ---- config table ----
@@ -128,6 +134,13 @@ export const paymentLedgerKeys = {
   pk: (paymentId: string) => `PAYLEDGER#${paymentId}`,
   sk: () => "META" as const,
   pkPrefix: () => "PAYLEDGER#" as const,
+};
+
+/** Vendor payout ledger entries (config table) — amounts paid to fulfill vendors. */
+export const vendorPayoutKeys = {
+  pk: (payoutId: string) => `VENDORPAY#${payoutId}`,
+  sk: () => "META" as const,
+  pkPrefix: () => "VENDORPAY#" as const,
 };
 
 // ---- email campaigns table (SES bulk marketing) ----

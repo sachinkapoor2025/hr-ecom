@@ -6,6 +6,7 @@ import { useApiClient } from "@/lib/auth-context";
 import { HorizontalBarChart, AreaChart, ChartLegend } from "@/components/admin/Charts";
 import { SalesReportPanel } from "@/components/admin/SalesReportPanel";
 import { VisitorAnalyticsPanel } from "@/components/admin/VisitorAnalyticsPanel";
+import { LiveVisitorsPanel } from "@/components/admin/LiveVisitorsPanel";
 import { downloadCsv, downloadPdfReport, formatMoney } from "@/lib/admin-utils";
 
 interface ProductStat {
@@ -51,7 +52,7 @@ interface Insights {
   ordersByDay: { day: string; orders: number; pageViews: number }[];
 }
 
-type AnalyticsTab = "overview" | "visitors";
+type AnalyticsTab = "overview" | "visitors" | "live";
 
 export default function AdminAnalyticsPage() {
   const apiClient = useApiClient();
@@ -193,6 +194,7 @@ export default function AdminAnalyticsPage() {
             [
               { id: "overview" as const, label: "Overview" },
               { id: "visitors" as const, label: "Visitor analytics" },
+              { id: "live" as const, label: "Live visitor" },
             ] as const
           ).map((t) => (
             <button
@@ -242,7 +244,9 @@ export default function AdminAnalyticsPage() {
         </div>
       </div>
 
-      {tab === "visitors" ? (
+      {tab === "live" ? (
+        <LiveVisitorsPanel />
+      ) : tab === "visitors" ? (
         <VisitorAnalyticsPanel />
       ) : loading ? (
         <p className="text-slate-500">Loading…</p>

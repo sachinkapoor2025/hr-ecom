@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
-import { useApiClient, useAuth } from "@/lib/auth-context";
+import { useParams } from "next/navigation";
+import { useApiClient } from "@/lib/auth-context";
 import type { Order, RateQuote } from "@hr-ecom/shared";
 import { ORDER_STATUS } from "@hr-ecom/shared";
 import {
@@ -28,8 +28,6 @@ type AdminOrder = Order & {
 
 export default function AdminOrderDetailPage() {
   const apiClient = useApiClient();
-  const { isSuperAdmin } = useAuth();
-  const router = useRouter();
   const params = useParams();
   const orderId = params.orderId as string;
 
@@ -44,7 +42,6 @@ export default function AdminOrderDetailPage() {
   const [adminNotes, setAdminNotes] = useState("");
   const [estimatedDeliveryAt, setEstimatedDeliveryAt] = useState("");
   const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
   const [message, setMessage] = useState("");
   const [buyingLabel, setBuyingLabel] = useState(false);
   const [syncingPayment, setSyncingPayment] = useState(false);
@@ -138,25 +135,6 @@ export default function AdminOrderDetailPage() {
       setError(err instanceof Error ? err.message : "Update failed.");
     } finally {
       setSaving(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (
-      !window.confirm(
-        `Permanently delete order ${orderId}? This removes the record from the database and cannot be undone.`
-      )
-    ) {
-      return;
-    }
-    setDeleting(true);
-    setError("");
-    try {
-      await apiClient(`/admin/orders/${orderId}`, { method: "DELETE" });
-      router.push("/admin/orders");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Delete failed.");
-      setDeleting(false);
     }
   };
 
@@ -366,16 +344,6 @@ export default function AdminOrderDetailPage() {
             >
               Retry payment
             </Link>
-          )}
-          {isSuperAdmin && (
-            <button
-              type="button"
-              disabled={deleting}
-              onClick={handleDelete}
-              className="text-sm bg-red-600 text-white rounded-lg px-3 py-1.5 print:hidden disabled:opacity-50"
-            >
-              {deleting ? "Deleting…" : "Delete order"}
-            </button>
           )}
         </div>
       </div>

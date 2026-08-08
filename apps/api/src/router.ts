@@ -22,6 +22,7 @@ import * as adminVendorApi from "./handlers/admin-vendor-api";
 import * as expenses from "./handlers/expenses";
 import * as paymentLedger from "./handlers/payment-ledger";
 import * as paymentReconciliation from "./handlers/payment-reconciliation";
+import * as vendorManagement from "./handlers/vendor-management";
 import * as reviews from "./handlers/reviews";
 import { stripeWebhook } from "./handlers/payments/stripe";
 import {
@@ -120,6 +121,26 @@ const routes: Route[] = [
     pattern: /^\/admin\/payment-reconciliation$/,
     handler: paymentReconciliation.getPaymentReconciliation,
   },
+  // Super admin: vendor order economics + payout ledger (website API, not vendor API)
+  {
+    method: "GET",
+    pattern: /^\/admin\/vendor-management$/,
+    handler: vendorManagement.getVendorManagement,
+  },
+  { method: "GET", pattern: /^\/admin\/vendor-payouts$/, handler: vendorManagement.listVendorPayouts },
+  { method: "POST", pattern: /^\/admin\/vendor-payouts$/, handler: vendorManagement.createVendorPayout },
+  {
+    method: "PUT",
+    pattern: /^\/admin\/vendor-payouts\/([^/]+)$/,
+    handler: vendorManagement.updateVendorPayout,
+    params: ["payoutId"],
+  },
+  {
+    method: "DELETE",
+    pattern: /^\/admin\/vendor-payouts\/([^/]+)$/,
+    handler: vendorManagement.deleteVendorPayout,
+    params: ["payoutId"],
+  },
   // Admin console for Orange County Vendor API (proxies vendor handlers; key stays server-side).
   { method: "GET", pattern: /^\/admin\/vendor-api\/health$/, handler: adminVendorApi.adminVendorHealth },
   { method: "GET", pattern: /^\/admin\/vendor-api\/auth-check$/, handler: adminVendorApi.adminVendorAuthCheck },
@@ -142,11 +163,9 @@ const routes: Route[] = [
   { method: "PUT", pattern: /^\/account\/addresses\/([^/]+)$/, handler: account.updateAccountAddress, params: ["addressId"] },
   { method: "DELETE", pattern: /^\/account\/addresses\/([^/]+)$/, handler: account.deleteAccountAddress, params: ["addressId"] },
   { method: "GET", pattern: /^\/admin\/orders$/, handler: orders.listAdminOrders },
-  { method: "POST", pattern: /^\/admin\/orders\/bulk-delete$/, handler: orders.bulkDeleteAdminOrders },
   { method: "GET", pattern: /^\/admin\/orders\/([^/]+)$/, handler: orders.getAdminOrder, params: ["orderId"] },
   { method: "PATCH", pattern: /^\/admin\/orders\/([^/]+)$/, handler: orders.updateOrderStatus, params: ["orderId"] },
   { method: "PUT", pattern: /^\/admin\/orders\/([^/]+)$/, handler: orders.updateOrderStatus, params: ["orderId"] },
-  { method: "DELETE", pattern: /^\/admin\/orders\/([^/]+)$/, handler: orders.deleteAdminOrder, params: ["orderId"] },
   { method: "GET", pattern: /^\/admin\/leads$/, handler: orders.listLeads },
   { method: "PATCH", pattern: /^\/admin\/leads$/, handler: orders.updateLead },
   { method: "GET", pattern: /^\/admin\/analytics\/overview$/, handler: analytics.getAnalyticsOverview },
@@ -155,6 +174,7 @@ const routes: Route[] = [
   { method: "GET", pattern: /^\/admin\/analytics\/searches$/, handler: analytics.getTopSearches },
   { method: "GET", pattern: /^\/admin\/analytics\/insights$/, handler: analytics.getAnalyticsInsights },
   { method: "GET", pattern: /^\/admin\/analytics\/visitors$/, handler: analytics.getVisitorAnalytics },
+  { method: "GET", pattern: /^\/admin\/live-visitors$/, handler: analytics.listLiveVisitors },
   { method: "GET", pattern: /^\/admin\/sessions$/, handler: analytics.listSessions },
   { method: "GET", pattern: /^\/admin\/sessions\/([^/]+)$/, handler: analytics.getSessionTimeline, params: ["sessionId"] },
   { method: "GET", pattern: /^\/admin\/carts\/abandoned$/, handler: adminCarts.getAbandonedCarts },

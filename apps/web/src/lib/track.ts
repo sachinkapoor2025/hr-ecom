@@ -176,6 +176,29 @@ export function trackSessionHeartbeat(
   });
 }
 
+/**
+ * Lightweight presence ping while the storefront tab is visible.
+ * Powers admin live-visitors map (server upserts PRESENCE#LIVE with short TTL).
+ */
+export function trackLivePresence(): void {
+  if (typeof window === "undefined") return;
+  if (document.visibilityState === "hidden") return;
+  const path = window.location.pathname + window.location.search;
+  if (path.startsWith("/admin") || path.startsWith("/ses-email")) return;
+
+  const elapsed = pageEnteredAt ? Date.now() - pageEnteredAt : 0;
+  track({
+    type: EVENT_TYPES.SESSION_PING,
+    path,
+    metadata: {
+      durationMs: String(Math.max(elapsed, 1000)),
+      reason: "live_presence",
+      durationMode: "floor",
+    },
+    immediate: true,
+  });
+}
+
 export function beginPageTiming(path?: string): void {
   if (typeof window === "undefined") return;
   currentPath = path ?? window.location.pathname + window.location.search;

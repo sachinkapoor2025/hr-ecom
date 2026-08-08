@@ -19,6 +19,11 @@ export const cartItemSchema = z.object({
   image: z.string().optional(),
   /** Copied from product at add-to-cart for vendor order feeds. */
   vendorSlug: z.string().min(1).max(80).optional(),
+  /**
+   * Snapshot of product.vendorCost at add-to-cart (USD wholesale).
+   * Used for vendor payouts so catalog price changes do not rewrite history.
+   */
+  vendorCost: z.number().nonnegative().optional(),
   sku: z.string().optional(),
   /** Copied from product — flash / fixed deals are not coupon-eligible. */
   couponExcluded: z.boolean().optional(),
