@@ -14,7 +14,8 @@ function VendorManagementHubInner() {
   const initial = useMemo(() => {
     const t = searchParams.get("tab");
     if (t === "expense" || t === "api") return t;
-    return "api" as VendorTab;
+    // Default: expense for super admins; API for everyone else.
+    return "expense" as VendorTab;
   }, [searchParams]);
   const [tab, setTab] = useState<VendorTab>(initial);
 
@@ -29,8 +30,8 @@ function VendorManagementHubInner() {
   }, [authLoading, isSuperAdmin, tab]);
 
   const tabs: { id: VendorTab; label: string; superOnly?: boolean }[] = [
-    { id: "api", label: "Vendor API" },
     { id: "expense", label: "Vendor expense management", superOnly: true },
+    { id: "api", label: "Vendor API" },
   ];
 
   return (
