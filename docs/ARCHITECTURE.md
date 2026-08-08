@@ -115,12 +115,12 @@ When admin (or Orange County vendor tracking) changes order status (accepted, pr
 | PUT | `/admin/payment-ledger/{paymentId}` | Super admin: update payment record |
 | DELETE | `/admin/payment-ledger/{paymentId}` | Super admin: delete payment record |
 | GET | `/admin/payment-reconciliation` | Super admin: expected paid orders vs recorded settlements. UI: `/admin/payment-reconciliation` |
-| GET | `/admin/vendor-management` | Super admin: vendor order economics (sell vs vendor cost), payout balance, charts. Query `?vendor=orange-county`. UI: `/admin/vendor-management` |
+| GET | `/admin/vendor-management` | Super admin: vendor order economics (sell vs vendor cost), payout balance, charts. Query `?vendor=orange-county`. UI: `/admin/vendor-management` → Vendor expense management |
 | GET | `/admin/vendor-payouts` | Super admin: list vendor payout ledger (`VENDORPAY#` on config table) |
 | POST | `/admin/vendor-payouts` | Super admin: record payment to vendor (`amount`, `paidDate`, `paymentMethod`, optional `orderIds` / `notes`) |
 | PUT | `/admin/vendor-payouts/{payoutId}` | Super admin: update payout |
 | DELETE | `/admin/vendor-payouts/{payoutId}` | Super admin: delete payout |
-| GET | `/admin/vendor-api/health` | Admin: Orange County Vendor API health console (UI: `/admin/vendor-api`) |
+| GET | `/admin/vendor-api/health` | Admin: Orange County Vendor API health console (UI: `/admin/vendor-management` → Vendor API) |
 | GET | `/admin/vendor-api/auth-check` | Admin: prove missing vendor key returns 401 |
 | GET | `/admin/vendor-api/orders` | Admin: proxy list/search vendor orders (`days`/`limit`/`cursor`/`status`/`updatedSince`) |
 | GET | `/admin/vendor-api/orders/{orderId}` | Admin: proxy get one vendor order (`OC#####` or UUID) |

@@ -14,20 +14,18 @@ const links: AdminNavLink[] = [
   { href: "/admin/orders", label: "Orders" },
   { href: "/admin/analytics", label: "Analytics" },
   { href: "/admin/welcome-leads", label: "Welcome Leads" },
-  { href: "/admin/visitors", label: "Visitors" },
   { href: "/admin/carts", label: "Abandoned Carts" },
   { href: "/admin/coupons", label: "Coupons" },
   { href: "/admin/products", label: "Products" },
   { href: "/admin/categories", label: "Categories" },
   { href: "/admin/shipping", label: "Shipping" },
-  { href: "/admin/vendor-api", label: "Vendor API" },
+  { href: "/admin/vendor-management", label: "Vendor Management" },
   { href: "/admin/email", label: "Marketing Email" },
   { href: "/admin/leads", label: "Leads" },
   { href: "/admin/payments", label: "Payments" },
 ];
 
 const superAdminLinks: AdminNavLink[] = [
-  { href: "/admin/vendor-management", label: "Vendor Management" },
   { href: "/admin/expenses", label: "Expenses" },
   { href: "/admin/payment-tracking", label: "Payment Tracking" },
   { href: "/admin/payment-reconciliation", label: "Reconciliation" },
