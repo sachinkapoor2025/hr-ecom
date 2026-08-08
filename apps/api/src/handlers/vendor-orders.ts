@@ -185,6 +185,8 @@ async function toVendorOrder(order: Order, items: CartItem[]) {
     createdAt: order.createdAt,
     updatedAt: order.updatedAt,
     status: order.status,
+    /** Last status pushed by vendor tracking API (raw), when available. */
+    currentShipmentStatus: order.vendorShipmentStatus ?? order.status ?? null,
     senderName: addr.senderName ?? null,
     recipientName: addr.name,
     recipientAddressLine1: addr.line1,
@@ -270,6 +272,7 @@ async function persistVendorOrderUpdate(
     status?: string;
     trackingNumber?: string;
     carrier?: string;
+    vendorShipmentStatus?: string;
     note?: string;
   }
 ) {
@@ -306,6 +309,9 @@ async function persistVendorOrderUpdate(
       : order.statusHistory,
     ...(patch.trackingNumber !== undefined ? { trackingNumber: patch.trackingNumber } : {}),
     ...(patch.carrier !== undefined ? { carrier: patch.carrier } : {}),
+    ...(patch.vendorShipmentStatus !== undefined
+      ? { vendorShipmentStatus: patch.vendorShipmentStatus }
+      : {}),
     ...applyDeliveryReviewSchedule(order, nextStatus, timestamp),
     updatedAt: timestamp,
     ...(statusChanged
@@ -542,7 +548,16 @@ async function applyTrackingUpdate(
   try {
     const updated = await persistVendorOrderUpdate(order, {
       ...(mapped && mapped !== order.status ? { status: mapped } : {}),
+      vendorShipmentStatus: statusRaw,
       note,
+    });
+
+    console.info("vendor.tracking.received", {
+      orderNumber: displayOrderRef(updated),
+      trackingNumber: updated.trackingNumber ?? null,
+      currentShipmentStatus: statusRaw,
+      statusMapped: mapped,
+      orderStatus: updated.status,
     });
 
     return ok({
@@ -550,6 +565,7 @@ async function applyTrackingUpdate(
       orderNumber: displayOrderRef(updated),
       internalOrderId: updated.orderId,
       status: updated.status,
+      trackingNumber: updated.trackingNumber ?? null,
       currentShipmentStatus: statusRaw,
       currentStatusReceived: statusRaw,
       statusMapped: mapped,

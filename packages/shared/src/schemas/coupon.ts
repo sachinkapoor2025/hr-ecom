@@ -14,8 +14,8 @@ export const WELCOME_COUPON_HOURS = 1;
 /** @deprecated Prefer weighted spin; kept as fallback average. */
 export const WELCOME_DISCOUNT_PERCENT = 10;
 
-/** Underlying discount values for each wheel slice (not shown on the wheel). */
-export const DAILY_DEAL_SEGMENTS = [6, 7, 8, 10, 6, 7, 8, 10] as const;
+/** Underlying discount values for each wheel slice (always max 10% for every spin). */
+export const DAILY_DEAL_SEGMENTS = [10, 10, 10, 10, 10, 10, 10, 10] as const;
 
 /**
  * Mystery labels shown on the wheel — never reveal the % until the prize reveal.
@@ -34,30 +34,24 @@ export const DAILY_DEAL_WHEEL_LABELS = [
 
 export type DailyDealPercent = 6 | 7 | 8 | 10;
 
+/** Max Discount of the Day offer (every spin). */
+export const DAILY_DEAL_MAX_PERCENT: DailyDealPercent = 10;
+
 /**
- * Spin odds:
- * 20% → 6% off, 40% → 7% off, 20% → 8% off, 20% → 10% off
+ * Spin odds — currently always 10% (maximum discount).
+ * Weights kept for backward-compatible imports; only 10% is issued.
  */
 export const DAILY_DEAL_WEIGHTS: ReadonlyArray<{ percent: DailyDealPercent; weight: number }> = [
-  { percent: 6, weight: 20 },
-  { percent: 7, weight: 40 },
-  { percent: 8, weight: 20 },
-  { percent: 10, weight: 20 },
+  { percent: 10, weight: 100 },
 ];
 
 export function isValidDailyDealPercent(n: unknown): n is DailyDealPercent {
   return n === 6 || n === 7 || n === 8 || n === 10;
 }
 
-/** Pick a random discount using configured weights. */
+/** Always awards the maximum Discount of the Day (10%). */
 export function pickDailyDealDiscount(): DailyDealPercent {
-  const total = DAILY_DEAL_WEIGHTS.reduce((sum, row) => sum + row.weight, 0);
-  let roll = Math.random() * total;
-  for (const row of DAILY_DEAL_WEIGHTS) {
-    roll -= row.weight;
-    if (roll <= 0) return row.percent;
-  }
-  return 7;
+  return DAILY_DEAL_MAX_PERCENT;
 }
 
 /** Calendar day key in America/New_York for one-spin-per-phone-per-day. */

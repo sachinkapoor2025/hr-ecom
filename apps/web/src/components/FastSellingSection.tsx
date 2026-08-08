@@ -21,10 +21,10 @@ export function FastSellingSection({ products, limit = 10 }: FastSellingSectionP
           <div>
             <p className="text-xs font-bold uppercase tracking-widest text-orange-600 mb-1">Trending now</p>
             <h2 className="text-2xl md:text-3xl font-bold text-primary">Fast Selling Rakhis</h2>
-            <p className="text-sm text-slate-600 mt-2 max-w-xl">
-              Sisters are ordering these most — {FAST_SELLING_THRESHOLD}+ sold. Grab yours before they sell out
-              for Raksha Bandhan.
-            </p>
+            <ul className="text-sm text-slate-600 mt-2 max-w-xl list-disc pl-5 space-y-1">
+              <li>Most-ordered Rakhis right now ({FAST_SELLING_THRESHOLD}+ sold each)</li>
+              <li>Popular picks for Raksha Bandhan — order before they sell out</li>
+            </ul>
           </div>
           <Link href="/products" className="text-nav font-semibold text-sm hover:underline shrink-0">
             Shop all →

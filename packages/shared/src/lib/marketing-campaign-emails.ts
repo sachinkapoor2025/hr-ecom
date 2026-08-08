@@ -246,23 +246,23 @@ export const STARTING_PRICE_EMAIL_CONFIG = {
   unsubscribeLabel: "Unsubscribe",
 } as const;
 
-/** ═══════════════ TEMPLATE 3 — Shop More, Save More ($10.99 / ₹899) ═══════════════ */
+/** ═══════════════ TEMPLATE 3 — Shop More, Save More ($10.99 / ₹1,046) ═══════════════ */
 export const SHOP_MORE_SAVE_MORE_EMAIL_CONFIG = {
   templateId: "shop-more-save-more",
-  name: "Shop More, Save More",
-  subject: "Make Your Bond Extra Special — Shop More, Save More | UsaRakhi",
+  name: "Are you Looking to Send Rakhi to USA?",
+  subject: "Are you Looking to Send Rakhi to USA? 💝✨",
   preheader:
-    "Make your bond extra special. Shop more, save more on cart value above $10.99 / ₹899. Premium Rakhis with USA delivery.",
+    "Are you looking to send Rakhi to USA? Shop more, save more on cart value above $10.99 / ₹1,046. Premium Rakhis with USA delivery.",
   logoUrl: LOGO,
   logoHref: SITE_SHORT,
   logoTagline: "Connecting Hearts Across Borders",
-  heroImageUrl: `${SITE}/email-templates/shop-more-save-more-banner.png`,
+  heroImageUrl: `${SITE}/email-templates/shop-more-save-more-hero-1046.png`,
   heroImageHref: SITE_SHORT,
-  heroImageAlt: "Are you Looking to Send Rakhi to USA? Shop More, Save More — UsaRakhi",
+  heroImageAlt: "Are you Looking to Send Rakhi to USA? Shop More, Save More — Cart value above $10.99 / ₹1,046",
   offerEyebrow: "RAKSHA BANDHAN SPECIAL",
   offerHeadline: "Are you Looking to Send Rakhi to USA? 💝✨",
   offerSubhead: "Shop More, Save More",
-  offerThreshold: "Cart Value Above $10.99 / ₹899",
+  offerThreshold: "Cart Value Above $10.99 / ₹1,046",
   offerBody:
     "Celebrate Raksha Bandhan with premium designer Rakhis, combos, and hampers — delivered across America from our California warehouse. Add more to your cart and unlock festive savings.",
   ctaText: "Shop Now",
@@ -381,7 +381,7 @@ export const SHOP_MORE_SAVE_MORE_EMAIL_CONFIG = {
   ] satisfies CampaignBenefit[],
   midCtaHeading: "Don't Miss This Festive Offer",
   midCtaBody:
-    "Shop more, save more when your cart is above $10.99 / ₹899. Send love across borders — order your Rakhi today.",
+    "Shop more, save more when your cart is above $10.99 / ₹1,046. Send love across borders — order your Rakhi today.",
   midCtaText: "Shop Now",
   midCtaHref: SITE_SHORT,
   footerTagline: "Connecting Hearts Across Borders",
@@ -896,7 +896,7 @@ export function buildStartingPriceEmailHtml(
   });
 }
 
-/** Template 3 HTML — Shop More, Save More (cart above $10.99 / ₹899). */
+/** Template 3 HTML — Shop More, Save More (cart above $10.99 / ₹1,046). */
 export function buildShopMoreSaveMoreEmailHtml(
   cfg: typeof SHOP_MORE_SAVE_MORE_EMAIL_CONFIG = SHOP_MORE_SAVE_MORE_EMAIL_CONFIG
 ): string {
