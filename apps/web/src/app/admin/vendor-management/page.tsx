@@ -23,7 +23,26 @@ function todayYmd() {
 
 function formatMoney(amount: number, currency: LedgerCurrency = "USD") {
   const symbol = currency === "INR" ? "₹" : "$";
-  return `${symbol}${amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
+  const digits = currency === "INR" ? 0 : 2;
+  return `${symbol}${amount.toLocaleString(undefined, {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  })}`;
+}
+
+/** USD primary; INR checkout shows `$10.00 (₹950)`. */
+function formatSell(row: {
+  sellTotalUsd?: number;
+  sellTotal?: number;
+  sellTotalInr?: number | null;
+  currency: LedgerCurrency;
+}) {
+  const usdAmount = row.sellTotalUsd ?? row.sellTotal ?? 0;
+  const usd = formatMoney(usdAmount, "USD");
+  if (row.currency === "INR" && row.sellTotalInr != null) {
+    return `${usd} (${formatMoney(row.sellTotalInr, "INR")})`;
+  }
+  return usd;
 }
 
 function statusBadgeClass(status: string) {
@@ -86,7 +105,6 @@ export default function VendorManagementPage() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [payableOnly, setPayableOnly] = useState(true);
 
   const [amount, setAmount] = useState("");
   const [paidDate, setPaidDate] = useState(todayYmd());
@@ -123,11 +141,10 @@ export default function VendorManagementPage() {
   const visibleOrders = useMemo(() => {
     if (!report) return [];
     return report.orders.filter((o) => {
-      if (payableOnly && !o.countsTowardPayable) return false;
       if (statusFilter !== "all" && o.status !== statusFilter) return false;
       return true;
     });
-  }, [report, payableOnly, statusFilter]);
+  }, [report, statusFilter]);
 
   const statusBars = useMemo(() => {
     if (!report) return [];
@@ -144,7 +161,7 @@ export default function VendorManagementPage() {
     if (!report) return [];
     const s = report.summary;
     return [
-      { label: "Sold USD", value: s.soldByCurrency.USD },
+      { label: "Sold USD", value: s.soldUsd ?? s.soldByCurrency.USD },
       { label: "Vendor cost", value: s.vendorCostTotal },
       { label: "Paid vendor", value: s.paidToVendor },
       { label: "Pending", value: Math.max(0, s.pendingToVendor) },
@@ -270,14 +287,18 @@ export default function VendorManagementPage() {
         <>
           <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
             <Kpi
-              label="Orders"
+              label="Paid orders"
               value={String(s.orderCount)}
-              hint={`${s.payableOrderCount} payable (paid→complete)`}
+              hint="Paid → complete only (pending ignored)"
             />
             <Kpi
-              label="Sold (USD / INR)"
-              value={`${formatMoney(s.soldByCurrency.USD)} / ${formatMoney(s.soldByCurrency.INR, "INR")}`}
-              hint="Retail on vendor line items"
+              label="Sold (USD)"
+              value={formatMoney(s.soldUsd ?? s.soldByCurrency.USD)}
+              hint={
+                (s.soldInr ?? s.soldByCurrency.INR) > 0
+                  ? `Includes INR checkouts → USD @ ${s.usdInrRate?.toFixed?.(2) ?? "—"} (INR total ${formatMoney(s.soldInr ?? s.soldByCurrency.INR, "INR")})`
+                  : "Cart value: products + shipping"
+              }
             />
             <Kpi
               label="Vendor cost (owed)"
@@ -298,7 +319,7 @@ export default function VendorManagementPage() {
             <Kpi
               label="Est. profit (USD)"
               value={formatMoney(s.estimatedProfitUsd)}
-              hint="USD sell − vendor cost"
+              hint="Sold USD − vendor cost"
             />
           </div>
 
@@ -459,16 +480,8 @@ export default function VendorManagementPage() {
 
           <div className="rounded-xl border border-slate-200 bg-white p-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
-              <h2 className="font-semibold text-primary">Vendor orders</h2>
+              <h2 className="font-semibold text-primary">Vendor orders (paid only)</h2>
               <div className="flex flex-wrap items-center gap-3 text-sm">
-                <label className="inline-flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={payableOnly}
-                    onChange={(e) => setPayableOnly(e.target.checked)}
-                  />
-                  Payable only
-                </label>
                 <label className="inline-flex items-center gap-2">
                   Status
                   <select
@@ -478,7 +491,7 @@ export default function VendorManagementPage() {
                   >
                     {statusOptions.map((st) => (
                       <option key={st} value={st}>
-                        {st === "all" ? "All" : st.replace(/_/g, " ")}
+                        {st === "all" ? "All paid statuses" : st.replace(/_/g, " ")}
                       </option>
                     ))}
                   </select>
@@ -491,7 +504,7 @@ export default function VendorManagementPage() {
                   <tr className="text-left text-slate-500 border-b">
                     <th className="py-2 pr-2">Order</th>
                     <th className="py-2 pr-2">Status</th>
-                    <th className="py-2 pr-2">Sell</th>
+                    <th className="py-2 pr-2">Sell (cart)</th>
                     <th className="py-2 pr-2">Vendor cost</th>
                     <th className="py-2 pr-2">Paid vendor</th>
                     <th className="py-2 pr-2">Pending</th>
@@ -522,7 +535,15 @@ export default function VendorManagementPage() {
                         </span>
                       </td>
                       <td className="py-2 pr-2 whitespace-nowrap">
-                        {formatMoney(o.sellTotal, o.currency)}
+                        <span className="font-medium">{formatSell(o)}</span>
+                        {(o.shippingAllocatedNative ?? 0) > 0 && (
+                          <p className="text-[11px] text-slate-500">
+                            incl. ship{" "}
+                            {o.currency === "INR"
+                              ? formatMoney(o.shippingAllocatedNative!, "INR")
+                              : formatMoney(o.shippingAllocatedNative!)}
+                          </p>
+                        )}
                       </td>
                       <td className="py-2 pr-2 whitespace-nowrap">
                         {o.vendorCostTotal == null ? "—" : formatMoney(o.vendorCostTotal)}

@@ -153,8 +153,6 @@ When admin (or Orange County vendor tracking) changes order status (accepted, pr
 | GET | `/admin/orders` | Admin: list orders (filter `?status=`) |
 | GET | `/admin/orders/{orderId}` | Admin: order detail |
 | PATCH | `/admin/orders/{orderId}` | Admin: update status + tracking; emails customer + order@usarakhi on each status step; schedules review email 1 day after delivered |
-| DELETE | `/admin/orders/{orderId}` | Super admin: permanently delete order |
-| POST | `/admin/orders/bulk-delete` | Super admin: bulk delete orders (`{ orderIds: string[] }`) |
 | GET | `/admin/analytics/sales` | Admin: day/week/month payments received (excludes refunds) |
 | GET | `/admin/analytics/overview` | Admin: traffic + funnel (`?days=`) |
 | GET | `/admin/analytics/products` | Admin: most-viewed products |

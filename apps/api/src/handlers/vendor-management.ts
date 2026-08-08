@@ -15,6 +15,9 @@ import {
   orderKeys,
   isRevenueOrder,
   displayOrderRef,
+  cartLineUnitTotal,
+  convertCurrencyAmount,
+  roundForCurrency,
   type Order,
   type CartItem,
   type VendorPayoutEntry,
@@ -30,6 +33,7 @@ import { requireSuperAdmin } from "../lib/auth";
 import { docClient, ORDERS_TABLE, CONFIG_TABLE, now } from "../lib/db";
 import { ok, created, badRequest, forbidden, notFound } from "../lib/response";
 import { getBundledOrangeCountyProduct } from "../lib/orange-county-catalog";
+import { getLiveUsdInrRate } from "../lib/exchange-rate";
 
 type StoredOrder = Order & { PK: string; SK: string };
 type StoredPayout = VendorPayoutEntry & { PK: string; SK: string };
@@ -92,10 +96,44 @@ function vendorLines(order: Order, vendorSlug: string): CartItem[] {
   return order.items.filter((i) => i.vendorSlug === vendorSlug);
 }
 
+function merchandiseTotal(items: CartItem[]): number {
+  return items.reduce((sum, item) => sum + cartLineUnitTotal(item) * item.quantity, 0);
+}
+
+/**
+ * Vendor cart sell = product + allocated shipping/tax/discount share of order.total.
+ * Low-value orders often charge shipping; that shipping is part of what we "sold".
+ */
+function vendorCartSellNative(order: Order, vendorSlug: string): {
+  sellNative: number;
+  productOnly: number;
+  shippingAllocated: number;
+} {
+  const lines = vendorLines(order, vendorSlug);
+  const productOnly = roundMoney(merchandiseTotal(lines));
+  const allMerch = merchandiseTotal(order.items);
+  const share = allMerch > 0 ? productOnly / allMerch : lines.length === order.items.length ? 1 : 0;
+  const orderTotal = Number(order.total) || 0;
+  const shipping = Number(order.shipping) || 0;
+  const sellNative =
+    orderTotal > 0
+      ? roundMoney(orderTotal * share)
+      : roundMoney(productOnly + shipping * share);
+  const shippingAllocated = roundMoney(Math.max(0, sellNative - productOnly));
+  return { sellNative, productOnly, shippingAllocated };
+}
+
+function toUsd(amount: number, currency: LedgerCurrency, usdInrRate: number): number {
+  return roundMoney(
+    roundForCurrency(convertCurrencyAmount(amount, currency, "USD", usdInrRate), "USD")
+  );
+}
+
 function buildOrderRow(
   order: Order,
   vendorSlug: string,
-  paidToVendor: number
+  paidToVendor: number,
+  usdInrRate: number
 ): VendorOrderPaymentRow {
   const lines = vendorLines(order, vendorSlug);
   const currency = normalizeCurrency(order.currency);
@@ -110,12 +148,15 @@ function buildOrderRow(
       sellCurrency: currency,
       vendorUnitCost: unitCost,
       vendorCostCurrency: "USD",
-      lineSellTotal: roundMoney(item.price * qty),
+      lineSellTotal: roundMoney(cartLineUnitTotal(item) * qty),
       lineVendorCostTotal: unitCost == null ? null : roundMoney(unitCost * qty),
     };
   });
 
-  const sellTotal = roundMoney(items.reduce((s, i) => s + i.lineSellTotal, 0));
+  const { sellNative, productOnly, shippingAllocated } = vendorCartSellNative(order, vendorSlug);
+  const sellTotalUsd = toUsd(sellNative, currency, usdInrRate);
+  const sellTotalInr = currency === "INR" ? roundForCurrency(sellNative, "INR") : null;
+
   const missingCost = items.some((i) => i.lineVendorCostTotal == null);
   const vendorCostTotal = missingCost
     ? null
@@ -127,10 +168,10 @@ function buildOrderRow(
       ? roundMoney(Math.max(0, vendorCostTotal - paidToVendor))
       : null;
 
-  let profitEstimate: number | null = null;
-  if (countsTowardPayable && vendorCostTotal != null && currency === "USD") {
-    profitEstimate = roundMoney(sellTotal - vendorCostTotal);
-  }
+  const profitEstimate =
+    countsTowardPayable && vendorCostTotal != null
+      ? roundMoney(sellTotalUsd - vendorCostTotal)
+      : null;
 
   return {
     orderId: order.orderId,
@@ -143,7 +184,12 @@ function buildOrderRow(
     trackingNumber: order.trackingNumber ?? null,
     recipientName: order.shippingAddress?.name,
     items,
-    sellTotal,
+    sellTotalNative: sellNative,
+    sellTotalUsd,
+    sellTotalInr,
+    productSellNative: productOnly,
+    shippingAllocatedNative: shippingAllocated,
+    sellTotal: sellTotalUsd,
     vendorCostTotal,
     paidToVendor: roundMoney(paidToVendor),
     pendingToVendor,
@@ -288,7 +334,7 @@ function buildDailySeries(
     const bucket = byDate.get(key);
     if (!bucket) continue;
     bucket.orderCount += 1;
-    if (row.currency === "USD") bucket.sellUsd = roundMoney(bucket.sellUsd + row.sellTotal);
+    bucket.sellUsd = roundMoney(bucket.sellUsd + row.sellTotalUsd);
     if (row.vendorCostTotal != null) {
       bucket.vendorCostUsd = roundMoney(bucket.vendorCostUsd + row.vendorCostTotal);
     }
@@ -308,30 +354,38 @@ function buildDailySeries(
 export async function buildVendorManagementReport(
   vendorSlug: VendorPaymentSlug
 ): Promise<VendorManagementReport> {
-  const [allOrders, payoutItems] = await Promise.all([
+  const [allOrders, payoutItems, fx] = await Promise.all([
     fetchAllOrdersNewestFirst(),
     listPayoutItems(vendorSlug),
+    getLiveUsdInrRate(),
   ]);
+  const usdInrRate = fx.rate;
 
-  const vendorOrders = allOrders.filter((o) => orderTouchesVendor(o, vendorSlug));
+  const vendorOrders = allOrders.filter(
+    (o) => orderTouchesVendor(o, vendorSlug) && isRevenueOrder(o.status)
+  );
   const payouts = payoutItems.map(toPublicPayout);
   const { paidByOrderId, unallocatedPaid } = allocatePayouts(vendorOrders, payouts, vendorSlug);
 
   const orders = vendorOrders.map((o) =>
-    buildOrderRow(o, vendorSlug, paidByOrderId.get(o.orderId) ?? 0)
+    buildOrderRow(o, vendorSlug, paidByOrderId.get(o.orderId) ?? 0, usdInrRate)
   );
 
   const soldByCurrency = emptyMoney();
+  let soldUsd = 0;
+  let soldInr = 0;
   let vendorCostTotal = 0;
   let estimatedProfitUsd = 0;
   const byStatus: Record<string, number> = {};
-  let payableOrderCount = 0;
 
   for (const row of orders) {
     byStatus[row.status] = (byStatus[row.status] ?? 0) + 1;
-    if (!row.countsTowardPayable) continue;
-    payableOrderCount += 1;
-    soldByCurrency[row.currency] = roundMoney(soldByCurrency[row.currency] + row.sellTotal);
+    soldUsd = roundMoney(soldUsd + row.sellTotalUsd);
+    soldByCurrency.USD = soldUsd;
+    if (row.sellTotalInr != null) {
+      soldInr = roundMoney(soldInr + row.sellTotalInr);
+      soldByCurrency.INR = soldInr;
+    }
     if (row.vendorCostTotal != null) {
       vendorCostTotal = roundMoney(vendorCostTotal + row.vendorCostTotal);
     }
@@ -350,8 +404,11 @@ export async function buildVendorManagementReport(
     vendorSlug,
     vendorLabel: VENDOR_PAYMENT_SLUG_LABELS[vendorSlug],
     orderCount: orders.length,
-    payableOrderCount,
+    payableOrderCount: orders.length,
+    soldUsd,
+    soldInr,
     soldByCurrency,
+    usdInrRate,
     vendorCostTotal,
     paidToVendor,
     unallocatedPaid,

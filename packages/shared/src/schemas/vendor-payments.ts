@@ -14,6 +14,8 @@ export const VENDOR_PAYMENT_SLUG_LABELS: Record<VendorPaymentSlug, string> = {
 export const VENDOR_PAYOUT_METHODS = [
   "bank_transfer",
   "wire",
+  "zelle",
+  "venmo",
   "upi",
   "cash",
   "other",
@@ -23,6 +25,8 @@ export type VendorPayoutMethod = (typeof VENDOR_PAYOUT_METHODS)[number];
 export const VENDOR_PAYOUT_METHOD_LABELS: Record<VendorPayoutMethod, string> = {
   bank_transfer: "Bank transfer",
   wire: "Wire",
+  zelle: "Zelle",
+  venmo: "Venmo",
   upi: "UPI",
   cash: "Cash",
   other: "Other",
@@ -97,7 +101,20 @@ export type VendorOrderPaymentRow = {
   trackingNumber?: string | null;
   recipientName?: string;
   items: VendorOrderLineSummary[];
-  /** Sum of retail for vendor lines (order currency). */
+  /**
+   * Cart value for vendor share: merchandise + allocated shipping/tax/discount
+   * (order.total × vendor merchandise share), in checkout currency.
+   */
+  sellTotalNative: number;
+  /** Always USD (converted when checkout was INR). */
+  sellTotalUsd: number;
+  /** Checkout INR amount when currency is INR; else null. */
+  sellTotalInr: number | null;
+  /** Vendor merchandise only (no shipping), checkout currency. */
+  productSellNative: number;
+  /** Shipping (+ tax share) allocated to vendor lines, checkout currency. */
+  shippingAllocatedNative: number;
+  /** @deprecated Prefer sellTotalUsd — kept for older clients. */
   sellTotal: number;
   /** Sum of vendorCost × qty (USD). Null if any line missing cost. */
   vendorCostTotal: number | null;
@@ -105,7 +122,7 @@ export type VendorOrderPaymentRow = {
   paidToVendor: number;
   /** max(0, vendorCostTotal - paidToVendor) when cost known. */
   pendingToVendor: number | null;
-  /** sellTotal - vendorCostTotal when both in comparable view; USD retail only for profitUsd. */
+  /** sellTotalUsd − vendorCostTotal when cost known. */
   profitEstimate: number | null;
   countsTowardPayable: boolean;
 };
@@ -113,9 +130,16 @@ export type VendorOrderPaymentRow = {
 export type VendorManagementSummary = {
   vendorSlug: VendorPaymentSlug;
   vendorLabel: string;
+  /** Payable (paid→complete) vendor orders only. */
   orderCount: number;
   payableOrderCount: number;
+  /** Total sold in USD (cart value, converted). */
+  soldUsd: number;
+  /** Sum of INR checkout amounts (hint only). */
+  soldInr: number;
+  /** @deprecated Prefer soldUsd */
   soldByCurrency: MoneyByCurrency;
+  usdInrRate: number;
   /** Total we owe vendor for payable orders (USD). */
   vendorCostTotal: number;
   /** Total recorded payouts (USD). */
@@ -124,7 +148,7 @@ export type VendorManagementSummary = {
   unallocatedPaid: number;
   /** vendorCostTotal - paidToVendor */
   pendingToVendor: number;
-  /** USD retail of vendor lines on payable USD orders minus vendor cost. */
+  /** soldUsd − vendorCostTotal */
   estimatedProfitUsd: number;
   byStatus: Record<string, number>;
 };
