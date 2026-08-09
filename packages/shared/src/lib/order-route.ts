@@ -169,7 +169,7 @@ export type OrderRouteResponse = {
   eventsNote?: string;
 };
 
-/** Lean row for Analytics → Order routes overview (no timeline / event fan-out). */
+/** Lean row for Analytics → Order routes overview. */
 export type OrderRouteListItem = {
   orderId: string;
   orderNumber?: string;
@@ -190,13 +190,30 @@ export type OrderRouteListItem = {
   landingPage?: string;
   referrer?: string;
   device?: string;
+  /** True when checkout stamped attribution on the order. */
   hasAttributionSnapshot: boolean;
+  /** Where overview fields came from. */
+  attributionOrigin: "checkout_snapshot" | "session_events" | "none";
 };
 
-export function buildOrderRouteListItem(order: Order): OrderRouteListItem {
-  const route = buildOrderRoutePayload(order, []);
+export function buildOrderRouteListItem(
+  order: Order,
+  events: RawAnalyticsEvent[] = []
+): OrderRouteListItem {
+  const hasSnapshot = Boolean(order.attribution?.firstTouch || order.attribution?.lastTouch);
+  const route = buildOrderRoutePayload(order, events);
   const first = route.attribution.firstTouch;
   const last = route.attribution.lastTouch;
+  const hasUseful =
+    Boolean(first?.source && first.source !== "unknown") ||
+    Boolean(last?.source && last.source !== "unknown") ||
+    Boolean(route.summary.landingPage) ||
+    Boolean(route.summary.device);
+
+  let attributionOrigin: OrderRouteListItem["attributionOrigin"] = "none";
+  if (hasSnapshot) attributionOrigin = "checkout_snapshot";
+  else if (events.length > 0 && hasUseful) attributionOrigin = "session_events";
+
   return {
     orderId: order.orderId,
     orderNumber: order.orderNumber,
@@ -217,7 +234,8 @@ export function buildOrderRouteListItem(order: Order): OrderRouteListItem {
     landingPage: route.summary.landingPage,
     referrer: route.summary.referrer,
     device: route.summary.device,
-    hasAttributionSnapshot: Boolean(order.attribution?.firstTouch || order.attribution?.lastTouch),
+    hasAttributionSnapshot: hasSnapshot,
+    attributionOrigin,
   };
 }
 

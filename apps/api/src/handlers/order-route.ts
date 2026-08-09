@@ -45,7 +45,29 @@ async function loadSessionEvents(sessionId: string): Promise<RawAnalyticsEvent[]
   return items;
 }
 
-/** Admin: overview list of order attribution (snapshot only — fast). */
+async function mapPool<T, R>(
+  items: T[],
+  concurrency: number,
+  fn: (item: T) => Promise<R>
+): Promise<R[]> {
+  if (!items.length) return [];
+  const results = new Array<R>(items.length);
+  let next = 0;
+  const workers = Array.from({ length: Math.min(concurrency, items.length) }, async () => {
+    while (true) {
+      const idx = next++;
+      if (idx >= items.length) return;
+      results[idx] = await fn(items[idx]!);
+    }
+  });
+  await Promise.all(workers);
+  return results;
+}
+
+/**
+ * Admin overview: checkout snapshots when present; otherwise reconstruct from
+ * session events (bounded) so older orders still show useful route fields.
+ */
 export async function listAdminOrderRoutes(event: APIGatewayProxyEventV2) {
   if (!requireAdmin(event)) return forbidden();
 
@@ -69,17 +91,42 @@ export async function listAdminOrderRoutes(event: APIGatewayProxyEventV2) {
     pages += 1;
   } while (ExclusiveStartKey && pages < 30);
 
-  const routes = items.map((order) => buildOrderRouteListItem(order));
+  // Newest orders missing a checkout snapshot — backfill from analytics events.
+  const needsEvents = items
+    .filter(
+      (o) =>
+        o.sessionId &&
+        !(o.attribution?.firstTouch || o.attribution?.lastTouch)
+    )
+    .slice(0, 120);
+
+  const eventsByOrderId = new Map<string, RawAnalyticsEvent[]>();
+  await mapPool(needsEvents, 10, async (order) => {
+    const events = await loadSessionEvents(order.sessionId!);
+    eventsByOrderId.set(order.orderId, events);
+    return null;
+  });
+
+  const routes = items.map((order) =>
+    buildOrderRouteListItem(order, eventsByOrderId.get(order.orderId) ?? [])
+  );
 
   const bySource = new Map<string, number>();
+  let withSnapshot = 0;
+  let fromEvents = 0;
+  let none = 0;
   for (const r of routes) {
     const key = (r.lastSource || r.firstSource || "unknown").toLowerCase();
     bySource.set(key, (bySource.get(key) ?? 0) + 1);
+    if (r.attributionOrigin === "checkout_snapshot") withSnapshot += 1;
+    else if (r.attributionOrigin === "session_events") fromEvents += 1;
+    else none += 1;
   }
 
   return ok({
     routes,
     count: routes.length,
+    coverage: { withSnapshot, fromEvents, none },
     bySource: [...bySource.entries()]
       .map(([source, count]) => ({ source, count }))
       .sort((a, b) => b.count - a.count),

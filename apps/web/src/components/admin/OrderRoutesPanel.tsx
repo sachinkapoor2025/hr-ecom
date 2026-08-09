@@ -24,6 +24,11 @@ export function OrderRoutesPanel() {
   const api = useApiClient();
   const [routes, setRoutes] = useState<OrderRouteListItem[]>([]);
   const [bySource, setBySource] = useState<Array<{ source: string; count: number }>>([]);
+  const [coverage, setCoverage] = useState<{
+    withSnapshot: number;
+    fromEvents: number;
+    none: number;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [q, setQ] = useState("");
@@ -37,14 +42,17 @@ export function OrderRoutesPanel() {
     api<{
       routes: OrderRouteListItem[];
       bySource: Array<{ source: string; count: number }>;
+      coverage?: { withSnapshot: number; fromEvents: number; none: number };
     }>("/admin/analytics/order-routes")
       .then((res) => {
         setRoutes(res.routes ?? []);
         setBySource(res.bySource ?? []);
+        setCoverage(res.coverage ?? null);
       })
       .catch((err) => {
         setRoutes([]);
         setBySource([]);
+        setCoverage(null);
         setError(err instanceof Error ? err.message : "Could not load order routes");
       })
       .finally(() => setLoading(false));
@@ -100,6 +108,30 @@ export function OrderRoutesPanel() {
         >
           Refresh
         </button>
+      </div>
+
+      <div className="mb-4 rounded-xl border border-blue-100 bg-blue-50/70 px-4 py-3 text-sm text-slate-700">
+        <p className="font-medium text-slate-900 mb-1">How attribution works</p>
+        <ul className="list-disc pl-5 space-y-1 text-xs sm:text-sm">
+          <li>
+            <strong>New orders</strong> (after Order Route went live) save first/last touch, campaign,
+            landing page, and device at checkout — those rows fill in automatically.
+          </li>
+          <li>
+            <strong>Older orders</strong> had no checkout snapshot; we rebuild what we can from
+            session analytics (referrer / UTMs in page URLs) while events still exist (~90 days).
+          </li>
+          <li>
+            Rows still showing Unknown usually had no referrer/UTM (privacy browsers, direct typed
+            URL) or session events already expired.
+          </li>
+        </ul>
+        {coverage && (
+          <p className="mt-2 text-xs text-slate-600">
+            Coverage: {coverage.withSnapshot} checkout snapshots · {coverage.fromEvents} from session
+            history · {coverage.none} with no usable signal
+          </p>
+        )}
       </div>
 
       {bySource.length > 0 && (
@@ -184,8 +216,12 @@ export function OrderRoutesPanel() {
                     >
                       {r.orderNumber ?? `${r.orderId.slice(0, 8)}…`}
                     </Link>
-                    {!r.hasAttributionSnapshot && (
-                      <p className="text-[10px] text-amber-700 mt-0.5">Pre-tracking order</p>
+                    {r.attributionOrigin === "checkout_snapshot" ? (
+                      <p className="text-[10px] text-emerald-700 mt-0.5">Checkout snapshot</p>
+                    ) : r.attributionOrigin === "session_events" ? (
+                      <p className="text-[10px] text-sky-700 mt-0.5">From session history</p>
+                    ) : (
+                      <p className="text-[10px] text-amber-700 mt-0.5">No tracking signal</p>
                     )}
                   </td>
                   <td className="py-3 px-3 text-xs text-slate-500 whitespace-nowrap">
