@@ -81,10 +81,10 @@ export default async function HomePage() {
   // Does not change category names, URLs, slugs, nav, or SEO elsewhere.
   const homeCategoryDisplayNames: Record<(typeof homeCategoryOrder)[number], string> = {
     "single-rakhi": "Single Rakhi To USA",
-    "rakhi-hampers": "Rakhi Hamper To USA",
     "rakhi-combo": "Rakhi Combo To USA",
-    "kids-rakhi": "Kids Rakhi To USA",
+    "rakhi-hampers": "Rakhi Hamper To USA",
     "bhaiya-bhabhi-rakhi": "Bhaiya Bhabhi Rakhi To USA",
+    "kids-rakhi": "Kids Rakhi To USA",
     "lumba-rakhi": "Lumba Rakhi To USA",
   };
 
