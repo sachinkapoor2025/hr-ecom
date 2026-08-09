@@ -83,9 +83,11 @@ function AdminAnalyticsPageInner() {
   const [zeroResult, setZeroResult] = useState<SearchStat[]>([]);
   const [overview, setOverview] = useState<Overview | null>(null);
   const [insights, setInsights] = useState<Insights | null>(null);
+  const [insightsLoading, setInsightsLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // Rollup-backed KPIs first — do not block Overview on heavy session rebuilds.
   useEffect(() => {
     if (tab !== "overview") return;
     setLoading(true);
@@ -96,24 +98,42 @@ function AdminAnalyticsPageInner() {
         `/admin/analytics/searches?days=${days}`
       ),
       apiClient<Overview>(`/admin/analytics/overview?days=${days}`),
-      apiClient<Insights>(`/admin/analytics/insights?days=${days}`),
     ])
-      .then(([p, s, o, i]) => {
+      .then(([p, s, o]) => {
         setProducts(p.products);
         setSearches(s.searches);
         setZeroResult(s.zeroResult);
         setOverview(o);
-        setInsights(i);
       })
       .catch((err) => {
         setProducts([]);
         setSearches([]);
         setZeroResult([]);
         setOverview(null);
-        setInsights(null);
         setError(err instanceof Error ? err.message : "Could not load analytics");
       })
       .finally(() => setLoading(false));
+  }, [apiClient, days, tab]);
+
+  // Insights rebuild sessions from raw events — load after KPIs so Overview stays snappy.
+  useEffect(() => {
+    if (tab !== "overview") return;
+    let cancelled = false;
+    setInsightsLoading(true);
+    setInsights(null);
+    apiClient<Insights>(`/admin/analytics/insights?days=${days}`)
+      .then((i) => {
+        if (!cancelled) setInsights(i);
+      })
+      .catch(() => {
+        if (!cancelled) setInsights(null);
+      })
+      .finally(() => {
+        if (!cancelled) setInsightsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [apiClient, days, tab]);
 
   const productChart = products.slice(0, 8).map((p) => ({
@@ -322,6 +342,10 @@ function AdminAnalyticsPageInner() {
                 ]}
               />
             </section>
+          )}
+
+          {insightsLoading && !insights && (
+            <p className="text-sm text-slate-500 mb-6">Loading location &amp; traffic insights…</p>
           )}
 
           {insights && (

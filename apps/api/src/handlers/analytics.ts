@@ -124,6 +124,15 @@ async function getRollup(day: string): Promise<RollupItem[]> {
   return (res.Items ?? []) as RollupItem[];
 }
 
+/** Fields needed to rebuild SessionSummary — avoid pulling full event payloads. */
+const SESSION_EVENT_PROJECTION =
+  "sessionId, #type, createdAt, #at, #path, productSlug, referrer, metadata";
+const SESSION_EVENT_ATTR_NAMES = {
+  "#type": "type",
+  "#at": "at",
+  "#path": "path",
+};
+
 /** Paginate GSI1 so we collect every event for a type/day (not just the first page). */
 async function querySessionEventsForDay(
   type: string,
@@ -138,6 +147,8 @@ async function querySessionEventsForDay(
         IndexName: "GSI1",
         KeyConditionExpression: "GSI1PK = :pk",
         ExpressionAttributeValues: { ":pk": eventKeys.gsi1pk(type, day) },
+        ProjectionExpression: SESSION_EVENT_PROJECTION,
+        ExpressionAttributeNames: SESSION_EVENT_ATTR_NAMES,
         ScanIndexForward: false,
         ExclusiveStartKey: lastKey,
       })
@@ -159,6 +170,28 @@ async function mapInBatches<T>(
     await Promise.all(items.slice(i, i + batchSize).map(fn));
   }
 }
+
+/** Run async work over items with a concurrency cap (cuts wall-clock vs serial awaits). */
+async function mapPool<T, R>(
+  items: T[],
+  concurrency: number,
+  fn: (item: T) => Promise<R>
+): Promise<R[]> {
+  if (!items.length) return [];
+  const results = new Array<R>(items.length);
+  let next = 0;
+  const workers = Array.from({ length: Math.min(concurrency, items.length) }, async () => {
+    while (true) {
+      const idx = next++;
+      if (idx >= items.length) return;
+      results[idx] = await fn(items[idx]!);
+    }
+  });
+  await Promise.all(workers);
+  return results;
+}
+
+const EVENT_QUERY_CONCURRENCY = 12;
 
 const FUNNEL_TYPES = [
   EVENT_TYPES.PAGE_VIEW,
@@ -283,6 +316,19 @@ interface SessionSummary {
   products: string[];
 }
 
+type SessionCollectCacheEntry = { at: number; list: SessionSummary[] };
+/** Warm-Lambda cache: identical day windows reuse rebuilt sessions for ~60s. */
+const SESSION_COLLECT_CACHE = new Map<string, SessionCollectCacheEntry>();
+const SESSION_COLLECT_TTL_MS = 60_000;
+
+function trimSessionForList(s: SessionSummary): SessionSummary {
+  return {
+    ...s,
+    pages: s.pages.slice(0, 12),
+    products: s.products.slice(0, 12),
+  };
+}
+
 const SESSION_EVENT_TYPES = [
   EVENT_TYPES.PAGE_VIEW,
   EVENT_TYPES.PRODUCT_VIEW,
@@ -358,38 +404,36 @@ async function enrichSessionIdentity(s: SessionSummary): Promise<void> {
   }
 }
 
-/** Leads keyed by session so we can join identity across silos. */
-async function loadIdentityIndex(): Promise<Map<string, { name?: string; email?: string; phone?: string }>> {
-  const bySession = new Map<string, { name?: string; email?: string; phone?: string }>();
+/**
+ * Attach lead contact for sessions that still lack identity.
+ * Bounded parallel queries — avoids scanning the entire lead GSI as it grows.
+ */
+async function attachLeadContacts(list: SessionSummary[], maxLookups = 600): Promise<void> {
+  const missing = list.filter((s) => !isKnownContact(s)).slice(0, maxLookups);
+  if (!missing.length) return;
 
-  let lastKey: Record<string, unknown> | undefined;
-  do {
+  await mapInBatches(missing, 40, async (s) => {
+    const pk = customerKeys.pk(s.sessionId);
     const leadsRes = await docClient.send(
       new QueryCommand({
         TableName: CUSTOMERS_TABLE,
-        IndexName: "GSI1",
-        KeyConditionExpression: "GSI1PK = :pk",
-        ExpressionAttributeValues: { ":pk": customerKeys.gsi1pk() },
+        KeyConditionExpression: "PK = :pk AND begins_with(SK, :sk)",
+        ExpressionAttributeValues: { ":pk": pk, ":sk": "LEAD#" },
+        ProjectionExpression: "#n, email, phone",
+        ExpressionAttributeNames: { "#n": "name" },
         ScanIndexForward: false,
-        ExclusiveStartKey: lastKey,
+        Limit: 8,
       })
     );
     for (const lead of leadsRes.Items ?? []) {
-      const sessionId =
-        (lead.sessionId as string | undefined) ?? String(lead.PK ?? "").replace(/^SESSION#/, "");
-      if (!sessionId) continue;
-      const prev = bySession.get(sessionId) ?? {};
-      applyContactFields(prev, {
+      mergeContactFields(s, {
         name: lead.name as string | undefined,
         email: lead.email as string | undefined,
         phone: lead.phone as string | undefined,
       });
-      bySession.set(sessionId, prev);
+      if (s.name && s.email && s.phone) break;
     }
-    lastKey = leadsRes.LastEvaluatedKey as Record<string, unknown> | undefined;
-  } while (lastKey);
-
-  return bySession;
+  });
 }
 
 function mergeSessionEvent(
@@ -506,30 +550,32 @@ function mergeSessionEvent(
 }
 
 async function collectSessionsForDayList(dayList: string[]): Promise<SessionSummary[]> {
-  const sessions = new Map<string, SessionSummary>();
+  const cacheKey = dayList.join(",");
+  const cached = SESSION_COLLECT_CACHE.get(cacheKey);
+  if (cached && Date.now() - cached.at < SESSION_COLLECT_TTL_MS) {
+    return cached.list.map((s) => ({ ...s, pages: [...s.pages], products: [...s.products] }));
+  }
 
-  for (const day of dayList) {
-    for (const type of SESSION_EVENT_TYPES) {
-      const items = await querySessionEventsForDay(type, day);
-      for (const raw of items) {
-        const sessionId = raw.sessionId as string;
-        if (!sessionId) continue;
-        mergeSessionEvent(sessions, raw, sessionId);
-      }
+  const sessions = new Map<string, SessionSummary>();
+  const jobs = dayList.flatMap((day) =>
+    SESSION_EVENT_TYPES.map((type) => ({ day, type: type as string }))
+  );
+
+  // Parallel GSI queries (bounded) — biggest wall-clock win vs nested serial awaits.
+  const batches = await mapPool(jobs, EVENT_QUERY_CONCURRENCY, async ({ day, type }) =>
+    querySessionEventsForDay(type, day)
+  );
+  for (const items of batches) {
+    for (const raw of items) {
+      const sessionId = raw.sessionId as string;
+      if (!sessionId) continue;
+      mergeSessionEvent(sessions, raw, sessionId);
     }
   }
 
   let list = [...sessions.values()].sort((a, b) => b.lastSeen.localeCompare(a.lastSeen));
 
-  const identityIndex = await loadIdentityIndex();
-  for (const s of list) {
-    const fromLeads = identityIndex.get(s.sessionId);
-    if (fromLeads) mergeContactFields(s, fromLeads);
-  }
-
-  // Full profile/cart lookup for identified or commerce-active sessions only.
-  // Anonymous browsers already have list fields from events — skipping them keeps
-  // large date ranges under the API Gateway Lambda timeout.
+  // Full profile/cart/lead lookup for commerce-active or already-identified sessions.
   const needsEnrich = list.filter(
     (s) =>
       isKnownContact(s) ||
@@ -539,7 +585,17 @@ async function collectSessionsForDayList(dayList: string[]): Promise<SessionSumm
   );
   await mapInBatches(needsEnrich, 25, (s) => enrichSessionIdentity(s));
 
-  return backfillContactsByIdentity(list);
+  // Light lead join for remaining anonymous (capped) — no full lead-index scan.
+  await attachLeadContacts(list);
+
+  list = backfillContactsByIdentity(list);
+  SESSION_COLLECT_CACHE.set(cacheKey, { at: Date.now(), list });
+  // Bound cache size (warm Lambda reuse)
+  if (SESSION_COLLECT_CACHE.size > 24) {
+    const oldest = [...SESSION_COLLECT_CACHE.entries()].sort((a, b) => a[1].at - b[1].at)[0];
+    if (oldest) SESSION_COLLECT_CACHE.delete(oldest[0]);
+  }
+  return list;
 }
 
 export async function listSessions(event: APIGatewayProxyEventV2) {
@@ -564,7 +620,7 @@ export async function listSessions(event: APIGatewayProxyEventV2) {
     from: range.from,
     to: range.to,
     timeZone: range.timeZone,
-    sessions: list,
+    sessions: list.map(trimSessionForList),
     identity: { known: knownCount, anonymous: anonymousCount },
     total: list.length,
   });
@@ -783,7 +839,7 @@ export async function getVisitorAnalytics(event: APIGatewayProxyEventV2) {
     },
     byDay,
     byCountry,
-    sessions: list,
+    sessions: list.map(trimSessionForList),
   });
 }
 
@@ -837,15 +893,19 @@ function trafficSourceLabel(referrer?: string): string {
 }
 
 async function collectSessions(days: number): Promise<Map<string, SessionSummary>> {
+  const dayList = rangeDays(days);
+  // Insights only needs funnel-ish fields — skip high-volume session_ping partition.
+  const types = SESSION_EVENT_TYPES.filter((t) => t !== EVENT_TYPES.SESSION_PING);
   const sessions = new Map<string, SessionSummary>();
-  for (const day of rangeDays(days)) {
-    for (const type of SESSION_EVENT_TYPES) {
-      const items = await querySessionEventsForDay(type, day);
-      for (const raw of items) {
-        const sessionId = raw.sessionId as string;
-        if (!sessionId) continue;
-        mergeSessionEvent(sessions, raw, sessionId);
-      }
+  const jobs = dayList.flatMap((day) => types.map((type) => ({ day, type: type as string })));
+  const batches = await mapPool(jobs, EVENT_QUERY_CONCURRENCY, async ({ day, type }) =>
+    querySessionEventsForDay(type, day)
+  );
+  for (const items of batches) {
+    for (const raw of items) {
+      const sessionId = raw.sessionId as string;
+      if (!sessionId) continue;
+      mergeSessionEvent(sessions, raw, sessionId);
     }
   }
   return sessions;
