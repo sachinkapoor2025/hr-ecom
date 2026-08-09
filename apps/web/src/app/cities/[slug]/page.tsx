@@ -1,20 +1,25 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { api } from "@/lib/api";
 import { HomeProductCard } from "@/components/HomeProductCard";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { CityContentSection } from "@/components/CityContentSection";
 import { JsonLd } from "@/components/JsonLd";
 import { cityLinks, site } from "@/lib/site";
 import { getCityContent } from "@/lib/content/city-pages";
+import { getCatalogProducts, mergeProductsPreferExisting } from "@/lib/catalog-fallback";
 import { shuffleForCity } from "@/lib/city-products";
+import { loadProducts } from "@/lib/product-loader";
 import { breadcrumbJsonLd, faqJsonLd, pageMetadata, serviceAreaJsonLd } from "@/lib/seo";
 import type { Product } from "@hr-ecom/shared";
 
 interface Props {
   params: Promise<{ slug: string }>;
 }
+
+/** Same as homepage / location pages: always load the full live catalog. */
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export function generateStaticParams() {
   return cityLinks.map((c) => ({ slug: c.slug }));
@@ -43,13 +48,12 @@ export default async function CityPage({ params }: Props) {
 
   let products: Product[] = [];
   try {
-    const data = await api<{ products: Product[] }>("/products");
-    products = data.products;
+    products = await loadProducts();
   } catch {
     products = [];
   }
-
-  const cityProducts = shuffleForCity(products, slug).slice(0, 20);
+  products = mergeProductsPreferExisting(products, getCatalogProducts());
+  const cityProducts = shuffleForCity(products, slug);
 
   const crumbs = [
     { label: "Home", href: "/" },
