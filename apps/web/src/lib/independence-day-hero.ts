@@ -11,20 +11,20 @@ import { homeBanners } from "@/lib/site";
 export const INDEPENDENCE_DAY_HERO_STARTS_AT = "2026-08-09T00:00:00.000Z";
 export const INDEPENDENCE_DAY_HERO_ENDS_AT = "2026-08-16T00:00:00.000Z";
 
-export const independenceDayHeroBanners: readonly HomeBanner[] = [
-  {
-    src: "/banners/banner-independence-day-2026.png",
-    alt: "Celebrate India's Independence Day — Send Rakhi to USA | UsaRakhi Great Freedom Sale",
-    href: "/products",
-    eyebrow: "INDEPENDENCE DAY · 15 AUGUST",
-    title: "🇮🇳 Celebrate India's Independence Day with Love Across the",
-    titleAccent: "USA",
-    description:
-      "Celebrate the spirit of freedom by sending beautiful Rakhis to your loved ones across the USA. Enjoy fast delivery, premium quality, and make this Independence Day & Raksha Bandhan even more memorable.",
-    cta: "Shop Independence Collection",
-    pill: "🇮🇳 Independence Day · Fast USA Delivery · Premium Rakhis",
-  },
-];
+/** Extra carousel slide — taller art uses contain so nothing is cropped. */
+export const independenceDayHeroBanner: HomeBanner = {
+  src: "/banners/banner-independence-day-2026.png",
+  alt: "Celebrate India's Independence Day — Send Rakhi to USA | UsaRakhi Great Freedom Sale",
+  href: "/products",
+  eyebrow: "INDEPENDENCE DAY · 15 AUGUST",
+  title: "🇮🇳 Celebrate India's Independence Day with Love Across the",
+  titleAccent: "USA",
+  description:
+    "Celebrate the spirit of freedom by sending beautiful Rakhis to your loved ones across the USA. Enjoy fast delivery, premium quality, and make this Independence Day & Raksha Bandhan even more memorable.",
+  cta: "Shop Independence Collection",
+  pill: "🇮🇳 Independence Day · Fast USA Delivery · Premium Rakhis",
+  imageFit: "contain",
+};
 
 export function isIndependenceDayHeroActive(now = new Date()): boolean {
   const t = now.getTime();
@@ -33,10 +33,13 @@ export function isIndependenceDayHeroActive(now = new Date()): boolean {
   return t >= start && t < end;
 }
 
-/** Homepage hero only — does not affect other pages that read `homeBanners`. */
+/**
+ * Homepage hero only — prepends the Independence Day slide while the campaign
+ * is active; all default `homeBanners` stay in the carousel after it.
+ */
 export function getHomeBanners(now = new Date()): readonly HomeBanner[] {
   if (isIndependenceDayHeroActive(now)) {
-    return independenceDayHeroBanners;
+    return [independenceDayHeroBanner, ...homeBanners];
   }
   return homeBanners;
 }
