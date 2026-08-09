@@ -115,14 +115,14 @@ export const promoBanners = [
   },
 ] as const;
 
-/** Homepage Rakhi sections: Single → Bhaiya Bhabhi → Kids → Lumba → Combo */
+/** Homepage Rakhi sections (after Fast Selling): Single → Combo → Hamper → others */
 export const homeCategoryOrder = [
   "single-rakhi",
+  "rakhi-combo",
+  "rakhi-hampers",
   "bhaiya-bhabhi-rakhi",
   "kids-rakhi",
   "lumba-rakhi",
-  "rakhi-combo",
-  "rakhi-hampers",
 ] as const;
 
 /** Virtual multi-piece set filters (nav dropdown + SEO landing pages). */

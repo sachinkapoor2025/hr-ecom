@@ -14,7 +14,14 @@ export type PaymentReconciliationSnapshot = {
   netAmountReceived: MoneyByCurrency;
   /** expected − recorded settlements. */
   pendingSettlements: MoneyByCurrency;
+  /** Expected revenue by payment provider (paid orders). */
   byProvider: {
+    stripe: MoneyByCurrency;
+    razorpay: MoneyByCurrency;
+    other: MoneyByCurrency;
+  };
+  /** Recorded settlement nets by ledger paymentSource. */
+  settlementsBySource: {
     stripe: MoneyByCurrency;
     razorpay: MoneyByCurrency;
     other: MoneyByCurrency;

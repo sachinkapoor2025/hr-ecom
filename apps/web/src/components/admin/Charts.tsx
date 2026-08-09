@@ -445,3 +445,130 @@ export function DailyVisitorsChart({
     </div>
   );
 }
+
+function polarXY(cx: number, cy: number, r: number, angleDeg: number) {
+  const rad = ((angleDeg - 90) * Math.PI) / 180;
+  return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+}
+
+function donutArc(
+  cx: number,
+  cy: number,
+  outerR: number,
+  innerR: number,
+  startDeg: number,
+  endDeg: number
+): string {
+  const sweep = Math.max(0.01, Math.min(359.999, endDeg - startDeg));
+  const large = sweep > 180 ? 1 : 0;
+  const o0 = polarXY(cx, cy, outerR, startDeg);
+  const o1 = polarXY(cx, cy, outerR, startDeg + sweep);
+  const i1 = polarXY(cx, cy, innerR, startDeg + sweep);
+  const i0 = polarXY(cx, cy, innerR, startDeg);
+  return [
+    `M ${o0.x} ${o0.y}`,
+    `A ${outerR} ${outerR} 0 ${large} 1 ${o1.x} ${o1.y}`,
+    `L ${i1.x} ${i1.y}`,
+    `A ${innerR} ${innerR} 0 ${large} 0 ${i0.x} ${i0.y}`,
+    "Z",
+  ].join(" ");
+}
+
+const EXPECTED_COLOR = "#183a68";
+const RECEIVED_COLOR = "#16a34a";
+
+/** Donut: Received (green) vs remaining Expected (navy). */
+export function SettlementExpectedDonut({
+  title,
+  subtitle,
+  expected,
+  received,
+  currency,
+  size = 200,
+}: {
+  title: string;
+  subtitle?: string;
+  expected: number;
+  received: number;
+  currency: "USD" | "INR";
+  size?: number;
+}) {
+  const symbol = currency === "INR" ? "₹" : "$";
+  const fmt = (n: number) =>
+    `${symbol}${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+  const exp = Math.max(0, expected);
+  const rec = Math.max(0, received);
+  const remaining = Math.max(0, exp - rec);
+  const over = rec > exp + 0.001;
+  const denom = over ? rec : Math.max(exp, rec, 0.01);
+  const receivedPct = Math.min(100, Math.round((rec / denom) * 100));
+  const receivedSweep = over ? 360 : exp > 0 ? (rec / exp) * 360 : rec > 0 ? 360 : 0;
+
+  const cx = size / 2;
+  const cy = size / 2;
+  const outerR = size * 0.42;
+  const innerR = size * 0.26;
+
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-5 flex flex-col items-center">
+      <div className="w-full mb-3">
+        <h3 className="font-semibold text-slate-900">{title}</h3>
+        {subtitle && <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>}
+      </div>
+
+      <div className="relative" style={{ width: size, height: size }}>
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden>
+          {/* Expected / remaining track */}
+          {exp <= 0 && rec <= 0 ? (
+            <circle cx={cx} cy={cy} r={(outerR + innerR) / 2} fill="none" stroke="#e2e8f0" strokeWidth={outerR - innerR} />
+          ) : over ? (
+            <path d={donutArc(cx, cy, outerR, innerR, 0, 360)} fill={RECEIVED_COLOR} />
+          ) : (
+            <>
+              {remaining > 0 && (
+                <path
+                  d={donutArc(cx, cy, outerR, innerR, receivedSweep, 360)}
+                  fill={EXPECTED_COLOR}
+                />
+              )}
+              {rec > 0 && (
+                <path d={donutArc(cx, cy, outerR, innerR, 0, receivedSweep || 0.01)} fill={RECEIVED_COLOR} />
+              )}
+              {rec <= 0 && exp > 0 && (
+                <path d={donutArc(cx, cy, outerR, innerR, 0, 360)} fill={EXPECTED_COLOR} />
+              )}
+            </>
+          )}
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+          <p className="text-2xl font-bold text-slate-900">{receivedPct}%</p>
+          <p className="text-[10px] uppercase tracking-wide text-slate-400">received</p>
+        </div>
+      </div>
+
+      <div className="w-full mt-4 space-y-2 text-sm">
+        <div className="flex items-center justify-between gap-2">
+          <span className="inline-flex items-center gap-2 text-slate-700">
+            <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: EXPECTED_COLOR }} />
+            Expected
+          </span>
+          <span className="font-semibold text-slate-900">{fmt(exp)}</span>
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <span className="inline-flex items-center gap-2 text-slate-700">
+            <span className="h-2.5 w-2.5 rounded-full shrink-0" style={{ backgroundColor: RECEIVED_COLOR }} />
+            Received
+          </span>
+          <span className="font-semibold text-emerald-700">{fmt(rec)}</span>
+        </div>
+        <div className="flex items-center justify-between gap-2 border-t border-slate-100 pt-2 text-xs">
+          <span className="text-slate-500">{over ? "Over-settled" : "Pending"}</span>
+          <span className={`font-medium ${over ? "text-amber-700" : "text-slate-700"}`}>
+            {fmt(over ? rec - exp : remaining)}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}

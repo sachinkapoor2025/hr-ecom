@@ -120,9 +120,18 @@ export async function buildPaymentReconciliationSnapshot(): Promise<PaymentRecon
 
   const recordedSettlements = emptyMoney();
   const gatewayCharges = emptyMoney();
+  const settlementsBySource = {
+    stripe: emptyMoney(),
+    razorpay: emptyMoney(),
+    other: emptyMoney(),
+  };
   for (const s of settlements) {
     const currency: LedgerCurrency = s.currency === "INR" ? "INR" : "USD";
-    addMoney(recordedSettlements, currency, Number(s.amount) || 0);
+    const amount = Number(s.amount) || 0;
+    addMoney(recordedSettlements, currency, amount);
+    if (s.paymentSource === "stripe") addMoney(settlementsBySource.stripe, currency, amount);
+    else if (s.paymentSource === "razorpay") addMoney(settlementsBySource.razorpay, currency, amount);
+    else addMoney(settlementsBySource.other, currency, amount);
     if (typeof s.gatewayFee === "number" && s.gatewayFee > 0) {
       addMoney(gatewayCharges, currency, s.gatewayFee);
     }
@@ -141,6 +150,7 @@ export async function buildPaymentReconciliationSnapshot(): Promise<PaymentRecon
     netAmountReceived: { ...recordedSettlements },
     pendingSettlements,
     byProvider,
+    settlementsBySource,
     overallExpected: { ...expectedPayments },
     orderCounts: {
       revenue,

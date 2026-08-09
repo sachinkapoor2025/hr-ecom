@@ -2,6 +2,7 @@
 
 import { getApiUrl } from "./env";
 import { getOrCreateSessionId } from "./session";
+import { attributionEventMetadata } from "./attribution-store";
 import { EVENT_TYPES, type EventType, parseClientDevice } from "@hr-ecom/shared";
 
 interface TrackPayload {
@@ -129,7 +130,11 @@ export function track(payload: TrackPayload): void {
     path: payload.path ?? window.location.pathname + window.location.search,
     referrer: document.referrer || undefined,
     at: new Date().toISOString(),
-    metadata: { ...getClientMetadata(), ...payload.metadata },
+    metadata: {
+      ...getClientMetadata(),
+      ...attributionEventMetadata(),
+      ...payload.metadata,
+    },
   });
 
   scheduleFlush(payload.immediate);
