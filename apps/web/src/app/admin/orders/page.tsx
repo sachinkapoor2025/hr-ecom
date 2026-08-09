@@ -431,7 +431,6 @@ export default function AdminOrdersPage() {
                 <th className="py-3 px-3">Total</th>
                 <th className="py-3 px-3">Updated</th>
                 <th className="py-3 px-3">Age</th>
-                <th className="py-3 px-3">Route</th>
               </tr>
             </thead>
             <tbody>
@@ -556,14 +555,6 @@ export default function AdminOrdersPage() {
                     ) : (
                       <span className="text-slate-400">{Math.floor(hoursSinceUpdate / 24)}d</span>
                     )}
-                  </td>
-                  <td className="py-3 px-3" onClick={(e) => e.stopPropagation()}>
-                    <Link
-                      href={`/admin/orders/${o.orderId}/route`}
-                      className="inline-flex rounded-md border border-nav px-2.5 py-1 text-xs font-semibold text-nav hover:bg-blue-50 whitespace-nowrap"
-                    >
-                      Order Route
-                    </Link>
                   </td>
                 </tr>
               );

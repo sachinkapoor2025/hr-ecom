@@ -113,8 +113,11 @@ export default function AdminOrderRoutePage() {
   if (error || !data) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-10">
-        <Link href={`/admin/orders/${orderId}`} className="text-sm text-nav hover:underline">
-          ← Back to order
+        <Link
+          href="/admin/analytics?tab=order-routes"
+          className="text-sm text-nav hover:underline"
+        >
+          ← Back to order routes
         </Link>
         <p className="mt-4 text-red-600 text-sm">{error || "Order route not found"}</p>
       </div>
@@ -127,8 +130,11 @@ export default function AdminOrderRoutePage() {
     <div className="max-w-4xl mx-auto px-4 py-10">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <div>
-          <Link href={`/admin/orders/${orderId}`} className="text-sm text-nav hover:underline">
-            ← Back to order
+          <Link
+            href="/admin/analytics?tab=order-routes"
+            className="text-sm text-nav hover:underline"
+          >
+            ← Back to order routes
           </Link>
           <h1 className="text-2xl font-bold mt-2">
             Order Route · {data.orderNumber ?? data.orderId.slice(0, 8)}

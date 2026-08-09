@@ -22,6 +22,7 @@ const navItems: NavItem[] = [
     href: "/admin/analytics",
     children: [
       { href: "/admin/analytics?tab=overview", label: "Overview" },
+      { href: "/admin/analytics?tab=order-routes", label: "Order routes" },
       { href: "/admin/analytics?tab=visitor-analytics", label: "Visitor analytics" },
       { href: "/admin/analytics?tab=live", label: "Live visitor" },
       { href: "/admin/analytics?tab=sessions", label: "Visitors" },

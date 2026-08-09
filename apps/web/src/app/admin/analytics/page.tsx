@@ -9,6 +9,7 @@ import { SalesReportPanel } from "@/components/admin/SalesReportPanel";
 import { VisitorAnalyticsPanel } from "@/components/admin/VisitorAnalyticsPanel";
 import { LiveVisitorsPanel } from "@/components/admin/LiveVisitorsPanel";
 import { VisitorsPanel } from "@/components/admin/VisitorsPanel";
+import { OrderRoutesPanel } from "@/components/admin/OrderRoutesPanel";
 import { downloadCsv, downloadPdfReport, formatMoney } from "@/lib/admin-utils";
 
 interface ProductStat {
@@ -54,10 +55,16 @@ interface Insights {
   ordersByDay: { day: string; orders: number; pageViews: number }[];
 }
 
-type AnalyticsTab = "overview" | "visitor-analytics" | "live" | "sessions";
+type AnalyticsTab = "overview" | "order-routes" | "visitor-analytics" | "live" | "sessions";
 
 function parseAnalyticsTab(raw: string | null): AnalyticsTab {
-  if (raw === "live" || raw === "sessions" || raw === "overview" || raw === "visitor-analytics") {
+  if (
+    raw === "live" ||
+    raw === "sessions" ||
+    raw === "overview" ||
+    raw === "visitor-analytics" ||
+    raw === "order-routes"
+  ) {
     return raw;
   }
   // Back-compat: old ?tab=visitors meant visitor analytics
@@ -233,6 +240,7 @@ function AdminAnalyticsPageInner() {
           {(
             [
               { id: "overview" as const, label: "Overview" },
+              { id: "order-routes" as const, label: "Order routes" },
               { id: "visitor-analytics" as const, label: "Visitor analytics" },
               { id: "live" as const, label: "Live visitor" },
               { id: "sessions" as const, label: "Visitors" },
@@ -291,6 +299,8 @@ function AdminAnalyticsPageInner() {
         <VisitorAnalyticsPanel />
       ) : tab === "sessions" ? (
         <VisitorsPanel />
+      ) : tab === "order-routes" ? (
+        <OrderRoutesPanel />
       ) : loading ? (
         <p className="text-slate-500">Loading…</p>
       ) : error ? (

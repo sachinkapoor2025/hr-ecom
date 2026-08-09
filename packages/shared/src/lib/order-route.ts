@@ -169,6 +169,58 @@ export type OrderRouteResponse = {
   eventsNote?: string;
 };
 
+/** Lean row for Analytics → Order routes overview (no timeline / event fan-out). */
+export type OrderRouteListItem = {
+  orderId: string;
+  orderNumber?: string;
+  orderCreatedAt: string;
+  customerName?: string;
+  customerEmail?: string;
+  total: number;
+  currency: "USD" | "INR";
+  status: string;
+  paymentProvider?: string;
+  firstTouchLabel: string;
+  lastTouchLabel: string;
+  firstSource?: string;
+  lastSource?: string;
+  medium?: string;
+  campaign?: string;
+  confidence: string;
+  landingPage?: string;
+  referrer?: string;
+  device?: string;
+  hasAttributionSnapshot: boolean;
+};
+
+export function buildOrderRouteListItem(order: Order): OrderRouteListItem {
+  const route = buildOrderRoutePayload(order, []);
+  const first = route.attribution.firstTouch;
+  const last = route.attribution.lastTouch;
+  return {
+    orderId: order.orderId,
+    orderNumber: order.orderNumber,
+    orderCreatedAt: order.createdAt,
+    customerName: order.shippingAddress?.name,
+    customerEmail: order.shippingAddress?.email,
+    total: order.total,
+    currency: order.currency === "INR" ? "INR" : "USD",
+    status: order.status,
+    paymentProvider: order.paymentProvider,
+    firstTouchLabel: route.summary.firstTouchLabel,
+    lastTouchLabel: route.summary.lastTouchLabel,
+    firstSource: first?.source,
+    lastSource: last?.source,
+    medium: last?.medium ?? first?.medium,
+    campaign: route.summary.primaryCampaign,
+    confidence: route.summary.confidence,
+    landingPage: route.summary.landingPage,
+    referrer: route.summary.referrer,
+    device: route.summary.device,
+    hasAttributionSnapshot: Boolean(order.attribution?.firstTouch || order.attribution?.lastTouch),
+  };
+}
+
 export function buildOrderRoutePayload(
   order: Order,
   events: RawAnalyticsEvent[]

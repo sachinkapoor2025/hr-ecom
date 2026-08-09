@@ -1,6 +1,7 @@
 import { QueryCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
 import type { APIGatewayProxyEventV2 } from "aws-lambda";
 import {
+  buildOrderRouteListItem,
   buildOrderRoutePayload,
   eventKeys,
   orderKeys,
@@ -42,6 +43,47 @@ async function loadSessionEvents(sessionId: string): Promise<RawAnalyticsEvent[]
     if (items.length >= 500) break;
   } while (ExclusiveStartKey);
   return items;
+}
+
+/** Admin: overview list of order attribution (snapshot only — fast). */
+export async function listAdminOrderRoutes(event: APIGatewayProxyEventV2) {
+  if (!requireAdmin(event)) return forbidden();
+
+  const items: Order[] = [];
+  let ExclusiveStartKey: Record<string, unknown> | undefined;
+  let pages = 0;
+  do {
+    const result = await docClient.send(
+      new QueryCommand({
+        TableName: ORDERS_TABLE,
+        IndexName: "GSI2",
+        KeyConditionExpression: "GSI2PK = :pk",
+        ExpressionAttributeValues: { ":pk": orderKeys.gsi2pk() },
+        ScanIndexForward: false,
+        ExclusiveStartKey,
+        Limit: 100,
+      })
+    );
+    items.push(...((result.Items ?? []) as Order[]));
+    ExclusiveStartKey = result.LastEvaluatedKey as Record<string, unknown> | undefined;
+    pages += 1;
+  } while (ExclusiveStartKey && pages < 30);
+
+  const routes = items.map((order) => buildOrderRouteListItem(order));
+
+  const bySource = new Map<string, number>();
+  for (const r of routes) {
+    const key = (r.lastSource || r.firstSource || "unknown").toLowerCase();
+    bySource.set(key, (bySource.get(key) ?? 0) + 1);
+  }
+
+  return ok({
+    routes,
+    count: routes.length,
+    bySource: [...bySource.entries()]
+      .map(([source, count]) => ({ source, count }))
+      .sort((a, b) => b.count - a.count),
+  });
 }
 
 /** Admin: full Order Route / attribution journey for one order. */

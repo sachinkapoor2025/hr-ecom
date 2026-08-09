@@ -171,6 +171,11 @@ const routes: Route[] = [
   { method: "GET", pattern: /^\/admin\/orders$/, handler: orders.listAdminOrders },
   {
     method: "GET",
+    pattern: /^\/admin\/analytics\/order-routes$/,
+    handler: orderRoute.listAdminOrderRoutes,
+  },
+  {
+    method: "GET",
     pattern: /^\/admin\/orders\/([^/]+)\/route$/,
     handler: orderRoute.getAdminOrderRoute,
     params: ["orderId"],
