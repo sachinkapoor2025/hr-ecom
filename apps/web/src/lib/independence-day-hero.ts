@@ -11,7 +11,7 @@ import { homeBanners } from "@/lib/site";
 export const INDEPENDENCE_DAY_HERO_STARTS_AT = "2026-08-09T00:00:00.000Z";
 export const INDEPENDENCE_DAY_HERO_ENDS_AT = "2026-08-16T00:00:00.000Z";
 
-/** Extra carousel slide — taller art uses contain so nothing is cropped. */
+/** Extra carousel slide — same cover fill as the other homepage banners. */
 export const independenceDayHeroBanner: HomeBanner = {
   src: "/banners/banner-independence-day-2026.png",
   alt: "India Independence Day Freedom Sale — Send Rakhi to USA | UsaRakhi",
@@ -23,7 +23,6 @@ export const independenceDayHeroBanner: HomeBanner = {
     "Premium rakhis with fast USA delivery. Perfect for Independence Day & Raksha Bandhan.",
   cta: "Shop Freedom Sale",
   pill: "Independence Day · Fast USA Delivery · Premium Rakhis",
-  imageFit: "contain",
 };
 
 export function isIndependenceDayHeroActive(now = new Date()): boolean {
