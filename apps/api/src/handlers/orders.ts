@@ -334,6 +334,15 @@ export async function checkout(event: APIGatewayProxyEventV2) {
     return badRequest("Scheduled delivery must be today through 28 August 2026");
   }
 
+  const attribution = parsed.data.attribution
+    ? {
+        ...parsed.data.attribution,
+        version: 1 as const,
+        sessionId: parsed.data.attribution.sessionId || sessionId || undefined,
+        visitorId: parsed.data.attribution.visitorId || sessionId || undefined,
+      }
+    : undefined;
+
   const order: Order = {
     orderId,
     orderNumber,
@@ -367,6 +376,7 @@ export async function checkout(event: APIGatewayProxyEventV2) {
       !shippingResult.selected && {
         labelStatus: "queued" as const,
       }),
+    ...(attribution ? { attribution } : {}),
     createdAt: timestamp,
     updatedAt: timestamp,
   };

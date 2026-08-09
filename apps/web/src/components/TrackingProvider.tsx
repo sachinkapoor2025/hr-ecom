@@ -9,6 +9,7 @@ import {
   trackLivePresence,
   ensureVisitorGeo,
 } from "@/lib/track";
+import { captureAttributionFromLocation } from "@/lib/attribution-store";
 
 const LIVE_PRESENCE_MS = 30_000;
 
@@ -17,6 +18,7 @@ export function TrackingProvider() {
   const pathname = usePathname();
 
   useEffect(() => {
+    captureAttributionFromLocation();
     void ensureVisitorGeo().then(() => {
       trackPageLeave();
       trackPageView(pathname);

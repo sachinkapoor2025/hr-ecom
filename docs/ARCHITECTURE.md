@@ -153,6 +153,7 @@ When admin (or Orange County vendor tracking) changes order status (accepted, pr
 | GET | `/orders/{orderId}` | Order detail (owner/admin) |
 | GET | `/admin/orders` | Admin: list orders (filter `?status=`) |
 | GET | `/admin/orders/{orderId}` | Admin: order detail |
+| GET | `/admin/orders/{orderId}/route` | Admin: Order Route attribution (first/last/assisted touches, journey timeline, confidence). UI: `/admin/orders/{orderId}/route` |
 | PATCH | `/admin/orders/{orderId}` | Admin: update status + tracking; emails customer + order@usarakhi on each status step; schedules review email 1 day after delivered |
 | GET | `/admin/analytics/sales` | Admin: day/week/month payments received (excludes refunds) |
 | GET | `/admin/analytics/overview` | Admin: traffic + funnel (`?days=`) |

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { cartItemSchema } from "./cart";
 import { ORDER_STATUS } from "../constants";
+import { checkoutAttributionSchema, orderAttributionSchema } from "./attribution";
 
 /** International phone: 10–15 digits; allows +, spaces, dashes, parentheses. */
 export function isValidShippingPhone(phone: string): boolean {
@@ -84,6 +85,8 @@ export const checkoutSchema = z.object({
   /** Customer override — must match a returned rate. */
   shippingServiceCode: z.string().optional(),
   shippingRateId: z.string().optional(),
+  /** First/last-touch marketing attribution snapshot from the browser. */
+  attribution: checkoutAttributionSchema.optional(),
 });
 
 /** Persisted per-delivery package on an order. */
@@ -196,6 +199,11 @@ export const orderSchema = z.object({
   labelStatus: z.enum(["none", "queued", "purchased", "failed"]).optional(),
   labelError: z.string().optional(),
   addressValidated: z.boolean().optional(),
+  /**
+   * Marketing attribution snapshot (first/last/assisted touch).
+   * Stored on the order so Order Route survives analytics event TTL.
+   */
+  attribution: orderAttributionSchema.optional(),
 });
 
 /** Admin order status update payload. */

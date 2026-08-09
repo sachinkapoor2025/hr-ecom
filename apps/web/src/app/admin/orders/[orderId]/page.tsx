@@ -347,6 +347,12 @@ export default function AdminOrderDetailPage() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href={`/admin/orders/${order.orderId}/route`}
+            className="rounded-lg border border-nav bg-white px-3 py-1.5 text-sm font-semibold text-nav hover:bg-blue-50"
+          >
+            Order Route
+          </Link>
           {hasOc && (
             <span className="px-3 py-1 rounded-full text-sm font-semibold bg-orange-100 text-orange-800">
               Orange County

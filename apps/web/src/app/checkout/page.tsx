@@ -9,6 +9,7 @@ import { useAuth, useApiClient } from "@/lib/auth-context";
 import { useCurrency, type DisplayCurrency } from "@/lib/currency-context";
 import { useSessionId, useDebouncedLeadCapture, useLeadCapture } from "@/lib/session";
 import { trackCheckoutStart, trackPurchase } from "@/lib/track";
+import { getAttributionSnapshotForCheckout } from "@/lib/attribution-store";
 import Script from "next/script";
 import { PaymentMethodPicker, type PaymentMethod } from "@/components/PaymentMethodPicker";
 import { ShippingAddressForm } from "@/components/ShippingAddressForm";
@@ -643,6 +644,7 @@ function CheckoutPageInner() {
           ...(displayCurrency === "INR" ? { usdInrRate } : {}),
           shippingAddress: payload,
           shipments,
+          attribution: getAttributionSnapshotForCheckout(),
           ...(appliedCouponCode ? { couponCode: appliedCouponCode } : {}),
           ...(() => {
             const preferredDeliveryDate = loadPreferredDeliveryDate();

@@ -4,6 +4,7 @@ import * as products from "./handlers/products";
 import * as categories from "./handlers/categories";
 import * as cart from "./handlers/cart";
 import * as orders from "./handlers/orders";
+import * as orderRoute from "./handlers/order-route";
 import * as config from "./handlers/config";
 import * as uploads from "./handlers/uploads";
 import * as events from "./handlers/events";
@@ -168,6 +169,12 @@ const routes: Route[] = [
   { method: "PUT", pattern: /^\/account\/addresses\/([^/]+)$/, handler: account.updateAccountAddress, params: ["addressId"] },
   { method: "DELETE", pattern: /^\/account\/addresses\/([^/]+)$/, handler: account.deleteAccountAddress, params: ["addressId"] },
   { method: "GET", pattern: /^\/admin\/orders$/, handler: orders.listAdminOrders },
+  {
+    method: "GET",
+    pattern: /^\/admin\/orders\/([^/]+)\/route$/,
+    handler: orderRoute.getAdminOrderRoute,
+    params: ["orderId"],
+  },
   { method: "GET", pattern: /^\/admin\/orders\/([^/]+)$/, handler: orders.getAdminOrder, params: ["orderId"] },
   { method: "PATCH", pattern: /^\/admin\/orders\/([^/]+)$/, handler: orders.updateOrderStatus, params: ["orderId"] },
   { method: "PUT", pattern: /^\/admin\/orders\/([^/]+)$/, handler: orders.updateOrderStatus, params: ["orderId"] },

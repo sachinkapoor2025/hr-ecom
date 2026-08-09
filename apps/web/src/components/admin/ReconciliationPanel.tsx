@@ -4,7 +4,12 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import type { PaymentReconciliationSnapshot, LedgerCurrency } from "@hr-ecom/shared";
 import { useAuth, useApiClient } from "@/lib/auth-context";
-import { BarChart, HorizontalBarChart, ChartLegend } from "@/components/admin/Charts";
+import {
+  BarChart,
+  HorizontalBarChart,
+  ChartLegend,
+  SettlementExpectedDonut,
+} from "@/components/admin/Charts";
 
 function formatMoney(amount: number, currency: LedgerCurrency) {
   const symbol = currency === "INR" ? "₹" : "$";
@@ -209,6 +214,39 @@ export function ReconciliationPanel() {
               usd={data.overallExpected.USD}
               inr={data.overallExpected.INR}
             />
+          </div>
+
+          <div className="mb-6">
+            <div className="flex flex-wrap items-end justify-between gap-2 mb-3">
+              <div>
+                <h2 className="font-semibold">Expected vs received by gateway</h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Navy = expected (still pending) · Green = received settlements
+                </p>
+              </div>
+              <ChartLegend
+                items={[
+                  { label: "Expected", color: "#183a68" },
+                  { label: "Received", color: "#16a34a" },
+                ]}
+              />
+            </div>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <SettlementExpectedDonut
+                title="Stripe"
+                subtitle="USD orders vs Stripe settlements"
+                expected={data.byProvider.stripe.USD}
+                received={data.settlementsBySource?.stripe?.USD ?? 0}
+                currency="USD"
+              />
+              <SettlementExpectedDonut
+                title="Razorpay"
+                subtitle="INR orders vs Razorpay settlements"
+                expected={data.byProvider.razorpay.INR}
+                received={data.settlementsBySource?.razorpay?.INR ?? 0}
+                currency="INR"
+              />
+            </div>
           </div>
 
           <div className="rounded-xl border border-slate-200 bg-white p-5 mb-6">
