@@ -43,7 +43,7 @@ function VendorManagementHubInner() {
             Orange County vendor tools — API console and (super admin) expense / payout tracking.
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-col xs:flex-row flex-wrap items-stretch sm:items-center gap-2 w-full sm:w-auto">
           {tabs
             .filter((t) => !t.superOnly || isSuperAdmin)
             .map((t) => (
@@ -51,7 +51,7 @@ function VendorManagementHubInner() {
                 key={t.id}
                 type="button"
                 onClick={() => setTab(t.id)}
-                className={`text-sm px-3 py-1.5 rounded-lg border transition-colors ${
+                className={`text-sm px-3 py-2.5 sm:py-1.5 rounded-lg border transition-colors text-left sm:text-center ${
                   tab === t.id
                     ? "bg-nav text-white border-nav"
                     : "border-slate-300 hover:bg-slate-50"

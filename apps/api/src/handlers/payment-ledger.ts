@@ -4,8 +4,10 @@ import { ScanCommand, GetCommand, PutCommand, DeleteCommand } from "@aws-sdk/lib
 import {
   createPaymentLedgerSchema,
   updatePaymentLedgerSchema,
+  bulkCreatePaymentLedgerSchema,
   paymentLedgerKeys,
   currencyForPaymentSource,
+  paymentLedgerDuplicateKey,
   type PaymentLedgerEntry,
   type LedgerCurrency,
 } from "@hr-ecom/shared";
@@ -91,9 +93,21 @@ export async function createPaymentLedgerEntry(event: APIGatewayProxyEventV2) {
   const parsed = createPaymentLedgerSchema.safeParse(JSON.parse(event.body ?? "{}"));
   if (!parsed.success) return badRequest(parsed.error.message);
 
+  const currency = currencyForPaymentSource(parsed.data.paymentSource, parsed.data.currency);
+  const existing = await listPaymentItems();
+  const dupKey = paymentLedgerDuplicateKey(parsed.data.receivedDate, parsed.data.amount, currency);
+  const already = existing.find(
+    (p) =>
+      paymentLedgerDuplicateKey(p.receivedDate, p.amount, normalizeCurrency(p.currency)) === dupKey
+  );
+  if (already) {
+    return badRequest(
+      `There is already a transaction logged on ${parsed.data.receivedDate} for ${currency} ${roundMoney(parsed.data.amount).toFixed(2)}.`
+    );
+  }
+
   const paymentId = uuidv4();
   const timestamp = now();
-  const currency = currencyForPaymentSource(parsed.data.paymentSource, parsed.data.currency);
   const item: StoredPayment = {
     PK: paymentLedgerKeys.pk(paymentId),
     SK: paymentLedgerKeys.sk(),
@@ -118,6 +132,97 @@ export async function createPaymentLedgerEntry(event: APIGatewayProxyEventV2) {
     createdBy: item.createdBy,
   });
   return created({ payment: toPublic(item) });
+}
+
+/** Bulk import from gateway Excel/CSV (pre-parsed rows). Skips amount+date duplicates. */
+export async function bulkCreatePaymentLedgerEntries(event: APIGatewayProxyEventV2) {
+  const auth = requireSuperAdmin(event);
+  if (!auth) return forbidden("Super admin access required");
+
+  let body: unknown;
+  try {
+    body = JSON.parse(event.body ?? "{}");
+  } catch {
+    return badRequest("Invalid JSON body");
+  }
+
+  const parsed = bulkCreatePaymentLedgerSchema.safeParse(body);
+  if (!parsed.success) return badRequest(parsed.error.message);
+
+  const { paymentSource, rows } = parsed.data;
+  const currency = currencyForPaymentSource(paymentSource);
+  const existing = await listPaymentItems();
+  const seen = new Set(
+    existing.map((p) =>
+      paymentLedgerDuplicateKey(p.receivedDate, p.amount, normalizeCurrency(p.currency))
+    )
+  );
+
+  const createdPayments: PaymentLedgerEntry[] = [];
+  const skippedDuplicates: Array<{
+    receivedDate: string;
+    amount: number;
+    currency: LedgerCurrency;
+    rowNumber?: number;
+    message: string;
+  }> = [];
+
+  const createdBy = auth.email || auth.userId;
+  const timestamp = now();
+
+  for (const row of rows) {
+    const amount = roundMoney(row.amount);
+    const key = paymentLedgerDuplicateKey(row.receivedDate, amount, currency);
+    if (seen.has(key)) {
+      skippedDuplicates.push({
+        receivedDate: row.receivedDate,
+        amount,
+        currency,
+        rowNumber: row.rowNumber,
+        message: `There is already a transaction logged on ${row.receivedDate} for ${currency} ${amount.toFixed(2)}.`,
+      });
+      continue;
+    }
+
+    const paymentId = uuidv4();
+    const item: StoredPayment = {
+      PK: paymentLedgerKeys.pk(paymentId),
+      SK: paymentLedgerKeys.sk(),
+      paymentId,
+      amount,
+      currency,
+      receivedDate: row.receivedDate,
+      paymentSource,
+      ...(typeof row.gatewayFee === "number" ? { gatewayFee: roundMoney(row.gatewayFee) } : {}),
+      notes: row.notes?.trim() || undefined,
+      createdBy,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    };
+
+    await docClient.send(new PutCommand({ TableName: CONFIG_TABLE, Item: item }));
+    seen.add(key);
+    createdPayments.push(toPublic(item));
+  }
+
+  console.info("payment-ledger.bulk", {
+    paymentSource,
+    created: createdPayments.length,
+    skippedDuplicates: skippedDuplicates.length,
+    createdBy,
+  });
+
+  return created({
+    paymentSource,
+    currency,
+    created: createdPayments,
+    skippedDuplicates,
+    summary: {
+      created: createdPayments.length,
+      skippedDuplicates: skippedDuplicates.length,
+      totalRows: rows.length,
+    },
+  });
 }
 
 export async function updatePaymentLedgerEntry(event: APIGatewayProxyEventV2) {

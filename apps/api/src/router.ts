@@ -105,6 +105,11 @@ const routes: Route[] = [
   { method: "GET", pattern: /^\/admin\/payment-ledger$/, handler: paymentLedger.listPaymentLedger },
   { method: "POST", pattern: /^\/admin\/payment-ledger$/, handler: paymentLedger.createPaymentLedgerEntry },
   {
+    method: "POST",
+    pattern: /^\/admin\/payment-ledger\/bulk$/,
+    handler: paymentLedger.bulkCreatePaymentLedgerEntries,
+  },
+  {
     method: "PUT",
     pattern: /^\/admin\/payment-ledger\/([^/]+)$/,
     handler: paymentLedger.updatePaymentLedgerEntry,

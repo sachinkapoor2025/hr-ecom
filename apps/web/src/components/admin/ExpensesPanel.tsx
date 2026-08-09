@@ -8,6 +8,7 @@ import {
   EXPENSE_MAX_BILL_IMAGES,
   EXPENSE_TYPES,
   EXPENSE_TYPE_LABELS,
+  normalizeExpenseTypes,
   LEDGER_CURRENCIES,
   recordedByLabel,
   type Expense,
@@ -53,18 +54,28 @@ export function ExpensesPanel() {
 
   const [amount, setAmount] = useState("");
   const [currency, setCurrency] = useState<LedgerCurrency>("USD");
-  const [expenseType, setExpenseType] = useState<ExpenseType>("shipping_charges");
+  const [expenseTypes, setExpenseTypes] = useState<ExpenseType[]>(["shipping_charges"]);
   const [description, setDescription] = useState("");
   const [expenseDate, setExpenseDate] = useState(todayYmd());
   const [billStatus, setBillStatus] = useState<ExpenseBillStatus>("all_bills");
   const [billFiles, setBillFiles] = useState<File[]>([]);
   const [existingBillUrls, setExistingBillUrls] = useState<string[]>([]);
 
+  const toggleExpenseType = (t: ExpenseType) => {
+    setExpenseTypes((prev) => {
+      if (prev.includes(t)) {
+        if (prev.length === 1) return prev;
+        return prev.filter((x) => x !== t);
+      }
+      return [...prev, t];
+    });
+  };
+
   const resetForm = () => {
     setAmount("");
     setDescription("");
     setExpenseDate(todayYmd());
-    setExpenseType("shipping_charges");
+    setExpenseTypes(["shipping_charges"]);
     setCurrency("USD");
     setBillStatus("all_bills");
     setBillFiles([]);
@@ -109,7 +120,9 @@ export function ExpensesPanel() {
     setEditing(ex);
     setAmount(String(ex.amount));
     setCurrency(ex.currency ?? "USD");
-    setExpenseType(ex.expenseType);
+    setExpenseTypes(
+      normalizeExpenseTypes({ expenseType: ex.expenseType, expenseTypes: ex.expenseTypes })
+    );
     setDescription(ex.description ?? "");
     setExpenseDate(ex.expenseDate);
     setBillStatus(resolveStatus(ex));
@@ -176,10 +189,15 @@ export function ExpensesPanel() {
         }
       }
 
+      if (expenseTypes.length === 0) {
+        throw new Error("Select at least one expense type");
+      }
+
       const body = {
         amount: value,
         currency,
-        expenseType,
+        expenseType: expenseTypes[0],
+        expenseTypes,
         description: description.trim() || undefined,
         expenseDate,
         billStatus,
@@ -280,20 +298,35 @@ export function ExpensesPanel() {
               className="w-full border border-slate-300 rounded-lg px-3 py-2"
             />
           </div>
-          <label className="block text-sm">
+          <div className="block text-sm sm:col-span-2">
             <span className="text-slate-700 font-medium">Expense type</span>
-            <select
-              value={expenseType}
-              onChange={(e) => setExpenseType(e.target.value as ExpenseType)}
-              className="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2"
-            >
-              {EXPENSE_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {EXPENSE_TYPE_LABELS[t]}
-                </option>
-              ))}
-            </select>
-          </label>
+            <p className="text-xs text-slate-500 mt-0.5 mb-2">
+              Select one or more — e.g. Shipping, Inventory Purchase, and Purchase Bills together.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {EXPENSE_TYPES.map((t) => {
+                const checked = expenseTypes.includes(t);
+                return (
+                  <label
+                    key={t}
+                    className={`flex items-center gap-2 rounded-lg border px-3 py-2 cursor-pointer transition-colors ${
+                      checked
+                        ? "border-nav bg-blue-50 text-nav"
+                        : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => toggleExpenseType(t)}
+                      className="rounded border-slate-300"
+                    />
+                    <span className="text-sm font-medium">{EXPENSE_TYPE_LABELS[t]}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
           <label className="block text-sm">
             <span className="text-slate-700 font-medium">Expense date</span>
             <input
@@ -436,7 +469,14 @@ export function ExpensesPanel() {
                 return (
                   <tr key={ex.expenseId} className="border-t border-slate-100">
                     <td className="py-3 px-3 whitespace-nowrap">{ex.expenseDate}</td>
-                    <td className="py-3 px-3">{EXPENSE_TYPE_LABELS[ex.expenseType]}</td>
+                    <td className="py-3 px-3">
+                      {normalizeExpenseTypes({
+                        expenseType: ex.expenseType,
+                        expenseTypes: ex.expenseTypes,
+                      })
+                        .map((t) => EXPENSE_TYPE_LABELS[t])
+                        .join(", ")}
+                    </td>
                     <td className="py-3 px-3 font-medium">
                       {formatMoney(ex.amount, ex.currency ?? "USD")}
                     </td>

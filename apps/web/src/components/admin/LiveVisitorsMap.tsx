@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { formatViewerLocation, type LiveVisitor } from "@hr-ecom/shared";
 import { referrerLabel } from "@/lib/admin-utils";
+import { siteUrl } from "@/lib/env";
 
 function visitorLabel(v: LiveVisitor): string {
   if (v.name) return v.name;
@@ -28,6 +29,14 @@ function agoLabel(seconds: number): string {
   if (seconds < 60) return `${seconds}s ago`;
   const m = Math.floor(seconds / 60);
   return `${m}m ago`;
+}
+
+/** Open the storefront page the visitor is on (keeps query/UTM params). */
+function visitorPageHref(path: string): string {
+  const raw = (path || "/").trim() || "/";
+  if (/^https?:\/\//i.test(raw)) return raw;
+  const base = siteUrl.replace(/\/$/, "");
+  return raw.startsWith("/") ? `${base}${raw}` : `${base}/${raw}`;
 }
 
 function hash01(seed: string): number {
@@ -332,7 +341,15 @@ export function LiveVisitorsMap({ visitors, activeWithinSeconds, byCountry = [] 
                 <p className="text-slate-600 mt-0.5">{locationOf(v)}</p>
                 <p className="mt-1">
                   <span className="text-slate-500">Page: </span>
-                  <span className="font-medium break-all">{v.path}</span>
+                  <a
+                    href={visitorPageHref(v.path)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium break-all text-nav hover:underline"
+                    title="Open this page in a new tab"
+                  >
+                    {v.path || "/"}
+                  </a>
                 </p>
                 <p className="text-xs text-slate-500 mt-1">
                   {[v.deviceType, v.browser, v.os].filter(Boolean).join(" · ") || "Device unknown"}

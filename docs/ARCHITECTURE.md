@@ -111,7 +111,8 @@ When admin (or Orange County vendor tracking) changes order status (accepted, pr
 | PUT | `/admin/expenses/{expenseId}` | Super admin: update expense |
 | DELETE | `/admin/expenses/{expenseId}` | Super admin: delete expense |
 | GET | `/admin/payment-ledger` | Super admin: list gateway settlements. UI: `/admin/expense-settlement?tab=settlement` |
-| POST | `/admin/payment-ledger` | Super admin: record payment (`amount`, `receivedDate`, `paymentSource`; currency auto Stripe→USD / Razorpay→INR; optional `gatewayFee` / `notes`) |
+| POST | `/admin/payment-ledger` | Super admin: record payment (`amount`, `receivedDate`, `paymentSource`; currency auto Stripe→USD / Razorpay→INR; optional `gatewayFee` / `notes`). Rejects duplicate date+amount+currency. |
+| POST | `/admin/payment-ledger/bulk` | Super admin: bulk import pre-parsed gateway rows (max 500). Skips duplicates (same date + amount + currency) with per-row messages. |
 | PUT | `/admin/payment-ledger/{paymentId}` | Super admin: update payment record |
 | DELETE | `/admin/payment-ledger/{paymentId}` | Super admin: delete payment record |
 | GET | `/admin/payment-reconciliation` | Super admin: expected paid orders vs recorded settlements. UI: `/admin/expense-settlement?tab=reconciliation` |

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { StayUpdatedPrompt } from "@/components/StayUpdatedPrompt";
 
 const FESTIVAL_DATE = new Date("2026-08-28T00:00:00");
 /** Order-by date for guaranteed pre-festival delivery */
@@ -50,26 +51,29 @@ export function RakshaBandhanCountdown({ variant = "banner" }: { variant?: Varia
   }
 
   return (
-    <div className="bg-gradient-to-r from-primary to-nav text-white text-center px-4 py-2.5 text-sm">
-      <p>
-        <span className="font-bold">Raksha Bandhan 2026</span> — August 28
-        {daysToFestival > 0 && (
-          <>
-            {" "}
-            · <span className="font-semibold">{daysToFestival} days to go</span>
-          </>
-        )}
-        {daysToOrder !== null && daysToOrder > 0 && daysToOrder <= 21 && (
-          <>
-            {" "}
-            · Order by Aug 20 for guaranteed delivery
-          </>
-        )}
-        {" · "}
-        <Link href="/raksha-bandhan" className="underline underline-offset-2 hover:text-white/90">
-          Gift guide
-        </Link>
-      </p>
+    <div className="bg-gradient-to-r from-primary to-nav text-white px-3 sm:px-4 py-2.5 text-sm">
+      <div className="max-w-7xl mx-auto flex items-center gap-3 justify-between">
+        <p className="min-w-0 flex-1 text-center sm:text-left text-[12px] sm:text-sm leading-snug">
+          <span className="font-bold">Raksha Bandhan 2026</span> — August 28
+          {daysToFestival > 0 && (
+            <>
+              {" "}
+              · <span className="font-semibold">{daysToFestival} days to go</span>
+            </>
+          )}
+          {daysToOrder !== null && daysToOrder > 0 && daysToOrder <= 21 && (
+            <>
+              {" "}
+              · Order by Aug 20 for guaranteed delivery
+            </>
+          )}
+          {" · "}
+          <Link href="/raksha-bandhan" className="underline underline-offset-2 hover:text-white/90">
+            Gift guide
+          </Link>
+        </p>
+        <StayUpdatedPrompt />
+      </div>
     </div>
   );
 }

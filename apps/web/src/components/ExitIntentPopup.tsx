@@ -432,25 +432,25 @@ export function ExitIntentPopup() {
                     disabled={phase === "spinning"}
                     className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-nav disabled:opacity-60"
                   />
-                  <button
-                    type="submit"
-                    disabled={phase === "spinning"}
-                    className="w-full rounded-lg bg-accent text-white font-bold text-sm py-3.5 hover:opacity-90 disabled:opacity-70 shadow-md shadow-accent/25"
-                  >
-                    {phase === "spinning" ? "Spinning…" : "Spin the wheel"}
-                  </button>
+                  <div className="flex flex-col-reverse sm:flex-row gap-2">
+                    <button
+                      type="button"
+                      onClick={close}
+                      disabled={phase === "spinning"}
+                      className="w-full sm:w-auto sm:min-w-[7.5rem] rounded-lg border-2 border-slate-300 bg-white text-slate-700 font-bold text-sm py-3.5 px-4 hover:bg-slate-50 hover:border-slate-400 disabled:opacity-70"
+                    >
+                      Skip
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={phase === "spinning"}
+                      className="w-full flex-1 rounded-lg bg-accent text-white font-bold text-sm py-3.5 hover:opacity-90 disabled:opacity-70 shadow-md shadow-accent/25"
+                    >
+                      {phase === "spinning" ? "Spinning…" : "Spin the wheel"}
+                    </button>
+                  </div>
                   {error && <p className="text-red-500 text-xs text-center">{error}</p>}
                 </form>
-              )}
-
-              {phase === "idle" && (
-                <button
-                  type="button"
-                  onClick={close}
-                  className="mt-3 w-full text-center text-xs text-slate-500 hover:text-slate-700 underline underline-offset-2"
-                >
-                  No thanks — continue without a discount
-                </button>
               )}
             </>
           ) : null}
