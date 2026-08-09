@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { api } from "@/lib/api";
 import { HomeProductCard } from "@/components/HomeProductCard";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { CityContentSection } from "@/components/CityContentSection";
@@ -22,7 +21,9 @@ import {
   isSecondaryCity,
   secondaryCityIntro,
 } from "@/lib/content/city-delivery-tiers";
+import { getCatalogProducts, mergeProductsPreferExisting } from "@/lib/catalog-fallback";
 import { shuffleForCity } from "@/lib/city-products";
+import { loadProducts } from "@/lib/product-loader";
 import { breadcrumbJsonLd, faqJsonLd, pageMetadata, serviceAreaJsonLd } from "@/lib/seo";
 import { buildLocationContent } from "@/components/SeoLocationLanding";
 import { site } from "@/lib/site";
@@ -31,6 +32,10 @@ import type { Product } from "@hr-ecom/shared";
 interface Props {
   params: Promise<{ slug: string }>;
 }
+
+/** Same as homepage: always load the full live catalog (avoid stale 20-product ISR HTML). */
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export function generateStaticParams() {
   return allSeoLocationSlugs().map((slug) => ({ slug }));
@@ -100,12 +105,12 @@ export default async function SeoLocationPage({ params }: Props) {
 
   let products: Product[] = [];
   try {
-    const data = await api<{ products: Product[] }>("/products");
-    products = data.products;
+    products = await loadProducts();
   } catch {
     products = [];
   }
-  // Full catalog — we deliver every product to every location.
+  // Full catalog — same merge as homepage so every location lists every deliverable SKU.
+  products = mergeProductsPreferExisting(products, getCatalogProducts());
   const cityProducts = shuffleForCity(products, slug);
 
   // --- Express metros: individually maintained CityContentSection ---
