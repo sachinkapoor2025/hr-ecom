@@ -14,6 +14,12 @@ export interface HomeBanner {
   description: string;
   cta: string;
   pill: string;
+  /**
+   * How the slide image fills the hero frame.
+   * Default `cover` matches existing banners; use `contain` for taller art
+   * that must stay fully visible (no top/bottom crop).
+   */
+  imageFit?: "cover" | "contain";
 }
 
 const TRUST_FEATURES = [
@@ -71,6 +77,12 @@ function Eyebrow({ text }: { text: string }) {
   );
 }
 
+function bannerImageClass(banner: HomeBanner): string {
+  return banner.imageFit === "contain"
+    ? "object-contain object-center"
+    : "object-cover object-center";
+}
+
 function SlideImage({
   banner,
   priority,
@@ -83,7 +95,7 @@ function SlideImage({
       src={banner.src}
       alt={banner.alt}
       fill
-      className="object-cover object-center"
+      className={bannerImageClass(banner)}
       sizes="(max-width: 1023px) 100vw, 768px"
       priority={priority}
       fetchPriority={priority ? "high" : "auto"}

@@ -7,11 +7,12 @@
  * Both builders emit table + inline-CSS HTML for Gmail / Outlook / Apple Mail.
  */
 
-import { cdnUploadUrl } from "./image-url";
+import { cdnUploadUrl, resolveProductImageUrl } from "./image-url";
 
 const SITE = "https://www.usarakhi.com";
 const SITE_SHORT = "https://usarakhi.com";
 const SHOP = `${SITE}/products`;
+const HAMPERS = `${SITE}/rakhi-hampers-to-usa`;
 const LOGO = `${SITE}/logo.png`;
 const HERO = `${SITE}/banners/banner-1-usa-rakhi-delivery.png`;
 const FB = `${SITE}/email-templates/icons/facebook.png`;
@@ -23,6 +24,7 @@ const GOLD = "#c9a227";
 const RED = "#c41e3a";
 const CREAM = "#fff8ef";
 const PAGE_BG = "#f3eee6";
+const WHITE = "#ffffff";
 
 export type CampaignCard = {
   name: string;
@@ -397,6 +399,107 @@ export const SHOP_MORE_SAVE_MORE_EMAIL_CONFIG = {
   unsubscribeLabel: "Unsubscribe",
 } as const;
 
+/** ═══════════════ TEMPLATE 4 — Rakhi Hampers to USA ═══════════════ */
+export const RAKHI_HAMPERS_USA_EMAIL_CONFIG = {
+  templateId: "rakhi-hampers-to-usa",
+  name: "Rakhi Hampers to USA 🎁",
+  subject: "Make Raksha Bandhan Special – Send Beautiful Rakhi Hampers to USA 🎁",
+  preheader:
+    "Premium Rakhi hamper collection for your brother in the USA — sweets, dry fruits & designer rakhis with fast domestic delivery.",
+  logoUrl: LOGO,
+  logoHref: SITE,
+  logoTagline: "Connecting Hearts Across Borders",
+  title: "Premium Rakhi Hamper Collection for Your Brother in the USA",
+  introEyebrow: "RAKSHA BANDHAN 2026",
+  introBody:
+    "Make this Raksha Bandhan unforgettable with a ready-to-gift Rakhi hamper. Each box pairs designer rakhis with sweets, dry fruits, and festive treats — packed with care and shipped from California to every state in America.",
+  introCtaText: "Shop All Hampers",
+  introCtaHref: HAMPERS,
+  productsHeading: "Featured Rakhi Hampers",
+  productsSubheading: "Handpicked gift boxes your brother will love — tap Shop Now to order for USA delivery.",
+  products: [
+    {
+      name: "Nuts & Love Rakhi Hamper",
+      description: "Designer rakhi with almonds, cashews & Ferrero.",
+      imageUrl: resolveProductImageUrl("/uploads/orange-county/TFUSA003/TFUSA003.jpg"),
+      href: `${SITE}/products/nuts-love-rakhi-hamper`,
+      buttonText: "Shop Now",
+      priceLabel: "$41.00",
+      badge: "BEST VALUE",
+    },
+    {
+      name: "Rakhi Dry Fruit Celebration Combo",
+      description: "Rakhi, Kaju Katli, cashews, pistachios & tikka set.",
+      imageUrl: resolveProductImageUrl("/uploads/orange-county/TFUSRH2026-3/TFUSRH2026-3.jpg"),
+      href: `${SITE}/products/rakhi-dry-fruit-celebration-combo`,
+      buttonText: "Shop Now",
+      priceLabel: "$59.90",
+      badge: "POPULAR",
+    },
+    {
+      name: "Grand Rakhi Dry Fruit Indulgence Box",
+      description: "Rakhi with Kaju Katli, almonds, cashews & pistachios.",
+      imageUrl: resolveProductImageUrl("/uploads/orange-county/TFUSRH2026-8/TFUSRH2026-8b.jpg"),
+      href: `${SITE}/products/grand-rakhi-dry-fruit-indulgence-box`,
+      buttonText: "Shop Now",
+      priceLabel: "$63.90",
+      badge: "PREMIUM",
+    },
+    {
+      name: "Rakhi 3-in-1 Festive Hamper",
+      description: "Set of 3 rakhis, Kaju Katli, cashews & Ferrero.",
+      imageUrl: resolveProductImageUrl("/uploads/orange-county/TFUSRH2026-24/TFUSRH2026-24.jpg"),
+      href: `${SITE}/products/rakhi-3-in-1-festive-hamper`,
+      buttonText: "Shop Now",
+      priceLabel: "$65.00",
+      badge: "FAMILY",
+    },
+    {
+      name: "Kaju Katli Elegance Hamper",
+      description: "Set of 2 designer rakhis, mithai & dry fruits.",
+      imageUrl: resolveProductImageUrl("/uploads/orange-county/TFUSRH2026-38/TFUSRH2026-38.jpg"),
+      href: `${SITE}/products/kaju-katli-elegance-hamper`,
+      buttonText: "Shop Now",
+      priceLabel: "$69.00",
+      badge: "ELEGANT",
+    },
+    {
+      name: "Think of me Rakhi Hamper",
+      description: "Set of 2 rakhis with cashews, pistachios & almonds.",
+      imageUrl: resolveProductImageUrl("/uploads/orange-county/TFCOM009/TFCOM009.jpg"),
+      href: `${SITE}/products/think-of-me-rakhi-hamper`,
+      buttonText: "Shop Now",
+      priceLabel: "$69.00",
+      badge: "GIFT READY",
+    },
+  ] satisfies CampaignCard[],
+  benefitsHeading: "Why Sisters Choose UsaRakhi Hampers",
+  benefitsSubheading: "Premium gift hampers with reliable USA delivery — from our California warehouse.",
+  benefits: [
+    { icon: "🚚", title: "Fast USA Delivery", description: "5–7 business days to all 50 states." },
+    { icon: "✨", title: "Premium Quality", description: "Designer rakhis, sweets & dry fruits." },
+    { icon: "🔒", title: "Secure Payment", description: "Safe checkout with Stripe & Razorpay." },
+    { icon: "🎁", title: "Fresh Packaging", description: "Festive gift boxes packed with care." },
+    { icon: "✅", title: "Easy Ordering", description: "Order online in minutes — we deliver." },
+  ] satisfies CampaignBenefit[],
+  midCtaHeading: "Order Before Raksha Bandhan",
+  midCtaBody:
+    "Don't wait until the last minute. Choose a beautiful Rakhi hamper today and send love across miles — delivered fresh to your brother in the USA.",
+  midCtaText: "Shop Rakhi Hampers Now",
+  midCtaHref: HAMPERS,
+  footerTagline: "Connecting Hearts Across Borders",
+  footerLogoUrl: LOGO,
+  websiteUrl: SITE,
+  websiteLabel: "www.usarakhi.com",
+  orderEmail: "order@usarakhi.com",
+  facebookUrl: "https://www.facebook.com/usarakhi/",
+  facebookIconUrl: FB,
+  instagramUrl: "https://www.instagram.com/usarakhi/",
+  instagramIconUrl: IG,
+  copyrightText: "© 2026 UsaRakhi. All Rights Reserved.",
+  unsubscribeLabel: "Unsubscribe",
+} as const;
+
 // ─── Shared HTML helpers ───────────────────────────────────────────────────
 
 function escapeHtml(value: string): string {
@@ -504,12 +607,8 @@ function twoColCards(cards: CampaignCard[]): string {
               </table>`;
 }
 
-function benefitsRow(benefits: readonly CampaignBenefit[]): string {
-  const cells = benefits
-    .slice(0, 4)
-    .map(
-      (b, i) => `
-                  <td class="stack-col-25" width="25%" valign="top" style="width:25%;padding:${i === 0 ? "0 4px 10px 0" : i === 3 ? "0 0 10px 4px" : "0 4px 10px 4px"};">
+function benefitCard(b: CampaignBenefit): string {
+  return `
                     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;background-color:#ffffff;border:1px solid #efe6d6;border-radius:12px;">
                       <tr>
                         <td align="center" style="padding:16px 10px;">
@@ -518,13 +617,60 @@ function benefitsRow(benefits: readonly CampaignBenefit[]): string {
                           <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:15px;color:#6b5e4e;">${escapeHtml(b.description)}</div>
                         </td>
                       </tr>
-                    </table>
+                    </table>`;
+}
+
+function benefitsRow(benefits: readonly CampaignBenefit[]): string {
+  const cells = benefits
+    .slice(0, 4)
+    .map(
+      (b, i) => `
+                  <td class="stack-col-25" width="25%" valign="top" style="width:25%;padding:${i === 0 ? "0 4px 10px 0" : i === 3 ? "0 0 10px 4px" : "0 4px 10px 4px"};">
+                    ${benefitCard(b)}
                   </td>`
     )
     .join("");
   return `
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
                 <tr>${cells}</tr>
+              </table>`;
+}
+
+/** Five benefits: 3 on the first row, 2 centered on the second (stacks on mobile). */
+function fiveBenefitsGrid(benefits: readonly CampaignBenefit[]): string {
+  const list = benefits.slice(0, 5);
+  const top = list.slice(0, 3);
+  const bottom = list.slice(3, 5);
+  const topCells = top
+    .map(
+      (b, i) => `
+                  <td class="stack-col" width="33.33%" valign="top" style="width:33.33%;padding:${i === 0 ? "0 4px 10px 0" : i === 2 ? "0 0 10px 4px" : "0 4px 10px 4px"};">
+                    ${benefitCard(b)}
+                  </td>`
+    )
+    .join("");
+  const bottomCells = bottom
+    .map(
+      (b, i) => `
+                  <td class="stack-col" width="50%" valign="top" style="width:50%;padding:${i === 0 ? "0 4px 10px 0" : "0 0 10px 4px"};">
+                    ${benefitCard(b)}
+                  </td>`
+    )
+    .join("");
+  return `
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
+                <tr>${topCells}</tr>
+              </table>
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
+                <tr>
+                  <td width="8.5%" style="width:8.5%;font-size:0;line-height:0;">&nbsp;</td>
+                  <td width="83%" style="width:83%;padding:0;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
+                      <tr>${bottomCells}</tr>
+                    </table>
+                  </td>
+                  <td width="8.5%" style="width:8.5%;font-size:0;line-height:0;">&nbsp;</td>
+                </tr>
               </table>`;
 }
 
@@ -535,6 +681,12 @@ function emailShell(opts: {
   logoHref: string;
   /** Optional brand tagline under the header logo. */
   logoTagline?: string;
+  /** Outer page background (default festive cream). */
+  pageBg?: string;
+  /** Logo header background (default soft cream). */
+  headerBg?: string;
+  /** Optional border around the 600px card (e.g. white-on-white layouts). */
+  containerBorder?: string;
   bodyRows: string;
   footer: {
     tagline: string;
@@ -551,6 +703,9 @@ function emailShell(opts: {
   };
 }): string {
   const f = opts.footer;
+  const pageBg = opts.pageBg ?? PAGE_BG;
+  const headerBg = opts.headerBg ?? "#fffdf8";
+  const containerBorder = opts.containerBorder ? `border:${opts.containerBorder};` : "";
   const logoTagline = opts.logoTagline
     ? `
               <div style="font-family:Georgia,'Times New Roman',serif;font-size:13px;line-height:18px;font-style:italic;color:${NAVY};padding-top:10px;">
@@ -603,17 +758,17 @@ function emailShell(opts: {
     }
   </style>
 </head>
-<body style="margin:0;padding:0;background-color:${PAGE_BG};-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
+<body style="margin:0;padding:0;background-color:${pageBg};-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
   <div style="display:none;font-size:1px;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;">
     ${escapeHtml(opts.preheader)}
   </div>
-  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;background-color:${PAGE_BG};">
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;background-color:${pageBg};">
     <tr>
       <td align="center" style="padding:20px 10px;">
-        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" class="email-container" style="border-collapse:collapse;width:600px;max-width:600px;background-color:#ffffff;border-radius:16px;overflow:hidden;">
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" class="email-container" style="border-collapse:collapse;width:600px;max-width:600px;background-color:#ffffff;border-radius:16px;overflow:hidden;${containerBorder}">
           <!-- Logo -->
           <tr>
-            <td align="center" bgcolor="#fffdf8" style="padding:20px 24px 14px 24px;background-color:#fffdf8;">
+            <td align="center" bgcolor="${headerBg}" style="padding:20px 24px 14px 24px;background-color:${headerBg};">
               <a href="${escAttr(opts.logoHref)}" target="_blank" style="text-decoration:none;">
                 <img src="${escAttr(opts.logoUrl)}" width="168" alt="UsaRakhi — Connecting Hearts Across Borders" style="display:block;width:168px;max-width:70%;height:auto;border:0;margin:0 auto;" />
               </a>
@@ -1006,6 +1161,93 @@ export function buildShopMoreSaveMoreEmailHtml(
     logoUrl: cfg.logoUrl,
     logoHref: cfg.logoHref,
     logoTagline: cfg.logoTagline,
+    bodyRows,
+    footer: footerFrom(cfg),
+  });
+}
+
+/** Template 4 HTML — Rakhi Hampers to USA (no top banner; white premium layout). */
+export function buildRakhiHampersUsaEmailHtml(
+  cfg: typeof RAKHI_HAMPERS_USA_EMAIL_CONFIG = RAKHI_HAMPERS_USA_EMAIL_CONFIG
+): string {
+  const productBlocks = [
+    twoColCards([cfg.products[0], cfg.products[1]]),
+    twoColCards([cfg.products[2], cfg.products[3]]),
+    twoColCards([cfg.products[4], cfg.products[5]]),
+  ].join("");
+
+  const bodyRows = `
+          <!-- Title + introduction (no banner image) -->
+          <tr>
+            <td class="mobile-pad" align="center" bgcolor="${WHITE}" style="padding:32px 28px 28px 28px;background-color:${WHITE};border-bottom:1px solid #efe6d6;">
+              <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:16px;letter-spacing:2px;text-transform:uppercase;color:${GOLD};font-weight:bold;padding-bottom:12px;">
+                ${escapeHtml(cfg.introEyebrow)}
+              </div>
+              <h1 class="hero-title" style="margin:0;padding:0 0 14px 0;font-family:Georgia,'Times New Roman',serif;font-size:28px;line-height:36px;font-weight:bold;color:${NAVY};">
+                ${escapeHtml(cfg.title)}
+              </h1>
+              <div style="width:56px;height:3px;background-color:${GOLD};margin:0 auto 16px auto;font-size:0;line-height:0;">&nbsp;</div>
+              <div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#5c5348;padding:0 4px 22px 4px;max-width:500px;margin:0 auto;">
+                ${escapeHtml(cfg.introBody)}
+              </div>
+              ${ctaButton(cfg.introCtaHref, cfg.introCtaText, { fill: RED, width: 200, pad: "15px 28px", fontSize: "16px" })}
+            </td>
+          </tr>
+          <!-- Hamper products -->
+          <tr>
+            <td class="mobile-pad" style="padding:28px 20px 8px 20px;background-color:${WHITE};">
+              <div class="section-title" style="font-family:Georgia,'Times New Roman',serif;font-size:24px;line-height:30px;font-weight:bold;color:${NAVY};text-align:center;padding-bottom:6px;">
+                ${escapeHtml(cfg.productsHeading)}
+              </div>
+              <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:20px;color:#6b5e4e;text-align:center;padding-bottom:18px;">
+                ${escapeHtml(cfg.productsSubheading)}
+              </div>
+              ${productBlocks}
+            </td>
+          </tr>
+          <!-- Benefits -->
+          <tr>
+            <td class="mobile-pad" style="padding:20px 20px 12px 20px;background-color:${WHITE};">
+              <div class="section-title" style="font-family:Georgia,'Times New Roman',serif;font-size:24px;line-height:30px;font-weight:bold;color:${NAVY};text-align:center;padding-bottom:6px;">
+                ${escapeHtml(cfg.benefitsHeading)}
+              </div>
+              <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:20px;color:#6b5e4e;text-align:center;padding-bottom:18px;">
+                ${escapeHtml(cfg.benefitsSubheading)}
+              </div>
+              ${fiveBenefitsGrid(cfg.benefits)}
+            </td>
+          </tr>
+          <!-- Strong CTA — order before Raksha Bandhan -->
+          <tr>
+            <td class="mobile-pad" style="padding:12px 24px 36px 24px;background-color:${WHITE};">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;background-color:${NAVY};border-radius:14px;">
+                <tr>
+                  <td align="center" style="padding:34px 22px;">
+                    <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:#f0d78c;font-weight:bold;padding-bottom:8px;">
+                      Limited Time · Raksha Bandhan
+                    </div>
+                    <div class="section-title" style="font-family:Georgia,'Times New Roman',serif;font-size:22px;line-height:28px;font-weight:bold;color:#ffffff;padding-bottom:8px;">
+                      ${escapeHtml(cfg.midCtaHeading)}
+                    </div>
+                    <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:22px;color:#e8e0d0;padding-bottom:18px;max-width:420px;margin:0 auto;">
+                      ${escapeHtml(cfg.midCtaBody)}
+                    </div>
+                    ${ctaButton(cfg.midCtaHref, cfg.midCtaText, { fill: GOLD, textColor: NAVY, width: 240, pad: "16px 28px", fontSize: "16px" })}
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>`;
+
+  return emailShell({
+    title: cfg.title,
+    preheader: cfg.preheader,
+    logoUrl: cfg.logoUrl,
+    logoHref: cfg.logoHref,
+    logoTagline: cfg.logoTagline,
+    pageBg: WHITE,
+    headerBg: WHITE,
+    containerBorder: "1px solid #efe6d6",
     bodyRows,
     footer: footerFrom(cfg),
   });

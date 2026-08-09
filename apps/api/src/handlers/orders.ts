@@ -112,29 +112,42 @@ export async function captureLead(event: APIGatewayProxyEventV2) {
   let leadPayload = parsed.data;
   if (parsed.data.source === "newsletter") {
     const phone = parsed.data.phone?.trim();
-    if (!phone) return badRequest("Enter a valid mobile number to spin");
-    const requested = Number(parsed.data.metadata?.discountPercent);
-    try {
-      welcomeCoupon = await issueWelcomeCoupon({
-        phone,
-        email,
-        sessionId,
-        discountPercent: Number.isFinite(requested) ? requested : undefined,
-      });
-    } catch (err) {
-      return badRequest(err instanceof Error ? err.message : "Could not issue discount coupon");
+    const isStayUpdated = parsed.data.metadata?.stayUpdated === "1";
+    // Spin-wheel / early-bird coupons need a phone. Stay Updated is email-only opt-in.
+    const isSpinOffer =
+      !isStayUpdated &&
+      (Boolean(phone) ||
+        Boolean(parsed.data.metadata?.discountPercent) ||
+        parsed.data.metadata?.trigger === "daily_deal_wheel" ||
+        parsed.data.metadata?.offer === "discount_of_the_day");
+
+    if (isSpinOffer) {
+      if (!phone) return badRequest("Enter a valid mobile number to spin");
+      const requested = Number(parsed.data.metadata?.discountPercent);
+      try {
+        welcomeCoupon = await issueWelcomeCoupon({
+          phone,
+          email,
+          sessionId,
+          discountPercent: Number.isFinite(requested) ? requested : undefined,
+        });
+      } catch (err) {
+        return badRequest(err instanceof Error ? err.message : "Could not issue discount coupon");
+      }
+      leadPayload = {
+        ...parsed.data,
+        metadata: {
+          ...parsed.data.metadata,
+          couponCode: welcomeCoupon.code,
+          couponExpiresAt: welcomeCoupon.expiresAt,
+          discountPercent: String(welcomeCoupon.discountPercent),
+          alreadyClaimedToday: welcomeCoupon.alreadyClaimedToday ? "true" : "false",
+          offer: "discount_of_the_day",
+        },
+      };
+    } else if (!email) {
+      return badRequest("Enter a valid email address.");
     }
-    leadPayload = {
-      ...parsed.data,
-      metadata: {
-        ...parsed.data.metadata,
-        couponCode: welcomeCoupon.code,
-        couponExpiresAt: welcomeCoupon.expiresAt,
-        discountPercent: String(welcomeCoupon.discountPercent),
-        alreadyClaimedToday: welcomeCoupon.alreadyClaimedToday ? "true" : "false",
-        offer: "discount_of_the_day",
-      },
-    };
   }
 
   // lead event (co-located under the session)
@@ -162,11 +175,13 @@ export async function captureLead(event: APIGatewayProxyEventV2) {
   });
 
   const emailResult = await notifyAdminLead(leadPayload);
-  // Newsletter spins are phone-first — only require SMTP when an email was provided.
+  const isStayUpdated = leadPayload.metadata?.stayUpdated === "1";
+  // Contact/review must deliver email. Spin coupons with email must notify. Stay Updated
+  // already persisted the lead — don't fail the subscribe UX if admin SMTP blips.
   const emailRequired =
     leadPayload.source === "contact" ||
     leadPayload.source === "review" ||
-    (leadPayload.source === "newsletter" && Boolean(email));
+    (leadPayload.source === "newsletter" && Boolean(email) && !isStayUpdated);
 
   if (emailRequired && emailResult.skipped) {
     console.error("Email skipped — SMTP not configured:", leadPayload.source);

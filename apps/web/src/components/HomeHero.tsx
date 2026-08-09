@@ -12,28 +12,27 @@ export function HomeHero({ banners }: { banners: readonly HomeBanner[] }) {
   const first = banners[0];
   if (!first) return null;
 
-  const lcpImage = first.href ? (
-    <Link href={first.href} className="block h-full w-full">
-      <Image
-        src={first.src}
-        alt={first.alt}
-        fill
-        className="object-cover object-center"
-        sizes="(max-width: 1023px) 100vw, 768px"
-        priority
-        fetchPriority="high"
-      />
-    </Link>
-  ) : (
+  const imageClass =
+    first.imageFit === "contain" ? "object-contain object-center" : "object-cover object-center";
+
+  const image = (
     <Image
       src={first.src}
       alt={first.alt}
       fill
-      className="object-cover object-center"
+      className={imageClass}
       sizes="(max-width: 1023px) 100vw, 768px"
       priority
       fetchPriority="high"
     />
+  );
+
+  const lcpImage = first.href ? (
+    <Link href={first.href} className="block h-full w-full">
+      {image}
+    </Link>
+  ) : (
+    image
   );
 
   return <BannerCarousel banners={banners} lcpImage={lcpImage} />;

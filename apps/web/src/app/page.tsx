@@ -16,7 +16,8 @@ import { TrustStrip } from "@/components/TrustStrip";
 import { IndiaBuyerBanner } from "@/components/IndiaBuyerBanner";
 import { WhyTrustUsSection } from "@/components/WhyTrustUsSection";
 import { JsonLd } from "@/components/JsonLd";
-import { site, homeBanners, homeCategoryOrder, faqs } from "@/lib/site";
+import { site, homeCategoryOrder, faqs } from "@/lib/site";
+import { getHomeBanners } from "@/lib/independence-day-hero";
 import {
   getCatalogProduct,
   getCatalogProductsByCategory,
@@ -104,7 +105,7 @@ export default async function HomePage() {
   return (
     <div>
       <JsonLd data={[faqJsonLd(faqs), howToSendRakhiJsonLd()]} />
-      <HomeHero banners={homeBanners} />
+      <HomeHero banners={getHomeBanners()} />
       <FlashSaleSection product={flashCombo} />
       <TrustStrip />
       <IndiaBuyerBanner />

@@ -197,12 +197,12 @@ export async function sendNewsletterEmails(input: {
     .filter(Boolean)
     .join("\n");
 
+  // Use order@ mailbox — shared-host SMTP auth is order@; From orders@ was rejected (550).
   const admin = await sendEmail({
     to: adminNotifyAddresses(),
     subject: `[${SITE_NAME}] Discount of the Day — ${input.email} (${pct}% off)`,
     text: adminText,
     replyTo: input.email,
-    mailbox: "orders",
   });
   if (!admin.ok) return admin;
 
@@ -213,7 +213,6 @@ export async function sendNewsletterEmails(input: {
   const customer = await sendEmail({
     to: input.email,
     subject: `Your Discount of the Day: ${pct}% off — ${SITE_NAME}`,
-    mailbox: "orders",
     text: `You spun the Discount of the Day wheel at UsaRakhi!
 
 Your exclusive code:
@@ -399,6 +398,26 @@ export async function notifyAdminLead(lead: LeadCaptureInput): Promise<EmailSend
   }
 
   if (lead.source === "newsletter") {
+    // Banner “Stay Updated” — email-only list signup (no spin coupon).
+    if (lead.metadata?.stayUpdated === "1") {
+      if (!smtpConfigured()) return { ok: true, skipped: true };
+      if (!lead.email) return { ok: true, skipped: true };
+      return sendEmail({
+        to: adminNotifyAddresses(),
+        subject: `[${SITE_NAME}] Stay Updated signup — ${lead.email}`,
+        text: [
+          "Source: Stay Updated (offers / top sellers)",
+          `Email: ${lead.email}`,
+          lead.page ? `Page: ${lead.page}` : null,
+          lead.metadata?.intent ? `Intent: ${lead.metadata.intent}` : null,
+          `\nSession: ${lead.sessionId}`,
+        ]
+          .filter(Boolean)
+          .join("\n"),
+        replyTo: lead.email,
+      });
+    }
+
     const coupon =
       lead.metadata?.couponCode && lead.metadata?.couponExpiresAt
         ? {

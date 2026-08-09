@@ -7,9 +7,11 @@ import {
   buildFreeShippingEmailHtml,
   buildStartingPriceEmailHtml,
   buildShopMoreSaveMoreEmailHtml,
+  buildRakhiHampersUsaEmailHtml,
   FREE_SHIPPING_EMAIL_CONFIG,
   STARTING_PRICE_EMAIL_CONFIG,
   SHOP_MORE_SAVE_MORE_EMAIL_CONFIG,
+  RAKHI_HAMPERS_USA_EMAIL_CONFIG,
   type MarketingEmailContent,
 } from "@hr-ecom/shared";
 
@@ -36,6 +38,7 @@ export const PREMIUM_RAKSHA_BANDHAN_TEMPLATE_ID = "premium-raksha-bandhan";
 export const FREE_SHIPPING_TEMPLATE_ID = FREE_SHIPPING_EMAIL_CONFIG.templateId;
 export const STARTING_PRICE_TEMPLATE_ID = STARTING_PRICE_EMAIL_CONFIG.templateId;
 export const SHOP_MORE_SAVE_MORE_TEMPLATE_ID = SHOP_MORE_SAVE_MORE_EMAIL_CONFIG.templateId;
+export const RAKHI_HAMPERS_USA_TEMPLATE_ID = RAKHI_HAMPERS_USA_EMAIL_CONFIG.templateId;
 
 export const STARTER_EMAIL_TEMPLATES: StarterEmailTemplateMeta[] = [
   {
@@ -72,6 +75,13 @@ export const STARTER_EMAIL_TEMPLATES: StarterEmailTemplateMeta[] = [
     subject: SHOP_MORE_SAVE_MORE_EMAIL_CONFIG.subject,
     buildHtml: () => buildShopMoreSaveMoreEmailHtml(),
     htmlPath: "/email-templates/shop-more-save-more.html",
+  },
+  {
+    templateId: RAKHI_HAMPERS_USA_TEMPLATE_ID,
+    name: RAKHI_HAMPERS_USA_EMAIL_CONFIG.name,
+    subject: RAKHI_HAMPERS_USA_EMAIL_CONFIG.subject,
+    buildHtml: () => buildRakhiHampersUsaEmailHtml(),
+    htmlPath: "/email-templates/rakhi-hampers-to-usa.html",
   },
 ];
 
