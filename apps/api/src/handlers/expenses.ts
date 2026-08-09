@@ -8,6 +8,7 @@ import {
   EXPENSE_MAX_BILL_IMAGES,
   resolveBillStatus,
   collectBillUrls,
+  normalizeExpenseTypes,
   type Expense,
   type ExpenseBillStatus,
   type LedgerCurrency,
@@ -47,11 +48,16 @@ function billFieldsFromInput(input: {
 
 function toPublic(item: StoredExpense): Expense {
   const bills = billFieldsFromInput(item);
+  const expenseTypes = normalizeExpenseTypes({
+    expenseType: item.expenseType,
+    expenseTypes: item.expenseTypes,
+  });
   return {
     expenseId: item.expenseId,
     amount: item.amount,
     currency: normalizeCurrency(item.currency),
-    expenseType: item.expenseType,
+    expenseType: expenseTypes[0] ?? item.expenseType,
+    expenseTypes,
     description: item.description,
     expenseDate: item.expenseDate,
     ...bills,
@@ -117,13 +123,15 @@ export async function createExpense(event: APIGatewayProxyEventV2) {
   const expenseId = uuidv4();
   const timestamp = now();
   const bills = billFieldsFromInput(parsed.data);
+  const expenseTypes = normalizeExpenseTypes(parsed.data);
   const item: StoredExpense = {
     PK: expenseKeys.pk(expenseId),
     SK: expenseKeys.sk(),
     expenseId,
     amount: parsed.data.amount,
     currency: normalizeCurrency(parsed.data.currency),
-    expenseType: parsed.data.expenseType,
+    expenseType: expenseTypes[0]!,
+    expenseTypes,
     description: parsed.data.description?.trim() || undefined,
     expenseDate: parsed.data.expenseDate,
     ...bills,
@@ -182,10 +190,18 @@ export async function updateExpense(event: APIGatewayProxyEventV2) {
     return badRequest("Upload at least one bill, or mark expense as having no bill");
   }
 
+  const typesTouched =
+    parsed.data.expenseType !== undefined || parsed.data.expenseTypes !== undefined;
+  const expenseTypes = typesTouched
+    ? normalizeExpenseTypes(parsed.data)
+    : normalizeExpenseTypes(prev);
+
   const updated: StoredExpense = {
     ...prev,
     ...(parsed.data.amount !== undefined ? { amount: parsed.data.amount } : {}),
-    ...(parsed.data.expenseType !== undefined ? { expenseType: parsed.data.expenseType } : {}),
+    ...(typesTouched
+      ? { expenseType: expenseTypes[0]!, expenseTypes }
+      : {}),
     ...(parsed.data.description !== undefined
       ? { description: parsed.data.description.trim() || undefined }
       : {}),

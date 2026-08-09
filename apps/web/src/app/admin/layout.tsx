@@ -79,6 +79,10 @@ function childActive(pathname: string, search: string, href: string) {
   if (!query) return true;
   const want = new URLSearchParams(query);
   const have = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
+  // Default hub tabs (no ?tab=) treat first child as active when path matches and tab missing.
+  if ([...want.keys()].length === 1 && want.has("tab") && !have.has("tab")) {
+    return false;
+  }
   for (const [k, v] of want.entries()) {
     if (have.get(k) !== v) return false;
   }
@@ -93,7 +97,7 @@ function Chevron({ open }: { open: boolean }) {
       viewBox="0 0 16 16"
       fill="none"
       aria-hidden="true"
-      className={`shrink-0 transition-transform ${open ? "rotate-90" : ""}`}
+      className={`shrink-0 transition-transform duration-200 ${open ? "rotate-90" : ""}`}
     >
       <path
         d="M6 3.5L10.5 8L6 12.5"
@@ -111,35 +115,47 @@ function NavButtons({
   search,
   onNavigate,
   isSuperAdmin,
+  authLoading,
   collapsed,
+  variant = "desktop",
 }: {
   pathname: string;
   search: string;
   onNavigate?: () => void;
   isSuperAdmin: boolean;
+  authLoading?: boolean;
   collapsed?: boolean;
+  /** Mobile drawer expands groups by default and uses tap (no hover). */
+  variant?: "desktop" | "mobile";
 }) {
+  // While auth loads, keep super-admin items visible so Vendor expense isn't missing on first paint.
+  const showSuper = Boolean(authLoading || isSuperAdmin);
+
   const visible = useMemo(
     () =>
       navItems.filter((item) => {
-        if (item.type === "link" && item.href === "/admin/load-test") return isSuperAdmin;
-        if (item.type === "group" && item.superOnly) return isSuperAdmin;
+        if (item.type === "link" && item.href === "/admin/load-test") return showSuper;
+        if (item.type === "group" && item.superOnly) return showSuper;
         return true;
       }),
-    [isSuperAdmin]
+    [showSuper]
   );
 
   const initiallyOpen = useMemo(() => {
     const open: Record<string, boolean> = {};
     for (const item of visible) {
-      if (item.type === "group" && pathActive(pathname, item.href)) {
+      if (item.type !== "group") continue;
+      if (variant === "mobile") {
+        open[item.id] = true;
+      } else if (pathActive(pathname, item.href)) {
         open[item.id] = true;
       }
     }
     return open;
-  }, [pathname, visible]);
+  }, [pathname, visible, variant]);
 
   const [expanded, setExpanded] = useState<Record<string, boolean>>(initiallyOpen);
+  const [hovered, setHovered] = useState<string | null>(null);
 
   useEffect(() => {
     setExpanded((prev) => {
@@ -148,14 +164,26 @@ function NavButtons({
         if (item.type === "group" && pathActive(pathname, item.href)) {
           next[item.id] = true;
         }
+        if (variant === "mobile" && item.type === "group") {
+          next[item.id] = true;
+        }
       }
       return next;
     });
-  }, [pathname, visible]);
+  }, [pathname, visible, variant]);
 
   const toggle = (id: string) => {
     setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
   };
+
+  const linkClass = (active: boolean) =>
+    `rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+      collapsed ? "text-center px-2" : ""
+    } ${
+      active
+        ? "bg-nav text-white shadow-sm"
+        : "text-slate-700 hover:bg-blue-50 hover:text-nav"
+    }`;
 
   return (
     <nav className="flex flex-col gap-1" aria-label="Admin">
@@ -168,13 +196,7 @@ function NavButtons({
               href={item.href}
               onClick={onNavigate}
               title={collapsed ? item.label : undefined}
-              className={`rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                collapsed ? "text-center px-2" : ""
-              } ${
-                active
-                  ? "bg-nav text-white shadow-sm"
-                  : "text-slate-700 hover:bg-slate-100 hover:text-primary"
-              }`}
+              className={linkClass(active)}
             >
               {collapsed ? item.label.slice(0, 1) : item.label}
             </Link>
@@ -182,11 +204,15 @@ function NavButtons({
         }
 
         const groupActive = pathActive(pathname, item.href);
-        const open = !!expanded[item.id];
         const children =
-          item.id === "vendor" && !isSuperAdmin
+          item.id === "vendor" && !showSuper
             ? item.children.filter((c) => !c.href.includes("tab=expense"))
             : item.children;
+
+        const open =
+          variant === "mobile"
+            ? !!expanded[item.id]
+            : !!expanded[item.id] || hovered === item.id || groupActive;
 
         if (collapsed) {
           return (
@@ -195,11 +221,7 @@ function NavButtons({
               href={item.href}
               onClick={onNavigate}
               title={item.label}
-              className={`rounded-lg px-2 py-2.5 text-sm font-medium text-center transition-colors ${
-                groupActive
-                  ? "bg-nav text-white shadow-sm"
-                  : "text-slate-700 hover:bg-slate-100 hover:text-primary"
-              }`}
+              className={linkClass(groupActive)}
             >
               {item.label.slice(0, 1)}
             </Link>
@@ -207,10 +229,23 @@ function NavButtons({
         }
 
         return (
-          <div key={item.id} className="space-y-0.5">
+          <div
+            key={item.id}
+            className="group/nav relative"
+            onMouseEnter={() => {
+              if (variant === "desktop") setHovered(item.id);
+            }}
+            onMouseLeave={() => {
+              if (variant === "desktop") setHovered((h) => (h === item.id ? null : h));
+            }}
+          >
             <div
-              className={`flex items-center gap-0.5 rounded-lg ${
-                groupActive && !open ? "bg-nav text-white shadow-sm" : ""
+              className={`flex items-center gap-0.5 rounded-lg transition-colors ${
+                groupActive && !open
+                  ? "bg-nav text-white shadow-sm"
+                  : groupActive
+                    ? "bg-blue-50"
+                    : "hover:bg-blue-50"
               }`}
             >
               <Link
@@ -221,7 +256,7 @@ function NavButtons({
                     ? "text-white"
                     : groupActive
                       ? "text-nav"
-                      : "text-slate-700 hover:bg-slate-100 hover:text-primary"
+                      : "text-slate-700 group-hover/nav:text-nav"
                 }`}
               >
                 {item.label}
@@ -229,10 +264,10 @@ function NavButtons({
               <button
                 type="button"
                 onClick={() => toggle(item.id)}
-                className={`mr-1 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-colors ${
+                className={`mr-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md transition-colors ${
                   groupActive && !open
                     ? "text-white/90 hover:bg-white/10"
-                    : "text-slate-500 hover:bg-slate-100 hover:text-primary"
+                    : "text-slate-500 hover:bg-blue-100 hover:text-nav"
                 }`}
                 aria-expanded={open}
                 aria-label={`${open ? "Collapse" : "Expand"} ${item.label}`}
@@ -240,8 +275,13 @@ function NavButtons({
                 <Chevron open={open} />
               </button>
             </div>
-            {open && (
-              <div className="ml-2 flex flex-col gap-0.5 border-l border-slate-200 pl-2">
+
+            <div
+              className={`overflow-hidden transition-all duration-200 ease-out ${
+                open ? "mt-0.5 max-h-96 opacity-100" : "max-h-0 opacity-0 pointer-events-none"
+              }`}
+            >
+              <div className="ml-2 flex flex-col gap-0.5 border-l-2 border-blue-100 pl-2 py-0.5">
                 {children.map((child) => {
                   const active = childActive(pathname, search, child.href);
                   return (
@@ -249,10 +289,10 @@ function NavButtons({
                       key={child.href}
                       href={child.href}
                       onClick={onNavigate}
-                      className={`rounded-md px-2.5 py-1.5 text-[13px] transition-colors ${
+                      className={`rounded-md px-2.5 py-2 text-[13px] font-medium transition-colors ${
                         active
-                          ? "bg-slate-100 font-medium text-nav"
-                          : "text-slate-600 hover:bg-slate-50 hover:text-primary"
+                          ? "bg-nav text-white shadow-sm"
+                          : "bg-blue-50 text-nav hover:bg-blue-200 hover:text-nav"
                       }`}
                     >
                       {child.label}
@@ -260,7 +300,7 @@ function NavButtons({
                   );
                 })}
               </div>
-            )}
+            </div>
           </div>
         );
       })}
@@ -274,7 +314,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const search = searchParams?.toString() ? `?${searchParams.toString()}` : "";
-  const { isSuperAdmin } = useAuth();
+  const { isSuperAdmin, loading: authLoading } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
@@ -321,11 +361,15 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
       <div className="min-h-screen bg-slate-50 lg:flex">
         <aside
           className={`hidden lg:flex lg:shrink-0 lg:flex-col lg:border-r lg:border-slate-200 lg:bg-white transition-[width] duration-200 ${
-            sidebarCollapsed ? "lg:w-16" : "lg:w-56"
+            sidebarCollapsed ? "lg:w-16" : "lg:w-60"
           }`}
         >
           <div className="sticky top-0 flex h-screen flex-col px-2 py-4">
-            <div className={`mb-3 flex items-center ${sidebarCollapsed ? "justify-center" : "justify-between px-1"}`}>
+            <div
+              className={`mb-3 flex items-center ${
+                sidebarCollapsed ? "justify-center" : "justify-between px-1"
+              }`}
+            >
               {!sidebarCollapsed && (
                 <Link href="/admin" className="px-2 text-lg font-bold text-primary truncate">
                   UsaRakhi Admin
@@ -334,7 +378,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
               <button
                 type="button"
                 onClick={toggleSidebar}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-blue-50 hover:text-nav"
                 aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
                 title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
               >
@@ -364,18 +408,20 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
                 <AdminSearch />
               </div>
             )}
-            <div className="flex-1 overflow-y-auto px-1">
+            <div className="flex-1 overflow-y-auto px-1 pb-2">
               <NavButtons
                 pathname={pathname}
                 search={search}
                 isSuperAdmin={isSuperAdmin}
+                authLoading={authLoading}
                 collapsed={sidebarCollapsed}
+                variant="desktop"
               />
             </div>
             {!sidebarCollapsed && (
               <Link
                 href="/"
-                className="mt-4 rounded-lg px-3 py-2.5 text-sm text-slate-500 hover:bg-slate-100 hover:text-accent"
+                className="mt-2 rounded-lg px-3 py-2.5 text-sm text-slate-500 hover:bg-blue-50 hover:text-nav"
               >
                 ← Storefront
               </Link>
@@ -383,13 +429,14 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
           </div>
         </aside>
 
+        {/* Mobile top bar */}
         <div className="sticky top-0 z-40 border-b border-slate-200 bg-white lg:hidden">
           <div className="flex items-center justify-between gap-3 px-4 py-3">
             <div className="flex min-w-0 items-center gap-3">
               <button
                 type="button"
                 onClick={() => setMenuOpen(true)}
-                className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50"
+                className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-slate-200 text-slate-700 hover:bg-blue-50"
                 aria-label="Open admin menu"
                 aria-expanded={menuOpen}
               >
@@ -406,30 +453,33 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
                 UsaRakhi Admin
               </Link>
             </div>
-            <Link href="/" className="shrink-0 text-sm text-slate-500 hover:text-accent">
+            <Link href="/" className="shrink-0 text-sm text-slate-500 hover:text-nav">
               ← Store
             </Link>
           </div>
-          <div className="border-t border-slate-100 px-4 py-2">
-            <AdminSearch />
-          </div>
         </div>
 
+        {/* Mobile drawer — wider, all groups expanded, search inside */}
         {menuOpen && (
-          <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Admin menu">
+          <div
+            className="fixed inset-0 z-50 lg:hidden"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Admin menu"
+          >
             <button
               type="button"
               className="absolute inset-0 bg-slate-900/40"
               aria-label="Close menu"
               onClick={() => setMenuOpen(false)}
             />
-            <aside className="absolute inset-y-0 left-0 flex w-[min(100%,18rem)] flex-col bg-white shadow-xl">
+            <aside className="absolute inset-y-0 left-0 flex w-[min(100%,20.5rem)] flex-col bg-white shadow-xl">
               <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
-                <span className="font-bold text-primary">Menu</span>
+                <span className="font-bold text-primary">Admin menu</span>
                 <button
                   type="button"
                   onClick={() => setMenuOpen(false)}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 text-slate-600 hover:bg-blue-50"
                   aria-label="Close menu"
                 >
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -442,19 +492,24 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
                   </svg>
                 </button>
               </div>
-              <div className="flex-1 overflow-y-auto px-3 py-4">
+              <div className="border-b border-slate-100 px-3 py-3">
+                <AdminSearch />
+              </div>
+              <div className="flex-1 overflow-y-auto overscroll-contain px-3 py-3">
                 <NavButtons
                   pathname={pathname}
                   search={search}
                   onNavigate={() => setMenuOpen(false)}
                   isSuperAdmin={isSuperAdmin}
+                  authLoading={authLoading}
+                  variant="mobile"
                 />
               </div>
-              <div className="border-t border-slate-200 px-3 py-3">
+              <div className="border-t border-slate-200 px-3 py-3 safe-area-pb">
                 <Link
                   href="/"
                   onClick={() => setMenuOpen(false)}
-                  className="block rounded-lg px-3 py-2.5 text-sm text-slate-500 hover:bg-slate-100 hover:text-accent"
+                  className="block rounded-lg px-3 py-3 text-sm text-slate-500 hover:bg-blue-50 hover:text-nav"
                 >
                   ← Storefront
                 </Link>
