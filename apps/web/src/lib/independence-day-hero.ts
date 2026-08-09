@@ -14,15 +14,15 @@ export const INDEPENDENCE_DAY_HERO_ENDS_AT = "2026-08-16T00:00:00.000Z";
 /** Extra carousel slide — taller art uses contain so nothing is cropped. */
 export const independenceDayHeroBanner: HomeBanner = {
   src: "/banners/banner-independence-day-2026.png",
-  alt: "Celebrate India's Independence Day — Send Rakhi to USA | UsaRakhi Great Freedom Sale",
+  alt: "India Independence Day Freedom Sale — Send Rakhi to USA | UsaRakhi",
   href: "/products",
   eyebrow: "INDEPENDENCE DAY · 15 AUGUST",
-  title: "🇮🇳 Celebrate India's Independence Day with Love Across the",
+  title: "Celebrate Freedom — Send Rakhi Love Across the",
   titleAccent: "USA",
   description:
-    "Celebrate the spirit of freedom by sending beautiful Rakhis to your loved ones across the USA. Enjoy fast delivery, premium quality, and make this Independence Day & Raksha Bandhan even more memorable.",
-  cta: "Shop Independence Collection",
-  pill: "🇮🇳 Independence Day · Fast USA Delivery · Premium Rakhis",
+    "Premium rakhis with fast USA delivery. Perfect for Independence Day & Raksha Bandhan.",
+  cta: "Shop Freedom Sale",
+  pill: "Independence Day · Fast USA Delivery · Premium Rakhis",
   imageFit: "contain",
 };
 
