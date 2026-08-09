@@ -116,8 +116,13 @@ export function StayUpdatedPrompt() {
         setOpen(false);
         setHidden(true);
       }, 1600);
-    } catch {
-      setError("Could not subscribe right now. Please try again.");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "";
+      setError(
+        message && !/API error|Fetch failed/i.test(message)
+          ? message
+          : "Could not subscribe right now. Please try again."
+      );
     } finally {
       setSaving(false);
     }
