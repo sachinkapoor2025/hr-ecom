@@ -105,7 +105,8 @@ export default async function SeoLocationPage({ params }: Props) {
   } catch {
     products = [];
   }
-  const cityProducts = shuffleForCity(products, slug).slice(0, 20);
+  // Full catalog — we deliver every product to every location.
+  const cityProducts = shuffleForCity(products, slug);
 
   // --- Express metros: individually maintained CityContentSection ---
   const cityContent = getCityContent(slug);

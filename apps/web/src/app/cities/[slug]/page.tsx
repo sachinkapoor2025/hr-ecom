@@ -49,7 +49,8 @@ export default async function CityPage({ params }: Props) {
     products = [];
   }
 
-  const cityProducts = shuffleForCity(products, slug).slice(0, 20);
+  // Full catalog — we deliver every product to every location.
+  const cityProducts = shuffleForCity(products, slug);
 
   const crumbs = [
     { label: "Home", href: "/" },
