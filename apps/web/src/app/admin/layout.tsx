@@ -228,6 +228,8 @@ function NavButtons({
           );
         }
 
+        const groupBlue = open || groupActive;
+
         return (
           <div
             key={item.id}
@@ -241,22 +243,16 @@ function NavButtons({
           >
             <div
               className={`flex items-center gap-0.5 rounded-lg transition-colors ${
-                groupActive && !open
+                groupBlue
                   ? "bg-nav text-white shadow-sm"
-                  : groupActive
-                    ? "bg-blue-50"
-                    : "hover:bg-blue-50"
+                  : "text-slate-700 hover:bg-nav hover:text-white"
               }`}
             >
               <Link
                 href={item.href}
                 onClick={onNavigate}
                 className={`min-w-0 flex-1 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                  groupActive && !open
-                    ? "text-white"
-                    : groupActive
-                      ? "text-nav"
-                      : "text-slate-700 group-hover/nav:text-nav"
+                  groupBlue ? "text-white" : "text-inherit"
                 }`}
               >
                 {item.label}
@@ -265,9 +261,9 @@ function NavButtons({
                 type="button"
                 onClick={() => toggle(item.id)}
                 className={`mr-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md transition-colors ${
-                  groupActive && !open
-                    ? "text-white/90 hover:bg-white/10"
-                    : "text-slate-500 hover:bg-blue-100 hover:text-nav"
+                  groupBlue
+                    ? "text-white/90 hover:bg-white/15"
+                    : "text-slate-500 hover:bg-white/15 hover:text-white"
                 }`}
                 aria-expanded={open}
                 aria-label={`${open ? "Collapse" : "Expand"} ${item.label}`}
@@ -281,7 +277,7 @@ function NavButtons({
                 open ? "mt-0.5 max-h-96 opacity-100" : "max-h-0 opacity-0 pointer-events-none"
               }`}
             >
-              <div className="ml-2 flex flex-col gap-0.5 border-l-2 border-blue-100 pl-2 py-0.5">
+              <div className="ml-2 flex flex-col gap-0.5 border-l-2 border-nav/30 pl-2 py-0.5">
                 {children.map((child) => {
                   const active = childActive(pathname, search, child.href);
                   return (
@@ -292,7 +288,7 @@ function NavButtons({
                       className={`rounded-md px-2.5 py-2 text-[13px] font-medium transition-colors ${
                         active
                           ? "bg-nav text-white shadow-sm"
-                          : "bg-blue-50 text-nav hover:bg-blue-200 hover:text-nav"
+                          : "text-slate-600 hover:bg-nav hover:text-white"
                       }`}
                     >
                       {child.label}
