@@ -1,4 +1,8 @@
 import type { HomeBanner } from "@/components/BannerCarousel";
+import {
+  HOME_PAGE_INDEPENDENCE_DAY_BANNER_ALT,
+  HOME_PAGE_INDEPENDENCE_DAY_BANNER_PATH,
+} from "@hr-ecom/shared";
 import { homeBanners } from "@/lib/site";
 
 /**
@@ -11,10 +15,13 @@ import { homeBanners } from "@/lib/site";
 export const INDEPENDENCE_DAY_HERO_STARTS_AT = "2026-08-09T00:00:00.000Z";
 export const INDEPENDENCE_DAY_HERO_ENDS_AT = "2026-08-16T00:00:00.000Z";
 
-/** Extra carousel slide — same cover fill as the other homepage banners. */
+/**
+ * Extra carousel slide — same asset as marketing email hero
+ * (`HOME_PAGE_INDEPENDENCE_DAY_BANNER_*` in @hr-ecom/shared).
+ */
 export const independenceDayHeroBanner: HomeBanner = {
-  src: "/banners/banner-independence-day-2026.png",
-  alt: "India Independence Day Freedom Sale — Send Rakhi to USA | UsaRakhi",
+  src: HOME_PAGE_INDEPENDENCE_DAY_BANNER_PATH,
+  alt: HOME_PAGE_INDEPENDENCE_DAY_BANNER_ALT,
   href: "/products",
   eyebrow: "INDEPENDENCE DAY · 15 AUGUST",
   title: "Celebrate Freedom — Send Rakhi Love Across the",

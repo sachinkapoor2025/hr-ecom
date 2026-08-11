@@ -50,6 +50,7 @@ export * from "./lib/order-shipments";
 export * from "./lib/schedule-delivery";
 export * from "./lib/marketing-email-html";
 export * from "./lib/marketing-campaign-emails";
+export * from "./lib/home-page-banners";
 export * from "./lib/order-number";
 export * from "./lib/order-status";
 export * from "./lib/order-vendors";

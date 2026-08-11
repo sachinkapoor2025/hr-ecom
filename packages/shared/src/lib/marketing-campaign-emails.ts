@@ -7,6 +7,7 @@
  * Both builders emit table + inline-CSS HTML for Gmail / Outlook / Apple Mail.
  */
 
+import { getFirstHomePageBannerForEmail } from "./home-page-banners";
 import { cdnUploadUrl, resolveProductImageUrl } from "./image-url";
 
 const SITE = "https://www.usarakhi.com";
@@ -25,6 +26,9 @@ const RED = "#c41e3a";
 const CREAM = "#fff8ef";
 const PAGE_BG = "#f3eee6";
 const WHITE = "#ffffff";
+/** Tiranga-inspired accents for Independence Day emails */
+const SAFFRON = "#ff9933";
+const INDIA_GREEN = "#138808";
 
 export type CampaignCard = {
   name: string;
@@ -487,6 +491,90 @@ export const RAKHI_HAMPERS_USA_EMAIL_CONFIG = {
     "Don't wait until the last minute. Choose a beautiful Rakhi hamper today and send love across miles — delivered fresh to your brother in the USA.",
   midCtaText: "Shop Rakhi Hampers Now",
   midCtaHref: HAMPERS,
+  footerTagline: "Connecting Hearts Across Borders",
+  footerLogoUrl: LOGO,
+  websiteUrl: SITE,
+  websiteLabel: "www.usarakhi.com",
+  orderEmail: "order@usarakhi.com",
+  facebookUrl: "https://www.facebook.com/usarakhi/",
+  facebookIconUrl: FB,
+  instagramUrl: "https://www.instagram.com/usarakhi/",
+  instagramIconUrl: IG,
+  copyrightText: "© 2026 UsaRakhi. All Rights Reserved.",
+  unsubscribeLabel: "Unsubscribe",
+} as const;
+
+/** ═══════════════ TEMPLATE 5 — India Independence Day Offer ═══════════════ */
+const independenceDayHomeBanner = getFirstHomePageBannerForEmail();
+
+export const INDEPENDENCE_DAY_EMAIL_CONFIG = {
+  templateId: "india-independence-day-offer",
+  name: "India Independence Day Offer – Rakhi Gifts & Special Discount",
+  subject: "🇮🇳 Independence Day Special Offer – Celebrate with Rakhi Gifts from USA Rakhi",
+  preheader:
+    "Celebrate India's Independence Day with 15% OFF Rakhi gifts in the USA — Single Rakhi, Bhaiya-Bhabhi Rakhi, combos & hampers for Raksha Bandhan.",
+  logoUrl: LOGO,
+  logoHref: SITE,
+  logoTagline: "Connecting Hearts Across Borders",
+  /** Same first homepage banner used by `getHomeBanners()` during the campaign. */
+  heroImageUrl: independenceDayHomeBanner.src,
+  heroImageHref: independenceDayHomeBanner.href,
+  heroImageAlt: independenceDayHomeBanner.alt,
+  title: "Celebrate India’s Independence Day with Special Rakhi Gifts 🇮🇳",
+  introEyebrow: "INDEPENDENCE DAY · 15 AUGUST",
+  introBody:
+    "From every corner of India to homes across America, Independence Day reminds us of freedom, family, and the bonds that hold us together. This season of pride and love, send a meaningful Rakhi for Brother, Bhaiya-Bhabhi Rakhi, or a festive Rakhi Hamper — premium Rakhi Gifts in USA, shipped domestically for Raksha Bandhan.",
+  offerBadge: "15% OFF",
+  offerLabel: "Independence Day Special Offer",
+  offerBody:
+    "Shop UsaRakhi’s Independence Day collection and enjoy 15% OFF on Rakhi gifts — designer threads, combos, and hampers for every sibling bond.",
+  ctaText: "Shop Now & Save 15%",
+  ctaHref: SHOP,
+  categoriesHeading: "Shop Rakhi Gifts in USA",
+  categoriesSubheading:
+    "Explore Single Rakhis, Bhaiya-Bhabhi sets, Rakhi Combos, Rakhi Hampers, and Kids Rakhis — all ready for USA delivery.",
+  categories: [
+    {
+      name: "Single Rakhi",
+      description: "Classic & designer Rakhi for Brother.",
+      imageUrl: cdnUploadUrl("2026/05/pink-multi-stone-rakhi-to-usa.jpeg"),
+      href: `${SITE}/single-rakhi-to-usa`,
+      buttonText: "Shop Now",
+    },
+    {
+      name: "Bhaiya-Bhabhi Rakhi",
+      description: "Matching sets for brother & bhabhi.",
+      imageUrl: cdnUploadUrl("2026/05/bhaiya-bhabhi-rakhi-to-usa-e1779468666580.jpeg"),
+      href: `${SITE}/bhaiya-bhabhi-rakhi-to-usa`,
+      buttonText: "Shop Now",
+    },
+    {
+      name: "Rakhi Combos",
+      description: "Rakhi with chocolates & festive treats.",
+      imageUrl: cdnUploadUrl("2026/05/fercho.png"),
+      href: `${SITE}/rakhi-combo-to-usa`,
+      buttonText: "Shop Now",
+    },
+    {
+      name: "Rakhi Hampers",
+      description: "Premium gift boxes with sweets & dry fruits.",
+      imageUrl: cdnUploadUrl("2026/03/Om-Single-Rakhi-1-e1779466859856.png"),
+      href: `${SITE}/rakhi-hampers-to-usa`,
+      buttonText: "Shop Now",
+    },
+    {
+      name: "Kids Rakhi",
+      description: "Fun designs little brothers love.",
+      imageUrl: cdnUploadUrl("2026/04/BRO-Kids-Rakhi-e1775564401163.jpg"),
+      href: `${SITE}/kids-rakhi-to-usa`,
+      buttonText: "Shop Now",
+    },
+  ] satisfies CampaignCard[],
+  midCtaHeading: "Shop Rakhi Collection — Save 15%",
+  midCtaBody:
+    "Don’t miss this Independence Day offer. Order your USA Rakhi gifts today and celebrate freedom, family, and Raksha Bandhan across miles.",
+  midCtaText: "Shop Rakhi Collection",
+  midCtaHref: SHOP,
   footerTagline: "Connecting Hearts Across Borders",
   footerLogoUrl: LOGO,
   websiteUrl: SITE,
@@ -1248,6 +1336,113 @@ export function buildRakhiHampersUsaEmailHtml(
     pageBg: WHITE,
     headerBg: WHITE,
     containerBorder: "1px solid #efe6d6",
+    bodyRows,
+    footer: footerFrom(cfg),
+  });
+}
+
+/** Template 5 HTML — India Independence Day Offer (homepage first banner as hero). */
+export function buildIndependenceDayEmailHtml(
+  cfg: typeof INDEPENDENCE_DAY_EMAIL_CONFIG = INDEPENDENCE_DAY_EMAIL_CONFIG
+): string {
+  const categoryBlocks = [
+    twoColCards([cfg.categories[0], cfg.categories[1]]),
+    twoColCards([cfg.categories[2], cfg.categories[3]]),
+    twoColCards([cfg.categories[4]]),
+  ].join("");
+
+  const bodyRows = `
+          <!-- Homepage first banner (Independence Day hero) -->
+          <tr>
+            <td align="center" style="padding:0;line-height:0;font-size:0;">
+              <a href="${escAttr(cfg.heroImageHref)}" target="_blank" style="text-decoration:none;">
+                <img class="fluid" src="${escAttr(cfg.heroImageUrl)}" width="600" alt="${escAttr(cfg.heroImageAlt)}" style="display:block;width:100%;max-width:600px;height:auto;border:0;" />
+              </a>
+            </td>
+          </tr>
+          <!-- Tiranga accent bar -->
+          <tr>
+            <td style="padding:0;line-height:0;font-size:0;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;">
+                <tr>
+                  <td width="33.33%" height="4" style="width:33.33%;height:4px;background-color:${SAFFRON};font-size:0;line-height:0;">&nbsp;</td>
+                  <td width="33.33%" height="4" style="width:33.33%;height:4px;background-color:${WHITE};font-size:0;line-height:0;">&nbsp;</td>
+                  <td width="33.33%" height="4" style="width:33.33%;height:4px;background-color:${INDIA_GREEN};font-size:0;line-height:0;">&nbsp;</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <!-- Warm message + 15% OFF -->
+          <tr>
+            <td class="mobile-pad" align="center" bgcolor="${CREAM}" style="padding:36px 28px 34px 28px;background-color:${CREAM};border-bottom:1px solid #efe6d6;">
+              <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:16px;letter-spacing:2px;text-transform:uppercase;color:${SAFFRON};font-weight:bold;padding-bottom:10px;">
+                ${escapeHtml(cfg.introEyebrow)}
+              </div>
+              <h1 class="hero-title" style="margin:0;padding:0 0 12px 0;font-family:Georgia,'Times New Roman',serif;font-size:28px;line-height:36px;font-weight:bold;color:${NAVY};">
+                ${escapeHtml(cfg.title)}
+              </h1>
+              <div style="width:56px;height:3px;background-color:${INDIA_GREEN};margin:0 auto 16px auto;font-size:0;line-height:0;">&nbsp;</div>
+              <div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:24px;color:#5c5348;padding:0 4px 20px 4px;max-width:500px;margin:0 auto;">
+                ${escapeHtml(cfg.introBody)}
+              </div>
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;margin:0 auto 16px auto;">
+                <tr>
+                  <td align="center" style="padding:18px 28px;background-color:${NAVY};border-radius:14px;border:2px solid ${SAFFRON};">
+                    <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#f0d78c;font-weight:bold;padding-bottom:6px;">
+                      ${escapeHtml(cfg.offerLabel)}
+                    </div>
+                    <div style="font-family:Georgia,'Times New Roman',serif;font-size:40px;line-height:44px;font-weight:bold;color:${WHITE};padding-bottom:4px;">
+                      ${escapeHtml(cfg.offerBadge)}
+                    </div>
+                    <div style="font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:20px;color:#e8e0d0;max-width:320px;">
+                      ${escapeHtml(cfg.offerBody)}
+                    </div>
+                  </td>
+                </tr>
+              </table>
+              ${ctaButton(cfg.ctaHref, cfg.ctaText, { fill: SAFFRON, textColor: NAVY, width: 240, pad: "16px 32px", fontSize: "17px" })}
+            </td>
+          </tr>
+          <!-- Category sections -->
+          <tr>
+            <td class="mobile-pad" style="padding:28px 20px 8px 20px;background-color:${WHITE};">
+              <div class="section-title" style="font-family:Georgia,'Times New Roman',serif;font-size:24px;line-height:30px;font-weight:bold;color:${NAVY};text-align:center;padding-bottom:6px;">
+                ${escapeHtml(cfg.categoriesHeading)}
+              </div>
+              <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:20px;color:#6b5e4e;text-align:center;padding-bottom:18px;">
+                ${escapeHtml(cfg.categoriesSubheading)}
+              </div>
+              ${categoryBlocks}
+            </td>
+          </tr>
+          <!-- Mid CTA -->
+          <tr>
+            <td class="mobile-pad" style="padding:12px 24px 36px 24px;background-color:${WHITE};">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;background-color:${NAVY};border-radius:14px;">
+                <tr>
+                  <td align="center" style="padding:34px 22px;">
+                    <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:${SAFFRON};font-weight:bold;padding-bottom:8px;">
+                      ${escapeHtml(cfg.offerBadge)} · Independence Day
+                    </div>
+                    <div class="section-title" style="font-family:Georgia,'Times New Roman',serif;font-size:22px;line-height:28px;font-weight:bold;color:#ffffff;padding-bottom:8px;">
+                      ${escapeHtml(cfg.midCtaHeading)}
+                    </div>
+                    <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:22px;color:#e8e0d0;padding-bottom:18px;max-width:420px;margin:0 auto;">
+                      ${escapeHtml(cfg.midCtaBody)}
+                    </div>
+                    ${ctaButton(cfg.midCtaHref, cfg.midCtaText, { fill: INDIA_GREEN, textColor: WHITE, width: 240, pad: "16px 28px", fontSize: "16px" })}
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>`;
+
+  return emailShell({
+    title: cfg.title,
+    preheader: cfg.preheader,
+    logoUrl: cfg.logoUrl,
+    logoHref: cfg.logoHref,
+    logoTagline: cfg.logoTagline,
     bodyRows,
     footer: footerFrom(cfg),
   });
