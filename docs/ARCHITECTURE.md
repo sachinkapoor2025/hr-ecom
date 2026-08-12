@@ -55,7 +55,7 @@ the Lambda via env vars (`PRODUCTS_TABLE`, `ORDERS_TABLE`, `CARTS_TABLE`,
 | orders | `ORDER#<orderId>` | `META` | GSI1 byCustomer (`USER#<key>`), GSI2 byDate (`ENTITY#ORDER`), GSI3 byStatus (`STATUS#<status>`) |
 | carts | `CART#<userKey>` | `META` | GSI1 byUpdatedAt (`ENTITY#CART`) + `itemCount`; TTL `expiresAt` |
 | customers | `SESSION#<sessionId>` | `PROFILE` / `LEAD#<ts>` | GSI1 lead feed (`ENTITY#LEAD`) |
-| events | `SESSION#<sessionId>` | `<ts>#<eventId>` | GSI1 byTypeDay (`<type>#<yyyy-mm-dd>`); TTL `expiresAt` (90d). Rollups: PK `ROLLUP#<yyyy-mm-dd>` |
+| events | `SESSION#<sessionId>` | `<ts>#<eventId>` | GSI1 byTypeDay (`<type>#<yyyy-mm-dd>`); TTL `expiresAt` (90d). Rollups: PK `ROLLUP#<yyyy-mm-dd>`. Product sales: PK `PRODUCT_SALES#<yyyy-mm-dd>` / SK `META` or `PRODUCT#<slug>` |
 | config | `CONFIG#PAYMENTS` | `META` | Stripe/Razorpay settings |
 | config | `CONFIG#SHIPPING` | `META` | USPS rate-shopping, origin address, festival mode |
 
@@ -157,11 +157,38 @@ When admin (or Orange County vendor tracking) changes order status (accepted, pr
 | GET | `/admin/orders/{orderId}/route` | Admin: detailed Order Route journey timeline. UI: `/admin/orders/{orderId}/route` (from Analytics → Order routes) |
 | PATCH | `/admin/orders/{orderId}` | Admin: update status + tracking; emails customer + order@usarakhi on each status step; schedules review email 1 day after delivered |
 | GET | `/admin/analytics/sales` | Admin: day/week/month payments received (excludes refunds) |
+| GET | `/admin/analytics/product-sales` | Admin: Product Sales Intelligence summary (KPIs, rankings, alerts, opportunities, category/vendor, co-purchase). Query `?preset=` (`today`…`this_year`/`custom`) + optional `from`/`to`. UI: `/admin/product-sales` |
+| GET | `/admin/analytics/product-sales/products` | Admin: paginated product performance rows (`q`, filters, `sort`, `dir`, `page`) |
+| GET | `/admin/analytics/product-sales/products/{slug}` | Admin: product detail + trend (`granularity=daily\|weekly\|monthly`) + recommendations. UI: `/admin/product-sales/{slug}` |
+| GET | `/admin/analytics/product-sales/compare` | Admin: compare 2–8 products (`?slugs=a,b`) |
+| GET | `/admin/analytics/product-sales/export` | Admin: full filtered export payload (CSV built in UI) |
+| POST | `/admin/analytics/product-sales/rebuild` | Admin: rebuild daily product-sales rollups for range |
+| GET/PUT | `/admin/analytics/product-sales/config` | Admin: configurable growth-score weights (`CONFIG#PRODUCT_SALES_INTEL`) |
 | GET | `/admin/analytics/overview` | Admin: traffic + funnel (`?days=`) |
 | GET | `/admin/analytics/products` | Admin: most-viewed products |
 | GET | `/admin/analytics/searches` | Admin: top + zero-result searches |
 | GET | `/admin/analytics/visitors` | Admin: visitor analytics (`?days=` or `?from=&to=` YYYY-MM-DD); totals, byDay (unique sessions/day), by-country, session list |
 | GET | `/admin/live-visitors` | Admin: currently active storefront visitors (presence TTL ~3 min; geo map + detail list in Visitor analytics UI) |
+
+### Product Sales Intelligence
+
+Admin **Product Sales Intelligence** (`/admin/product-sales`) aggregates **paid order line items** into product-level performance.
+
+**Include:** `paid | accepted | on_hold | processing | shipped | delivered | complete`  
+**Exclude:** `pending_payment`, `cancelled`, payment IDs matching `_loadtest_` / `_dev_`  
+**Refunds:** full-order `refunded` status only (no partial refund amounts). Refund merchandise is attributed to the original paid day and excluded from revenue.
+
+**Metrics (order-time data):**
+- Gross = `(line unit price + add-ons) × qty`
+- Discount allocated by eligible merchandise share of order-level `discount`
+- Net = gross − allocated discount
+- Estimated profit = net USD − `vendorCost × qty` when cost is known (line snapshot preferred); otherwise `null`
+- Orders = unique orders containing the SKU; Units = sum of quantities
+
+**Scale:** daily rollups on the events table — `PK=PRODUCT_SALES#yyyy-mm-dd`, `SK=META|PRODUCT#slug`. Paid/refund status changes mark the day dirty; next dashboard read rebuilds that day. Growth-score weights live in `CONFIG#PRODUCT_SALES_INTEL`.
+
+**Unavailable (intentionally null until integrated):** page views, add-to-cart, conversion, ad spend, ROAS, repeat-purchase rate, geo/segment splits.
+
 | GET | `/admin/sessions` | Admin: recent visitor sessions (`?days=` or `?from=&to=` & `identity=all|known|anonymous`) |
 | GET | `/admin/sessions/{sessionId}` | Admin: full visitor journey |
 | GET | `/admin/customers/{email}` | Admin: unified customer profile (orders, leads, carts, sessions) |

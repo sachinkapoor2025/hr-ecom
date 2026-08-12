@@ -22,6 +22,7 @@ const navItems: NavItem[] = [
     href: "/admin/analytics",
     children: [
       { href: "/admin/analytics?tab=overview", label: "Overview" },
+      { href: "/admin/product-sales", label: "Product sales" },
       { href: "/admin/analytics?tab=order-routes", label: "Order routes" },
       { href: "/admin/analytics?tab=visitor-analytics", label: "Visitor analytics" },
       { href: "/admin/analytics?tab=live", label: "Live visitor" },
@@ -165,6 +166,13 @@ function NavButtons({
         if (item.type === "group" && pathActive(pathname, item.href)) {
           next[item.id] = true;
         }
+        if (
+          item.type === "group" &&
+          item.id === "analytics" &&
+          pathname.startsWith("/admin/product-sales")
+        ) {
+          next[item.id] = true;
+        }
         if (variant === "mobile" && item.type === "group") {
           next[item.id] = true;
         }
@@ -204,7 +212,9 @@ function NavButtons({
           );
         }
 
-        const groupActive = pathActive(pathname, item.href);
+        const groupActive =
+          pathActive(pathname, item.href) ||
+          (item.id === "analytics" && pathname.startsWith("/admin/product-sales"));
         const children =
           item.id === "vendor" && !showSuper
             ? item.children.filter((c) => !c.href.includes("tab=expense"))

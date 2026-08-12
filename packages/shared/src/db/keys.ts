@@ -95,6 +95,13 @@ export const eventKeys = {
    */
   presencePk: () => "PRESENCE#LIVE" as const,
   presenceSk: (sessionId: string) => `SESSION#${sessionId}`,
+  /**
+   * Product sales intelligence daily rollups (long-term).
+   * PK = PRODUCT_SALES#yyyy-mm-dd, SK = META | PRODUCT#slug
+   */
+  productSalesDayPk: (day: string) => `PRODUCT_SALES#${day}`,
+  productSalesMetaSk: () => "META" as const,
+  productSalesProductSk: (productSlug: string) => `PRODUCT#${productSlug}`,
 };
 
 // ---- config table ----
@@ -102,6 +109,8 @@ export const configKeys = {
   payments: { pk: "CONFIG#PAYMENTS", sk: "META" as const },
   blogImages: { pk: "CONFIG#BLOG_IMAGES", sk: "META" as const },
   shipping: { pk: "CONFIG#SHIPPING", sk: "META" as const },
+  /** Growth-score weights + feature flags for Product Sales Intelligence. */
+  productSalesIntel: { pk: "CONFIG#PRODUCT_SALES_INTEL", sk: "META" as const },
 };
 
 /** Tracks admin S3 uploads → product slug for recovery if DB is reset. */
