@@ -520,7 +520,7 @@ export const INDEPENDENCE_DAY_EMAIL_CONFIG = {
   heroImageUrl: independenceDayHomeBanner.src,
   heroImageHref: independenceDayHomeBanner.href,
   heroImageAlt: independenceDayHomeBanner.alt,
-  title: "Celebrate India’s Independence Day with Special Rakhi Gifts 🇮🇳",
+  title: " Celebrate Independence Day with Love from India to USA 🇺🇸",
   introEyebrow: "INDEPENDENCE DAY · 15 AUGUST",
   introBody:
     "From every corner of India to homes across America, Independence Day reminds us of freedom, family, and the bonds that hold us together. This season of pride and love, send a meaningful Rakhi for Brother, Bhaiya-Bhabhi Rakhi, or a festive Rakhi Hamper — premium Rakhi Gifts in USA, shipped domestically for Raksha Bandhan.",
@@ -532,7 +532,7 @@ export const INDEPENDENCE_DAY_EMAIL_CONFIG = {
   ctaHref: SHOP,
   categoriesHeading: "Shop Rakhi Gifts in USA",
   categoriesSubheading:
-    "Explore Single Rakhis, Bhaiya-Bhabhi sets, Rakhi Combos, Rakhi Hampers, and Kids Rakhis — all ready for USA delivery.",
+    "Explore Single Rakhis, Bhaiya-Bhabhi sets, Rakhi Combos, Rakhi Hampers, and Lumba Rakhis — all ready for USA delivery.",
   categories: [
     {
       name: "Single Rakhi",
@@ -563,10 +563,10 @@ export const INDEPENDENCE_DAY_EMAIL_CONFIG = {
       buttonText: "Shop Now",
     },
     {
-      name: "Kids Rakhi",
-      description: "Fun designs little brothers love.",
-      imageUrl: cdnUploadUrl("2026/04/BRO-Kids-Rakhi-e1775564401163.jpg"),
-      href: `${SITE}/kids-rakhi-to-usa`,
+      name: "Lumba Rakhi",
+      description: "Elegant bracelet styles for bhabhi.",
+      imageUrl: cdnUploadUrl("2026/04/Unique-pink-Lumba-Rakhi-e1779468035922.jpg"),
+      href: `${SITE}/lumba-rakhi-to-usa`,
       buttonText: "Shop Now",
     },
   ] satisfies CampaignCard[],
@@ -690,6 +690,24 @@ function twoColCards(cards: CampaignCard[]): string {
                   </td>
                   <td class="stack-col" width="50%" valign="top" style="width:50%;padding:0 0 14px 6px;">
                     ${b ? productCard(b) : "&nbsp;"}
+                  </td>
+                </tr>
+              </table>`;
+}
+
+/** Single category card centered at half-row width (matches two-col card size on desktop; full width on mobile). */
+function centeredHalfCard(card: CampaignCard): string {
+  return `
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse;">
+                <tr>
+                  <td align="center" style="padding:0 0 14px 0;">
+                    <table role="presentation" class="fluid" cellpadding="0" cellspacing="0" border="0" width="280" style="width:280px;max-width:100%;border-collapse:collapse;">
+                      <tr>
+                        <td style="padding:0 6px;">
+                          ${productCard(card)}
+                        </td>
+                      </tr>
+                    </table>
                   </td>
                 </tr>
               </table>`;
@@ -1348,7 +1366,7 @@ export function buildIndependenceDayEmailHtml(
   const categoryBlocks = [
     twoColCards([cfg.categories[0], cfg.categories[1]]),
     twoColCards([cfg.categories[2], cfg.categories[3]]),
-    twoColCards([cfg.categories[4]]),
+    centeredHalfCard(cfg.categories[4]),
   ].join("");
 
   const bodyRows = `

@@ -356,6 +356,114 @@ export const blogPosts: BlogPost[] = [
       },
     ],
   },
+  {
+    slug: "send-rakhi-to-usa-best-rakhi-combos-gift-ideas",
+    title: "Send Rakhi to USA: Best Rakhi Combos & Gift Ideas for Your Dear Brother",
+    description:
+      "Send Rakhi to USA with the best Rakhi combos and gift ideas for your brother. Explore Single Rakhi, sets, Bhaiya Bhabhi, Kids, Lumba, hampers, and how to order online for Raksha Bandhan.",
+    excerpt:
+      "Distance does not have to break tradition. Discover the best Rakhi styles, combos, and gift ideas to send Rakhi to USA and make Raksha Bandhan memorable for your brother.",
+    publishedAt: "2026-08-12",
+    updatedAt: "2026-08-12",
+    relatedCategory: "rakhi-combo",
+    sections: [
+      {
+        paragraphs: [
+          "Raksha Bandhan is a beautiful festival to celebrate the loving bond between brothers and sisters. The distance can make the celebration a little different when you have your brother in another country. But you can always stay attached to the tradition by sending a Rakhi and a thoughtful gift.",
+          "You have plenty of Rakhi styles, combinations and gifts options to choose from when you are going to Send Rakhi to USA. Pick something meaningful from a simple Rakhi to a complete Rakhi hamper to make the occasion memorable for your brother.",
+        ],
+      },
+      {
+        heading: "Select the Ideal Rakhi for Your Brother",
+        paragraphs: [
+          "You can get rakhis in many designs, quality and combinations so you can easily choose something according to your brother’s personality and liking. If you are searching for rakhi in USA, you can find options from traditional threads to modern and stylish rakhis.",
+          "If you want to concentrate on the traditional Raksha Bandhan ritual then a Single Rakhi to USA is a simple option. Multiple-Rakhi sets can come in handy for families celebrating together.",
+          "Some popular choices include:",
+          "• Single Rakhi to USA for a simple and traditional celebration",
+          "• Set of 2 Rakhis to USA for brothers or family members",
+          "• Set of 3 Rakhis to USA for celebrating with multiple siblings",
+          "• Set of 4 Rakhis to USA for larger families",
+          "• Bhaiya Bhabhi Rakhi to USA to celebrate bond with brother and sister-in-Law both",
+          "• Kids Rakhi to USA with fun & colorful designs for little brothers",
+          "• Lumba Rakhi to USA for celebrating the traditional bond with sisters-in-law",
+          "The main deciding factor in choosing the right set is who you are celebrating with and how many family members you want included.",
+        ],
+      },
+      {
+        heading: "Top Rakhi Combos and Gift Ideas",
+        paragraphs: [
+          "A little gift with a Rakhi makes it even more special. You don’t necessarily need a pricey gift. Thoughtful mix of Rakhi and something your brother likes can be enough to make him feel remembered.",
+        ],
+      },
+      {
+        heading: "Rakhi Combo to USA",
+        paragraphs: [
+          "You can send Rakhi combo to USA which generally comprises of a Rakhi with chocolates, sweets, dry fruits or any other small gift. If you want to send a few things together, and keep the celebration simple, it is a convenient option.",
+        ],
+      },
+      {
+        heading: "Rakhi Hamper to USA",
+        paragraphs: [
+          "A Rakhi Hamper to USA can be suitable if you are planning to make a more complete celebration package. A hamper can be filled with a rakhi, sweets, chocolates, dry fruits, personalized items or any other festive gift, depending on the options.",
+        ],
+      },
+      {
+        heading: "Chocolates and Sweets",
+        paragraphs: [
+          "Chocolates and traditional sweets are common gifts on Raksha Bandhan. These can go well with the Rakhi and add to the festive feel without making the gift complicated.",
+        ],
+      },
+      {
+        heading: "Personalized Gifts",
+        paragraphs: [
+          "A personalized gift may carry more sentimental value, because it is a reflection of your relationship with your brother. Add a photo frame to the Rakhi celebration and make it more personalized with a customized mug, engraved accessory or a handwritten note.",
+        ],
+      },
+      {
+        heading: "How to Send Rakhi to USA from India",
+        paragraphs: [
+          "If your brother is living in United States then you can send rakhi from India via online rakhi delivery services. The basic process is usually simple.",
+          "Choose the Rakhi or Gift you wish to send. If you are planning to buy rakhi online then look for the design or combination which suits your brother. You can then enter the delivery details to the recipient in the USA and choose a delivery option that suits you.",
+          "Many prefer to send rakhi online as it allows them to arrange the gift from home instead of visiting the physical store. Likewise, online gift rakhi searchers can compare various Rakhi combinations and gift options before placing an order.",
+          "Ordering early is advisable, especially during Raksha Bandhan, when delivery demand can spike. Enter the recipient's address, ZIP code, telephone number, and other information required.",
+        ],
+      },
+      {
+        heading: "What to Know Before You Order",
+        paragraphs: [
+          "Remember few simple points before you Send Rakhi to USA:",
+          "• Delivery time: See the estimated delivery time and order in advance.",
+          "• Rakhi design: Think about whether your brother prefers traditional, minimalist, colorful or modern designs.",
+          "• Gift preferences: Depending upon his interests go for chocolates, sweets, dry fruits or personalized gifts.",
+          "• Family celebrations: If you are sending Rakhis to more than one family member, a set might be more convenient than ordering individual Rakhis.",
+          "• Address details: Check the recipient’s full US address to help prevent delivery issues.",
+        ],
+      },
+      {
+        heading: "Make Raksha Bandhan Special Across the Miles",
+        paragraphs: [
+          "Living in different countries doesn’t mean missing out on important family traditions. A Rakhi from India can be a simple reminder of the memories you share and the bond between siblings.",
+          "Choose a Single Rakhi to USA, a Set of 2 Rakhis to USA or a bigger Rakhi Combo to USA, but it’s the message behind the gesture which matters the most. A little gift or a personal note can make the celebration more meaningful.",
+          "The online options make it easy to Send Rakhi to USA and celebrate the festival of Raksha Bandhan even when your brother is miles away.",
+        ],
+      },
+      {
+        heading: "FAQs",
+        paragraphs: [
+          "1. Is it possible to send Rakhi from India to USA?",
+          "Yes, Rakhi delivery to USA is possible through online rakhi and gifting services. Select a Rakhi, enter the recipient’s US address and pick from the delivery options available.",
+          "2. What all can I add along with a Rakhi?",
+          "You can pair a Rakhi with chocolates, sweets, dry fruits, personalized gifts or any other little gifts. A Rakhi Combo or Rakhi Hamper can help you get multiple items packed in one gift.",
+          "3. Can I send more than one Rakhi to USA?",
+          "Yes. Depending on your requirement you can choose a set of 2, set of 3 or set of 4 Rakhis to celebrate Raksha Bandhan with multiple brothers or family members.",
+          "4. What is a Bhaiya Bhabhi Rakhi?",
+          "Bhaiya Bhabhi Rakhi is a combo that is made for brother and sister-in-law. It’s a thoughtful choice for families looking to celebrate both relationships on Raksha Bandhan.",
+          "5. When do I have to order Rakhi for delivery in USA?",
+          "Generally, it’s better to order sooner rather than later. This provides plenty of time for processing and delivery, especially during the busy Raksha Bandhan season.",
+        ],
+      },
+    ],
+  },
 ];
 
 export function getBlogPost(slug: string): BlogPost | undefined {
