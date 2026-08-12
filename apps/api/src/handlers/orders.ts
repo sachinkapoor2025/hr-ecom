@@ -653,6 +653,15 @@ export async function updateOrderStatus(event: APIGatewayProxyEventV2) {
 
   const statusChanged = resolvedStatus !== order.status;
 
+  if (statusChanged && resolvedStatus === ORDER_STATUS.REFUNDED) {
+    try {
+      const { invalidateProductSalesForOrder } = await import("../lib/product-sales-rollups");
+      await invalidateProductSalesForOrder(updated);
+    } catch (err) {
+      console.error("Product sales rollup invalidate failed:", orderId, err);
+    }
+  }
+
   if (
     order.status === ORDER_STATUS.PENDING_PAYMENT &&
     resolvedStatus === ORDER_STATUS.CANCELLED
@@ -768,6 +777,13 @@ export async function markOrderPaid(
 
   const { markReminderEmailConverted } = await import("./reminder-emails");
   await markReminderEmailConverted(updated.shippingAddress?.email);
+
+  try {
+    const { invalidateProductSalesForOrder } = await import("../lib/product-sales-rollups");
+    await invalidateProductSalesForOrder(updated);
+  } catch (err) {
+    console.error("Product sales rollup invalidate failed:", orderId, err);
+  }
 }
 
 /** Mark checkout cancelled after failed or abandoned payment. */

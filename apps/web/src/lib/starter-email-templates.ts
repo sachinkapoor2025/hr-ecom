@@ -8,10 +8,12 @@ import {
   buildStartingPriceEmailHtml,
   buildShopMoreSaveMoreEmailHtml,
   buildRakhiHampersUsaEmailHtml,
+  buildIndependenceDayEmailHtml,
   FREE_SHIPPING_EMAIL_CONFIG,
   STARTING_PRICE_EMAIL_CONFIG,
   SHOP_MORE_SAVE_MORE_EMAIL_CONFIG,
   RAKHI_HAMPERS_USA_EMAIL_CONFIG,
+  INDEPENDENCE_DAY_EMAIL_CONFIG,
   type MarketingEmailContent,
 } from "@hr-ecom/shared";
 
@@ -39,6 +41,7 @@ export const FREE_SHIPPING_TEMPLATE_ID = FREE_SHIPPING_EMAIL_CONFIG.templateId;
 export const STARTING_PRICE_TEMPLATE_ID = STARTING_PRICE_EMAIL_CONFIG.templateId;
 export const SHOP_MORE_SAVE_MORE_TEMPLATE_ID = SHOP_MORE_SAVE_MORE_EMAIL_CONFIG.templateId;
 export const RAKHI_HAMPERS_USA_TEMPLATE_ID = RAKHI_HAMPERS_USA_EMAIL_CONFIG.templateId;
+export const INDEPENDENCE_DAY_TEMPLATE_ID = INDEPENDENCE_DAY_EMAIL_CONFIG.templateId;
 
 export const STARTER_EMAIL_TEMPLATES: StarterEmailTemplateMeta[] = [
   {
@@ -82,6 +85,13 @@ export const STARTER_EMAIL_TEMPLATES: StarterEmailTemplateMeta[] = [
     subject: RAKHI_HAMPERS_USA_EMAIL_CONFIG.subject,
     buildHtml: () => buildRakhiHampersUsaEmailHtml(),
     htmlPath: "/email-templates/rakhi-hampers-to-usa.html",
+  },
+  {
+    templateId: INDEPENDENCE_DAY_TEMPLATE_ID,
+    name: INDEPENDENCE_DAY_EMAIL_CONFIG.name,
+    subject: INDEPENDENCE_DAY_EMAIL_CONFIG.subject,
+    buildHtml: () => buildIndependenceDayEmailHtml(),
+    htmlPath: "/email-templates/india-independence-day-offer.html",
   },
 ];
 

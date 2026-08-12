@@ -10,6 +10,7 @@ import * as uploads from "./handlers/uploads";
 import * as events from "./handlers/events";
 import * as analytics from "./handlers/analytics";
 import * as salesReport from "./handlers/sales-report";
+import * as productSalesIntel from "./handlers/product-sales-intelligence";
 import * as adminCarts from "./handlers/admin-carts";
 import * as adminCustomers from "./handlers/admin-customers";
 import * as account from "./handlers/account";
@@ -187,6 +188,47 @@ const routes: Route[] = [
   { method: "PATCH", pattern: /^\/admin\/leads$/, handler: orders.updateLead },
   { method: "GET", pattern: /^\/admin\/analytics\/overview$/, handler: analytics.getAnalyticsOverview },
   { method: "GET", pattern: /^\/admin\/analytics\/sales$/, handler: salesReport.getSalesReport },
+  {
+    method: "GET",
+    pattern: /^\/admin\/analytics\/product-sales$/,
+    handler: productSalesIntel.getProductSalesSummary,
+  },
+  {
+    method: "GET",
+    pattern: /^\/admin\/analytics\/product-sales\/products$/,
+    handler: productSalesIntel.listProductSalesProducts,
+  },
+  {
+    method: "GET",
+    pattern: /^\/admin\/analytics\/product-sales\/products\/([^/]+)$/,
+    handler: productSalesIntel.getProductSalesDetail,
+    params: ["slug"],
+  },
+  {
+    method: "GET",
+    pattern: /^\/admin\/analytics\/product-sales\/compare$/,
+    handler: productSalesIntel.compareProductSales,
+  },
+  {
+    method: "GET",
+    pattern: /^\/admin\/analytics\/product-sales\/export$/,
+    handler: productSalesIntel.exportProductSales,
+  },
+  {
+    method: "POST",
+    pattern: /^\/admin\/analytics\/product-sales\/rebuild$/,
+    handler: productSalesIntel.rebuildProductSales,
+  },
+  {
+    method: "GET",
+    pattern: /^\/admin\/analytics\/product-sales\/config$/,
+    handler: productSalesIntel.getProductSalesConfig,
+  },
+  {
+    method: "PUT",
+    pattern: /^\/admin\/analytics\/product-sales\/config$/,
+    handler: productSalesIntel.updateProductSalesConfig,
+  },
   { method: "GET", pattern: /^\/admin\/analytics\/products$/, handler: analytics.getTopProducts },
   { method: "GET", pattern: /^\/admin\/analytics\/searches$/, handler: analytics.getTopSearches },
   { method: "GET", pattern: /^\/admin\/analytics\/insights$/, handler: analytics.getAnalyticsInsights },
