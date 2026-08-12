@@ -8,6 +8,7 @@ import { TrustBadges } from "@/components/TrustBadges";
 import { resolveImageUrl } from "@/lib/images";
 import { carrierTrackingUrl } from "@/lib/tracking-url";
 import {
+  displayOrderRef,
   formatOrderStatusLabel,
   isOrderAwaitingPayment,
   orderConfirmationHeadline,
@@ -55,7 +56,7 @@ type OrderConfirmationProps = {
 
 export function OrderConfirmation({ order, paid }: OrderConfirmationProps) {
   const addr = order.shippingAddress;
-  const shortOrderId = order.orderId.slice(0, 8).toUpperCase();
+  const orderRef = displayOrderRef(order);
   const awaitingPayment = isOrderAwaitingPayment(order.status) && !paid;
   const statusLabel = formatOrderStatusLabel(order.status);
   const trackingUrl = order.trackingNumber
@@ -68,7 +69,9 @@ export function OrderConfirmation({ order, paid }: OrderConfirmationProps) {
       <div className="bg-primary text-white">
         <div className="max-w-2xl mx-auto px-4 pt-8 pb-20 text-center">
           <div className="flex justify-center mb-6">
-            <SiteLogoLink className="brightness-0 invert" priority />
+            <div className="rounded-xl bg-white px-4 py-2.5 shadow-sm">
+              <SiteLogoLink priority />
+            </div>
           </div>
 
           <div
@@ -88,7 +91,7 @@ export function OrderConfirmation({ order, paid }: OrderConfirmationProps) {
 
           {paid && (
             <p className="mt-3 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 text-xs font-semibold tracking-wide">
-              Order #{shortOrderId}
+              Order #{orderRef}
             </p>
           )}
         </div>
@@ -101,7 +104,7 @@ export function OrderConfirmation({ order, paid }: OrderConfirmationProps) {
           <div className="border-b border-slate-100 bg-slate-50/80 px-5 sm:px-6 py-4 flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-xs uppercase tracking-wider text-slate-500 font-semibold">Order summary</p>
-              <p className="text-sm text-slate-600 font-mono mt-0.5">{order.orderId}</p>
+              <p className="text-sm text-slate-900 font-semibold mt-0.5">#{orderRef}</p>
             </div>
             <span
               className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide ${
@@ -330,7 +333,7 @@ export function OrderConfirmation({ order, paid }: OrderConfirmationProps) {
             Continue shopping
           </Link>
           <a
-            href={whatsappChatUrl(`Hi UsaRakhi, I placed order #${shortOrderId}. Can you confirm dispatch timing?`)}
+            href={whatsappChatUrl(`Hi UsaRakhi, I placed order #${orderRef}. Can you confirm dispatch timing?`)}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center rounded-lg border-2 border-nav text-nav font-bold text-sm px-8 py-3.5 hover:bg-nav/5 transition"
