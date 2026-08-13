@@ -188,7 +188,7 @@ export function SalesReportPanel({ compact = false }: SalesReportPanelProps) {
         <div>
           <h2 className="font-bold text-lg">Sales &amp; payments received</h2>
           <p className="text-xs text-slate-500 mt-0.5">
-            Paid orders only — refunds, cancelled, and unpaid orders excluded
+            Paid orders only — refunds, cancelled, and unpaid orders excluded. Days start at 12:00 AM IST.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">

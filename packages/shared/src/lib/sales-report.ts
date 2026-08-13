@@ -1,5 +1,10 @@
 import { ORDER_STATUS } from "../constants";
 import type { Order } from "../schemas/order";
+import {
+  ADMIN_ANALYTICS_UTC_OFFSET,
+  businessDayKey,
+  instantToBusinessDay,
+} from "./admin-analytics-tz";
 
 /** Order statuses that count as received payment (excludes pending, cancelled, refunded). */
 export const REVENUE_ORDER_STATUSES = [
@@ -74,22 +79,43 @@ export type SalesReportResponse = {
   month: SalesPeriodReport;
 };
 
+/** Start of the current IST calendar day (00:00:00 Asia/Kolkata). */
+export function startOfIstDay(now = new Date()): Date {
+  const day = businessDayKey(now);
+  return new Date(`${day}T00:00:00${ADMIN_ANALYTICS_UTC_OFFSET}`);
+}
+
+/**
+ * Sales period windows use IST midnight (Asia/Kolkata), not UTC.
+ * "Today" = from 12:00 AM IST through now.
+ */
 export function periodRange(period: SalesPeriod, now = new Date()): { from: Date; to: Date; label: string } {
   const to = new Date(now);
-  const from = new Date(now);
+  const todayStart = startOfIstDay(now);
 
   if (period === "day") {
-    from.setUTCHours(0, 0, 0, 0);
-    return { from, to, label: "Today" };
+    return { from: todayStart, to, label: "Today" };
   }
   if (period === "week") {
-    from.setUTCDate(from.getUTCDate() - 6);
-    from.setUTCHours(0, 0, 0, 0);
-    return { from, to, label: "Last 7 days" };
+    return {
+      from: new Date(todayStart.getTime() - 6 * 86_400_000),
+      to,
+      label: "Last 7 days",
+    };
   }
-  from.setUTCDate(from.getUTCDate() - 29);
-  from.setUTCHours(0, 0, 0, 0);
-  return { from, to, label: "Last 30 days" };
+  return {
+    from: new Date(todayStart.getTime() - 29 * 86_400_000),
+    to,
+    label: "Last 30 days",
+  };
+}
+
+/** YYYY-MM-DD bucket for sales charts — IST calendar day. */
+export function salesDayBucket(isoOrDate: string | Date): string {
+  if (isoOrDate instanceof Date) {
+    return businessDayKey(isoOrDate);
+  }
+  return instantToBusinessDay(isoOrDate) ?? businessDayKey(new Date(isoOrDate));
 }
 
 export function addToRevenue(totals: { USD: number; INR: number }, currency: "USD" | "INR", amount: number) {

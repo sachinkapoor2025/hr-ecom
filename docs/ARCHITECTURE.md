@@ -164,7 +164,7 @@ When admin (or Orange County vendor tracking) changes order status (accepted, pr
 | GET | `/admin/analytics/order-routes` | Admin: Order Route overview list (first/last touch per order). UI: `/admin/analytics?tab=order-routes` |
 | GET | `/admin/orders/{orderId}/route` | Admin: detailed Order Route journey timeline. UI: `/admin/orders/{orderId}/route` (from Analytics → Order routes) |
 | PATCH | `/admin/orders/{orderId}` | Admin: update status + tracking; emails customer + order@usarakhi on each status step; schedules review email 1 day after delivered |
-| GET | `/admin/analytics/sales` | Admin: day/week/month payments received (excludes refunds) |
+| GET | `/admin/analytics/sales` | Admin: day/week/month payments received (excludes refunds); day windows start at **12:00 AM IST** (`Asia/Kolkata`) |
 | GET | `/admin/analytics/product-sales` | Admin: Product Sales Intelligence summary (KPIs, rankings, alerts, opportunities, category/vendor, co-purchase). Query `?preset=` (`today`…`this_year`/`custom`) + optional `from`/`to`. UI: `/admin/product-sales` |
 | GET | `/admin/analytics/product-sales/products` | Admin: paginated product performance rows (`q`, filters, `sort`, `dir`, `page`) |
 | GET | `/admin/analytics/product-sales/products/{slug}` | Admin: product detail + trend (`granularity=daily\|weekly\|monthly`) + recommendations. UI: `/admin/product-sales/{slug}` |
