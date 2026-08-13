@@ -59,8 +59,10 @@ the Lambda via env vars (`PRODUCTS_TABLE`, `ORDERS_TABLE`, `CARTS_TABLE`,
 | config | `CONFIG#PAYMENTS` | `META` | Stripe/Razorpay settings |
 | config | `CONFIG#SHIPPING` | `META` | USPS rate-shopping, origin address, festival mode |
 
-Order status lifecycle: `pending_payment → paid → processing → shipped → delivered`
-(plus `cancelled` / `refunded`), with a `statusHistory[]` audit trail and tracking number.
+Order status lifecycle: `pending_payment → paid → (accepted/on_hold) → processing → shipped → in_transit → out_for_delivery → delivered → complete`
+(plus `delivery_exception`, `cancelled` / `refunded`), with a `statusHistory[]` audit trail and tracking number.
+
+**USPS tracking sync (single source of truth):** Order `status` plus carrier fields (`carrierTrackingStatus`, `carrierStatusDetail`, `trackingEvents[]`, `lastTrackingSyncAt`, `lastTrackingSyncError`, `lastTrackingNotificationStatus`, `deliveredAt`, `estimatedDeliveryAt`) live on the order item. Admin portal and customer My Orders / order detail both read this same record — there is no separate customer status cache. Cron `processUspsTrackingSync` (EventBridge every 15 minutes on `ReviewEmailsCronFunction`, task `trackingSync`) queries GSI3 for active poll statuses (`processing`/`shipped`/`in_transit`/`out_for_delivery`/`delivery_exception` with a tracking number), calls USPS Tracking API v3, maps via `@hr-ecom/shared` `mapCarrierTrackingPhase`, advances `status` only forward (never overwrites `cancelled`/`refunded`/`complete`), emails only on meaningful status change (`lastTrackingNotificationStatus` dedupe), and stops polling once status is `delivered`/`complete`. Admin manual refresh: `POST /admin/orders/{orderId}/tracking/sync`. Customer read: `GET /orders/{orderId}/tracking` (or full `GET /orders/{orderId}`).
 
 Migration from the legacy single table: `npm run migrate:multitable` (copies orders +
 leads/sessions; products re-seed via `import:usarakhi`).
@@ -69,7 +71,9 @@ leads/sessions; products re-seed via `import:usarakhi`).
 
 | Job | Schedule | Purpose |
 |-----|----------|---------|
-| `ReviewEmailsCronFunction` | Every hour | Email customers 1 day after order is marked **Delivered** or **Complete**, linking to `/reviews` |
+| `ReviewEmailsCronFunction` | Every 15 minutes | Review emails + abandoned cart + pending-payment reminders |
+| `ReviewEmailsCronFunction` (`task: trackingSync`) | Every 15 minutes | **USPS tracking sync** for active shipments (`processUspsTrackingSync`) |
+| `ReviewEmailsCronFunction` (review path) | As due | Email customers 1 day after order is marked **Delivered** or **Complete**, linking to `/reviews` |
 
 When admin (or Orange County vendor tracking) changes order status (accepted, processing, shipped, delivered, complete, cancelled, refunded, or paid), the API emails **both** the customer at `shippingAddress.email` and the ops inbox (`order@usarakhi.com` / `NOTIFY_EMAIL`) via **SMTP** (`notifyCustomerOrderStatusChange` in `apps/api/src/lib/email.ts` — same transactional path as paid confirmation). Admin copy includes customer contact, items, tracking, and an admin order link so the team need not open the portal for every update. **Marketing campaigns** (`/ses-email/*`, admin Email) send via **marketing SMTP** (default Mailercloud `smtp-prod.mailrcld.com:587`) configured under Admin → Email → Settings; Amazon SES API remains an optional legacy transport if `marketingTransport=ses`. Transactional `SMTP_*` env is separate and unchanged. Shipped emails include carrier/tracking when present. `pending_payment` → `cancelled` skips the customer/status pair (admin payment-failed alert only). Separately, **Delivered** or **Complete** also sets `reviewEmailDueAt` (delivery + 1 day); the cron sends one review-request email per order (`reviewEmailSentAt`).
 
@@ -150,9 +154,11 @@ When admin (or Orange County vendor tracking) changes order status (accepted, pr
 | POST | `/pending-payment-unsubscribe` | Public: opt out of pending-payment reminder emails (DynamoDB list) |
 | POST | `/events` | First-party analytics events (batched, public) |
 | GET | `/orders` | User orders |
-| GET | `/orders/{orderId}` | Order detail (owner/admin) |
+| GET | `/orders/{orderId}` | Order detail (owner/admin) — includes tracking sync fields |
+| GET | `/orders/{orderId}/tracking` | Owner/admin: tracking snapshot (status, carrier events, last sync) |
 | GET | `/admin/orders` | Admin: list orders (filter `?status=`) |
 | GET | `/admin/orders/{orderId}` | Admin: order detail |
+| POST | `/admin/orders/{orderId}/tracking/sync` | Admin: refresh USPS tracking and advance order status if changed |
 | GET | `/admin/analytics/order-routes` | Admin: Order Route overview list (first/last touch per order). UI: `/admin/analytics?tab=order-routes` |
 | GET | `/admin/orders/{orderId}/route` | Admin: detailed Order Route journey timeline. UI: `/admin/orders/{orderId}/route` (from Analytics → Order routes) |
 | PATCH | `/admin/orders/{orderId}` | Admin: update status + tracking; emails customer + order@usarakhi on each status step; schedules review email 1 day after delivered |

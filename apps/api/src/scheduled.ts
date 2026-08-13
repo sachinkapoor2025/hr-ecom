@@ -4,12 +4,13 @@ import { processAbandonedCartEmails } from "./handlers/abandoned-cart-emails";
 import { processPendingPaymentReminders } from "./handlers/pending-payment-reminders";
 import { reconcilePendingRazorpayPayments } from "./handlers/payments/razorpay";
 import { runPaymentReconciliationJob } from "./handlers/payment-reconciliation";
+import { processUspsTrackingSync } from "./handlers/tracking-sync";
 
 type CronEvent = {
   task?: string;
 };
 
-/** EventBridge schedules → review/abandoned/pending (15m) or Razorpay reconcile (1h). */
+/** EventBridge schedules → review/abandoned/pending/tracking (15m) or Razorpay reconcile (1h). */
 export async function handler(event: CronEvent, _context: Context) {
   if (event?.task === "razorpayReconcile") {
     try {
@@ -27,6 +28,16 @@ export async function handler(event: CronEvent, _context: Context) {
       return { paymentReconciliation };
     } catch (err) {
       console.error("Payment reconciliation cron failed:", err);
+      throw err;
+    }
+  }
+
+  if (event?.task === "trackingSync") {
+    try {
+      const trackingSync = await processUspsTrackingSync();
+      return { trackingSync };
+    } catch (err) {
+      console.error("USPS tracking sync cron failed:", err);
       throw err;
     }
   }
@@ -53,6 +64,8 @@ export async function handler(event: CronEvent, _context: Context) {
     console.error("Pending payment reminders cron failed:", err);
     results.pendingPaymentRemindersError = err instanceof Error ? err.message : String(err);
   }
+
+  // USPS tracking sync runs on the dedicated EventBridge rule (task: trackingSync).
 
   // Best-effort reconciliation snapshot log (does not fail the email cron).
   try {

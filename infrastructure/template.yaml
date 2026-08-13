@@ -786,7 +786,9 @@ Resources:
     Properties:
       FunctionName: !Sub hr-ecom-review-emails-${Environment}
       Handler: scheduled.handler
-      Timeout: 120
+      # Tracking sync batches USPS calls; keep headroom above email jobs alone.
+      Timeout: 300
+      MemorySize: 512
       CodeUri: ..
       Policies:
         - DynamoDBCrudPolicy:
@@ -799,6 +801,12 @@ Resources:
             TableName: !Ref ConfigTable
         - DynamoDBCrudPolicy:
             TableName: !Ref PendingPaymentUnsubTable
+        - Statement:
+            - Effect: Allow
+              Action:
+                - secretsmanager:GetSecretValue
+                - ssm:GetParameter
+              Resource: "*"
       Events:
         EmailJobsEvery15Minutes:
           Type: Schedule
@@ -806,6 +814,13 @@ Resources:
             Schedule: rate(15 minutes)
             Description: Review emails + abandoned cart + pending-payment reminders
             Enabled: true
+        TrackingSyncEvery15Minutes:
+          Type: Schedule
+          Properties:
+            Schedule: rate(15 minutes)
+            Description: USPS tracking sync for active shipments (task trackingSync)
+            Enabled: true
+            Input: '{"task":"trackingSync"}'
         RazorpayReconcileHourly:
           Type: Schedule
           Properties:

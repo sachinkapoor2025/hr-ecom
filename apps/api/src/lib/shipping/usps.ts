@@ -508,32 +508,68 @@ export class USPSProvider implements ShippingProvider {
   async trackShipment(trackingNumber: string): Promise<TrackingStatus> {
     try {
       await resolveCredentials();
-      const res = await this.fetchWithRetry(
-        `${this.baseUrl()}/tracking/v3/tracking/${encodeURIComponent(trackingNumber)}`,
-        { method: "GET", headers: await this.authHeaders() }
+      const url = new URL(
+        `${this.baseUrl()}/tracking/v3/tracking/${encodeURIComponent(trackingNumber)}`
       );
+      url.searchParams.set("expand", "DETAIL");
+      const res = await this.fetchWithRetry(url.toString(), {
+        method: "GET",
+        headers: await this.authHeaders(),
+      });
       if (!res.ok) {
-        return { trackingNumber, status: "unknown", statusDetail: `USPS tracking HTTP ${res.status}` };
+        return {
+          trackingNumber,
+          status: "unknown",
+          statusDetail: `USPS tracking HTTP ${res.status}`,
+        };
       }
       const data = (await res.json()) as {
         status?: string;
+        statusCategory?: string;
         statusSummary?: string;
         expectedDeliveryDate?: string;
-        trackingEvents?: Array<{ eventDate?: string; eventDescription?: string; eventCity?: string }>;
+        deliveryDate?: string;
+        trackingEvents?: Array<{
+          eventDate?: string;
+          eventTime?: string;
+          eventDescription?: string;
+          eventCity?: string;
+          eventState?: string;
+          eventZIPCode?: string;
+        }>;
       };
+      const statusDetail =
+        data.statusSummary ?? data.status ?? data.statusCategory ?? undefined;
+      const status =
+        data.statusCategory ?? data.status ?? statusDetail ?? "unknown";
+      const events = (data.trackingEvents ?? []).map((e) => {
+        const date = [e.eventDate, e.eventTime].filter(Boolean).join("T");
+        const location = [e.eventCity, e.eventState, e.eventZIPCode]
+          .filter(Boolean)
+          .join(", ");
+        return {
+          date,
+          description: e.eventDescription ?? "",
+          location: location || undefined,
+        };
+      });
       return {
         trackingNumber,
-        status: data.status ?? "in_transit",
-        statusDetail: data.statusSummary,
-        estimatedDeliveryDate: data.expectedDeliveryDate?.slice(0, 10),
-        events: data.trackingEvents?.map((e) => ({
-          date: e.eventDate ?? "",
-          description: e.eventDescription ?? "",
-          location: e.eventCity,
-        })),
+        status,
+        statusDetail,
+        estimatedDeliveryDate:
+          data.expectedDeliveryDate?.slice(0, 10) ?? data.deliveryDate?.slice(0, 10),
+        events,
       };
-    } catch {
-      return { trackingNumber, status: "unknown", statusDetail: "Tracking unavailable" };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      const detail =
+        /timeout|aborted|ETIMEDOUT|AbortError/i.test(message)
+          ? "USPS tracking timeout"
+          : /429|rate/i.test(message)
+            ? "USPS tracking rate limited"
+            : "Tracking unavailable";
+      return { trackingNumber, status: "unknown", statusDetail: detail };
     }
   }
 }

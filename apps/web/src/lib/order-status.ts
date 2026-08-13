@@ -7,6 +7,9 @@ export const ORDER_STATUS_LABELS: Record<string, string> = {
   [ORDER_STATUS.ON_HOLD]: "On hold",
   [ORDER_STATUS.PROCESSING]: "Processing",
   [ORDER_STATUS.SHIPPED]: "Shipped",
+  [ORDER_STATUS.IN_TRANSIT]: "In transit",
+  [ORDER_STATUS.OUT_FOR_DELIVERY]: "Out for delivery",
+  [ORDER_STATUS.DELIVERY_EXCEPTION]: "Delivery exception",
   [ORDER_STATUS.DELIVERED]: "Delivered",
   [ORDER_STATUS.COMPLETE]: "Complete",
   [ORDER_STATUS.CANCELLED]: "Cancelled",
@@ -20,19 +23,24 @@ export const ORDER_STATUS_BADGE: Record<string, string> = {
   [ORDER_STATUS.ON_HOLD]: "bg-orange-100 text-orange-900",
   [ORDER_STATUS.PROCESSING]: "bg-indigo-100 text-indigo-800",
   [ORDER_STATUS.SHIPPED]: "bg-purple-100 text-purple-800",
+  [ORDER_STATUS.IN_TRANSIT]: "bg-violet-100 text-violet-900",
+  [ORDER_STATUS.OUT_FOR_DELIVERY]: "bg-sky-100 text-sky-900",
+  [ORDER_STATUS.DELIVERY_EXCEPTION]: "bg-rose-100 text-rose-900",
   [ORDER_STATUS.DELIVERED]: "bg-green-100 text-green-800",
   [ORDER_STATUS.COMPLETE]: "bg-emerald-100 text-emerald-900",
   [ORDER_STATUS.CANCELLED]: "bg-slate-200 text-slate-700",
   [ORDER_STATUS.REFUNDED]: "bg-red-100 text-red-800",
 };
 
-/** Main fulfillment progression shown as a stepper. */
+/** Main fulfillment progression shown as a stepper (admin). */
 export const FULFILLMENT_STEPS = [
   ORDER_STATUS.PENDING_PAYMENT,
   ORDER_STATUS.PAID,
   ORDER_STATUS.ACCEPTED,
   ORDER_STATUS.PROCESSING,
   ORDER_STATUS.SHIPPED,
+  ORDER_STATUS.IN_TRANSIT,
+  ORDER_STATUS.OUT_FOR_DELIVERY,
   ORDER_STATUS.DELIVERED,
   ORDER_STATUS.COMPLETE,
 ] as const;

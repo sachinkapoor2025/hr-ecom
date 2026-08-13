@@ -103,6 +103,9 @@ export function paymentStatusClass(status: string): string {
 
 export function shippingStatusLabel(status: string): string {
   if (status === ORDER_STATUS.SHIPPED) return "Shipped";
+  if (status === ORDER_STATUS.IN_TRANSIT) return "In transit";
+  if (status === ORDER_STATUS.OUT_FOR_DELIVERY) return "Out for delivery";
+  if (status === ORDER_STATUS.DELIVERY_EXCEPTION) return "Delivery exception";
   if (status === ORDER_STATUS.DELIVERED || status === ORDER_STATUS.COMPLETE) return "Delivered";
   if (status === ORDER_STATUS.ON_HOLD) return "On hold";
   if (status === ORDER_STATUS.CANCELLED || status === ORDER_STATUS.REFUNDED) return "—";

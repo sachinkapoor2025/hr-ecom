@@ -7,6 +7,9 @@ const PAYMENT_SETTLED_STATUSES = new Set<string>([
   ORDER_STATUS.ON_HOLD,
   ORDER_STATUS.PROCESSING,
   ORDER_STATUS.SHIPPED,
+  ORDER_STATUS.IN_TRANSIT,
+  ORDER_STATUS.OUT_FOR_DELIVERY,
+  ORDER_STATUS.DELIVERY_EXCEPTION,
   ORDER_STATUS.DELIVERED,
   ORDER_STATUS.COMPLETE,
   ORDER_STATUS.REFUNDED,
@@ -24,7 +27,16 @@ export function isOrderAwaitingPayment(status: string): boolean {
 
 /** Human-readable customer-facing status label. */
 export function formatOrderStatusLabel(status: string): string {
-  return status.replace(/_/g, " ");
+  switch (status) {
+    case ORDER_STATUS.IN_TRANSIT:
+      return "In transit";
+    case ORDER_STATUS.OUT_FOR_DELIVERY:
+      return "Out for delivery";
+    case ORDER_STATUS.DELIVERY_EXCEPTION:
+      return "Delivery exception";
+    default:
+      return status.replace(/_/g, " ");
+  }
 }
 
 /** Short customer headline for the order confirmation page. */
@@ -32,6 +44,12 @@ export function orderConfirmationHeadline(status: string): string {
   switch (status) {
     case ORDER_STATUS.SHIPPED:
       return "Your order has shipped!";
+    case ORDER_STATUS.IN_TRANSIT:
+      return "Your order is in transit!";
+    case ORDER_STATUS.OUT_FOR_DELIVERY:
+      return "Your order is out for delivery!";
+    case ORDER_STATUS.DELIVERY_EXCEPTION:
+      return "There's a delivery update";
     case ORDER_STATUS.DELIVERED:
       return "Your order was delivered!";
     case ORDER_STATUS.COMPLETE:
@@ -60,6 +78,12 @@ export function orderConfirmationSubcopy(status: string): string {
   switch (status) {
     case ORDER_STATUS.SHIPPED:
       return "Your Rakhi gift is on the way. Use the tracking details below to follow your shipment.";
+    case ORDER_STATUS.IN_TRANSIT:
+      return "Your package is moving through the carrier network. Tracking updates appear below as scans arrive.";
+    case ORDER_STATUS.OUT_FOR_DELIVERY:
+      return "Your package is out for delivery today. Please watch for the carrier.";
+    case ORDER_STATUS.DELIVERY_EXCEPTION:
+      return "The carrier reported a delivery exception. Check tracking details below or contact support.";
     case ORDER_STATUS.DELIVERED:
       return "Your gift has arrived. We hope your brother loves it — thank you for choosing UsaRakhi.";
     case ORDER_STATUS.COMPLETE:

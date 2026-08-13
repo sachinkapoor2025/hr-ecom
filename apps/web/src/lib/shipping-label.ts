@@ -7,6 +7,9 @@ const LABEL_ELIGIBLE = new Set([
   "accepted",
   "processing",
   "shipped",
+  "in_transit",
+  "out_for_delivery",
+  "delivery_exception",
   "delivered",
   "complete",
 ]);

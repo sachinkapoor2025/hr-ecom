@@ -7,6 +7,7 @@ import { SiteLogoLink } from "@/components/SiteLogo";
 import { TrustBadges } from "@/components/TrustBadges";
 import { resolveImageUrl } from "@/lib/images";
 import { carrierTrackingUrl } from "@/lib/tracking-url";
+import { OrderFulfillmentTimeline } from "@/components/OrderFulfillmentTimeline";
 import {
   displayOrderRef,
   formatOrderStatusLabel,
@@ -15,6 +16,17 @@ import {
   orderConfirmationSubcopy,
   type Order,
 } from "@hr-ecom/shared";
+
+function formatDeliveryDate(iso?: string) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
 
 function formatMoney(amount: number, currency: string) {
   return new Intl.NumberFormat(undefined, { style: "currency", currency }).format(amount);
@@ -182,38 +194,100 @@ export function OrderConfirmation({ order, paid }: OrderConfirmationProps) {
             )}
           </div>
 
-          {/* Shipment tracking — shown whenever admin saved a tracking number */}
-          {order.trackingNumber && (
-            <div className="border-t border-slate-100 px-5 sm:px-6 py-5 bg-emerald-50/60">
-              <div className="flex gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-800">
-                  <TruckIcon />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs uppercase tracking-wider text-emerald-800 font-semibold mb-1">
-                    Shipment tracking
-                  </p>
-                  {order.carrier && (
-                    <p className="text-sm text-slate-700 mb-1">
-                      Carrier: <span className="font-semibold">{order.carrier}</span>
-                    </p>
-                  )}
-                  <p className="text-sm text-slate-700">
-                    Tracking number:{" "}
-                    <span className="font-mono font-semibold break-all">{order.trackingNumber}</span>
-                  </p>
-                  {trackingUrl && (
-                    <a
-                      href={trackingUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex mt-3 text-sm font-bold text-nav hover:underline"
-                    >
-                      Track shipment →
-                    </a>
-                  )}
-                </div>
+          {/* Fulfillment timeline + tracking (same order.status as admin) */}
+          {paid && (
+            <div className="border-t border-slate-100 px-5 sm:px-6 py-5 space-y-5">
+              <div>
+                <p className="text-xs uppercase tracking-wider text-slate-500 font-semibold mb-1">
+                  Order status
+                </p>
+                <p className="text-base font-bold text-slate-900 capitalize">{statusLabel}</p>
+                <OrderFulfillmentTimeline status={order.status} className="mt-4" />
               </div>
+
+              {order.trackingNumber && (
+                <div className="rounded-xl bg-emerald-50/70 border border-emerald-100 p-4">
+                  <div className="flex gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-800">
+                      <TruckIcon />
+                    </div>
+                    <div className="min-w-0 flex-1 space-y-1.5 text-sm text-slate-700">
+                      <p className="text-xs uppercase tracking-wider text-emerald-800 font-semibold">
+                        Shipment tracking
+                      </p>
+                      <p>
+                        Tracking number:{" "}
+                        <span className="font-mono font-semibold break-all">
+                          {order.trackingNumber}
+                        </span>
+                      </p>
+                      <p>
+                        Carrier:{" "}
+                        <span className="font-semibold">{order.carrier?.trim() || "USPS"}</span>
+                      </p>
+                      {(order.carrierStatusDetail || order.carrierTrackingStatus) && (
+                        <p>
+                          Tracking status:{" "}
+                          <span className="font-semibold">
+                            {order.carrierStatusDetail ??
+                              order.carrierTrackingStatus?.replace(/_/g, " ")}
+                          </span>
+                        </p>
+                      )}
+                      {formatDeliveryDate(order.deliveredAt) && (
+                        <p>
+                          Delivered on:{" "}
+                          <span className="font-semibold">
+                            {formatDeliveryDate(order.deliveredAt)}
+                          </span>
+                        </p>
+                      )}
+                      {formatDeliveryDate(order.estimatedDeliveryAt) &&
+                        !order.deliveredAt && (
+                          <p>
+                            Estimated delivery:{" "}
+                            <span className="font-semibold">
+                              {formatDeliveryDate(order.estimatedDeliveryAt)}
+                            </span>
+                          </p>
+                        )}
+                      {trackingUrl && (
+                        <a
+                          href={trackingUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex mt-2 text-sm font-bold text-nav hover:underline"
+                        >
+                          Track on carrier site →
+                        </a>
+                      )}
+                    </div>
+                  </div>
+
+                  {order.trackingEvents && order.trackingEvents.length > 0 && (
+                    <ol className="mt-4 border-t border-emerald-100 pt-3 space-y-2">
+                      {[...order.trackingEvents].reverse().slice(0, 8).map((ev, i) => (
+                        <li key={`${ev.date}-${ev.description}-${i}`} className="text-xs text-slate-600">
+                          <span className="font-semibold text-slate-800">
+                            {ev.date
+                              ? new Date(ev.date).toLocaleString(undefined, {
+                                  month: "short",
+                                  day: "numeric",
+                                  year: "numeric",
+                                  hour: "numeric",
+                                  minute: "2-digit",
+                                })
+                              : "—"}
+                          </span>
+                          {" — "}
+                          {ev.description}
+                          {ev.location ? ` · ${ev.location}` : ""}
+                        </li>
+                      ))}
+                    </ol>
+                  )}
+                </div>
+              )}
             </div>
           )}
 

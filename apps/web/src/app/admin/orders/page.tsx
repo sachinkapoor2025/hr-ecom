@@ -102,7 +102,10 @@ const STATUS_TABS: { id: string; label: string }[] = [
   { id: ORDER_STATUS.ON_HOLD, label: "On hold" },
   { id: ORDER_STATUS.PROCESSING, label: "Processing" },
   { id: ORDER_STATUS.SHIPPED, label: "Shipped" },
+  { id: ORDER_STATUS.IN_TRANSIT, label: "In transit" },
+  { id: ORDER_STATUS.OUT_FOR_DELIVERY, label: "Out for delivery" },
   { id: ORDER_STATUS.DELIVERED, label: "Delivered" },
+  { id: ORDER_STATUS.DELIVERY_EXCEPTION, label: "Delivery exception" },
   { id: ORDER_STATUS.CANCELLED, label: "Cancelled" },
   { id: ORDER_STATUS.REFUNDED, label: "Refunded" },
 ];

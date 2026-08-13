@@ -34,6 +34,11 @@ type AdminOrder = Order & {
   adminNotes?: string;
   estimatedDeliveryAt?: string;
   deliveredAt?: string;
+  carrierTrackingStatus?: string;
+  carrierStatusDetail?: string;
+  lastTrackingSyncAt?: string;
+  lastTrackingSyncError?: string;
+  trackingEvents?: Array<{ date: string; description: string; location?: string }>;
 };
 
 export default function AdminOrderDetailPage() {
@@ -58,6 +63,7 @@ export default function AdminOrderDetailPage() {
   const [message, setMessage] = useState("");
   const [buyingLabel, setBuyingLabel] = useState(false);
   const [syncingPayment, setSyncingPayment] = useState(false);
+  const [syncingTracking, setSyncingTracking] = useState(false);
   const [ratesWarning, setRatesWarning] = useState("");
   const [loadingRates, setLoadingRates] = useState(false);
   const [savingService, setSavingService] = useState(false);
@@ -111,8 +117,14 @@ export default function AdminOrderDetailPage() {
       const shippingFieldsRelevant =
         newStatus === ORDER_STATUS.PROCESSING ||
         newStatus === ORDER_STATUS.SHIPPED ||
+        newStatus === ORDER_STATUS.IN_TRANSIT ||
+        newStatus === ORDER_STATUS.OUT_FOR_DELIVERY ||
+        newStatus === ORDER_STATUS.DELIVERY_EXCEPTION ||
         order?.status === ORDER_STATUS.PROCESSING ||
-        order?.status === ORDER_STATUS.SHIPPED;
+        order?.status === ORDER_STATUS.SHIPPED ||
+        order?.status === ORDER_STATUS.IN_TRANSIT ||
+        order?.status === ORDER_STATUS.OUT_FOR_DELIVERY ||
+        order?.status === ORDER_STATUS.DELIVERY_EXCEPTION;
 
       const multi = order ? isMultiVendorOrder(order) : false;
       const payload: Record<string, unknown> = {
@@ -174,6 +186,39 @@ export default function AdminOrderDetailPage() {
       setError(err instanceof Error ? err.message : "Update failed.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const syncTracking = async () => {
+    setSyncingTracking(true);
+    setError("");
+    setMessage("");
+    try {
+      const data = await apiClient<{
+        order: AdminOrder;
+        result: { updated: boolean; nextStatus: string; error?: string; phase?: string };
+      }>(`/admin/orders/${orderId}/tracking/sync`, { method: "POST" });
+      if (data.order) {
+        setOrder(data.order);
+        syncVendorTrackingState(data.order);
+        const next = nextStatuses(data.order.status);
+        setNewStatus(next[0] ?? data.order.status);
+      }
+      if (data.result?.error) {
+        setError(`Tracking sync: ${data.result.error}`);
+      } else if (data.result?.updated) {
+        setMessage(
+          `Tracking synced → ${statusLabel(data.result.nextStatus)}${
+            data.result.phase ? ` (${data.result.phase.replace(/_/g, " ")})` : ""
+          }.`
+        );
+      } else {
+        setMessage("Tracking checked — no status change.");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Tracking sync failed.");
+    } finally {
+      setSyncingTracking(false);
     }
   };
 
@@ -304,14 +349,28 @@ export default function AdminOrderDetailPage() {
   if (loading) return <div className="max-w-4xl mx-auto px-4 py-10 text-slate-500">Loading…</div>;
   if (!order) return <div className="max-w-4xl mx-auto px-4 py-10 text-red-600">{error || "Order not found."}</div>;
 
-  const currentStepIndex = FULFILLMENT_STEPS.indexOf(order.status as (typeof FULFILLMENT_STEPS)[number]);
+  const currentStepIndex = (() => {
+    const idx = FULFILLMENT_STEPS.indexOf(order.status as (typeof FULFILLMENT_STEPS)[number]);
+    if (idx >= 0) return idx;
+    if (order.status === ORDER_STATUS.DELIVERY_EXCEPTION) {
+      return FULFILLMENT_STEPS.indexOf(ORDER_STATUS.IN_TRANSIT);
+    }
+    return -1;
+  })();
   const transitions = nextStatuses(order.status);
   const addr = order.shippingAddress;
   const showShippingFields =
     newStatus === ORDER_STATUS.PROCESSING ||
     newStatus === ORDER_STATUS.SHIPPED ||
+    newStatus === ORDER_STATUS.IN_TRANSIT ||
+    newStatus === ORDER_STATUS.OUT_FOR_DELIVERY ||
+    newStatus === ORDER_STATUS.DELIVERY_EXCEPTION ||
     (transitions.length === 0 &&
-      (order.status === ORDER_STATUS.PROCESSING || order.status === ORDER_STATUS.SHIPPED));
+      (order.status === ORDER_STATUS.PROCESSING ||
+        order.status === ORDER_STATUS.SHIPPED ||
+        order.status === ORDER_STATUS.IN_TRANSIT ||
+        order.status === ORDER_STATUS.OUT_FOR_DELIVERY ||
+        order.status === ORDER_STATUS.DELIVERY_EXCEPTION));
   const isAcceptOnly = newStatus === ORDER_STATUS.ACCEPTED;
   const isOnHoldOnly = newStatus === ORDER_STATUS.ON_HOLD;
   const isReviveFromCancelled = order.status === ORDER_STATUS.CANCELLED;
@@ -742,6 +801,72 @@ export default function AdminOrderDetailPage() {
                 Delivered: {new Date(order.deliveredAt).toLocaleDateString()}
               </p>
             )}
+
+            <div className="mt-3 space-y-2 border-t border-slate-100 pt-3">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                  Carrier tracking sync
+                </p>
+                <button
+                  type="button"
+                  disabled={syncingTracking || !order.trackingNumber}
+                  onClick={() => void syncTracking()}
+                  className="text-xs rounded-lg border border-nav text-nav px-2.5 py-1 hover:bg-blue-50 disabled:opacity-50 font-medium"
+                  title={
+                    order.trackingNumber
+                      ? "Refresh status from USPS"
+                      : "Add a tracking number first"
+                  }
+                >
+                  {syncingTracking ? "Syncing…" : "Refresh tracking"}
+                </button>
+              </div>
+              <p className="text-slate-600">
+                Internal status:{" "}
+                <span className="font-medium">{statusLabel(order.status)}</span>
+              </p>
+              {(order.carrierTrackingStatus || order.carrierStatusDetail) && (
+                <p className="text-slate-600">
+                  Carrier status:{" "}
+                  <span className="font-medium">
+                    {order.carrierStatusDetail ??
+                      order.carrierTrackingStatus?.replace(/_/g, " ")}
+                  </span>
+                </p>
+              )}
+              {order.lastTrackingSyncAt && (
+                <p className="text-xs text-slate-500">
+                  Last sync: {new Date(order.lastTrackingSyncAt).toLocaleString()}
+                </p>
+              )}
+              {order.lastTrackingSyncError && (
+                <p className="text-xs text-red-700 bg-red-50 border border-red-100 rounded-md px-2 py-1.5">
+                  Sync error: {order.lastTrackingSyncError}
+                </p>
+              )}
+              {order.trackingEvents && order.trackingEvents.length > 0 && (
+                <ol className="mt-1 max-h-40 overflow-y-auto space-y-1.5 border border-slate-100 rounded-md p-2 bg-slate-50">
+                  {[...order.trackingEvents].reverse().map((ev, i) => (
+                    <li key={`${ev.date}-${i}`} className="text-[11px] text-slate-600 leading-snug">
+                      <span className="font-semibold text-slate-800">
+                        {ev.date
+                          ? new Date(ev.date).toLocaleString(undefined, {
+                              month: "short",
+                              day: "numeric",
+                              hour: "numeric",
+                              minute: "2-digit",
+                            })
+                          : "—"}
+                      </span>
+                      {" — "}
+                      {ev.description}
+                      {ev.location ? ` · ${ev.location}` : ""}
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </div>
+
             <p className="text-xs text-slate-400 mt-2">
               Invoice: {order.status === ORDER_STATUS.PENDING_PAYMENT ? "Pending payment" : "Generated"}
             </p>
