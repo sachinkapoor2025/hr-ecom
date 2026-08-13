@@ -64,6 +64,8 @@ Order status lifecycle: `pending_payment → paid → (accepted/on_hold) → pro
 
 **USPS tracking sync (single source of truth):** Order `status` plus carrier fields (`carrierTrackingStatus`, `carrierStatusDetail`, `trackingEvents[]`, `lastTrackingSyncAt`, `lastTrackingSyncError`, `lastTrackingNotificationStatus`, `deliveredAt`, `estimatedDeliveryAt`) live on the order item. Admin portal and customer My Orders / order detail both read this same record — there is no separate customer status cache. Cron `processUspsTrackingSync` (EventBridge every 15 minutes on `ReviewEmailsCronFunction`, task `trackingSync`) queries GSI3 for active poll statuses (`processing`/`shipped`/`in_transit`/`out_for_delivery`/`delivery_exception` with a tracking number), calls USPS Tracking API v3, maps via `@hr-ecom/shared` `mapCarrierTrackingPhase`, advances `status` only forward (never overwrites `cancelled`/`refunded`/`complete`), emails only on meaningful status change (`lastTrackingNotificationStatus` dedupe), and stops polling once status is `delivered`/`complete`. Admin manual refresh: `POST /admin/orders/{orderId}/tracking/sync`. Customer read: `GET /orders/{orderId}/tracking` (or full `GET /orders/{orderId}`).
 
+**Orange County vendor tracking:** `POST /vendors/orange-county/tracking` accepts enum statuses (`in_transit`, `delivered`) **or** free-text USPS scan lines (e.g. `Arrived at USPS Regional Destination Facility`). Those strings are mapped with the same `mapCarrierTrackingPhase` layer and advance `order.status` for admin + customer together.
+
 Migration from the legacy single table: `npm run migrate:multitable` (copies orders +
 leads/sessions; products re-seed via `import:usarakhi`).
 

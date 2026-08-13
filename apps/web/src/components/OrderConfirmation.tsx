@@ -8,6 +8,7 @@ import { TrustBadges } from "@/components/TrustBadges";
 import { resolveImageUrl } from "@/lib/images";
 import { carrierTrackingUrl } from "@/lib/tracking-url";
 import { OrderFulfillmentTimeline } from "@/components/OrderFulfillmentTimeline";
+import { badgeClass } from "@/lib/order-status";
 import {
   displayOrderRef,
   formatOrderStatusLabel,
@@ -119,9 +120,9 @@ export function OrderConfirmation({ order, paid }: OrderConfirmationProps) {
               <p className="text-sm text-slate-900 font-semibold mt-0.5">#{orderRef}</p>
             </div>
             <span
-              className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide ${
-                paid ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
-              }`}
+              className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide ${badgeClass(
+                awaitingPayment ? "pending_payment" : order.status
+              )}`}
             >
               {statusLabel}
             </span>

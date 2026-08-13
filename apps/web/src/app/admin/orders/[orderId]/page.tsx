@@ -424,6 +424,15 @@ export default function AdminOrderDetailPage() {
           >
             {paymentStatusLabel(order.status)}
           </span>
+          <a
+            href={`/orders/${order.orderId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm border border-emerald-600 text-emerald-800 rounded-lg px-3 py-1.5 hover:bg-emerald-50 print:hidden font-medium"
+            title="Open the same order page the customer sees (status, timeline, tracking)"
+          >
+            View customer order page
+          </a>
           <button
             type="button"
             onClick={printInvoice}

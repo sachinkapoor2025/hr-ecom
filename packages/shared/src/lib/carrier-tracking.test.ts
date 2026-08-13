@@ -34,6 +34,29 @@ describe("mapCarrierTrackingPhase", () => {
     );
   });
 
+  it("maps Orange County free-text USPS scan lines", () => {
+    assert.equal(
+      mapCarrierTrackingPhase({
+        status: "Arrived at USPS Regional Destination Facility",
+      }),
+      CARRIER_TRACKING_PHASE.IN_TRANSIT
+    );
+    assert.equal(
+      orderStatusForCarrierPhase(
+        mapCarrierTrackingPhase({
+          status: "Arrived at USPS Regional Destination Facility",
+        })
+      ),
+      ORDER_STATUS.IN_TRANSIT
+    );
+    assert.equal(
+      orderStatusForCarrierPhase(
+        mapCarrierTrackingPhase({ status: "Delivered, In/At Mailbox" })
+      ),
+      ORDER_STATUS.DELIVERED
+    );
+  });
+
   it("maps accepted / label created", () => {
     assert.equal(
       mapCarrierTrackingPhase({ statusDetail: "USPS in possession of item" }),

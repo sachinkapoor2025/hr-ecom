@@ -28,12 +28,32 @@ export function isOrderAwaitingPayment(status: string): boolean {
 /** Human-readable customer-facing status label. */
 export function formatOrderStatusLabel(status: string): string {
   switch (status) {
+    case ORDER_STATUS.PENDING_PAYMENT:
+      return "Pending payment";
+    case ORDER_STATUS.PAID:
+      return "Paid";
+    case ORDER_STATUS.ACCEPTED:
+      return "Accepted";
+    case ORDER_STATUS.ON_HOLD:
+      return "On hold";
+    case ORDER_STATUS.PROCESSING:
+      return "Processing";
+    case ORDER_STATUS.SHIPPED:
+      return "Shipped";
     case ORDER_STATUS.IN_TRANSIT:
       return "In transit";
     case ORDER_STATUS.OUT_FOR_DELIVERY:
       return "Out for delivery";
     case ORDER_STATUS.DELIVERY_EXCEPTION:
       return "Delivery exception";
+    case ORDER_STATUS.DELIVERED:
+      return "Delivered";
+    case ORDER_STATUS.COMPLETE:
+      return "Complete";
+    case ORDER_STATUS.CANCELLED:
+      return "Cancelled";
+    case ORDER_STATUS.REFUNDED:
+      return "Refunded";
     default:
       return status.replace(/_/g, " ");
   }
