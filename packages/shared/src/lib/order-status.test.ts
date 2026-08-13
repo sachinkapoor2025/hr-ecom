@@ -19,6 +19,9 @@ describe("isOrderPaymentSettled", () => {
       "on_hold",
       "processing",
       "shipped",
+      "in_transit",
+      "out_for_delivery",
+      "delivery_exception",
       "delivered",
       "complete",
       "refunded",
@@ -40,5 +43,11 @@ describe("orderConfirmationHeadline", () => {
   it("uses shipped copy instead of awaiting payment", () => {
     assert.match(orderConfirmationHeadline("shipped"), /shipped/i);
     assert.match(orderConfirmationHeadline("pending_payment"), /Awaiting payment/i);
+  });
+
+  it("uses transit / delivered headlines", () => {
+    assert.match(orderConfirmationHeadline("in_transit"), /transit/i);
+    assert.match(orderConfirmationHeadline("out_for_delivery"), /out for delivery/i);
+    assert.match(orderConfirmationHeadline("delivered"), /delivered/i);
   });
 });

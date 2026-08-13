@@ -115,11 +115,21 @@ const orderStatusEnum = z.enum([
   ORDER_STATUS.ON_HOLD,
   ORDER_STATUS.PROCESSING,
   ORDER_STATUS.SHIPPED,
+  ORDER_STATUS.IN_TRANSIT,
+  ORDER_STATUS.OUT_FOR_DELIVERY,
+  ORDER_STATUS.DELIVERY_EXCEPTION,
   ORDER_STATUS.DELIVERED,
   ORDER_STATUS.COMPLETE,
   ORDER_STATUS.CANCELLED,
   ORDER_STATUS.REFUNDED,
 ]);
+
+export const trackingEventSchema = z.object({
+  date: z.string(),
+  description: z.string(),
+  location: z.string().optional(),
+  code: z.string().optional(),
+});
 
 export const orderStatusHistoryEntrySchema = z.object({
   status: orderStatusEnum,
@@ -159,6 +169,18 @@ export const orderSchema = z.object({
   razorpayPaymentId: z.string().optional(),
   trackingNumber: z.string().optional(),
   carrier: z.string().optional(),
+  /** Normalized carrier phase from last sync (label_created|shipped|in_transit|…). */
+  carrierTrackingStatus: z.string().max(80).optional(),
+  /** Human-readable carrier summary (e.g. Delivered, In/At Mailbox). */
+  carrierStatusDetail: z.string().max(500).optional(),
+  /** ISO timestamp of last successful/attempted carrier sync. */
+  lastTrackingSyncAt: z.string().optional(),
+  /** Last sync error message (cleared on success). */
+  lastTrackingSyncError: z.string().max(500).optional(),
+  /** Append-only carrier scan events (deduped). */
+  trackingEvents: z.array(trackingEventSchema).max(50).optional(),
+  /** Last order.status for which a customer status email was sent (dedupe). */
+  lastTrackingNotificationStatus: z.string().optional(),
   /**
    * Per-vendor fulfillment (tracking) for mixed Orange County + UsaRakhi carts.
    * Legacy single-vendor orders may only have top-level trackingNumber/carrier.

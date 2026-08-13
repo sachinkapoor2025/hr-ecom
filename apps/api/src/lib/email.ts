@@ -753,14 +753,49 @@ Order total: ${total}
 
 Typical USA delivery is 5–7 business days after dispatch (faster to many metros).${footer}`,
       };
+    case ORDER_STATUS.IN_TRANSIT:
+      return {
+        subject: `Order in transit — #${shortId} | ${SITE_NAME}`,
+        body: `Hi ${name},
+
+Your order #${shortId} is in transit with the carrier.
+
+${trackingLines || "Tracking details are on your order page."}
+
+Order total: ${total}
+
+We'll email you again when it's out for delivery or delivered.${footer}`,
+      };
+    case ORDER_STATUS.OUT_FOR_DELIVERY:
+      return {
+        subject: `Out for delivery — #${shortId} | ${SITE_NAME}`,
+        body: `Hi ${name},
+
+Great news — order #${shortId} is out for delivery today.
+
+${trackingLines || "See tracking on your order page."}
+
+Please watch for the carrier. Enjoy Raksha Bandhan!${footer}`,
+      };
+    case ORDER_STATUS.DELIVERY_EXCEPTION:
+      return {
+        subject: `Delivery update — #${shortId} | ${SITE_NAME}`,
+        body: `Hi ${name},
+
+The carrier reported a delivery exception for order #${shortId}.
+
+${trackingLines || "Check tracking on your order page for details."}
+
+If you need help, reply to this email and our team will assist.${footer}`,
+      };
     case ORDER_STATUS.DELIVERED:
       return {
         subject: `Order delivered — #${shortId} | ${SITE_NAME}`,
         body: `Hi ${name},
 
-Your order #${shortId} has been marked as delivered.
+Your order #${shortId} has been delivered.
 
-We hope your brother loves his Rakhi! If anything looks wrong with the package, reply to this email and we'll help right away.${footer}`,
+${trackingLines ? `${trackingLines}\n\n` : ""}We hope your brother loves his Rakhi! If anything looks wrong with the package, reply to this email and we'll help right away.${footer}`,
       };
     case ORDER_STATUS.COMPLETE:
       return {

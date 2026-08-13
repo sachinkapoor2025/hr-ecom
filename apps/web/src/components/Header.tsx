@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useCart } from "@/lib/cart-context";
 import { categoryHref } from "@/lib/category-urls";
-import { navItems, cityLinks, rakhiSetsMenu } from "@/lib/site";
+import { navItems, cityLinks, cityNavHref, cityNavMenuLabel, rakhiSetsMenu } from "@/lib/site";
 import { SearchBar } from "@/components/SearchBar";
 import { SiteLogoLink } from "@/components/SiteLogo";
 
@@ -34,14 +34,14 @@ function CitiesMenu({ onNavigate }: { onNavigate?: () => void }) {
             {cityLinks.map((c) => (
               <Link
                 key={c.slug}
-                href={`/send-rakhi-to-${c.slug}`}
+                href={cityNavHref(c)}
                 className="block px-4 py-2.5 text-sm text-slate-700 hover:bg-blue-50 hover:text-nav whitespace-nowrap"
                 onClick={() => {
                   setOpen(false);
                   onNavigate?.();
                 }}
               >
-                Rakhi to {c.label}
+                {cityNavMenuLabel(c)}
               </Link>
             ))}
           </div>
@@ -444,11 +444,11 @@ export function Header() {
                     {cityLinks.map((c) => (
                       <Link
                         key={c.slug}
-                        href={`/send-rakhi-to-${c.slug}`}
+                        href={cityNavHref(c)}
                         onClick={closeMenu}
                         className="block rounded-lg px-4 py-2.5 text-sm text-slate-700 hover:bg-blue-50 hover:text-nav"
                       >
-                        Rakhi to {c.label}
+                        {cityNavMenuLabel(c)}
                       </Link>
                     ))}
                   </div>

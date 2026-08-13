@@ -1,4 +1,4 @@
-import { site, navItems, cityLinks, faqs, rakhiSetsMenu } from "@/lib/site";
+import { site, navItems, cityNavHref, cityLinks, faqs, rakhiSetsMenu } from "@/lib/site";
 import { categoryHref } from "@/lib/category-urls";
 import { siteUrl } from "@/lib/env";
 import { blogPosts } from "@/lib/content/blog-posts";
@@ -17,7 +17,7 @@ export function buildChatKnowledge(): string {
     .filter((n) => !("category" in n))
     .map((n) => `- ${n.label}: ${siteUrl}${n.href === "/" ? "" : n.href}`);
 
-  const cities = cityLinks.map((c) => `- ${c.label}: ${siteUrl}/send-rakhi-to-${c.slug}`);
+  const cities = cityLinks.map((c) => `- ${c.menuLabel ?? c.label}: ${siteUrl}${cityNavHref(c)}`);
 
   const faqBlock = faqs.map((f) => `Q: ${f.q}\nA: ${f.a}`).join("\n\n");
 

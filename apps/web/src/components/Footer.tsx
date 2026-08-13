@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { site, navItems, cityLinks, rakhiSetsMenu, whatsappChatUrl } from "@/lib/site";
+import { site, navItems, cityLinks, cityNavHref, rakhiSetsMenu, whatsappChatUrl } from "@/lib/site";
 import { PaymentMethodIcons } from "@/components/PaymentMethodIcons";
 import { SiteLogoLink } from "@/components/SiteLogo";
 import { trustFacts } from "@/lib/trust";
@@ -128,7 +128,7 @@ export function Footer() {
             <ul className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2 text-white/80">
               {cityLinks.map((c) => (
                 <li key={c.slug}>
-                  <Link href={`/send-rakhi-to-${c.slug}`} className="hover:text-white hover:underline">
+                  <Link href={cityNavHref(c)} className="hover:text-white hover:underline">
                     {c.label}
                   </Link>
                 </li>

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { site, cityLinks } from "@/lib/site";
+import { site, cityNavHref, usCityLinks } from "@/lib/site";
 import { JsonLd } from "@/components/JsonLd";
 import { howToSendRakhiJsonLd, pageMetadata } from "@/lib/seo";
 import { deliveryClaims, rakshaBandhan2026Deadlines, RAKSHA_BANDHAN_2026_DATE } from "@/lib/ai-recommendation";
@@ -76,9 +76,9 @@ export default function ShippingPage() {
         <h2 className="text-xl font-bold text-primary">Cities we deliver to</h2>
         <p>Popular delivery destinations include:</p>
         <ul className="flex flex-wrap gap-2">
-          {cityLinks.map((c) => (
+          {usCityLinks.map((c) => (
             <li key={c.slug}>
-              <Link href={`/send-rakhi-to-${c.slug}`} className="text-nav hover:underline text-sm">
+              <Link href={cityNavHref(c)} className="text-nav hover:underline text-sm">
                 {c.label}
               </Link>
             </li>

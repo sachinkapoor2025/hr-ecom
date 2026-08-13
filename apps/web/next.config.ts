@@ -20,6 +20,9 @@ const nextConfig: NextConfig = {
       // Slash form → hyphenated canonical (keeps one public URL per city).
       { source: "/send-rakhi-to/:city", destination: "/send-rakhi-to-:city", statusCode: 301 },
       { source: "/send-rakhi-to/:city/", destination: "/send-rakhi-to-:city", statusCode: 301 },
+      // Country landings — trailing-slash → canonical (not US city /send-rakhi-to-* pages).
+      { source: "/rakhi-from-uk/", destination: "/rakhi-from-uk", statusCode: 301 },
+      { source: "/rakhi-from-canada/", destination: "/rakhi-from-canada", statusCode: 301 },
       { source: "/sitemap.rss", destination: "/sitemap.xml", statusCode: 301 },
     ];
   },

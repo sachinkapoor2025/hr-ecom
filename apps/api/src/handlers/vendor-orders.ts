@@ -34,10 +34,15 @@ import {
   allVendorsHaveTracking,
   anyVendorHasTracking,
   isMultiVendorOrder,
+  mapCarrierTrackingPhase,
+  orderStatusForCarrierPhase,
+  shouldAdvanceOrderStatus,
+  mergeTrackingEvents,
   type Order,
   type CartItem,
   type OrderStatusHistoryEntry,
   type VendorFulfillment,
+  type TrackingEventInput,
 } from "@hr-ecom/shared";
 import { docClient, ORDERS_TABLE, PRODUCTS_TABLE, now } from "../lib/db";
 import { ok, unauthorized, badRequest, forbidden, notFound } from "../lib/response";
@@ -225,8 +230,16 @@ async function loadVendorOrder(orderId: string): Promise<StoredOrder | undefined
   return resolveOrderByIdOrNumber(orderId) as Promise<StoredOrder | undefined>;
 }
 
-function mapVendorStatus(raw: string): string | null {
-  const s = raw.trim().toLowerCase().replace(/[\s-]+/g, "_");
+/**
+ * Map vendor `currentShipmentStatus` → internal order.status.
+ * Supports enum values (`in_transit`, `delivered`) and free-text USPS scan lines
+ * (e.g. "Arrived at USPS Regional Destination Facility", "Delivered, In/At Mailbox").
+ */
+export function mapVendorStatus(raw: string): string | null {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+
+  const s = trimmed.toLowerCase().replace(/[\s-]+/g, "_");
   const aliases: Record<string, string> = {
     pending_payment: ORDER_STATUS.PENDING_PAYMENT,
     paid: ORDER_STATUS.PAID,
@@ -235,9 +248,10 @@ function mapVendorStatus(raw: string): string | null {
     packed: ORDER_STATUS.PROCESSING,
     packing: ORDER_STATUS.PROCESSING,
     shipped: ORDER_STATUS.SHIPPED,
-    in_transit: ORDER_STATUS.SHIPPED,
+    in_transit: ORDER_STATUS.IN_TRANSIT,
     dispatched: ORDER_STATUS.SHIPPED,
-    out_for_delivery: ORDER_STATUS.SHIPPED,
+    out_for_delivery: ORDER_STATUS.OUT_FOR_DELIVERY,
+    delivery_exception: ORDER_STATUS.DELIVERY_EXCEPTION,
     delivered: ORDER_STATUS.DELIVERED,
     complete: ORDER_STATUS.COMPLETE,
     completed: ORDER_STATUS.COMPLETE,
@@ -245,7 +259,11 @@ function mapVendorStatus(raw: string): string | null {
     canceled: ORDER_STATUS.CANCELLED,
     refunded: ORDER_STATUS.REFUNDED,
   };
-  return aliases[s] ?? null;
+  if (aliases[s]) return aliases[s];
+
+  // Orange County often posts the raw USPS event description as the status string.
+  const phase = mapCarrierTrackingPhase({ status: trimmed, statusDetail: trimmed });
+  return orderStatusForCarrierPhase(phase);
 }
 
 function encodeCursor(key: Record<string, unknown>): string {
@@ -280,6 +298,9 @@ async function persistVendorOrderUpdate(
     trackingNumber?: string;
     carrier?: string;
     vendorShipmentStatus?: string;
+    carrierTrackingStatus?: string;
+    carrierStatusDetail?: string;
+    trackingEvent?: TrackingEventInput;
     note?: string;
     /** When set, AWB is stored on this vendor lane (does not wipe other vendors). */
     fulfillmentVendorSlug?: string;
@@ -289,26 +310,45 @@ async function persistVendorOrderUpdate(
 
   let vendorFulfillments: VendorFulfillment[] = ensureVendorFulfillments(order);
   if (patch.fulfillmentVendorSlug && (patch.trackingNumber !== undefined || patch.carrier !== undefined)) {
+    const laneStatus =
+      patch.status === ORDER_STATUS.DELIVERED
+        ? "delivered"
+        : patch.trackingNumber?.trim()
+          ? "shipped"
+          : undefined;
     vendorFulfillments = upsertVendorFulfillment(vendorFulfillments, {
       vendorSlug: patch.fulfillmentVendorSlug,
       trackingNumber: patch.trackingNumber,
       carrier: patch.carrier,
-      status: patch.trackingNumber?.trim() ? "shipped" : undefined,
+      status: laneStatus,
+      updatedAt: timestamp,
+    });
+  } else if (
+    patch.fulfillmentVendorSlug &&
+    patch.status === ORDER_STATUS.DELIVERED
+  ) {
+    vendorFulfillments = upsertVendorFulfillment(vendorFulfillments, {
+      vendorSlug: patch.fulfillmentVendorSlug,
+      status: "delivered",
       updatedAt: timestamp,
     });
   }
 
   const primary = primaryTrackingFromFulfillments(vendorFulfillments);
   const multi = isMultiVendorOrder(order);
-  const terminal =
+  const postShip =
     order.status === ORDER_STATUS.SHIPPED ||
+    order.status === ORDER_STATUS.IN_TRANSIT ||
+    order.status === ORDER_STATUS.OUT_FOR_DELIVERY ||
+    order.status === ORDER_STATUS.DELIVERY_EXCEPTION ||
     order.status === ORDER_STATUS.DELIVERED ||
     order.status === ORDER_STATUS.COMPLETE;
 
   let nextStatus = patch.status ?? order.status;
 
   // Mixed carts: only advance to shipped when every vendor has tracking.
-  if (multi && patch.fulfillmentVendorSlug && !terminal) {
+  // After shipped, allow carrier-driven advances (in_transit → delivered) from patch.status.
+  if (multi && patch.fulfillmentVendorSlug && !postShip) {
     const allowed = ORDER_STATUS_TRANSITIONS[order.status] ?? [];
     if (allVendorsHaveTracking(vendorFulfillments) && allowed.includes(ORDER_STATUS.SHIPPED)) {
       nextStatus = ORDER_STATUS.SHIPPED;
@@ -324,6 +364,17 @@ async function persistVendorOrderUpdate(
         nextStatus = ORDER_STATUS.PROCESSING;
       }
     }
+  }
+
+  // Never go backwards from vendor free-text scans (e.g. label-created while already shipped).
+  if (
+    patch.status &&
+    patch.status !== order.status &&
+    !shouldAdvanceOrderStatus(order.status, patch.status) &&
+    patch.status !== ORDER_STATUS.CANCELLED &&
+    patch.status !== ORDER_STATUS.REFUNDED
+  ) {
+    nextStatus = order.status;
   }
 
   const statusChanged = nextStatus !== order.status;
@@ -357,6 +408,13 @@ async function persistVendorOrderUpdate(
         }
       : null;
 
+  const trackingEvents = patch.trackingEvent
+    ? mergeTrackingEvents(
+        order.trackingEvents as TrackingEventInput[] | undefined,
+        [patch.trackingEvent]
+      )
+    : order.trackingEvents;
+
   const updated: StoredOrder = {
     ...order,
     status: nextStatus as Order["status"],
@@ -369,12 +427,20 @@ async function persistVendorOrderUpdate(
     ...(patch.vendorShipmentStatus !== undefined
       ? { vendorShipmentStatus: patch.vendorShipmentStatus }
       : {}),
+    ...(patch.carrierTrackingStatus !== undefined
+      ? { carrierTrackingStatus: patch.carrierTrackingStatus }
+      : {}),
+    ...(patch.carrierStatusDetail !== undefined
+      ? { carrierStatusDetail: patch.carrierStatusDetail }
+      : {}),
+    ...(trackingEvents ? { trackingEvents } : {}),
     ...applyDeliveryReviewSchedule(order, nextStatus, timestamp),
     updatedAt: timestamp,
     ...(statusChanged
       ? {
           GSI3PK: orderKeys.gsi3pk(nextStatus),
           GSI3SK: orderKeys.gsi3sk(order.createdAt),
+          lastTrackingNotificationStatus: nextStatus,
         }
       : {}),
   };
@@ -551,14 +617,18 @@ async function applyShipmentUpdate(
 
   try {
     const multi = isMultiVendorOrder(order);
-    const nextStatus =
+    const alreadyInTransit =
       order.status === ORDER_STATUS.SHIPPED ||
+      order.status === ORDER_STATUS.IN_TRANSIT ||
+      order.status === ORDER_STATUS.OUT_FOR_DELIVERY ||
+      order.status === ORDER_STATUS.DELIVERY_EXCEPTION ||
       order.status === ORDER_STATUS.DELIVERED ||
-      order.status === ORDER_STATUS.COMPLETE
-        ? order.status
-        : multi
-          ? ORDER_STATUS.PROCESSING
-          : ORDER_STATUS.SHIPPED;
+      order.status === ORDER_STATUS.COMPLETE;
+    const nextStatus = alreadyInTransit
+      ? order.status
+      : multi
+        ? ORDER_STATUS.PROCESSING
+        : ORDER_STATUS.SHIPPED;
 
     const updated = await persistVendorOrderUpdate(order, {
       status: nextStatus,
@@ -613,14 +683,26 @@ async function applyTrackingUpdate(
 
   const statusRaw = parsed.data.currentShipmentStatus || parsed.data.currentStatus;
   const mapped = mapVendorStatus(statusRaw);
+  const phase = mapCarrierTrackingPhase({ status: statusRaw, statusDetail: statusRaw });
   const note =
     parsed.data.note?.trim() || `Vendor tracking update: ${statusRaw}`;
+  const advance =
+    mapped &&
+    mapped !== order.status &&
+    shouldAdvanceOrderStatus(order.status, mapped);
 
   try {
     const updated = await persistVendorOrderUpdate(order, {
-      ...(mapped && mapped !== order.status ? { status: mapped } : {}),
+      ...(advance ? { status: mapped } : {}),
       fulfillmentVendorSlug: VENDOR_ORANGE_COUNTY,
       vendorShipmentStatus: statusRaw,
+      carrierTrackingStatus: phase,
+      carrierStatusDetail: statusRaw,
+      trackingEvent: {
+        date: now(),
+        description: statusRaw,
+        location: undefined,
+      },
       note,
     });
 
@@ -629,6 +711,8 @@ async function applyTrackingUpdate(
       trackingNumber: updated.trackingNumber ?? null,
       currentShipmentStatus: statusRaw,
       statusMapped: mapped,
+      phase,
+      advanced: Boolean(advance),
       orderStatus: updated.status,
     });
 
@@ -641,6 +725,7 @@ async function applyTrackingUpdate(
       currentShipmentStatus: statusRaw,
       currentStatusReceived: statusRaw,
       statusMapped: mapped,
+      carrierTrackingStatus: phase,
       updatedAt: updated.updatedAt,
     });
   } catch (err) {

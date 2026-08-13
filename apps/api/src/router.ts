@@ -11,6 +11,7 @@ import * as events from "./handlers/events";
 import * as analytics from "./handlers/analytics";
 import * as salesReport from "./handlers/sales-report";
 import * as productSalesIntel from "./handlers/product-sales-intelligence";
+import * as trackingSync from "./handlers/tracking-sync";
 import * as adminCarts from "./handlers/admin-carts";
 import * as adminCustomers from "./handlers/admin-customers";
 import * as account from "./handlers/account";
@@ -162,6 +163,12 @@ const routes: Route[] = [
   { method: "POST", pattern: /^\/admin\/vendor-api\/tracking$/, handler: adminVendorApi.adminVendorPostTracking },
   // Orange County vendor feed is ONLY on dedicated VendorHttpApi (vendor-api.ts / VendorApiUrl).
   { method: "GET", pattern: /^\/orders$/, handler: orders.listOrders },
+  {
+    method: "GET",
+    pattern: /^\/orders\/([^/]+)\/tracking$/,
+    handler: trackingSync.getOrderTracking,
+    params: ["orderId"],
+  },
   { method: "GET", pattern: /^\/orders\/([^/]+)$/, handler: orders.getOrder, params: ["orderId"] },
   { method: "POST", pattern: /^\/orders\/([^/]+)\/retry-payment$/, handler: orders.retryOrderPayment, params: ["orderId"] },
   { method: "GET", pattern: /^\/account$/, handler: account.getAccount },
@@ -182,6 +189,12 @@ const routes: Route[] = [
     params: ["orderId"],
   },
   { method: "GET", pattern: /^\/admin\/orders\/([^/]+)$/, handler: orders.getAdminOrder, params: ["orderId"] },
+  {
+    method: "POST",
+    pattern: /^\/admin\/orders\/([^/]+)\/tracking\/sync$/,
+    handler: trackingSync.syncAdminOrderTracking,
+    params: ["orderId"],
+  },
   { method: "PATCH", pattern: /^\/admin\/orders\/([^/]+)$/, handler: orders.updateOrderStatus, params: ["orderId"] },
   { method: "PUT", pattern: /^\/admin\/orders\/([^/]+)$/, handler: orders.updateOrderStatus, params: ["orderId"] },
   { method: "GET", pattern: /^\/admin\/leads$/, handler: orders.listLeads },

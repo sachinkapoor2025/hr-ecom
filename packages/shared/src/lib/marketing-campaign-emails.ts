@@ -509,10 +509,10 @@ const independenceDayHomeBanner = getFirstHomePageBannerForEmail();
 
 export const INDEPENDENCE_DAY_EMAIL_CONFIG = {
   templateId: "india-independence-day-offer",
-  name: "India Independence Day Offer – Rakhi Gifts & Special Discount",
+  name: "Celebrate Independence Day with Love from India to USA 🇺🇸",
   subject: "🇮🇳 Independence Day Special Offer – Celebrate with Rakhi Gifts from USA Rakhi",
   preheader:
-    "Celebrate India's Independence Day with 15% OFF Rakhi gifts in the USA — Single Rakhi, Bhaiya-Bhabhi Rakhi, combos & hampers for Raksha Bandhan.",
+    "Celebrate India's Independence Day with 15% OFF Rakhi gifts in the USA — Single Rakhi, Bhaiya-Bhabhi, Kids, Lumba, combos & hampers for Raksha Bandhan.",
   logoUrl: LOGO,
   logoHref: SITE,
   logoTagline: "Connecting Hearts Across Borders",
@@ -520,7 +520,7 @@ export const INDEPENDENCE_DAY_EMAIL_CONFIG = {
   heroImageUrl: independenceDayHomeBanner.src,
   heroImageHref: independenceDayHomeBanner.href,
   heroImageAlt: independenceDayHomeBanner.alt,
-  title: "Celebrate India’s Independence Day with Special Rakhi Gifts 🇮🇳",
+  title: " Celebrate Independence Day with Love from India to USA 🇺🇸",
   introEyebrow: "INDEPENDENCE DAY · 15 AUGUST",
   introBody:
     "From every corner of India to homes across America, Independence Day reminds us of freedom, family, and the bonds that hold us together. This season of pride and love, send a meaningful Rakhi for Brother, Bhaiya-Bhabhi Rakhi, or a festive Rakhi Hamper — premium Rakhi Gifts in USA, shipped domestically for Raksha Bandhan.",
@@ -532,7 +532,7 @@ export const INDEPENDENCE_DAY_EMAIL_CONFIG = {
   ctaHref: SHOP,
   categoriesHeading: "Shop Rakhi Gifts in USA",
   categoriesSubheading:
-    "Explore Single Rakhis, Bhaiya-Bhabhi sets, Rakhi Combos, Rakhi Hampers, and Kids Rakhis — all ready for USA delivery.",
+    "Explore Single Rakhi, Bhaiya Bhabhi Rakhi, Kids Rakhi, Lumba Rakhi, Rakhi Combos, and Rakhi Hampers — all ready for USA delivery.",
   categories: [
     {
       name: "Single Rakhi",
@@ -542,24 +542,10 @@ export const INDEPENDENCE_DAY_EMAIL_CONFIG = {
       buttonText: "Shop Now",
     },
     {
-      name: "Bhaiya-Bhabhi Rakhi",
+      name: "Bhaiya Bhabhi Rakhi",
       description: "Matching sets for brother & bhabhi.",
       imageUrl: cdnUploadUrl("2026/05/bhaiya-bhabhi-rakhi-to-usa-e1779468666580.jpeg"),
       href: `${SITE}/bhaiya-bhabhi-rakhi-to-usa`,
-      buttonText: "Shop Now",
-    },
-    {
-      name: "Rakhi Combos",
-      description: "Rakhi with chocolates & festive treats.",
-      imageUrl: cdnUploadUrl("2026/05/fercho.png"),
-      href: `${SITE}/rakhi-combo-to-usa`,
-      buttonText: "Shop Now",
-    },
-    {
-      name: "Rakhi Hampers",
-      description: "Premium gift boxes with sweets & dry fruits.",
-      imageUrl: cdnUploadUrl("2026/03/Om-Single-Rakhi-1-e1779466859856.png"),
-      href: `${SITE}/rakhi-hampers-to-usa`,
       buttonText: "Shop Now",
     },
     {
@@ -567,6 +553,27 @@ export const INDEPENDENCE_DAY_EMAIL_CONFIG = {
       description: "Fun designs little brothers love.",
       imageUrl: cdnUploadUrl("2026/04/BRO-Kids-Rakhi-e1775564401163.jpg"),
       href: `${SITE}/kids-rakhi-to-usa`,
+      buttonText: "Shop Now",
+    },
+    {
+      name: "Lumba Rakhi",
+      description: "Elegant bracelet styles for bhabhi.",
+      imageUrl: cdnUploadUrl("2026/04/Unique-pink-Lumba-Rakhi-e1779468035922.jpg"),
+      href: `${SITE}/lumba-rakhi-to-usa`,
+      buttonText: "Shop Now",
+    },
+    {
+      name: "Rakhi Combo",
+      description: "Rakhi with chocolates & festive treats.",
+      imageUrl: cdnUploadUrl("2026/05/fercho.png"),
+      href: `${SITE}/rakhi-combo-to-usa`,
+      buttonText: "Shop Now",
+    },
+    {
+      name: "Rakhi Hamper",
+      description: "Premium gift boxes with sweets & dry fruits.",
+      imageUrl: cdnUploadUrl("2026/03/Om-Single-Rakhi-1-e1779466859856.png"),
+      href: `${SITE}/rakhi-hampers-to-usa`,
       buttonText: "Shop Now",
     },
   ] satisfies CampaignCard[],
@@ -1348,7 +1355,7 @@ export function buildIndependenceDayEmailHtml(
   const categoryBlocks = [
     twoColCards([cfg.categories[0], cfg.categories[1]]),
     twoColCards([cfg.categories[2], cfg.categories[3]]),
-    twoColCards([cfg.categories[4]]),
+    twoColCards([cfg.categories[4], cfg.categories[5]]),
   ].join("");
 
   const bodyRows = `

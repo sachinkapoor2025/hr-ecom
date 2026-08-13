@@ -12,8 +12,9 @@ import {
   getOrderPaidAt,
   isRevenueOrder,
   periodRange,
+  salesDayBucket,
 } from "@hr-ecom/shared";
-import { docClient, ORDERS_TABLE, dayBucket } from "../lib/db";
+import { docClient, ORDERS_TABLE } from "../lib/db";
 import { ok, forbidden } from "../lib/response";
 import { requireAdmin } from "../lib/auth";
 
@@ -67,19 +68,20 @@ function buildPeriodReport(period: SalesPeriod, orders: StoredOrder[], now = new
   const revenueOrders: { order: StoredOrder; paidAt: string }[] = [];
 
   for (const order of orders) {
-    const orderMs = new Date(order.createdAt).getTime();
-    if (orderMs < fromMs || orderMs > toMs) continue;
-
+    // Revenue is attributed by payment time (IST day). Excluded statuses use createdAt.
     if (order.status === ORDER_STATUS.REFUNDED) {
-      excluded.refunded += 1;
+      const ms = new Date(order.createdAt).getTime();
+      if (ms >= fromMs && ms <= toMs) excluded.refunded += 1;
       continue;
     }
     if (order.status === ORDER_STATUS.CANCELLED) {
-      excluded.cancelled += 1;
+      const ms = new Date(order.createdAt).getTime();
+      if (ms >= fromMs && ms <= toMs) excluded.cancelled += 1;
       continue;
     }
     if (order.status === ORDER_STATUS.PENDING_PAYMENT) {
-      excluded.pendingPayment += 1;
+      const ms = new Date(order.createdAt).getTime();
+      if (ms >= fromMs && ms <= toMs) excluded.pendingPayment += 1;
       continue;
     }
 
@@ -104,7 +106,7 @@ function buildPeriodReport(period: SalesPeriod, orders: StoredOrder[], now = new
     if (order.currency === "USD") revenueUSD += order.total;
     else revenueINR += order.total;
 
-    const date = dayBucket(new Date(paidAt));
+    const date = salesDayBucket(paidAt);
     const bucket = bucketMap.get(date) ?? {
       label: date,
       date,
@@ -139,7 +141,9 @@ export async function getSalesReport(event: APIGatewayProxyEventV2) {
 
   const now = new Date();
   const monthRange = periodRange("month", now);
-  const orders = await fetchOrdersSince(monthRange.from.toISOString());
+  // Pull a little earlier so orders created before the IST window but paid inside it are included.
+  const fetchFrom = new Date(monthRange.from.getTime() - 86_400_000).toISOString();
+  const orders = await fetchOrdersSince(fetchFrom);
 
   const response: SalesReportResponse = {
     generatedAt: now.toISOString(),

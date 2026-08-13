@@ -5,7 +5,7 @@ import { HomeProductCard } from "@/components/HomeProductCard";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { CityContentSection } from "@/components/CityContentSection";
 import { JsonLd } from "@/components/JsonLd";
-import { cityLinks, site } from "@/lib/site";
+import { cityNavHref, site, usCityLinks } from "@/lib/site";
 import { getCityContent } from "@/lib/content/city-pages";
 import { getCatalogProducts, mergeProductsPreferExisting } from "@/lib/catalog-fallback";
 import { shuffleForCity } from "@/lib/city-products";
@@ -22,12 +22,12 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export function generateStaticParams() {
-  return cityLinks.map((c) => ({ slug: c.slug }));
+  return usCityLinks.map((c) => ({ slug: c.slug }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const city = cityLinks.find((c) => c.slug === slug);
+  const city = usCityLinks.find((c) => c.slug === slug);
   const content = getCityContent(slug);
   if (!city) return { title: "City" };
   return pageMetadata({
@@ -42,7 +42,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function CityPage({ params }: Props) {
   const { slug } = await params;
-  const city = cityLinks.find((c) => c.slug === slug);
+  const city = usCityLinks.find((c) => c.slug === slug);
   const content = getCityContent(slug);
   if (!city || !content) notFound();
 
@@ -95,10 +95,10 @@ export default async function CityPage({ params }: Props) {
       <section className="mt-12 p-6 bg-slate-50 rounded-xl text-sm text-slate-600">
         <h2 className="font-semibold text-primary mb-2">Also deliver Rakhi to</h2>
         <div className="flex flex-wrap gap-x-4 gap-y-2">
-          {cityLinks
+          {usCityLinks
             .filter((c) => c.slug !== slug)
             .map((c) => (
-              <Link key={c.slug} href={`/send-rakhi-to-${c.slug}`} className="text-nav hover:underline">
+              <Link key={c.slug} href={cityNavHref(c)} className="text-nav hover:underline">
                 {c.label}
               </Link>
             ))}

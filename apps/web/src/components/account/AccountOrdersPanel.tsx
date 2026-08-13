@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import type { Order } from "@hr-ecom/shared";
+import { formatOrderStatusLabel, type Order } from "@hr-ecom/shared";
 import { carrierTrackingUrl } from "@/lib/tracking-url";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -10,6 +10,9 @@ const STATUS_COLORS: Record<string, string> = {
   accepted: "bg-cyan-100 text-cyan-800",
   processing: "bg-blue-100 text-blue-800",
   shipped: "bg-indigo-100 text-indigo-800",
+  in_transit: "bg-violet-100 text-violet-900",
+  out_for_delivery: "bg-sky-100 text-sky-900",
+  delivery_exception: "bg-rose-100 text-rose-900",
   delivered: "bg-emerald-100 text-emerald-800",
   complete: "bg-emerald-100 text-emerald-900",
   cancelled: "bg-slate-100 text-slate-600",
@@ -60,8 +63,13 @@ export function AccountOrdersPanel({
                   })}
                 </p>
                 <span className={`inline-block mt-2 text-xs font-medium px-2.5 py-1 rounded-full capitalize ${statusClass}`}>
-                  {order.status.replace(/_/g, " ")}
+                  {formatOrderStatusLabel(order.status)}
                 </span>
+                {order.carrierStatusDetail && (
+                  <p className="text-xs text-slate-500 mt-1.5">
+                    Carrier: {order.carrierStatusDetail}
+                  </p>
+                )}
               </div>
               <div className="text-right">
                 <p className="font-bold text-nav text-lg">
@@ -79,7 +87,10 @@ export function AccountOrdersPanel({
             {order.trackingNumber && (
               <p className="text-sm text-slate-600 mt-3">
                 Tracking: <span className="font-mono">{order.trackingNumber}</span>
-                {order.carrier ? ` · ${order.carrier}` : ""}
+                {` · ${order.carrier?.trim() || "USPS"}`}
+                {order.deliveredAt
+                  ? ` · Delivered ${new Date(order.deliveredAt).toLocaleDateString()}`
+                  : ""}
                 {" · "}
                 <a
                   href={carrierTrackingUrl(order.trackingNumber, order.carrier)}
