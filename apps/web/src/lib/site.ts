@@ -45,7 +45,19 @@ export const navItems = [
   { label: "Raksha Bandhan", href: "/raksha-bandhan" },
 ] as const;
 
-export const cityLinks = [
+/** Nav / footer location links. Optional `href` + `menuLabel` for country landings (not US city pages). */
+export type CityNavLink = {
+  label: string;
+  slug: string;
+  /** When set, used instead of `/send-rakhi-to-${slug}` (UK / Canada country pages). */
+  href?: string;
+  /** Cities dropdown label; defaults to `Rakhi to ${label}`. */
+  menuLabel?: string;
+};
+
+export const cityLinks: readonly CityNavLink[] = [
+  { label: "UK", slug: "uk", href: "/rakhi-from-uk", menuLabel: "Rakhi from UK" },
+  { label: "Canada", slug: "canada", href: "/rakhi-from-canada", menuLabel: "Rakhi from Canada" },
   { label: "California", slug: "california" },
   { label: "New York", slug: "new-york" },
   { label: "Texas", slug: "texas" },
@@ -63,7 +75,22 @@ export const cityLinks = [
   { label: "Jersey City", slug: "jersey-city" },
   { label: "Washington DC", slug: "washington-dc" },
   { label: "Fairfax, VA", slug: "fairfax-virginia" },
-] as const;
+];
+
+export function cityNavHref(link: CityNavLink): string {
+  return link.href ?? `/send-rakhi-to-${link.slug}`;
+}
+
+export function cityNavMenuLabel(link: CityNavLink): string {
+  return link.menuLabel ?? `Rakhi to ${link.label}`;
+}
+
+/** US metro/state city pages only (excludes UK / Canada country landings). */
+export function isUsCityNavLink(link: CityNavLink): boolean {
+  return !link.href;
+}
+
+export const usCityLinks = cityLinks.filter(isUsCityNavLink);
 
 export const homeBanners = [
   {

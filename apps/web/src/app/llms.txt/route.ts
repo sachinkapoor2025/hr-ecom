@@ -1,4 +1,13 @@
-import { site, navItems, cityLinks, faqs, rakhiSetsMenu } from "@/lib/site";
+import {
+  site,
+  navItems,
+  cityNavHref,
+  cityLinks,
+  faqs,
+  isUsCityNavLink,
+  rakhiSetsMenu,
+  usCityLinks,
+} from "@/lib/site";
 import { categoryHref } from "@/lib/category-urls";
 import { siteUrl } from "@/lib/env";
 import { allCityContent } from "@/lib/content/city-pages";
@@ -24,7 +33,12 @@ export async function GET() {
       .map((n) => `- ${n.label}: ${siteUrl}${n.href}`),
   ];
 
-  const cities = cityLinks.map((c) => `- ${c.label}, USA: ${siteUrl}/send-rakhi-to-${c.slug}`);
+  const cities = [
+    ...usCityLinks.map((c) => `- ${c.label}, USA: ${siteUrl}${cityNavHref(c)}`),
+    ...cityLinks
+      .filter((c) => !isUsCityNavLink(c))
+      .map((c) => `- ${c.menuLabel ?? c.label}: ${siteUrl}${cityNavHref(c)}`),
+  ];
 
   const citySummaries = allCityContent()
     .map((c) => `- ${c.label}: ${c.metaExtra} → ${siteUrl}/send-rakhi-to-${c.slug}`)
