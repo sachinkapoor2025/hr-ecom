@@ -255,11 +255,19 @@ export const orderStatusUpdateSchema = z.object({
   labelError: z.string().optional(),
 });
 
+/** Admin corrects shipping address (customer request). Invalidates purchased labels. */
+export const correctOrderAddressSchema = z.object({
+  shippingAddress: shippingAddressSchema,
+  /** When set, also update this multi-address shipment; otherwise primary + first shipment. */
+  shipmentId: z.string().min(1).optional(),
+});
+
 export type ShippingAddress = z.infer<typeof shippingAddressSchema>;
 export type CheckoutShipment = z.infer<typeof checkoutShipmentSchema>;
 export type OrderShipment = z.infer<typeof orderShipmentSchema>;
 export type CheckoutInput = z.infer<typeof checkoutSchema>;
 export type OrderStatusUpdate = z.infer<typeof orderStatusUpdateSchema>;
+export type CorrectOrderAddressInput = z.infer<typeof correctOrderAddressSchema>;
 export type OrderStatusHistoryEntry = z.infer<typeof orderStatusHistoryEntrySchema>;
 export type Order = z.infer<typeof orderSchema> & {
   createdAt: string;

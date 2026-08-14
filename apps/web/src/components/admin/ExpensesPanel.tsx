@@ -41,7 +41,7 @@ function resolveStatus(ex: Expense): ExpenseBillStatus {
 }
 
 export function ExpensesPanel() {
-  const { isSuperAdmin, loading: authLoading } = useAuth();
+  const { isAdmin, isSuperAdmin, user, loading: authLoading } = useAuth();
   const api = useApiClient();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [totalByCurrency, setTotalByCurrency] = useState({ USD: 0, INR: 0 });
@@ -108,15 +108,27 @@ export function ExpensesPanel() {
   }, [api]);
 
   useEffect(() => {
-    if (!authLoading && isSuperAdmin) void load();
-  }, [authLoading, isSuperAdmin, load]);
+    if (!authLoading && isAdmin) void load();
+  }, [authLoading, isAdmin, load]);
 
   const visibleExpenses = useMemo(() => {
     if (listCurrency === "ALL") return expenses;
     return expenses.filter((e) => (e.currency ?? "USD") === listCurrency);
   }, [expenses, listCurrency]);
 
+  const canModifyExpense = (ex: Expense): boolean => {
+    if (isSuperAdmin) return true;
+    const createdBy = (ex.createdBy ?? "").trim().toLowerCase();
+    if (!createdBy) return false;
+    const email = (user?.email ?? "").trim().toLowerCase();
+    return Boolean(email) && createdBy === email;
+  };
+
   const startEdit = (ex: Expense) => {
+    if (!canModifyExpense(ex)) {
+      setError("You can only edit expenses you added");
+      return;
+    }
     setEditing(ex);
     setAmount(String(ex.amount));
     setCurrency(ex.currency ?? "USD");
@@ -206,6 +218,9 @@ export function ExpensesPanel() {
       };
 
       if (editing) {
+        if (!canModifyExpense(editing)) {
+          throw new Error("You can only edit expenses you added");
+        }
         await api(`/admin/expenses/${editing.expenseId}`, {
           method: "PUT",
           body: JSON.stringify(body),
@@ -228,6 +243,10 @@ export function ExpensesPanel() {
   };
 
   const remove = async (expenseId: string) => {
+    if (!isSuperAdmin) {
+      setError("Only super admins can delete expenses");
+      return;
+    }
     if (!confirm("Delete this expense?")) return;
     setError("");
     try {
@@ -243,10 +262,10 @@ export function ExpensesPanel() {
     return <div className="p-10 text-slate-500">Loading…</div>;
   }
 
-  if (!isSuperAdmin) {
+  if (!isAdmin) {
     return (
       <div className="max-w-lg mx-auto px-4 py-16 text-center">
-        <h1 className="text-xl font-semibold text-slate-800 mb-2">Super admin only</h1>
+        <h1 className="text-xl font-semibold text-slate-800 mb-2">Admin access required</h1>
         <Link href="/admin" className="text-sm text-accent hover:underline">
           ← Back to dashboard
         </Link>
@@ -508,20 +527,26 @@ export function ExpensesPanel() {
                       {ex.createdBy ? recordedByLabel(ex.createdBy, "expense") : "—"}
                     </td>
                     <td className="py-3 px-3 space-x-3 whitespace-nowrap">
-                      <button
-                        type="button"
-                        onClick={() => startEdit(ex)}
-                        className="text-accent hover:underline"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => void remove(ex.expenseId)}
-                        className="text-red-600 hover:underline"
-                      >
-                        Delete
-                      </button>
+                      {canModifyExpense(ex) ? (
+                        <button
+                          type="button"
+                          onClick={() => startEdit(ex)}
+                          className="text-accent hover:underline"
+                        >
+                          Edit
+                        </button>
+                      ) : (
+                        <span className="text-slate-400 text-xs">View only</span>
+                      )}
+                      {isSuperAdmin && (
+                        <button
+                          type="button"
+                          onClick={() => void remove(ex.expenseId)}
+                          className="text-red-600 hover:underline"
+                        >
+                          Delete
+                        </button>
+                      )}
                     </td>
                   </tr>
                 );

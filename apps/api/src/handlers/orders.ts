@@ -6,6 +6,7 @@ import {
   leadCaptureSchema,
   updateLeadSchema,
   orderStatusUpdateSchema,
+  correctOrderAddressSchema,
   orderKeys,
   customerKeys,
   ORDER_STATUS,
@@ -26,6 +27,7 @@ import {
   isMultiVendorOrder,
   type Order,
   type OrderStatusHistoryEntry,
+  type ShippingAddress,
   type CartItem,
   type VendorFulfillment,
 } from "@hr-ecom/shared";
@@ -40,6 +42,7 @@ import {
   notifyAdminOrderPlaced,
   notifyAdminOrderPaymentFailed,
   notifyCustomerOrderStatusChange,
+  notifyCustomerAddressCorrected,
 } from "../lib/email";
 import { decrementInventoryForOrder, validateOrderInventory } from "../lib/inventory";
 import { applyDeliveryReviewSchedule } from "./review-emails";
@@ -686,6 +689,99 @@ export async function updateOrderStatus(event: APIGatewayProxyEventV2) {
   }
 
   return ok({ order: updated });
+}
+
+function formatAddressForNote(addr: ShippingAddress): string {
+  const street = [addr.line1, addr.line2].filter(Boolean).join(", ");
+  return `${addr.name}; ${street}; ${addr.city}, ${addr.state} ${addr.postalCode}; ${addr.country}; ${addr.phone}; ${addr.email}`;
+}
+
+/** Admin corrects shipping address — history note, customer email, invalidate old USPS label. */
+export async function correctOrderAddress(event: APIGatewayProxyEventV2) {
+  if (!requireAdmin(event)) return forbidden();
+
+  const orderId = event.pathParameters?.orderId;
+  if (!orderId) return badRequest("Order ID required");
+
+  const body = JSON.parse(event.body ?? "{}");
+  const parsed = correctOrderAddressSchema.safeParse(body);
+  if (!parsed.success) return badRequest(parsed.error.message);
+
+  const order = await fetchOrder(orderId);
+  if (!order) return notFound("Order not found");
+
+  const previous = order.shippingAddress;
+  const nextAddress: ShippingAddress = {
+    ...parsed.data.shippingAddress,
+    // Keep gift-from fields unless the admin explicitly sent new ones.
+    senderName:
+      parsed.data.shippingAddress.senderName?.trim() || previous.senderName,
+    senderMessage:
+      parsed.data.shippingAddress.senderMessage?.trim() || previous.senderMessage,
+  };
+  const timestamp = now();
+  const note = `Address corrected to: ${formatAddressForNote(nextAddress)}`;
+
+  let shipments = order.shipments;
+  const targetShipmentId = parsed.data.shipmentId ?? shipments?.[0]?.shipmentId;
+  if (shipments?.length && targetShipmentId) {
+    shipments = shipments.map((s) =>
+      s.shipmentId === targetShipmentId ? { ...s, shippingAddress: nextAddress } : s
+    );
+  }
+
+  const updatePrimary =
+    !order.shipments?.length ||
+    !targetShipmentId ||
+    targetShipmentId === order.shipments[0]?.shipmentId;
+
+  const previousNotes = (order.adminNotes ?? "").trim();
+  const adminNotes = previousNotes
+    ? `${previousNotes}\n${timestamp}: ${note}`
+    : `${timestamp}: ${note}`;
+
+  // Purchased labels still print the old address — clear so admin rebuys with the correction.
+  const hadPurchasedLabel = order.labelStatus === "purchased" || Boolean(order.labelPdfUrl);
+
+  const updated: StoredOrder = {
+    ...order,
+    ...(updatePrimary ? { shippingAddress: nextAddress } : {}),
+    ...(shipments ? { shipments } : {}),
+    statusHistory: [
+      ...(order.statusHistory ?? []),
+      { status: order.status, at: timestamp, note },
+    ],
+    adminNotes: adminNotes.slice(0, 2000),
+    addressValidated: false,
+    ...(hadPurchasedLabel
+      ? {
+          labelStatus: "none" as const,
+        }
+      : {}),
+    updatedAt: timestamp,
+  };
+
+  // Remove stale label URL key when invalidating
+  if (hadPurchasedLabel) {
+    delete (updated as { labelPdfUrl?: string }).labelPdfUrl;
+    delete (updated as { labelError?: string }).labelError;
+  }
+
+  await docClient.send(new PutCommand({ TableName: ORDERS_TABLE, Item: updated }));
+
+  const emailResult = await notifyCustomerAddressCorrected(
+    updatePrimary ? updated : { ...updated, shippingAddress: nextAddress },
+    updatePrimary ? previous : order.shipments?.find((s) => s.shipmentId === targetShipmentId)?.shippingAddress
+  );
+  if (!emailResult.ok && !emailResult.skipped) {
+    console.error("Address correction email failed:", emailResult.error);
+  }
+
+  return ok({
+    order: updated,
+    emailSent: emailResult.ok,
+    labelInvalidated: hadPurchasedLabel,
+  });
 }
 
 /** Mark an order paid (called by Stripe/Razorpay webhooks + Razorpay verify). */

@@ -197,6 +197,12 @@ const routes: Route[] = [
   },
   { method: "PATCH", pattern: /^\/admin\/orders\/([^/]+)$/, handler: orders.updateOrderStatus, params: ["orderId"] },
   { method: "PUT", pattern: /^\/admin\/orders\/([^/]+)$/, handler: orders.updateOrderStatus, params: ["orderId"] },
+  {
+    method: "POST",
+    pattern: /^\/admin\/orders\/([^/]+)\/correct-address$/,
+    handler: orders.correctOrderAddress,
+    params: ["orderId"],
+  },
   { method: "GET", pattern: /^\/admin\/leads$/, handler: orders.listLeads },
   { method: "PATCH", pattern: /^\/admin\/leads$/, handler: orders.updateLead },
   { method: "GET", pattern: /^\/admin\/analytics\/overview$/, handler: analytics.getAnalyticsOverview },

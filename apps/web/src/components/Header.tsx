@@ -25,7 +25,7 @@ function CitiesMenu({ onNavigate }: { onNavigate?: () => void }) {
         aria-haspopup="true"
         className={`btn-nav gap-1 ${open ? "btn-nav-active" : ""}`}
       >
-        Cities
+        Location
         <span className={`text-xs transition-transform ${open ? "rotate-180" : ""}`}>▼</span>
       </button>
       {open && (
@@ -436,7 +436,7 @@ export function Header() {
                     citiesOpen ? "bg-nav text-white" : "text-primary hover:bg-blue-50 hover:text-nav"
                   }`}
                 >
-                  Cities
+                  Location
                   <span className={`text-xs transition-transform ${citiesOpen ? "rotate-180" : ""}`}>▼</span>
                 </button>
                 {citiesOpen && (

@@ -7,7 +7,7 @@ import { AdminGuard } from "@/components/AdminGuard";
 import { AdminSearch } from "@/components/admin/AdminSearch";
 import { useAuth } from "@/lib/auth-context";
 
-type NavChild = { href: string; label: string };
+type NavChild = { href: string; label: string; superOnly?: boolean };
 type NavItem =
   | { type: "link"; href: string; label: string; exact?: boolean }
   | { type: "group"; id: string; label: string; href: string; children: NavChild[]; superOnly?: boolean };
@@ -62,10 +62,9 @@ const navItems: NavItem[] = [
     href: "/admin/expense-settlement",
     children: [
       { href: "/admin/expense-settlement?tab=expense", label: "Expense" },
-      { href: "/admin/expense-settlement?tab=settlement", label: "Settlement" },
-      { href: "/admin/expense-settlement?tab=reconciliation", label: "Reconciliation" },
+      { href: "/admin/expense-settlement?tab=settlement", label: "Settlement", superOnly: true },
+      { href: "/admin/expense-settlement?tab=reconciliation", label: "Reconciliation", superOnly: true },
     ],
-    superOnly: true,
   },
   { type: "link", href: "/admin/load-test", label: "Load Test", exact: false },
 ];
@@ -218,7 +217,7 @@ function NavButtons({
         const children =
           item.id === "vendor" && !showSuper
             ? item.children.filter((c) => !c.href.includes("tab=expense"))
-            : item.children;
+            : item.children.filter((c) => !c.superOnly || showSuper);
 
         const open =
           variant === "mobile"

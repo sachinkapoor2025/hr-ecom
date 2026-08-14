@@ -15,6 +15,178 @@ export interface BlogPost {
 
 export const blogPosts: BlogPost[] = [
   {
+    /** Overrides SEO stub `what-is-lumba-rakhi` — same URL/slug/image key. */
+    slug: "what-is-lumba-rakhi",
+    title: "What Is Lumba Rakhi? Meaning, Tradition, and Why It Is Tied on Raksha Bandhan",
+    description:
+      "What is Lumba Rakhi? Learn Lumba Rakhi meaning, tradition, Lumba Rakhi for bhabhi, Lumba Rakhi vs regular Rakhi, and Bhaiya Bhabhi Rakhi sets for Raksha Bandhan.",
+    excerpt:
+      "Discover what Lumba Rakhi is, why it is tied for bhabhi on Raksha Bandhan, how it differs from a regular Rakhi, and how to choose the right design or Bhaiya Bhabhi set.",
+    publishedAt: "2026-06-15",
+    updatedAt: "2026-08-14",
+    relatedCategory: "lumba-rakhi",
+    sections: [
+      {
+        paragraphs: [
+          "Raksha Bandhan is a festival which celebrates the unique relationship between brothers and sisters. Besides the usual Rakhi, which is tied on a brother’s wrist, there are other kinds of Rakhis that represent various family bonds. One of them is Lumba Rakhi, which is traditionally tied for a bhabhi, or a brother’s wife.",
+          "In Raksha Bandhan celebrations, particularly in many communities of North India, Lumba Rakhi has become popular. It also creates another important connection to the festival, bringing the sister-in-law into the celebration.",
+        ],
+      },
+      {
+        heading: "About Lumba Rakhi",
+        paragraphs: [
+          "A Lumba Rakhi is a decorative Rakhi that is normally tied to the bangle or bracelet of a brother’s wife. Unlike the regular Rakhi that is tied around the wrist, the Lumba Rakhi is tied to a bangle and is designed especially for women.",
+          "The word “Lumba” is often associated with the traditional style of Rakhi worn by bhabhis. Usually, it includes colorful threads, beads, stones, charms, or other decorative elements. Today, Lumba Rakhis are available in various modern designs while still keeping their traditional significance.",
+        ],
+      },
+      {
+        heading: "Why Is Lumba Rakhi Tied to Bhabhi?",
+        paragraphs: [
+          "Tying a Lumba Rakhi is a tradition that reflects the belief that marriage is a union of two families. A brother’s wife is an important member of the family, and celebrating Raksha Bandhan with her is a way to show love and togetherness.",
+          "Rakhi traditionally celebrates the bond between brother and sister, while a Lumba Rakhi extends the celebration to include the brother’s wife. Thus, it is less a distinct ritual and more a way of including the whole family in the festival.",
+        ],
+      },
+      {
+        heading: "Lumba Rakhi vs. Regular Rakhi",
+        paragraphs: [
+          "The primary difference between a normal Rakhi and a Lumba Rakhi is how and where they are worn. Normally, a Rakhi is tied around the brother’s wrist during the Raksha Bandhan ceremony. However, a Lumba Rakhi is usually tied to the bangle or bracelet of the bhabhi.",
+          "Lumba Rakhis are also generally more ornamental, as they are designed to match traditional jewellery and festive dress. However, a particular design and style may vary according to personal preferences and regional traditions.",
+        ],
+      },
+      {
+        heading: "How to Select a Lumba Rakhi?",
+        paragraphs: [
+          "If you consider the recipient’s style, it can be easy to pick a Lumba Rakhi. If you like the classic look, you can go for traditional designs with beads, pearls, and colorful threads. If you prefer a modern style, opt for minimalist Lumba Rakhis with elegant charms or simple detailing.",
+          "You can also choose a Bhaiya Bhabhi Rakhi set, which generally has a Rakhi for the brother and a Lumba Rakhi for the bhabhi. These sets are ideal for celebrating both relationships together.",
+        ],
+      },
+      {
+        heading: "Lumba Rakhi and Modern Raksha Bandhan Celebrations",
+        paragraphs: [
+          "Today, families celebrate Raksha Bandhan in many different ways. Some prefer to have traditional ceremonies at home, while others prefer to celebrate from different cities or even countries by sending gifts and Rakhis to their loved ones.",
+          "The option of sending Rakhi online has made it easier for families living apart to keep these traditions alive. Lumba Rakhi sets can be paired with regular Rakhis, sweets, chocolates, or other gifts so that sisters can celebrate the occasion even when their brother and bhabhi are far away.",
+        ],
+      },
+      {
+        heading: "Why Is Lumba Rakhi Special?",
+        paragraphs: [
+          "The beauty of Lumba Rakhis is in their meaning. It acknowledges the sister-bhabhi relationship and signifies the broader concept of family bonding during Raksha Bandhan. It is also a reminder that festivals can change and develop without losing their traditional values.",
+          "Whether you go for a simple Lumba Rakhi or a fancy design, the thought behind it is the most important part.",
+        ],
+      },
+      {
+        heading: "Final Thoughts",
+        paragraphs: [
+          "Lumba Rakhi is a beautiful tradition that brings the brother’s wife into the celebrations of Raksha Bandhan. The decorative style and meaningful connection to the family make it a popular choice for sisters to celebrate their brother and bhabhi.",
+          "So, whether you celebrate Raksha Bandhan together or from afar, the simple act of sending and tying a Lumba Rakhi can make the occasion feel more special and connected.",
+        ],
+      },
+      {
+        heading: "Frequently Asked Questions",
+        paragraphs: [
+          "1. Is Lumba Rakhi for Bhabhi?",
+          "Yes. Traditionally, Lumba Rakhi is tied to a bhabhi (brother’s wife) and is tied to her bangle or bracelet.",
+          "2. How is Lumba Rakhi different from a normal Rakhi?",
+          "A normal Rakhi is tied on the brother’s wrist, while a Lumba Rakhi is usually attached to the bhabhi’s bangle or bracelet.",
+          "3. Can I send a Lumba Rakhi to another country?",
+          "Yes. Lumba Rakhis can be included in Rakhi gift packages and sent to family members living in different countries. Many online Rakhi stores offer delivery options for international celebrations.",
+          "4. What comes in a Bhaiya Bhabhi Rakhi set?",
+          "A Bhaiya Bhabhi Rakhi set commonly includes one traditional Rakhi for the brother and one Lumba Rakhi for the bhabhi. Some sets may also include sweets, chocolates, or small gifts.",
+        ],
+      },
+    ],
+  },
+  {
+    /** Overrides SEO stub `what-to-gift-bhabhi-on-raksha-bandhan` — same URL/slug/image key. */
+    slug: "what-to-gift-bhabhi-on-raksha-bandhan",
+    title: "What to Gift Bhabhi on Raksha Bandhan",
+    description:
+      "What to gift bhabhi on Raksha Bandhan — thoughtful Raksha Bandhan gifts for bhabhi, Rakhi gifts for bhabhi, and Rakhi gift ideas for sisters celebrating with family in the USA.",
+    excerpt:
+      "Looking for Raksha Bandhan gift ideas for bhabhi? Explore jewellery, personalized keepsakes, self-care hampers, sweets, and Rakhi gift combos that show real appreciation.",
+    publishedAt: "2026-06-15",
+    updatedAt: "2026-08-14",
+    relatedCategory: "bhaiya-bhabhi-rakhi",
+    sections: [
+      {
+        paragraphs: [
+          "Raksha Bandhan is not only about the relationship between a brother and sister. It’s also a great opportunity to celebrate the relationships that become part of the family after marriage. A sister-in-law or bhabhi is an important part of Rakhi festivities, bringing warmth and happiness to family celebrations.",
+          "Choosing a thoughtful gift for bhabhi on Raksha Bandhan is a simple way to show affection and appreciation. If you are wondering what to gift bhabhi on Raksha Bandhan, there are plenty of options that are useful, stylish, and personal. The best gifts don’t always have to come with a high price tag. A little thought in your choice makes it so much more meaningful.",
+        ],
+      },
+      {
+        heading: "1. Elegant Jewelry",
+        paragraphs: [
+          "Jewelry is a long-standing gift for bhabhi. Choose something simple like a pair of earrings, a lovely bracelet, or a pendant. If you know her style, picking something that fits her personality can make the gift feel more personal.",
+          "For a traditional touch, you can also go for a small pair of ethnic earrings or a delicate accessory that she can wear for family occasions.",
+        ],
+      },
+      {
+        heading: "2. Personalized Gifts",
+        paragraphs: [
+          "Raksha Bandhan can have an emotional touch with personalized gifts. A personalized photo frame, an engraved accessory with her name, a personalized mug, or a small keepsake can serve as a reminder of the special family bond.",
+          "If you have a memorable family photo, turning it into a personalized gift can make the gesture even more thoughtful.",
+        ],
+      },
+      {
+        heading: "3. Beauty and Self-Care Hampers",
+        paragraphs: [
+          "Another good gift for bhabhi on the occasion of Raksha Bandhan is a self-care hamper. You can assemble things such as skincare products, scented candles, bath essentials, hand creams, or a relaxing face mask.",
+          "Pick products that match her tastes instead of just buying a big bunch of things. A small, well-thought-out hamper can be more useful than an oversized gift box.",
+        ],
+      },
+      {
+        heading: "4. Chocolates and Sweet Treats",
+        paragraphs: [
+          "Chocolates and sweets are easy choices if you are looking for a simple and universally loved option. Pick her favourite chocolates, traditional Indian sweets, dry fruits, or a combination of various treats.",
+          "A nicely presented box along with another small gift can also be a complete Raksha Bandhan surprise.",
+        ],
+      },
+      {
+        heading: "5. Handbag or Wallet",
+        paragraphs: [
+          "A stylish handbag, wallet, or small purse can be both attractive and practical. Before you choose, note her favourite colours and style. If you’re unsure of her taste, neutral colours and simple designs are a good option.",
+          "This is especially handy if you’re after a practical gift that she’ll use all the time.",
+        ],
+      },
+      {
+        heading: "6. Traditional Clothing or Accessories",
+        paragraphs: [
+          "If she is into traditional wear, a saree, dupatta, stole, or ethnic accessory can be a thoughtful gift. You could get something in a colour or style she normally likes.",
+          "Buying clothes as a gift is nice if you know her size and personal taste beforehand.",
+        ],
+      },
+      {
+        heading: "7. Plants or Home Décor",
+        paragraphs: [
+          "If your bhabhi likes to decorate her house, then a small indoor plant, decorative lamp, vase, wall accessory, or any other home décor item can be a lovely gift for her.",
+          "Plants are especially nice as they bring freshness to the home and can last far longer than many traditional gifts. Look for something that matches her home style and is easy to care for.",
+        ],
+      },
+      {
+        heading: "8. Rakhi and Gift Combo",
+        paragraphs: [
+          "If you are celebrating Raksha Bandhan from a distance, you can also opt for a Rakhi and gift combo comprising something for bhabhi in addition to a Rakhi for your brother. The choices can be chocolates, sweets, dry fruits, or small lifestyle gifts.",
+          "Sending Rakhi online allows you to send a combo, making it easier to send something for brother and bhabhi in one thoughtful package.",
+        ],
+      },
+      {
+        heading: "How to Pick the Best Gift for Bhabhi",
+        paragraphs: [
+          "It depends on what kind of person she is and what she likes. Consider her preferences, whether they are traditional or modern, and whether she would prefer something useful or something sentimental.",
+          "You can also make it personal with a simple gift and a handwritten note. Raksha Bandhan is all about celebrating relationships, and hence it is the thought behind the gift that is more important than its price.",
+        ],
+      },
+      {
+        heading: "Final Thoughts",
+        paragraphs: [
+          "There are numerous ways to make your bhabhi feel special on Raksha Bandhan. There are options for every taste and budget, from jewellery and personalized keepsakes to chocolates, self-care hampers, and traditional gifts.",
+          "Choosing a thoughtful gift for bhabhi can add another beautiful moment to the festival, whether you are celebrating together or planning to send Rakhi to USA for family living abroad. A simple, meaningful gesture can help strengthen the bond shared within the family.",
+        ],
+      },
+    ],
+  },
+  {
     /** Overrides SEO stub `why-roli-chawal-is-used-in-rakhi` — same URL/slug/image key. */
     slug: "why-roli-chawal-is-used-in-rakhi",
     title: "Why Roli Chawal Is Used in Rakhi",

@@ -69,6 +69,17 @@ export default function AdminOrderDetailPage() {
   const [savingService, setSavingService] = useState(false);
   const [rateOptions, setRateOptions] = useState<RateQuote[]>([]);
   const [selectedRateId, setSelectedRateId] = useState("");
+  const [correctingAddress, setCorrectingAddress] = useState(false);
+  const [corrName, setCorrName] = useState("");
+  const [corrLine1, setCorrLine1] = useState("");
+  const [corrLine2, setCorrLine2] = useState("");
+  const [corrCity, setCorrCity] = useState("");
+  const [corrState, setCorrState] = useState("");
+  const [corrPostal, setCorrPostal] = useState("");
+  const [corrCountry, setCorrCountry] = useState("US");
+  const [corrPhone, setCorrPhone] = useState("");
+  const [corrEmail, setCorrEmail] = useState("");
+  const [corrShipmentId, setCorrShipmentId] = useState("");
 
   const syncVendorTrackingState = (o: AdminOrder) => {
     const rows = ensureVendorFulfillments(o);
@@ -86,12 +97,27 @@ export default function AdminOrderDetailPage() {
     setCarrier(us?.carrier ?? o.carrier ?? "");
   };
 
+  const syncCorrectionForm = (o: AdminOrder) => {
+    const a = o.shippingAddress;
+    setCorrName(a.name ?? "");
+    setCorrLine1(a.line1 ?? "");
+    setCorrLine2(a.line2 ?? "");
+    setCorrCity(a.city ?? "");
+    setCorrState(a.state ?? "");
+    setCorrPostal(a.postalCode ?? "");
+    setCorrCountry(a.country ?? "US");
+    setCorrPhone(a.phone ?? "");
+    setCorrEmail(a.email ?? "");
+    setCorrShipmentId(o.shipments?.[0]?.shipmentId ?? "");
+  };
+
   const load = useCallback(async () => {
     setLoading(true);
     try {
       const data = await apiClient<{ order: AdminOrder }>(`/admin/orders/${orderId}`);
       setOrder(data.order);
       syncVendorTrackingState(data.order);
+      syncCorrectionForm(data.order);
       setAdminNotes(data.order.adminNotes ?? "");
       setEstimatedDeliveryAt(data.order.estimatedDeliveryAt?.slice(0, 10) ?? "");
       setSelectedRateId(data.order.shippingRateId ?? "");
@@ -186,6 +212,54 @@ export default function AdminOrderDetailPage() {
       setError(err instanceof Error ? err.message : "Update failed.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleCorrectAddress = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCorrectingAddress(true);
+    setError("");
+    setMessage("");
+    try {
+      const data = await apiClient<{
+        order: AdminOrder;
+        labelInvalidated?: boolean;
+        emailSent?: boolean;
+      }>(`/admin/orders/${orderId}/correct-address`, {
+        method: "POST",
+        body: JSON.stringify({
+          shippingAddress: {
+            name: corrName.trim(),
+            line1: corrLine1.trim(),
+            ...(corrLine2.trim() ? { line2: corrLine2.trim() } : {}),
+            city: corrCity.trim(),
+            state: corrState.trim(),
+            postalCode: corrPostal.trim(),
+            country: corrCountry.trim().toUpperCase().slice(0, 2),
+            phone: corrPhone.trim(),
+            email: corrEmail.trim(),
+            ...(order?.shippingAddress.senderName
+              ? { senderName: order.shippingAddress.senderName }
+              : {}),
+            ...(order?.shippingAddress.senderMessage
+              ? { senderMessage: order.shippingAddress.senderMessage }
+              : {}),
+          },
+          ...(corrShipmentId ? { shipmentId: corrShipmentId } : {}),
+        }),
+      });
+      setOrder(data.order);
+      syncCorrectionForm(data.order);
+      setAdminNotes(data.order.adminNotes ?? "");
+      setMessage(
+        data.labelInvalidated
+          ? "Address corrected. Customer emailed. Previous shipping label cleared — buy a new label with the updated address."
+          : "Address corrected. Customer emailed. New labels will use this address."
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not correct address.");
+    } finally {
+      setCorrectingAddress(false);
     }
   };
 
@@ -947,6 +1021,142 @@ export default function AdminOrderDetailPage() {
               className="w-full border border-slate-300 rounded-lg px-2 py-2 text-sm"
               placeholder="Internal remarks (not visible to customer)"
             />
+          </section>
+
+          <section className="bg-white border rounded-xl p-5">
+            <h2 className="font-semibold mb-1">Correction</h2>
+            <p className="text-xs text-slate-500 mb-3">
+              Update the shipping address when a customer requests a change. Logged in status history
+              and admin notes, emails the customer, and clears any purchased label so the next
+              download uses the corrected address.
+            </p>
+            <form onSubmit={handleCorrectAddress} className="space-y-2">
+              {order.shipments && order.shipments.length > 1 && (
+                <label className="block text-xs font-medium text-slate-500">
+                  Delivery to update
+                  <select
+                    value={corrShipmentId}
+                    onChange={(e) => {
+                      const id = e.target.value;
+                      setCorrShipmentId(id);
+                      const ship = order.shipments?.find((s) => s.shipmentId === id);
+                      if (ship) {
+                        const a = ship.shippingAddress;
+                        setCorrName(a.name ?? "");
+                        setCorrLine1(a.line1 ?? "");
+                        setCorrLine2(a.line2 ?? "");
+                        setCorrCity(a.city ?? "");
+                        setCorrState(a.state ?? "");
+                        setCorrPostal(a.postalCode ?? "");
+                        setCorrCountry(a.country ?? "US");
+                        setCorrPhone(a.phone ?? "");
+                        setCorrEmail(a.email ?? "");
+                      }
+                    }}
+                    className="mt-1 w-full border border-slate-300 rounded-lg px-2 py-2 text-sm"
+                  >
+                    {order.shipments.map((s, idx) => (
+                      <option key={s.shipmentId} value={s.shipmentId}>
+                        Delivery {idx + 1} — {s.shippingAddress.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
+              <label className="block text-xs font-medium text-slate-500">
+                Name
+                <input
+                  value={corrName}
+                  onChange={(e) => setCorrName(e.target.value)}
+                  required
+                  className="mt-1 w-full border border-slate-300 rounded-lg px-2 py-2 text-sm"
+                />
+              </label>
+              <label className="block text-xs font-medium text-slate-500">
+                Address line 1
+                <input
+                  value={corrLine1}
+                  onChange={(e) => setCorrLine1(e.target.value)}
+                  required
+                  className="mt-1 w-full border border-slate-300 rounded-lg px-2 py-2 text-sm"
+                />
+              </label>
+              <label className="block text-xs font-medium text-slate-500">
+                Address line 2
+                <input
+                  value={corrLine2}
+                  onChange={(e) => setCorrLine2(e.target.value)}
+                  className="mt-1 w-full border border-slate-300 rounded-lg px-2 py-2 text-sm"
+                />
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <label className="block text-xs font-medium text-slate-500">
+                  City
+                  <input
+                    value={corrCity}
+                    onChange={(e) => setCorrCity(e.target.value)}
+                    required
+                    className="mt-1 w-full border border-slate-300 rounded-lg px-2 py-2 text-sm"
+                  />
+                </label>
+                <label className="block text-xs font-medium text-slate-500">
+                  State
+                  <input
+                    value={corrState}
+                    onChange={(e) => setCorrState(e.target.value)}
+                    required
+                    className="mt-1 w-full border border-slate-300 rounded-lg px-2 py-2 text-sm"
+                  />
+                </label>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <label className="block text-xs font-medium text-slate-500">
+                  ZIP / Postal
+                  <input
+                    value={corrPostal}
+                    onChange={(e) => setCorrPostal(e.target.value)}
+                    required
+                    className="mt-1 w-full border border-slate-300 rounded-lg px-2 py-2 text-sm"
+                  />
+                </label>
+                <label className="block text-xs font-medium text-slate-500">
+                  Country
+                  <input
+                    value={corrCountry}
+                    onChange={(e) => setCorrCountry(e.target.value)}
+                    required
+                    maxLength={2}
+                    className="mt-1 w-full border border-slate-300 rounded-lg px-2 py-2 text-sm uppercase"
+                  />
+                </label>
+              </div>
+              <label className="block text-xs font-medium text-slate-500">
+                Phone
+                <input
+                  value={corrPhone}
+                  onChange={(e) => setCorrPhone(e.target.value)}
+                  required
+                  className="mt-1 w-full border border-slate-300 rounded-lg px-2 py-2 text-sm"
+                />
+              </label>
+              <label className="block text-xs font-medium text-slate-500">
+                Email
+                <input
+                  type="email"
+                  value={corrEmail}
+                  onChange={(e) => setCorrEmail(e.target.value)}
+                  required
+                  className="mt-1 w-full border border-slate-300 rounded-lg px-2 py-2 text-sm"
+                />
+              </label>
+              <button
+                type="submit"
+                disabled={correctingAddress}
+                className="w-full bg-nav text-white py-2 rounded-lg text-sm font-medium hover:bg-nav/90 disabled:opacity-50"
+              >
+                {correctingAddress ? "Saving correction…" : "Save address correction"}
+              </button>
+            </form>
           </section>
 
           <section className="bg-white border rounded-xl p-5">
