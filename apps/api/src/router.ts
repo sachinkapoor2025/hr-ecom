@@ -268,6 +268,22 @@ const routes: Route[] = [
     pattern: /^\/pending-payment-unsubscribe$/,
     handler: pendingPaymentUnsub.unsubscribePendingPaymentReminders,
   },
+  {
+    method: "GET",
+    pattern: /^\/admin\/pending-payment-unsubscribe$/,
+    handler: pendingPaymentUnsub.listPendingPaymentUnsubs,
+  },
+  {
+    method: "POST",
+    pattern: /^\/admin\/pending-payment-unsubscribe$/,
+    handler: pendingPaymentUnsub.adminAddPendingPaymentUnsub,
+  },
+  {
+    method: "DELETE",
+    pattern: /^\/admin\/pending-payment-unsubscribe\/([^/]+)$/,
+    handler: pendingPaymentUnsub.adminRemovePendingPaymentUnsub,
+    params: ["email"],
+  },
   { method: "POST", pattern: /^\/events$/, handler: events.recordEvent },
   { method: "GET", pattern: /^\/config\/payments$/, handler: config.getPaymentConfig },
   { method: "GET", pattern: /^\/config\/usd-inr-rate$/, handler: config.getUsdInrRate },

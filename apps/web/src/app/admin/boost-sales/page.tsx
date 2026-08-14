@@ -6,11 +6,18 @@ import { WelcomeLeadsPanel } from "@/components/admin/WelcomeLeadsPanel";
 import { AbandonedCartsPanel } from "@/components/admin/AbandonedCartsPanel";
 import { CouponsPanel } from "@/components/admin/CouponsPanel";
 import { LeadsPanel } from "@/components/admin/LeadsPanel";
+import { UnsubscribeEmailPanel } from "@/components/admin/UnsubscribeEmailPanel";
 
-type BoostTab = "welcome-leads" | "carts" | "coupons" | "leads";
+type BoostTab = "welcome-leads" | "carts" | "coupons" | "leads" | "unsubscribe";
 
 function parseTab(raw: string | null): BoostTab {
-  if (raw === "welcome-leads" || raw === "carts" || raw === "coupons" || raw === "leads") {
+  if (
+    raw === "welcome-leads" ||
+    raw === "carts" ||
+    raw === "coupons" ||
+    raw === "leads" ||
+    raw === "unsubscribe"
+  ) {
     return raw;
   }
   return "welcome-leads";
@@ -30,6 +37,7 @@ function BoostSalesHubInner() {
     { id: "carts", label: "Abandoned Carts" },
     { id: "coupons", label: "Coupons" },
     { id: "leads", label: "Leads" },
+    { id: "unsubscribe", label: "Unsubscribe Email" },
   ];
 
   return (
@@ -39,7 +47,8 @@ function BoostSalesHubInner() {
           <div>
             <h1 className="text-2xl font-bold">Boost Sales</h1>
             <p className="text-sm text-slate-600 mt-1">
-              Welcome leads, abandoned carts, coupons, and lead outreach — same tools, one place.
+              Welcome leads, abandoned carts, coupons, leads, and reminder unsubscribes — same tools,
+              one place.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -65,6 +74,7 @@ function BoostSalesHubInner() {
       {tab === "carts" && <AbandonedCartsPanel />}
       {tab === "coupons" && <CouponsPanel />}
       {tab === "leads" && <LeadsPanel />}
+      {tab === "unsubscribe" && <UnsubscribeEmailPanel />}
     </div>
   );
 }
