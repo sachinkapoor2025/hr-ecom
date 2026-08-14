@@ -20,7 +20,19 @@ export const ORDER_STATUS = {
 
 /** Allowed next statuses an admin can move an order to from its current status. */
 export const ORDER_STATUS_TRANSITIONS: Record<string, string[]> = {
-  [ORDER_STATUS.PENDING_PAYMENT]: [ORDER_STATUS.PAID, ORDER_STATUS.CANCELLED],
+  // Unpaid: mark Paid, jump into fulfillment (admin override), or cancel.
+  [ORDER_STATUS.PENDING_PAYMENT]: [
+    ORDER_STATUS.PAID,
+    ORDER_STATUS.ACCEPTED,
+    ORDER_STATUS.ON_HOLD,
+    ORDER_STATUS.PROCESSING,
+    ORDER_STATUS.SHIPPED,
+    ORDER_STATUS.IN_TRANSIT,
+    ORDER_STATUS.OUT_FOR_DELIVERY,
+    ORDER_STATUS.DELIVERED,
+    ORDER_STATUS.COMPLETE,
+    ORDER_STATUS.CANCELLED,
+  ],
   [ORDER_STATUS.PAID]: [
     ORDER_STATUS.ACCEPTED,
     ORDER_STATUS.ON_HOLD,
