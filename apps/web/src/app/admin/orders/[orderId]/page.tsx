@@ -1017,27 +1017,9 @@ export default function AdminOrderDetailPage() {
 
           <section className="bg-white border rounded-xl p-5">
             <h2 className="font-semibold mb-3">Update order</h2>
-            {order.status === ORDER_STATUS.PENDING_PAYMENT && (
-              <p className="text-xs text-amber-800 bg-amber-50 border border-amber-100 rounded-md px-2 py-1.5 mb-3">
-                Awaiting payment. Choose <strong>Paid</strong> or any fulfillment status (Accepted /
-                Processing / Shipped…). Fulfillment choices also mark the order paid.
-              </p>
-            )}
             {(transitions.includes(ORDER_STATUS.CANCELLED) ||
-              transitions.includes(ORDER_STATUS.REFUNDED) ||
-              transitions.includes(ORDER_STATUS.PAID)) && (
+              transitions.includes(ORDER_STATUS.REFUNDED)) && (
               <div className="flex flex-wrap gap-2 mb-3">
-                {transitions.includes(ORDER_STATUS.PAID) &&
-                  order.status === ORDER_STATUS.PENDING_PAYMENT && (
-                  <button
-                    type="button"
-                    disabled={saving}
-                    onClick={() => quickStatus(ORDER_STATUS.PAID)}
-                    className="text-xs border border-green-200 text-green-800 px-2 py-1 rounded"
-                  >
-                    Mark as paid
-                  </button>
-                )}
                 {transitions.includes(ORDER_STATUS.CANCELLED) && (
                   <button
                     type="button"

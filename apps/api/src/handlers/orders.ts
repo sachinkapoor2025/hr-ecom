@@ -618,34 +618,12 @@ export async function updateOrderStatus(event: APIGatewayProxyEventV2) {
         ? { status: order.status, at: timestamp, note: parsed.data.note }
         : null;
 
-  // Admin jumped unpaid → fulfillment status: record Paid in history so payment reports stay correct.
-  const bridgedFromUnpaid =
-    order.status === ORDER_STATUS.PENDING_PAYMENT &&
-    resolvedStatus !== order.status &&
-    resolvedStatus !== ORDER_STATUS.PAID &&
-    resolvedStatus !== ORDER_STATUS.CANCELLED;
-
-  const statusHistory = (() => {
-    const base = order.statusHistory ?? [];
-    if (!historyEntry) return base;
-    if (bridgedFromUnpaid) {
-      return [
-        ...base,
-        {
-          status: ORDER_STATUS.PAID,
-          at: timestamp,
-          note: "Marked paid when admin set fulfillment status",
-        },
-        historyEntry,
-      ];
-    }
-    return [...base, historyEntry];
-  })();
-
   const updated: StoredOrder = {
     ...order,
     status: resolvedStatus,
-    statusHistory,
+    statusHistory: historyEntry
+      ? [...(order.statusHistory ?? []), historyEntry]
+      : order.statusHistory,
     vendorFulfillments,
     ...(primary.trackingNumber ? { trackingNumber: primary.trackingNumber } : {}),
     ...(primary.carrier ? { carrier: primary.carrier } : {}),
