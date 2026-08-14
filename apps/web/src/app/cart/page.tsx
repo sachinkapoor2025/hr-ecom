@@ -245,7 +245,7 @@ export default function CartPage() {
               {showMixedVendorShippingException ? (
                 <p className="text-xs text-amber-900 bg-amber-50 border border-amber-100 rounded-md px-3 py-2">
                   Your items ship from different sellers, so shipping is checked separately for each
-                  — not on the cart total. Under $7 is $6.99, $7–$10.98 is $2.99, and $10.99+ is free
+                  — not on the cart total. Under $8 is $6.99, $8–$13.99 is $3.99, and above $13.99 is free
                   per seller. Current shipping fee: {format(shippingCharge, currency)}.
                 </p>
               ) : (
@@ -258,7 +258,7 @@ export default function CartPage() {
               {itemCount > 1 && (
                 <p className="text-xs text-slate-500">
                   At checkout you can ship each Rakhi to a different US address. Per address: under
-                  $7 is $6.99, $7–$10.98 is $2.99, and $10.99+ ships free.
+                  $8 is $6.99, $8–$13.99 is $3.99, and above $13.99 ships free.
                 </p>
               )}
               <div className="flex items-center justify-between gap-4 pt-2 border-t border-slate-100">

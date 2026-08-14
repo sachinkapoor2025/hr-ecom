@@ -3,10 +3,29 @@ import { looksLikeHtml, stripHtml } from "./html-text";
 
 type ProductLike = Pick<Product, "name" | "description" | "categorySlug" | "tags"> & {
   slug?: string;
+  additionalCategorySlugs?: string[];
 };
 
 function hasChocolateSignal(text: string): boolean {
   return /chocolate|ferrero|hershey|lindor|lindt|kitkat|dairy\s*milk|snicker/i.test(text);
+}
+
+const EATABLE_SIGNAL =
+  /chocolate|ferrero|hershey|lindor|lindt|kitkat|dairy\s*milk|snicker|kaju\s*katli|dry\s*fruit|mithai|sweet|eatable|edible|cookie|biscuit|candy|toffee/i;
+
+/**
+ * True when the product pairs Rakhi with chocolates, sweets, dry fruits, or other eatables.
+ * Used to show food-care Instructions on the product page.
+ */
+export function productHasEatablesWithRakhi(product: ProductLike): boolean {
+  const categories = [product.categorySlug, ...(product.additionalCategorySlugs ?? [])];
+  if (categories.some((c) => c === "rakhi-combo" || c === "rakhi-hampers")) return true;
+
+  const blob = [product.name, product.description, product.slug ?? "", ...(product.tags ?? [])].join(" ");
+  const plain = looksLikeHtml(blob) ? stripHtml(blob) : blob;
+  if (EATABLE_SIGNAL.test(plain)) return true;
+  if (product.slug === "bhai-bhabhi-lumba-rakhi-set") return true;
+  return Boolean(parseChocolateInclude(plain));
 }
 
 /** Parse explicit "Includes N … chocolates" or "with N Brand" from name/description. */

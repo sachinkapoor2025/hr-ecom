@@ -835,8 +835,8 @@ function CheckoutPageInner() {
                   <h2 className="text-lg font-bold text-slate-900">Deliver each Rakhi</h2>
                   <p className="text-sm text-slate-600 mt-1">
                     By default every Rakhi ships to the address above. Uncheck “Same address” to send
-                    a Rakhi to a different US location. Per address: under $7 is $6.99, $7–$10.98 is
-                    $2.99, and $10.99+ ships free.
+                    a Rakhi to a different US location. Per address: under $8 is $6.99, $8–$13.99 is
+                    $3.99, and above $13.99 ships free.
                   </p>
                 </div>
                 <ul className="space-y-4">
@@ -988,14 +988,14 @@ function CheckoutPageInner() {
                   {showMixedVendorShippingException ? (
                     <p className="text-xs text-amber-900 bg-amber-50 border border-amber-100 rounded-md px-3 py-2">
                       Your items ship from different sellers, so shipping is checked separately for
-                      each — not on the order total. Under $7 is $6.99, $7–$10.98 is $2.99, and
-                      $10.99+ is free per seller. Current shipping fee:{" "}
+                      each — not on the order total. Under $8 is $6.99, $8–$13.99 is $3.99, and
+                      above $13.99 is free per seller. Current shipping fee:{" "}
                       {format(shippingCharge, displayCurrency)}.
                     </p>
                   ) : showMultiGroupShippingNotice ? (
                     <p className="text-xs text-amber-900 bg-amber-50 border border-amber-100 rounded-md px-3 py-2">
-                      Shipping is calculated per delivery address. Under $7 is $6.99, $7–$10.98 is
-                      $2.99, and $10.99+ is free for that delivery.
+                      Shipping is calculated per delivery address. Under $8 is $6.99, $8–$13.99 is
+                      $3.99, and above $13.99 is free for that delivery.
                       {chargedShipmentCount > 0 ? (
                         <>
                           {" "}

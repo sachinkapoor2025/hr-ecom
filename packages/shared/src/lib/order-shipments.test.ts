@@ -19,10 +19,10 @@ const addr = (name: string) => ({
 });
 
 describe("buildOrderShipments", () => {
-  it("charges shipping only on under-$7 deliveries", () => {
+  it("charges shipping only on under-threshold deliveries", () => {
     const cart: CartItem[] = [
-      { productSlug: "a", name: "A", price: 10, currency: "USD", quantity: 1 },
-      { productSlug: "b", name: "B", price: 12, currency: "USD", quantity: 1 },
+      { productSlug: "a", name: "A", price: 14, currency: "USD", quantity: 1 },
+      { productSlug: "b", name: "B", price: 15, currency: "USD", quantity: 1 },
       { productSlug: "c", name: "C", price: 3, currency: "USD", quantity: 1 },
     ];
     const shipments: CheckoutShipment[] = [
