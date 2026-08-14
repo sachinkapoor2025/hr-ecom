@@ -136,6 +136,47 @@ export function CountryRakhiLanding({
         </ol>
       </section>
 
+      {/* Added SEO guide content — does not replace existing intro / how-to / FAQs */}
+      {page.addedGuideSections.length > 0 && (
+        <section className="max-w-3xl mx-auto px-4 py-10 md:py-12 space-y-10">
+          {page.addedGuideSections.map((block) => (
+            <div key={block.heading} className="min-w-0">
+              <h2 className="text-2xl font-bold text-primary mb-3 break-words">{block.heading}</h2>
+              <div className="space-y-3 text-slate-600 text-sm md:text-base leading-relaxed">
+                {block.paragraphs.map((p) => (
+                  <p key={p.slice(0, 56)}>{p}</p>
+                ))}
+              </div>
+              {block.subSections?.map((sub) => (
+                <div key={sub.heading} className="mt-5">
+                  <h3 className="text-lg font-semibold text-primary mb-2 break-words">{sub.heading}</h3>
+                  <div className="space-y-3 text-slate-600 text-sm md:text-base leading-relaxed">
+                    {sub.paragraphs.map((p) => (
+                      <p key={p.slice(0, 56)}>{p}</p>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ))}
+          <div className="flex flex-wrap justify-center gap-3 pt-2">
+            <a
+              href="#country-products"
+              className="inline-flex items-center justify-center rounded-lg text-white px-5 py-2.5 text-sm font-semibold hover:opacity-90"
+              style={{ backgroundColor: accent.cta }}
+            >
+              {page.shopCtaLabel}
+            </a>
+            <Link
+              href="/shipping"
+              className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-primary hover:border-nav"
+            >
+              Delivery information
+            </Link>
+          </div>
+        </section>
+      )}
+
       <section id="country-products" className="max-w-6xl mx-auto px-4 py-10 md:py-12 scroll-mt-24">
         <div className="text-center mb-6 max-w-2xl mx-auto">
           <h2 className="text-2xl md:text-3xl font-bold text-primary mb-2">{page.productSectionHeading}</h2>
@@ -171,6 +212,15 @@ export function CountryRakhiLanding({
               {label}
             </Link>
           ))}
+        </div>
+        <div className="mt-8 flex justify-center">
+          <a
+            href="#country-products"
+            className="inline-flex items-center justify-center rounded-lg text-white px-5 py-2.5 text-sm font-semibold hover:opacity-90"
+            style={{ backgroundColor: accent.cta }}
+          >
+            {page.shopCtaLabel}
+          </a>
         </div>
       </section>
 

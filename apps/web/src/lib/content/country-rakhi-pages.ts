@@ -2,6 +2,13 @@
 
 export type CountryRakhiPageId = "uk" | "canada";
 
+export type CountryGuideSection = {
+  heading: string;
+  paragraphs: string[];
+  /** Optional H3 blocks under this H2 */
+  subSections?: { heading: string; paragraphs: string[] }[];
+};
+
 export type CountryRakhiPage = {
   id: CountryRakhiPageId;
   /** Public path without trailing slash (canonical). */
@@ -23,6 +30,12 @@ export type CountryRakhiPage = {
   faqs: { q: string; a: string }[];
   whatsappPrefill: string;
   localeHints: Record<string, string>;
+  /**
+   * Additional SEO guide blocks (appended on-page; does not replace existing intro/how-to/FAQs).
+   */
+  addedGuideSections: CountryGuideSection[];
+  /** Primary shop CTA label for the country landing (e.g. Shop Rakhi for UK). */
+  shopCtaLabel: string;
 };
 
 export const countryRakhiPages: Record<CountryRakhiPageId, CountryRakhiPage> = {
@@ -35,7 +48,7 @@ export const countryRakhiPages: Record<CountryRakhiPageId, CountryRakhiPage> = {
     metaDescription:
       "Shop Rakhi from UK on UsaRakhi. Send Rakhi to UK or arrange Rakhi Delivery to UK for Raksha Bandhan — premium rakhis, combos & hampers with secure checkout.",
     keywords:
-      "Rakhi from UK, Rakhi Delivery to UK, Send Rakhi to UK, send rakhi from india to uk, rakhi gifts uk, raksha bandhan uk",
+      "Rakhi from UK, Rakhi Delivery to UK, Send Rakhi to UK, send rakhi from india to uk, rakhi gifts uk, raksha bandhan uk, Rakhi from India to UK, Rakhi delivery UK, Raksha Bandhan gifts UK, Indian Rakhi delivery UK, Rakhi gifts for brother in UK",
     eyebrow: "United Kingdom · Raksha Bandhan gifts",
     intro: [
       "Looking for Rakhi from UK options for Raksha Bandhan? UsaRakhi makes it simple to browse premium rakhis, combos, and hampers online — whether you are arranging a gift from India for someone you love, or you need a clear path to Send Rakhi to UK with thoughtful packaging.",
@@ -83,6 +96,58 @@ export const countryRakhiPages: Record<CountryRakhiPageId, CountryRakhiPage> = {
       en: "/rakhi-from-uk",
       "x-default": "/",
     },
+    shopCtaLabel: "Shop Rakhi for UK",
+    addedGuideSections: [
+      {
+        heading: "Send Rakhi from India to the UK",
+        paragraphs: [
+          "Many families celebrate Raksha Bandhan across borders. If you are looking for Rakhi from India to UK, UsaRakhi helps you browse traditional and designer threads online, then complete a secure checkout — including INR / UPI when you are ordering from India.",
+          "Whether you want to send Rakhi to UK for your brother, choose Raksha Bandhan gifts UK families love, or explore Indian Rakhi delivery UK options for a thoughtful festival surprise, this page brings the catalog and guidance together in one place.",
+        ],
+      },
+      {
+        heading: "Rakhi delivery UK — what to know",
+        paragraphs: [
+          "Rakhi delivery UK searches usually mean finding a gift that arrives ready for the tilak ritual — with roli and chawal on most single rakhis — and packaging that feels festive.",
+          "Before you place an order, confirm the recipient’s full address and preferred gift style. During the busy Raksha Bandhan season, ordering earlier gives more time for packing and shipping. For current shipping details, review the information shown at checkout and on our shipping page.",
+        ],
+        subSections: [
+          {
+            heading: "Rakhi gifts for brother in UK",
+            paragraphs: [
+              "Looking for Rakhi gifts for brother in UK? Start with a classic Single Rakhi for a traditional ceremony, or choose a set if more than one sibling is celebrating together. Matching Bhaiya Bhabhi and Lumba styles work well when the celebration includes sister-in-law too.",
+            ],
+          },
+        ],
+      },
+      {
+        heading: "Available Rakhi collections",
+        paragraphs: [
+          "Browse the same UsaRakhi collections used across the store — each linked from the chips below the product grid:",
+        ],
+        subSections: [
+          {
+            heading: "Single, sets & family styles",
+            paragraphs: [
+              "Single Rakhi, Kids Rakhi, Bhaiya Bhabhi Rakhi, and Lumba Rakhi cover everyday festival needs — from a simple thread to coordinated family sets.",
+            ],
+          },
+          {
+            heading: "Rakhi combos and hampers",
+            paragraphs: [
+              "Rakhi Combos pair a thread with chocolates or small treats for a sweet Send Rakhi to UK moment. Rakhi Hampers add sweets, dry fruits, and a fuller gift presentation when you want Raksha Bandhan gifts UK relatives will share together.",
+            ],
+          },
+        ],
+      },
+      {
+        heading: "Easy online ordering",
+        paragraphs: [
+          "Shopping is straightforward: pick a design from the grid, add it to cart, enter delivery details, and pay with Stripe (USD) or Razorpay (INR / UPI). Product photos, names, and live prices appear on each card so you can compare options before you buy.",
+          "Need help choosing Rakhi from India to UK? Message us on WhatsApp — we can point you to collections that match your brother’s style and your budget.",
+        ],
+      },
+    ],
   },
   canada: {
     id: "canada",
@@ -93,7 +158,7 @@ export const countryRakhiPages: Record<CountryRakhiPageId, CountryRakhiPage> = {
     metaDescription:
       "Shop Rakhi from Canada on UsaRakhi. Send Rakhi to Canada or arrange Rakhi Delivery to Canada for Raksha Bandhan — premium rakhis, combos & hampers with secure checkout.",
     keywords:
-      "Rakhi from Canada, Rakhi Delivery to Canada, Send Rakhi to Canada, send rakhi from india to canada, rakhi gifts canada, raksha bandhan canada",
+      "Rakhi from Canada, Rakhi Delivery to Canada, Send Rakhi to Canada, send rakhi from india to canada, rakhi gifts canada, raksha bandhan canada, Rakhi from India to Canada, Rakhi delivery Canada, Raksha Bandhan gifts Canada, Indian Rakhi delivery Canada, Rakhi gifts for brother in Canada",
     eyebrow: "Canada · Raksha Bandhan gifts",
     intro: [
       "Searching for Rakhi from Canada for Raksha Bandhan? UsaRakhi brings together designer threads, combos, and hampers so you can Send Rakhi to Canada with a gift that feels personal — including when you are arranging something special from India for family abroad.",
@@ -141,6 +206,58 @@ export const countryRakhiPages: Record<CountryRakhiPageId, CountryRakhiPage> = {
       en: "/rakhi-from-canada",
       "x-default": "/",
     },
+    shopCtaLabel: "Shop Rakhi for Canada",
+    addedGuideSections: [
+      {
+        heading: "Send Rakhi from India to Canada",
+        paragraphs: [
+          "Distance should not stop the Raksha Bandhan ritual. If you are arranging Rakhi from India to Canada, UsaRakhi lets you explore designer and traditional rakhis online, then check out securely — including INR / UPI for customers ordering from India.",
+          "Use this page when you want to send Rakhi to Canada, find Raksha Bandhan gifts Canada families appreciate, or compare Indian Rakhi delivery Canada–friendly gift ideas before you order.",
+        ],
+      },
+      {
+        heading: "Rakhi delivery Canada — planning tips",
+        paragraphs: [
+          "Rakhi delivery Canada shoppers often look for a complete festival experience: a quality thread, roli and chawal on most single rakhis, and optional sweets or chocolates.",
+          "Double-check the recipient’s address details at checkout, and order earlier during the peak Raksha Bandhan period so there is comfortable time for fulfilment. See the shipping page and checkout summary for the latest delivery information — we do not list fixed guarantees here that may change by season or destination.",
+        ],
+        subSections: [
+          {
+            heading: "Rakhi gifts for brother in Canada",
+            paragraphs: [
+              "For Rakhi gifts for brother in Canada, a Single Rakhi keeps the ritual classic. Multi-piece sets help when several brothers celebrate together, while Bhaiya Bhabhi and Lumba options include sister-in-law in the festival.",
+            ],
+          },
+        ],
+      },
+      {
+        heading: "Rakhi collections for Canada shoppers",
+        paragraphs: [
+          "All major UsaRakhi collections are available from this landing — use the category links under the product grid to jump straight into a style:",
+        ],
+        subSections: [
+          {
+            heading: "Threads and family sets",
+            paragraphs: [
+              "Single Rakhi, Kids Rakhi, Bhaiya Bhabhi Rakhi, and Lumba Rakhi cover traditional and modern looks for every sibling bond.",
+            ],
+          },
+          {
+            heading: "Combos and hampers",
+            paragraphs: [
+              "Rakhi Combos are ideal when you want chocolates with the thread. Rakhi Hampers package sweets, dry fruits, and festive presentation for richer Raksha Bandhan gifts Canada relatives can share.",
+            ],
+          },
+        ],
+      },
+      {
+        heading: "Easy online ordering",
+        paragraphs: [
+          "Choose a product, add it to cart, enter shipping details, and pay with Stripe (USD) or Razorpay (INR / UPI). Sorting and the currency toggle work the same as elsewhere on UsaRakhi so comparing gifts stays simple.",
+          "Unsure what to pick for Send Rakhi to Canada? Reach out on WhatsApp — we are happy to help you narrow combos, hampers, or classic single threads.",
+        ],
+      },
+    ],
   },
 };
 

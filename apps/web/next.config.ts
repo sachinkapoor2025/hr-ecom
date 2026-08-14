@@ -23,6 +23,17 @@ const nextConfig: NextConfig = {
       // Country landings — trailing-slash → canonical (not US city /send-rakhi-to-* pages).
       { source: "/rakhi-from-uk/", destination: "/rakhi-from-uk", statusCode: 301 },
       { source: "/rakhi-from-canada/", destination: "/rakhi-from-canada", statusCode: 301 },
+      // Blog article trailing slash → canonical slug (SEO stub upgraded to full guide).
+      {
+        source: "/blog/what-to-gift-bhabhi-on-raksha-bandhan/",
+        destination: "/blog/what-to-gift-bhabhi-on-raksha-bandhan",
+        statusCode: 301,
+      },
+      {
+        source: "/blog/what-is-lumba-rakhi/",
+        destination: "/blog/what-is-lumba-rakhi",
+        statusCode: 301,
+      },
       { source: "/sitemap.rss", destination: "/sitemap.xml", statusCode: 301 },
     ];
   },
