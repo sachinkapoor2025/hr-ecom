@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { ExpensesPanel } from "@/components/admin/ExpensesPanel";
 import { SettlementPanel } from "@/components/admin/SettlementPanel";
@@ -19,6 +19,7 @@ function parseTab(raw: string | null): ExpenseTab {
 
 function ExpenseSettlementHubInner() {
   const { isSuperAdmin, loading: authLoading } = useAuth();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const initial = useMemo(() => parseTab(searchParams.get("tab")), [searchParams]);
   const [tab, setTab] = useState<ExpenseTab>(initial);
@@ -27,39 +28,43 @@ function ExpenseSettlementHubInner() {
     setTab(initial);
   }, [initial]);
 
+  // Admins may use Expense; Settlement / Reconciliation stay super-admin only.
+  useEffect(() => {
+    if (authLoading || isSuperAdmin) return;
+    if (tab === "settlement" || tab === "reconciliation") {
+      setTab("expense");
+      router.replace("/admin/expense-settlement?tab=expense");
+    }
+  }, [authLoading, isSuperAdmin, tab, router]);
+
   if (authLoading) {
     return <p className="text-slate-500 p-6">Loading…</p>;
   }
 
-  if (!isSuperAdmin) {
-    return (
-      <div className="max-w-lg mx-auto px-4 py-16 text-center">
-        <h1 className="text-xl font-semibold text-slate-800 mb-2">Super admin only</h1>
-        <p className="text-slate-600 text-sm">
-          Expense &amp; Settlement is limited to Cognito users in the <code>super-admin</code> group.
-        </p>
-      </div>
-    );
-  }
-
-  const tabs: { id: ExpenseTab; label: string }[] = [
+  const tabs: { id: ExpenseTab; label: string; superOnly?: boolean }[] = [
     { id: "expense", label: "Expense" },
-    { id: "settlement", label: "Settlement" },
-    { id: "reconciliation", label: "Reconciliation" },
+    { id: "settlement", label: "Settlement", superOnly: true },
+    { id: "reconciliation", label: "Reconciliation", superOnly: true },
   ];
+
+  const visibleTabs = tabs.filter((t) => !t.superOnly || isSuperAdmin);
 
   return (
     <div className="min-h-[50vh]">
       <div className="max-w-6xl mx-auto px-4 pt-8 pb-2">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
           <div>
-            <h1 className="text-2xl font-bold">Expense &amp; Settlement</h1>
+            <h1 className="text-2xl font-bold">
+              {isSuperAdmin ? "Expense & Settlement" : "Expense"}
+            </h1>
             <p className="text-sm text-slate-600 mt-1">
-              Business expenses, gateway settlements, and reconciliation — same tools, one place.
+              {isSuperAdmin
+                ? "Business expenses, gateway settlements, and reconciliation — same tools, one place."
+                : "Record and manage business expenses."}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            {tabs.map((t) => (
+            {visibleTabs.map((t) => (
               <button
                 key={t.id}
                 type="button"
@@ -78,8 +83,8 @@ function ExpenseSettlementHubInner() {
       </div>
 
       {tab === "expense" && <ExpensesPanel />}
-      {tab === "settlement" && <SettlementPanel />}
-      {tab === "reconciliation" && <ReconciliationPanel />}
+      {tab === "settlement" && isSuperAdmin && <SettlementPanel />}
+      {tab === "reconciliation" && isSuperAdmin && <ReconciliationPanel />}
     </div>
   );
 }
