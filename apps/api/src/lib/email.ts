@@ -1010,6 +1010,97 @@ export async function notifyCustomerOrderStatusChange(order: Order): Promise<Ema
   return emailResult;
 }
 
+function formatAddressBlock(addr: {
+  name?: string;
+  line1?: string;
+  line2?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  country?: string;
+  phone?: string;
+  email?: string;
+} | null | undefined): string {
+  if (!addr) return "—";
+  return [
+    addr.name,
+    addr.line1,
+    addr.line2,
+    [addr.city, addr.state, addr.postalCode].filter(Boolean).join(", "),
+    addr.country,
+    addr.phone ? `Phone: ${addr.phone}` : null,
+    addr.email ? `Email: ${addr.email}` : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+/** Customer + ops email when admin corrects the shipping address. */
+export async function notifyCustomerAddressCorrected(
+  order: Order,
+  previousAddress?: Order["shippingAddress"]
+): Promise<EmailSendResult> {
+  if (!smtpConfigured()) {
+    return { ok: false, skipped: true, error: "SMTP not configured" };
+  }
+
+  const shortId = (order.orderNumber ?? order.orderId).toString();
+  const name = order.shippingAddress?.name?.split(" ")[0] ?? "there";
+  const newBlock = formatAddressBlock(order.shippingAddress);
+  const oldBlock = formatAddressBlock(previousAddress);
+
+  const customerBody = `Hi ${name},
+
+We've updated the shipping address on your ${SITE_NAME} order ${shortId}.
+
+Updated shipping address:
+${newBlock}
+
+If this looks incorrect, reply to this email or WhatsApp us right away so we can fix it before the label is printed.
+
+Track your order: ${siteUrl()}/orders/${order.orderId}
+
+— Team ${SITE_NAME}
+${notifyAddress()}`;
+
+  const adminBody = [
+    `Address corrected on order ${shortId}`,
+    `Order ID: ${order.orderId}`,
+    "",
+    "Previous address:",
+    oldBlock,
+    "",
+    "New address:",
+    newBlock,
+    "",
+    `Admin: ${siteUrl()}/admin/orders/${order.orderId}`,
+  ].join("\n");
+
+  const adminResult = await sendEmail({
+    to: adminNotifyAddresses(),
+    subject: `[${SITE_NAME}] Address corrected — ${shortId}`,
+    text: adminBody,
+    replyTo: order.shippingAddress?.email,
+  });
+  if (!adminResult.ok && !adminResult.skipped) {
+    console.error("Admin address-correction email failed:", adminResult.error);
+  }
+
+  const customerEmail = order.shippingAddress?.email?.trim();
+  if (!customerEmail?.includes("@")) {
+    return adminResult.ok
+      ? { ok: true, skipped: true, error: "No customer email" }
+      : { ok: false, skipped: true, error: "No customer email" };
+  }
+
+  return sendEmail({
+    to: customerEmail,
+    subject: `Shipping address updated — order ${shortId} | ${SITE_NAME}`,
+    text: customerBody,
+    replyTo: notifyAddress(),
+  });
+}
+
 export async function sendReviewRequestEmail(order: Order): Promise<EmailSendResult> {
   if (!smtpConfigured()) {
     return { ok: false, skipped: true, error: "SMTP not configured" };

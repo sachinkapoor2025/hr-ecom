@@ -13,11 +13,21 @@ import {
   type ExpenseBillStatus,
   type LedgerCurrency,
 } from "@hr-ecom/shared";
-import { requireSuperAdmin } from "../lib/auth";
+import { requireAdmin, requireSuperAdmin, type AuthContext } from "../lib/auth";
 import { docClient, CONFIG_TABLE, now } from "../lib/db";
 import { ok, created, badRequest, forbidden, notFound } from "../lib/response";
 
 type StoredExpense = Expense & { PK: string; SK: string };
+
+/** Super admin: any expense. Admin: only expenses they personally created. */
+function canEditExpense(auth: AuthContext, expense: StoredExpense): boolean {
+  if (auth.isSuperAdmin) return true;
+  const createdBy = (expense.createdBy ?? "").trim().toLowerCase();
+  if (!createdBy) return false;
+  const email = auth.email.trim().toLowerCase();
+  const userId = auth.userId.trim().toLowerCase();
+  return createdBy === email || createdBy === userId;
+}
 
 function normalizeCurrency(value: unknown): LedgerCurrency {
   return value === "INR" ? "INR" : "USD";
@@ -94,7 +104,7 @@ async function listExpenseItems(): Promise<StoredExpense[]> {
 }
 
 export async function listExpenses(event: APIGatewayProxyEventV2) {
-  if (!requireSuperAdmin(event)) return forbidden("Super admin access required");
+  if (!requireAdmin(event)) return forbidden();
   const expenses = (await listExpenseItems()).map(toPublic);
   const totalByCurrency = {
     USD: roundMoney(
@@ -114,8 +124,8 @@ export async function listExpenses(event: APIGatewayProxyEventV2) {
 }
 
 export async function createExpense(event: APIGatewayProxyEventV2) {
-  const auth = requireSuperAdmin(event);
-  if (!auth) return forbidden("Super admin access required");
+  const auth = requireAdmin(event);
+  if (!auth) return forbidden();
 
   const parsed = createExpenseSchema.safeParse(JSON.parse(event.body ?? "{}"));
   if (!parsed.success) return badRequest(parsed.error.message);
@@ -152,8 +162,8 @@ export async function createExpense(event: APIGatewayProxyEventV2) {
 }
 
 export async function updateExpense(event: APIGatewayProxyEventV2) {
-  const auth = requireSuperAdmin(event);
-  if (!auth) return forbidden("Super admin access required");
+  const auth = requireAdmin(event);
+  if (!auth) return forbidden();
 
   const expenseId = event.pathParameters?.expenseId?.trim();
   if (!expenseId) return badRequest("expenseId required");
@@ -170,6 +180,10 @@ export async function updateExpense(event: APIGatewayProxyEventV2) {
   if (!existing.Item) return notFound("Expense not found");
 
   const prev = existing.Item as StoredExpense;
+  if (!canEditExpense(auth, prev)) {
+    return forbidden("You can only edit expenses you added");
+  }
+
   const billsTouched =
     parsed.data.billStatus !== undefined ||
     parsed.data.noBill !== undefined ||
