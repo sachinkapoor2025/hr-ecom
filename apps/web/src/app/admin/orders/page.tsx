@@ -110,6 +110,23 @@ const STATUS_TABS: { id: string; label: string }[] = [
   { id: ORDER_STATUS.REFUNDED, label: "Refunded" },
 ];
 
+/** Exact order statuses for multi-select filter (includes Accepted / Complete). */
+const STATUS_CHECKBOXES: { id: string; label: string }[] = [
+  { id: ORDER_STATUS.PENDING_PAYMENT, label: "Pending payment" },
+  { id: ORDER_STATUS.PAID, label: "Paid" },
+  { id: ORDER_STATUS.ACCEPTED, label: "Accepted" },
+  { id: ORDER_STATUS.ON_HOLD, label: "On hold" },
+  { id: ORDER_STATUS.PROCESSING, label: "Processing" },
+  { id: ORDER_STATUS.SHIPPED, label: "Shipped" },
+  { id: ORDER_STATUS.IN_TRANSIT, label: "In transit" },
+  { id: ORDER_STATUS.OUT_FOR_DELIVERY, label: "Out for delivery" },
+  { id: ORDER_STATUS.DELIVERED, label: "Delivered" },
+  { id: ORDER_STATUS.COMPLETE, label: "Complete" },
+  { id: ORDER_STATUS.DELIVERY_EXCEPTION, label: "Delivery exception" },
+  { id: ORDER_STATUS.CANCELLED, label: "Cancelled" },
+  { id: ORDER_STATUS.REFUNDED, label: "Refunded" },
+];
+
 const PAYMENT_FILTERS = [
   { id: "all", label: "All payments" },
   { id: "pending", label: "Pending" },
@@ -124,6 +141,7 @@ export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState("all");
+  const [statusMulti, setStatusMulti] = useState<Set<string>>(new Set());
   const [paymentFilter, setPaymentFilter] = useState("all");
   const [paymentMethod, setPaymentMethod] = useState("all");
   const [vendorFilter, setVendorFilter] = useState("all");
@@ -150,12 +168,38 @@ export default function AdminOrdersPage() {
 
   useEffect(() => {
     setPage(1);
-  }, [tab, paymentFilter, paymentMethod, vendorFilter, search, dateFrom, dateTo, sortKey, sortDir]);
+  }, [
+    tab,
+    statusMulti,
+    paymentFilter,
+    paymentMethod,
+    vendorFilter,
+    search,
+    dateFrom,
+    dateTo,
+    sortKey,
+    sortDir,
+  ]);
+
+  const toggleStatusMulti = (id: string) => {
+    setStatusMulti((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+    setTab("all");
+  };
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
+    const multiActive = statusMulti.size > 0;
     let list = orders.filter((o) => {
-      if (!matchesOrderStatusTab(o.status, tab)) return false;
+      if (multiActive) {
+        if (!statusMulti.has(o.status)) return false;
+      } else if (!matchesOrderStatusTab(o.status, tab)) {
+        return false;
+      }
       if (!matchesPaymentFilter(o.status, paymentFilter)) return false;
       if (paymentMethod !== "all" && o.paymentProvider !== paymentMethod) return false;
       if (vendorFilter !== "all" && !orderHasVendor(o, vendorFilter)) {
@@ -183,7 +227,19 @@ export default function AdminOrdersPage() {
 
     list = sortItems(list, sorter, sortDir);
     return list;
-  }, [orders, tab, paymentFilter, paymentMethod, vendorFilter, search, dateFrom, dateTo, sortKey, sortDir]);
+  }, [
+    orders,
+    tab,
+    statusMulti,
+    paymentFilter,
+    paymentMethod,
+    vendorFilter,
+    search,
+    dateFrom,
+    dateTo,
+    sortKey,
+    sortDir,
+  ]);
 
   const vendorOptions = useMemo(() => collectVendorSlugs(orders), [orders]);
 
@@ -299,10 +355,11 @@ export default function AdminOrdersPage() {
             type="button"
             onClick={() => {
               setTab(t.id);
+              setStatusMulti(new Set());
               setPaymentFilter("all");
             }}
             className={`px-3 py-1.5 rounded-full text-sm border ${
-              tab === t.id
+              tab === t.id && statusMulti.size === 0
                 ? "bg-nav text-white border-nav"
                 : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
             }`}
@@ -310,6 +367,37 @@ export default function AdminOrdersPage() {
             {t.label}
           </button>
         ))}
+      </div>
+
+      <div className="mb-4 rounded-lg border border-slate-200 bg-white p-3">
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+          <p className="text-sm font-medium text-slate-700">Order status</p>
+          {statusMulti.size > 0 && (
+            <button
+              type="button"
+              onClick={() => setStatusMulti(new Set())}
+              className="text-xs text-slate-500 underline hover:text-slate-800"
+            >
+              Clear ({statusMulti.size})
+            </button>
+          )}
+        </div>
+        <div className="flex flex-wrap gap-x-4 gap-y-2">
+          {STATUS_CHECKBOXES.map((s) => (
+            <label
+              key={s.id}
+              className="inline-flex cursor-pointer items-center gap-1.5 text-sm text-slate-700"
+            >
+              <input
+                type="checkbox"
+                checked={statusMulti.has(s.id)}
+                onChange={() => toggleStatusMulti(s.id)}
+                className="rounded border-slate-300"
+              />
+              {s.label}
+            </label>
+          ))}
+        </div>
       </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
