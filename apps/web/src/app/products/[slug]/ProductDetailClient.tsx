@@ -34,6 +34,7 @@ import {
   FLASH_COMBO_SHIPPING_USD,
 } from "@hr-ecom/shared";
 import { EstimatedDeliveryNote } from "@/components/EstimatedDeliveryNote";
+import { ProductCareAccordions } from "@/components/ProductCareAccordions";
 import { ScheduleDeliveryPicker } from "@/components/ScheduleDeliveryPicker";
 import type { Product, ProductAddonSelection } from "@hr-ecom/shared";
 import { FastSellingBanner } from "@/components/FastSellingBadge";
@@ -260,6 +261,8 @@ export function ProductDetailClient({
           <EstimatedDeliveryNote variant="banner" prefix="Estimated delivery:" className="mb-4" />
 
           <TrustBadges variant="compact" className="mb-5" />
+
+          <ProductCareAccordions product={product} />
 
           {showAddons ? (
             <ProductAddonsPicker selected={addons} onChange={setAddons} className="mb-4" />

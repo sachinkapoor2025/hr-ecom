@@ -243,23 +243,23 @@ export default function CartPage() {
                 </span>
               </div>
               {showMixedVendorShippingException ? (
-                <p className="text-xs text-amber-900 bg-amber-50 border border-amber-100 rounded-md px-3 py-2">
-                  Your items ship from different sellers, so shipping is checked separately for each
-                  — not on the cart total. Under $7 is $6.99, $7–$10.98 is $2.99, and $10.99+ is free
-                  per seller. Current shipping fee: {format(shippingCharge, currency)}.
-                </p>
+                <FreeShippingNotice
+                  quote={shippingQuote}
+                  formatMoney={format}
+                  currency={currency}
+                  footnote={`Your items ship from different sellers, so each seller is priced separately (not on the cart total). Current shipping fee: ${format(shippingCharge, currency)}.`}
+                />
               ) : (
                 <FreeShippingNotice
                   quote={shippingQuote}
                   formatMoney={format}
                   currency={currency}
+                  footnote={
+                    itemCount > 1
+                      ? "At checkout you can ship each Rakhi to a different US address — rates apply per address."
+                      : undefined
+                  }
                 />
-              )}
-              {itemCount > 1 && (
-                <p className="text-xs text-slate-500">
-                  At checkout you can ship each Rakhi to a different US address. Per address: under
-                  $7 is $6.99, $7–$10.98 is $2.99, and $10.99+ ships free.
-                </p>
               )}
               <div className="flex items-center justify-between gap-4 pt-2 border-t border-slate-100">
                 <span className="font-bold text-slate-900">Estimated total</span>

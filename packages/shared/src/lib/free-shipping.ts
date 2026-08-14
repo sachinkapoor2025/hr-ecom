@@ -9,20 +9,20 @@ import {
 } from "./flash-sale";
 import { cartLineUnitTotal } from "./product-addons";
 
-/** Cart subtotal at or above this (USD) unlocks free shipping. */
-export const FREE_SHIPPING_MIN_SUBTOTAL_USD = 10.99;
+/** Cart subtotal at or above this (USD) unlocks free shipping (above $13.99 → $14.00+). */
+export const FREE_SHIPPING_MIN_SUBTOTAL_USD = 14;
 
 /**
- * At or above this (USD) and below free-shipping threshold → reduced $2.99 shipping.
+ * At or above this (USD) and below free-shipping threshold → reduced $3.99 shipping.
  * Below this → $6.99 shipping.
  */
-export const REDUCED_SHIPPING_MIN_SUBTOTAL_USD = 7;
+export const REDUCED_SHIPPING_MIN_SUBTOTAL_USD = 8;
 
-/** Flat shipping when bucket is under $7. */
+/** Flat shipping when bucket is under $8. */
 export const BELOW_THRESHOLD_SHIPPING_USD = 6.99;
 
-/** Flat shipping when bucket is $7+ but under $10.99. */
-export const REDUCED_SHIPPING_USD = 2.99;
+/** Flat shipping when bucket is $8+ but under $14 (i.e. through $13.99). */
+export const REDUCED_SHIPPING_USD = 3.99;
 
 export type FreeShippingTier = "low" | "mid" | "free";
 
@@ -32,15 +32,15 @@ export type FreeShippingQuote = {
   qualifiesForFreeShipping: boolean;
   /** How much more cart value (in `currency`) is needed for free shipping. */
   amountAwayFromFreeShipping: number;
-  /** How much more cart value (in `currency`) is needed to reach the $2.99 tier. */
+  /** How much more cart value (in `currency`) is needed to reach the $3.99 tier. */
   amountAwayFromReducedShipping: number;
   /** Free-shipping threshold expressed in `currency`. */
   thresholdInCurrency: number;
-  /** Reduced-shipping ($2.99) threshold expressed in `currency`. */
+  /** Reduced-shipping ($3.99) threshold expressed in `currency`. */
   reducedThresholdInCurrency: number;
   /** $6.99 tier fee in `currency`. */
   lowTierFeeInCurrency: number;
-  /** $2.99 tier fee in `currency`. */
+  /** $3.99 tier fee in `currency`. */
   midTierFeeInCurrency: number;
   /** Current tier for this bucket. */
   tier: FreeShippingTier;
@@ -71,9 +71,9 @@ function toUsd(
 
 /**
  * Shipping tiers (per address × vendor bucket, in USD):
- * - under $7 → $6.99
- * - $7 to under $10.99 → $2.99
- * - $10.99+ → free
+ * - under $8 → $6.99
+ * - $8 to $13.99 → $3.99
+ * - above $13.99 ($14+) → free
  * Evaluated in USD, then converted when the shopper currency is INR.
  */
 export function quoteFreeShippingThreshold(input: {
