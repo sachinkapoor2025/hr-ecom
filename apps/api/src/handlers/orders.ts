@@ -7,6 +7,7 @@ import {
   updateLeadSchema,
   orderStatusUpdateSchema,
   correctOrderAddressSchema,
+  MAX_ORDER_ADDRESS_CORRECTIONS,
   orderKeys,
   customerKeys,
   ORDER_STATUS,
@@ -710,6 +711,18 @@ export async function correctOrderAddress(event: APIGatewayProxyEventV2) {
   const order = await fetchOrder(orderId);
   if (!order) return notFound("Order not found");
 
+  const priorCount =
+    typeof order.addressCorrectionCount === "number"
+      ? order.addressCorrectionCount
+      : (order.statusHistory ?? []).filter((h) =>
+          (h.note ?? "").toLowerCase().startsWith("address corrected")
+        ).length;
+  if (priorCount >= MAX_ORDER_ADDRESS_CORRECTIONS) {
+    return badRequest(
+      `Shipping address can be corrected at most ${MAX_ORDER_ADDRESS_CORRECTIONS} times for this order.`
+    );
+  }
+
   const previous = order.shippingAddress;
   const nextAddress: ShippingAddress = {
     ...parsed.data.shippingAddress,
@@ -753,6 +766,7 @@ export async function correctOrderAddress(event: APIGatewayProxyEventV2) {
     ],
     adminNotes: adminNotes.slice(0, 2000),
     addressValidated: false,
+    addressCorrectionCount: priorCount + 1,
     ...(hadPurchasedLabel
       ? {
           labelStatus: "none" as const,

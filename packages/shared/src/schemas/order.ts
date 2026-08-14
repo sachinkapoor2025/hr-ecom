@@ -221,12 +221,17 @@ export const orderSchema = z.object({
   labelStatus: z.enum(["none", "queued", "purchased", "failed"]).optional(),
   labelError: z.string().optional(),
   addressValidated: z.boolean().optional(),
+  /** How many times admins have corrected the shipping address (max 3). */
+  addressCorrectionCount: z.number().int().min(0).max(10).optional(),
   /**
    * Marketing attribution snapshot (first/last/assisted touch).
    * Stored on the order so Order Route survives analytics event TTL.
    */
   attribution: orderAttributionSchema.optional(),
 });
+
+/** Max shipping-address corrections an admin may apply per order. */
+export const MAX_ORDER_ADDRESS_CORRECTIONS = 3;
 
 /** Admin order status update payload. */
 export const orderStatusUpdateSchema = z.object({
