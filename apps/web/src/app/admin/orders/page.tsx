@@ -391,7 +391,7 @@ export default function AdminOrdersPage() {
         ))}
       </div>
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-6 gap-3 mb-4">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
         <input
           type="search"
           placeholder="Search order ID, name, email, phone…"
@@ -482,22 +482,6 @@ export default function AdminOrdersPage() {
             </option>
           ))}
         </select>
-        <div className="flex gap-2">
-          <input
-            type="date"
-            value={dateFrom}
-            onChange={(e) => setDateFrom(e.target.value)}
-            className="flex-1 border border-slate-300 rounded-lg px-2 py-2 text-sm"
-            title="From date"
-          />
-          <input
-            type="date"
-            value={dateTo}
-            onChange={(e) => setDateTo(e.target.value)}
-            className="flex-1 border border-slate-300 rounded-lg px-2 py-2 text-sm"
-            title="To date"
-          />
-        </div>
       </div>
 
       <TableControls
@@ -515,16 +499,30 @@ export default function AdminOrdersPage() {
         }}
         onExport={exportOrders}
       >
+        <div className="flex items-center gap-2">
+          <input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className="border border-slate-300 rounded-lg px-2 py-1.5 text-sm"
+            title="From date"
+          />
+          <input
+            type="date"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            className="border border-slate-300 rounded-lg px-2 py-1.5 text-sm"
+            title="To date"
+          />
+        </div>
         {selected.size > 0 && (
-          <>
-            <button
-              type="button"
-              onClick={bulkExport}
-              className="text-sm bg-slate-800 text-white px-3 py-1.5 rounded-lg"
-            >
-              Export {selected.size} selected
-            </button>
-          </>
+          <button
+            type="button"
+            onClick={bulkExport}
+            className="text-sm bg-slate-800 text-white px-3 py-1.5 rounded-lg"
+          >
+            Export {selected.size} selected
+          </button>
         )}
       </TableControls>
 
