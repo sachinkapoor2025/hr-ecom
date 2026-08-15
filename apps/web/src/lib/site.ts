@@ -8,10 +8,10 @@ export const site = {
   description:
     "UsaRakhi.com — top-rated online Rakhi store for USA delivery. Ships domestically within the US (no customs delays). Sisters in India pay INR/UPI and send to brothers across America. 2–3 day express to major cities, 5–7 days nationwide. Gift combos, designer rakhis, Bhaiya Bhabhi sets.",
   supportEmail: "order@usarakhi.com",
-  phone: "+91 96504 57697",
+  phone: "+91 9266467887",
   /** WhatsApp support — digits only with country code (no +). Used when no group invite is set. */
-  whatsapp: "919650457697",
-  whatsappDisplay: "+91 96504 57697",
+  whatsapp: "919266467887",
+  whatsappDisplay: "+91 9266467887",
   /**
    * Optional WhatsApp group invite link (https://chat.whatsapp.com/...).
    * When set, all site WhatsApp buttons open this group so both team members see enquiries.

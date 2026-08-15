@@ -270,7 +270,7 @@ function friendlyTwilioError(status: number, body: string): string {
     if (parsed.code === 63007) {
       return (
         "Twilio 63007: From number is not a WhatsApp sender on this Twilio account. " +
-        "Register +919650457697 under Twilio Console → Messaging → Senders → WhatsApp " +
+        "Register +919266467887 under Twilio Console → Messaging → Senders → WhatsApp " +
         "(status ONLINE), or for testing set TWILIO_WHATSAPP_FROM to the Sandbox number " +
         "whatsapp:+14155238886 and join the sandbox from the recipient phone."
       );
