@@ -5,6 +5,7 @@ import { api } from "@/lib/api";
 import { applyInlineLinks } from "@/lib/inline-links";
 import { homepageInlineLinks } from "@/lib/content/page-inline-links";
 import { HomeHero } from "@/components/HomeHero";
+import { CategoryShopIcons } from "@/components/CategoryShopIcons";
 import { GoogleReviews } from "@/components/GoogleReviews";
 import { getGoogleReviews } from "@/lib/google-reviews";
 import { HomeProductCard } from "@/components/HomeProductCard";
@@ -106,6 +107,7 @@ export default async function HomePage() {
     <div>
       <JsonLd data={[faqJsonLd(faqs), howToSendRakhiJsonLd()]} />
       <HomeHero banners={getHomeBanners()} />
+      <CategoryShopIcons />
       <FlashSaleSection product={flashCombo} />
       <TrustStrip />
       <IndiaBuyerBanner />
