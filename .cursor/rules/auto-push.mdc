@@ -1,0 +1,15 @@
+---
+description: Always commit and push completed work to the current branch by default
+alwaysApply: true
+---
+
+# Auto push after work
+
+When finishing a coding task that changes the repo:
+
+1. **Commit** the relevant changes (do not wait for the user to say “commit” or “push”).
+2. **Push** to the tracked remote branch immediately after a successful commit (`git push -u origin HEAD`).
+3. Follow existing git safety rules: never force-push, never amend unless the amend conditions in user rules are met, never commit secrets, never update git config.
+4. Use a clear commit message focused on why; use a HEREDOC for the message.
+5. If there is nothing to commit, do not create an empty commit; still report status briefly.
+6. If push fails (auth/network/rejected), report the error and stop — do not force-push unless the user explicitly asks.

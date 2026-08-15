@@ -62,6 +62,75 @@ export const COLLECTIONS: CollectionDefinition[] = [
       ),
   },
   {
+    slug: "rakhi-with-sweets",
+    title: "Rakhi with Sweets USA — Mithai & Kaju Katli Hampers",
+    h1: "Rakhi with Sweets",
+    description:
+      "Send Rakhi with sweets to the USA — kaju katli, mithai, and festive sweet hampers with domestic shipping.",
+    intro:
+      "Pair a designer Rakhi with traditional sweets and mithai gift boxes for a complete Raksha Bandhan surprise.",
+    filter: (products) =>
+      products.filter((p) =>
+        matchesAnyKeyword(p, [
+          "sweet",
+          "sweets",
+          "mithai",
+          "kaju katli",
+          "kaju",
+          "laddoo",
+          "ladoo",
+          "barfi",
+          "halwa",
+        ])
+      ),
+  },
+  {
+    slug: "rakhi-with-chocolates",
+    title: "Rakhi with Chocolates USA — Ferrero, Lindt & More",
+    h1: "Rakhi with Chocolates",
+    description:
+      "Shop Rakhi with chocolates for USA delivery — Ferrero Rocher, Lindt, Hershey's, and chocolate combos shipped domestically.",
+    intro:
+      "Chocolate Rakhi combos loved by brothers across America — premium wrapped chocolates with designer threads.",
+    filter: (products) =>
+      products.filter(
+        (p) =>
+          inCategory(p, "rakhi-combo") ||
+          matchesAnyKeyword(p, [
+            "chocolate",
+            "chocolates",
+            "ferrero",
+            "lindt",
+            "hershey",
+            "dairy milk",
+            "snickers",
+          ])
+      ),
+  },
+  {
+    slug: "rakhi-with-dryfruits",
+    title: "Rakhi with Dry Fruits USA — Nuts & Dry Fruit Hampers",
+    h1: "Rakhi with Dry Fruits",
+    description:
+      "Send Rakhi with dry fruits to the USA — almonds, pistachios, cashews, and premium dry fruit hampers.",
+    intro:
+      "Nutritious dry fruit and nut gift boxes paired with Rakhi — ideal for brothers who love healthy festive treats.",
+    filter: (products) =>
+      products.filter((p) =>
+        matchesAnyKeyword(p, [
+          "dry fruit",
+          "dryfruit",
+          "dry fruits",
+          "almond",
+          "pistachio",
+          "cashew",
+          "walnut",
+          "nuts",
+          "mixed nuts",
+        ])
+      ),
+  },
+  {
     slug: "personalized-rakhi",
     title: "Personalized Rakhi USA — Custom Name & Photo Styles",
     h1: "Personalized Rakhi to USA",
