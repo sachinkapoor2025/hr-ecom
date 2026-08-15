@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useApiClient } from "@/lib/auth-context";
@@ -110,6 +110,23 @@ const STATUS_TABS: { id: string; label: string }[] = [
   { id: ORDER_STATUS.REFUNDED, label: "Refunded" },
 ];
 
+/** Exact order statuses for multi-select filter (includes Accepted / Complete). */
+const STATUS_OPTIONS: { id: string; label: string }[] = [
+  { id: ORDER_STATUS.PENDING_PAYMENT, label: "Pending payment" },
+  { id: ORDER_STATUS.PAID, label: "Paid" },
+  { id: ORDER_STATUS.ACCEPTED, label: "Accepted" },
+  { id: ORDER_STATUS.ON_HOLD, label: "On hold" },
+  { id: ORDER_STATUS.PROCESSING, label: "Processing" },
+  { id: ORDER_STATUS.SHIPPED, label: "Shipped" },
+  { id: ORDER_STATUS.IN_TRANSIT, label: "In transit" },
+  { id: ORDER_STATUS.OUT_FOR_DELIVERY, label: "Out for delivery" },
+  { id: ORDER_STATUS.DELIVERED, label: "Delivered" },
+  { id: ORDER_STATUS.COMPLETE, label: "Complete" },
+  { id: ORDER_STATUS.DELIVERY_EXCEPTION, label: "Delivery exception" },
+  { id: ORDER_STATUS.CANCELLED, label: "Cancelled" },
+  { id: ORDER_STATUS.REFUNDED, label: "Refunded" },
+];
+
 const PAYMENT_FILTERS = [
   { id: "all", label: "All payments" },
   { id: "pending", label: "Pending" },
@@ -124,6 +141,9 @@ export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState("all");
+  const [statusMulti, setStatusMulti] = useState<Set<string>>(new Set());
+  const [statusMenuOpen, setStatusMenuOpen] = useState(false);
+  const statusMenuRef = useRef<HTMLDivElement>(null);
   const [paymentFilter, setPaymentFilter] = useState("all");
   const [paymentMethod, setPaymentMethod] = useState("all");
   const [vendorFilter, setVendorFilter] = useState("all");
@@ -135,6 +155,17 @@ export default function AdminOrdersPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (!statusMenuOpen) return;
+    const onDoc = (e: MouseEvent) => {
+      if (statusMenuRef.current && !statusMenuRef.current.contains(e.target as Node)) {
+        setStatusMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [statusMenuOpen]);
 
   const loadOrders = useCallback(() => {
     setLoading(true);
@@ -150,12 +181,38 @@ export default function AdminOrdersPage() {
 
   useEffect(() => {
     setPage(1);
-  }, [tab, paymentFilter, paymentMethod, vendorFilter, search, dateFrom, dateTo, sortKey, sortDir]);
+  }, [
+    tab,
+    statusMulti,
+    paymentFilter,
+    paymentMethod,
+    vendorFilter,
+    search,
+    dateFrom,
+    dateTo,
+    sortKey,
+    sortDir,
+  ]);
+
+  const toggleStatusMulti = (id: string) => {
+    setStatusMulti((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+    setTab("all");
+  };
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
+    const multiActive = statusMulti.size > 0;
     let list = orders.filter((o) => {
-      if (!matchesOrderStatusTab(o.status, tab)) return false;
+      if (multiActive) {
+        if (!statusMulti.has(o.status)) return false;
+      } else if (!matchesOrderStatusTab(o.status, tab)) {
+        return false;
+      }
       if (!matchesPaymentFilter(o.status, paymentFilter)) return false;
       if (paymentMethod !== "all" && o.paymentProvider !== paymentMethod) return false;
       if (vendorFilter !== "all" && !orderHasVendor(o, vendorFilter)) {
@@ -183,7 +240,19 @@ export default function AdminOrdersPage() {
 
     list = sortItems(list, sorter, sortDir);
     return list;
-  }, [orders, tab, paymentFilter, paymentMethod, vendorFilter, search, dateFrom, dateTo, sortKey, sortDir]);
+  }, [
+    orders,
+    tab,
+    statusMulti,
+    paymentFilter,
+    paymentMethod,
+    vendorFilter,
+    search,
+    dateFrom,
+    dateTo,
+    sortKey,
+    sortDir,
+  ]);
 
   const vendorOptions = useMemo(() => collectVendorSlugs(orders), [orders]);
 
@@ -279,6 +348,14 @@ export default function AdminOrdersPage() {
     customer: "Customer",
   };
 
+  const statusMultiLabel = (() => {
+    if (statusMulti.size === 0) return "All order statuses";
+    const labels = STATUS_OPTIONS.filter((s) => statusMulti.has(s.id)).map((s) => s.label);
+    if (labels.length === 1) return labels[0];
+    if (labels.length === 2) return `${labels[0]}, ${labels[1]}`;
+    return `${labels[0]} +${labels.length - 1}`;
+  })();
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
       <div className="flex items-center justify-between mb-6">
@@ -299,10 +376,12 @@ export default function AdminOrdersPage() {
             type="button"
             onClick={() => {
               setTab(t.id);
+              setStatusMulti(new Set());
+              setStatusMenuOpen(false);
               setPaymentFilter("all");
             }}
             className={`px-3 py-1.5 rounded-full text-sm border ${
-              tab === t.id
+              tab === t.id && statusMulti.size === 0
                 ? "bg-nav text-white border-nav"
                 : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
             }`}
@@ -312,7 +391,7 @@ export default function AdminOrdersPage() {
         ))}
       </div>
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-6 gap-3 mb-4">
         <input
           type="search"
           placeholder="Search order ID, name, email, phone…"
@@ -320,6 +399,55 @@ export default function AdminOrdersPage() {
           onChange={(e) => setSearch(e.target.value)}
           className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
         />
+        <div className="relative" ref={statusMenuRef}>
+          <button
+            type="button"
+            onClick={() => setStatusMenuOpen((o) => !o)}
+            className={`w-full border rounded-lg px-3 py-2 text-sm text-left flex items-center justify-between gap-2 bg-white ${
+              statusMulti.size > 0 || statusMenuOpen
+                ? "border-nav"
+                : "border-slate-300"
+            }`}
+            aria-haspopup="listbox"
+            aria-expanded={statusMenuOpen}
+            title="Filter by one or more order statuses"
+          >
+            <span className="truncate text-slate-800">{statusMultiLabel}</span>
+            <span className="text-slate-400 shrink-0" aria-hidden>
+              ▾
+            </span>
+          </button>
+          {statusMenuOpen && (
+            <div className="absolute z-20 mt-1 w-full min-w-[220px] max-h-72 overflow-auto rounded-lg border border-slate-200 bg-white shadow-lg py-1">
+              <div className="flex items-center justify-between px-3 py-1.5 border-b border-slate-100">
+                <span className="text-xs font-medium text-slate-500">Order status</span>
+                {statusMulti.size > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setStatusMulti(new Set())}
+                    className="text-xs text-slate-500 underline hover:text-slate-800"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+              {STATUS_OPTIONS.map((s) => (
+                <label
+                  key={s.id}
+                  className="flex cursor-pointer items-center gap-2 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
+                >
+                  <input
+                    type="checkbox"
+                    checked={statusMulti.has(s.id)}
+                    onChange={() => toggleStatusMulti(s.id)}
+                    className="rounded border-slate-300"
+                  />
+                  {s.label}
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
         <select
           value={paymentFilter}
           onChange={(e) => setPaymentFilter(e.target.value)}

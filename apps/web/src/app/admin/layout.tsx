@@ -39,6 +39,7 @@ const navItems: NavItem[] = [
       { href: "/admin/boost-sales?tab=carts", label: "Abandoned Carts" },
       { href: "/admin/boost-sales?tab=coupons", label: "Coupons" },
       { href: "/admin/boost-sales?tab=leads", label: "Leads" },
+      { href: "/admin/boost-sales?tab=unsubscribe", label: "Unsubscribe Email" },
     ],
   },
   { type: "link", href: "/admin/products", label: "Products" },
