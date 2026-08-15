@@ -20,8 +20,8 @@ function ScrollArrow({
       onClick={onClick}
       disabled={disabled}
       aria-label={direction === "left" ? "Scroll categories left" : "Scroll categories right"}
-      className={`absolute top-1/2 z-10 hidden sm:flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-slate-800 text-white shadow-md transition disabled:opacity-30 ${
-        direction === "left" ? "left-0" : "right-0"
+      className={`absolute top-[38%] z-10 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-slate-800 text-white shadow-md transition disabled:opacity-30 sm:flex ${
+        direction === "left" ? "left-1" : "right-1"
       }`}
     >
       <span aria-hidden>{direction === "left" ? "‹" : "›"}</span>
@@ -64,33 +64,33 @@ export function CategoryShopIcons() {
 
   return (
     <section
-      className="border-b border-slate-100 bg-gradient-to-b from-[#fff7f0] to-white"
+      className="w-full overflow-x-clip border-b border-slate-100 bg-gradient-to-b from-[#fff7f0] to-white"
       aria-label="Shop Rakhi by category"
     >
-      <div className="relative mx-auto max-w-7xl px-4 py-6 sm:py-8">
+      <div className="relative mx-auto min-w-0 max-w-7xl px-3 py-5 sm:px-4 sm:py-8">
         <ScrollArrow direction="left" onClick={() => scrollBy(-1)} disabled={!canLeft} />
         <ScrollArrow direction="right" onClick={() => scrollBy(1)} disabled={!canRight} />
 
         <div
           ref={scrollerRef}
-          className="flex gap-4 overflow-x-auto scroll-smooth px-1 pb-1 sm:gap-5 sm:px-8 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="flex min-w-0 w-full gap-3 overflow-x-auto overscroll-x-contain touch-pan-x scroll-smooth snap-x snap-mandatory pb-1 sm:gap-5 sm:px-8 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           {CATEGORY_SHOP_ICONS.map((item) => (
             <Link
               key={item.id}
               href={item.href}
-              className="group flex w-[5.75rem] shrink-0 flex-col items-center gap-2 sm:w-[6.75rem]"
+              className="group flex w-[28%] max-w-[6.5rem] shrink-0 snap-start flex-col items-center gap-1.5 sm:w-[6.75rem] sm:max-w-none sm:gap-2"
             >
               <span className="relative aspect-square w-full overflow-hidden rounded-2xl bg-[#fde8d8] shadow-sm ring-1 ring-black/5 transition group-hover:shadow-md group-hover:ring-nav/30">
                 <Image
                   src={item.imageSrc}
                   alt={item.imageAlt}
                   fill
-                  sizes="(max-width: 640px) 92px, 108px"
-                  className="object-contain p-2 transition duration-300 group-hover:scale-105"
+                  sizes="(max-width: 640px) 28vw, 108px"
+                  className="object-contain p-1.5 transition duration-300 group-hover:scale-105 sm:p-2"
                 />
               </span>
-              <span className="text-center text-[11px] font-medium leading-tight text-slate-800 sm:text-xs">
+              <span className="line-clamp-2 w-full px-0.5 text-center text-[10px] font-medium leading-snug text-slate-800 sm:text-xs">
                 {item.label}
               </span>
             </Link>
