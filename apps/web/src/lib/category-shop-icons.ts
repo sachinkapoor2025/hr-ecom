@@ -26,6 +26,13 @@ export const CATEGORY_SHOP_ICONS: CategoryShopIcon[] = [
     imageAlt: "Set of 2 designer Rakhis",
   },
   {
+    id: "rakhi-hampers",
+    label: "Rakhi Hampers",
+    href: categoryHref("rakhi-hampers"),
+    imageSrc: iconSrc("/uploads/orange-county/TFUSRH2026-24/TFUSRH2026-24a.jpg"),
+    imageAlt: "Premium Rakhi gift hamper",
+  },
+  {
     id: "with-sweets",
     label: "With Sweets",
     href: "/collections/rakhi-with-sweets",
