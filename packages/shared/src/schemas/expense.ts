@@ -36,6 +36,10 @@ export const EXPENSE_BILL_STATUS_LABELS: Record<ExpenseBillStatus, string> = {
   no_bill: "This expense has no bill",
 };
 
+/** Who physically incurred / paid the expense (not the admin who logged it). */
+export const EXPENSE_DONE_BY = ["DGV", "Joha"] as const;
+export type ExpenseDoneBy = (typeof EXPENSE_DONE_BY)[number];
+
 const billUrlSchema = z.string().url();
 
 function collectBillUrls(data: {
@@ -107,6 +111,8 @@ export const createExpenseSchema = z
     expenseDate: z
       .string()
       .regex(/^\d{4}-\d{2}-\d{2}$/, "expenseDate must be YYYY-MM-DD"),
+    /** Person who incurred the expense (DGV or Joha). */
+    doneBy: z.enum(EXPENSE_DONE_BY),
     billStatus: z.enum(EXPENSE_BILL_STATUSES).optional(),
     /** @deprecated use billStatus === "no_bill" */
     noBill: z.boolean().optional(),
@@ -151,6 +157,7 @@ export const updateExpenseSchema = z
       .string()
       .regex(/^\d{4}-\d{2}-\d{2}$/, "expenseDate must be YYYY-MM-DD")
       .optional(),
+    doneBy: z.enum(EXPENSE_DONE_BY).optional(),
     billStatus: z.enum(EXPENSE_BILL_STATUSES).optional(),
     noBill: z.boolean().optional(),
     billImageUrls: z.array(billUrlSchema).max(EXPENSE_MAX_BILL_IMAGES).optional(),
@@ -175,6 +182,8 @@ export type Expense = {
   expenseTypes?: ExpenseType[];
   description?: string;
   expenseDate: string;
+  /** Who incurred the expense (DGV / Joha). */
+  doneBy?: ExpenseDoneBy;
   billStatus?: ExpenseBillStatus;
   /** @deprecated use billStatus */
   noBill?: boolean;

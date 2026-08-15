@@ -70,6 +70,7 @@ function toPublic(item: StoredExpense): Expense {
     expenseTypes,
     description: item.description,
     expenseDate: item.expenseDate,
+    ...(item.doneBy === "DGV" || item.doneBy === "Joha" ? { doneBy: item.doneBy } : {}),
     ...bills,
     createdBy: item.createdBy,
     createdAt: item.createdAt,
@@ -144,6 +145,7 @@ export async function createExpense(event: APIGatewayProxyEventV2) {
     expenseTypes,
     description: parsed.data.description?.trim() || undefined,
     expenseDate: parsed.data.expenseDate,
+    doneBy: parsed.data.doneBy,
     ...bills,
     createdBy: auth.email || auth.userId,
     createdAt: timestamp,
@@ -220,6 +222,7 @@ export async function updateExpense(event: APIGatewayProxyEventV2) {
       ? { description: parsed.data.description.trim() || undefined }
       : {}),
     ...(parsed.data.expenseDate !== undefined ? { expenseDate: parsed.data.expenseDate } : {}),
+    ...(parsed.data.doneBy !== undefined ? { doneBy: parsed.data.doneBy } : {}),
     currency:
       parsed.data.currency !== undefined
         ? normalizeCurrency(parsed.data.currency)
