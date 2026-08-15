@@ -5,14 +5,17 @@ import Link from "next/link";
 import {
   EXPENSE_BILL_STATUSES,
   EXPENSE_BILL_STATUS_LABELS,
+  EXPENSE_DONE_BY,
   EXPENSE_MAX_BILL_IMAGES,
   EXPENSE_TYPES,
   EXPENSE_TYPE_LABELS,
   normalizeExpenseTypes,
   LEDGER_CURRENCIES,
   recordedByLabel,
+  displayNameFromEmail,
   type Expense,
   type ExpenseBillStatus,
+  type ExpenseDoneBy,
   type ExpenseType,
   type LedgerCurrency,
 } from "@hr-ecom/shared";
@@ -44,8 +47,10 @@ export function ExpensesPanel() {
   const { isAdmin, isSuperAdmin, user, loading: authLoading } = useAuth();
   const api = useApiClient();
   const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [totalByCurrency, setTotalByCurrency] = useState({ USD: 0, INR: 0 });
   const [listCurrency, setListCurrency] = useState<LedgerCurrency | "ALL">("ALL");
+  const [filterLoggedBy, setFilterLoggedBy] = useState("ALL");
+  const [filterDoneBy, setFilterDoneBy] = useState<"ALL" | ExpenseDoneBy>("ALL");
+  const [filterType, setFilterType] = useState<"ALL" | ExpenseType>("ALL");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -55,6 +60,7 @@ export function ExpensesPanel() {
   const [amount, setAmount] = useState("");
   const [currency, setCurrency] = useState<LedgerCurrency>("USD");
   const [expenseTypes, setExpenseTypes] = useState<ExpenseType[]>(["shipping_charges"]);
+  const [doneBy, setDoneBy] = useState<ExpenseDoneBy>("DGV");
   const [description, setDescription] = useState("");
   const [expenseDate, setExpenseDate] = useState(todayYmd());
   const [billStatus, setBillStatus] = useState<ExpenseBillStatus>("all_bills");
@@ -76,6 +82,7 @@ export function ExpensesPanel() {
     setDescription("");
     setExpenseDate(todayYmd());
     setExpenseTypes(["shipping_charges"]);
+    setDoneBy("DGV");
     setCurrency("USD");
     setBillStatus("all_bills");
     setBillFiles([]);
@@ -89,16 +96,8 @@ export function ExpensesPanel() {
     try {
       const res = await api<{
         expenses: Expense[];
-        totalByCurrency?: { USD: number; INR: number };
-        totalAmount?: number;
       }>("/admin/expenses");
       setExpenses(res.expenses ?? []);
-      setTotalByCurrency(
-        res.totalByCurrency ?? {
-          USD: res.totalAmount ?? 0,
-          INR: 0,
-        }
-      );
     } catch (err) {
       setExpenses([]);
       setError(err instanceof Error ? err.message : "Failed to load expenses");
@@ -111,10 +110,49 @@ export function ExpensesPanel() {
     if (!authLoading && isAdmin) void load();
   }, [authLoading, isAdmin, load]);
 
+  const loggedByOptions = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const e of expenses) {
+      const key = (e.createdBy ?? "").trim().toLowerCase();
+      if (!key) continue;
+      if (!map.has(key)) map.set(key, displayNameFromEmail(e.createdBy));
+    }
+    return Array.from(map.entries())
+      .map(([value, label]) => ({ value, label }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [expenses]);
+
   const visibleExpenses = useMemo(() => {
-    if (listCurrency === "ALL") return expenses;
-    return expenses.filter((e) => (e.currency ?? "USD") === listCurrency);
-  }, [expenses, listCurrency]);
+    return expenses.filter((e) => {
+      if (listCurrency !== "ALL" && (e.currency ?? "USD") !== listCurrency) return false;
+      if (filterDoneBy !== "ALL" && e.doneBy !== filterDoneBy) return false;
+      if (filterLoggedBy !== "ALL") {
+        const created = (e.createdBy ?? "").trim().toLowerCase();
+        if (created !== filterLoggedBy) return false;
+      }
+      if (filterType !== "ALL") {
+        const types = normalizeExpenseTypes({
+          expenseType: e.expenseType,
+          expenseTypes: e.expenseTypes,
+        });
+        if (!types.includes(filterType)) return false;
+      }
+      return true;
+    });
+  }, [expenses, listCurrency, filterDoneBy, filterLoggedBy, filterType]);
+
+  const filteredTotals = useMemo(() => {
+    const USD = visibleExpenses
+      .filter((e) => (e.currency ?? "USD") === "USD")
+      .reduce((sum, e) => sum + e.amount, 0);
+    const INR = visibleExpenses
+      .filter((e) => e.currency === "INR")
+      .reduce((sum, e) => sum + e.amount, 0);
+    return {
+      USD: Math.round(USD * 100) / 100,
+      INR: Math.round(INR * 100) / 100,
+    };
+  }, [visibleExpenses]);
 
   const canModifyExpense = (ex: Expense): boolean => {
     if (isSuperAdmin) return true;
@@ -135,6 +173,7 @@ export function ExpensesPanel() {
     setExpenseTypes(
       normalizeExpenseTypes({ expenseType: ex.expenseType, expenseTypes: ex.expenseTypes })
     );
+    setDoneBy(ex.doneBy === "Joha" ? "Joha" : "DGV");
     setDescription(ex.description ?? "");
     setExpenseDate(ex.expenseDate);
     setBillStatus(resolveStatus(ex));
@@ -210,6 +249,7 @@ export function ExpensesPanel() {
         currency,
         expenseType: expenseTypes[0],
         expenseTypes,
+        doneBy,
         description: description.trim() || undefined,
         expenseDate,
         billStatus,
@@ -356,6 +396,21 @@ export function ExpensesPanel() {
               className="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2"
             />
           </label>
+          <label className="block text-sm">
+            <span className="text-slate-700 font-medium">Expense done by</span>
+            <select
+              required
+              value={doneBy}
+              onChange={(e) => setDoneBy(e.target.value as ExpenseDoneBy)}
+              className="mt-1 w-full border border-slate-300 rounded-lg px-3 py-2"
+            >
+              {EXPENSE_DONE_BY.map((name) => (
+                <option key={name} value={name}>
+                  {name}
+                </option>
+              ))}
+            </select>
+          </label>
           <div className="block text-sm space-y-2">
             <span className="text-slate-700 font-medium">Bill availability</span>
             <div className="space-y-1.5">
@@ -439,35 +494,76 @@ export function ExpensesPanel() {
       {error && <p className="text-sm text-red-600 mb-3">{error}</p>}
       {message && <p className="text-sm text-emerald-700 mb-3">{message}</p>}
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-3">
-        <h2 className="text-lg font-semibold">All expenses</h2>
-        <div className="flex flex-wrap items-center gap-4 text-sm">
-          {(["ALL", "USD", "INR"] as const).map((c) => (
-            <label key={c} className="inline-flex items-center gap-1.5 text-slate-700">
-              <input
-                type="radio"
-                name="expense-list-currency"
-                checked={listCurrency === c}
-                onChange={() => setListCurrency(c)}
-              />
-              {c === "ALL" ? "All" : c}
-            </label>
-          ))}
-          <p className="text-slate-600">
+      <div className="flex flex-col gap-3 mb-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="text-lg font-semibold">All expenses</h2>
+          <p className="text-sm text-slate-600">
             Total:{" "}
             <span className="font-semibold text-slate-900">
               {listCurrency === "ALL"
-                ? `${formatMoney(totalByCurrency.USD, "USD")} · ${formatMoney(totalByCurrency.INR, "INR")}`
-                : formatMoney(totalByCurrency[listCurrency], listCurrency)}
+                ? `${formatMoney(filteredTotals.USD, "USD")} · ${formatMoney(filteredTotals.INR, "INR")}`
+                : formatMoney(filteredTotals[listCurrency], listCurrency)}
             </span>
+            <span className="text-slate-400 ml-1">({visibleExpenses.length})</span>
           </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-sm">
+          <select
+            value={listCurrency}
+            onChange={(e) => setListCurrency(e.target.value as LedgerCurrency | "ALL")}
+            className="border border-slate-300 rounded-lg px-3 py-1.5 bg-white"
+            title="Filter by currency"
+          >
+            <option value="ALL">All currencies</option>
+            <option value="USD">USD</option>
+            <option value="INR">INR</option>
+          </select>
+          <select
+            value={filterDoneBy}
+            onChange={(e) => setFilterDoneBy(e.target.value as "ALL" | ExpenseDoneBy)}
+            className="border border-slate-300 rounded-lg px-3 py-1.5 bg-white"
+            title="Filter by who incurred the expense"
+          >
+            <option value="ALL">All done by</option>
+            {EXPENSE_DONE_BY.map((name) => (
+              <option key={name} value={name}>
+                Done by {name}
+              </option>
+            ))}
+          </select>
+          <select
+            value={filterLoggedBy}
+            onChange={(e) => setFilterLoggedBy(e.target.value)}
+            className="border border-slate-300 rounded-lg px-3 py-1.5 bg-white"
+            title="Filter by who logged the expense"
+          >
+            <option value="ALL">All logged by</option>
+            {loggedByOptions.map((o) => (
+              <option key={o.value} value={o.value}>
+                Logged by {o.label}
+              </option>
+            ))}
+          </select>
+          <select
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value as "ALL" | ExpenseType)}
+            className="border border-slate-300 rounded-lg px-3 py-1.5 bg-white"
+            title="Filter by expense type"
+          >
+            <option value="ALL">All types</option>
+            {EXPENSE_TYPES.map((t) => (
+              <option key={t} value={t}>
+                {EXPENSE_TYPE_LABELS[t]}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
       {loading ? (
         <p className="text-slate-500 text-sm">Loading…</p>
       ) : visibleExpenses.length === 0 ? (
-        <p className="text-slate-500 text-sm">No expenses recorded yet.</p>
+        <p className="text-slate-500 text-sm">No expenses match these filters.</p>
       ) : (
         <div className="overflow-x-auto rounded-xl border border-slate-200">
           <table className="min-w-full text-sm">
@@ -476,6 +572,7 @@ export function ExpensesPanel() {
                 <th className="py-3 px-3">Date</th>
                 <th className="py-3 px-3">Type</th>
                 <th className="py-3 px-3">Amount</th>
+                <th className="py-3 px-3">Done by</th>
                 <th className="py-3 px-3">Bills</th>
                 <th className="py-3 px-3">Logged by</th>
                 <th className="py-3 px-3">Actions</th>
@@ -499,6 +596,7 @@ export function ExpensesPanel() {
                     <td className="py-3 px-3 font-medium">
                       {formatMoney(ex.amount, ex.currency ?? "USD")}
                     </td>
+                    <td className="py-3 px-3 whitespace-nowrap">{ex.doneBy ?? "—"}</td>
                     <td className="py-3 px-3">
                       {status === "no_bill" || urls.length === 0 ? (
                         <span className="text-slate-500">No bill</span>
