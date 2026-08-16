@@ -9,13 +9,11 @@ import {
   buildShopMoreSaveMoreEmailHtml,
   buildRakhiHampersUsaEmailHtml,
   buildIndependenceDayEmailHtml,
-  buildRakshaBandhanOrderBy20EmailHtml,
   FREE_SHIPPING_EMAIL_CONFIG,
   STARTING_PRICE_EMAIL_CONFIG,
   SHOP_MORE_SAVE_MORE_EMAIL_CONFIG,
   RAKHI_HAMPERS_USA_EMAIL_CONFIG,
   INDEPENDENCE_DAY_EMAIL_CONFIG,
-  RAKSHA_BANDHAN_ORDER_BY_20_EMAIL_CONFIG,
   type MarketingEmailContent,
 } from "@hr-ecom/shared";
 
@@ -35,8 +33,6 @@ export type StarterEmailTemplateMeta = {
    * DynamoDB template so Admin field edits are preserved.
    */
   preserveAdminEdits?: boolean;
-  /** When true, always PUT packaged HTML/subject/name over the stored template. */
-  forceRefresh?: boolean;
 };
 
 export const RAKSHA_BANDHAN_TEMPLATE_ID = "raksha-bandhan-usa";
@@ -46,7 +42,6 @@ export const STARTING_PRICE_TEMPLATE_ID = STARTING_PRICE_EMAIL_CONFIG.templateId
 export const SHOP_MORE_SAVE_MORE_TEMPLATE_ID = SHOP_MORE_SAVE_MORE_EMAIL_CONFIG.templateId;
 export const RAKHI_HAMPERS_USA_TEMPLATE_ID = RAKHI_HAMPERS_USA_EMAIL_CONFIG.templateId;
 export const INDEPENDENCE_DAY_TEMPLATE_ID = INDEPENDENCE_DAY_EMAIL_CONFIG.templateId;
-export const RAKSHA_BANDHAN_ORDER_BY_20_TEMPLATE_ID = RAKSHA_BANDHAN_ORDER_BY_20_EMAIL_CONFIG.templateId;
 
 export const STARTER_EMAIL_TEMPLATES: StarterEmailTemplateMeta[] = [
   {
@@ -97,15 +92,6 @@ export const STARTER_EMAIL_TEMPLATES: StarterEmailTemplateMeta[] = [
     subject: INDEPENDENCE_DAY_EMAIL_CONFIG.subject,
     buildHtml: () => buildIndependenceDayEmailHtml(),
     htmlPath: "/email-templates/india-independence-day-offer.html",
-  },
-  {
-    templateId: RAKSHA_BANDHAN_ORDER_BY_20_TEMPLATE_ID,
-    name: RAKSHA_BANDHAN_ORDER_BY_20_EMAIL_CONFIG.name,
-    subject: RAKSHA_BANDHAN_ORDER_BY_20_EMAIL_CONFIG.subject,
-    buildHtml: () => buildRakshaBandhanOrderBy20EmailHtml(),
-    htmlPath: "/email-templates/raksha-bandhan-order-by-20-august.html",
-    /** Overwrite Admin copy so the removed hero banner actually disappears from DynamoDB. */
-    forceRefresh: true,
   },
 ];
 

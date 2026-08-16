@@ -79,12 +79,7 @@ export async function ensureStarterEmailTemplates(api: ApiClient): Promise<{
     }
 
     // File / buildHtml starters: refresh when packaged HTML or metadata changes.
-    if (
-      starter.forceRefresh ||
-      existing.htmlBody !== htmlBody ||
-      existing.subject !== starter.subject ||
-      existing.name !== starter.name
-    ) {
+    if (existing.htmlBody !== htmlBody || existing.subject !== starter.subject || existing.name !== starter.name) {
       const res = await api<{ template: SesTemplate }>(`/ses-email/templates/${starter.templateId}`, {
         method: "PUT",
         body: JSON.stringify({
