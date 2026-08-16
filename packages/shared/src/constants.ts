@@ -170,6 +170,9 @@ export const LOW_STOCK_ALERT_EMAIL = "dgv@mydgv.com";
 /** Minimum units sold to show in "Fast Selling" section and badge. */
 export const FAST_SELLING_THRESHOLD = 10;
 
+/** Top-selling hampers pinned in the homepage Fast Selling section. */
+export const FAST_SELLING_HAMPER_COUNT = 3;
+
 export type OrderStatus = (typeof ORDER_STATUS)[keyof typeof ORDER_STATUS];
 export type UserRole = (typeof USER_ROLES)[keyof typeof USER_ROLES];
 export type PaymentRegion = (typeof PAYMENT_REGIONS)[keyof typeof PAYMENT_REGIONS];
