@@ -1538,6 +1538,7 @@ export function buildRakshaBandhanOrderBy20EmailHtml(
   ].join("");
 
   const bodyRows = `
+          <!-- revision: no-hero-banner -->
           <!-- Primary CTA -->
           <tr>
             <td class="mobile-pad" align="center" bgcolor="${WHITE}" style="padding:22px 24px 8px 24px;background-color:${WHITE};">
