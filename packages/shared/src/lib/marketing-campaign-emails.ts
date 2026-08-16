@@ -7,7 +7,10 @@
  * Both builders emit table + inline-CSS HTML for Gmail / Outlook / Apple Mail.
  */
 
-import { getFirstHomePageBannerForEmail } from "./home-page-banners";
+import {
+  getFirstHomePageBannerForEmail,
+  getOrderBy20HomePageBannerForEmail,
+} from "./home-page-banners";
 import { cdnUploadUrl, resolveProductImageUrl } from "./image-url";
 
 const SITE = "https://www.usarakhi.com";
@@ -1456,6 +1459,167 @@ export function buildIndependenceDayEmailHtml(
     logoUrl: cfg.logoUrl,
     logoHref: cfg.logoHref,
     logoTagline: cfg.logoTagline,
+    bodyRows,
+    footer: footerFrom(cfg),
+  });
+}
+
+/** ═══════════════ TEMPLATE 6 — Raksha Bandhan Order by 20 August ═══════════════ */
+const orderBy20HomeBanner = getOrderBy20HomePageBannerForEmail();
+
+export const RAKSHA_BANDHAN_ORDER_BY_20_EMAIL_CONFIG = {
+  templateId: "raksha-bandhan-order-by-20-august",
+  name: "Raksha Bandhan — Order by 20 August for Guaranteed Delivery",
+  subject: "❤️ Raksha Bandhan is just around the corner! Order by 20 August",
+  preheader:
+    "Order by 20 August for Guaranteed Delivery Before Rakhi. Shop Single Rakhi, Combos, Hampers & Kids Rakhi from UsaRakhi.",
+  logoUrl: LOGO,
+  logoHref: SITE,
+  logoTagline: "Connecting Hearts Across Borders",
+  /** Same first homepage carousel banner (`/banners/banner-raksha-bandhan-order-by-20-august.png`). */
+  heroImageUrl: orderBy20HomeBanner.src,
+  heroImageHref: orderBy20HomeBanner.href,
+  heroImageAlt: orderBy20HomeBanner.alt,
+  ctaText: "SHOP RAKHI NOW",
+  ctaHref: `${SITE}/products?category=rakhi-combo`,
+  urgencyEyebrow: "LIMITED TIME · RAKSHA BANDHAN 2026",
+  urgencyHeadline: "Order by 20 August for Guaranteed Delivery Before Rakhi",
+  urgencyBody:
+    "Don’t wait until the last minute. Place your order by 20 August so your brother receives his Rakhi in time — premium packaging, roli & chawal on most designs, and domestic USA delivery from California.",
+  categoriesHeading: "Shop Rakhi Collections",
+  categoriesSubheading: "Single Rakhi, Combos, Hampers & Kids Rakhi — ready to gift across America.",
+  categories: [
+    {
+      name: "Single Rakhi",
+      description: "Classic & designer threads for brother.",
+      imageUrl: cdnUploadUrl("2026/05/pink-multi-stone-rakhi-to-usa.jpeg"),
+      href: `${SITE}/single-rakhi-to-usa`,
+      buttonText: "Shop Now",
+    },
+    {
+      name: "Rakhi Combos",
+      description: "Rakhi with chocolates & festive treats.",
+      imageUrl: cdnUploadUrl("2026/05/fercho.png"),
+      href: `${SITE}/rakhi-combo-to-usa`,
+      buttonText: "Shop Now",
+    },
+    {
+      name: "Rakhi Hampers",
+      description: "Premium gift boxes with sweets & dry fruits.",
+      imageUrl: cdnUploadUrl("2026/03/Om-Single-Rakhi-1-e1779466859856.png"),
+      href: `${SITE}/rakhi-hampers-to-usa`,
+      buttonText: "Shop Now",
+    },
+    {
+      name: "Kids Rakhi",
+      description: "Fun designs little brothers love.",
+      imageUrl: cdnUploadUrl("2026/04/BRO-Kids-Rakhi-e1775564401163.jpg"),
+      href: `${SITE}/kids-rakhi-to-usa`,
+      buttonText: "Shop Now",
+    },
+  ] satisfies CampaignCard[],
+  emotionalHeading: "Make Raksha Bandhan Special, Even From Miles Away ❤️",
+  emotionalBody:
+    "Distance can’t dim the sibling bond. Send a beautiful Rakhi from UsaRakhi and celebrate Raksha Bandhan with love — wherever your brother lives in the USA.",
+  midCtaText: "ORDER YOUR RAKHI NOW",
+  midCtaHref: `${SITE}/products?category=rakhi-combo`,
+  footerTagline: "Connecting Hearts Across Borders",
+  footerLogoUrl: LOGO,
+  websiteUrl: SITE,
+  websiteLabel: "www.usarakhi.com",
+  orderEmail: "order@usarakhi.com",
+  facebookUrl: "https://www.facebook.com/usarakhi/",
+  facebookIconUrl: FB,
+  instagramUrl: "https://www.instagram.com/usarakhi/",
+  instagramIconUrl: IG,
+  copyrightText: "© 2026 UsaRakhi. All Rights Reserved.",
+  unsubscribeLabel: "Unsubscribe",
+} as const;
+
+/** Template 6 HTML — Raksha Bandhan Order by 20 August (homepage first banner as hero). */
+export function buildRakshaBandhanOrderBy20EmailHtml(
+  cfg: typeof RAKSHA_BANDHAN_ORDER_BY_20_EMAIL_CONFIG = RAKSHA_BANDHAN_ORDER_BY_20_EMAIL_CONFIG
+): string {
+  const categoryBlocks = [
+    twoColCards([cfg.categories[0], cfg.categories[1]]),
+    twoColCards([cfg.categories[2], cfg.categories[3]]),
+  ].join("");
+
+  const bodyRows = `
+          <!-- Homepage first banner (full width, uncropped) -->
+          <tr>
+            <td align="center" style="padding:0;line-height:0;font-size:0;">
+              <a href="${escAttr(cfg.heroImageHref)}" target="_blank" style="text-decoration:none;">
+                <img class="fluid" src="${escAttr(cfg.heroImageUrl)}" width="600" alt="${escAttr(cfg.heroImageAlt)}" style="display:block;width:100%;max-width:600px;height:auto;border:0;" />
+              </a>
+            </td>
+          </tr>
+          <!-- Primary CTA -->
+          <tr>
+            <td class="mobile-pad" align="center" bgcolor="${WHITE}" style="padding:24px 24px 10px 24px;background-color:${WHITE};">
+              ${ctaButton(cfg.ctaHref, cfg.ctaText, { fill: RED, width: 280, pad: "16px 36px", fontSize: "17px" })}
+            </td>
+          </tr>
+          <!-- Urgency: Order by 20 August -->
+          <tr>
+            <td class="mobile-pad" style="padding:12px 24px 28px 24px;background-color:${WHITE};">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;background-color:${CREAM};border:2px solid ${GOLD};border-radius:14px;">
+                <tr>
+                  <td align="center" style="padding:28px 22px;">
+                    <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:${GOLD};font-weight:bold;padding-bottom:10px;">
+                      ${escapeHtml(cfg.urgencyEyebrow)}
+                    </div>
+                    <div class="section-title" style="font-family:Georgia,'Times New Roman',serif;font-size:26px;line-height:34px;font-weight:bold;color:${RED};padding-bottom:12px;">
+                      ${escapeHtml(cfg.urgencyHeadline)}
+                    </div>
+                    <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:22px;color:#5c5348;max-width:460px;margin:0 auto;">
+                      ${escapeHtml(cfg.urgencyBody)}
+                    </div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <!-- Categories -->
+          <tr>
+            <td class="mobile-pad" style="padding:8px 20px 8px 20px;background-color:${WHITE};">
+              <div class="section-title" style="font-family:Georgia,'Times New Roman',serif;font-size:24px;line-height:30px;font-weight:bold;color:${NAVY};text-align:center;padding-bottom:6px;">
+                ${escapeHtml(cfg.categoriesHeading)}
+              </div>
+              <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:20px;color:#6b5e4e;text-align:center;padding-bottom:18px;">
+                ${escapeHtml(cfg.categoriesSubheading)}
+              </div>
+              ${categoryBlocks}
+            </td>
+          </tr>
+          <!-- Emotional message + final CTA -->
+          <tr>
+            <td class="mobile-pad" style="padding:12px 24px 36px 24px;background-color:${WHITE};">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;background-color:${NAVY};border-radius:14px;">
+                <tr>
+                  <td align="center" style="padding:34px 22px;">
+                    <div class="section-title" style="font-family:Georgia,'Times New Roman',serif;font-size:22px;line-height:30px;font-weight:bold;color:#ffffff;padding-bottom:10px;">
+                      ${escapeHtml(cfg.emotionalHeading)}
+                    </div>
+                    <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:22px;color:#e8e0d0;padding-bottom:20px;max-width:420px;margin:0 auto;">
+                      ${escapeHtml(cfg.emotionalBody)}
+                    </div>
+                    ${ctaButton(cfg.midCtaHref, cfg.midCtaText, { fill: GOLD, textColor: NAVY, width: 280, pad: "16px 32px", fontSize: "16px" })}
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>`;
+
+  return emailShell({
+    title: "Raksha Bandhan is just around the corner | UsaRakhi",
+    preheader: cfg.preheader,
+    logoUrl: cfg.logoUrl,
+    logoHref: cfg.logoHref,
+    logoTagline: cfg.logoTagline,
+    pageBg: WHITE,
+    headerBg: WHITE,
+    containerBorder: "1px solid #efe6d6",
     bodyRows,
     footer: footerFrom(cfg),
   });

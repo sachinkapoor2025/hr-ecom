@@ -15,7 +15,7 @@ export const HOME_PAGE_INDEPENDENCE_DAY_BANNER_URL = `${SITE_ORIGIN}${HOME_PAGE_
 export const HOME_PAGE_INDEPENDENCE_DAY_BANNER_ALT =
   "India Independence Day Freedom Sale — Send Rakhi to USA | UsaRakhi" as const;
 
-/** Homepage carousel slide asset (not used by marketing email templates). */
+/** Homepage carousel slide — first slide from `getHomeBanners()` (Order by 20 August). */
 export const RAKSHA_BANDHAN_ORDER_BY_20_BANNER_PATH =
   "/banners/banner-raksha-bandhan-order-by-20-august.png" as const;
 
@@ -37,5 +37,21 @@ export function getFirstHomePageBannerForEmail(): {
     src: HOME_PAGE_INDEPENDENCE_DAY_BANNER_URL,
     alt: HOME_PAGE_INDEPENDENCE_DAY_BANNER_ALT,
     href: `${SITE_ORIGIN}/products`,
+  };
+}
+
+/**
+ * Current first homepage carousel slide (Order by 20 August) for marketing emails.
+ * Same asset as `rakshaBandhanOrderBy20Banner` in the storefront hero.
+ */
+export function getOrderBy20HomePageBannerForEmail(): {
+  src: string;
+  alt: string;
+  href: string;
+} {
+  return {
+    src: RAKSHA_BANDHAN_ORDER_BY_20_BANNER_URL,
+    alt: RAKSHA_BANDHAN_ORDER_BY_20_BANNER_ALT,
+    href: `${SITE_ORIGIN}/products?category=rakhi-combo`,
   };
 }
