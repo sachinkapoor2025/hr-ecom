@@ -35,7 +35,7 @@ export const independenceDayHeroBanner: HomeBanner = {
   imageFit: "contain",
 };
 
-/** Raksha Bandhan “Order by 20 August” promo — full artwork in image (use contain to avoid crop). */
+/** Raksha Bandhan “Order by 20 August” promo — same cover fit as default homepage slides. */
 export const rakshaBandhanOrderBy20Banner: HomeBanner = {
   src: RAKSHA_BANDHAN_ORDER_BY_20_BANNER_PATH,
   alt: RAKSHA_BANDHAN_ORDER_BY_20_BANNER_ALT,
@@ -47,7 +47,6 @@ export const rakshaBandhanOrderBy20Banner: HomeBanner = {
     "Order by 20 August for Guaranteed Delivery Before Rakhi. Shop premium Single Rakhi, Combos, Hampers & more.",
   cta: "Shop Rakhi Now",
   pill: "Order by 20 August · Guaranteed Delivery · Premium Rakhis",
-  imageFit: "contain",
 };
 
 export function isIndependenceDayHeroActive(now = new Date()): boolean {
