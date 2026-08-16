@@ -21,6 +21,14 @@ export const RAKSHA_BANDHAN_ORDER_BY_20_BANNER_PATH =
 
 export const RAKSHA_BANDHAN_ORDER_BY_20_BANNER_URL = `${SITE_ORIGIN}${RAKSHA_BANDHAN_ORDER_BY_20_BANNER_PATH}`;
 
+/**
+ * Absolute email hero URL.
+ * Amplify serves production from `main`; until that branch includes the PNG,
+ * www.usarakhi.com returns 404. jsDelivr serves the same public-repo asset now.
+ */
+export const RAKSHA_BANDHAN_ORDER_BY_20_EMAIL_BANNER_URL =
+  "https://cdn.jsdelivr.net/gh/sachinkapoor2025/hr-ecom@dev/apps/web/public/banners/banner-raksha-bandhan-order-by-20-august.png" as const;
+
 export const RAKSHA_BANDHAN_ORDER_BY_20_BANNER_ALT =
   "Raksha Bandhan is just around the corner — Order by 20 August for Guaranteed Delivery Before Rakhi | UsaRakhi" as const;
 

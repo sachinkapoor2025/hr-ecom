@@ -377,6 +377,9 @@ async function sendViaMarketingSmtp(
   };
   const transporter = nodemailer.createTransport(options);
   const listUnsub = input.listUnsubscribeUrl?.trim();
+  const listUnsubHeader = listUnsub
+    ? `<mailto:email@usarakhi.com?subject=unsubscribe>, <${listUnsub}>`
+    : undefined;
   try {
     const info = await transporter.sendMail({
       from: { name: fromName, address: fromEmail },
@@ -385,9 +388,9 @@ async function sendViaMarketingSmtp(
       subject: input.subject,
       html: input.html,
       text: input.text,
-      headers: listUnsub
+      headers: listUnsubHeader
         ? {
-            "List-Unsubscribe": `<${listUnsub}>`,
+            "List-Unsubscribe": listUnsubHeader,
             "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
             Precedence: "bulk",
           }
@@ -426,7 +429,10 @@ async function sendViaSesApi(input: SesSendInput): Promise<{ messageId?: string 
   const listUnsub = input.listUnsubscribeUrl?.trim();
   const simpleHeaders = listUnsub
     ? [
-        { Name: "List-Unsubscribe", Value: `<${listUnsub}>` },
+        {
+          Name: "List-Unsubscribe",
+          Value: `<mailto:email@usarakhi.com?subject=unsubscribe>, <${listUnsub}>`,
+        },
         { Name: "List-Unsubscribe-Post", Value: "List-Unsubscribe=One-Click" },
         { Name: "Precedence", Value: "bulk" },
       ]
