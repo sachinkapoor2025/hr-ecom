@@ -610,7 +610,7 @@ export const RAKSHA_BANDHAN_ORDER_BY_20_EMAIL_CONFIG = {
   logoUrl: LOGO,
   logoHref: SITE,
   logoTagline: "Connecting Hearts Across Borders",
-  /** Live CDN URL — www.usarakhi.com path 404s until Amplify deploys main with the PNG. */
+  /** First-party usarakhi.com URL — third-party CDNs trigger Gmail “suspicious” image hiding. */
   heroImageUrl: RAKSHA_BANDHAN_ORDER_BY_20_EMAIL_BANNER_URL,
   heroImageHref: `${SITE}/products?category=rakhi-combo`,
   heroImageAlt: RAKSHA_BANDHAN_ORDER_BY_20_BANNER_ALT,

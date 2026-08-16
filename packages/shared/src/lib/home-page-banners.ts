@@ -22,12 +22,15 @@ export const RAKSHA_BANDHAN_ORDER_BY_20_BANNER_PATH =
 export const RAKSHA_BANDHAN_ORDER_BY_20_BANNER_URL = `${SITE_ORIGIN}${RAKSHA_BANDHAN_ORDER_BY_20_BANNER_PATH}`;
 
 /**
- * Absolute email hero URL.
- * Amplify serves production from `main`; until that branch includes the PNG,
- * www.usarakhi.com returns 404. jsDelivr serves the same public-repo asset now.
+ * Email hero must be first-party (same brand domain).
+ * Third-party hosts (jsDelivr/GitHub) make Gmail hide images as “suspicious”.
+ * File path: apps/web/public/email-templates/raksha-bandhan-order-by-20-august-banner.png
  */
+export const RAKSHA_BANDHAN_ORDER_BY_20_EMAIL_BANNER_PATH =
+  "/email-templates/raksha-bandhan-order-by-20-august-banner.png" as const;
+
 export const RAKSHA_BANDHAN_ORDER_BY_20_EMAIL_BANNER_URL =
-  "https://cdn.jsdelivr.net/gh/sachinkapoor2025/hr-ecom@dev/apps/web/public/banners/banner-raksha-bandhan-order-by-20-august.png" as const;
+  `${SITE_ORIGIN}${RAKSHA_BANDHAN_ORDER_BY_20_EMAIL_BANNER_PATH}` as const;
 
 export const RAKSHA_BANDHAN_ORDER_BY_20_BANNER_ALT =
   "Raksha Bandhan is just around the corner — Order by 20 August for Guaranteed Delivery Before Rakhi | UsaRakhi" as const;
