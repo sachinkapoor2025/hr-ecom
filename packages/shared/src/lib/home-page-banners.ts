@@ -15,6 +15,15 @@ export const HOME_PAGE_INDEPENDENCE_DAY_BANNER_URL = `${SITE_ORIGIN}${HOME_PAGE_
 export const HOME_PAGE_INDEPENDENCE_DAY_BANNER_ALT =
   "India Independence Day Freedom Sale — Send Rakhi to USA | UsaRakhi" as const;
 
+/** Raksha Bandhan “Order by 20 August” campaign banner (homepage + marketing email). */
+export const RAKSHA_BANDHAN_ORDER_BY_20_BANNER_PATH =
+  "/banners/banner-raksha-bandhan-order-by-20-august.png" as const;
+
+export const RAKSHA_BANDHAN_ORDER_BY_20_BANNER_URL = `${SITE_ORIGIN}${RAKSHA_BANDHAN_ORDER_BY_20_BANNER_PATH}`;
+
+export const RAKSHA_BANDHAN_ORDER_BY_20_BANNER_ALT =
+  "Raksha Bandhan is just around the corner — Order by 20 August for Guaranteed Delivery Before Rakhi | UsaRakhi" as const;
+
 /**
  * First homepage banner image for marketing emails.
  * Matches the Independence Day slide prepended by `getHomeBanners()` on the storefront.

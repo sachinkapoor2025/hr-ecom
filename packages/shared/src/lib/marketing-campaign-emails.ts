@@ -7,7 +7,11 @@
  * Both builders emit table + inline-CSS HTML for Gmail / Outlook / Apple Mail.
  */
 
-import { getFirstHomePageBannerForEmail } from "./home-page-banners";
+import {
+  getFirstHomePageBannerForEmail,
+  RAKSHA_BANDHAN_ORDER_BY_20_BANNER_ALT,
+  RAKSHA_BANDHAN_ORDER_BY_20_BANNER_URL,
+} from "./home-page-banners";
 import { cdnUploadUrl, resolveProductImageUrl } from "./image-url";
 
 const SITE = "https://www.usarakhi.com";
@@ -599,22 +603,23 @@ export const INDEPENDENCE_DAY_EMAIL_CONFIG = {
 export const RAKSHA_BANDHAN_ORDER_BY_20_EMAIL_CONFIG = {
   templateId: "raksha-bandhan-order-by-20-august",
   name: "Raksha Bandhan — Order by 20 August for Guaranteed Delivery",
-  subject: "❤️ Raksha Bandhan is just around the corner! Order by 20 August",
+  /** No emoji in subject — improves inbox placement with Gmail/Outlook filters. */
+  subject: "Raksha Bandhan is near — order by 20 August for on-time USA delivery",
   preheader:
-    "Order by 20 August for Guaranteed Delivery Before Rakhi. Shop Single Rakhi, Combos, Hampers & Kids Rakhi from UsaRakhi.",
+    "Order by 20 August for guaranteed delivery before Rakhi. Shop Single Rakhi, Combos, Hampers & Kids Rakhi from UsaRakhi.",
   logoUrl: LOGO,
   logoHref: SITE,
   logoTagline: "Connecting Hearts Across Borders",
-  heroImageUrl: `${SITE}/email-templates/raksha-bandhan-order-by-20-august-banner.png`,
-  heroImageHref: SHOP,
-  heroImageAlt:
-    "Raksha Bandhan is just around the corner — Order by 20 August for Guaranteed Delivery Before Rakhi | UsaRakhi",
-  ctaText: "SHOP RAKHI NOW",
-  ctaHref: SHOP,
-  urgencyEyebrow: "LIMITED TIME · RAKSHA BANDHAN 2026",
-  urgencyHeadline: "Order by 20 August for Guaranteed Delivery Before Rakhi",
+  /** Same public `/banners/` asset as the homepage slide (Amplify must deploy main). */
+  heroImageUrl: RAKSHA_BANDHAN_ORDER_BY_20_BANNER_URL,
+  heroImageHref: `${SITE}/products?category=rakhi-combo`,
+  heroImageAlt: RAKSHA_BANDHAN_ORDER_BY_20_BANNER_ALT,
+  ctaText: "Shop Rakhi Now",
+  ctaHref: `${SITE}/products?category=rakhi-combo`,
+  urgencyEyebrow: "RAKSHA BANDHAN 2026",
+  urgencyHeadline: "Order by 20 August for guaranteed delivery before Rakhi",
   urgencyBody:
-    "Don’t wait until the last minute. Place your order by 20 August so your brother receives his Rakhi in time for the celebration — premium packaging, roli & chawal on most designs, domestic USA delivery.",
+    "Place your order by 20 August so your brother receives his Rakhi in time — premium packaging, roli & chawal on most designs, and domestic USA delivery from California.",
   categoriesHeading: "Shop Rakhi Collections",
   categoriesSubheading: "Single Rakhi, Combos, Hampers & Kids Rakhi — ready to gift across America.",
   categories: [
@@ -647,11 +652,11 @@ export const RAKSHA_BANDHAN_ORDER_BY_20_EMAIL_CONFIG = {
       buttonText: "Shop Now",
     },
   ] satisfies CampaignCard[],
-  emotionalHeading: "Make Raksha Bandhan Special, Even From Miles Away ❤️",
+  emotionalHeading: "Make Raksha Bandhan special, even from miles away",
   emotionalBody:
     "Distance can’t dim the sibling bond. Send a beautiful Rakhi from UsaRakhi and celebrate Raksha Bandhan with love — wherever your brother lives in the USA.",
-  midCtaText: "ORDER YOUR RAKHI NOW",
-  midCtaHref: SHOP,
+  midCtaText: "Order your Rakhi",
+  midCtaHref: `${SITE}/products?category=rakhi-combo`,
   footerTagline: "Connecting Hearts Across Borders",
   footerLogoUrl: LOGO,
   websiteUrl: SITE,
@@ -999,6 +1004,12 @@ function emailShell(opts: {
                 <tr>
                   <td align="center" style="padding:0 0 12px 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px;color:#9aa8c0;">
                     ${escapeHtml(f.copyrightText)}
+                  </td>
+                </tr>
+                <tr>
+                  <td align="center" style="padding:0 0 10px 0;font-family:Arial,Helvetica,sans-serif;font-size:11px;line-height:16px;color:#8a96a8;">
+                    UsaRakhi · California, United States ·
+                    <a href="mailto:${escAttr(f.orderEmail)}" style="color:#c5d0e0;text-decoration:underline;">${escapeHtml(f.orderEmail)}</a>
                   </td>
                 </tr>
                 <tr>

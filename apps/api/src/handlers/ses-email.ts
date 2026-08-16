@@ -1292,8 +1292,9 @@ export async function sendTest(event: APIGatewayProxyEventV2) {
       company: "Test Co",
       email: parsed.data.to,
     });
+    const unsubUrl = `${SITE_URL}/email/unsubscribe/${unsubToken}`;
     html = injectTracking(html, openToken, linkMap);
-    html = finalizeEmailHtml(html, settings, `${SITE_URL}/email/unsubscribe/${unsubToken}`);
+    html = finalizeEmailHtml(html, settings, unsubUrl);
     await persistClickTokens(linkMap, {
       campaignId: campaign.campaignId,
       email: parsed.data.to,
@@ -1307,6 +1308,7 @@ export async function sendTest(event: APIGatewayProxyEventV2) {
       fromName,
       fromEmail,
       replyTo,
+      listUnsubscribeUrl: unsubUrl,
     });
 
     console.info("[SES] Test email sent", {
@@ -1791,8 +1793,9 @@ async function sendQueuedEmail(
     company: recipient.company as string | undefined,
     email,
   });
+  const unsubUrl = `${SITE_URL}/email/unsubscribe/${unsubToken}`;
   html = injectTracking(html, openToken, linkMap);
-  html = finalizeEmailHtml(html, settings, `${SITE_URL}/email/unsubscribe/${unsubToken}`);
+  html = finalizeEmailHtml(html, settings, unsubUrl);
 
   // Store open + unsub token (reuse open record for unsub lookup by storing email)
   await docClient.send(
@@ -1836,6 +1839,7 @@ async function sendQueuedEmail(
       "email@usarakhi.com"
     ).trim(),
     replyTo: (campaign.replyTo || settings.defaultReplyTo || "").trim() || undefined,
+    listUnsubscribeUrl: unsubUrl,
   });
 
   await updateRecipientStatus(campaign.campaignId, email, {

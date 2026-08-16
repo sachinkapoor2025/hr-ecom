@@ -28,6 +28,8 @@ export type SesSendInput = {
   fromEmail: string;
   replyTo?: string;
   configurationSetName?: string;
+  /** One-click / mailto unsubscribe URL (Gmail & Yahoo bulk-sender requirement). */
+  listUnsubscribeUrl?: string;
 };
 
 export class SesSendError extends Error {
@@ -374,6 +376,7 @@ async function sendViaMarketingSmtp(
     socketTimeout: 30_000,
   };
   const transporter = nodemailer.createTransport(options);
+  const listUnsub = input.listUnsubscribeUrl?.trim();
   try {
     const info = await transporter.sendMail({
       from: { name: fromName, address: fromEmail },
@@ -382,6 +385,13 @@ async function sendViaMarketingSmtp(
       subject: input.subject,
       html: input.html,
       text: input.text,
+      headers: listUnsub
+        ? {
+            "List-Unsubscribe": `<${listUnsub}>`,
+            "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+            Precedence: "bulk",
+          }
+        : undefined,
       envelope: {
         from: fromEmail,
         to: input.to,
@@ -413,6 +423,14 @@ async function sendViaSesApi(input: SesSendInput): Promise<{ messageId?: string 
   const from = formatSesFromAddress(input.fromName, input.fromEmail);
   const configurationSetName =
     input.configurationSetName || process.env.SES_CONFIGURATION_SET || undefined;
+  const listUnsub = input.listUnsubscribeUrl?.trim();
+  const simpleHeaders = listUnsub
+    ? [
+        { Name: "List-Unsubscribe", Value: `<${listUnsub}>` },
+        { Name: "List-Unsubscribe-Post", Value: "List-Unsubscribe=One-Click" },
+        { Name: "Precedence", Value: "bulk" },
+      ]
+    : undefined;
 
   try {
     const result = await getClient().send(
@@ -422,6 +440,7 @@ async function sendViaSesApi(input: SesSendInput): Promise<{ messageId?: string 
         ReplyToAddresses: input.replyTo?.trim() ? [input.replyTo.trim()] : undefined,
         Content: {
           Simple: {
+            ...(simpleHeaders ? { Headers: simpleHeaders } : {}),
             Subject: { Data: input.subject, Charset: "UTF-8" },
             Body: {
               Html: { Data: input.html, Charset: "UTF-8" },

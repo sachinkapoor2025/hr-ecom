@@ -199,6 +199,12 @@ export default function SettingsPage() {
           Use the SMTP username shown in Mailercloud (often <code>order@usarakhi.com</code>). Do not use
           the transactional <code>smtp.usarakhi.com</code> mailbox password here.
         </p>
+        <p className="text-xs text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
+          Inbox tip: In Mailercloud, verify <code>usarakhi.com</code> with SPF + DKIM + DMARC, and keep
+          From as the verified Sender ID. Campaigns now send{" "}
+          <code>List-Unsubscribe</code> headers (required by Gmail/Yahoo for bulk mail). Avoid emoji
+          and ALL-CAPS subjects.
+        </p>
       </div>
 
       <div className="rounded-xl border bg-white p-5 space-y-3">

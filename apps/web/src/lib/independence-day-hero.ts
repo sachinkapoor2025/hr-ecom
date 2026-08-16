@@ -2,6 +2,8 @@ import type { HomeBanner } from "@/components/BannerCarousel";
 import {
   HOME_PAGE_INDEPENDENCE_DAY_BANNER_ALT,
   HOME_PAGE_INDEPENDENCE_DAY_BANNER_PATH,
+  RAKSHA_BANDHAN_ORDER_BY_20_BANNER_ALT,
+  RAKSHA_BANDHAN_ORDER_BY_20_BANNER_PATH,
 } from "@hr-ecom/shared";
 import { homeBanners } from "@/lib/site";
 
@@ -35,8 +37,8 @@ export const independenceDayHeroBanner: HomeBanner = {
 
 /** Raksha Bandhan “Order by 20 August” promo — full artwork in image (use contain to avoid crop). */
 export const rakshaBandhanOrderBy20Banner: HomeBanner = {
-  src: "/banners/banner-raksha-bandhan-order-by-20-august.png",
-  alt: "Raksha Bandhan is just around the corner — Order by 20 August for Guaranteed Delivery Before Rakhi | UsaRakhi",
+  src: RAKSHA_BANDHAN_ORDER_BY_20_BANNER_PATH,
+  alt: RAKSHA_BANDHAN_ORDER_BY_20_BANNER_ALT,
   href: "/products?category=rakhi-combo",
   eyebrow: "RAKSHA BANDHAN · ORDER BY 20 AUGUST",
   title: "Raksha Bandhan is just around the",
