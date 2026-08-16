@@ -30,6 +30,22 @@ export const independenceDayHeroBanner: HomeBanner = {
     "Premium rakhis with fast USA delivery. Perfect for Independence Day & Raksha Bandhan.",
   cta: "Shop Freedom Sale",
   pill: "Independence Day · Fast USA Delivery · Premium Rakhis",
+  imageFit: "contain",
+};
+
+/** Raksha Bandhan “Order by 20 August” promo — full artwork in image (use contain to avoid crop). */
+export const rakshaBandhanOrderBy20Banner: HomeBanner = {
+  src: "/banners/banner-raksha-bandhan-order-by-20-august.png",
+  alt: "Raksha Bandhan is just around the corner — Order by 20 August for Guaranteed Delivery Before Rakhi | UsaRakhi",
+  href: "/products?category=rakhi-combo",
+  eyebrow: "RAKSHA BANDHAN · ORDER BY 20 AUGUST",
+  title: "Raksha Bandhan is just around the",
+  titleAccent: "corner!",
+  description:
+    "Order by 20 August for Guaranteed Delivery Before Rakhi. Shop premium Single Rakhi, Combos, Hampers & more.",
+  cta: "Shop Rakhi Now",
+  pill: "Order by 20 August · Guaranteed Delivery · Premium Rakhis",
+  imageFit: "contain",
 };
 
 export function isIndependenceDayHeroActive(now = new Date()): boolean {
@@ -40,12 +56,13 @@ export function isIndependenceDayHeroActive(now = new Date()): boolean {
 }
 
 /**
- * Homepage hero only — prepends the Independence Day slide while the campaign
- * is active; all default `homeBanners` stay in the carousel after it.
+ * Homepage hero — campaign slides first, then default `homeBanners`.
+ * Existing catalog banners are never removed or modified.
  */
 export function getHomeBanners(now = new Date()): readonly HomeBanner[] {
+  const withOrderBy20: HomeBanner[] = [rakshaBandhanOrderBy20Banner, ...homeBanners];
   if (isIndependenceDayHeroActive(now)) {
-    return [independenceDayHeroBanner, ...homeBanners];
+    return [independenceDayHeroBanner, ...withOrderBy20];
   }
-  return homeBanners;
+  return withOrderBy20;
 }
