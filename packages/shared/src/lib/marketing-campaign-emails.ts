@@ -1546,7 +1546,7 @@ export function buildRakshaBandhanOrderBy20EmailHtml(
   ].join("");
 
   const bodyRows = `
-          <!-- Campaign hero banner -->
+          <!-- Campaign hero banner (revision: restore-2026-08-16) -->
           <tr>
             <td align="center" style="padding:0;line-height:0;font-size:0;">
               <a href="${escAttr(cfg.heroImageHref)}" target="_blank" style="text-decoration:none;">
