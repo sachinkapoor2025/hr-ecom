@@ -68,7 +68,7 @@ export const PRODUCT_ADDONS: readonly ProductAddonDef[] = [
   {
     id: "lindt-5pc",
     name: "Lindt Lindor chocolates (5 pcs)",
-    priceUsd: 6,
+    priceUsd: 9,
     group: "chocolates",
     detail: "5 pcs",
   },

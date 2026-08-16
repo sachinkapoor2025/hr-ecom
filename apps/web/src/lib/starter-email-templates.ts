@@ -35,8 +35,6 @@ export type StarterEmailTemplateMeta = {
    * DynamoDB template so Admin field edits are preserved.
    */
   preserveAdminEdits?: boolean;
-  /** When true, always PUT packaged HTML/subject/name over the stored template. */
-  forceRefresh?: boolean;
 };
 
 export const RAKSHA_BANDHAN_TEMPLATE_ID = "raksha-bandhan-usa";
@@ -104,8 +102,6 @@ export const STARTER_EMAIL_TEMPLATES: StarterEmailTemplateMeta[] = [
     subject: RAKSHA_BANDHAN_ORDER_BY_20_EMAIL_CONFIG.subject,
     buildHtml: () => buildRakshaBandhanOrderBy20EmailHtml(),
     htmlPath: "/email-templates/raksha-bandhan-order-by-20-august.html",
-    /** Overwrite Admin copy so the removed hero banner actually disappears from DynamoDB. */
-    forceRefresh: true,
   },
 ];
 

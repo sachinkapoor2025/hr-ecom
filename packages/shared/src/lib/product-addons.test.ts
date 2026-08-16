@@ -18,7 +18,7 @@ describe("product-addons", () => {
     assert.equal(getProductAddon("kaju-katli-200g"), undefined);
     assert.equal(getProductAddon("badam-100g")?.priceUsd, 9);
     assert.equal(getProductAddon("hershey-2pc")?.priceUsd, 5);
-    assert.equal(getProductAddon("lindt-5pc")?.priceUsd, 6);
+    assert.equal(getProductAddon("lindt-5pc")?.priceUsd, 9);
     assert.equal(getProductAddon("ferrero-3pc")?.priceUsd, 5);
   });
 
