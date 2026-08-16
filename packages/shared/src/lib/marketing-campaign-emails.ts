@@ -7,11 +7,7 @@
  * Both builders emit table + inline-CSS HTML for Gmail / Outlook / Apple Mail.
  */
 
-import {
-  getFirstHomePageBannerForEmail,
-  RAKSHA_BANDHAN_ORDER_BY_20_BANNER_ALT,
-  RAKSHA_BANDHAN_ORDER_BY_20_BANNER_URL,
-} from "./home-page-banners";
+import { getFirstHomePageBannerForEmail } from "./home-page-banners";
 import { cdnUploadUrl, resolveProductImageUrl } from "./image-url";
 
 const SITE = "https://www.usarakhi.com";
@@ -610,10 +606,6 @@ export const RAKSHA_BANDHAN_ORDER_BY_20_EMAIL_CONFIG = {
   logoUrl: LOGO,
   logoHref: SITE,
   logoTagline: "Connecting Hearts Across Borders",
-  /** Same public `/banners/` asset as the homepage slide (Amplify must deploy main). */
-  heroImageUrl: RAKSHA_BANDHAN_ORDER_BY_20_BANNER_URL,
-  heroImageHref: `${SITE}/products?category=rakhi-combo`,
-  heroImageAlt: RAKSHA_BANDHAN_ORDER_BY_20_BANNER_ALT,
   ctaText: "Shop Rakhi Now",
   ctaHref: `${SITE}/products?category=rakhi-combo`,
   urgencyEyebrow: "RAKSHA BANDHAN 2026",
@@ -1536,7 +1528,7 @@ export function buildIndependenceDayEmailHtml(
   });
 }
 
-/** Template 6 HTML — Raksha Bandhan Order by 20 August (provided campaign banner). */
+/** Template 6 HTML — Raksha Bandhan Order by 20 August (no hero banner). */
 export function buildRakshaBandhanOrderBy20EmailHtml(
   cfg: typeof RAKSHA_BANDHAN_ORDER_BY_20_EMAIL_CONFIG = RAKSHA_BANDHAN_ORDER_BY_20_EMAIL_CONFIG
 ): string {
@@ -1546,14 +1538,6 @@ export function buildRakshaBandhanOrderBy20EmailHtml(
   ].join("");
 
   const bodyRows = `
-          <!-- Campaign hero banner (user-provided — full width, uncropped) -->
-          <tr>
-            <td align="center" style="padding:0;line-height:0;font-size:0;">
-              <a href="${escAttr(cfg.heroImageHref)}" target="_blank" style="text-decoration:none;">
-                <img class="fluid" src="${escAttr(cfg.heroImageUrl)}" width="600" alt="${escAttr(cfg.heroImageAlt)}" style="display:block;width:100%;max-width:600px;height:auto;border:0;" />
-              </a>
-            </td>
-          </tr>
           <!-- Primary CTA -->
           <tr>
             <td class="mobile-pad" align="center" bgcolor="${WHITE}" style="padding:22px 24px 8px 24px;background-color:${WHITE};">
