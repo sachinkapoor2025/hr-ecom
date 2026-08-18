@@ -20,8 +20,19 @@ import { ConfettiBurst } from "@/components/ConfettiBurst";
 import { PhoneInput, buildPhoneValue } from "@/components/PhoneInput";
 
 const STORAGE_KEY = "usarakhi_daily_deal_shown";
-const SHOW_AFTER_MS = 10_000;
+const ELAPSED_KEY = "usarakhi_daily_deal_elapsed";
+const SHOW_AFTER_MS = 30_000;
 const SPIN_MS = 4200;
+
+/** Home, cart, and product detail only — not listing, shipping, blog, etc. */
+export function isSpinWheelPath(pathname: string): boolean {
+  const path = pathname.replace(/\/+$/, "") || "/";
+  if (path === "/") return true;
+  if (path === "/cart") return true;
+  if (!path.startsWith("/products/")) return false;
+  const slug = path.slice("/products/".length);
+  return slug.length > 0 && !slug.includes("/");
+}
 
 const SEGMENTS = [...DAILY_DEAL_SEGMENTS];
 const WHEEL_LABELS = [...DAILY_DEAL_WHEEL_LABELS];
@@ -92,27 +103,28 @@ export function ExitIntentPopup() {
   }, []);
 
   useEffect(() => {
-    if (pathname.startsWith("/admin") || pathname.startsWith("/ses-email") || pathname.startsWith("/checkout")) return;
+    if (!isSpinWheelPath(pathname)) return;
     if (sessionStorage.getItem(STORAGE_KEY)) return;
 
-    const TIMER_START_KEY = "usarakhi_daily_deal_timer_start";
-    let startedAt = Number(sessionStorage.getItem(TIMER_START_KEY) || 0);
-    if (!startedAt) {
-      startedAt = Date.now();
-      sessionStorage.setItem(TIMER_START_KEY, String(startedAt));
-    }
+    const elapsed = Number(sessionStorage.getItem(ELAPSED_KEY) || 0);
+    const remaining = Math.max(0, SHOW_AFTER_MS - elapsed);
+    const started = Date.now();
 
-    const remaining = Math.max(0, SHOW_AFTER_MS - (Date.now() - startedAt));
     const timer = window.setTimeout(() => {
       if (sessionStorage.getItem(STORAGE_KEY)) return;
       const path = window.location.pathname;
-      if (path.startsWith("/admin") || path.startsWith("/ses-email") || path.startsWith("/checkout")) return;
+      if (!isSpinWheelPath(path)) return;
       sessionStorage.setItem(STORAGE_KEY, "1");
       setOpen(true);
       trackSessionHeartbeat("daily_deal_shown", SHOW_AFTER_MS, path);
     }, remaining);
 
-    return () => window.clearTimeout(timer);
+    return () => {
+      window.clearTimeout(timer);
+      if (sessionStorage.getItem(STORAGE_KEY)) return;
+      const extra = Date.now() - started;
+      sessionStorage.setItem(ELAPSED_KEY, String(Math.min(SHOW_AFTER_MS, elapsed + extra)));
+    };
   }, [pathname]);
 
   const copyCode = async () => {
@@ -237,6 +249,7 @@ export function ExitIntentPopup() {
   };
 
   if (!open) return null;
+  if (!isSpinWheelPath(pathname) && phase === "idle") return null;
 
   const showWheel = phase === "idle" || phase === "spinning" || phase === "celebrating";
   const celebrating = phase === "celebrating";
