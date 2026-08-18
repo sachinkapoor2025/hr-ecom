@@ -57,6 +57,7 @@ export const categoryPathToSlug: Record<string, string> = {
   "/2-set-rakhi-to-usa": "2-set-rakhi",
   "/3-set-rakhi-to-usa": "3-set-rakhi",
   "/4-set-rakhi-to-usa": "4-set-rakhi",
+  "/5-set-rakhi-to-usa": "5-set-rakhi",
   "/bhaiya-bhabhi-rakhi-to-usa": "bhaiya-bhabhi-rakhi",
   "/kids-rakhi-to-usa": "kids-rakhi",
   "/lumba-rakhi-to-usa": "lumba-rakhi",

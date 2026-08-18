@@ -1,4 +1,11 @@
 import { VENDOR_ORANGE_COUNTY } from "../constants";
+import {
+  MAX_RAKHI_ADDON_PIECES,
+  MINI_RAKHI_ADDONS,
+  RAKHI_ADDON_BUNDLE_USD,
+  rakhiAddonBundlePriceUsd,
+  rakhiAddonId,
+} from "./mini-rakhi-combos";
 
 export type ProductAddonGroup = "dry-fruits" | "chocolates" | "rakhis";
 
@@ -11,10 +18,12 @@ export type ProductAddonDef = {
   detail: string;
   /** Catalog slug when this add-on is a real rakhi SKU (standalone product price is unchanged). */
   productSlug?: string;
+  /** Storefront image for extra-rakhi cards. */
+  image?: string;
 };
 
-/** Extra-rakhi add-on price. Standalone product pages keep their regular selling price. */
-export const RAKHI_ADDON_PRICE_USD = 3.99;
+/** Extra-rakhi add-on price for a single piece. Mix 2–5 for bundle rates. */
+export const RAKHI_ADDON_PRICE_USD = RAKHI_ADDON_BUNDLE_USD[1];
 
 /** Max packs of a single add-on per cart line. */
 export const MAX_PRODUCT_ADDON_QUANTITY = 10;
@@ -85,70 +94,17 @@ export const PRODUCT_ADDONS: readonly ProductAddonDef[] = [
     group: "chocolates",
     detail: "3 pcs",
   },
-  {
-    id: "rakhi-blue-beads-pearl-single-rakhi",
-    name: "Blue Beads Pearl Single",
-    priceUsd: RAKHI_ADDON_PRICE_USD,
-    group: "rakhis",
-    detail: "Extra designer rakhi",
-    productSlug: "blue-beads-pearl-single-rakhi",
-  },
-  {
-    id: "rakhi-ganesh-single-rakhi",
-    name: "Ganesh Single Rakhi",
-    priceUsd: RAKHI_ADDON_PRICE_USD,
-    group: "rakhis",
-    detail: "Extra designer rakhi",
-    productSlug: "ganesh-single-rakhi",
-  },
-  {
-    id: "rakhi-mutiple-stone-single-rakhi",
-    name: "Mutiple Stone Single Rakhi",
-    priceUsd: RAKHI_ADDON_PRICE_USD,
-    group: "rakhis",
-    detail: "Extra designer rakhi",
-    productSlug: "mutiple-stone-single-rakhi",
-  },
-  {
-    id: "rakhi-om-rakhi-with-roli-chawal-for-brother",
-    name: "Om Rakhi with Roli Chawal for Brother",
-    priceUsd: RAKHI_ADDON_PRICE_USD,
-    group: "rakhis",
-    detail: "Extra designer rakhi",
-    productSlug: "om-rakhi-with-roli-chawal-for-brother",
-  },
-  {
-    id: "rakhi-pearl-single-rakhi",
-    name: "Pearl Single Rakhi",
-    priceUsd: RAKHI_ADDON_PRICE_USD,
-    group: "rakhis",
-    detail: "Extra designer rakhi",
-    productSlug: "pearl-single-rakhi",
-  },
-  {
-    id: "rakhi-red-rubi-single-stone-rakhi",
-    name: "Red Rubi Single Stone Rakhi",
-    priceUsd: RAKHI_ADDON_PRICE_USD,
-    group: "rakhis",
-    detail: "Extra designer rakhi",
-    productSlug: "red-rubi-single-stone-rakhi",
-  },
-  {
-    id: "rakhi-pearl-rakhi-with-gold-single-rakhi",
-    name: "Pearl Rakhi With Gold Single Rakhi",
-    priceUsd: RAKHI_ADDON_PRICE_USD,
-    group: "rakhis",
-    detail: "Extra designer rakhi",
-    productSlug: "pearl-rakhi-with-gold-single-rakhi",
-  },
-  {
-    id: "rakhi-om-single-rakhi",
-    name: "Om Single Rakhi",
-    priceUsd: RAKHI_ADDON_PRICE_USD,
-    group: "rakhis",
-    detail: "Extra designer rakhi",
-    productSlug: "om-single-rakhi",
-  },
+  ...MINI_RAKHI_ADDONS.map(
+    (rakhi): ProductAddonDef => ({
+      id: rakhiAddonId(rakhi.slug),
+      name: rakhi.name,
+      priceUsd: RAKHI_ADDON_PRICE_USD,
+      group: "rakhis",
+      detail: "Mix-and-match extra rakhi",
+      productSlug: rakhi.slug,
+      image: rakhi.image,
+    })
+  ),
 ] as const;
 
 export type ProductAddonId = (typeof PRODUCT_ADDONS)[number]["id"];
@@ -269,7 +225,53 @@ export function resolveProductAddons(
       quantity: sel.quantity,
     });
   }
-  return { ok: true, addons };
+
+  const pieceCount = addons
+    .filter((addon) => getProductAddon(addon.id)?.group === "rakhis")
+    .reduce((sum, addon) => sum + addon.quantity, 0);
+  if (pieceCount > MAX_RAKHI_ADDON_PIECES) {
+    return {
+      ok: false,
+      error: `You can mix up to ${MAX_RAKHI_ADDON_PIECES} extra rakhis`,
+    };
+  }
+
+  const priced = applyRakhiBundlePricing(addons);
+  return { ok: true, addons: priced };
+}
+
+function applyRakhiBundlePricing(addons: CartAddonLike[]): CartAddonLike[] {
+  const rakhiIndexes = addons
+    .map((addon, index) => (getProductAddon(addon.id)?.group === "rakhis" ? index : -1))
+    .filter((index) => index >= 0);
+  const pieceCount = rakhiIndexes.reduce((sum, index) => sum + addons[index]!.quantity, 0);
+  if (pieceCount === 0) return addons;
+  if (pieceCount > MAX_RAKHI_ADDON_PIECES) {
+    return addons;
+  }
+
+  const bundleCents = Math.round(rakhiAddonBundlePriceUsd(pieceCount) * 100);
+  const perPiece = Math.floor(bundleCents / pieceCount);
+  let leftover = bundleCents - perPiece * pieceCount;
+  const next = addons.map((addon) => ({ ...addon }));
+
+  for (const index of rakhiIndexes) {
+    const qty = next[index]!.quantity;
+    let lineCents = perPiece * qty;
+    const extra = Math.min(leftover, qty);
+    lineCents += extra;
+    leftover -= extra;
+    next[index]!.price = lineCents / 100 / qty;
+  }
+  return next;
+}
+
+export function selectedAddonsUsdTotal(
+  input: AddonResolveInput[] | undefined | null
+): number {
+  const resolved = resolveProductAddons(input);
+  if (!resolved.ok) return 0;
+  return sumAddonPrices(resolved.addons);
 }
 
 /** @deprecated Prefer resolveProductAddons — kept for call-site compatibility. */

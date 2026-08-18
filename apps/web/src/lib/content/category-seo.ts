@@ -39,6 +39,12 @@ export const categoryPageSeo: Record<
       "Shop Set of 4 Rakhis to USA — four-piece designer rakhi sets for larger families. Fast USA delivery with festive packaging.",
     h1: "Send Set of 4 Rakhis to USA",
   },
+  "5-set-rakhi": {
+    title: "Send Set of 5 Rakhis to USA | Free Shipping | USA Rakhi",
+    description:
+      "Shop Set of 5 Rakhis to USA — five-piece designer rakhi sets mixed from our popular singles. Fast USA delivery with festive packaging.",
+    h1: "Send Set of 5 Rakhis to USA",
+  },
   "kids-rakhi": {
     title: "Send Kids Rakhi to USA | Free Shipping | USA Rakhi",
     description:

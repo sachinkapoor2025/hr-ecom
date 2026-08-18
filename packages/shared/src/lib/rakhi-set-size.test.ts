@@ -30,6 +30,17 @@ describe("detectRakhiSetSize", () => {
     );
   });
 
+  it("detects set of 5 from name", () => {
+    assert.equal(
+      detectRakhiSetSize({
+        name: "Designer Rakhi Set of 5 — Classic Collection",
+        slug: "designer-rakhi-set-of-5-classic-collection",
+        categorySlug: "rakhi-combo",
+      }),
+      5
+    );
+  });
+
   it("detects set of 4 from name/description", () => {
     assert.equal(
       detectRakhiSetSize({

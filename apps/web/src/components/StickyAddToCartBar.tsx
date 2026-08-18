@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { AddToCartControl } from "@/components/AddToCartControl";
 import { useCurrency } from "@/lib/currency-context";
-import { getProductAddon, sumAddonPrices, type Product, type ProductAddonSelection } from "@hr-ecom/shared";
+import { selectedAddonsUsdTotal, type Product, type ProductAddonSelection } from "@hr-ecom/shared";
 
 /** Fixed bottom bar on mobile so Add to Cart stays visible while scrolling. */
 export function StickyAddToCartBar({
@@ -29,17 +29,7 @@ export function StickyAddToCartBar({
 
   if (!visible || product.inventory <= 0) return null;
 
-  const addonsUsdTotal = sumAddonPrices(
-    addons.map((s) => {
-      const def = getProductAddon(s.id);
-      return {
-        id: s.id,
-        name: def?.name ?? s.id,
-        price: def?.priceUsd ?? 0,
-        quantity: s.quantity,
-      };
-    })
-  );
+  const addonsUsdTotal = selectedAddonsUsdTotal(addons);
   const showCombined = addonsUsdTotal > 0 && product.currency === "USD";
   const displayPrice = showCombined ? product.price + addonsUsdTotal : product.price;
 
