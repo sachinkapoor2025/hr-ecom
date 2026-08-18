@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import {
   MAX_PRODUCT_ADDON_QUANTITY,
   MAX_RAKHI_ADDON_PIECES,
@@ -146,34 +145,34 @@ function RakhiAddonStrip({
           </p>
         ) : null}
       </div>
-      <ul className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 snap-x snap-mandatory">
+      <ul className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
         {items.map((addon) => {
           const qty = quantities.get(addon.id) ?? 0;
           const checked = qty > 0;
           const image = addon.image ? resolveImageUrl(addon.image) : "";
           const canAdd = remaining > 0 || checked;
           return (
-            <li key={addon.id} className="snap-start shrink-0 w-[8.5rem]">
+            <li key={addon.id}>
               <div
-                className={`rounded-lg border overflow-hidden bg-white h-full flex flex-col ${
+                className={`rounded-lg border bg-white flex flex-col overflow-hidden ${
                   checked ? "border-nav ring-1 ring-nav/30" : "border-slate-200"
                 } ${!canAdd ? "opacity-50" : ""}`}
               >
                 <button
                   type="button"
                   onClick={() => canAdd && onToggle(addon.id)}
-                  className="text-left"
+                  className="text-left w-full"
                   aria-pressed={checked}
                   aria-label={addon.name}
                 >
-                  <span className="relative block aspect-square bg-slate-100">
+                  <span className="relative block w-full aspect-square bg-slate-100 overflow-hidden">
                     {image ? (
-                      <Image
+                      // Native img: next/image fill collapses to 0px inside a shrink-wrapped button.
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
                         src={image}
-                        alt={addon.name}
-                        fill
-                        sizes="136px"
-                        className="object-cover"
+                        alt=""
+                        className="absolute inset-0 h-full w-full object-cover"
                       />
                     ) : null}
                     {checked ? (
@@ -182,14 +181,14 @@ function RakhiAddonStrip({
                       </span>
                     ) : null}
                   </span>
-                  <span className="block px-2 pt-2 pb-1">
+                  <span className="block px-1.5 pt-1.5 pb-1">
                     <span className="block text-[11px] font-semibold text-slate-900 leading-snug line-clamp-2 min-h-[2.1rem]">
                       {addon.name}
                     </span>
                   </span>
                 </button>
                 {checked ? (
-                  <div className="mt-auto px-2 pb-2 flex items-center justify-center">
+                  <div className="mt-auto px-1.5 pb-2 flex items-center justify-center">
                     <div className="inline-flex items-center rounded-full border border-slate-200 bg-white">
                       <button
                         type="button"
@@ -214,7 +213,7 @@ function RakhiAddonStrip({
                     </div>
                   </div>
                 ) : (
-                  <p className="mt-auto px-2 pb-2 text-[10px] text-slate-500 text-center">Tap to add</p>
+                  <p className="mt-auto px-1.5 pb-2 text-[10px] text-slate-500 text-center">Tap to add</p>
                 )}
               </div>
             </li>
