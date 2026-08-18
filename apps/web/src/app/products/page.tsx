@@ -43,6 +43,10 @@ const CATEGORY_SEO: Record<string, { title: string; description: string }> = {
     title: "4 Set Rakhi USA — Four-Piece Rakhi Sets",
     description: "Shop 4-piece rakhi sets for larger families in the USA. Designer packs with fast domestic delivery.",
   },
+  "5-set-rakhi": {
+    title: "5 Set Rakhi USA — Five-Piece Rakhi Sets",
+    description: "Shop 5-piece rakhi sets mixed from popular designer singles. Fast domestic USA delivery.",
+  },
   "rakhi-combo": {
     title: "Rakhi Combo USA — Rakhi with Chocolates",
     description: "Rakhi combo sets with Ferrero Rocher, Lindt & Hershey's. Send Rakhi combo to USA with free shipping on selected orders.",

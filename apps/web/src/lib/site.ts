@@ -32,6 +32,7 @@ export const rakhiSetsMenu = {
     { label: "Set of 2 Rakhis", href: categoryHref("2-set-rakhi"), category: "2-set-rakhi" },
     { label: "Set of 3 Rakhis", href: categoryHref("3-set-rakhi"), category: "3-set-rakhi" },
     { label: "Set of 4 Rakhis", href: categoryHref("4-set-rakhi"), category: "4-set-rakhi" },
+    { label: "Set of 5 Rakhis", href: categoryHref("5-set-rakhi"), category: "5-set-rakhi" },
   ],
 } as const;
 
@@ -153,7 +154,7 @@ export const homeCategoryOrder = [
 ] as const;
 
 /** Virtual multi-piece set filters (nav dropdown + SEO landing pages). */
-export const setSizeCategoryOrder = ["2-set-rakhi", "3-set-rakhi", "4-set-rakhi"] as const;
+export const setSizeCategoryOrder = ["2-set-rakhi", "3-set-rakhi", "4-set-rakhi", "5-set-rakhi"] as const;
 
 /** All browsable category slugs (home sections + set-size landings). */
 export const categoryOrder = [...homeCategoryOrder, ...setSizeCategoryOrder] as const;

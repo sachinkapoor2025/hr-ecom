@@ -10,6 +10,7 @@ import {
   productAllowsAddons,
   resolveProductAddons,
   resolveProductAddonsFromIds,
+  selectedAddonsUsdTotal,
   sumAddonPrices,
 } from "./product-addons";
 import { VENDOR_ORANGE_COUNTY } from "../constants";
@@ -27,7 +28,7 @@ describe("product-addons", () => {
     const rakhiAddons = PRODUCT_ADDONS.filter((a) => a.group === "rakhis");
     assert.equal(rakhiAddons.length, 8);
     assert.ok(rakhiAddons.every((a) => a.priceUsd === RAKHI_ADDON_PRICE_USD));
-    assert.equal(getProductAddon("rakhi-om-single-rakhi")?.productSlug, "om-single-rakhi");
+    assert.equal(getProductAddon("rakhi-om-single-rakhi")?.image?.includes("cloudfront"), true);
     assert.equal(addonsForProductPage("om-single-rakhi").filter((a) => a.group === "rakhis").length, 7);
     assert.equal(
       addonsForProductPage("om-single-rakhi").some((a) => a.id === "rakhi-om-single-rakhi"),
@@ -81,5 +82,27 @@ describe("product-addons", () => {
     assert.equal(bad.ok, false);
     const tooMany = resolveProductAddons([{ id: "badam-100g", quantity: 99 }]);
     assert.equal(tooMany.ok, false);
+  });
+
+  it("prices mixed extra rakhis as a 1–5 bundle", () => {
+    const one = resolveProductAddons([{ id: "rakhi-ganesh-single-rakhi", quantity: 1 }]);
+    assert.equal(one.ok, true);
+    if (one.ok) assert.equal(sumAddonPrices(one.addons), 3.99);
+
+    const two = resolveProductAddons([
+      { id: "rakhi-ganesh-single-rakhi", quantity: 1 },
+      { id: "rakhi-pearl-single-rakhi", quantity: 1 },
+    ]);
+    assert.equal(two.ok, true);
+    if (two.ok) assert.equal(sumAddonPrices(two.addons), 5.99);
+
+    const five = resolveProductAddons([{ id: "rakhi-ganesh-single-rakhi", quantity: 5 }]);
+    assert.equal(five.ok, true);
+    if (five.ok) assert.equal(sumAddonPrices(five.addons), 8.5);
+
+    const six = resolveProductAddons([{ id: "rakhi-ganesh-single-rakhi", quantity: 6 }]);
+    assert.equal(six.ok, false);
+
+    assert.equal(selectedAddonsUsdTotal([{ id: "rakhi-om-single-rakhi", quantity: 3 }]), 6.99);
   });
 });

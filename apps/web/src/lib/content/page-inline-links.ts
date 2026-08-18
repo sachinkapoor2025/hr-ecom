@@ -19,14 +19,22 @@ export const categoryPageInlineLinks: Record<string, readonly { phrase: string; 
   "2-set-rakhi": [
     { phrase: "Set of 3 Rakhis", href: categoryHref("3-set-rakhi") },
     { phrase: "Set of 4 Rakhis", href: categoryHref("4-set-rakhi") },
+    { phrase: "Set of 5 Rakhis", href: categoryHref("5-set-rakhi") },
   ],
   "3-set-rakhi": [
     { phrase: "Set of 2 Rakhis", href: categoryHref("2-set-rakhi") },
     { phrase: "Set of 4 Rakhis", href: categoryHref("4-set-rakhi") },
+    { phrase: "Set of 5 Rakhis", href: categoryHref("5-set-rakhi") },
   ],
   "4-set-rakhi": [
     { phrase: "Set of 2 Rakhis", href: categoryHref("2-set-rakhi") },
     { phrase: "Set of 3 Rakhis", href: categoryHref("3-set-rakhi") },
+    { phrase: "Set of 5 Rakhis", href: categoryHref("5-set-rakhi") },
+  ],
+  "5-set-rakhi": [
+    { phrase: "Set of 2 Rakhis", href: categoryHref("2-set-rakhi") },
+    { phrase: "Set of 3 Rakhis", href: categoryHref("3-set-rakhi") },
+    { phrase: "Set of 4 Rakhis", href: categoryHref("4-set-rakhi") },
   ],
 };
 

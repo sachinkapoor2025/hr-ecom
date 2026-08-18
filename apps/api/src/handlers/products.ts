@@ -11,6 +11,7 @@ import {
   productAllowsAddons,
   isRakhiSetSizeCategory,
   productMatchesRakhiSetCategory,
+  mergeMiniRakhiComboProducts,
   resolveProductImagesForUpsert,
   type Product,
 } from "@hr-ecom/shared";
@@ -123,7 +124,7 @@ export async function listProducts(event: APIGatewayProxyEventV2) {
 
   if (category) {
     if (isRakhiSetSizeCategory(category)) {
-      const all = await scanAllProducts();
+      const all = mergeMiniRakhiComboProducts(await scanAllProducts());
       items = all.filter((product) => productMatchesRakhiSetCategory(product, category));
     } else if (category === "rakhi-combo") {
       const [combo, kids, hampers] = await Promise.all([
@@ -136,7 +137,7 @@ export async function listProducts(event: APIGatewayProxyEventV2) {
       for (const product of hampers) {
         if (product.additionalCategorySlugs?.includes("rakhi-combo")) bySlug.set(product.slug, product);
       }
-      items = [...bySlug.values()];
+      items = mergeMiniRakhiComboProducts([...bySlug.values()]);
     } else if (category === "rakhi-hampers") {
       items = await queryProductsByCategory(category);
     } else {
@@ -151,7 +152,7 @@ export async function listProducts(event: APIGatewayProxyEventV2) {
       items = [...bySlug.values()];
     }
   } else {
-    items = await scanAllProducts();
+    items = mergeMiniRakhiComboProducts(await scanAllProducts());
   }
 
   items = items.filter((p) => p.published !== false && (p.inventory ?? 0) > 0);

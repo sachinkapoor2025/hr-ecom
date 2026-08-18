@@ -26,6 +26,7 @@ const relatedAll = [
   { slug: "2-set-rakhi", label: "Set of 2 Rakhis to USA", text: "Two-piece designer rakhi sets for brothers." },
   { slug: "3-set-rakhi", label: "Set of 3 Rakhis to USA", text: "Three-piece rakhi sets for multiple brothers." },
   { slug: "4-set-rakhi", label: "Set of 4 Rakhis to USA", text: "Four-piece rakhi sets for larger families." },
+  { slug: "5-set-rakhi", label: "Set of 5 Rakhis to USA", text: "Five-piece designer rakhi mixes from popular singles." },
   { slug: "rakhi-combo", label: "Rakhi Combos to USA", text: "Rakhi with Ferrero Rocher, Lindt, Hershey's." },
   { slug: "rakhi-hampers", label: "Rakhi Hampers to USA", text: "Festive gift boxes with sweets and dry fruits." },
   { slug: "bhaiya-bhabhi-rakhi", label: "Bhaiya Bhabhi Rakhi to USA", text: "Matching sets for brother and Bhabhi." },
@@ -43,6 +44,7 @@ function relatedForSetPage(slug: string) {
     "2-set-rakhi",
     "3-set-rakhi",
     "4-set-rakhi",
+    "5-set-rakhi",
     "rakhi-combo",
     "rakhi-hampers",
     "bhaiya-bhabhi-rakhi",
@@ -574,6 +576,65 @@ export const categoryRichContent: Record<string, CategoryRichContent> = {
       },
     ],
     relatedCategories: relatedForSetPage("4-set-rakhi"),
+  },
+  "5-set-rakhi": {
+    slug: "5-set-rakhi",
+    headline: "Set of 5 Rakhis for USA Delivery — Mix-and-Match Mini Collections",
+    intro: [
+      "A Set of 5 Rakhis is our largest mix from eight popular designer singles — five coordinated rakhis in one pack at a bundle price, while each design still sells on its own page at the regular price.",
+      "These five-piece sets are built for larger sibling groups and for sisters who want a ready-made mix instead of picking extras one by one. Complimentary roli and chawal are included so the tilak ceremony can happen at the US address.",
+      "Order a Set of 5 Rakhis from India or worldwide. UsaRakhi ships domestically across America in 5–7 business days. Prefer a smaller pack? Browse Set of 2, Set of 3, and Set of 4 Rakhis.",
+    ],
+    delivery: {
+      heading: "Set of 5 Rakhis Delivery Across the USA",
+      paragraphs: [
+        "UsaRakhi ships five-piece designer mixes to all 50 US states with domestic carriers and tracking.",
+        "Plan ahead for Raksha Bandhan so every brother has his rakhi before festival day.",
+      ],
+    },
+    highlights: {
+      heading: "Why Choose a Set of 5 Rakhis",
+      items: [],
+      paragraphs: [
+        "Five-piece mixes give you the lowest per-rakhi bundle from our popular singles — $8.50 for five, versus buying each design on its own product page. Every Set of 5 Rakhis ships domestically across all 50 states in 5–7 business days.",
+      ],
+    },
+    whyUs: {
+      heading: "Why Order Set of 5 Rakhis from UsaRakhi",
+      bullets: [
+        "Five designer rakhis mixed from popular singles",
+        "Bundle price while standalone pages keep regular prices",
+        "Roli and chawal included",
+        "Domestic USA shipping",
+        "Secure Stripe and Razorpay checkout",
+        "WhatsApp and email support",
+      ],
+    },
+    howTo: {
+      heading: "How to Send a Set of 5 Rakhis to the USA",
+      steps: [
+        "Choose a five-piece mix from the collection above.",
+        "Review the five designs on the product photos.",
+        "Add to cart and enter the full US shipping address.",
+        "Pay securely in USD or INR.",
+        "We pack the set and deliver in 5–7 business days.",
+      ],
+    },
+    faqs: [
+      {
+        q: "What is included in a Set of 5 Rakhis?",
+        a: "Five designer rakhis mixed from our popular singles, plus complimentary roli and chawal.",
+      },
+      {
+        q: "Can I still buy each rakhi separately?",
+        a: "Yes. Each design stays on its own product page at the regular price. The set is the five-piece bundle price.",
+      },
+      {
+        q: "How long does Set of 5 Rakhis delivery take?",
+        a: "Typically 5–7 business days after dispatch to any US state.",
+      },
+    ],
+    relatedCategories: relatedForSetPage("5-set-rakhi"),
   },
   "rakhi-hampers": {
     slug: "rakhi-hampers",

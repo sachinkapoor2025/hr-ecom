@@ -2,6 +2,7 @@ import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import {
   isRakhiSetSizeCategory,
+  allMiniRakhiComboProducts,
   productAllowsAddons,
   productMatchesRakhiSetCategory,
   resolveProductImageUrls,
@@ -39,6 +40,7 @@ export function getCatalogProducts(): Product[] {
   for (const product of [
     ...loadCatalogFile("usarakhi-catalog.json"),
     ...loadCatalogFile("orange-county-hampers.json"),
+    ...allMiniRakhiComboProducts(),
   ]) {
     // Never expose vendorCost / vendorSlug to the browser via SSR props.
     const allowsAddons = productAllowsAddons(product);

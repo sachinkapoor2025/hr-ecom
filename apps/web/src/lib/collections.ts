@@ -49,7 +49,7 @@ export const COLLECTIONS: CollectionDefinition[] = [
     title: "Rakhi Sets USA — Multi-Piece Designer Rakhi Packs",
     h1: "Rakhi Sets for USA Delivery",
     description:
-      "Shop multi-piece Rakhi sets and combo packs for brothers in the USA. Set of 2, 3, and 4 designer rakhis with domestic shipping.",
+      "Shop multi-piece Rakhi sets and combo packs for brothers in the USA. Set of 2, 3, 4, and 5 designer rakhis with domestic shipping.",
     intro:
       "Send a curated Rakhi set to your brother in America — multi-piece packs and chocolate combos with roli chawal on most orders.",
     filter: (products) =>
@@ -58,7 +58,8 @@ export const COLLECTIONS: CollectionDefinition[] = [
           inCategory(p, "rakhi-combo") ||
           productMatchesRakhiSetCategory(p, "2-set-rakhi") ||
           productMatchesRakhiSetCategory(p, "3-set-rakhi") ||
-          productMatchesRakhiSetCategory(p, "4-set-rakhi")
+          productMatchesRakhiSetCategory(p, "4-set-rakhi") ||
+          productMatchesRakhiSetCategory(p, "5-set-rakhi")
       ),
   },
   {

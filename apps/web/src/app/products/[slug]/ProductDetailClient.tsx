@@ -26,8 +26,7 @@ import {
   isFastSelling,
   getUnitsSold,
   estimatedDeliveryLabel,
-  sumAddonPrices,
-  getProductAddon,
+  selectedAddonsUsdTotal,
   isFlashComboProduct,
   isFlashComboSaleActive,
   flashComboSaleEndsAt,
@@ -151,17 +150,7 @@ export function ProductDetailClient({
   }, [product.slug]);
 
   const price = format(product.price, product.currency);
-  const addonsUsdTotal = sumAddonPrices(
-    addons.map((s) => {
-      const def = getProductAddon(s.id);
-      return {
-        id: s.id,
-        name: def?.name ?? s.id,
-        price: def?.priceUsd ?? 0,
-        quantity: s.quantity,
-      };
-    })
-  );
+  const addonsUsdTotal = selectedAddonsUsdTotal(addons);
   /** Add-on catalog is USD; show combined display when shopper has extras selected. */
   const displayTotal =
     addonsUsdTotal > 0 && product.currency === "USD"
