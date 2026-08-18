@@ -1,9 +1,11 @@
 /**
- * Raise rakhi catalog prices by tier and rewrite Lindt pack copy to 3-instead-of-5.
+ * Raise rakhi catalog prices by tier and rewrite Lindor pack copy.
  *
  *   ENVIRONMENT=prod npx tsx scripts/apply-rakhi-price-and-lindt-copy.ts --dry-run
  *   ENVIRONMENT=prod npx tsx scripts/apply-rakhi-price-and-lindt-copy.ts --apply
+ *   ENVIRONMENT=prod npx tsx scripts/apply-rakhi-price-and-lindt-copy.ts --lindt-copy-only --apply
  *
+ * `--lindt-copy-only` updates descriptions only (never prices).
  * Does not touch product images.
  */
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
@@ -14,7 +16,8 @@ const ENV = process.env.ENVIRONMENT ?? "prod";
 const TABLE = process.env.PRODUCTS_TABLE ?? `hr-ecom-products-${ENV}`;
 const REGION = process.env.AWS_DEFAULT_REGION ?? process.env.AWS_REGION ?? "us-east-1";
 const APPLY = process.argv.includes("--apply");
-const LINDT_PHRASE = "Includes 3 Lindt Chocolates instead of 5.";
+const COPY_ONLY = process.argv.includes("--lindt-copy-only");
+const LINDOR_PHRASE = "Includes 3 Lindor Chocolates.";
 
 const doc = DynamoDBDocumentClient.from(new DynamoDBClient({ region: REGION }), {
   marshallOptions: { removeUndefinedValues: true },
@@ -61,23 +64,29 @@ function bumpMoney(amount: number, currency: ShopCurrency, percent: number): num
 function rewriteLindtCopy(text: string): string {
   if (!text) return text;
   return text
+    .replace(/\bIncludes\s+3\s+Lindt\s+Chocolates\s+instead of 5\.?/gi, "Includes 3 Lindor Chocolates")
+    .replace(/\b3\s+Lindt\s+Chocolates\s+instead of 5/gi, "3 Lindor Chocolates")
+    .replace(/\bIncludes\s+3\s+Lindt\s+Chocolates\.?/gi, "Includes 3 Lindor Chocolates")
+    .replace(/\b3\s+Lindt\s+Chocolates/gi, "3 Lindor Chocolates")
     .replace(
-      /\bIncludes\s+5\s+Lind(?:or|t(?:\s+Lindor)?)\s+chocolates?/gi,
-      "Includes 3 Lindt Chocolates instead of 5"
+      /\bIncludes\s+5\s+Lind(?:or|t(?:\s+Lindor)?)\s+chocolates?\.?/gi,
+      "Includes 3 Lindor Chocolates"
     )
-    .replace(/\b5\s+Lind(?:or|t(?:\s+Lindor)?)\s+chocolates?/gi, "3 Lindt Chocolates instead of 5")
-    .replace(/\b5\s*-?\s*pcs?\s+(?:of\s+)?Lind(?:or|t(?:\s+Lindor)?)/gi, "3 pcs Lindt")
-    .replace(/\bLind(?:or|t)\s+chocolates?\s*\(\s*5\s*pcs?\s*\)/gi, "Lindt chocolates (3 pcs)");
+    .replace(/\b5\s+Lind(?:or|t(?:\s+Lindor)?)\s+chocolates?/gi, "3 Lindor Chocolates")
+    .replace(/\b5\s*-?\s*pcs?\s+(?:of\s+)?Lind(?:or|t(?:\s+Lindor)?)/gi, "3 pcs Lindor")
+    .replace(/\bLind(?:or|t(?:\s+Lindor)?)\s+chocolates?\s*\(\s*5\s*pcs?\s*\)/gi, "Lindor chocolates (3 pcs)")
+    .replace(/(Includes\s+3\s+Lindor\s+Chocolates\.?\s*){2,}/gi, "Includes 3 Lindor Chocolates. ")
+    .replace(/[ \t]{2,}/g, " ");
 }
 
 function ensureLindtDetails(description: string): string {
   let next = rewriteLindtCopy(description).trim();
-  if (!/3 Lindt Chocolates instead of 5/i.test(next)) {
+  if (!/\b3\s+Lindor\s+Chocolates\b/i.test(next)) {
     next = next
       ? /[.!?]$/.test(next)
-        ? `${next} ${LINDT_PHRASE}`
-        : `${next}. ${LINDT_PHRASE}`
-      : LINDT_PHRASE;
+        ? `${next} ${LINDOR_PHRASE}`
+        : `${next}. ${LINDOR_PHRASE}`
+      : LINDOR_PHRASE;
   }
   return next;
 }
@@ -106,7 +115,9 @@ async function main() {
     process.exit(1);
   }
 
-  console.log(`${APPLY ? "APPLY" : "DRY-RUN"} ${TABLE} (${REGION})`);
+  console.log(
+    `${APPLY ? "APPLY" : "DRY-RUN"}${COPY_ONLY ? " lindt-copy-only" : ""} ${TABLE} (${REGION})`
+  );
   const products = await scanProducts();
   console.log(`Scanned ${products.length} product rows`);
 
@@ -128,7 +139,12 @@ async function main() {
     const sets = ["#updatedAt = :now"];
     const logParts: string[] = [];
 
-    if (isRakhiProduct(product) && Number.isFinite(product.price) && (product.price ?? 0) > 0) {
+    if (
+      !COPY_ONLY &&
+      isRakhiProduct(product) &&
+      Number.isFinite(product.price) &&
+      (product.price ?? 0) > 0
+    ) {
       const oldPrice = product.price as number;
       const percent = priceIncreasePercent(oldPrice);
       const newPrice = bumpMoney(oldPrice, currency, percent);

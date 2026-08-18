@@ -68,7 +68,7 @@ export const PRODUCT_ADDONS: readonly ProductAddonDef[] = [
   {
     /** Legacy id — pack is now 3 pcs for $9; keep id so existing carts still resolve. */
     id: "lindt-5pc",
-    name: "Lindt Lindor chocolates (3 pcs)",
+    name: "Lindor chocolates (3 pcs)",
     priceUsd: 9,
     group: "chocolates",
     detail: "3 pcs",
