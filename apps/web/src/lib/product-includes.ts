@@ -29,7 +29,7 @@ export function productHasEatablesWithRakhi(product: ProductLike): boolean {
 }
 
 /** Shown on Lindt / Lindor product "What's included" checklists. */
-export const LINDT_INCLUDE_LABEL = "3 Lindt Chocolates instead of 5";
+export const LINDT_INCLUDE_LABEL = "3 Lindor Chocolates";
 
 /** Parse explicit "Includes N … chocolates" or "with N Brand" from name/description. */
 export function parseChocolateInclude(text: string): string | null {

@@ -28,9 +28,10 @@ describe("parseChocolateInclude", () => {
     assert.equal(parseChocolateInclude("Rakhi with Ferrero Rocher"), "3 Ferrero Rocher Chocolates");
   });
 
-  it("labels Lindt packs as 3 chocolates instead of 5", () => {
+  it("labels Lindt/Lindor packs as 3 Lindor Chocolates", () => {
     assert.equal(parseChocolateInclude("Gift set. Includes 5 Lindor chocolates."), LINDT_INCLUDE_LABEL);
     assert.equal(parseChocolateInclude("Blue Stone Rakhi with Lindt"), LINDT_INCLUDE_LABEL);
+    assert.equal(parseChocolateInclude("Includes 3 Lindor Chocolates."), LINDT_INCLUDE_LABEL);
   });
 
   it("returns null when no chocolate", () => {
