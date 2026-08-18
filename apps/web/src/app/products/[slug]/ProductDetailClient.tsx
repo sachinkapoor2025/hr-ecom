@@ -31,6 +31,7 @@ import {
   isFlashComboSaleActive,
   flashComboSaleEndsAt,
   FLASH_COMBO_SHIPPING_USD,
+  productAllowsAddons,
 } from "@hr-ecom/shared";
 import { EstimatedDeliveryNote } from "@/components/EstimatedDeliveryNote";
 import { ProductCareAccordions } from "@/components/ProductCareAccordions";
@@ -168,7 +169,7 @@ export function ProductDetailClient({
   const cartQuantity =
     cart?.items.filter((i) => i.productSlug === product.slug).reduce((s, i) => s + i.quantity, 0) ?? 0;
   const inCart = cartQuantity > 0;
-  const showAddons = product.allowsAddons === true;
+  const showAddons = product.allowsAddons === true && productAllowsAddons(product);
   const lowStock = product.inventory > 0 && product.inventory <= LOW_STOCK_THRESHOLD;
   const fastSelling = isFastSelling(product);
   const unitsSold = getUnitsSold(product);

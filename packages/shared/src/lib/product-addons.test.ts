@@ -39,7 +39,13 @@ describe("product-addons", () => {
   it("allows addons only for non–Orange County products", () => {
     assert.equal(productAllowsAddons({}), true);
     assert.equal(productAllowsAddons({ vendorSlug: undefined }), true);
+    assert.equal(productAllowsAddons({ categorySlug: "single-rakhi" }), true);
     assert.equal(productAllowsAddons({ vendorSlug: VENDOR_ORANGE_COUNTY }), false);
+    assert.equal(productAllowsAddons({ categorySlug: "rakhi-hampers" }), false);
+    assert.equal(
+      productAllowsAddons({ images: ["/uploads/orange-county/TFUSA001/TFUSA001.jpg"] }),
+      false
+    );
   });
 
   it("sums addon prices and line unit totals", () => {
