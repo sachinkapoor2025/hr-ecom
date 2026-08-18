@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
   PRODUCT_ADDONS,
+  RAKHI_ADDON_PRICE_USD,
+  addonsForProductPage,
   cartAddonSignature,
   cartLineUnitTotal,
   getProductAddon,
@@ -14,7 +16,7 @@ import { VENDOR_ORANGE_COUNTY } from "../constants";
 
 describe("product-addons", () => {
   it("lists catalog with expected prices", () => {
-    assert.equal(PRODUCT_ADDONS.length, 9);
+    assert.equal(PRODUCT_ADDONS.length, 17);
     assert.equal(getProductAddon("kaju-katli-200g"), undefined);
     assert.equal(getProductAddon("badam-100g")?.priceUsd, 9);
     assert.equal(getProductAddon("hershey-2pc")?.priceUsd, 5);
@@ -22,6 +24,15 @@ describe("product-addons", () => {
     assert.equal(getProductAddon("lindt-5pc")?.detail, "3 pcs");
     assert.match(getProductAddon("lindt-5pc")?.name ?? "", /Lindor chocolates \(3 pcs\)/);
     assert.equal(getProductAddon("ferrero-3pc")?.priceUsd, 5);
+    const rakhiAddons = PRODUCT_ADDONS.filter((a) => a.group === "rakhis");
+    assert.equal(rakhiAddons.length, 8);
+    assert.ok(rakhiAddons.every((a) => a.priceUsd === RAKHI_ADDON_PRICE_USD));
+    assert.equal(getProductAddon("rakhi-om-single-rakhi")?.productSlug, "om-single-rakhi");
+    assert.equal(addonsForProductPage("om-single-rakhi").filter((a) => a.group === "rakhis").length, 7);
+    assert.equal(
+      addonsForProductPage("om-single-rakhi").some((a) => a.id === "rakhi-om-single-rakhi"),
+      false
+    );
   });
 
   it("allows addons only for non–Orange County products", () => {

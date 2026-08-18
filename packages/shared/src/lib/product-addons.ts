@@ -1,6 +1,6 @@
 import { VENDOR_ORANGE_COUNTY } from "../constants";
 
-export type ProductAddonGroup = "dry-fruits" | "chocolates";
+export type ProductAddonGroup = "dry-fruits" | "chocolates" | "rakhis";
 
 export type ProductAddonDef = {
   id: string;
@@ -9,7 +9,12 @@ export type ProductAddonDef = {
   group: ProductAddonGroup;
   /** Short weight / pack label for UI. */
   detail: string;
+  /** Catalog slug when this add-on is a real rakhi SKU (standalone product price is unchanged). */
+  productSlug?: string;
 };
+
+/** Extra-rakhi add-on price. Standalone product pages keep their regular selling price. */
+export const RAKHI_ADDON_PRICE_USD = 3.99;
 
 /** Max packs of a single add-on per cart line. */
 export const MAX_PRODUCT_ADDON_QUANTITY = 10;
@@ -80,6 +85,70 @@ export const PRODUCT_ADDONS: readonly ProductAddonDef[] = [
     group: "chocolates",
     detail: "3 pcs",
   },
+  {
+    id: "rakhi-blue-beads-pearl-single-rakhi",
+    name: "Blue Beads Pearl Single",
+    priceUsd: RAKHI_ADDON_PRICE_USD,
+    group: "rakhis",
+    detail: "Extra designer rakhi",
+    productSlug: "blue-beads-pearl-single-rakhi",
+  },
+  {
+    id: "rakhi-ganesh-single-rakhi",
+    name: "Ganesh Single Rakhi",
+    priceUsd: RAKHI_ADDON_PRICE_USD,
+    group: "rakhis",
+    detail: "Extra designer rakhi",
+    productSlug: "ganesh-single-rakhi",
+  },
+  {
+    id: "rakhi-mutiple-stone-single-rakhi",
+    name: "Mutiple Stone Single Rakhi",
+    priceUsd: RAKHI_ADDON_PRICE_USD,
+    group: "rakhis",
+    detail: "Extra designer rakhi",
+    productSlug: "mutiple-stone-single-rakhi",
+  },
+  {
+    id: "rakhi-om-rakhi-with-roli-chawal-for-brother",
+    name: "Om Rakhi with Roli Chawal for Brother",
+    priceUsd: RAKHI_ADDON_PRICE_USD,
+    group: "rakhis",
+    detail: "Extra designer rakhi",
+    productSlug: "om-rakhi-with-roli-chawal-for-brother",
+  },
+  {
+    id: "rakhi-pearl-single-rakhi",
+    name: "Pearl Single Rakhi",
+    priceUsd: RAKHI_ADDON_PRICE_USD,
+    group: "rakhis",
+    detail: "Extra designer rakhi",
+    productSlug: "pearl-single-rakhi",
+  },
+  {
+    id: "rakhi-red-rubi-single-stone-rakhi",
+    name: "Red Rubi Single Stone Rakhi",
+    priceUsd: RAKHI_ADDON_PRICE_USD,
+    group: "rakhis",
+    detail: "Extra designer rakhi",
+    productSlug: "red-rubi-single-stone-rakhi",
+  },
+  {
+    id: "rakhi-pearl-rakhi-with-gold-single-rakhi",
+    name: "Pearl Rakhi With Gold Single Rakhi",
+    priceUsd: RAKHI_ADDON_PRICE_USD,
+    group: "rakhis",
+    detail: "Extra designer rakhi",
+    productSlug: "pearl-rakhi-with-gold-single-rakhi",
+  },
+  {
+    id: "rakhi-om-single-rakhi",
+    name: "Om Single Rakhi",
+    priceUsd: RAKHI_ADDON_PRICE_USD,
+    group: "rakhis",
+    detail: "Extra designer rakhi",
+    productSlug: "om-single-rakhi",
+  },
 ] as const;
 
 export type ProductAddonId = (typeof PRODUCT_ADDONS)[number]["id"];
@@ -94,6 +163,11 @@ const ADDON_BY_ID = new Map(PRODUCT_ADDONS.map((a) => [a.id, a]));
 
 export function getProductAddon(id: string): ProductAddonDef | undefined {
   return ADDON_BY_ID.get(id);
+}
+
+/** Hide a rakhi add-on on its own product page so the $3.99 deal is only for extras. */
+export function addonsForProductPage(productSlug: string): readonly ProductAddonDef[] {
+  return PRODUCT_ADDONS.filter((a) => a.productSlug !== productSlug);
 }
 
 export function productAllowsAddons(product: {

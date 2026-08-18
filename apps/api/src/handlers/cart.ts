@@ -8,6 +8,7 @@ import {
   applyCompetitivePriceReduction,
   cartAddonSignature,
   cartLineUnitTotal,
+  getProductAddon,
   productAllowsAddons,
   resolveProductAddons,
   isFlashComboProduct,
@@ -158,6 +159,9 @@ export async function addToCart(event: APIGatewayProxyEventV2) {
   const resolved = resolveProductAddons(requestedAddons);
   if (!resolved.ok) return badRequest(resolved.error);
   const addons = resolved.addons;
+  if (addons.some((a) => getProductAddon(a.id)?.productSlug === product.slug)) {
+    return badRequest("This rakhi cannot be added as an add-on to itself");
+  }
   const signature = cartAddonSignature(addons);
 
   // Vendor / hamper / flash fixed-price deals — do not stack competitive cuts.

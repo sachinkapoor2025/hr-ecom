@@ -3,14 +3,12 @@
 import {
   MAX_PRODUCT_ADDON_QUANTITY,
   PRODUCT_ADDONS,
+  addonsForProductPage,
   sumAddonPrices,
   type ProductAddonDef,
   type ProductAddonSelection,
 } from "@hr-ecom/shared";
 import { useCurrency } from "@/lib/currency-context";
-
-const DRY_FRUITS = PRODUCT_ADDONS.filter((a) => a.group === "dry-fruits");
-const CHOCOLATES = PRODUCT_ADDONS.filter((a) => a.group === "chocolates");
 
 function qtyMap(selected: ProductAddonSelection[]): Map<string, number> {
   return new Map(selected.map((s) => [s.id, s.quantity]));
@@ -105,21 +103,28 @@ function AddonGroup({
   );
 }
 
-/** UsaRakhi-only dry fruit & chocolate add-ons (multi-select with quantity). */
+/** UsaRakhi-only extra rakhi, dry fruit & chocolate add-ons (multi-select with quantity). */
 export function ProductAddonsPicker({
   selected,
   onChange,
+  productSlug,
   className = "",
 }: {
   selected: ProductAddonSelection[];
   onChange: (next: ProductAddonSelection[]) => void;
+  /** Current PDP slug — hides that rakhi from the $3.99 extra-rakhi list. */
+  productSlug?: string;
   className?: string;
 }) {
   const { format } = useCurrency();
+  const catalog = productSlug ? addonsForProductPage(productSlug) : PRODUCT_ADDONS;
+  const rakhis = catalog.filter((a) => a.group === "rakhis");
+  const dryFruits = catalog.filter((a) => a.group === "dry-fruits");
+  const chocolates = catalog.filter((a) => a.group === "chocolates");
   const quantities = qtyMap(selected);
   const addonsTotal = sumAddonPrices(
     selected.map((s) => {
-      const def = PRODUCT_ADDONS.find((a) => a.id === s.id);
+      const def = catalog.find((a) => a.id === s.id) ?? PRODUCT_ADDONS.find((a) => a.id === s.id);
       return {
         id: s.id,
         name: def?.name ?? s.id,
@@ -153,22 +158,32 @@ export function ProductAddonsPicker({
   return (
     <div className={`rounded-lg border border-slate-200 bg-slate-50/80 px-3 py-3 sm:px-4 sm:py-4 ${className}`}>
       <div className="mb-3">
-        <p className="text-sm font-bold text-primary">Add something sweet</p>
+        <p className="text-sm font-bold text-primary">Add extras</p>
         <p className="text-xs text-slate-600 mt-0.5">
-          Optional dry fruits &amp; chocolates — choose how many of each to add.
+          Extra designer rakhis are $3.99 each (their own product pages stay at the regular price).
+          Dry fruits and chocolates are optional.
         </p>
       </div>
       <div className="space-y-4">
+        {rakhis.length > 0 ? (
+          <AddonGroup
+            title="Extra rakhis — $3.99 each"
+            items={rakhis}
+            quantities={quantities}
+            onToggle={toggle}
+            onSetQuantity={setQuantity}
+          />
+        ) : null}
         <AddonGroup
           title="Dry fruits"
-          items={DRY_FRUITS}
+          items={dryFruits}
           quantities={quantities}
           onToggle={toggle}
           onSetQuantity={setQuantity}
         />
         <AddonGroup
           title="Chocolates"
-          items={CHOCOLATES}
+          items={chocolates}
           quantities={quantities}
           onToggle={toggle}
           onSetQuantity={setQuantity}

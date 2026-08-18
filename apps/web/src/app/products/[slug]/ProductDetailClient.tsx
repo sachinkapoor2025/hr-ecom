@@ -265,7 +265,12 @@ export function ProductDetailClient({
           <ProductCareAccordions product={product} />
 
           {showAddons ? (
-            <ProductAddonsPicker selected={addons} onChange={setAddons} className="mb-4" />
+            <ProductAddonsPicker
+              selected={addons}
+              onChange={setAddons}
+              productSlug={product.slug}
+              className="mb-4"
+            />
           ) : null}
 
           {inCart ? (
