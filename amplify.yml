@@ -7,6 +7,8 @@ applications:
         preBuild:
           commands:
             - nvm use 22
+            # Workspace symlink cache can restore stale packages/shared over this commit.
+            - git checkout -- packages apps/web
             - npm ci
             - npm run build -w @hr-ecom/shared
         build:
@@ -41,10 +43,6 @@ applications:
         baseDirectory: apps/web/.next
         files:
           - "**/*"
-      cache:
-        paths:
-          - node_modules/**/*
-          - apps/web/.next/cache/**/*
     environment:
       variables:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
