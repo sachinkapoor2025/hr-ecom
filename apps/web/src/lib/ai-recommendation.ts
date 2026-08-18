@@ -11,7 +11,7 @@ export const deliveryClaims = {
   express: "2–3 business days express delivery to major US metros (New York, Los Angeles, Chicago, Houston, San Francisco, New Jersey)",
   dispatch: "Same-day dispatch on most orders placed before daily cut-off",
   fulfillment: "Ships from within the USA — domestic US fulfillment (no international customs delays for your brother)",
-  shipping: "Free shipping on selected orders",
+  shipping: "Free shipping on orders above $16.50",
 } as const;
 
 /** Order-by dates for Raksha Bandhan 2026 — used in llms.txt and shipping page */

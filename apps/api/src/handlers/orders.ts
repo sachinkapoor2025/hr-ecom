@@ -448,35 +448,58 @@ export async function listOrders(event: APIGatewayProxyEventV2) {
   return ok({ orders: result.Items ?? [] });
 }
 
+async function queryAllOrdersByIndex(params: {
+  indexName: "GSI2" | "GSI3";
+  keyConditionExpression: string;
+  expressionAttributeValues: Record<string, string>;
+  maxPages?: number;
+}) {
+  const items: StoredOrder[] = [];
+  let ExclusiveStartKey: Record<string, unknown> | undefined;
+  let pages = 0;
+  const maxPages = params.maxPages ?? 200;
+
+  do {
+    const result = await docClient.send(
+      new QueryCommand({
+        TableName: ORDERS_TABLE,
+        IndexName: params.indexName,
+        KeyConditionExpression: params.keyConditionExpression,
+        ExpressionAttributeValues: params.expressionAttributeValues,
+        ScanIndexForward: false,
+        ExclusiveStartKey,
+        Limit: 100,
+      })
+    );
+    items.push(...((result.Items ?? []) as StoredOrder[]));
+    ExclusiveStartKey = result.LastEvaluatedKey as Record<string, unknown> | undefined;
+    pages += 1;
+  } while (ExclusiveStartKey && pages < maxPages);
+
+  return items;
+}
+
 export async function listAdminOrders(event: APIGatewayProxyEventV2) {
   if (!requireAdmin(event)) return forbidden();
 
   const status = event.queryStringParameters?.status;
 
   if (status) {
-    const result = await docClient.send(
-      new QueryCommand({
-        TableName: ORDERS_TABLE,
-        IndexName: "GSI3",
-        KeyConditionExpression: "GSI3PK = :pk",
-        ExpressionAttributeValues: { ":pk": orderKeys.gsi3pk(status) },
-        ScanIndexForward: false,
-      })
-    );
-    return ok({ orders: result.Items ?? [] });
+    const orders = await queryAllOrdersByIndex({
+      indexName: "GSI3",
+      keyConditionExpression: "GSI3PK = :pk",
+      expressionAttributeValues: { ":pk": orderKeys.gsi3pk(status) },
+    });
+    return ok({ orders });
   }
 
-  const result = await docClient.send(
-    new QueryCommand({
-      TableName: ORDERS_TABLE,
-      IndexName: "GSI2",
-      KeyConditionExpression: "GSI2PK = :pk",
-      ExpressionAttributeValues: { ":pk": orderKeys.gsi2pk() },
-      ScanIndexForward: false,
-    })
-  );
+  const orders = await queryAllOrdersByIndex({
+    indexName: "GSI2",
+    keyConditionExpression: "GSI2PK = :pk",
+    expressionAttributeValues: { ":pk": orderKeys.gsi2pk() },
+  });
 
-  return ok({ orders: result.Items ?? [] });
+  return ok({ orders });
 }
 
 async function fetchOrder(orderId: string): Promise<StoredOrder | undefined> {

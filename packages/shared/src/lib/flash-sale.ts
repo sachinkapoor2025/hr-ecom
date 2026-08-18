@@ -15,8 +15,8 @@ export const FLASH_COMBO_SALE = {
   slug: FLASH_COMBO_SALE_SLUG,
   title: "24-Hour Flash Sale",
   headline: "Grab Your Offer (5 product combo)",
-  priceUsd: 12.96,
-  compareAtUsd: 24.99,
+  priceUsd: 14.9,
+  compareAtUsd: 28.74,
   shippingUsd: FLASH_COMBO_SHIPPING_USD,
   includes: [
     "Blue Beads Pearl Single Rakhi",

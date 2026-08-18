@@ -2,6 +2,7 @@
 
 import {
   BELOW_THRESHOLD_SHIPPING_USD,
+  FREE_SHIPPING_ABOVE_USD,
   FREE_SHIPPING_MIN_SUBTOTAL_USD,
   REDUCED_SHIPPING_MIN_SUBTOTAL_USD,
   REDUCED_SHIPPING_USD,
@@ -42,14 +43,13 @@ function orderRangeLabel(
     currency,
     formatMoney
   );
-  const freeMin = usdOrLocal(
-    FREE_SHIPPING_MIN_SUBTOTAL_USD,
-    quote.thresholdInCurrency,
+  const above = usdOrLocal(
+    FREE_SHIPPING_ABOVE_USD,
+    quote.aboveAmountInCurrency,
     currency,
     formatMoney
   );
-  // Mid band ends just under free ($13.99 when free starts at $14).
-  const midMaxUsd = FREE_SHIPPING_MIN_SUBTOTAL_USD - 0.01;
+  const midMaxUsd = FREE_SHIPPING_ABOVE_USD;
   const midMax =
     currency === "USD"
       ? `$${midMaxUsd.toFixed(2)}`
@@ -58,9 +58,11 @@ function orderRangeLabel(
           currency
         );
 
-  if (tier === "low") return `Under ${midMin}`;
+  if (tier === "low") {
+    return currency === "USD" ? "$1.00 – $9.99" : `Under ${midMin}`;
+  }
   if (tier === "mid") return `${midMin} – ${midMax}`;
-  return `${freeMin}+`;
+  return `Above ${above}`;
 }
 
 function feeLabel(

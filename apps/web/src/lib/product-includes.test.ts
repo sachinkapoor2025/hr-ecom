@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { getProductIncludes, parseChocolateInclude } from "./product-includes";
+import { getProductIncludes, parseChocolateInclude, LINDT_INCLUDE_LABEL } from "./product-includes";
 
 describe("parseChocolateInclude", () => {
   it("reads Ferrero count from Includes sentence", () => {
@@ -26,6 +26,11 @@ describe("parseChocolateInclude", () => {
 
   it("defaults Ferrero to 3 when brand only", () => {
     assert.equal(parseChocolateInclude("Rakhi with Ferrero Rocher"), "3 Ferrero Rocher Chocolates");
+  });
+
+  it("labels Lindt packs as 3 chocolates instead of 5", () => {
+    assert.equal(parseChocolateInclude("Gift set. Includes 5 Lindor chocolates."), LINDT_INCLUDE_LABEL);
+    assert.equal(parseChocolateInclude("Blue Stone Rakhi with Lindt"), LINDT_INCLUDE_LABEL);
   });
 
   it("returns null when no chocolate", () => {
