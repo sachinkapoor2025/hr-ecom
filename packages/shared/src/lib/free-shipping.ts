@@ -9,19 +9,25 @@ import {
 } from "./flash-sale";
 import { cartLineUnitTotal } from "./product-addons";
 
-/** Cart subtotal at or above this (USD) unlocks free shipping (above $13.99 → $14.00+). */
-export const FREE_SHIPPING_MIN_SUBTOTAL_USD = 14;
+/**
+ * Exclusive cutoff: shipping is free when the cart is **above** this USD amount.
+ * $16.50 still pays the mid-tier fee.
+ */
+export const FREE_SHIPPING_ABOVE_USD = 16.5;
+
+/** First subtotal that qualifies for free shipping (above $16.50 → $16.51+). */
+export const FREE_SHIPPING_MIN_SUBTOTAL_USD = 16.51;
 
 /**
- * At or above this (USD) and below free-shipping threshold → reduced $3.99 shipping.
- * Below this → $6.99 shipping.
+ * At or above this (USD) and through $16.50 → reduced $3.99 shipping.
+ * Below this ($1–$9.99) → $7.99 shipping.
  */
-export const REDUCED_SHIPPING_MIN_SUBTOTAL_USD = 8;
+export const REDUCED_SHIPPING_MIN_SUBTOTAL_USD = 10;
 
-/** Flat shipping when bucket is under $8. */
-export const BELOW_THRESHOLD_SHIPPING_USD = 6.99;
+/** Flat shipping when bucket is under $10. */
+export const BELOW_THRESHOLD_SHIPPING_USD = 7.99;
 
-/** Flat shipping when bucket is $8+ but under $14 (i.e. through $13.99). */
+/** Flat shipping when bucket is $10–$16.50. */
 export const REDUCED_SHIPPING_USD = 3.99;
 
 export type FreeShippingTier = "low" | "mid" | "free";
@@ -34,11 +40,13 @@ export type FreeShippingQuote = {
   amountAwayFromFreeShipping: number;
   /** How much more cart value (in `currency`) is needed to reach the $3.99 tier. */
   amountAwayFromReducedShipping: number;
-  /** Free-shipping threshold expressed in `currency`. */
+  /** Exclusive "above this" free-shipping cutoff expressed in `currency`. */
+  aboveAmountInCurrency: number;
+  /** Free-shipping threshold expressed in `currency` (first free amount). */
   thresholdInCurrency: number;
   /** Reduced-shipping ($3.99) threshold expressed in `currency`. */
   reducedThresholdInCurrency: number;
-  /** $6.99 tier fee in `currency`. */
+  /** $7.99 tier fee in `currency`. */
   lowTierFeeInCurrency: number;
   /** $3.99 tier fee in `currency`. */
   midTierFeeInCurrency: number;
@@ -71,9 +79,9 @@ function toUsd(
 
 /**
  * Shipping tiers (per address × vendor bucket, in USD):
- * - under $8 → $6.99
- * - $8 to $13.99 → $3.99
- * - above $13.99 ($14+) → free
+ * - $1 to $9.99 → $7.99
+ * - $10 to $16.50 → $3.99
+ * - above $16.50 → free
  * Evaluated in USD, then converted when the shopper currency is INR.
  */
 export function quoteFreeShippingThreshold(input: {
@@ -82,6 +90,7 @@ export function quoteFreeShippingThreshold(input: {
   usdInrRate: number;
 }): FreeShippingQuote {
   const { subtotal, currency, usdInrRate } = input;
+  const aboveAmountInCurrency = toCurrency(FREE_SHIPPING_ABOVE_USD, currency, usdInrRate);
   const thresholdInCurrency = toCurrency(
     FREE_SHIPPING_MIN_SUBTOTAL_USD,
     currency,
@@ -124,6 +133,7 @@ export function quoteFreeShippingThreshold(input: {
     qualifiesForFreeShipping,
     amountAwayFromFreeShipping,
     amountAwayFromReducedShipping,
+    aboveAmountInCurrency,
     thresholdInCurrency,
     reducedThresholdInCurrency,
     lowTierFeeInCurrency: lowTierFee,
@@ -193,6 +203,7 @@ function flashComboShippingQuote(
   usdInrRate: number
 ): FreeShippingQuote {
   const charge = toCurrency(FLASH_COMBO_SHIPPING_USD, currency, usdInrRate);
+  const aboveAmountInCurrency = toCurrency(FREE_SHIPPING_ABOVE_USD, currency, usdInrRate);
   const thresholdInCurrency = toCurrency(
     FREE_SHIPPING_MIN_SUBTOTAL_USD,
     currency,
@@ -208,6 +219,7 @@ function flashComboShippingQuote(
     qualifiesForFreeShipping: false,
     amountAwayFromFreeShipping: 0,
     amountAwayFromReducedShipping: 0,
+    aboveAmountInCurrency,
     thresholdInCurrency,
     reducedThresholdInCurrency,
     lowTierFeeInCurrency: toCurrency(BELOW_THRESHOLD_SHIPPING_USD, currency, usdInrRate),

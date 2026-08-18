@@ -61,7 +61,7 @@ const CDN_IG = `${SITE}/email-templates/icons/instagram.png`;
 
 export const DEFAULT_PREMIUM_MARKETING_EMAIL_CONTENT: MarketingEmailContent = {
   preheader:
-    "Send love across the USA with premium Rakhis — ships from California. Free shipping above $7.",
+    "Send love across the USA with premium Rakhis — ships from California. Free shipping above $16.50.",
   logoUrl: `${SITE}/logo.png`,
   logoHref: SITE,
   logoAlt: "UsaRakhi — Connecting Hearts Across Borders",

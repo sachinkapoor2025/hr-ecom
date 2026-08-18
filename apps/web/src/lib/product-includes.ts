@@ -28,6 +28,9 @@ export function productHasEatablesWithRakhi(product: ProductLike): boolean {
   return Boolean(parseChocolateInclude(plain));
 }
 
+/** Shown on Lindt / Lindor product "What's included" checklists. */
+export const LINDT_INCLUDE_LABEL = "3 Lindt Chocolates instead of 5";
+
 /** Parse explicit "Includes N … chocolates" or "with N Brand" from name/description. */
 export function parseChocolateInclude(text: string): string | null {
   const patterns: { re: RegExp; label: (n: string) => string }[] = [
@@ -41,7 +44,7 @@ export function parseChocolateInclude(text: string): string | null {
     },
     {
       re: /includes\s+(\d+)\s+lind(?:or|t(?:\s+lindor)?)\s+chocolates?/i,
-      label: (n) => `${n} Lindor Chocolates`,
+      label: () => LINDT_INCLUDE_LABEL,
     },
     {
       re: /includes\s+\d+\s+assorted\s+chocolates?/i,
@@ -61,7 +64,7 @@ export function parseChocolateInclude(text: string): string | null {
     },
     {
       re: /with\s+(\d+)\s+lind(?:or|t)\s+chocolates?/i,
-      label: (n) => `${n} Lindor Chocolates`,
+      label: () => LINDT_INCLUDE_LABEL,
     },
     {
       re: /with\s+\d+\s+assorted\s+chocolates?/i,
@@ -83,7 +86,7 @@ export function parseChocolateInclude(text: string): string | null {
   // Brand defaults when qty is not stated (standard UsaRakhi pack sizes).
   if (/ferrero/i.test(text)) return "3 Ferrero Rocher Chocolates";
   if (/hershey/i.test(text)) return "2 small Hershey's chocolates";
-  if (/lindor|lindt/i.test(text)) return "5 Lindor Chocolates";
+  if (/lindor|lindt/i.test(text)) return LINDT_INCLUDE_LABEL;
   return "Assorted Chocolates";
 }
 

@@ -109,7 +109,7 @@ export function buildOrderShipments(input: {
     };
   }
 
-  /** Per address × vendor: under $8 → $6.99; $8–$13.99 → $3.99; above $13.99 ($14+) → free. */
+  /** Per address × vendor: $1–$9.99 → $7.99; $10–$16.50 → $3.99; above $16.50 → free. */
   const perAddress = built.map((s) =>
     quoteAddressShipmentShipping({
       items: s.items,
