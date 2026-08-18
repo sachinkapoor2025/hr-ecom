@@ -251,8 +251,6 @@ export function ProductDetailClient({
 
           <TrustBadges variant="compact" className="mb-5" />
 
-          <ProductCareAccordions product={product} />
-
           {showAddons ? (
             <ProductAddonsPicker
               selected={addons}
@@ -261,6 +259,8 @@ export function ProductDetailClient({
               className="mb-4"
             />
           ) : null}
+
+          <ProductCareAccordions product={product} />
 
           {inCart ? (
             <div className="mb-3">
