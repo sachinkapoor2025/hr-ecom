@@ -125,27 +125,29 @@ function RakhiAddonStrip({
 }) {
   const { format } = useCurrency();
   const mixTotal = selectedAddonsUsdTotal(selected.filter((s) => items.some((i) => i.id === s.id)));
+  const bundlePrices = [1, 2, 3, 4, 5] as const;
 
   return (
     <div>
-      <div className="flex flex-wrap items-end justify-between gap-2 mb-2">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-            Extra rakhis — mix any 1 to 5
-          </p>
-          <p className="text-xs text-slate-600 mt-0.5">
-            1 for {format(RAKHI_ADDON_BUNDLE_USD[1], "USD")} · 2 for{" "}
-            {format(RAKHI_ADDON_BUNDLE_USD[2], "USD")} · 3 for {format(RAKHI_ADDON_BUNDLE_USD[3], "USD")} · 4
-            for {format(RAKHI_ADDON_BUNDLE_USD[4], "USD")} · 5 for {format(RAKHI_ADDON_BUNDLE_USD[5], "USD")}
-          </p>
+      <div className="mb-3">
+        <div className="flex flex-wrap items-end justify-between gap-2">
+          <p className="text-sm sm:text-base font-bold text-primary">Extra rakhis — mix any 1 to 5</p>
+          {rakhiPieces > 0 ? (
+            <p className="text-sm font-bold text-nav tabular-nums">
+              {rakhiPieces} extra · {format(mixTotal, "USD")}
+            </p>
+          ) : null}
         </div>
-        {rakhiPieces > 0 ? (
-          <p className="text-xs font-semibold text-primary tabular-nums">
-            {rakhiPieces} extra · {format(mixTotal, "USD")}
-          </p>
-        ) : null}
+        <p className="mt-1.5 text-sm sm:text-[15px] font-semibold text-slate-800 leading-relaxed">
+          {bundlePrices.map((count, i) => (
+            <span key={count}>
+              {i > 0 ? " · " : ""}
+              {count} for {format(RAKHI_ADDON_BUNDLE_USD[count], "USD")}
+            </span>
+          ))}
+        </p>
       </div>
-      <ul className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
+      <ul className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
         {items.map((addon) => {
           const qty = quantities.get(addon.id) ?? 0;
           const checked = qty > 0;
@@ -154,8 +156,8 @@ function RakhiAddonStrip({
           return (
             <li key={addon.id}>
               <div
-                className={`rounded-lg border bg-white flex flex-col overflow-hidden ${
-                  checked ? "border-nav ring-1 ring-nav/30" : "border-slate-200"
+                className={`group rounded-lg border bg-white flex flex-col overflow-hidden transition ${
+                  checked ? "border-nav ring-1 ring-nav/30" : "border-slate-200 hover:border-nav/40 hover:shadow-sm"
                 } ${!canAdd ? "opacity-50" : ""}`}
               >
                 <button
@@ -172,11 +174,11 @@ function RakhiAddonStrip({
                       <img
                         src={image}
                         alt=""
-                        className="absolute inset-0 h-full w-full object-cover"
+                        className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-110"
                       />
                     ) : null}
                     {checked ? (
-                      <span className="absolute top-1.5 right-1.5 rounded-full bg-nav text-white text-[10px] font-bold px-1.5 py-0.5">
+                      <span className="absolute top-1.5 right-1.5 rounded-full bg-nav text-white text-[10px] font-bold px-1.5 py-0.5 z-[1]">
                         {qty}
                       </span>
                     ) : null}
@@ -213,7 +215,16 @@ function RakhiAddonStrip({
                     </div>
                   </div>
                 ) : (
-                  <p className="mt-auto px-1.5 pb-2 text-[10px] text-slate-500 text-center">Tap to add</p>
+                  <div className="mt-auto px-1.5 pb-2">
+                    <button
+                      type="button"
+                      disabled={!canAdd}
+                      onClick={() => onToggle(addon.id)}
+                      className="w-full rounded-md bg-nav px-2 py-1.5 text-xs font-bold text-white hover:bg-primary transition disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      Add
+                    </button>
+                  </div>
                 )}
               </div>
             </li>
@@ -250,12 +261,15 @@ export function ProductAddonsPicker({
   const remaining = MAX_RAKHI_ADDON_PIECES - rakhiPieces;
   const addonsTotal = selectedAddonsUsdTotal(selected);
 
+  const addonDef = (id: string) =>
+    catalog.find((a) => a.id === id) ?? PRODUCT_ADDONS.find((a) => a.id === id);
+
   const toggle = (id: string) => {
     if (quantities.has(id)) {
       onChange(selected.filter((s) => s.id !== id));
       return;
     }
-    if (remaining <= 0) return;
+    if (addonDef(id)?.group === "rakhis" && remaining <= 0) return;
     onChange([...selected, { id, quantity: 1 }].sort((a, b) => a.id.localeCompare(b.id)));
   };
 
@@ -265,7 +279,8 @@ export function ProductAddonsPicker({
       return;
     }
     const current = quantities.get(id) ?? 0;
-    const maxForThis = current + remaining;
+    const maxForThis =
+      addonDef(id)?.group === "rakhis" ? current + remaining : MAX_PRODUCT_ADDON_QUANTITY;
     const nextQty = Math.min(MAX_PRODUCT_ADDON_QUANTITY, maxForThis, quantity);
     if (nextQty < 1) {
       onChange(selected.filter((s) => s.id !== id));
@@ -279,10 +294,10 @@ export function ProductAddonsPicker({
   };
 
   return (
-    <div className={`rounded-lg border border-slate-200 bg-slate-50/80 px-3 py-3 sm:px-4 sm:py-4 ${className}`}>
-      <div className="mb-3">
-        <p className="text-sm font-bold text-primary">Add extras</p>
-        <p className="text-xs text-slate-600 mt-0.5">
+    <div className={`rounded-xl border border-nav/20 bg-gradient-to-br from-[#eef3ff] via-white to-amber-50/50 px-3 py-4 sm:px-4 sm:py-5 ${className}`}>
+      <div className="mb-4">
+        <p className="text-lg sm:text-xl font-extrabold text-primary tracking-tight">Add extras</p>
+        <p className="text-sm sm:text-[15px] text-slate-700 mt-1.5 leading-relaxed">
           Mix extra designer rakhis at bundle prices. Their own product pages stay at the regular price.
         </p>
       </div>

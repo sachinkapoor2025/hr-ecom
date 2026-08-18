@@ -1,4 +1,4 @@
-import { VENDOR_ORANGE_COUNTY } from "../constants";
+import { ORANGE_COUNTY_CATEGORY_SLUG, VENDOR_ORANGE_COUNTY } from "../constants";
 import {
   MAX_RAKHI_ADDON_PIECES,
   MINI_RAKHI_ADDONS,
@@ -126,12 +126,19 @@ export function addonsForProductPage(productSlug: string): readonly ProductAddon
   return PRODUCT_ADDONS.filter((a) => a.productSlug !== productSlug);
 }
 
+/** Extra rakhis / dry fruit / chocolate add-ons — UsaRakhi products only. */
 export function productAllowsAddons(product: {
   vendorSlug?: string | null;
+  categorySlug?: string | null;
+  additionalCategorySlugs?: string[] | null;
+  images?: string[] | null;
 }): boolean {
   const v = product.vendorSlug?.trim();
-  if (!v) return true;
-  return v !== VENDOR_ORANGE_COUNTY;
+  if (v === VENDOR_ORANGE_COUNTY) return false;
+  if ((product.categorySlug ?? "").trim() === ORANGE_COUNTY_CATEGORY_SLUG) return false;
+  if ((product.additionalCategorySlugs ?? []).includes(ORANGE_COUNTY_CATEGORY_SLUG)) return false;
+  if ((product.images ?? []).some((src) => src.includes("/uploads/orange-county/"))) return false;
+  return true;
 }
 
 export type CartAddonLike = {
