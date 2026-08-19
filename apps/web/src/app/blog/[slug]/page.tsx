@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { BlogShowMoreProducts } from "@/components/BlogShowMoreProducts";
 import { categoryHref } from "@/lib/category-urls";
+import { BlogCoverImage } from "@/components/BlogCoverImage";
 import { JsonLd } from "@/components/JsonLd";
 import { loadBlogPostWithImage } from "@/lib/blog-images";
 import { listAllBlogPosts } from "@/lib/content/blog-posts";
@@ -65,20 +66,13 @@ export default async function BlogPostPage({ params }: Props) {
           <p className="text-base sm:text-lg text-slate-600 break-words">{post.excerpt}</p>
         </header>
 
-        <div className="relative w-full aspect-[16/10] max-h-[420px] rounded-xl overflow-hidden mb-8 bg-slate-100">
-          {post.image ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={post.image}
-              alt={post.title}
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <div className="flex min-h-[200px] w-full items-center justify-center border border-dashed border-slate-300 bg-slate-50 text-center px-6">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Blog image placeholder</p>
-            </div>
-          )}
-        </div>
+        {post.image ? (
+          <BlogCoverImage src={post.image} alt={post.title} variant="article" />
+        ) : (
+          <div className="mb-8 flex min-h-[200px] w-full items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 px-6 text-center">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Blog image placeholder</p>
+          </div>
+        )}
 
         <div className="space-y-8 min-w-0 break-words [overflow-wrap:anywhere]">
           {post.sections.map((section, i) => (

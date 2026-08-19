@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { BlogCoverImage } from "@/components/BlogCoverImage";
 import { BlogShowMoreProducts } from "@/components/BlogShowMoreProducts";
 import { loadBlogPostsWithImages } from "@/lib/blog-images";
 import { pageMetadata } from "@/lib/seo";
@@ -29,16 +30,11 @@ export default async function BlogPage() {
             key={post.slug}
             className="border border-slate-200 rounded-xl overflow-hidden hover:shadow-md transition bg-white flex flex-col"
           >
-            <Link href={`/blog/${post.slug}`} className="block relative aspect-[16/10] bg-slate-100 overflow-hidden">
+            <Link href={`/blog/${post.slug}`} className="block bg-slate-100">
               {post.image ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={post.image}
-                  alt={post.title}
-                  className="h-full w-full object-cover"
-                />
+                <BlogCoverImage src={post.image} alt={post.title} variant="card" />
               ) : (
-                <div className="flex h-full w-full items-center justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50 text-center text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <div className="flex aspect-[16/9] w-full items-center justify-center bg-slate-50 text-center text-xs font-semibold uppercase tracking-wide text-slate-400">
                   Blog image placeholder
                 </div>
               )}
