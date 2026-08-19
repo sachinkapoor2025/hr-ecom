@@ -91,8 +91,6 @@ export default async function BlogPostPage({ params }: Props) {
           ))}
         </div>
 
-        {post.faqs && post.faqs.length > 0 && <BlogFaqSection faqs={post.faqs} />}
-
         {post.closing && (
           <section className="mt-10 min-w-0">
             <h2 className="text-xl font-bold text-primary mb-3 break-words">{post.closing.heading}</h2>
@@ -112,6 +110,8 @@ export default async function BlogPostPage({ params }: Props) {
             </Link>
           </div>
         )}
+
+        {post.faqs && post.faqs.length > 0 && <BlogFaqSection faqs={post.faqs} />}
 
         <div className="mt-8 pt-6 border-t flex flex-wrap gap-4 text-sm">
           <Link href="/" className="text-nav hover:underline">
