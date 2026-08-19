@@ -1,4 +1,10 @@
 import { allSeoBlogSlugs, seoBlogPostToBlogPost } from "./seo-blog";
+import { applyHandwrittenEndMatter } from "./blog-end-matter";
+
+export interface BlogFaqItem {
+  q: string;
+  a: string;
+}
 
 export interface BlogPost {
   slug: string;
@@ -10,6 +16,8 @@ export interface BlogPost {
   updatedAt: string;
   /** HTML-safe markdown-ish paragraphs */
   sections: { heading?: string; paragraphs: string[] }[];
+  faqs?: BlogFaqItem[];
+  closing?: { heading: string; paragraphs: string[] };
   relatedCategory?: string;
 }
 
@@ -1189,15 +1197,16 @@ export const blogPosts: BlogPost[] = [
 
 export function getBlogPost(slug: string): BlogPost | undefined {
   const hand = blogPosts.find((p) => p.slug === slug);
-  if (hand) return hand;
+  if (hand) return applyHandwrittenEndMatter(hand);
   return seoBlogPostToBlogPost(slug);
 }
 
 export function listAllBlogPosts(): BlogPost[] {
   const handSlugs = new Set(blogPosts.map((p) => p.slug));
+  const handwritten = blogPosts.map((p) => applyHandwrittenEndMatter(p));
   const seoOnly = allSeoBlogSlugs()
     .filter((s) => !handSlugs.has(s))
     .map((s) => seoBlogPostToBlogPost(s))
     .filter((p): p is BlogPost => !!p);
-  return [...blogPosts, ...seoOnly];
+  return [...handwritten, ...seoOnly];
 }

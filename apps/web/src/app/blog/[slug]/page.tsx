@@ -5,10 +5,11 @@ import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { BlogShowMoreProducts } from "@/components/BlogShowMoreProducts";
 import { categoryHref } from "@/lib/category-urls";
 import { BlogCoverImage } from "@/components/BlogCoverImage";
+import { BlogFaqSection } from "@/components/BlogFaqSection";
 import { JsonLd } from "@/components/JsonLd";
 import { loadBlogPostWithImage } from "@/lib/blog-images";
 import { listAllBlogPosts } from "@/lib/content/blog-posts";
-import { articleJsonLd, breadcrumbJsonLd, pageMetadata } from "@/lib/seo";
+import { articleJsonLd, breadcrumbJsonLd, faqJsonLd, pageMetadata } from "@/lib/seo";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -51,6 +52,7 @@ export default async function BlogPostPage({ params }: Props) {
           data={[
             articleJsonLd(post),
             breadcrumbJsonLd(crumbs.map((c) => ({ name: c.label, path: c.href ?? `/blog/${slug}` }))),
+            ...(post.faqs?.length ? [faqJsonLd(post.faqs)] : []),
           ]}
         />
         <Breadcrumbs items={crumbs} />
@@ -88,6 +90,19 @@ export default async function BlogPostPage({ params }: Props) {
             </section>
           ))}
         </div>
+
+        {post.faqs && post.faqs.length > 0 && <BlogFaqSection faqs={post.faqs} />}
+
+        {post.closing && (
+          <section className="mt-10 min-w-0">
+            <h2 className="text-xl font-bold text-primary mb-3 break-words">{post.closing.heading}</h2>
+            {post.closing.paragraphs.map((p) => (
+              <p key={p} className="text-slate-700 leading-relaxed mb-4 break-words [overflow-wrap:anywhere]">
+                {p}
+              </p>
+            ))}
+          </section>
+        )}
 
         {post.relatedCategory && (
           <div className="mt-10 p-6 bg-slate-50 rounded-xl border min-w-0">
