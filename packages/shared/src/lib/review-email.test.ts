@@ -250,6 +250,20 @@ describe("review-request admin display status", () => {
     assert.equal(canRetryReviewChannel(completed, "whatsapp"), false);
   });
 
+  it("treats Twilio 63038 daily limit as Failed so WhatsApp can be retried after the cap resets", () => {
+    const order = {
+      ...delivered,
+      reviewEmailSentAt: "2026-08-20T12:02:00.000Z",
+      reviewWhatsAppLastError:
+        "Twilio 63038: Account exceeded the 50 daily WhatsApp messages limit (sandbox/trial cap).",
+      reviewWhatsAppLastAttemptAt: "2026-08-20T12:02:01.000Z",
+    };
+    assert.equal(getReviewWhatsAppChannelStatus(order).status, "failed");
+    assert.notEqual(getReviewWhatsAppChannelStatus(order).status, "sent");
+    assert.equal(canRetryReviewChannel(order, "whatsapp"), true);
+    assert.equal(reviewRequestStillNeeded(order), true);
+  });
+
   it("allows retrying only the failed channel after a partial send", () => {
     const order = {
       ...delivered,
