@@ -1,0 +1,56 @@
+name: Update order sender message
+
+on:
+  workflow_dispatch:
+    inputs:
+      order:
+        description: Human order number (e.g. US10360)
+        required: true
+        default: US10360
+      environment:
+        description: Dynamo environment suffix
+        required: true
+        default: prod
+        type: choice
+        options:
+          - prod
+          - staging
+          - dev
+  push:
+    branches: [dev]
+    paths:
+      - scripts/update-order-sender-message.ts
+      - .github/workflows/update-order-sender-message.yml
+
+env:
+  AWS_REGION: us-east-1
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: ".nvmrc"
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build -w @hr-ecom/shared
+
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update senderMessage for one order
+        env:
+          ENVIRONMENT: ${{ github.event.inputs.environment || 'prod' }}
+          ORDER_NUMBER: ${{ github.event.inputs.order || 'US10360' }}
+        run: |
+          npx tsx scripts/update-order-sender-message.ts \
+            --order "${ORDER_NUMBER}" \
+            --apply
