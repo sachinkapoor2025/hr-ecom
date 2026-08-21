@@ -9,6 +9,12 @@ import {
   LOW_STOCK_ALERT_EMAIL,
   ABANDONED_CART_DISCOUNT_PERCENT,
   isAdminExtremeDiscount,
+  isDeliveredStatus,
+  reviewRequestStillNeeded,
+  renderReviewRequestTemplate,
+  omitEmptyGoogleReviewLines,
+  type ReviewRequestSettings,
+  type ReviewRequestTemplateVars,
 } from "@hr-ecom/shared";
 import {
   abandonedCartWhatsAppMessage,
@@ -17,7 +23,6 @@ import {
   orderPaidWhatsAppMessage,
   orderStatusWhatsAppMessage,
   pendingPaymentWhatsAppMessage,
-  reviewRequestWhatsAppMessage,
   welcomeCouponWhatsAppMessage,
 } from "./whatsapp";
 
@@ -980,6 +985,12 @@ export async function notifyCustomerOrderStatusChange(order: Order): Promise<Ema
     console.error("Admin order status email failed:", adminResult.error);
   }
 
+  // First Delivered/Complete: customer review request (email + WhatsApp) is sent
+  // separately and includes confirmation. Skip the generic status pair to avoid duplicates.
+  if (isDeliveredStatus(order.status) && reviewRequestStillNeeded(order)) {
+    return { ok: true, skipped: true };
+  }
+
   const customerEmail = order.shippingAddress?.email?.trim();
   if (!customerEmail?.includes("@")) {
     return adminResult.ok
@@ -1101,7 +1112,93 @@ ${notifyAddress()}`;
   });
 }
 
-export async function sendReviewRequestEmail(order: Order): Promise<EmailSendResult> {
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function reviewCtaButton(label: string, href: string, bg: string): string {
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="display:inline-table;margin:0 8px 12px 0;">
+  <tr>
+    <td bgcolor="${bg}" style="border-radius:8px;">
+      <a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:12px 22px;font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:bold;color:#ffffff;text-decoration:none;">${escapeHtml(label)}</a>
+    </td>
+  </tr>
+</table>`;
+}
+
+function buildReviewRequestEmailHtml(input: {
+  orderNumber: string;
+  statusLabel: string;
+  bodyText: string;
+  websiteReviewUrl: string;
+  googleReviewUrl?: string;
+}): string {
+  const paragraphs = input.bodyText
+    .split(/\n{2,}/)
+    .map((p) => p.trim())
+    .filter(Boolean)
+    .filter((p) => !p.startsWith("Leave a review:") && !p.startsWith("Review us on Google:"))
+    .map(
+      (p) =>
+        `<p style="margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.55;color:#1e293b;">${escapeHtml(p).replace(/\n/g, "<br>")}</p>`
+    )
+    .join("");
+
+  const googleBtn = input.googleReviewUrl
+    ? reviewCtaButton("Review us on Google", input.googleReviewUrl, "#1a73e8")
+    : "";
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Your ${SITE_NAME} order ${escapeHtml(input.orderNumber)}</title>
+</head>
+<body style="margin:0;padding:0;background:#f8fafc;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#f8fafc;">
+    <tr>
+      <td align="center" style="padding:24px 12px;">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;">
+          <tr>
+            <td style="padding:28px 28px 8px;font-family:Arial,Helvetica,sans-serif;">
+              <p style="margin:0 0 6px;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#64748b;">${SITE_NAME}</p>
+              <h1 style="margin:0 0 16px;font-size:22px;line-height:1.3;color:#0f172a;">Order ${escapeHtml(input.orderNumber)} is ${escapeHtml(input.statusLabel)}</h1>
+              ${paragraphs}
+              <p style="margin:8px 0 18px;">
+                ${reviewCtaButton("Leave a Review", input.websiteReviewUrl, "#0f4c81")}
+                ${googleBtn}
+              </p>
+              <p style="margin:24px 0 0;font-size:13px;line-height:1.5;color:#64748b;">
+                Reviews on our website stay on UsaRakhi. Google reviews are submitted by you on Google — we never copy or publish your website review to Google.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 28px 28px;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#64748b;">
+              — Team ${SITE_NAME}<br>
+              <a href="${escapeHtml(siteUrl())}" style="color:#0f4c81;">${escapeHtml(siteUrl())}</a>
+              &nbsp;·&nbsp;
+              <a href="mailto:${escapeHtml(notifyAddress())}" style="color:#0f4c81;">${escapeHtml(notifyAddress())}</a>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+}
+
+export async function sendReviewRequestEmail(
+  order: Order,
+  settings: ReviewRequestSettings,
+  vars: ReviewRequestTemplateVars
+): Promise<EmailSendResult> {
   if (!smtpConfigured()) {
     return { ok: false, skipped: true, error: "SMTP not configured" };
   }
@@ -1111,45 +1208,27 @@ export async function sendReviewRequestEmail(order: Order): Promise<EmailSendRes
     return { ok: false, skipped: true, error: "No customer email" };
   }
 
-  const name = order.shippingAddress?.name?.split(" ")[0] ?? "there";
-  const shortId = order.orderId.slice(0, 8).toUpperCase();
-  const reviewUrl = `${siteUrl()}/reviews`;
+  const subjectTemplate = omitEmptyGoogleReviewLines(settings.emailSubjectTemplate, vars.googleReviewUrl);
+  const textTemplate = omitEmptyGoogleReviewLines(settings.emailTextTemplate, vars.googleReviewUrl);
+  const subject = renderReviewRequestTemplate(subjectTemplate, vars).trim() ||
+    `Your ${SITE_NAME} order ${vars.orderNumber} was ${vars.statusLabel}`;
+  const text = renderReviewRequestTemplate(textTemplate, vars).trim();
+  const html = buildReviewRequestEmailHtml({
+    orderNumber: vars.orderNumber,
+    statusLabel: vars.statusLabel,
+    bodyText: text,
+    websiteReviewUrl: vars.websiteReviewUrl,
+    googleReviewUrl: vars.googleReviewUrl || undefined,
+  });
 
-  const text = `Hi ${name},
-
-We hope your Rakhi order #${shortId} arrived safely and made Raksha Bandhan special!
-
-We're UsaRakhi — dedicated to Rakhi and Raksha Bandhan traditions — and your feedback helps other sisters trust us for USA Rakhi delivery.
-
-Would you take 30 seconds to share your experience?
-${reviewUrl}
-
-You can mention delivery speed, packaging, or how your brother liked the Rakhi. We read every review.
-
-Thank you for choosing ${SITE_NAME}.
-
-— Team ${SITE_NAME}
-${siteUrl()}
-WhatsApp / support: ${notifyAddress()}`;
-
-  const emailResult = await sendEmail({
+  return sendEmail({
     to: customerEmail,
-    mailbox: "orders",
-    subject: `How was your Rakhi delivery? — ${SITE_NAME}`,
+    mailbox: "order",
+    subject,
     text,
+    html,
     replyTo: notifyAddress(),
   });
-
-  await notifyCustomerWhatsApp({
-    phone: order.shippingAddress?.phone,
-    context: "review-request",
-    message: reviewRequestWhatsAppMessage({
-      name,
-      orderId: order.orderId,
-    }),
-  });
-
-  return emailResult;
 }
 
 function formatCartLines(items: CartItem[], currency: string): string {

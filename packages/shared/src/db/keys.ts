@@ -111,6 +111,8 @@ export const configKeys = {
   shipping: { pk: "CONFIG#SHIPPING", sk: "META" as const },
   /** Growth-score weights + feature flags for Product Sales Intelligence. */
   productSalesIntel: { pk: "CONFIG#PRODUCT_SALES_INTEL", sk: "META" as const },
+  /** Post-delivery review request (email + WhatsApp) settings. */
+  reviewRequest: { pk: "CONFIG#REVIEW_REQUEST", sk: "META" as const },
 };
 
 /** Tracks admin S3 uploads → product slug for recovery if DB is reset. */

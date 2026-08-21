@@ -201,10 +201,18 @@ export const orderSchema = z.object({
   adminNotes: z.string().max(2000).optional(),
   estimatedDeliveryAt: z.string().optional(),
   deliveredAt: z.string().optional(),
-  /** ISO timestamp when post-delivery review email should send (deliveredAt + 1 day). */
+  /** ISO timestamp when post-delivery review request should send (set on first Delivered/Complete). */
   reviewEmailDueAt: z.string().optional(),
-  /** Set after review request email is sent (idempotency). */
+  /** Set after the review-request email is successfully sent (idempotency). */
   reviewEmailSentAt: z.string().optional(),
+  /** Last review-email error (cleared on success). */
+  reviewEmailLastError: z.string().max(500).optional(),
+  /** Set after the review-request WhatsApp is successfully sent (idempotency). */
+  reviewWhatsAppSentAt: z.string().optional(),
+  /** Set when WhatsApp is skipped (no valid phone) so it is not retried. */
+  reviewWhatsAppSkippedAt: z.string().optional(),
+  /** Last review-WhatsApp error (cleared on success/skip). */
+  reviewWhatsAppLastError: z.string().max(500).optional(),
   /** Last pending-payment reminder send time (ISO). */
   pendingPaymentReminderLastSentAt: z.string().optional(),
   /** America/New_York calendar day (YYYY-MM-DD) of last pending-payment reminder. */

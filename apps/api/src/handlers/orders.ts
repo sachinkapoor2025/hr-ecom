@@ -13,6 +13,7 @@ import {
   ORDER_STATUS,
   ORDER_STATUS_TRANSITIONS,
   convertCartItemsToCurrency,
+  convertCartItemsToCurrency,
   cartSubtotal,
   couponEligibleSubtotal,
   buildOrderShipments,
@@ -46,7 +47,7 @@ import {
   notifyCustomerAddressCorrected,
 } from "../lib/email";
 import { decrementInventoryForOrder, validateOrderInventory } from "../lib/inventory";
-import { applyDeliveryReviewSchedule } from "./review-emails";
+import { applyDeliveryReviewSchedule, notifyReviewRequestAfterStatusChange } from "./review-emails";
 import { markCartConverted } from "./abandoned-cart-emails";
 import { upsertSessionProfile } from "../lib/customer-profile";
 import {
@@ -710,6 +711,7 @@ export async function updateOrderStatus(event: APIGatewayProxyEventV2) {
     if (!statusEmailResult.ok && !statusEmailResult.skipped) {
       console.error("Order status email failed:", statusEmailResult.error);
     }
+    await notifyReviewRequestAfterStatusChange(updated);
   }
 
   return ok({ order: updated });

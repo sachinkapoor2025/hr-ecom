@@ -27,6 +27,7 @@ import * as paymentLedger from "./handlers/payment-ledger";
 import * as paymentReconciliation from "./handlers/payment-reconciliation";
 import * as vendorManagement from "./handlers/vendor-management";
 import * as reviews from "./handlers/reviews";
+import * as reviewRequestSettings from "./handlers/review-request-settings";
 import { stripeWebhook } from "./handlers/payments/stripe";
 import {
   razorpayWebhook,
@@ -197,6 +198,14 @@ const routes: Route[] = [
   },
   { method: "PATCH", pattern: /^\/admin\/orders\/([^/]+)$/, handler: orders.updateOrderStatus, params: ["orderId"] },
   { method: "PUT", pattern: /^\/admin\/orders\/([^/]+)$/, handler: orders.updateOrderStatus, params: ["orderId"] },
+  {
+    method: "POST",
+    pattern: /^\/admin\/orders\/([^/]+)\/review-request$/,
+    handler: reviewRequestSettings.retryOrderReviewRequest,
+    params: ["orderId"],
+  },
+  { method: "GET", pattern: /^\/admin\/review-request\/settings$/, handler: reviewRequestSettings.getReviewRequestSettings },
+  { method: "PUT", pattern: /^\/admin\/review-request\/settings$/, handler: reviewRequestSettings.updateReviewRequestSettings },
   {
     method: "POST",
     pattern: /^\/admin\/orders\/([^/]+)\/correct-address$/,

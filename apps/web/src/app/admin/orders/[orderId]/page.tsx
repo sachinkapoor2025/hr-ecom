@@ -16,6 +16,8 @@ import {
   orderHasOrangeCounty,
   orderHasUsarakhi,
   vendorDisplayLabel,
+  isDeliveredStatus,
+  reviewRequestStillNeeded,
 } from "@hr-ecom/shared";
 import {
   statusLabel,
@@ -71,6 +73,7 @@ export default function AdminOrderDetailPage() {
   const [rateOptions, setRateOptions] = useState<RateQuote[]>([]);
   const [selectedRateId, setSelectedRateId] = useState("");
   const [correctingAddress, setCorrectingAddress] = useState(false);
+  const [retryingReview, setRetryingReview] = useState(false);
   const [corrName, setCorrName] = useState("");
   const [corrLine1, setCorrLine1] = useState("");
   const [corrLine2, setCorrLine2] = useState("");
@@ -185,12 +188,17 @@ export default function AdminOrderDetailPage() {
         method: "PUT",
         body: JSON.stringify(payload),
       });
-      setOrder(data.order);
-      syncVendorTrackingState(data.order);
+      let nextOrder = data.order;
+      if (isDeliveredStatus(nextOrder.status)) {
+        const refreshed = await apiClient<{ order: AdminOrder }>(`/admin/orders/${orderId}`);
+        nextOrder = refreshed.order;
+      }
+      setOrder(nextOrder);
+      syncVendorTrackingState(nextOrder);
       setNote("");
       setMessage("Order updated.");
-      const next = nextStatuses(data.order.status);
-      setNewStatus(next[0] ?? data.order.status);
+      const next = nextStatuses(nextOrder.status);
+      setNewStatus(next[0] ?? nextOrder.status);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Update failed.");
     } finally {
@@ -206,14 +214,45 @@ export default function AdminOrderDetailPage() {
         method: "PUT",
         body: JSON.stringify({ status, note: `Status changed to ${statusLabel(status)}` }),
       });
-      setOrder(data.order);
+      let nextOrder = data.order;
+      if (isDeliveredStatus(nextOrder.status)) {
+        const refreshed = await apiClient<{ order: AdminOrder }>(`/admin/orders/${orderId}`);
+        nextOrder = refreshed.order;
+      }
+      setOrder(nextOrder);
       setMessage(`Order marked as ${statusLabel(status)}.`);
-      const next = nextStatuses(data.order.status);
-      setNewStatus(next[0] ?? data.order.status);
+      const next = nextStatuses(nextOrder.status);
+      setNewStatus(next[0] ?? nextOrder.status);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Update failed.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const retryReviewRequest = async () => {
+    if (!order) return;
+    setRetryingReview(true);
+    setError("");
+    setMessage("");
+    try {
+      const data = await apiClient<{
+        alreadySent?: boolean;
+        result?: { email: string; whatsapp: string };
+      }>(`/admin/orders/${orderId}/review-request`, { method: "POST" });
+      const refreshed = await apiClient<{ order: AdminOrder }>(`/admin/orders/${orderId}`);
+      setOrder(refreshed.order);
+      if (data.alreadySent) {
+        setMessage("Review request was already sent for this order.");
+      } else {
+        setMessage(
+          `Review request: email ${data.result?.email ?? "—"}, WhatsApp ${data.result?.whatsapp ?? "—"}.`
+        );
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Review request failed.");
+    } finally {
+      setRetryingReview(false);
     }
   };
 
@@ -756,6 +795,44 @@ export default function AdminOrderDetailPage() {
               </>
             )}
           </section>
+
+          </section>
+
+          {isDeliveredStatus(order.status) && (
+            <section className="bg-white border rounded-xl p-5 text-sm">
+              <h2 className="font-semibold mb-3">Review request</h2>
+              <p className="text-slate-600">
+                Email:{" "}
+                {order.reviewEmailSentAt
+                  ? `sent ${new Date(order.reviewEmailSentAt).toLocaleString()}`
+                  : "not sent"}
+              </p>
+              {order.reviewEmailLastError && (
+                <p className="text-red-600 text-xs mt-1">{order.reviewEmailLastError}</p>
+              )}
+              <p className="text-slate-600 mt-1">
+                WhatsApp:{" "}
+                {order.reviewWhatsAppSentAt
+                  ? `sent ${new Date(order.reviewWhatsAppSentAt).toLocaleString()}`
+                  : order.reviewWhatsAppSkippedAt
+                    ? "skipped (no valid number or WhatsApp not configured)"
+                    : "not sent"}
+              </p>
+              {order.reviewWhatsAppLastError && (
+                <p className="text-red-600 text-xs mt-1">{order.reviewWhatsAppLastError}</p>
+              )}
+              {reviewRequestStillNeeded(order) && (
+                <button
+                  type="button"
+                  disabled={retryingReview}
+                  onClick={() => void retryReviewRequest()}
+                  className="mt-3 text-sm rounded-lg border border-nav text-nav px-3 py-1.5 hover:bg-blue-50 disabled:opacity-50"
+                >
+                  {retryingReview ? "Sending…" : "Retry review request"}
+                </button>
+              )}
+            </section>
+          )}
 
           <section className="bg-white border rounded-xl p-5 text-sm">
             <h2 className="font-semibold mb-3">Payment & shipping</h2>

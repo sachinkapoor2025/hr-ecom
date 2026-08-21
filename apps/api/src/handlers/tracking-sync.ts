@@ -27,7 +27,7 @@ import { docClient, ORDERS_TABLE, now } from "../lib/db";
 import { ok, badRequest, forbidden, notFound } from "../lib/response";
 import { createUSPSProvider } from "../lib/shipping/usps";
 import { loadShippingSettings } from "../lib/shipping/settings";
-import { applyDeliveryReviewSchedule } from "./review-emails";
+import { applyDeliveryReviewSchedule, notifyReviewRequestAfterStatusChange } from "./review-emails";
 import { notifyCustomerOrderStatusChange } from "../lib/email";
 
 type StoredOrder = Order & { PK: string; SK: string; GSI3PK?: string; GSI3SK?: string };
@@ -285,6 +285,10 @@ export async function syncOrderTracking(
     }
   } else {
     await docClient.send(new PutCommand({ TableName: ORDERS_TABLE, Item: updated }));
+  }
+
+  if (statusChanged) {
+    await notifyReviewRequestAfterStatusChange(updated);
   }
 
   console.log("Tracking sync", {

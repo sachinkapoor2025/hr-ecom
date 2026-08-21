@@ -181,14 +181,21 @@ Complete payment so we can pack and ship for Raksha Bandhan.`;
 export function reviewRequestWhatsAppMessage(input: {
   name?: string;
   orderId: string;
+  orderNumber?: string;
+  websiteReviewUrl?: string;
+  googleReviewUrl?: string;
 }): string {
   const hi = input.name ? `Hi ${input.name}` : "Hi";
-  const shortId = input.orderId.slice(0, 8).toUpperCase();
-  return `${hi}! We hope order #${shortId} arrived safely. Would you share a quick review?
+  const ref = (input.orderNumber ?? input.orderId.slice(0, 8)).toUpperCase();
+  const siteReview = input.websiteReviewUrl ?? `${SITE_URL()}/reviews`;
+  const googleLine = input.googleReviewUrl?.trim()
+    ? `\nReview us on Google: ${input.googleReviewUrl.trim()}`
+    : "";
+  return `${hi}! Thank you — your ${SITE} order ${ref} is delivered.
 
-${SITE_URL()}/reviews
+Leave a review: ${siteReview}${googleLine}
 
-Thank you for choosing ${SITE}!`;
+We hope your brother loved his Rakhi.`;
 }
 
 export function contactAckWhatsAppMessage(input: { name?: string }): string {
