@@ -796,8 +796,6 @@ export default function AdminOrderDetailPage() {
             )}
           </section>
 
-          </section>
-
           {isDeliveredStatus(order.status) && (
             <section className="bg-white border rounded-xl p-5 text-sm">
               <h2 className="font-semibold mb-3">Review request</h2>
