@@ -263,11 +263,11 @@ async function sendViaMeta(toDigits: string, body: string): Promise<Omit<WhatsAp
     }
     return { ok: false, provider: "meta", error: `Meta WhatsApp ${res.status}: ${text.slice(0, 300)}` };
   }
-  const body = (await res.json().catch(() => ({}))) as {
+  const apiResponse = (await res.json().catch(() => ({}))) as {
     messages?: Array<{ id?: string; message_status?: string }>;
   };
-  const messageId = body.messages?.[0]?.id;
-  const providerStatus = body.messages?.[0]?.message_status || "accepted";
+  const messageId = apiResponse.messages?.[0]?.id;
+  const providerStatus = apiResponse.messages?.[0]?.message_status || "accepted";
   return { ok: true, provider: "meta", messageId, providerStatus };
 }
 
@@ -327,12 +327,12 @@ async function sendViaTwilio(toDigits: string, body: string): Promise<Omit<Whats
     const text = await res.text().catch(() => "");
     return { ok: false, provider: "twilio", error: friendlyTwilioError(res.status, text) };
   }
-  const body = (await res.json().catch(() => ({}))) as { sid?: string; status?: string };
+  const apiResponse = (await res.json().catch(() => ({}))) as { sid?: string; status?: string };
   return {
     ok: true,
     provider: "twilio",
-    messageId: body.sid,
-    providerStatus: body.status,
+    messageId: apiResponse.sid,
+    providerStatus: apiResponse.status,
   };
 }
 
