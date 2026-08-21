@@ -13,20 +13,25 @@ export const REVIEW_REQUEST_TEMPLATE_VARS = [
 export const DEFAULT_WEBSITE_REVIEW_URL = "https://www.usarakhi.com/reviews";
 
 export const DEFAULT_REVIEW_REQUEST_EMAIL_SUBJECT =
-  "Your UsaRakhi order {{orderNumber}} was {{statusLabel}}";
+  "Order {{statusLabel}} — #{{orderNumber}} | UsaRakhi";
 
 export const DEFAULT_REVIEW_REQUEST_EMAIL_TEXT = `Hi {{name}},
 
-Your UsaRakhi order {{orderNumber}} is {{statusLabel}}. Thank you for celebrating with us.
+Your order #{{orderNumber}} has been {{statusLabel}}.
 
-If you have a moment, we would love to hear how the delivery went. Your review helps other families send Rakhi with confidence.
+We hope your brother loves his Rakhi! If you have a moment, we would love to hear how the delivery went. Your review helps other families send Rakhi with confidence.
 
-Leave a review: {{websiteReviewUrl}}
-Review us on Google: {{googleReviewUrl}}
+Leave a Review:
+{{websiteReviewUrl}}
+
+Review us on Google:
+{{googleReviewUrl}}
 
 This is optional — only share if you would like to.
 
-— Team UsaRakhi
+Questions? Reply to this email or WhatsApp us.
+
+— UsaRakhi Team
 {{siteUrl}}`;
 
 export const DEFAULT_REVIEW_REQUEST_WHATSAPP = `Hi {{name}}! Thank you — your UsaRakhi order {{orderNumber}} is {{statusLabel}}.

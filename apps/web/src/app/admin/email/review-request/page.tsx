@@ -48,8 +48,8 @@ export default function ReviewRequestSettingsPage() {
         <h2 className="text-xl font-bold text-primary">Review request</h2>
         <p className="text-sm text-slate-500 mt-1">
           Sent once when an order first becomes <strong>Delivered</strong> or <strong>Complete</strong>.
-          Uses transactional SMTP (<code>order@usarakhi.com</code>), not marketing Mailercloud. Website
-          reviews are never copied to Google.
+          Uses transactional SMTP (<code>order@usarakhi.com</code>), the same sender and layout as
+          other order emails — not marketing Mailercloud. Website reviews are never copied to Google.
         </p>
       </div>
 
@@ -109,7 +109,7 @@ export default function ReviewRequestSettingsPage() {
           />
         </label>
         <label className="block text-sm">
-          Email body (plain text; HTML is generated for Gmail/Outlook)
+          Email body (plain text — same format as other order emails; Leave a Review / Google lines become buttons)
           <textarea
             className="mt-1 w-full border rounded-lg px-3 py-2 min-h-[180px] font-mono text-xs"
             value={settings.emailTextTemplate}

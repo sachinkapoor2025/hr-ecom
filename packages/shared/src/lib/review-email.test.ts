@@ -17,9 +17,12 @@ import {
   REVIEW_WHATSAPP_UNAVAILABLE_LABEL,
 } from "./review-email";
 import {
+  DEFAULT_REVIEW_REQUEST_EMAIL_SUBJECT,
+  DEFAULT_REVIEW_REQUEST_EMAIL_TEXT,
   omitEmptyGoogleReviewLines,
   renderReviewRequestTemplate,
 } from "../schemas/review-request";
+import { buildReviewRequestEmailHtml } from "./review-request-email-html";
 
 describe("review-request eligibility", () => {
   const base = {
@@ -125,6 +128,53 @@ describe("review-request templates", () => {
     );
     assert.equal(text.includes("Google"), false);
     assert.equal(text.includes("Leave a review"), true);
+  });
+
+  it("uses the same subject/footer pattern as transactional order emails", () => {
+    const subject = renderReviewRequestTemplate(DEFAULT_REVIEW_REQUEST_EMAIL_SUBJECT, vars);
+    assert.equal(subject, "Order Delivered — #US10360 | UsaRakhi");
+    const body = renderReviewRequestTemplate(DEFAULT_REVIEW_REQUEST_EMAIL_TEXT, vars);
+    assert.match(body, /^Hi Priya,/);
+    assert.match(body, /Your order #US10360 has been Delivered/);
+    assert.match(body, /Leave a Review:\nhttps:\/\/www\.usarakhi\.com\/reviews/);
+    assert.match(body, /Review us on Google:\nhttps:\/\/search\.google\.com/);
+    assert.match(body, /Questions\? Reply to this email or WhatsApp us\./);
+    assert.match(body, /— UsaRakhi Team\nhttps:\/\/www\.usarakhi\.com/);
+  });
+
+  it("drops Google CTA from the default template when no Google URL is set", () => {
+    const text = omitEmptyGoogleReviewLines(DEFAULT_REVIEW_REQUEST_EMAIL_TEXT, "");
+    assert.equal(text.includes("Google"), false);
+    assert.equal(text.includes("{{websiteReviewUrl}}"), true);
+  });
+
+  it("renders review HTML like other transactional emails (br + buttons, no card)", () => {
+    const body = renderReviewRequestTemplate(DEFAULT_REVIEW_REQUEST_EMAIL_TEXT, vars);
+    const html = buildReviewRequestEmailHtml({
+      bodyText: body,
+      websiteReviewUrl: vars.websiteReviewUrl,
+      googleReviewUrl: vars.googleReviewUrl,
+    });
+    assert.equal(html.includes("<!DOCTYPE"), false);
+    assert.equal(html.includes("border-radius:12px"), false);
+    assert.match(html, /^Hi Priya,<br>/);
+    assert.match(html, /Your order #US10360 has been Delivered/);
+    assert.match(html, /Questions\? Reply to this email or WhatsApp us\./);
+    assert.match(html, /— UsaRakhi Team<br>/);
+    assert.match(html, /Leave a Review/);
+    assert.match(html, /Review us on Google/);
+    assert.equal(html.includes(vars.websiteReviewUrl), true);
+    assert.equal(html.includes(vars.googleReviewUrl), true);
+    assert.equal(html.includes("Leave a Review:\n"), false);
+  });
+
+  it("omits the Google button when no Google URL is provided", () => {
+    const html = buildReviewRequestEmailHtml({
+      bodyText: "Hi Priya,\n\nThanks\n\nLeave a Review:\nhttps://www.usarakhi.com/reviews\n\n— UsaRakhi Team",
+      websiteReviewUrl: "https://www.usarakhi.com/reviews",
+    });
+    assert.equal(html.includes("Review us on Google"), false);
+    assert.equal(html.includes("Leave a Review"), true);
   });
 });
 
