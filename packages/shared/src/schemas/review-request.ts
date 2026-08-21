@@ -82,3 +82,28 @@ export function omitEmptyGoogleReviewLines(text: string, googleReviewUrl: string
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
+
+export const REVIEW_NOTIFICATION_CHANNELS = ["email", "whatsapp"] as const;
+export type ReviewNotificationChannel = (typeof REVIEW_NOTIFICATION_CHANNELS)[number];
+
+/** Persisted attempt outcome — never "not_sent" (that is only a derived UI state). */
+export const REVIEW_NOTIFICATION_LOG_STATUSES = ["sent", "failed", "not_available"] as const;
+export type ReviewNotificationLogStatus = (typeof REVIEW_NOTIFICATION_LOG_STATUSES)[number];
+
+export const reviewNotificationLogEntrySchema = z.object({
+  id: z.string().min(1).max(80),
+  type: z.literal("review_request").default("review_request"),
+  channel: z.enum(REVIEW_NOTIFICATION_CHANNELS),
+  orderId: z.string().min(1).max(80),
+  customer: z.string().max(200).optional(),
+  status: z.enum(REVIEW_NOTIFICATION_LOG_STATUSES),
+  at: z.string().min(1),
+  provider: z.string().max(80).optional(),
+  messageId: z.string().max(200).optional(),
+  providerStatus: z.string().max(300).optional(),
+  error: z.string().max(500).optional(),
+});
+
+export type ReviewNotificationLogEntry = z.infer<typeof reviewNotificationLogEntrySchema>;
+
+export const REVIEW_NOTIFICATION_LOG_MAX = 30;

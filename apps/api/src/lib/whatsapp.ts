@@ -11,6 +11,10 @@ export type WhatsAppSendResult = {
   error?: string;
   /** Always useful for admin one-click send if API is unavailable. */
   deepLink: string;
+  /** Provider message id (Meta wamid / Twilio SID). */
+  messageId?: string;
+  /** Provider delivery status when returned (e.g. queued, sent). */
+  providerStatus?: string;
 };
 
 const SITE = "UsaRakhi";
@@ -259,7 +263,12 @@ async function sendViaMeta(toDigits: string, body: string): Promise<Omit<WhatsAp
     }
     return { ok: false, provider: "meta", error: `Meta WhatsApp ${res.status}: ${text.slice(0, 300)}` };
   }
-  return { ok: true, provider: "meta" };
+  const body = (await res.json().catch(() => ({}))) as {
+    messages?: Array<{ id?: string; message_status?: string }>;
+  };
+  const messageId = body.messages?.[0]?.id;
+  const providerStatus = body.messages?.[0]?.message_status || "accepted";
+  return { ok: true, provider: "meta", messageId, providerStatus };
 }
 
 /** Normalize Twilio WhatsApp From → `whatsapp:+E164` (strip spaces/dashes). */
@@ -318,7 +327,13 @@ async function sendViaTwilio(toDigits: string, body: string): Promise<Omit<Whats
     const text = await res.text().catch(() => "");
     return { ok: false, provider: "twilio", error: friendlyTwilioError(res.status, text) };
   }
-  return { ok: true, provider: "twilio" };
+  const body = (await res.json().catch(() => ({}))) as { sid?: string; status?: string };
+  return {
+    ok: true,
+    provider: "twilio",
+    messageId: body.sid,
+    providerStatus: body.status,
+  };
 }
 
 type WhatsAppProvider = "meta" | "twilio";

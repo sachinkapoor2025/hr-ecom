@@ -2,6 +2,7 @@ import { z } from "zod";
 import { cartItemSchema } from "./cart";
 import { ORDER_STATUS } from "../constants";
 import { checkoutAttributionSchema, orderAttributionSchema } from "./attribution";
+import { reviewNotificationLogEntrySchema } from "./review-request";
 
 /** International phone: 10–15 digits; allows +, spaces, dashes, parentheses. */
 export function isValidShippingPhone(phone: string): boolean {
@@ -203,16 +204,31 @@ export const orderSchema = z.object({
   deliveredAt: z.string().optional(),
   /** ISO timestamp when post-delivery review request should send (set on first Delivered/Complete). */
   reviewEmailDueAt: z.string().optional(),
-  /** Set after the review-request email is successfully sent (idempotency). */
+  /** Set only after the SMTP/transactional provider returns success (idempotency). */
   reviewEmailSentAt: z.string().optional(),
   /** Last review-email error (cleared on success). */
   reviewEmailLastError: z.string().max(500).optional(),
-  /** Set after the review-request WhatsApp is successfully sent (idempotency). */
+  /** Set when email cannot be sent (missing/invalid address) — not a Failed send. */
+  reviewEmailUnavailableAt: z.string().optional(),
+  reviewEmailLastAttemptAt: z.string().optional(),
+  reviewEmailProvider: z.string().max(80).optional(),
+  reviewEmailMessageId: z.string().max(200).optional(),
+  reviewEmailProviderStatus: z.string().max(300).optional(),
+  /** In-progress lock so concurrent cron/admin retries do not double-send. */
+  reviewEmailSendingAt: z.string().optional(),
+  /** Set only after the WhatsApp provider returns success (idempotency). */
   reviewWhatsAppSentAt: z.string().optional(),
-  /** Set when WhatsApp is skipped (no valid phone) so it is not retried. */
+  /** Set when WhatsApp cannot be sent (no valid phone) — not a Failed send. */
   reviewWhatsAppSkippedAt: z.string().optional(),
   /** Last review-WhatsApp error (cleared on success/skip). */
   reviewWhatsAppLastError: z.string().max(500).optional(),
+  reviewWhatsAppLastAttemptAt: z.string().optional(),
+  reviewWhatsAppProvider: z.string().max(80).optional(),
+  reviewWhatsAppMessageId: z.string().max(200).optional(),
+  reviewWhatsAppProviderStatus: z.string().max(300).optional(),
+  reviewWhatsAppSendingAt: z.string().optional(),
+  /** Append-only review-request send attempts (email + WhatsApp). */
+  reviewNotificationLog: z.array(reviewNotificationLogEntrySchema).max(30).optional(),
   /** Last pending-payment reminder send time (ISO). */
   pendingPaymentReminderLastSentAt: z.string().optional(),
   /** America/New_York calendar day (YYYY-MM-DD) of last pending-payment reminder. */

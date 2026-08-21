@@ -41,6 +41,11 @@ export type EmailSendResult = {
   ok: boolean;
   error?: string;
   skipped?: boolean;
+  /** SMTP Message-ID when the provider accepted the message. */
+  messageId?: string;
+  /** Raw SMTP response (e.g. 250 2.0.0 Ok). */
+  providerStatus?: string;
+  provider?: string;
 };
 
 function smtpPassword(): string | undefined {
@@ -281,7 +286,7 @@ export async function sendEmail(opts: {
   try {
     const transporter = await createWorkingTransporter(mailbox);
     const from = fromAddressFor(mailbox);
-    await transporter.sendMail({
+    const info = await transporter.sendMail({
       from: `"${SITE_NAME}" <${from}>`,
       to: opts.to,
       subject: opts.subject,
@@ -293,8 +298,22 @@ export async function sendEmail(opts: {
         "Auto-Submitted": "auto-generated",
       },
     });
-    console.info("sendEmail.ok", { mailbox, from, to: opts.to, subject: opts.subject });
-    return { ok: true };
+    const messageId = typeof info.messageId === "string" ? info.messageId : undefined;
+    const providerStatus = typeof info.response === "string" ? info.response.slice(0, 300) : undefined;
+    const rejected = Array.isArray(info.rejected) ? info.rejected : [];
+    const accepted = Array.isArray(info.accepted) ? info.accepted : [];
+    if (rejected.length > 0 && accepted.length === 0) {
+      console.error("sendEmail rejected", { mailbox, from, to: opts.to, rejected, providerStatus });
+      return {
+        ok: false,
+        error: `SMTP rejected recipient: ${providerStatus || "no response"}`,
+        messageId,
+        providerStatus,
+        provider: "smtp",
+      };
+    }
+    console.info("sendEmail.ok", { mailbox, from, to: opts.to, subject: opts.subject, messageId });
+    return { ok: true, messageId, providerStatus, provider: "smtp" };
   } catch (err) {
     const raw = err instanceof Error ? err.message : String(err);
     const message = /Daily send limit/i.test(raw)

@@ -5,14 +5,15 @@ import {
   isReviewEmailDue,
   isDeliveredStatus,
   reviewRequestStillNeeded,
-  isReviewEmailChannelDone,
-  isReviewWhatsAppChannelDone,
+  getReviewEmailChannelStatus,
+  getReviewWhatsAppChannelStatus,
   displayOrderRef,
   formatOrderStatusLabel,
   renderReviewRequestTemplate,
   omitEmptyGoogleReviewLines,
   type Order,
   type ReviewRequestSettings,
+  type ReviewNotificationLogEntry,
 } from "@hr-ecom/shared";
 import { docClient, ORDERS_TABLE, now } from "../lib/db";
 import { sendReviewRequestEmail } from "../lib/email";
@@ -27,17 +28,27 @@ type StoredOrder = Order & {
 };
 
 const DELIVERED_STATUSES = [ORDER_STATUS.DELIVERED, ORDER_STATUS.COMPLETE] as const;
+const SEND_LOCK_STALE_MS = 2 * 60 * 1000;
 
+export type ReviewDispatchChannel = "email" | "whatsapp";
 export type ReviewDispatchChannelResult =
   | "sent"
   | "skipped"
   | "already_sent"
   | "disabled"
-  | "failed";
+  | "failed"
+  | "not_available";
 
 export type ReviewDispatchResult = {
   email: ReviewDispatchChannelResult;
   whatsapp: ReviewDispatchChannelResult;
+};
+
+export type ReviewDispatchOptions = {
+  /** When set, only these channels run. Successful sends are never repeated. */
+  channels?: ReviewDispatchChannel[];
+  /** Admin retry: re-check email/phone instead of treating Not Available as finished. */
+  recheckContact?: boolean;
 };
 
 function logReviewNotify(input: {
@@ -48,6 +59,7 @@ function logReviewNotify(input: {
   ok: boolean;
   skipped?: boolean;
   error?: string;
+  messageId?: string;
 }) {
   const payload = {
     type: `review-request-${input.channel}`,
@@ -58,6 +70,7 @@ function logReviewNotify(input: {
     ok: input.ok,
     skipped: Boolean(input.skipped),
     error: input.error,
+    messageId: input.messageId,
   };
   if (input.ok || input.skipped) console.info("Review request notify", payload);
   else console.error("Review request notify failed", payload);
@@ -84,27 +97,30 @@ async function queryOrdersByStatus(status: string): Promise<StoredOrder[]> {
   return items;
 }
 
-async function patchOrderFlags(
+function staleLockIso(): string {
+  return new Date(Date.now() - SEND_LOCK_STALE_MS).toISOString();
+}
+
+async function claimChannelLock(
   orderId: string,
-  opts: {
-    condition: string;
-    set: string[];
-    remove?: string[];
-    names?: Record<string, string>;
-    values: Record<string, unknown>;
-  }
+  channel: ReviewDispatchChannel,
+  opts?: { requireUnsent?: boolean }
 ): Promise<boolean> {
-  const parts = [`SET ${opts.set.join(", ")}`];
-  if (opts.remove?.length) parts.push(`REMOVE ${opts.remove.join(", ")}`);
+  const sendingAttr = channel === "email" ? "reviewEmailSendingAt" : "reviewWhatsAppSendingAt";
+  const sentAttr = channel === "email" ? "reviewEmailSentAt" : "reviewWhatsAppSentAt";
+  const sentAt = now();
+  const requireUnsent = opts?.requireUnsent !== false;
+  const condition = requireUnsent
+    ? `attribute_not_exists(${sentAttr}) AND (attribute_not_exists(${sendingAttr}) OR ${sendingAttr} < :stale)`
+    : `attribute_not_exists(${sendingAttr}) OR ${sendingAttr} < :stale`;
   try {
     await docClient.send(
       new UpdateCommand({
         TableName: ORDERS_TABLE,
         Key: { PK: orderKeys.pk(orderId), SK: orderKeys.sk() },
-        UpdateExpression: parts.join(" "),
-        ConditionExpression: opts.condition,
-        ExpressionAttributeNames: opts.names,
-        ExpressionAttributeValues: opts.values,
+        UpdateExpression: `SET ${sendingAttr} = :now, updatedAt = :now`,
+        ConditionExpression: condition,
+        ExpressionAttributeValues: { ":now": sentAt, ":stale": staleLockIso() },
       })
     );
     return true;
@@ -114,76 +130,135 @@ async function patchOrderFlags(
   }
 }
 
-async function claimEmailSent(orderId: string, sentAt: string): Promise<boolean> {
-  return patchOrderFlags(orderId, {
-    condition: "attribute_not_exists(reviewEmailSentAt)",
-    set: [
-      "reviewEmailSentAt = :sent",
-      "reviewEmailDueAt = if_not_exists(reviewEmailDueAt, :sent)",
-      "updatedAt = :sent",
-    ],
-    remove: ["reviewEmailLastError"],
-    values: { ":sent": sentAt },
-  });
-}
+async function persistReviewOutcome(opts: {
+  orderId: string;
+  channel: ReviewDispatchChannel;
+  outcome: "sent" | "failed" | "not_available";
+  at: string;
+  customer?: string;
+  error?: string;
+  provider?: string;
+  messageId?: string;
+  providerStatus?: string;
+}): Promise<void> {
+  const log: ReviewNotificationLogEntry = {
+    id: `${opts.channel}-${opts.at}-${Math.random().toString(36).slice(2, 8)}`,
+    type: "review_request",
+    channel: opts.channel,
+    orderId: opts.orderId,
+    ...(opts.customer ? { customer: opts.customer.slice(0, 200) } : {}),
+    status: opts.outcome,
+    at: opts.at,
+    ...(opts.provider ? { provider: opts.provider.slice(0, 80) } : {}),
+    ...(opts.messageId ? { messageId: opts.messageId.slice(0, 200) } : {}),
+    ...(opts.providerStatus ? { providerStatus: opts.providerStatus.slice(0, 300) } : {}),
+    ...(opts.error ? { error: opts.error.slice(0, 500) } : {}),
+  };
 
-async function clearEmailClaim(orderId: string, error: string): Promise<void> {
-  const sentAt = now();
-  try {
-    await docClient.send(
-      new UpdateCommand({
-        TableName: ORDERS_TABLE,
-        Key: { PK: orderKeys.pk(orderId), SK: orderKeys.sk() },
-        UpdateExpression: "REMOVE reviewEmailSentAt SET reviewEmailLastError = :err, updatedAt = :now",
-        ExpressionAttributeValues: { ":err": error.slice(0, 500), ":now": sentAt },
-      })
-    );
-  } catch (err) {
-    console.error("Failed to clear review email claim", orderId, err);
+  const names: Record<string, string> = { "#log": "reviewNotificationLog" };
+  const values: Record<string, unknown> = {
+    ":log": [log],
+    ":empty": [],
+    ":at": opts.at,
+  };
+  const set: string[] = ["#log = list_append(if_not_exists(#log, :empty), :log)", "updatedAt = :at"];
+  const remove: string[] = [];
+
+  const errVal = (opts.error ?? (opts.outcome === "not_available" ? "Not available" : "Send failed")).slice(0, 500);
+
+  if (opts.channel === "email") {
+    remove.push("reviewEmailSendingAt");
+    if (opts.outcome === "sent") {
+      set.push(
+        "reviewEmailSentAt = :at",
+        "reviewEmailDueAt = if_not_exists(reviewEmailDueAt, :at)",
+        "reviewEmailLastAttemptAt = :at"
+      );
+      remove.push("reviewEmailLastError", "reviewEmailUnavailableAt");
+      if (opts.provider) {
+        set.push("reviewEmailProvider = :prov");
+        values[":prov"] = opts.provider.slice(0, 80);
+      }
+      if (opts.messageId) {
+        set.push("reviewEmailMessageId = :mid");
+        values[":mid"] = opts.messageId.slice(0, 200);
+      }
+      if (opts.providerStatus) {
+        set.push("reviewEmailProviderStatus = :pst");
+        values[":pst"] = opts.providerStatus.slice(0, 300);
+      }
+    } else if (opts.outcome === "not_available") {
+      set.push("reviewEmailUnavailableAt = :at", "reviewEmailLastAttemptAt = :at", "reviewEmailLastError = :err");
+      values[":err"] = errVal;
+      remove.push("reviewEmailSentAt");
+    } else {
+      set.push("reviewEmailLastError = :err", "reviewEmailLastAttemptAt = :at");
+      values[":err"] = errVal;
+      remove.push("reviewEmailSentAt");
+      if (opts.provider) {
+        set.push("reviewEmailProvider = :prov");
+        values[":prov"] = opts.provider.slice(0, 80);
+      }
+      if (opts.providerStatus) {
+        set.push("reviewEmailProviderStatus = :pst");
+        values[":pst"] = opts.providerStatus.slice(0, 300);
+      }
+    }
+  } else {
+    remove.push("reviewWhatsAppSendingAt");
+    if (opts.outcome === "sent") {
+      set.push("reviewWhatsAppSentAt = :at", "reviewWhatsAppLastAttemptAt = :at");
+      remove.push("reviewWhatsAppLastError", "reviewWhatsAppSkippedAt");
+      if (opts.provider) {
+        set.push("reviewWhatsAppProvider = :prov");
+        values[":prov"] = opts.provider.slice(0, 80);
+      }
+      if (opts.messageId) {
+        set.push("reviewWhatsAppMessageId = :mid");
+        values[":mid"] = opts.messageId.slice(0, 200);
+      }
+      if (opts.providerStatus) {
+        set.push("reviewWhatsAppProviderStatus = :pst");
+        values[":pst"] = opts.providerStatus.slice(0, 300);
+      }
+    } else if (opts.outcome === "not_available") {
+      set.push(
+        "reviewWhatsAppSkippedAt = if_not_exists(reviewWhatsAppSkippedAt, :at)",
+        "reviewWhatsAppLastAttemptAt = :at",
+        "reviewWhatsAppLastError = :err"
+      );
+      values[":err"] = errVal;
+      remove.push("reviewWhatsAppSentAt");
+    } else {
+      set.push("reviewWhatsAppLastError = :err", "reviewWhatsAppLastAttemptAt = :at");
+      values[":err"] = errVal;
+      remove.push("reviewWhatsAppSentAt");
+      if (opts.provider) {
+        set.push("reviewWhatsAppProvider = :prov");
+        values[":prov"] = opts.provider.slice(0, 80);
+      }
+      if (opts.providerStatus) {
+        set.push("reviewWhatsAppProviderStatus = :pst");
+        values[":pst"] = opts.providerStatus.slice(0, 300);
+      }
+    }
   }
-}
 
-async function claimWhatsAppSent(orderId: string, sentAt: string): Promise<boolean> {
-  return patchOrderFlags(orderId, {
-    condition:
-      "attribute_not_exists(reviewWhatsAppSentAt) AND attribute_not_exists(reviewWhatsAppSkippedAt)",
-    set: ["reviewWhatsAppSentAt = :sent", "updatedAt = :sent"],
-    remove: ["reviewWhatsAppLastError"],
-    values: { ":sent": sentAt },
-  });
-}
+  const parts = [`SET ${set.join(", ")}`];
+  if (remove.length) parts.push(`REMOVE ${remove.join(", ")}`);
 
-async function markWhatsAppSkipped(orderId: string, reason: string): Promise<void> {
-  const sentAt = now();
   try {
     await docClient.send(
       new UpdateCommand({
         TableName: ORDERS_TABLE,
-        Key: { PK: orderKeys.pk(orderId), SK: orderKeys.sk() },
-        UpdateExpression:
-          "REMOVE reviewWhatsAppSentAt SET reviewWhatsAppSkippedAt = if_not_exists(reviewWhatsAppSkippedAt, :sent), reviewWhatsAppLastError = :err, updatedAt = :sent",
-        ExpressionAttributeValues: { ":sent": sentAt, ":err": reason.slice(0, 500) },
+        Key: { PK: orderKeys.pk(opts.orderId), SK: orderKeys.sk() },
+        UpdateExpression: parts.join(" "),
+        ExpressionAttributeNames: names,
+        ExpressionAttributeValues: values,
       })
     );
   } catch (err) {
-    console.error("Failed to mark review WhatsApp skipped", orderId, err);
-  }
-}
-
-async function recordWhatsAppError(orderId: string, error: string): Promise<void> {
-  const sentAt = now();
-  try {
-    await docClient.send(
-      new UpdateCommand({
-        TableName: ORDERS_TABLE,
-        Key: { PK: orderKeys.pk(orderId), SK: orderKeys.sk() },
-        UpdateExpression:
-          "REMOVE reviewWhatsAppSentAt SET reviewWhatsAppLastError = :err, updatedAt = :now",
-        ExpressionAttributeValues: { ":err": error.slice(0, 500), ":now": sentAt },
-      })
-    );
-  } catch (err) {
-    console.error("Failed to record review WhatsApp error", orderId, err);
+    console.error("Failed to persist review notification outcome", opts.orderId, opts.channel, err);
   }
 }
 
@@ -207,26 +282,33 @@ function templateVars(order: Order, settings: ReviewRequestSettings) {
   };
 }
 
+function channelEnabled(opts: ReviewDispatchOptions | undefined, channel: ReviewDispatchChannel): boolean {
+  if (!opts?.channels?.length) return true;
+  return opts.channels.includes(channel);
+}
+
 async function sendEmailChannel(
   order: StoredOrder,
-  settings: ReviewRequestSettings
+  settings: ReviewRequestSettings,
+  opts?: ReviewDispatchOptions
 ): Promise<ReviewDispatchChannelResult> {
-  if (isReviewEmailChannelDone(order)) return "already_sent";
+  const emailStatus = getReviewEmailChannelStatus(order);
+  if (emailStatus.status === "sent") return "already_sent";
+  if (!opts?.recheckContact && emailStatus.status === "not_available") {
+    return "not_available";
+  }
   if (!settings.emailEnabled) return "disabled";
 
   const customerEmail = order.shippingAddress?.email?.trim();
   if (!customerEmail?.includes("@")) {
-    const claimed = await claimEmailSent(order.orderId, now());
-    if (claimed) {
-      await docClient.send(
-        new UpdateCommand({
-          TableName: ORDERS_TABLE,
-          Key: { PK: orderKeys.pk(order.orderId), SK: orderKeys.sk() },
-          UpdateExpression: "SET reviewEmailLastError = :err, updatedAt = :now",
-          ExpressionAttributeValues: { ":err": "No customer email", ":now": now() },
-        })
-      );
-    }
+    await persistReviewOutcome({
+      orderId: order.orderId,
+      channel: "email",
+      outcome: "not_available",
+      at: now(),
+      customer: customerEmail,
+      error: "Invalid/Missing email",
+    });
     logReviewNotify({
       channel: "email",
       orderId: order.orderId,
@@ -234,27 +316,54 @@ async function sendEmailChannel(
       customer: customerEmail,
       ok: false,
       skipped: true,
-      error: "No customer email",
+      error: "Invalid/Missing email",
     });
-    return "skipped";
+    return "not_available";
   }
 
-  const claimed = await claimEmailSent(order.orderId, now());
+  const claimed = await claimChannelLock(order.orderId, "email", {
+    requireUnsent: emailStatus.status !== "not_available",
+  });
   if (!claimed) return "already_sent";
 
   const vars = templateVars(order, settings);
   const result = await sendReviewRequestEmail(order, settings, vars);
-  if (result.ok) {
+  const sentAt = now();
+
+  if (result.ok && !result.skipped) {
+    await persistReviewOutcome({
+      orderId: order.orderId,
+      channel: "email",
+      outcome: "sent",
+      at: sentAt,
+      customer: customerEmail,
+      provider: result.provider ?? "smtp",
+      messageId: result.messageId,
+      providerStatus: result.providerStatus,
+    });
     logReviewNotify({
       channel: "email",
       orderId: order.orderId,
       orderNumber: order.orderNumber,
       customer: customerEmail,
       ok: true,
+      messageId: result.messageId,
     });
     return "sent";
   }
 
+  const error = result.error ?? (result.skipped ? "Email send skipped" : "Email send failed");
+  await persistReviewOutcome({
+    orderId: order.orderId,
+    channel: "email",
+    outcome: "failed",
+    at: sentAt,
+    customer: customerEmail,
+    error,
+    provider: result.provider ?? "smtp",
+    messageId: result.messageId,
+    providerStatus: result.providerStatus,
+  });
   logReviewNotify({
     channel: "email",
     orderId: order.orderId,
@@ -262,22 +371,33 @@ async function sendEmailChannel(
     customer: customerEmail,
     ok: false,
     skipped: result.skipped,
-    error: result.error,
+    error,
   });
-  await clearEmailClaim(order.orderId, result.error ?? "Email send failed");
-  return result.skipped ? "skipped" : "failed";
+  return "failed";
 }
 
 async function sendWhatsAppChannel(
   order: StoredOrder,
-  settings: ReviewRequestSettings
+  settings: ReviewRequestSettings,
+  opts?: ReviewDispatchOptions
 ): Promise<ReviewDispatchChannelResult> {
-  if (isReviewWhatsAppChannelDone(order)) return "already_sent";
+  const waStatus = getReviewWhatsAppChannelStatus(order);
+  if (waStatus.status === "sent") return "already_sent";
+  if (!opts?.recheckContact && waStatus.status === "not_available") {
+    return "not_available";
+  }
   if (!settings.whatsappEnabled) return "disabled";
 
   const phone = validWhatsAppPhone(order.shippingAddress?.phone);
   if (!phone) {
-    await markWhatsAppSkipped(order.orderId, "No valid WhatsApp number");
+    await persistReviewOutcome({
+      orderId: order.orderId,
+      channel: "whatsapp",
+      outcome: "not_available",
+      at: now(),
+      customer: order.shippingAddress?.phone,
+      error: "No valid WhatsApp number",
+    });
     logReviewNotify({
       channel: "whatsapp",
       orderId: order.orderId,
@@ -287,10 +407,12 @@ async function sendWhatsAppChannel(
       skipped: true,
       error: "No valid WhatsApp number",
     });
-    return "skipped";
+    return "not_available";
   }
 
-  const claimed = await claimWhatsAppSent(order.orderId, now());
+  const claimed = await claimChannelLock(order.orderId, "whatsapp", {
+    requireUnsent: waStatus.status !== "not_available",
+  });
   if (!claimed) return "already_sent";
 
   const vars = templateVars(order, settings);
@@ -310,35 +432,44 @@ async function sendWhatsAppChannel(
     context: `review-request-${order.orderId}`,
     message,
   });
+  const sentAt = now();
 
-  if (wa?.ok) {
+  if (wa?.ok && !wa.skipped) {
+    await persistReviewOutcome({
+      orderId: order.orderId,
+      channel: "whatsapp",
+      outcome: "sent",
+      at: sentAt,
+      customer: phone,
+      provider: wa.provider,
+      messageId: wa.messageId,
+      providerStatus: wa.providerStatus,
+    });
     logReviewNotify({
       channel: "whatsapp",
       orderId: order.orderId,
       orderNumber: order.orderNumber,
       customer: phone,
       ok: true,
+      messageId: wa.messageId,
     });
     return "sent";
   }
 
-  const error = wa?.error ?? (wa == null ? "WhatsApp not configured or send skipped" : "WhatsApp send failed");
-  const skipped = Boolean(wa?.skipped || wa == null);
-  if (skipped) {
-    await markWhatsAppSkipped(order.orderId, error);
-    logReviewNotify({
-      channel: "whatsapp",
-      orderId: order.orderId,
-      orderNumber: order.orderNumber,
-      customer: phone,
-      ok: false,
-      skipped: true,
-      error,
-    });
-    return "skipped";
-  }
-
-  await recordWhatsAppError(order.orderId, error);
+  const error =
+    wa?.error ??
+    (wa == null ? "WhatsApp not configured or send skipped" : "WhatsApp send failed");
+  await persistReviewOutcome({
+    orderId: order.orderId,
+    channel: "whatsapp",
+    outcome: "failed",
+    at: sentAt,
+    customer: phone,
+    error,
+    provider: wa?.provider,
+    messageId: wa?.messageId,
+    providerStatus: wa?.providerStatus,
+  });
   logReviewNotify({
     channel: "whatsapp",
     orderId: order.orderId,
@@ -352,9 +483,13 @@ async function sendWhatsAppChannel(
 
 /**
  * Send the one-time review request (email + WhatsApp) for a delivered/complete order.
- * Never throws. Each channel is independently idempotent.
+ * Never throws. Each channel is independently idempotent. Sent is recorded only after
+ * the SMTP / WhatsApp provider returns success.
  */
-export async function dispatchReviewRequest(order: Order): Promise<ReviewDispatchResult> {
+export async function dispatchReviewRequest(
+  order: Order,
+  opts?: ReviewDispatchOptions
+): Promise<ReviewDispatchResult> {
   const stored = order as StoredOrder;
   if (!isDeliveredStatus(stored.status)) {
     return { email: "skipped", whatsapp: "skipped" };
@@ -368,14 +503,18 @@ export async function dispatchReviewRequest(order: Order): Promise<ReviewDispatc
     return { email: "failed", whatsapp: "failed" };
   }
 
-  const email = await sendEmailChannel(stored, settings).catch((err) => {
-    console.error("Review email dispatch exception", stored.orderId, err);
-    return "failed" as const;
-  });
-  const whatsapp = await sendWhatsAppChannel(stored, settings).catch((err) => {
-    console.error("Review WhatsApp dispatch exception", stored.orderId, err);
-    return "failed" as const;
-  });
+  const email = channelEnabled(opts, "email")
+    ? await sendEmailChannel(stored, settings, opts).catch((err) => {
+        console.error("Review email dispatch exception", stored.orderId, err);
+        return "failed" as const;
+      })
+    : "skipped";
+  const whatsapp = channelEnabled(opts, "whatsapp")
+    ? await sendWhatsAppChannel(stored, settings, opts).catch((err) => {
+        console.error("Review WhatsApp dispatch exception", stored.orderId, err);
+        return "failed" as const;
+      })
+    : "skipped";
   return { email, whatsapp };
 }
 
@@ -399,7 +538,7 @@ async function processOrder(order: StoredOrder): Promise<"sent" | "skipped" | "f
   return "skipped";
 }
 
-/** 15-minute cron: retry unsent review channels for delivered/complete orders. */
+/** 15-minute cron: retry unsent/failed review channels for delivered/complete orders. */
 export async function processDueReviewEmails(): Promise<{
   scanned: number;
   sent: number;
