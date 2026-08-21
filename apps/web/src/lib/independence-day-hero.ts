@@ -57,13 +57,12 @@ export function isIndependenceDayHeroActive(now = new Date()): boolean {
 }
 
 /**
- * Homepage hero — campaign slides first, then default `homeBanners`.
- * Existing catalog banners are never removed or modified.
+ * Homepage hero — default `homeBanners` in existing order.
+ * Independence Day slide is prepended only while that campaign window is active.
  */
 export function getHomeBanners(now = new Date()): readonly HomeBanner[] {
-  const withOrderBy20: HomeBanner[] = [rakshaBandhanOrderBy20Banner, ...homeBanners];
   if (isIndependenceDayHeroActive(now)) {
-    return [independenceDayHeroBanner, ...withOrderBy20];
+    return [independenceDayHeroBanner, ...homeBanners];
   }
-  return withOrderBy20;
+  return homeBanners;
 }
