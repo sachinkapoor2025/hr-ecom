@@ -47,6 +47,7 @@ import {
   cartLineUnitTotal,
   cartHasCouponExcludedItems,
   isFlashComboProduct,
+  STRIPE_PAYMENTS_ENABLED,
   type Order,
   type RateQuote,
   type ShippingAddress,
@@ -196,7 +197,8 @@ function CheckoutPageInner() {
 
   useEffect(() => {
     if (displayCurrency === "INR") setPaymentMethod("razorpay");
-    else if (displayCurrency === "USD") setPaymentMethod("stripe");
+    else if (displayCurrency === "USD" && STRIPE_PAYMENTS_ENABLED) setPaymentMethod("stripe");
+    else setPaymentMethod("razorpay");
     setStripeCheckout(null);
     setRazorpayPayment(null);
   }, [displayCurrency]);
@@ -273,7 +275,11 @@ function CheckoutPageInner() {
           });
         }
         if (data.order.paymentProvider === "razorpay") setPaymentMethod("razorpay");
-        else if (data.order.paymentProvider === "stripe") setPaymentMethod("stripe");
+        else if (data.order.paymentProvider === "stripe" && STRIPE_PAYMENTS_ENABLED) {
+          setPaymentMethod("stripe");
+        } else {
+          setPaymentMethod("razorpay");
+        }
         if (data.order.discount > 0) {
           setDiscount(data.order.discount);
           if (data.order.couponCode) setAppliedCouponCode(data.order.couponCode);
@@ -302,7 +308,10 @@ function CheckoutPageInner() {
         try {
           const account = await fetchAccount(token, sessionId);
           if (account.profile.preferredPaymentMethod) {
-            setPaymentMethod(account.profile.preferredPaymentMethod);
+            const preferred = account.profile.preferredPaymentMethod;
+            setPaymentMethod(
+              preferred === "stripe" && !STRIPE_PAYMENTS_ENABLED ? "razorpay" : preferred
+            );
           }
           const defaultAddress =
             account.addresses.find((a) => a.isDefault) ?? account.addresses[0];

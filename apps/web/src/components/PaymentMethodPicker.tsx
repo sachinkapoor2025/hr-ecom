@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { STRIPE_PAYMENTS_ENABLED } from "@hr-ecom/shared";
 
 export type PaymentMethod = "stripe" | "razorpay";
 
@@ -40,32 +41,40 @@ export function PaymentMethodPicker({
     { id: "stripe", label: "Pay with Stripe", icon: <StripeIcon /> },
   ];
 
-  const options =
-    checkoutCurrency === "INR"
-      ? allOptions.filter((o) => o.id === "razorpay")
-      : allOptions;
+  const options = allOptions.filter((o) => {
+    if (o.id === "stripe" && !STRIPE_PAYMENTS_ENABLED) return false;
+    if (checkoutCurrency === "INR" && o.id === "stripe") return false;
+    return true;
+  });
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
-      {options.map((option) => {
-        const selected = value === option.id;
-        return (
-          <button
-            key={option.id}
-            type="button"
-            onClick={() => onChange(option.id)}
-            className={`flex items-center gap-3 rounded-xl border-2 px-4 py-4 text-left transition-all ${
-              selected
-                ? "border-nav bg-blue-50 shadow-sm ring-1 ring-nav/20"
-                : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
-            }`}
-            aria-pressed={selected}
-          >
-            {option.icon}
-            <span className="font-semibold text-slate-900 text-sm">{option.label}</span>
-          </button>
-        );
-      })}
+    <div className="mb-6">
+      {!STRIPE_PAYMENTS_ENABLED ? (
+        <p className="text-xs text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 mb-3">
+          Stripe card payments are temporarily on hold. Please continue with Razorpay.
+        </p>
+      ) : null}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {options.map((option) => {
+          const selected = value === option.id;
+          return (
+            <button
+              key={option.id}
+              type="button"
+              onClick={() => onChange(option.id)}
+              className={`flex items-center gap-3 rounded-xl border-2 px-4 py-4 text-left transition-all ${
+                selected
+                  ? "border-nav bg-blue-50 shadow-sm ring-1 ring-nav/20"
+                  : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50"
+              }`}
+              aria-pressed={selected}
+            >
+              {option.icon}
+              <span className="font-semibold text-slate-900 text-sm">{option.label}</span>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

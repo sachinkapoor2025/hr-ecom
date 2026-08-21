@@ -1,5 +1,6 @@
 import Stripe from "stripe";
 import type { Order } from "@hr-ecom/shared";
+import { STRIPE_PAYMENTS_ENABLED } from "@hr-ecom/shared";
 import type { APIGatewayProxyEventV2 } from "aws-lambda";
 import { ok, badRequest, serverError } from "../../lib/response";
 import { markOrderPaid, markOrderPaymentFailed } from "../orders";
@@ -24,6 +25,10 @@ function getHeader(event: APIGatewayProxyEventV2, name: string): string | undefi
 }
 
 export async function createStripePaymentIntent(order: Order) {
+  if (!STRIPE_PAYMENTS_ENABLED) {
+    throw new Error("Stripe card payments are temporarily unavailable. Please pay with Razorpay.");
+  }
+
   if (isLoadTestMode()) {
     return {
       paymentIntentId: `pi_loadtest_${order.orderId}`,
