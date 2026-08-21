@@ -14,6 +14,7 @@ const links = [
   { href: "/admin/email/queue", label: "Queue" },
   { href: "/admin/email/analytics", label: "Analytics" },
   { href: "/admin/email/suppression", label: "Suppression List" },
+  { href: "/admin/email/review-request", label: "Review request" },
   { href: "/admin/email/settings", label: "Settings" },
 ];
 

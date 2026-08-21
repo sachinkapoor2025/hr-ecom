@@ -48,7 +48,7 @@ import { docClient, ORDERS_TABLE, PRODUCTS_TABLE, now } from "../lib/db";
 import { ok, unauthorized, badRequest, forbidden, notFound } from "../lib/response";
 import { getBundledOrangeCountyProduct } from "../lib/orange-county-catalog";
 import { notifyCustomerOrderStatusChange } from "../lib/email";
-import { applyDeliveryReviewSchedule } from "./review-emails";
+import { applyDeliveryReviewSchedule, notifyReviewRequestAfterStatusChange } from "./review-emails";
 import { resolveOrderByIdOrNumber } from "../lib/order-numbers";
 
 /** Hard cap on Dynamo rows scanned per list request (across pages). */
@@ -452,6 +452,7 @@ async function persistVendorOrderUpdate(
     if (!emailResult.ok && !emailResult.skipped) {
       console.error("Vendor status customer email failed:", emailResult.error);
     }
+    await notifyReviewRequestAfterStatusChange(updated);
   }
 
   return updated;

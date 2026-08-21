@@ -142,15 +142,15 @@ export function BannerCarousel({
 
   return (
     <section
-      className="w-full"
+      className="w-full max-w-full overflow-x-hidden"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       aria-label="Featured promotions"
     >
       <div className="relative overflow-hidden bg-white border-b border-slate-100">
-        <div className="relative max-w-7xl mx-auto lg:grid lg:grid-cols-[2fr_3fr] lg:gap-6 lg:items-center lg:px-4 lg:py-4">
-          <div className="order-1 lg:order-2 relative w-full">
-            <div className="relative w-full aspect-[5/2] sm:aspect-[1024/420] overflow-hidden bg-slate-900/5">
+        <div className="relative w-full max-w-7xl mx-auto min-w-0 lg:grid lg:grid-cols-[2fr_3fr] lg:gap-6 lg:items-center lg:px-4 lg:py-4">
+          <div className="order-1 lg:order-2 relative w-full min-w-0 max-w-full">
+            <div className="relative w-full max-w-full aspect-[5/2] sm:aspect-[1024/420] overflow-hidden bg-slate-900/5">
               {/* Server LCP image for slide 0 */}
               {lcpImage ? (
                 <div
@@ -209,11 +209,11 @@ export function BannerCarousel({
             </div>
           </div>
 
-          <div className="order-2 lg:order-1 text-center lg:text-left z-10 px-4 py-6 sm:py-8 lg:py-0 lg:pl-2 lg:pr-4">
+          <div className="order-2 lg:order-1 text-center lg:text-left z-10 min-w-0 px-4 py-6 sm:py-8 lg:py-0 lg:pl-2 lg:pr-4">
             <div key={banner.src}>
               <Eyebrow text={banner.eyebrow} />
 
-              <p className="font-serif text-3xl sm:text-4xl lg:text-[2.65rem] leading-tight text-primary mb-4">
+              <p className="font-serif text-3xl sm:text-4xl lg:text-[2.65rem] leading-tight text-primary mb-4 break-words">
                 {banner.title}{" "}
                 <span className="text-nav italic">{banner.titleAccent}</span>
               </p>
@@ -266,11 +266,11 @@ export function BannerCarousel({
         </ul>
 
         <div className="px-4 sm:px-6 pb-4 sm:pb-5 max-w-7xl mx-auto">
-          <div className="flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-blue-100/80 via-sky-50 to-blue-100/80 border border-blue-100 px-4 sm:px-6 py-3 text-center">
+          <div className="flex flex-wrap items-center justify-center gap-2 rounded-full bg-gradient-to-r from-blue-100/80 via-sky-50 to-blue-100/80 border border-blue-100 px-4 sm:px-6 py-3 text-center min-w-0">
             <svg className="w-4 h-4 text-accent shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
               <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
             </svg>
-            <p className="text-xs sm:text-sm text-primary font-medium leading-snug">
+            <p className="text-xs sm:text-sm text-primary font-medium leading-snug min-w-0 break-words">
               {banner.pill.split("·").map((part, i, arr) => (
                 <span key={i}>
                   {i > 0 && " · "}

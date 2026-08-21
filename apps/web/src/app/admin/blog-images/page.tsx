@@ -184,10 +184,14 @@ export default function AdminBlogImagesPage() {
             key={post.slug}
             className="border border-slate-200 rounded-xl p-4 bg-white flex flex-col sm:flex-row gap-4"
           >
-            <div className="relative aspect-[16/10] w-full sm:w-48 shrink-0 rounded-lg overflow-hidden bg-slate-100 border border-dashed border-slate-300">
+            <div className="relative aspect-[16/9] w-full sm:w-48 shrink-0 rounded-lg overflow-hidden bg-slate-100 border border-slate-200">
               {images[post.slug] ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={images[post.slug]} alt={post.title} className="h-full w-full object-cover" />
+                <img
+                  src={images[post.slug]}
+                  alt={post.title}
+                  className="absolute inset-0 m-auto max-h-full max-w-full object-contain object-center p-2"
+                />
               ) : (
                 <div className="flex h-full w-full items-center justify-center text-center text-xs font-semibold uppercase tracking-wide text-slate-400 px-2">
                   Blog image placeholder

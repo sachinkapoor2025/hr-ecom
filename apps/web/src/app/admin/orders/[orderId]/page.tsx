@@ -16,6 +16,12 @@ import {
   orderHasOrangeCounty,
   orderHasUsarakhi,
   vendorDisplayLabel,
+  isDeliveredStatus,
+  getReviewEmailChannelStatus,
+  getReviewWhatsAppChannelStatus,
+  getReviewRequestOverallStatus,
+  getReviewRequestOverallLabel,
+  canRetryReviewChannel,
 } from "@hr-ecom/shared";
 import {
   statusLabel,
@@ -41,6 +47,21 @@ type AdminOrder = Order & {
   lastTrackingSyncError?: string;
   trackingEvents?: Array<{ date: string; description: string; location?: string }>;
 };
+
+function reviewStatusBadgeClass(status: string): string {
+  switch (status) {
+    case "sent":
+      return "bg-green-100 text-green-800";
+    case "failed":
+      return "bg-red-100 text-red-800";
+    case "not_available":
+      return "bg-slate-100 text-slate-700";
+    case "partially_sent":
+      return "bg-amber-100 text-amber-800";
+    default:
+      return "bg-slate-100 text-slate-600";
+  }
+}
 
 export default function AdminOrderDetailPage() {
   const apiClient = useApiClient();
@@ -71,6 +92,9 @@ export default function AdminOrderDetailPage() {
   const [rateOptions, setRateOptions] = useState<RateQuote[]>([]);
   const [selectedRateId, setSelectedRateId] = useState("");
   const [correctingAddress, setCorrectingAddress] = useState(false);
+  const [retryingReviewChannel, setRetryingReviewChannel] = useState<"email" | "whatsapp" | null>(
+    null
+  );
   const [corrName, setCorrName] = useState("");
   const [corrLine1, setCorrLine1] = useState("");
   const [corrLine2, setCorrLine2] = useState("");
@@ -185,12 +209,17 @@ export default function AdminOrderDetailPage() {
         method: "PUT",
         body: JSON.stringify(payload),
       });
-      setOrder(data.order);
-      syncVendorTrackingState(data.order);
+      let nextOrder = data.order;
+      if (isDeliveredStatus(nextOrder.status)) {
+        const refreshed = await apiClient<{ order: AdminOrder }>(`/admin/orders/${orderId}`);
+        nextOrder = refreshed.order;
+      }
+      setOrder(nextOrder);
+      syncVendorTrackingState(nextOrder);
       setNote("");
       setMessage("Order updated.");
-      const next = nextStatuses(data.order.status);
-      setNewStatus(next[0] ?? data.order.status);
+      const next = nextStatuses(nextOrder.status);
+      setNewStatus(next[0] ?? nextOrder.status);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Update failed.");
     } finally {
@@ -206,14 +235,48 @@ export default function AdminOrderDetailPage() {
         method: "PUT",
         body: JSON.stringify({ status, note: `Status changed to ${statusLabel(status)}` }),
       });
-      setOrder(data.order);
+      let nextOrder = data.order;
+      if (isDeliveredStatus(nextOrder.status)) {
+        const refreshed = await apiClient<{ order: AdminOrder }>(`/admin/orders/${orderId}`);
+        nextOrder = refreshed.order;
+      }
+      setOrder(nextOrder);
       setMessage(`Order marked as ${statusLabel(status)}.`);
-      const next = nextStatuses(data.order.status);
-      setNewStatus(next[0] ?? data.order.status);
+      const next = nextStatuses(nextOrder.status);
+      setNewStatus(next[0] ?? nextOrder.status);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Update failed.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const retryReviewRequest = async (channel: "email" | "whatsapp") => {
+    if (!order) return;
+    setRetryingReviewChannel(channel);
+    setError("");
+    setMessage("");
+    try {
+      const data = await apiClient<{
+        alreadySent?: boolean;
+        result?: { email: string; whatsapp: string };
+      }>(`/admin/orders/${orderId}/review-request`, {
+        method: "POST",
+        body: JSON.stringify({ channel }),
+      });
+      const refreshed = await apiClient<{ order: AdminOrder }>(`/admin/orders/${orderId}`);
+      setOrder(refreshed.order);
+      const label = channel === "email" ? "Email" : "WhatsApp";
+      if (data.alreadySent) {
+        setMessage(`${label} review request was already sent for this order.`);
+      } else {
+        const outcome = channel === "email" ? data.result?.email : data.result?.whatsapp;
+        setMessage(`${label} review request: ${outcome ?? "—"}. The other channel was not sent again.`);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Review request failed.");
+    } finally {
+      setRetryingReviewChannel(null);
     }
   };
 
@@ -756,6 +819,147 @@ export default function AdminOrderDetailPage() {
               </>
             )}
           </section>
+
+          {isDeliveredStatus(order.status) && (
+            <section className="bg-white border rounded-xl p-5 text-sm">
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <h2 className="font-semibold">Review Notification Status</h2>
+                <span
+                  className={`shrink-0 text-xs font-semibold px-2 py-1 rounded-full ${reviewStatusBadgeClass(getReviewRequestOverallStatus(order))}`}
+                >
+                  {getReviewRequestOverallLabel(order)}
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 mb-4">
+                Status is recorded only after the email/WhatsApp provider returns success. Failed
+                channels can be retried without sending the successful one again.
+              </p>
+
+              {(() => {
+                const emailStatus = getReviewEmailChannelStatus(order);
+                const waStatus = getReviewWhatsAppChannelStatus(order);
+                const log = [...(order.reviewNotificationLog ?? [])].reverse();
+                return (
+                  <>
+                    <div className="space-y-3">
+                      <div className="rounded-lg border border-slate-100 p-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="font-medium">Email Review Request</p>
+                          <span
+                            className={`text-xs font-semibold px-2 py-0.5 rounded-full ${reviewStatusBadgeClass(emailStatus.status)}`}
+                          >
+                            {emailStatus.label}
+                          </span>
+                        </div>
+                        {emailStatus.at && (
+                          <p className="text-xs text-slate-500 mt-1">
+                            {new Date(emailStatus.at).toLocaleString()}
+                          </p>
+                        )}
+                        {emailStatus.providerStatus && (
+                          <p className="text-xs text-slate-600 mt-1">
+                            SMTP: {emailStatus.providerStatus}
+                          </p>
+                        )}
+                        {emailStatus.messageId && (
+                          <p className="text-xs text-slate-500 mt-0.5 break-all">
+                            Message ID: {emailStatus.messageId}
+                          </p>
+                        )}
+                        {emailStatus.error && emailStatus.status !== "sent" && (
+                          <p className="text-red-600 text-xs mt-1">{emailStatus.error}</p>
+                        )}
+                        {canRetryReviewChannel(order, "email") &&
+                          (emailStatus.status === "failed" || emailStatus.status === "not_available") && (
+                          <button
+                            type="button"
+                            disabled={retryingReviewChannel !== null}
+                            onClick={() => void retryReviewRequest("email")}
+                            className="mt-2 text-sm rounded-lg border border-nav text-nav px-3 py-1.5 hover:bg-blue-50 disabled:opacity-50"
+                          >
+                            {retryingReviewChannel === "email" ? "Sending…" : "Retry Email"}
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="rounded-lg border border-slate-100 p-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="font-medium">WhatsApp Review Request</p>
+                          <span
+                            className={`text-xs font-semibold px-2 py-0.5 rounded-full ${reviewStatusBadgeClass(waStatus.status)}`}
+                          >
+                            {waStatus.label}
+                          </span>
+                        </div>
+                        {waStatus.at && (
+                          <p className="text-xs text-slate-500 mt-1">
+                            {new Date(waStatus.at).toLocaleString()}
+                          </p>
+                        )}
+                        {(waStatus.provider || waStatus.providerStatus) && (
+                          <p className="text-xs text-slate-600 mt-1">
+                            {[waStatus.provider, waStatus.providerStatus].filter(Boolean).join(" · ")}
+                          </p>
+                        )}
+                        {waStatus.messageId && (
+                          <p className="text-xs text-slate-500 mt-0.5 break-all">
+                            Message ID: {waStatus.messageId}
+                          </p>
+                        )}
+                        {waStatus.error && waStatus.status !== "sent" && (
+                          <p className="text-red-600 text-xs mt-1">{waStatus.error}</p>
+                        )}
+                        {canRetryReviewChannel(order, "whatsapp") &&
+                          (waStatus.status === "failed" || waStatus.status === "not_available") && (
+                          <button
+                            type="button"
+                            disabled={retryingReviewChannel !== null}
+                            onClick={() => void retryReviewRequest("whatsapp")}
+                            className="mt-2 text-sm rounded-lg border border-nav text-nav px-3 py-1.5 hover:bg-blue-50 disabled:opacity-50"
+                          >
+                            {retryingReviewChannel === "whatsapp" ? "Sending…" : "Retry WhatsApp"}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="mt-4">
+                      <h3 className="font-medium mb-2">Notification history</h3>
+                      {log.length === 0 ? (
+                        <p className="text-xs text-slate-500">No review-request attempts logged yet.</p>
+                      ) : (
+                        <ul className="space-y-2 max-h-56 overflow-y-auto">
+                          {log.map((entry) => (
+                            <li
+                              key={entry.id}
+                              className="text-xs border border-slate-100 rounded-md px-2 py-2"
+                            >
+                              <p className="font-medium capitalize">
+                                {entry.channel} · {entry.status.replaceAll("_", " ")}
+                              </p>
+                              <p className="text-slate-500">{new Date(entry.at).toLocaleString()}</p>
+                              <p className="text-slate-600">
+                                Order {entry.orderId}
+                                {entry.customer ? ` · ${entry.customer}` : ""}
+                              </p>
+                              {(entry.provider || entry.messageId || entry.providerStatus) && (
+                                <p className="text-slate-500 break-all">
+                                  {[entry.provider, entry.providerStatus, entry.messageId]
+                                    .filter(Boolean)
+                                    .join(" · ")}
+                                </p>
+                              )}
+                              {entry.error && <p className="text-red-600 mt-0.5">{entry.error}</p>}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  </>
+                );
+              })()}
+            </section>
+          )}
 
           <section className="bg-white border rounded-xl p-5 text-sm">
             <h2 className="font-semibold mb-3">Payment & shipping</h2>

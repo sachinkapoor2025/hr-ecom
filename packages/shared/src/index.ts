@@ -1,5 +1,6 @@
 export * from "./schemas/product";
 export * from "./schemas/review";
+export * from "./schemas/review-request";
 export * from "./schemas/category";
 export * from "./schemas/cart";
 export * from "./schemas/order";
@@ -38,6 +39,7 @@ export * from "./lib/product-sales";
 export * from "./lib/product-sales-intelligence";
 export * from "./lib/sales-report";
 export * from "./lib/review-email";
+export * from "./lib/review-request-email-html";
 export * from "./lib/pending-payment-reminder";
 export * from "./lib/viewer-geo";
 export * from "./lib/admin-analytics-tz";

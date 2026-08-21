@@ -9,6 +9,13 @@ import {
   LOW_STOCK_ALERT_EMAIL,
   ABANDONED_CART_DISCOUNT_PERCENT,
   isAdminExtremeDiscount,
+  isDeliveredStatus,
+  reviewRequestStillNeeded,
+  renderReviewRequestTemplate,
+  omitEmptyGoogleReviewLines,
+  buildReviewRequestEmailHtml,
+  type ReviewRequestSettings,
+  type ReviewRequestTemplateVars,
 } from "@hr-ecom/shared";
 import {
   abandonedCartWhatsAppMessage,
@@ -17,7 +24,6 @@ import {
   orderPaidWhatsAppMessage,
   orderStatusWhatsAppMessage,
   pendingPaymentWhatsAppMessage,
-  reviewRequestWhatsAppMessage,
   welcomeCouponWhatsAppMessage,
 } from "./whatsapp";
 
@@ -36,6 +42,11 @@ export type EmailSendResult = {
   ok: boolean;
   error?: string;
   skipped?: boolean;
+  /** SMTP Message-ID when the provider accepted the message. */
+  messageId?: string;
+  /** Raw SMTP response (e.g. 250 2.0.0 Ok). */
+  providerStatus?: string;
+  provider?: string;
 };
 
 function smtpPassword(): string | undefined {
@@ -276,7 +287,7 @@ export async function sendEmail(opts: {
   try {
     const transporter = await createWorkingTransporter(mailbox);
     const from = fromAddressFor(mailbox);
-    await transporter.sendMail({
+    const info = await transporter.sendMail({
       from: `"${SITE_NAME}" <${from}>`,
       to: opts.to,
       subject: opts.subject,
@@ -288,8 +299,22 @@ export async function sendEmail(opts: {
         "Auto-Submitted": "auto-generated",
       },
     });
-    console.info("sendEmail.ok", { mailbox, from, to: opts.to, subject: opts.subject });
-    return { ok: true };
+    const messageId = typeof info.messageId === "string" ? info.messageId : undefined;
+    const providerStatus = typeof info.response === "string" ? info.response.slice(0, 300) : undefined;
+    const rejected = Array.isArray(info.rejected) ? info.rejected : [];
+    const accepted = Array.isArray(info.accepted) ? info.accepted : [];
+    if (rejected.length > 0 && accepted.length === 0) {
+      console.error("sendEmail rejected", { mailbox, from, to: opts.to, rejected, providerStatus });
+      return {
+        ok: false,
+        error: `SMTP rejected recipient: ${providerStatus || "no response"}`,
+        messageId,
+        providerStatus,
+        provider: "smtp",
+      };
+    }
+    console.info("sendEmail.ok", { mailbox, from, to: opts.to, subject: opts.subject, messageId });
+    return { ok: true, messageId, providerStatus, provider: "smtp" };
   } catch (err) {
     const raw = err instanceof Error ? err.message : String(err);
     const message = /Daily send limit/i.test(raw)
@@ -980,6 +1005,12 @@ export async function notifyCustomerOrderStatusChange(order: Order): Promise<Ema
     console.error("Admin order status email failed:", adminResult.error);
   }
 
+  // First Delivered/Complete: customer review request (email + WhatsApp) is sent
+  // separately and includes confirmation. Skip the generic status pair to avoid duplicates.
+  if (isDeliveredStatus(order.status) && reviewRequestStillNeeded(order)) {
+    return { ok: true, skipped: true };
+  }
+
   const customerEmail = order.shippingAddress?.email?.trim();
   if (!customerEmail?.includes("@")) {
     return adminResult.ok
@@ -1101,7 +1132,11 @@ ${notifyAddress()}`;
   });
 }
 
-export async function sendReviewRequestEmail(order: Order): Promise<EmailSendResult> {
+export async function sendReviewRequestEmail(
+  order: Order,
+  settings: ReviewRequestSettings,
+  vars: ReviewRequestTemplateVars
+): Promise<EmailSendResult> {
   if (!smtpConfigured()) {
     return { ok: false, skipped: true, error: "SMTP not configured" };
   }
@@ -1111,45 +1146,26 @@ export async function sendReviewRequestEmail(order: Order): Promise<EmailSendRes
     return { ok: false, skipped: true, error: "No customer email" };
   }
 
-  const name = order.shippingAddress?.name?.split(" ")[0] ?? "there";
-  const shortId = order.orderId.slice(0, 8).toUpperCase();
-  const reviewUrl = `${siteUrl()}/reviews`;
+  const subjectTemplate = omitEmptyGoogleReviewLines(settings.emailSubjectTemplate, vars.googleReviewUrl);
+  const textTemplate = omitEmptyGoogleReviewLines(settings.emailTextTemplate, vars.googleReviewUrl);
+  const subject =
+    renderReviewRequestTemplate(subjectTemplate, vars).trim() ||
+    `Order ${vars.statusLabel} — #${vars.orderNumber} | ${SITE_NAME}`;
+  const text = renderReviewRequestTemplate(textTemplate, vars).trim();
+  const html = buildReviewRequestEmailHtml({
+    bodyText: text,
+    websiteReviewUrl: vars.websiteReviewUrl,
+    googleReviewUrl: vars.googleReviewUrl || undefined,
+  });
 
-  const text = `Hi ${name},
-
-We hope your Rakhi order #${shortId} arrived safely and made Raksha Bandhan special!
-
-We're UsaRakhi — dedicated to Rakhi and Raksha Bandhan traditions — and your feedback helps other sisters trust us for USA Rakhi delivery.
-
-Would you take 30 seconds to share your experience?
-${reviewUrl}
-
-You can mention delivery speed, packaging, or how your brother liked the Rakhi. We read every review.
-
-Thank you for choosing ${SITE_NAME}.
-
-— Team ${SITE_NAME}
-${siteUrl()}
-WhatsApp / support: ${notifyAddress()}`;
-
-  const emailResult = await sendEmail({
+  return sendEmail({
     to: customerEmail,
-    mailbox: "orders",
-    subject: `How was your Rakhi delivery? — ${SITE_NAME}`,
+    mailbox: "order",
+    subject,
     text,
+    html,
     replyTo: notifyAddress(),
   });
-
-  await notifyCustomerWhatsApp({
-    phone: order.shippingAddress?.phone,
-    context: "review-request",
-    message: reviewRequestWhatsAppMessage({
-      name,
-      orderId: order.orderId,
-    }),
-  });
-
-  return emailResult;
 }
 
 function formatCartLines(items: CartItem[], currency: string): string {

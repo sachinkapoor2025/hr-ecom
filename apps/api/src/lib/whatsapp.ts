@@ -11,6 +11,10 @@ export type WhatsAppSendResult = {
   error?: string;
   /** Always useful for admin one-click send if API is unavailable. */
   deepLink: string;
+  /** Provider message id (Meta wamid / Twilio SID). */
+  messageId?: string;
+  /** Provider delivery status when returned (e.g. queued, sent). */
+  providerStatus?: string;
 };
 
 const SITE = "UsaRakhi";
@@ -181,14 +185,21 @@ Complete payment so we can pack and ship for Raksha Bandhan.`;
 export function reviewRequestWhatsAppMessage(input: {
   name?: string;
   orderId: string;
+  orderNumber?: string;
+  websiteReviewUrl?: string;
+  googleReviewUrl?: string;
 }): string {
   const hi = input.name ? `Hi ${input.name}` : "Hi";
-  const shortId = input.orderId.slice(0, 8).toUpperCase();
-  return `${hi}! We hope order #${shortId} arrived safely. Would you share a quick review?
+  const ref = (input.orderNumber ?? input.orderId.slice(0, 8)).toUpperCase();
+  const siteReview = input.websiteReviewUrl ?? `${SITE_URL()}/reviews`;
+  const googleLine = input.googleReviewUrl?.trim()
+    ? `\nReview us on Google: ${input.googleReviewUrl.trim()}`
+    : "";
+  return `${hi}! Thank you — your ${SITE} order ${ref} is delivered.
 
-${SITE_URL()}/reviews
+Leave a review: ${siteReview}${googleLine}
 
-Thank you for choosing ${SITE}!`;
+We hope your brother loved his Rakhi.`;
 }
 
 export function contactAckWhatsAppMessage(input: { name?: string }): string {
@@ -252,7 +263,12 @@ async function sendViaMeta(toDigits: string, body: string): Promise<Omit<WhatsAp
     }
     return { ok: false, provider: "meta", error: `Meta WhatsApp ${res.status}: ${text.slice(0, 300)}` };
   }
-  return { ok: true, provider: "meta" };
+  const apiResponse = (await res.json().catch(() => ({}))) as {
+    messages?: Array<{ id?: string; message_status?: string }>;
+  };
+  const messageId = apiResponse.messages?.[0]?.id;
+  const providerStatus = apiResponse.messages?.[0]?.message_status || "accepted";
+  return { ok: true, provider: "meta", messageId, providerStatus };
 }
 
 /** Normalize Twilio WhatsApp From → `whatsapp:+E164` (strip spaces/dashes). */
@@ -263,6 +279,35 @@ function twilioWhatsAppFromAddress(raw: string): string {
   if (!digits) return trimmed.startsWith("whatsapp:") ? trimmed : `whatsapp:${trimmed}`;
   return `whatsapp:+${digits}`;
 }
+
+/** In-process skip after Twilio 63038 so a cron burst does not keep hitting the cap. */
+let twilioDailyLimitUntilMs = 0;
+
+function twilioDailyLimitActive(): boolean {
+  return Date.now() < twilioDailyLimitUntilMs;
+}
+
+function markTwilioDailyLimit(): void {
+  const now = new Date();
+  twilioDailyLimitUntilMs = Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate() + 1,
+    0,
+    5,
+    0
+  );
+}
+
+export function isTwilioDailyLimitError(code?: number, message?: string): boolean {
+  if (code === 63038) return true;
+  return /63038|50 daily messages limit/i.test(message ?? "");
+}
+
+const TWILIO_DAILY_LIMIT_MESSAGE =
+  "Twilio 63038: Account exceeded the 50 daily WhatsApp messages limit (sandbox/trial cap). " +
+  "This is retryable — the cap typically resets at midnight UTC, or upgrade the Twilio WhatsApp sender off sandbox. " +
+  "Meta Cloud API is used as fallback when WHATSAPP_TOKEN is configured.";
 
 function friendlyTwilioError(status: number, body: string): string {
   try {
@@ -275,12 +320,16 @@ function friendlyTwilioError(status: number, body: string): string {
         "whatsapp:+14155238886 and join the sandbox from the recipient phone."
       );
     }
+    if (isTwilioDailyLimitError(parsed.code, parsed.message)) {
+      return TWILIO_DAILY_LIMIT_MESSAGE;
+    }
     if (parsed.code && parsed.message) {
       return `Twilio ${parsed.code}: ${parsed.message}`;
     }
   } catch {
     /* use raw body */
   }
+  if (isTwilioDailyLimitError(undefined, body)) return TWILIO_DAILY_LIMIT_MESSAGE;
   return `Twilio ${status}: ${body.slice(0, 300)}`;
 }
 
@@ -307,11 +356,60 @@ async function sendViaTwilio(toDigits: string, body: string): Promise<Omit<Whats
     },
     body: params.toString(),
   });
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    return { ok: false, provider: "twilio", error: friendlyTwilioError(res.status, text) };
+  const raw = await res.text().catch(() => "");
+  let apiResponse: {
+    sid?: string;
+    status?: string;
+    code?: number;
+    message?: string;
+    error_code?: number | string;
+    error_message?: string;
+  } = {};
+  try {
+    apiResponse = raw ? (JSON.parse(raw) as typeof apiResponse) : {};
+  } catch {
+    apiResponse = {};
   }
-  return { ok: true, provider: "twilio" };
+
+  const errorCode =
+    typeof apiResponse.error_code === "number"
+      ? apiResponse.error_code
+      : typeof apiResponse.error_code === "string"
+        ? Number(apiResponse.error_code)
+        : apiResponse.code;
+  const errorMessage = apiResponse.error_message || apiResponse.message || raw;
+
+  if (!res.ok) {
+    const error = friendlyTwilioError(res.status, raw || errorMessage);
+    if (isTwilioDailyLimitError(errorCode, error)) markTwilioDailyLimit();
+    return { ok: false, provider: "twilio", error };
+  }
+
+  // HTTP 2xx with a SID can still mean the WhatsApp channel rejected the message (quota).
+  if (
+    isTwilioDailyLimitError(errorCode, errorMessage) ||
+    apiResponse.status === "failed" ||
+    apiResponse.status === "undelivered"
+  ) {
+    const error = isTwilioDailyLimitError(errorCode, errorMessage)
+      ? TWILIO_DAILY_LIMIT_MESSAGE
+      : `Twilio message ${apiResponse.status ?? "failed"}: ${String(errorMessage).slice(0, 300)}`;
+    if (isTwilioDailyLimitError(errorCode, errorMessage)) markTwilioDailyLimit();
+    return {
+      ok: false,
+      provider: "twilio",
+      error,
+      messageId: apiResponse.sid,
+      providerStatus: apiResponse.status,
+    };
+  }
+
+  return {
+    ok: true,
+    provider: "twilio",
+    messageId: apiResponse.sid,
+    providerStatus: apiResponse.status,
+  };
 }
 
 type WhatsAppProvider = "meta" | "twilio";
@@ -340,13 +438,22 @@ export async function sendWhatsAppMessage(input: {
   const metaTemplate = Boolean(process.env.WHATSAPP_TEMPLATE_NAME?.trim());
   const prefer: WhatsAppProvider =
     input.prefer ?? (metaTemplate ? "meta" : "twilio");
-  const order: WhatsAppProvider[] =
-    prefer === "twilio" ? ["twilio", "meta"] : ["meta", "twilio"];
+  // After Twilio 63038, try Meta first so remaining messages in this run can still send.
+  const order: WhatsAppProvider[] = twilioDailyLimitActive()
+    ? ["meta", "twilio"]
+    : prefer === "twilio"
+      ? ["twilio", "meta"]
+      : ["meta", "twilio"];
 
   try {
     const errors: string[] = [];
 
     for (const provider of order) {
+      if (provider === "twilio" && twilioDailyLimitActive()) {
+        errors.push(`twilio: ${TWILIO_DAILY_LIMIT_MESSAGE}`);
+        continue;
+      }
+
       const result =
         provider === "meta"
           ? await sendViaMeta(toDigits, input.message)
@@ -355,6 +462,7 @@ export async function sendWhatsAppMessage(input: {
       if (result.ok) return { ...result, deepLink };
       if (result.skipped) continue;
       if (result.error) {
+        if (isTwilioDailyLimitError(undefined, result.error)) markTwilioDailyLimit();
         errors.push(`${provider}: ${result.error}`);
         console.error("WhatsApp provider failed, trying next", {
           provider,

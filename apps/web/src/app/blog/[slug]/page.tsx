@@ -4,10 +4,12 @@ import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { BlogShowMoreProducts } from "@/components/BlogShowMoreProducts";
 import { categoryHref } from "@/lib/category-urls";
+import { BlogCoverImage } from "@/components/BlogCoverImage";
+import { BlogFaqSection } from "@/components/BlogFaqSection";
 import { JsonLd } from "@/components/JsonLd";
 import { loadBlogPostWithImage } from "@/lib/blog-images";
 import { listAllBlogPosts } from "@/lib/content/blog-posts";
-import { articleJsonLd, breadcrumbJsonLd, pageMetadata } from "@/lib/seo";
+import { articleJsonLd, breadcrumbJsonLd, faqJsonLd, pageMetadata } from "@/lib/seo";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -50,6 +52,7 @@ export default async function BlogPostPage({ params }: Props) {
           data={[
             articleJsonLd(post),
             breadcrumbJsonLd(crumbs.map((c) => ({ name: c.label, path: c.href ?? `/blog/${slug}` }))),
+            ...(post.faqs?.length ? [faqJsonLd(post.faqs)] : []),
           ]}
         />
         <Breadcrumbs items={crumbs} />
@@ -65,20 +68,13 @@ export default async function BlogPostPage({ params }: Props) {
           <p className="text-base sm:text-lg text-slate-600 break-words">{post.excerpt}</p>
         </header>
 
-        <div className="relative w-full aspect-[16/10] max-h-[420px] rounded-xl overflow-hidden mb-8 bg-slate-100">
-          {post.image ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={post.image}
-              alt={post.title}
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <div className="flex min-h-[200px] w-full items-center justify-center border border-dashed border-slate-300 bg-slate-50 text-center px-6">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Blog image placeholder</p>
-            </div>
-          )}
-        </div>
+        {post.image ? (
+          <BlogCoverImage src={post.image} alt={post.title} variant="article" />
+        ) : (
+          <div className="mb-8 flex min-h-[200px] w-full items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 px-6 text-center">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Blog image placeholder</p>
+          </div>
+        )}
 
         <div className="space-y-8 min-w-0 break-words [overflow-wrap:anywhere]">
           {post.sections.map((section, i) => (
@@ -95,6 +91,17 @@ export default async function BlogPostPage({ params }: Props) {
           ))}
         </div>
 
+        {post.closing && (
+          <section className="mt-10 min-w-0">
+            <h2 className="text-xl font-bold text-primary mb-3 break-words">{post.closing.heading}</h2>
+            {post.closing.paragraphs.map((p) => (
+              <p key={p} className="text-slate-700 leading-relaxed mb-4 break-words [overflow-wrap:anywhere]">
+                {p}
+              </p>
+            ))}
+          </section>
+        )}
+
         {post.relatedCategory && (
           <div className="mt-10 p-6 bg-slate-50 rounded-xl border min-w-0">
             <h2 className="font-semibold text-primary mb-2">Shop related Rakhis</h2>
@@ -103,6 +110,8 @@ export default async function BlogPostPage({ params }: Props) {
             </Link>
           </div>
         )}
+
+        {post.faqs && post.faqs.length > 0 && <BlogFaqSection faqs={post.faqs} />}
 
         <div className="mt-8 pt-6 border-t flex flex-wrap gap-4 text-sm">
           <Link href="/" className="text-nav hover:underline">
