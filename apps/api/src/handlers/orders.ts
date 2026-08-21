@@ -13,7 +13,6 @@ import {
   ORDER_STATUS,
   ORDER_STATUS_TRANSITIONS,
   convertCartItemsToCurrency,
-  convertCartItemsToCurrency,
   cartSubtotal,
   couponEligibleSubtotal,
   buildOrderShipments,
