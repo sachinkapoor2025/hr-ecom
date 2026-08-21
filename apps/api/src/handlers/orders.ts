@@ -26,6 +26,7 @@ import {
   allVendorsHaveTracking,
   anyVendorHasTracking,
   isMultiVendorOrder,
+  STRIPE_PAYMENTS_ENABLED,
   type Order,
   type OrderStatusHistoryEntry,
   type ShippingAddress,
@@ -227,6 +228,12 @@ export async function checkout(event: APIGatewayProxyEventV2) {
 
   const cartCurrency = cart.items[0]?.currency ?? "USD";
   const checkoutCurrency = parsed.data.checkoutCurrency ?? cartCurrency;
+
+  if (parsed.data.paymentMethod === "stripe" && !STRIPE_PAYMENTS_ENABLED) {
+    return badRequest(
+      "Stripe card payments are temporarily unavailable. Please pay with Razorpay."
+    );
+  }
 
   if (parsed.data.paymentMethod === "stripe" && checkoutCurrency !== "USD") {
     return badRequest("Stripe checkout requires USD. Switch currency to USD or pay with Razorpay.");
@@ -979,7 +986,10 @@ export async function retryOrderPayment(event: APIGatewayProxyEventV2) {
   }
 
   const body = JSON.parse(event.body ?? "{}");
-  const paymentMethod = (body.paymentMethod as string | undefined) ?? order.paymentProvider ?? "stripe";
+  let paymentMethod = (body.paymentMethod as string | undefined) ?? order.paymentProvider ?? "razorpay";
+  if (paymentMethod === "stripe" && !STRIPE_PAYMENTS_ENABLED) {
+    paymentMethod = "razorpay";
+  }
 
   if (paymentMethod === "stripe" && order.currency !== "USD") {
     return badRequest("Stripe retry requires USD orders");

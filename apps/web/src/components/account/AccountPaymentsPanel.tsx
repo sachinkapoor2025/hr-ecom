@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { AccountProfile, Order } from "@hr-ecom/shared";
+import { STRIPE_PAYMENTS_ENABLED } from "@hr-ecom/shared";
 import { PaymentMethodPicker, type PaymentMethod } from "@/components/PaymentMethodPicker";
 import { updateAccountProfile } from "@/lib/account";
 
@@ -18,7 +19,11 @@ export function AccountPaymentsPanel({
   sessionId: string;
   onRefresh: () => Promise<void>;
 }) {
-  const [method, setMethod] = useState<PaymentMethod>(profile.preferredPaymentMethod ?? "razorpay");
+  const initial =
+    profile.preferredPaymentMethod === "stripe" && !STRIPE_PAYMENTS_ENABLED
+      ? "razorpay"
+      : (profile.preferredPaymentMethod ?? "razorpay");
+  const [method, setMethod] = useState<PaymentMethod>(initial);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");

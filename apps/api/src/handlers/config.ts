@@ -5,6 +5,8 @@ import {
   configKeys,
   defaultPaymentConfig,
   paymentConfigSchema,
+  withStripePaymentsGate,
+  type PaymentConfig,
 } from "@hr-ecom/shared";
 import { docClient, CONFIG_TABLE, now } from "../lib/db";
 import { ok, badRequest, forbidden } from "../lib/response";
@@ -24,8 +26,8 @@ export async function getPaymentConfig(_event: APIGatewayProxyEventV2) {
     })
   );
 
-  const config = result.Item ?? defaultPaymentConfig;
-  return ok({ config });
+  const stored = (result.Item ?? defaultPaymentConfig) as PaymentConfig;
+  return ok({ config: withStripePaymentsGate(stored) });
 }
 
 export async function updatePaymentConfig(event: APIGatewayProxyEventV2) {
