@@ -20,7 +20,7 @@ function reviewCtaButton(label: string, href: string, bg: string): string {
 function isWebsiteReviewCtaLine(line: string, websiteReviewUrl: string): boolean {
   const t = line.trim();
   if (!t) return false;
-  if (/^leave a review:?/i.test(t)) return true;
+  if (/^(👉\s*)?(share your review|leave a review):?/i.test(t)) return true;
   return Boolean(websiteReviewUrl) && t === websiteReviewUrl;
 }
 
@@ -71,14 +71,16 @@ export function buildReviewRequestEmailHtml(input: {
 
   const text = kept.join("\n").replace(/\n{3,}/g, "\n\n").trim();
   const buttons = [
-    reviewCtaButton("Leave a Review", website, "#0f4c81"),
+    reviewCtaButton("Share Your Review", website, "#0f4c81"),
     google ? reviewCtaButton("Review us on Google", google, "#1a73e8") : "",
   ]
     .filter(Boolean)
     .join("");
 
-  return text
+  const body = text
     .split(REVIEW_CTA_MARKER)
     .map((part) => escapeHtml(part).replace(/\n/g, "<br>"))
     .join(buttons);
+
+  return `<div style="font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.65;color:#1e293b;">${body}</div>`;
 }

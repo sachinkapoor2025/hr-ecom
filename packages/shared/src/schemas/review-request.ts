@@ -15,9 +15,44 @@ export const REVIEW_REQUEST_TEMPLATE_VARS = [
 export const DEFAULT_WEBSITE_REVIEW_URL = "https://www.usarakhi.com/reviews";
 
 export const DEFAULT_REVIEW_REQUEST_EMAIL_SUBJECT =
-  "Order {{statusLabel}} — #{{orderNumber}} | UsaRakhi";
+  "Your UsaRakhi order #{{orderNumber}} has been delivered!";
 
-export const DEFAULT_REVIEW_REQUEST_EMAIL_TEXT = `Hi {{name}},
+/** Same wording as the WhatsApp review request — used for the automatic email. */
+export const DEFAULT_REVIEW_REQUEST_EMAIL_TEXT = `Hi {{name}} ❤️
+
+Your UsaRakhi order #{{orderNumber}} has been delivered! 🎁
+
+We hope your brother loved the Rakhi and that our little surprise made your celebration more special. 😊
+
+Could you take just a minute to share your experience with us? ⭐ Your feedback means a lot to us and helps other families shop with confidence.
+
+👉 Share Your Review:
+{{websiteReviewUrl}}
+
+Thank you for choosing UsaRakhi and being a part of our journey! ❤️`;
+
+export const DEFAULT_REVIEW_REQUEST_WHATSAPP = DEFAULT_REVIEW_REQUEST_EMAIL_TEXT;
+
+const LEGACY_REVIEW_EMAIL_SUBJECTS = [
+  "Your UsaRakhi order {{orderNumber}} was {{statusLabel}}",
+  "Order {{statusLabel}} — #{{orderNumber}} | UsaRakhi",
+];
+
+const LEGACY_REVIEW_EMAIL_BODIES = [
+  `Hi {{name}},
+
+Your UsaRakhi order {{orderNumber}} is {{statusLabel}}. Thank you for celebrating with us.
+
+If you have a moment, we would love to hear how the delivery went. Your review helps other families send Rakhi with confidence.
+
+Leave a review: {{websiteReviewUrl}}
+Review us on Google: {{googleReviewUrl}}
+
+This is optional — only share if you would like to.
+
+— Team UsaRakhi
+{{siteUrl}}`,
+  `Hi {{name}},
 
 Your order #{{orderNumber}} has been {{statusLabel}}.
 
@@ -34,14 +69,26 @@ This is optional — only share if you would like to.
 Questions? Reply to this email or WhatsApp us.
 
 — UsaRakhi Team
-{{siteUrl}}`;
+{{siteUrl}}`,
+];
 
-export const DEFAULT_REVIEW_REQUEST_WHATSAPP = `Hi {{name}}! Thank you — your UsaRakhi order {{orderNumber}} is {{statusLabel}}.
+const LEGACY_REVIEW_WHATSAPP = [
+  `Hi {{name}}! Thank you — your UsaRakhi order {{orderNumber}} is {{statusLabel}}.
 
 Leave a review: {{websiteReviewUrl}}
 Review us on Google: {{googleReviewUrl}}
 
-We hope your brother loved his Rakhi.`;
+We hope your brother loved his Rakhi.`,
+];
+
+function normalizeTemplate(value: string): string {
+  return value.replace(/\r\n/g, "\n").trim();
+}
+
+function isLegacyTemplate(value: string, legacy: string[]): boolean {
+  const current = normalizeTemplate(value);
+  return legacy.some((item) => normalizeTemplate(item) === current);
+}
 
 export const reviewRequestSettingsSchema = z.object({
   websiteReviewUrl: z.string().trim().url().max(500).default(DEFAULT_WEBSITE_REVIEW_URL),
@@ -61,6 +108,22 @@ export const reviewRequestSettingsSchema = z.object({
 export type ReviewRequestSettings = z.infer<typeof reviewRequestSettingsSchema>;
 
 export const defaultReviewRequestSettings: ReviewRequestSettings = reviewRequestSettingsSchema.parse({});
+
+/** Upgrade stored/default-era copy to the current review-request wording. */
+export function withCurrentReviewCopy(settings: ReviewRequestSettings): ReviewRequestSettings {
+  return {
+    ...settings,
+    emailSubjectTemplate: isLegacyTemplate(settings.emailSubjectTemplate, LEGACY_REVIEW_EMAIL_SUBJECTS)
+      ? DEFAULT_REVIEW_REQUEST_EMAIL_SUBJECT
+      : settings.emailSubjectTemplate,
+    emailTextTemplate: isLegacyTemplate(settings.emailTextTemplate, LEGACY_REVIEW_EMAIL_BODIES)
+      ? DEFAULT_REVIEW_REQUEST_EMAIL_TEXT
+      : settings.emailTextTemplate,
+    whatsappTemplate: isLegacyTemplate(settings.whatsappTemplate, LEGACY_REVIEW_WHATSAPP)
+      ? DEFAULT_REVIEW_REQUEST_WHATSAPP
+      : settings.whatsappTemplate,
+  };
+}
 
 export type ReviewRequestTemplateVars = {
   name: string;
@@ -125,8 +188,9 @@ export function buildReviewRequestWhatsAppDraft(
   settings: ReviewRequestSettings,
   siteUrl = DEFAULT_REVIEW_SITE_URL
 ): string {
-  const vars = reviewRequestTemplateVars(order, settings, siteUrl);
-  const template = omitEmptyGoogleReviewLines(settings.whatsappTemplate, vars.googleReviewUrl);
+  const resolved = withCurrentReviewCopy(settings);
+  const vars = reviewRequestTemplateVars(order, resolved, siteUrl);
+  const template = omitEmptyGoogleReviewLines(resolved.whatsappTemplate, vars.googleReviewUrl);
   return renderReviewRequestTemplate(template, vars).trim();
 }
 

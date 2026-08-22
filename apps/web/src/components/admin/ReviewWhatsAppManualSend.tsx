@@ -80,7 +80,7 @@ export function ReviewWhatsAppManualSend({
       <label className="block text-xs font-medium text-slate-600 mt-3">
         Message (editable)
         <textarea
-          className="mt-1 w-full border rounded-lg px-3 py-2 min-h-[140px] font-mono text-xs text-slate-800"
+          className="mt-1 w-full border rounded-lg px-3 py-2 min-h-[220px] font-mono text-xs text-slate-800"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           disabled={!ready}

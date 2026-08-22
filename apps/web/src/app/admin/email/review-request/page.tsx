@@ -49,9 +49,10 @@ export default function ReviewRequestSettingsPage() {
         <p className="text-sm text-slate-500 mt-1">
           Sent once when an order first becomes <strong>Delivered</strong> or <strong>Complete</strong>.
           The review email is sent automatically by transactional SMTP (
-          <code>order@usarakhi.com</code>). WhatsApp is <strong>not</strong> sent automatically
-          (Twilio is not used). Admins send WhatsApp from the order page using the customer&apos;s
-          checkout phone and this template. Website reviews are never copied to Google.
+          <code>order@usarakhi.com</code>). Email and WhatsApp share the same friendly review
+          copy (name, order number, and review link). WhatsApp is <strong>not</strong> sent
+          automatically (Twilio is not used). Admins send WhatsApp from the order page using the
+          customer&apos;s checkout phone. Website reviews are never copied to Google.
         </p>
       </div>
 
