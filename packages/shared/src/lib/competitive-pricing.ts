@@ -1,4 +1,5 @@
 import { roundForCurrency, type ShopCurrency } from "../currency";
+import { VENDOR_ORANGE_COUNTY } from "../constants";
 import {
   productUsesFixedStorefrontPrice,
   withFlashComboStorefrontPricing,
@@ -59,8 +60,8 @@ type VendorPriced = Priced & {
 export function withCompetitiveStorefrontPricing<T extends VendorPriced>(product: T): T {
   // Flash combo price is owned by code — never show a stale Dynamo $3.99.
   const priced = withFlashComboStorefrontPricing(product);
-  // Already has intentional list vs sale pricing from the vendor catalog.
-  if (priced.vendorSlug || priced.categorySlug === "rakhi-hampers") return priced;
+  // Vendor-priced products (e.g. Orange County hampers) keep stored sale/list prices.
+  if (priced.vendorSlug === VENDOR_ORANGE_COUNTY) return priced;
   // Flash / fixed-price deals must stay at the exact listed price.
   if (productUsesFixedStorefrontPrice(priced)) {
     return { ...priced, storefrontPricingApplied: true };

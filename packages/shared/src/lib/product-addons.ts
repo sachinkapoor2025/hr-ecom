@@ -1,4 +1,4 @@
-import { ORANGE_COUNTY_CATEGORY_SLUG, VENDOR_ORANGE_COUNTY } from "../constants";
+import { VENDOR_ORANGE_COUNTY } from "../constants";
 import {
   MAX_RAKHI_ADDON_PIECES,
   MINI_RAKHI_ADDONS,
@@ -135,8 +135,6 @@ export function productAllowsAddons(product: {
 }): boolean {
   const v = product.vendorSlug?.trim();
   if (v === VENDOR_ORANGE_COUNTY) return false;
-  if ((product.categorySlug ?? "").trim() === ORANGE_COUNTY_CATEGORY_SLUG) return false;
-  if ((product.additionalCategorySlugs ?? []).includes(ORANGE_COUNTY_CATEGORY_SLUG)) return false;
   if ((product.images ?? []).some((src) => src.includes("/uploads/orange-county/"))) return false;
   return true;
 }

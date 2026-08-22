@@ -91,7 +91,7 @@ export const MINI_RAKHI_ADDONS: readonly MiniRakhiAddon[] = [
     shortName: "Om Single",
     image:
       "https://d301af4ndyn9qx.cloudfront.net/uploads/2026/03/Om-Single-Rakhi-1-e1779466859856.png",
-    standaloneUsd: 6.89,
+    standaloneUsd: 9.89,
   },
 ];
 

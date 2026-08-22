@@ -36,7 +36,6 @@ import {
 import { EstimatedDeliveryNote } from "@/components/EstimatedDeliveryNote";
 import { RakhiWeekendShippingBanner } from "@/components/ExpeditedShippingPicker";
 import { ProductCareAccordions } from "@/components/ProductCareAccordions";
-import { ScheduleDeliveryPicker } from "@/components/ScheduleDeliveryPicker";
 import type { Product, ProductAddonSelection } from "@hr-ecom/shared";
 import { FastSellingBanner } from "@/components/FastSellingBadge";
 import { looksLikeHtml, shortPlainDescription } from "@/lib/html-text";
@@ -344,8 +343,6 @@ export function ProductDetailClient({
               </div>
             </div>
           )}
-
-          <ScheduleDeliveryPicker className="mb-5" />
 
         </div>
       </div>

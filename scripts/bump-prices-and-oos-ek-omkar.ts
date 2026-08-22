@@ -18,7 +18,6 @@ import {
 import {
   FORCE_OUT_OF_STOCK_SLUGS,
   VENDOR_ORANGE_COUNTY,
-  ORANGE_COUNTY_CATEGORY_SLUG,
   productKeys,
 } from "@hr-ecom/shared";
 
@@ -43,10 +42,9 @@ type ProductRow = {
 };
 
 function isOrangeCounty(p: ProductRow): boolean {
-  const vendor = (p.vendorSlug ?? "").trim();
-  if (vendor === VENDOR_ORANGE_COUNTY) return true;
-  if ((p.categorySlug ?? "").trim() === ORANGE_COUNTY_CATEGORY_SLUG) return true;
-  return false;
+  // Price bumps skip vendor Orange County only. Do not use categorySlug —
+  // some UsaRakhi SKUs were mis-tagged as rakhi-hampers (e.g. om-single-rakhi).
+  return (p.vendorSlug ?? "").trim() === VENDOR_ORANGE_COUNTY;
 }
 
 function roundMoney(n: number): number {
