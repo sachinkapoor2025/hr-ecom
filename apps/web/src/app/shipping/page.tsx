@@ -45,7 +45,7 @@ export default function ShippingPage() {
           <RakhiDeliveryBulletList
             items={[
               ...RAKHI_DELIVERY_URGENCY_NOTICE.compactBullets,
-              "At checkout choose 3-day ($19) or 2-day ($39)",
+              "3-day ($19) or 2-day ($39) — confirmed Rakhi-day delivery on Aug 28",
             ]}
             highlightFirst
           />

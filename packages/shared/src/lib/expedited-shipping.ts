@@ -41,7 +41,7 @@ export const CHECKOUT_SHIPPING_OPTIONS: readonly ExpeditedShippingDef[] = [
     packingBusinessDays: 1,
     transitBusinessDays: 5,
     detail:
-      "About 6 business days. Order by Monday — we do our best to deliver on Raksha Bandhan.",
+      "About 6 business days. Order by Monday — ~90% Rakhi-day delivery; we'll try our best.",
   },
   {
     id: "three_day",
@@ -50,7 +50,7 @@ export const CHECKOUT_SHIPPING_OPTIONS: readonly ExpeditedShippingDef[] = [
     priceUsd: EXPEDITED_THREE_DAY_SHIPPING_USD,
     packingBusinessDays: 1,
     transitBusinessDays: 3,
-    detail: "Includes 1 business day for packing, then 3 business days in transit ($19).",
+    detail: "Confirmed Rakhi-day delivery — 1 packing day + 3 transit days ($19).",
   },
   {
     id: "two_day",
@@ -59,7 +59,7 @@ export const CHECKOUT_SHIPPING_OPTIONS: readonly ExpeditedShippingDef[] = [
     priceUsd: EXPEDITED_TWO_DAY_SHIPPING_USD,
     packingBusinessDays: 0,
     transitBusinessDays: 2,
-    detail: "Priority packing and 2 business days in transit ($39).",
+    detail: "Confirmed Rakhi-day delivery — priority pack + 2 transit days ($39).",
   },
 ] as const;
 
@@ -202,18 +202,20 @@ export const RAKHI_DELIVERY_URGENCY_NOTICE = {
   orderByLong: "Monday, August 24",
   festivalShort: "Aug 28",
   body:
-    "Order by Monday, August 24 and we'll do our best to reach your brother on Raksha Bandhan (Friday, August 28). About 9 in 10 orders placed by Monday with 3-day ($19) or 2-day ($39) shipping have arrived on festival day. Ordering this weekend? You're still in time — we prioritize packing as soon as USPS reopens.",
+    "Order by Monday, August 24. Standard shipping gives about a 90% chance of Rakhi-day delivery — we'll try our best for every order. Choose 3-day ($19) or 2-day ($39) at checkout for confirmed delivery on Raksha Bandhan (Friday, August 28). Weekend orders welcome — we prioritize packing Monday morning.",
   compact:
-    "Order by Mon, Aug 24 — ~90% arrive on Rakhi day with 3-day or 2-day at checkout. We'll try our best for every order.",
-  /** Short bullet lines for cart / PDP banners (prices appended in UI). */
+    "Order by Mon, Aug 24 — ~90% Rakhi-day delivery with standard shipping. 3-day or 2-day = confirmed on Aug 28.",
+  /** Short bullet lines for cart / PDP banners (expedited prices appended in UI). */
   compactBullets: [
-    "Order by Mon, Aug 24 for Rakhi-day delivery",
-    "~90% arrive on Rakhi day (Aug 28) with 3-day or 2-day at checkout",
-    "We'll try our best for every order",
+    "Order by Mon, Aug 24 — ~90% Rakhi-day delivery with standard shipping",
+    "3-day or 2-day at checkout — confirmed delivery on Rakhi day (Aug 28)",
+    "We'll try our best for every standard order",
   ],
   weekendNote:
     "Weekend orders welcome — place yours now and we'll prioritize packing Monday morning.",
+  /** Standard shipping only — not expedited. */
   successRateLabel: "~90% on Rakhi day",
+  confirmedExpeditedLabel: "Confirmed Rakhi-day delivery",
 } as const;
 
 /** @deprecated Use RAKHI_DELIVERY_URGENCY_NOTICE — kept for existing imports. */

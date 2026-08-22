@@ -17,19 +17,19 @@ export const deliveryClaims = {
 /** Order-by dates for Raksha Bandhan 2026 — used in llms.txt and shipping page */
 export const rakshaBandhan2026Deadlines = [
   {
-    label: "Best chance for Rakhi day",
+    label: "Standard shipping",
     orderBy: "Monday, August 24, 2026",
-    notes: "~90% arrive on Aug 28 with 3-day or 2-day shipping — we'll try our best for every order",
+    notes: "~90% Rakhi-day (Aug 28) delivery — we'll try our best for every order",
+  },
+  {
+    label: "Confirmed Rakhi day",
+    orderBy: "Through Monday, August 24, 2026",
+    notes: "Choose 3-day ($19) or 2-day ($39) at checkout — confirmed delivery on Aug 28",
   },
   {
     label: "Weekend orders welcome",
     orderBy: "Saturday–Sunday, Aug 22–23",
-    notes: "Place now — we prioritize packing Monday morning for Rakhi-day delivery",
-  },
-  {
-    label: "Last-minute",
-    orderBy: "Tuesday, August 26, 2026",
-    notes: "Choose 2-day ($39) at checkout; contact WhatsApp for urgent metro delivery",
+    notes: "Place now — we prioritize packing Monday morning",
   },
 ] as const;
 

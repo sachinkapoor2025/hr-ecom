@@ -43,7 +43,7 @@ export function RakshaBandhanCountdown({ variant = "banner" }: { variant?: Varia
         )}
         {daysToOrder !== null && daysToOrder > 0 && daysToOrder <= 14 && (
           <span className="block text-xs text-emerald-800 mt-0.5">
-            Order by Mon, Aug 24 · ~90% arrive on Rakhi day with 3-day or 2-day shipping
+            Order by Mon, Aug 24 · ~90% on Rakhi day with standard shipping
           </span>
         )}
       </p>
@@ -64,7 +64,7 @@ export function RakshaBandhanCountdown({ variant = "banner" }: { variant?: Varia
           {daysToOrder !== null && daysToOrder > 0 && daysToOrder <= 21 && (
             <>
               {" "}
-              · Order by Mon, Aug 24 · ~90% on Rakhi day
+              · Order by Mon, Aug 24 · 3-day/2-day confirmed on Rakhi day
             </>
           )}
           {" · "}

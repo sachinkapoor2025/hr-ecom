@@ -44,13 +44,13 @@ export function ExpeditedShippingPicker({
         <RakhiDeliveryBulletList
           items={[
             ...notice.compactBullets,
-            `At checkout choose 3-day (${formatMoney(
+            `3-day (${formatMoney(
               expeditedOptionPriceInCurrency("three_day", currency, usdInrRate),
               currency
             )}) or 2-day (${formatMoney(
               expeditedOptionPriceInCurrency("two_day", currency, usdInrRate),
               currency
-            )})`,
+            )}) — confirmed Rakhi-day delivery`,
           ]}
           highlightFirst
         />
@@ -108,15 +108,15 @@ export function ExpeditedShippingPicker({
                 <span className="mt-1.5 flex flex-wrap items-center gap-2 text-[11px]">
                   {option.id === "standard" ? (
                     <span className="rounded-full bg-emerald-50 text-emerald-800 px-2 py-0.5 font-semibold">
-                      {notice.successRateLabel} if ordered by {notice.orderByShort} · est. {eta}
+                      {notice.successRateLabel} with standard · est. {eta}
                     </span>
                   ) : canConfirm ? (
                     <span className="rounded-full bg-emerald-50 text-emerald-800 px-2 py-0.5 font-semibold">
-                      Best odds for Rakhi day · est. {eta}
+                      {notice.confirmedExpeditedLabel} · est. {eta}
                     </span>
                   ) : (
                     <span className="rounded-full bg-amber-50 text-amber-900 px-2 py-0.5 font-semibold">
-                      Add 2-day for best Rakhi-day odds · est. {eta}
+                      Choose 2-day for {notice.confirmedExpeditedLabel.toLowerCase()} · est. {eta}
                     </span>
                   )}
                 </span>
@@ -143,7 +143,7 @@ export function RakhiWeekendShippingBanner({ className = "" }: { className?: str
       <RakhiDeliveryBulletList
         items={[
           ...notice.compactBullets,
-          `At checkout choose 3-day (${format(three, displayCurrency)}) or 2-day (${format(two, displayCurrency)})`,
+          `3-day (${format(three, displayCurrency)}) or 2-day (${format(two, displayCurrency)}) — confirmed Rakhi-day delivery`,
         ]}
         highlightFirst
       />
