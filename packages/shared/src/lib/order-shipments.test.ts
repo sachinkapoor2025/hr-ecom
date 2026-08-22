@@ -86,4 +86,25 @@ describe("buildOrderShipments", () => {
     ]);
     assert.ok(err);
   });
+
+  it("applies flat expedited passThroughShipping ($19 / $39)", () => {
+    const cart: CartItem[] = [
+      { productSlug: "a", name: "A", price: 50, currency: "USD", quantity: 1 },
+    ];
+    for (const fee of [19, 39] as const) {
+      const built = buildOrderShipments({
+        cartItems: cart,
+        checkoutShipments: [
+          { shippingAddress: addr("One"), items: [{ productSlug: "a", quantity: 1 }] },
+        ],
+        currency: "USD",
+        usdInrRate: 96,
+        passThroughShipping: fee,
+      });
+      assert.ok(!("error" in built));
+      if ("error" in built) return;
+      assert.equal(built.shippingTotal, fee);
+      assert.equal(built.shipments[0].shipping, fee);
+    }
+  });
 });

@@ -20,8 +20,9 @@ import { CouponInput } from "@/components/CouponInput";
 import { StripePaymentForm } from "@/components/StripePaymentForm";
 import { RazorpayQrPanel } from "@/components/RazorpayQrPanel";
 import { EstimatedDeliveryNote } from "@/components/EstimatedDeliveryNote";
-import { ScheduleDeliveryPicker } from "@/components/ScheduleDeliveryPicker";
 import { FreeShippingNotice } from "@/components/FreeShippingNotice";
+import { ExpeditedShippingPicker } from "@/components/ExpeditedShippingPicker";
+import { ScheduleDeliveryPicker } from "@/components/ScheduleDeliveryPicker";
 import { RecipientAddressFields } from "@/components/RecipientAddressFields";
 import { loadWelcomeCoupon } from "@/lib/welcome-coupon";
 import { loadPreferredDeliveryDate } from "@/lib/preferred-delivery";
@@ -48,6 +49,10 @@ import {
   cartHasCouponExcludedItems,
   isFlashComboProduct,
   STRIPE_PAYMENTS_ENABLED,
+  resolveCheckoutShippingCharge,
+  shippingOptionServiceName,
+  expeditedArrivalLabel,
+  type CheckoutShippingOptionId,
   type Order,
   type RateQuote,
   type ShippingAddress,
@@ -125,6 +130,7 @@ function CheckoutPageInner() {
     settingsMode: "free",
     customerCharge: 0,
   });
+  const [shippingOption, setShippingOption] = useState<CheckoutShippingOptionId>("standard");
   const ratesTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isAddressReadyForRates = useCallback((a: ShippingAddress) => {
@@ -655,11 +661,12 @@ function CheckoutPageInner() {
           shipments,
           attribution: getAttributionSnapshotForCheckout(),
           ...(appliedCouponCode ? { couponCode: appliedCouponCode } : {}),
+          shippingOption,
           ...(() => {
             const preferredDeliveryDate = loadPreferredDeliveryDate();
             return preferredDeliveryDate ? { preferredDeliveryDate } : {};
           })(),
-          ...(shippingQuote.selected
+          ...(shippingOption === "standard" && shippingQuote.selected
             ? {
                 shippingServiceCode: shippingQuote.selected.mailClass,
                 shippingRateId: shippingQuote.selected.rateId,
@@ -767,11 +774,19 @@ function CheckoutPageInner() {
       usdInrRate,
     });
   /** Prefer per-delivery threshold for free mode so shipping shows before address rates load. */
-  const shippingCharge = isRetry
+  const standardShippingCharge = isRetry
     ? retryOrder!.shipping
     : shippingQuote.settingsMode === "pass_through"
       ? shippingQuote.customerCharge
       : multiShippingQuote.totalCharge;
+  const shippingCharge = isRetry
+    ? retryOrder!.shipping
+    : resolveCheckoutShippingCharge({
+        optionId: shippingOption,
+        standardCharge: standardShippingCharge,
+        currency: displayCurrency,
+        usdInrRate,
+      });
   const orderTotal = isRetry
     ? retryOrder!.total
     : Math.max(0, displaySubtotal - discount + shippingCharge);
@@ -788,6 +803,9 @@ function CheckoutPageInner() {
   const shippingDetailLine = isRetry
     ? null
     : (() => {
+        if (shippingOption !== "standard") {
+          return `${shippingOptionServiceName(shippingOption)} · est. ${expeditedArrivalLabel(shippingOption)}`;
+        }
         const selected = shippingQuote.selected;
         const serviceName = selected?.serviceName ?? "Standard shipping";
         const deliveryHint = selected?.estimatedDeliveryDate
@@ -822,7 +840,18 @@ function CheckoutPageInner() {
             Retrying payment for order <span className="font-mono">{retryOrder!.orderId.slice(0, 8)}…</span>
           </p>
         )}
-        <EstimatedDeliveryNote variant="banner" prefix="Estimated delivery:" className="mb-6" />
+        <EstimatedDeliveryNote variant="banner" prefix="Estimated delivery:" className="mb-4" />
+        {!isRetry && shippingQuote.settingsMode !== "pass_through" ? (
+          <ExpeditedShippingPicker
+            value={shippingOption}
+            onChange={setShippingOption}
+            standardCharge={standardShippingCharge}
+            formatMoney={format}
+            currency={displayCurrency}
+            usdInrRate={usdInrRate}
+            className="mb-6"
+          />
+        ) : null}
         {!isRetry && <ScheduleDeliveryPicker className="mb-6" />}
 
         <form
@@ -992,7 +1021,7 @@ function CheckoutPageInner() {
                     : "FREE"}
                 </span>
               </div>
-              {!isRetry && shippingQuote.settingsMode !== "pass_through" && (
+              {!isRetry && shippingQuote.settingsMode !== "pass_through" && shippingOption === "standard" && (
                 <>
                   {showMixedVendorShippingException ? (
                     <FreeShippingNotice
@@ -1021,6 +1050,11 @@ function CheckoutPageInner() {
                   )}
                 </>
               )}
+              {!isRetry && shippingOption !== "standard" ? (
+                <p className="text-[11px] text-slate-500 leading-snug">
+                  Expedited fee replaces standard cart shipping rates for this order.
+                </p>
+              ) : null}
               <div className="flex justify-between gap-4 pt-2 border-t border-slate-200">
                 <span className="font-bold text-slate-900">Total</span>
                 <span className="font-bold text-nav text-base">

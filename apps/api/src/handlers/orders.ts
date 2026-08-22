@@ -27,6 +27,10 @@ import {
   anyVendorHasTracking,
   isMultiVendorOrder,
   STRIPE_PAYMENTS_ENABLED,
+  resolveCheckoutShippingCharge,
+  shippingOptionServiceCode,
+  shippingOptionServiceName,
+  type CheckoutShippingOptionId,
   type Order,
   type OrderStatusHistoryEntry,
   type ShippingAddress,
@@ -291,15 +295,38 @@ export async function checkout(event: APIGatewayProxyEventV2) {
     console.warn("Checkout shipping rate lookup:", shippingResult.warning);
   }
 
-  const built = buildOrderShipments({
+  const shippingOption = (parsed.data.shippingOption ?? "standard") as CheckoutShippingOptionId;
+  const standardShippingCharge =
+    shippingSettings.customerShippingMode === "pass_through"
+      ? shippingResult.customerShippingCharge
+      : undefined;
+  // Build once with threshold logic so we know the standard charge when needed.
+  const thresholdBuilt = buildOrderShipments({
     cartItems: orderItems,
     checkoutShipments,
     currency: checkoutCurrency as "USD" | "INR",
     usdInrRate,
-    ...(shippingSettings.customerShippingMode === "pass_through"
-      ? { passThroughShipping: shippingResult.customerShippingCharge }
-      : {}),
+    ...(standardShippingCharge != null ? { passThroughShipping: standardShippingCharge } : {}),
   });
+  if ("error" in thresholdBuilt) return badRequest(thresholdBuilt.error);
+
+  const customerShippingCharge = resolveCheckoutShippingCharge({
+    optionId: shippingOption,
+    standardCharge: thresholdBuilt.shippingTotal,
+    currency: checkoutCurrency as "USD" | "INR",
+    usdInrRate,
+  });
+
+  const built =
+    shippingOption === "standard"
+      ? thresholdBuilt
+      : buildOrderShipments({
+          cartItems: orderItems,
+          checkoutShipments,
+          currency: checkoutCurrency as "USD" | "INR",
+          usdInrRate,
+          passThroughShipping: customerShippingCharge,
+        });
   if ("error" in built) return badRequest(built.error);
 
   const shipping = built.shippingTotal;
@@ -388,15 +415,23 @@ export async function checkout(event: APIGatewayProxyEventV2) {
     statusHistory: [{ status: ORDER_STATUS.PENDING_PAYMENT, at: timestamp }],
     shippingAddress: orderShipments[0]?.shippingAddress ?? parsed.data.shippingAddress,
     shipments: orderShipments,
+    shippingOption,
     ...(preferredDeliveryDate
       ? { estimatedDeliveryAt: preferredDeliveryDateToIso(preferredDeliveryDate) }
       : {}),
-    ...(shippingResult.selected && {
-      shippingServiceCode: shippingResult.selected.mailClass,
-      shippingServiceName: shippingResult.selected.serviceName,
-      shippingRateId: shippingResult.selected.rateId,
-      estimatedLabelCost: shippingResult.estimatedLabelCost,
-    }),
+    ...(shippingOption !== "standard"
+      ? {
+          shippingServiceCode: shippingOptionServiceCode(shippingOption),
+          shippingServiceName: shippingOptionServiceName(shippingOption),
+        }
+      : shippingResult.selected
+        ? {
+            shippingServiceCode: shippingResult.selected.mailClass,
+            shippingServiceName: shippingResult.selected.serviceName,
+            shippingRateId: shippingResult.selected.rateId,
+            estimatedLabelCost: shippingResult.estimatedLabelCost,
+          }
+        : {}),
     ...(shippingResult.labelStatus && { labelStatus: shippingResult.labelStatus }),
     ...(shippingResult.warning &&
       !shippingResult.selected && {

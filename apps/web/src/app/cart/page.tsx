@@ -15,6 +15,7 @@ import { TrustBadges } from "@/components/TrustBadges";
 import { resolveImageUrl } from "@/lib/images";
 import { EstimatedDeliveryNote } from "@/components/EstimatedDeliveryNote";
 import { FreeShippingNotice } from "@/components/FreeShippingNotice";
+import { RakhiWeekendShippingBanner } from "@/components/ExpeditedShippingPicker";
 import { cartLineUnitTotal, type CartItem } from "@hr-ecom/shared";
 import type { DisplayCurrency } from "@/lib/currency-context";
 
@@ -276,7 +277,8 @@ export default function CartPage() {
 
             <TrustBadges variant="compact" className="mb-4" />
 
-            <EstimatedDeliveryNote variant="banner" prefix="Order today →" className="mb-5" />
+            <EstimatedDeliveryNote variant="banner" prefix="Order today →" className="mb-3" />
+            <RakhiWeekendShippingBanner className="mb-5" />
 
             <Link
               href="/checkout"

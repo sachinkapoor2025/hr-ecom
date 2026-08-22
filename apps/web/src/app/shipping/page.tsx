@@ -38,6 +38,22 @@ export default function ShippingPage() {
             <strong>Shipping:</strong> {deliveryClaims.shipping}
           </li>
         </ul>
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-slate-800">
+          <p className="font-bold text-primary">Weekend note — choose delivery carefully</p>
+          <p className="mt-1.5 leading-relaxed">
+            USPS offices are closed on weekends, so <strong>standard shipping cannot confirm</strong> delivery on
+            or before Raksha Bandhan. For a better chance of on-time arrival, choose at checkout:
+          </p>
+          <ul className="mt-2 list-disc list-inside space-y-1">
+            <li>
+              <strong>3-day delivery — $19</strong> (includes 1 business day for packing, then 3 business days in
+              transit)
+            </li>
+            <li>
+              <strong>2-day delivery — $39</strong> (priority packing, 2 business days in transit)
+            </li>
+          </ul>
+        </div>
         <h2 className="text-xl font-bold text-primary">Shipping rates</h2>
         <ul className="list-disc list-inside space-y-2">
           <li>
