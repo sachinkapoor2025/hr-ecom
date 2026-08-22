@@ -33,8 +33,7 @@ import {
   FLASH_COMBO_SHIPPING_USD,
   productAllowsAddons,
 } from "@hr-ecom/shared";
-import { EstimatedDeliveryNote } from "@/components/EstimatedDeliveryNote";
-import { RakhiWeekendShippingBanner } from "@/components/ExpeditedShippingPicker";
+import { RakhiDeliverySummary } from "@/components/RakhiDeliverySummary";
 import { ProductCareAccordions } from "@/components/ProductCareAccordions";
 import type { Product, ProductAddonSelection } from "@hr-ecom/shared";
 import { FastSellingBanner } from "@/components/FastSellingBadge";
@@ -248,8 +247,7 @@ export function ProductDetailClient({
             </p>
           )}
 
-          <EstimatedDeliveryNote variant="banner" prefix="Estimated delivery:" className="mb-3" />
-          <RakhiWeekendShippingBanner className="mb-4" />
+          <RakhiDeliverySummary datePrefix="Estimated delivery:" className="mb-4" />
 
           <TrustBadges variant="compact" className="mb-5" />
 

@@ -19,7 +19,7 @@ import { TrustBadges } from "@/components/TrustBadges";
 import { CouponInput } from "@/components/CouponInput";
 import { StripePaymentForm } from "@/components/StripePaymentForm";
 import { RazorpayQrPanel } from "@/components/RazorpayQrPanel";
-import { EstimatedDeliveryNote } from "@/components/EstimatedDeliveryNote";
+import { RakhiDeliverySummary } from "@/components/RakhiDeliverySummary";
 import { FreeShippingNotice } from "@/components/FreeShippingNotice";
 import { ExpeditedShippingPicker } from "@/components/ExpeditedShippingPicker";
 import { RecipientAddressFields } from "@/components/RecipientAddressFields";
@@ -200,9 +200,7 @@ function CheckoutPageInner() {
   ]);
 
   useEffect(() => {
-    if (displayCurrency === "INR") setPaymentMethod("razorpay");
-    else if (displayCurrency === "USD" && STRIPE_PAYMENTS_ENABLED) setPaymentMethod("stripe");
-    else setPaymentMethod("razorpay");
+    setPaymentMethod("razorpay");
     setStripeCheckout(null);
     setRazorpayPayment(null);
   }, [displayCurrency]);
@@ -313,9 +311,16 @@ function CheckoutPageInner() {
           const account = await fetchAccount(token, sessionId);
           if (account.profile.preferredPaymentMethod) {
             const preferred = account.profile.preferredPaymentMethod;
-            setPaymentMethod(
-              preferred === "stripe" && !STRIPE_PAYMENTS_ENABLED ? "razorpay" : preferred
-            );
+            if (preferred === "razorpay") setPaymentMethod("razorpay");
+            else if (
+              preferred === "stripe" &&
+              STRIPE_PAYMENTS_ENABLED &&
+              displayCurrency === "USD"
+            ) {
+              setPaymentMethod("stripe");
+            } else {
+              setPaymentMethod("razorpay");
+            }
           }
           const defaultAddress =
             account.addresses.find((a) => a.isDefault) ?? account.addresses[0];
@@ -834,7 +839,7 @@ function CheckoutPageInner() {
             Retrying payment for order <span className="font-mono">{retryOrder!.orderId.slice(0, 8)}…</span>
           </p>
         )}
-        <EstimatedDeliveryNote variant="banner" prefix="Estimated delivery:" className="mb-4" />
+        <RakhiDeliverySummary datePrefix="Estimated delivery:" className="mb-4" />
         {!isRetry && shippingQuote.settingsMode !== "pass_through" ? (
           <ExpeditedShippingPicker
             value={shippingOption}
@@ -843,6 +848,7 @@ function CheckoutPageInner() {
             formatMoney={format}
             currency={displayCurrency}
             usdInrRate={usdInrRate}
+            showHeader={false}
             className="mb-6"
           />
         ) : null}

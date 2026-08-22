@@ -27,6 +27,14 @@ function StripeIcon() {
   );
 }
 
+export function paymentMethodsForCheckoutCurrency(
+  checkoutCurrency: "USD" | "INR"
+): PaymentMethod[] {
+  const methods: PaymentMethod[] = ["razorpay"];
+  if (checkoutCurrency === "USD" && STRIPE_PAYMENTS_ENABLED) methods.push("stripe");
+  return methods;
+}
+
 export function PaymentMethodPicker({
   value,
   onChange,
@@ -41,14 +49,26 @@ export function PaymentMethodPicker({
     { id: "stripe", label: "Pay with Stripe", icon: <StripeIcon /> },
   ];
 
-  const options = allOptions.filter((o) => {
-    if (o.id === "stripe" && !STRIPE_PAYMENTS_ENABLED) return false;
-    if (checkoutCurrency === "INR" && o.id === "stripe") return false;
-    return true;
-  });
+  const allowed = new Set(paymentMethodsForCheckoutCurrency(checkoutCurrency));
+  const options = allOptions.filter((o) => allowed.has(o.id));
+
+  if (options.length === 1) {
+    return (
+      <div className="mb-6 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 flex items-center gap-3">
+        {options[0]!.icon}
+        <div>
+          <p className="font-semibold text-slate-900 text-sm">{options[0]!.label}</p>
+          <p className="text-xs text-slate-600">Secure checkout via Razorpay</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mb-6">
+      <p className="text-xs text-slate-600 mb-3">
+        Razorpay is selected by default. You can switch to Stripe if you prefer card checkout.
+      </p>
       {!STRIPE_PAYMENTS_ENABLED ? (
         <p className="text-xs text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 mb-3">
           Stripe card payments are temporarily on hold. Please continue with Razorpay.

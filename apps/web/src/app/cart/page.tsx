@@ -13,9 +13,8 @@ import { PaymentMethodIcons } from "@/components/PaymentMethodIcons";
 import { CheckoutLegalNotice } from "@/components/CheckoutLegalNotice";
 import { TrustBadges } from "@/components/TrustBadges";
 import { resolveImageUrl } from "@/lib/images";
-import { EstimatedDeliveryNote } from "@/components/EstimatedDeliveryNote";
+import { RakhiDeliverySummary } from "@/components/RakhiDeliverySummary";
 import { FreeShippingNotice } from "@/components/FreeShippingNotice";
-import { RakhiWeekendShippingBanner } from "@/components/ExpeditedShippingPicker";
 import { cartLineUnitTotal, type CartItem } from "@hr-ecom/shared";
 import type { DisplayCurrency } from "@/lib/currency-context";
 
@@ -277,8 +276,7 @@ export default function CartPage() {
 
             <TrustBadges variant="compact" className="mb-4" />
 
-            <EstimatedDeliveryNote variant="banner" prefix="Order today →" className="mb-3" />
-            <RakhiWeekendShippingBanner className="mb-5" />
+            <RakhiDeliverySummary className="mb-5" />
 
             <Link
               href="/checkout"
