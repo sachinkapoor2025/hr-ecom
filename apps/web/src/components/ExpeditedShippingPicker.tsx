@@ -5,7 +5,6 @@ import {
   EXPEDITED_THREE_DAY_SHIPPING_USD,
   EXPEDITED_TWO_DAY_SHIPPING_USD,
   RAKHI_DELIVERY_URGENCY_NOTICE,
-  RAKHI_DELIVERY_URGENCY_NOTICE,
   canConfirmDeliveryByRakhi,
   expeditedArrivalLabel,
   expeditedOptionPriceInCurrency,
