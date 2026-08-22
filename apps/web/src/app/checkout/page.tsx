@@ -19,7 +19,7 @@ import { TrustBadges } from "@/components/TrustBadges";
 import { CouponInput } from "@/components/CouponInput";
 import { StripePaymentForm } from "@/components/StripePaymentForm";
 import { RazorpayQrPanel } from "@/components/RazorpayQrPanel";
-import { EstimatedDeliveryNote } from "@/components/EstimatedDeliveryNote";
+import { RakhiDeliverySummary } from "@/components/RakhiDeliverySummary";
 import { FreeShippingNotice } from "@/components/FreeShippingNotice";
 import { ExpeditedShippingPicker } from "@/components/ExpeditedShippingPicker";
 import { RecipientAddressFields } from "@/components/RecipientAddressFields";
@@ -834,7 +834,7 @@ function CheckoutPageInner() {
             Retrying payment for order <span className="font-mono">{retryOrder!.orderId.slice(0, 8)}…</span>
           </p>
         )}
-        <EstimatedDeliveryNote variant="banner" prefix="Estimated delivery:" className="mb-4" />
+        <RakhiDeliverySummary datePrefix="Estimated delivery:" className="mb-4" />
         {!isRetry && shippingQuote.settingsMode !== "pass_through" ? (
           <ExpeditedShippingPicker
             value={shippingOption}
@@ -843,6 +843,7 @@ function CheckoutPageInner() {
             formatMoney={format}
             currency={displayCurrency}
             usdInrRate={usdInrRate}
+            showHeader={false}
             className="mb-6"
           />
         ) : null}

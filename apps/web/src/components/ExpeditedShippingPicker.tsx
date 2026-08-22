@@ -4,13 +4,14 @@ import {
   CHECKOUT_SHIPPING_OPTIONS,
   EXPEDITED_THREE_DAY_SHIPPING_USD,
   EXPEDITED_TWO_DAY_SHIPPING_USD,
-  RAKHI_DELIVERY_URGENCY_NOTICE,
+  RAKHI_DELIVERY_MESSAGING,
   canConfirmDeliveryByRakhi,
   expeditedArrivalLabel,
   expeditedOptionPriceInCurrency,
   type CheckoutShippingOptionId,
 } from "@hr-ecom/shared";
 import { useCurrency, type DisplayCurrency } from "@/lib/currency-context";
+import { RakhiDeliverySummary } from "@/components/RakhiDeliverySummary";
 import { RakhiDeliveryBulletList } from "@/components/RakhiDeliveryBulletList";
 
 type FormatMoney = (amount: number, currency: DisplayCurrency) => string;
@@ -24,6 +25,8 @@ type Props = {
   currency: DisplayCurrency;
   usdInrRate: number;
   className?: string;
+  /** Hide the summary header when RakhiDeliverySummary is shown above. */
+  showHeader?: boolean;
 };
 
 export function ExpeditedShippingPicker({
@@ -34,28 +37,28 @@ export function ExpeditedShippingPicker({
   currency,
   usdInrRate,
   className = "",
+  showHeader = true,
 }: Props) {
-  const notice = RAKHI_DELIVERY_URGENCY_NOTICE;
+  const msg = RAKHI_DELIVERY_MESSAGING;
+  const three = formatMoney(
+    expeditedOptionPriceInCurrency("three_day", currency, usdInrRate),
+    currency
+  );
+  const two = formatMoney(
+    expeditedOptionPriceInCurrency("two_day", currency, usdInrRate),
+    currency
+  );
 
   return (
     <div className={`rounded-xl border border-amber-200 bg-amber-50/60 overflow-hidden ${className}`}>
-      <div className="px-3.5 py-3 border-b border-amber-200/80 bg-white/70">
-        <p className="text-sm font-bold text-primary">{notice.title}</p>
-        <RakhiDeliveryBulletList
-          items={[
-            ...notice.compactBullets,
-            `3-day (${formatMoney(
-              expeditedOptionPriceInCurrency("three_day", currency, usdInrRate),
-              currency
-            )}) or 2-day (${formatMoney(
-              expeditedOptionPriceInCurrency("two_day", currency, usdInrRate),
-              currency
-            )}) — confirmed Rakhi-day delivery`,
-          ]}
-          highlightFirst
-        />
-        <p className="text-[11px] text-emerald-800 mt-2 font-medium">{notice.weekendNote}</p>
-      </div>
+      {showHeader ? (
+        <div className="px-3.5 py-3 border-b border-amber-200/80 bg-white/70 space-y-2">
+          <p className="text-sm font-bold text-primary">{msg.expeditedTitle}</p>
+          <RakhiDeliveryBulletList
+            items={[...msg.expeditedBullets, `At checkout: 3-day (${three}) · 2-day (${two})`]}
+          />
+        </div>
+      ) : null}
 
       <fieldset className="p-3 space-y-2.5">
         <legend className="sr-only">Shipping speed</legend>
@@ -108,15 +111,15 @@ export function ExpeditedShippingPicker({
                 <span className="mt-1.5 flex flex-wrap items-center gap-2 text-[11px]">
                   {option.id === "standard" ? (
                     <span className="rounded-full bg-emerald-50 text-emerald-800 px-2 py-0.5 font-semibold">
-                      {notice.successRateLabel} with standard · est. {eta}
+                      {msg.standardBadge} · est. {eta}
                     </span>
                   ) : canConfirm ? (
                     <span className="rounded-full bg-emerald-50 text-emerald-800 px-2 py-0.5 font-semibold">
-                      {notice.confirmedExpeditedLabel} · est. {eta}
+                      {msg.expeditedBadge} · est. {eta}
                     </span>
                   ) : (
                     <span className="rounded-full bg-amber-50 text-amber-900 px-2 py-0.5 font-semibold">
-                      Choose 2-day for {notice.confirmedExpeditedLabel.toLowerCase()} · est. {eta}
+                      Choose 2-day for {msg.expeditedBadge.toLowerCase()} · est. {eta}
                     </span>
                   )}
                 </span>
@@ -129,28 +132,7 @@ export function ExpeditedShippingPicker({
   );
 }
 
-/** Compact banner for cart / product pages. */
-export function RakhiWeekendShippingBanner({ className = "" }: { className?: string }) {
-  const { format, displayCurrency, usdInrRate } = useCurrency();
-  const three = expeditedOptionPriceInCurrency("three_day", displayCurrency, usdInrRate);
-  const two = expeditedOptionPriceInCurrency("two_day", displayCurrency, usdInrRate);
-  const notice = RAKHI_DELIVERY_URGENCY_NOTICE;
-  return (
-    <div
-      className={`rounded-lg border border-amber-200 bg-amber-50 px-3.5 py-3 text-sm text-slate-800 ${className}`}
-    >
-      <p className="font-bold text-primary text-sm">{notice.title}</p>
-      <RakhiDeliveryBulletList
-        items={[
-          ...notice.compactBullets,
-          `3-day (${format(three, displayCurrency)}) or 2-day (${format(two, displayCurrency)}) — confirmed Rakhi-day delivery`,
-        ]}
-        highlightFirst
-      />
-      <p className="text-[11px] text-emerald-800 mt-2 font-medium">{notice.weekendNote}</p>
-      <p className="sr-only">
-        Reference USD fees: ${EXPEDITED_THREE_DAY_SHIPPING_USD} and ${EXPEDITED_TWO_DAY_SHIPPING_USD}.
-      </p>
-    </div>
-  );
+/** @deprecated Use RakhiDeliverySummary — one block, standard and expedited separated. */
+export function RakhiWeekendShippingBanner(props: { className?: string }) {
+  return <RakhiDeliverySummary {...props} />;
 }

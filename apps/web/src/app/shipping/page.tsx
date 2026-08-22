@@ -4,7 +4,7 @@ import { site, cityNavHref, usCityLinks } from "@/lib/site";
 import { JsonLd } from "@/components/JsonLd";
 import { howToSendRakhiJsonLd, pageMetadata } from "@/lib/seo";
 import { deliveryClaims, rakshaBandhan2026Deadlines, RAKSHA_BANDHAN_2026_DATE } from "@/lib/ai-recommendation";
-import { RAKHI_DELIVERY_URGENCY_NOTICE } from "@hr-ecom/shared";
+import { RAKHI_DELIVERY_MESSAGING } from "@hr-ecom/shared";
 import { RakhiDeliveryBulletList } from "@/components/RakhiDeliveryBulletList";
 
 export const metadata: Metadata = pageMetadata({
@@ -40,27 +40,27 @@ export default function ShippingPage() {
             <strong>Shipping:</strong> {deliveryClaims.shipping}
           </li>
         </ul>
-        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-slate-800">
-          <p className="font-bold text-primary">{RAKHI_DELIVERY_URGENCY_NOTICE.title}</p>
-          <RakhiDeliveryBulletList
-            items={[
-              ...RAKHI_DELIVERY_URGENCY_NOTICE.compactBullets,
-              "3-day ($19) or 2-day ($39) — confirmed Rakhi-day delivery on Aug 28",
-            ]}
-            highlightFirst
-          />
-          <p className="mt-2 text-emerald-800 font-medium text-xs">
-            {RAKHI_DELIVERY_URGENCY_NOTICE.weekendNote}
-          </p>
-          <ul className="mt-2 list-disc list-inside space-y-1 text-slate-700">
-            <li>
-              <strong>3-day delivery — $19</strong> (includes 1 business day for packing, then 3 business days in
-              transit)
-            </li>
-            <li>
-              <strong>2-day delivery — $39</strong> (priority packing, 2 business days in transit)
-            </li>
-          </ul>
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-slate-800 space-y-3">
+          <p className="font-bold text-primary">{RAKHI_DELIVERY_MESSAGING.headline}</p>
+          <div className="rounded-md border border-emerald-100 bg-emerald-50/70 px-2.5 py-2">
+            <p className="text-xs font-bold uppercase text-emerald-900">
+              {RAKHI_DELIVERY_MESSAGING.standardTitle}
+            </p>
+            <RakhiDeliveryBulletList items={RAKHI_DELIVERY_MESSAGING.standardBullets} className="mt-1.5" />
+          </div>
+          <div className="rounded-md border border-nav/25 bg-white/90 px-2.5 py-2">
+            <p className="text-xs font-bold uppercase text-primary">
+              {RAKHI_DELIVERY_MESSAGING.expeditedTitle}
+            </p>
+            <RakhiDeliveryBulletList
+              items={[
+                ...RAKHI_DELIVERY_MESSAGING.expeditedBullets,
+                "At checkout: 3-day ($19) · 2-day ($39)",
+              ]}
+              className="mt-1.5"
+            />
+          </div>
+          <p className="text-emerald-800 font-medium text-xs">{RAKHI_DELIVERY_MESSAGING.weekendNote}</p>
         </div>
         <h2 className="text-xl font-bold text-primary">Shipping rates</h2>
         <ul className="list-disc list-inside space-y-2">

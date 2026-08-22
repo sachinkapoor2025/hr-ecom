@@ -95,15 +95,12 @@ describe("expedited-shipping", () => {
   });
 
   it("uses optimistic Rakhi urgency copy with Monday order-by and ~90% framing", async () => {
-    const { RAKHI_DELIVERY_URGENCY_NOTICE, RAKHI_ORDER_BY_DATE } = await import("./expedited-shipping");
+    const { RAKHI_DELIVERY_MESSAGING, RAKHI_ORDER_BY_DATE } = await import("./expedited-shipping");
     assert.equal(RAKHI_ORDER_BY_DATE, "2026-08-24");
-    assert.match(RAKHI_DELIVERY_URGENCY_NOTICE.title, /Monday/i);
-    assert.match(RAKHI_DELIVERY_URGENCY_NOTICE.body, /90|9 in 10/i);
-    assert.match(RAKHI_DELIVERY_URGENCY_NOTICE.compactBullets[0] ?? "", /standard shipping/i);
-    assert.match(RAKHI_DELIVERY_URGENCY_NOTICE.compactBullets[1] ?? "", /confirmed/i);
-    assert.doesNotMatch(RAKHI_DELIVERY_URGENCY_NOTICE.compactBullets[0] ?? "", /3-day|2-day/i);
-    assert.doesNotMatch(RAKHI_DELIVERY_URGENCY_NOTICE.body, /cannot confirm/i);
-    assert.match(RAKHI_DELIVERY_URGENCY_NOTICE.weekendNote, /weekend/i);
-    assert.ok(RAKHI_DELIVERY_URGENCY_NOTICE.compactBullets.length >= 3);
+    assert.match(RAKHI_DELIVERY_MESSAGING.headline, /Monday/i);
+    assert.match(RAKHI_DELIVERY_MESSAGING.standardBullets[1] ?? "", /90/i);
+    assert.doesNotMatch(RAKHI_DELIVERY_MESSAGING.standardBullets[1] ?? "", /3-day|2-day/i);
+    assert.match(RAKHI_DELIVERY_MESSAGING.expeditedBullets[0] ?? "", /Confirmed/i);
+    assert.match(RAKHI_DELIVERY_MESSAGING.weekendNote, /weekend/i);
   });
 });
