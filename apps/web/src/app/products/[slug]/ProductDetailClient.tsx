@@ -36,7 +36,6 @@ import {
 import { EstimatedDeliveryNote } from "@/components/EstimatedDeliveryNote";
 import { RakhiWeekendShippingBanner } from "@/components/ExpeditedShippingPicker";
 import { ProductCareAccordions } from "@/components/ProductCareAccordions";
-import { ScheduleDeliveryPicker } from "@/components/ScheduleDeliveryPicker";
 import type { Product, ProductAddonSelection } from "@hr-ecom/shared";
 import { FastSellingBanner } from "@/components/FastSellingBadge";
 import { looksLikeHtml, shortPlainDescription } from "@/lib/html-text";
@@ -245,7 +244,7 @@ export function ProductDetailClient({
 
           {lowStock && (
             <p className="text-sm font-semibold text-orange-700 bg-orange-50 border border-orange-100 rounded-md px-3 py-2 mb-3">
-              Only {product.inventory} left in stock — order soon for Raksha Bandhan delivery
+              Only {product.inventory} left in stock — order by Monday for Rakhi-day delivery
             </p>
           )}
 
@@ -344,8 +343,6 @@ export function ProductDetailClient({
               </div>
             </div>
           )}
-
-          <ScheduleDeliveryPicker className="mb-5" />
 
         </div>
       </div>

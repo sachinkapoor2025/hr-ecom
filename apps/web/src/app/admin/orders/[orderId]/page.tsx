@@ -36,6 +36,7 @@ import {
   shippingStatusLabel,
 } from "@/lib/admin-utils";
 import { canDownloadShippingLabel, printShippingLabel } from "@/lib/shipping-label";
+import { ReviewWhatsAppManualSend } from "@/components/admin/ReviewWhatsAppManualSend";
 
 type AdminOrder = Order & {
   adminNotes?: string;
@@ -831,8 +832,9 @@ export default function AdminOrderDetailPage() {
                 </span>
               </div>
               <p className="text-xs text-slate-500 mb-4">
-                Status is recorded only after the email/WhatsApp provider returns success. Failed
-                channels can be retried without sending the successful one again.
+                The review email is sent automatically when the order is marked Delivered or
+                Complete. WhatsApp is not sent automatically — use <strong>Send WhatsApp</strong>{" "}
+                to open the customer&apos;s chat with the review message pre-filled.
               </p>
 
               {(() => {
@@ -882,45 +884,26 @@ export default function AdminOrderDetailPage() {
                         )}
                       </div>
 
-                      <div className="rounded-lg border border-slate-100 p-3">
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="font-medium">WhatsApp Review Request</p>
+                      <ReviewWhatsAppManualSend
+                        order={order}
+                        statusBadge={
                           <span
                             className={`text-xs font-semibold px-2 py-0.5 rounded-full ${reviewStatusBadgeClass(waStatus.status)}`}
                           >
                             {waStatus.label}
                           </span>
+                        }
+                      />
+                      {(waStatus.at || waStatus.error || waStatus.provider) && (
+                        <div className="text-xs text-slate-500 -mt-1 px-1">
+                          {waStatus.at && (
+                            <p>Last automatic attempt: {new Date(waStatus.at).toLocaleString()}</p>
+                          )}
+                          {waStatus.error && waStatus.status !== "sent" && (
+                            <p className="text-slate-500">{waStatus.error}</p>
+                          )}
                         </div>
-                        {waStatus.at && (
-                          <p className="text-xs text-slate-500 mt-1">
-                            {new Date(waStatus.at).toLocaleString()}
-                          </p>
-                        )}
-                        {(waStatus.provider || waStatus.providerStatus) && (
-                          <p className="text-xs text-slate-600 mt-1">
-                            {[waStatus.provider, waStatus.providerStatus].filter(Boolean).join(" · ")}
-                          </p>
-                        )}
-                        {waStatus.messageId && (
-                          <p className="text-xs text-slate-500 mt-0.5 break-all">
-                            Message ID: {waStatus.messageId}
-                          </p>
-                        )}
-                        {waStatus.error && waStatus.status !== "sent" && (
-                          <p className="text-red-600 text-xs mt-1">{waStatus.error}</p>
-                        )}
-                        {canRetryReviewChannel(order, "whatsapp") &&
-                          (waStatus.status === "failed" || waStatus.status === "not_available") && (
-                          <button
-                            type="button"
-                            disabled={retryingReviewChannel !== null}
-                            onClick={() => void retryReviewRequest("whatsapp")}
-                            className="mt-2 text-sm rounded-lg border border-nav text-nav px-3 py-1.5 hover:bg-blue-50 disabled:opacity-50"
-                          >
-                            {retryingReviewChannel === "whatsapp" ? "Sending…" : "Retry WhatsApp"}
-                          </button>
-                        )}
-                      </div>
+                      )}
                     </div>
 
                     <div className="mt-4">

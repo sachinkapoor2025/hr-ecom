@@ -22,10 +22,8 @@ import { RazorpayQrPanel } from "@/components/RazorpayQrPanel";
 import { EstimatedDeliveryNote } from "@/components/EstimatedDeliveryNote";
 import { FreeShippingNotice } from "@/components/FreeShippingNotice";
 import { ExpeditedShippingPicker } from "@/components/ExpeditedShippingPicker";
-import { ScheduleDeliveryPicker } from "@/components/ScheduleDeliveryPicker";
 import { RecipientAddressFields } from "@/components/RecipientAddressFields";
 import { loadWelcomeCoupon } from "@/lib/welcome-coupon";
-import { loadPreferredDeliveryDate } from "@/lib/preferred-delivery";
 import {
   emptyShippingAddress,
   loadSavedAddresses,
@@ -662,10 +660,6 @@ function CheckoutPageInner() {
           attribution: getAttributionSnapshotForCheckout(),
           ...(appliedCouponCode ? { couponCode: appliedCouponCode } : {}),
           shippingOption,
-          ...(() => {
-            const preferredDeliveryDate = loadPreferredDeliveryDate();
-            return preferredDeliveryDate ? { preferredDeliveryDate } : {};
-          })(),
           ...(shippingOption === "standard" && shippingQuote.selected
             ? {
                 shippingServiceCode: shippingQuote.selected.mailClass,
@@ -852,7 +846,6 @@ function CheckoutPageInner() {
             className="mb-6"
           />
         ) : null}
-        {!isRetry && <ScheduleDeliveryPicker className="mb-6" />}
 
         <form
           onSubmit={handleCheckout}

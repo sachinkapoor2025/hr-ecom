@@ -22,7 +22,7 @@ export const RAKSHA_BANDHAN_ORDER_BY_20_BANNER_PATH =
 export const RAKSHA_BANDHAN_ORDER_BY_20_BANNER_URL = `${SITE_ORIGIN}${RAKSHA_BANDHAN_ORDER_BY_20_BANNER_PATH}`;
 
 export const RAKSHA_BANDHAN_ORDER_BY_20_BANNER_ALT =
-  "Raksha Bandhan is just around the corner — Order by 20 August for Guaranteed Delivery Before Rakhi | UsaRakhi" as const;
+  "Raksha Bandhan Aug 28 — Standard ~90% Rakhi-day · 3-day/2-day confirmed | UsaRakhi" as const;
 
 /**
  * First homepage banner image for marketing emails.

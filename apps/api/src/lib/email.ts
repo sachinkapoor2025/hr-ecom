@@ -13,6 +13,7 @@ import {
   reviewRequestStillNeeded,
   renderReviewRequestTemplate,
   omitEmptyGoogleReviewLines,
+  withCurrentReviewCopy,
   buildReviewRequestEmailHtml,
   type ReviewRequestSettings,
   type ReviewRequestTemplateVars,
@@ -1146,11 +1147,12 @@ export async function sendReviewRequestEmail(
     return { ok: false, skipped: true, error: "No customer email" };
   }
 
-  const subjectTemplate = omitEmptyGoogleReviewLines(settings.emailSubjectTemplate, vars.googleReviewUrl);
-  const textTemplate = omitEmptyGoogleReviewLines(settings.emailTextTemplate, vars.googleReviewUrl);
+  const resolved = withCurrentReviewCopy(settings);
+  const subjectTemplate = omitEmptyGoogleReviewLines(resolved.emailSubjectTemplate, vars.googleReviewUrl);
+  const textTemplate = omitEmptyGoogleReviewLines(resolved.emailTextTemplate, vars.googleReviewUrl);
   const subject =
     renderReviewRequestTemplate(subjectTemplate, vars).trim() ||
-    `Order ${vars.statusLabel} — #${vars.orderNumber} | ${SITE_NAME}`;
+    `Your ${SITE_NAME} order #${vars.orderNumber} has been delivered!`;
   const text = renderReviewRequestTemplate(textTemplate, vars).trim();
   const html = buildReviewRequestEmailHtml({
     bodyText: text,

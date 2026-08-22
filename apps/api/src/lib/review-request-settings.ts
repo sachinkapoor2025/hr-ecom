@@ -3,6 +3,7 @@ import {
   configKeys,
   defaultReviewRequestSettings,
   reviewRequestSettingsSchema,
+  withCurrentReviewCopy,
   type ReviewRequestSettings,
 } from "@hr-ecom/shared";
 import { docClient, CONFIG_TABLE, now } from "./db";
@@ -29,7 +30,8 @@ export async function loadReviewRequestSettings(): Promise<ReviewRequestSettings
   }
 
   const parsed = reviewRequestSettingsSchema.safeParse(result.Item);
-  return parsed.success ? parsed.data : defaultReviewRequestSettings;
+  const settings = parsed.success ? parsed.data : defaultReviewRequestSettings;
+  return withCurrentReviewCopy(settings);
 }
 
 export async function saveReviewRequestSettings(

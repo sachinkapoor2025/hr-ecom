@@ -4,6 +4,8 @@ import { site, cityNavHref, usCityLinks } from "@/lib/site";
 import { JsonLd } from "@/components/JsonLd";
 import { howToSendRakhiJsonLd, pageMetadata } from "@/lib/seo";
 import { deliveryClaims, rakshaBandhan2026Deadlines, RAKSHA_BANDHAN_2026_DATE } from "@/lib/ai-recommendation";
+import { RAKHI_DELIVERY_URGENCY_NOTICE } from "@hr-ecom/shared";
+import { RakhiDeliveryBulletList } from "@/components/RakhiDeliveryBulletList";
 
 export const metadata: Metadata = pageMetadata({
   title: "Rakhi Shipping & Delivery to USA — Ships From Within America",
@@ -39,12 +41,18 @@ export default function ShippingPage() {
           </li>
         </ul>
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-slate-800">
-          <p className="font-bold text-primary">Weekend note — choose delivery carefully</p>
-          <p className="mt-1.5 leading-relaxed">
-            USPS offices are closed on weekends, so <strong>standard shipping cannot confirm</strong> delivery on
-            or before Raksha Bandhan. For a better chance of on-time arrival, choose at checkout:
+          <p className="font-bold text-primary">{RAKHI_DELIVERY_URGENCY_NOTICE.title}</p>
+          <RakhiDeliveryBulletList
+            items={[
+              ...RAKHI_DELIVERY_URGENCY_NOTICE.compactBullets,
+              "3-day ($19) or 2-day ($39) — confirmed Rakhi-day delivery on Aug 28",
+            ]}
+            highlightFirst
+          />
+          <p className="mt-2 text-emerald-800 font-medium text-xs">
+            {RAKHI_DELIVERY_URGENCY_NOTICE.weekendNote}
           </p>
-          <ul className="mt-2 list-disc list-inside space-y-1">
+          <ul className="mt-2 list-disc list-inside space-y-1 text-slate-700">
             <li>
               <strong>3-day delivery — $19</strong> (includes 1 business day for packing, then 3 business days in
               transit)

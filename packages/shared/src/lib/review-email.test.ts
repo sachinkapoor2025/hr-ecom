@@ -19,8 +19,11 @@ import {
 import {
   DEFAULT_REVIEW_REQUEST_EMAIL_SUBJECT,
   DEFAULT_REVIEW_REQUEST_EMAIL_TEXT,
+  DEFAULT_REVIEW_REQUEST_WHATSAPP,
   omitEmptyGoogleReviewLines,
   renderReviewRequestTemplate,
+  withCurrentReviewCopy,
+  defaultReviewRequestSettings,
 } from "../schemas/review-request";
 import { buildReviewRequestEmailHtml } from "./review-request-email-html";
 
@@ -40,6 +43,15 @@ describe("review-request eligibility", () => {
   it("needs a request the first time an order is delivered", () => {
     assert.equal(reviewRequestStillNeeded(base), true);
     assert.equal(isReviewEmailDue(base, new Date("2026-08-20T12:01:00.000Z")), true);
+  });
+
+  it("does not auto-send again after the review email succeeded (WhatsApp is manual)", () => {
+    const emailSent = {
+      ...base,
+      reviewEmailSentAt: "2026-08-20T12:02:00.000Z",
+    };
+    assert.equal(reviewRequestStillNeeded(emailSent), false);
+    assert.equal(isReviewEmailDue(emailSent, new Date("2026-08-21T12:00:00.000Z")), false);
   });
 
   it("does not send again after email + WhatsApp succeeded", () => {
@@ -80,7 +92,7 @@ describe("review-request eligibility", () => {
     assert.equal(isReviewEmailChannelDone(missingEmail), true);
     assert.equal(getReviewEmailChannelStatus(missingEmail).status, "not_available");
     assert.equal(getReviewEmailChannelStatus(missingEmail).label, REVIEW_EMAIL_UNAVAILABLE_LABEL);
-    assert.equal(reviewRequestStillNeeded(missingEmail), true);
+    assert.equal(reviewRequestStillNeeded(missingEmail), false);
   });
 
   it("is not due before the due stamp", () => {
@@ -130,16 +142,51 @@ describe("review-request templates", () => {
     assert.equal(text.includes("Leave a review"), true);
   });
 
-  it("uses the same subject/footer pattern as transactional order emails", () => {
+  it("uses the shared friendly review-request wording for email and WhatsApp", () => {
     const subject = renderReviewRequestTemplate(DEFAULT_REVIEW_REQUEST_EMAIL_SUBJECT, vars);
-    assert.equal(subject, "Order Delivered — #US10360 | UsaRakhi");
+    assert.equal(subject, "Your UsaRakhi order #US10360 has been delivered!");
     const body = renderReviewRequestTemplate(DEFAULT_REVIEW_REQUEST_EMAIL_TEXT, vars);
-    assert.match(body, /^Hi Priya,/);
-    assert.match(body, /Your order #US10360 has been Delivered/);
-    assert.match(body, /Leave a Review:\nhttps:\/\/www\.usarakhi\.com\/reviews/);
-    assert.match(body, /Review us on Google:\nhttps:\/\/search\.google\.com/);
-    assert.match(body, /Questions\? Reply to this email or WhatsApp us\./);
-    assert.match(body, /— UsaRakhi Team\nhttps:\/\/www\.usarakhi\.com/);
+    assert.match(body, /^Hi Priya ❤️/);
+    assert.match(body, /Your UsaRakhi order #US10360 has been delivered! 🎁/);
+    assert.match(body, /We hope your brother loved the Rakhi/);
+    assert.match(body, /share your experience/);
+    assert.match(body, /👉 Share Your Review:\nhttps:\/\/www\.usarakhi\.com\/reviews/);
+    assert.match(body, /Thank you for choosing UsaRakhi/);
+    assert.equal(body.includes("Google"), false);
+  });
+
+  it("upgrades stored legacy templates to the current shared copy", () => {
+    const upgraded = withCurrentReviewCopy({
+      ...defaultReviewRequestSettings,
+      emailSubjectTemplate: "Order {{statusLabel}} — #{{orderNumber}} | UsaRakhi",
+      emailTextTemplate: `Hi {{name}},
+
+Your order #{{orderNumber}} has been {{statusLabel}}.
+
+We hope your brother loves his Rakhi! If you have a moment, we would love to hear how the delivery went. Your review helps other families send Rakhi with confidence.
+
+Leave a Review:
+{{websiteReviewUrl}}
+
+Review us on Google:
+{{googleReviewUrl}}
+
+This is optional — only share if you would like to.
+
+Questions? Reply to this email or WhatsApp us.
+
+— UsaRakhi Team
+{{siteUrl}}`,
+      whatsappTemplate: `Hi {{name}}! Thank you — your UsaRakhi order {{orderNumber}} is {{statusLabel}}.
+
+Leave a review: {{websiteReviewUrl}}
+Review us on Google: {{googleReviewUrl}}
+
+We hope your brother loved his Rakhi.`,
+    });
+    assert.equal(upgraded.emailSubjectTemplate, DEFAULT_REVIEW_REQUEST_EMAIL_SUBJECT);
+    assert.equal(upgraded.emailTextTemplate, DEFAULT_REVIEW_REQUEST_EMAIL_TEXT);
+    assert.equal(upgraded.whatsappTemplate, DEFAULT_REVIEW_REQUEST_WHATSAPP);
   });
 
   it("drops Google CTA from the default template when no Google URL is set", () => {
@@ -148,33 +195,27 @@ describe("review-request templates", () => {
     assert.equal(text.includes("{{websiteReviewUrl}}"), true);
   });
 
-  it("renders review HTML like other transactional emails (br + buttons, no card)", () => {
+  it("renders review HTML with the Share Your Review button", () => {
     const body = renderReviewRequestTemplate(DEFAULT_REVIEW_REQUEST_EMAIL_TEXT, vars);
     const html = buildReviewRequestEmailHtml({
       bodyText: body,
       websiteReviewUrl: vars.websiteReviewUrl,
-      googleReviewUrl: vars.googleReviewUrl,
     });
     assert.equal(html.includes("<!DOCTYPE"), false);
-    assert.equal(html.includes("border-radius:12px"), false);
-    assert.match(html, /^Hi Priya,<br>/);
-    assert.match(html, /Your order #US10360 has been Delivered/);
-    assert.match(html, /Questions\? Reply to this email or WhatsApp us\./);
-    assert.match(html, /— UsaRakhi Team<br>/);
-    assert.match(html, /Leave a Review/);
-    assert.match(html, /Review us on Google/);
+    assert.match(html, /Hi Priya ❤️/);
+    assert.match(html, /Your UsaRakhi order #US10360 has been delivered!/);
+    assert.match(html, /Share Your Review/);
     assert.equal(html.includes(vars.websiteReviewUrl), true);
-    assert.equal(html.includes(vars.googleReviewUrl), true);
-    assert.equal(html.includes("Leave a Review:\n"), false);
+    assert.equal(html.includes("Review us on Google"), false);
   });
 
   it("omits the Google button when no Google URL is provided", () => {
     const html = buildReviewRequestEmailHtml({
-      bodyText: "Hi Priya,\n\nThanks\n\nLeave a Review:\nhttps://www.usarakhi.com/reviews\n\n— UsaRakhi Team",
+      bodyText: "Hi Priya,\n\nThanks\n\nShare Your Review:\nhttps://www.usarakhi.com/reviews\n\nThank you",
       websiteReviewUrl: "https://www.usarakhi.com/reviews",
     });
     assert.equal(html.includes("Review us on Google"), false);
-    assert.equal(html.includes("Leave a Review"), true);
+    assert.equal(html.includes("Share Your Review"), true);
   });
 });
 
@@ -218,7 +259,7 @@ describe("review-request admin display status", () => {
     assert.equal(getReviewRequestOverallLabel(order), "Review Request: Partially Sent");
     assert.equal(canRetryReviewChannel(order, "email"), false);
     assert.equal(canRetryReviewChannel(order, "whatsapp"), true);
-    assert.equal(reviewRequestStillNeeded(order), true);
+    assert.equal(reviewRequestStillNeeded(order), false);
   });
 
   it("shows Partially Sent when email failed and WhatsApp succeeded", () => {
@@ -311,7 +352,7 @@ describe("review-request admin display status", () => {
     assert.equal(getReviewWhatsAppChannelStatus(order).status, "failed");
     assert.notEqual(getReviewWhatsAppChannelStatus(order).status, "sent");
     assert.equal(canRetryReviewChannel(order, "whatsapp"), true);
-    assert.equal(reviewRequestStillNeeded(order), true);
+    assert.equal(reviewRequestStillNeeded(order), false);
   });
 
   it("allows retrying only the failed channel after a partial send", () => {
@@ -322,7 +363,7 @@ describe("review-request admin display status", () => {
       reviewWhatsAppLastError: "WhatsApp send failed",
       reviewWhatsAppLastAttemptAt: "2026-08-20T12:02:01.000Z",
     };
-    assert.equal(reviewRequestStillNeeded(order), true);
+    assert.equal(reviewRequestStillNeeded(order), false);
     assert.equal(canRetryReviewChannel(order, "email"), false);
     assert.equal(canRetryReviewChannel(order, "whatsapp"), true);
   });

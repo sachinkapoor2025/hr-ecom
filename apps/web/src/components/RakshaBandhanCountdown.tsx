@@ -6,8 +6,8 @@ import { usePathname } from "next/navigation";
 import { StayUpdatedPrompt } from "@/components/StayUpdatedPrompt";
 
 const FESTIVAL_DATE = new Date("2026-08-28T00:00:00");
-/** Order-by date for guaranteed pre-festival delivery */
-const ORDER_DEADLINE = new Date("2026-08-20T23:59:59");
+/** Order-by Monday for best Rakhi-day delivery */
+const ORDER_DEADLINE = new Date("2026-08-24T23:59:59");
 
 function daysUntil(target: Date): number {
   const now = new Date();
@@ -42,8 +42,8 @@ export function RakshaBandhanCountdown({ variant = "banner" }: { variant?: Varia
           </>
         )}
         {daysToOrder !== null && daysToOrder > 0 && daysToOrder <= 14 && (
-          <span className="block text-xs text-orange-700 mt-0.5">
-            Order within {daysToOrder} days for guaranteed pre-festival USA delivery
+          <span className="block text-xs text-emerald-800 mt-0.5">
+            Order by Mon, Aug 24 · ~90% on Rakhi day with standard shipping
           </span>
         )}
       </p>
@@ -64,7 +64,7 @@ export function RakshaBandhanCountdown({ variant = "banner" }: { variant?: Varia
           {daysToOrder !== null && daysToOrder > 0 && daysToOrder <= 21 && (
             <>
               {" "}
-              · Order by Aug 20 for guaranteed delivery
+              · Order by Mon, Aug 24 · 3-day/2-day confirmed on Rakhi day
             </>
           )}
           {" · "}

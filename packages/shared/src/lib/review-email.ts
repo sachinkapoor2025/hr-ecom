@@ -75,15 +75,15 @@ export function isReviewWhatsAppChannelDone(
   return Boolean(order.reviewWhatsAppSentAt || order.reviewWhatsAppSkippedAt);
 }
 
-/** True when either channel still needs a first successful/unavailable attempt. */
+/** True when the automatic review email still needs a first successful/unavailable attempt. WhatsApp is admin-manual. */
 export function reviewRequestStillNeeded(order: ReviewOrderFields): boolean {
   if (!isDeliveredStatus(order.status)) return false;
-  return !isReviewEmailChannelDone(order) || !isReviewWhatsAppChannelDone(order);
+  return !isReviewEmailChannelDone(order);
 }
 
 /** Resolve when a review email should send (for backfill on older orders). */
 export function resolveReviewEmailDueAt(order: ReviewOrderFields): string | null {
-  if (isReviewEmailChannelDone(order) && isReviewWhatsAppChannelDone(order)) return null;
+  if (isReviewEmailChannelDone(order)) return null;
   if (order.reviewEmailDueAt) return order.reviewEmailDueAt;
   if (order.deliveredAt) return reviewEmailDueAtFrom(order.deliveredAt);
   if (!isDeliveredStatus(order.status)) return null;

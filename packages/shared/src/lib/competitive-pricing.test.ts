@@ -44,15 +44,15 @@ describe("withCompetitiveStorefrontPricing", () => {
     assert.equal(result.compareAtPrice, 53.91);
   });
 
-  it("skips competitive cuts for rakhi-hampers category (catalog fallback)", () => {
+  it("applies competitive cuts when only categorySlug is rakhi-hampers (UsaRakhi mis-tags)", () => {
     const result = withCompetitiveStorefrontPricing({
-      price: 59.9,
-      compareAtPrice: 74.88,
+      price: 9.89,
+      compareAtPrice: 28.3,
       currency: "USD" as const,
       categorySlug: "rakhi-hampers",
     });
-    assert.equal(result.price, 59.9);
-    assert.equal(result.compareAtPrice, 74.88);
+    assert.equal(result.price, 9.1); // 8% under $25
+    assert.equal(result.compareAtPrice, 28.3);
   });
 
   it("lowers price and preserves original as compare-at", () => {
