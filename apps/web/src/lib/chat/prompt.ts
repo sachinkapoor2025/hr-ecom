@@ -53,7 +53,7 @@ Date: August 28, 2026. Order by early August for on-time delivery.
 - Order from anywhere; recipient address must be in the USA
 - Payment: Stripe (USD) and Razorpay (INR)
 - Most single rakhis include complimentary roli & chawal
-- Free shipping on orders above $16.50 ($7.99 from $1–$9.99; $3.99 from $10–$16.50)
+- Free shipping on orders above $19.50 ($7.99 from $1–$9.99; $3.99 from $10–$19.50)
 
 ## Support
 - Email: ${site.supportEmail}

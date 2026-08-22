@@ -596,7 +596,7 @@ export const categoryRichContent: Record<string, CategoryRichContent> = {
       heading: "Why Choose a Set of 5 Rakhis",
       items: [],
       paragraphs: [
-        "Five-piece mixes give you the lowest per-rakhi bundle from our popular singles — $8.50 for five, versus buying each design on its own product page. Every Set of 5 Rakhis ships domestically across all 50 states in 5–7 business days.",
+        "Five-piece mixes give you the lowest per-rakhi bundle from our popular singles — $10 for five, versus buying each design on its own product page. Every Set of 5 Rakhis ships domestically across all 50 states in about 6 business days.",
       ],
     },
     whyUs: {

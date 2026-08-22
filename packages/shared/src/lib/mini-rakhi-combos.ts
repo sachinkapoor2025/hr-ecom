@@ -9,12 +9,15 @@ function usd(amount: number): number {
 export const MAX_RAKHI_ADDON_PIECES = 5;
 
 export const RAKHI_ADDON_BUNDLE_USD = {
-  1: 3.99,
-  2: 5.99,
-  3: 6.99,
-  4: 7.99,
-  5: 8.5,
+  1: 5.49,
+  2: 7.49,
+  3: 8.49,
+  4: 9.49,
+  5: 10,
 } as const;
+
+/** Set-of-N catalog SKUs are $1.50 above the matching add-on mix (= +$3 vs prior set list price). */
+export const MINI_RAKHI_SET_LIST_EXTRA_USD = 1.5;
 
 export type MiniRakhiAddon = {
   slug: string;
@@ -102,7 +105,7 @@ export function getMiniRakhiAddon(slug: string): MiniRakhiAddon | undefined {
   return ADDON_BY_SLUG.get(slug);
 }
 
-/** Total extra-rakhi add-on price for `count` pieces (packs of 5 at $8.50, then remainder). */
+/** Total extra-rakhi add-on price for `count` pieces (packs of 5 at $10, then remainder). */
 export function rakhiAddonBundlePriceUsd(count: number): number {
   if (!Number.isFinite(count) || count <= 0) return 0;
   const n = Math.floor(count);
@@ -234,7 +237,7 @@ function membersFor(def: MiniRakhiComboDef): MiniRakhiAddon[] {
 
 export function buildMiniRakhiComboProduct(def: MiniRakhiComboDef): Product {
   const members = membersFor(def);
-  const price = RAKHI_ADDON_BUNDLE_USD[def.size];
+  const price = usd(RAKHI_ADDON_BUNDLE_USD[def.size] + MINI_RAKHI_SET_LIST_EXTRA_USD);
   const compareAtPrice = usd(members.reduce((sum, m) => sum + m.standaloneUsd, 0));
   const listItems = members.map((m) => `<li>${m.name}</li>`).join("");
   const names = members.map((m) => m.shortName).join(", ");

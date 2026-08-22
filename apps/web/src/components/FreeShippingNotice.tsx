@@ -79,7 +79,7 @@ function feeLabel(
 }
 
 /**
- * Shipping-rate breakup for cart / checkout (v2026-08-18: $7.99 / $3.99 / free above $16.50).
+ * Shipping-rate breakup for cart / checkout (v2026-08-22: $7.99 / $3.99 / free above $19.50).
  * Highlights the shopper's current tier and how much more unlocks the next savings.
  */
 export function FreeShippingNotice({ quote, formatMoney, currency, className = "", footnote }: Props) {

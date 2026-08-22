@@ -19,12 +19,12 @@ describe("product-addons", () => {
   it("lists catalog with expected prices", () => {
     assert.equal(PRODUCT_ADDONS.length, 17);
     assert.equal(getProductAddon("kaju-katli-200g"), undefined);
-    assert.equal(getProductAddon("badam-100g")?.priceUsd, 9);
-    assert.equal(getProductAddon("hershey-2pc")?.priceUsd, 5);
-    assert.equal(getProductAddon("lindt-5pc")?.priceUsd, 9);
+    assert.equal(getProductAddon("badam-100g")?.priceUsd, 10.5);
+    assert.equal(getProductAddon("hershey-2pc")?.priceUsd, 6.5);
+    assert.equal(getProductAddon("lindt-5pc")?.priceUsd, 10.5);
     assert.equal(getProductAddon("lindt-5pc")?.detail, "3 pcs");
     assert.match(getProductAddon("lindt-5pc")?.name ?? "", /Lindor chocolates \(3 pcs\)/);
-    assert.equal(getProductAddon("ferrero-3pc")?.priceUsd, 5);
+    assert.equal(getProductAddon("ferrero-3pc")?.priceUsd, 6.5);
     const rakhiAddons = PRODUCT_ADDONS.filter((a) => a.group === "rakhis");
     assert.equal(rakhiAddons.length, 8);
     assert.ok(rakhiAddons.every((a) => a.priceUsd === RAKHI_ADDON_PRICE_USD));
@@ -93,22 +93,22 @@ describe("product-addons", () => {
   it("prices mixed extra rakhis as a 1–5 bundle", () => {
     const one = resolveProductAddons([{ id: "rakhi-ganesh-single-rakhi", quantity: 1 }]);
     assert.equal(one.ok, true);
-    if (one.ok) assert.equal(sumAddonPrices(one.addons), 3.99);
+    if (one.ok) assert.equal(sumAddonPrices(one.addons), 5.49);
 
     const two = resolveProductAddons([
       { id: "rakhi-ganesh-single-rakhi", quantity: 1 },
       { id: "rakhi-pearl-single-rakhi", quantity: 1 },
     ]);
     assert.equal(two.ok, true);
-    if (two.ok) assert.equal(sumAddonPrices(two.addons), 5.99);
+    if (two.ok) assert.equal(sumAddonPrices(two.addons), 7.49);
 
     const five = resolveProductAddons([{ id: "rakhi-ganesh-single-rakhi", quantity: 5 }]);
     assert.equal(five.ok, true);
-    if (five.ok) assert.equal(sumAddonPrices(five.addons), 8.5);
+    if (five.ok) assert.equal(sumAddonPrices(five.addons), 10);
 
     const six = resolveProductAddons([{ id: "rakhi-ganesh-single-rakhi", quantity: 6 }]);
     assert.equal(six.ok, false);
 
-    assert.equal(selectedAddonsUsdTotal([{ id: "rakhi-om-single-rakhi", quantity: 3 }]), 6.99);
+    assert.equal(selectedAddonsUsdTotal([{ id: "rakhi-om-single-rakhi", quantity: 3 }]), 8.49);
   });
 });

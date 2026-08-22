@@ -30,7 +30,7 @@ describe("quoteFreeShippingThreshold", () => {
     );
   });
 
-  it("charges $3.99 from $10 through $16.50", () => {
+  it("charges $3.99 from $10 through $19.50", () => {
     const atTen = quoteFreeShippingThreshold({
       subtotal: REDUCED_SHIPPING_MIN_SUBTOTAL_USD,
       currency: "USD",
@@ -41,16 +41,16 @@ describe("quoteFreeShippingThreshold", () => {
     assert.equal(atTen.charge, REDUCED_SHIPPING_USD);
     assert.equal(atTen.amountAwayFromReducedShipping, 0);
 
-    const atSixteenFifty = quoteFreeShippingThreshold({
+    const atCutoff = quoteFreeShippingThreshold({
       subtotal: FREE_SHIPPING_ABOVE_USD,
       currency: "USD",
       usdInrRate: 96,
     });
-    assert.equal(atSixteenFifty.qualifiesForFreeShipping, false);
-    assert.equal(atSixteenFifty.charge, REDUCED_SHIPPING_USD);
+    assert.equal(atCutoff.qualifiesForFreeShipping, false);
+    assert.equal(atCutoff.charge, REDUCED_SHIPPING_USD);
   });
 
-  it("is free above $16.50", () => {
+  it("is free above $19.50", () => {
     const quote = quoteFreeShippingThreshold({
       subtotal: FREE_SHIPPING_MIN_SUBTOTAL_USD,
       currency: "USD",
@@ -77,7 +77,7 @@ describe("quoteFreeShippingThreshold", () => {
 describe("quoteShipmentsShipping", () => {
   it("applies tiers per delivery bucket", () => {
     const { totalCharge, perShipment } = quoteShipmentsShipping({
-      shipmentSubtotals: [17, 10, 3],
+      shipmentSubtotals: [20, 10, 3],
       currency: "USD",
       usdInrRate: 96,
     });
@@ -116,7 +116,7 @@ describe("quoteAddressShipmentShipping", () => {
     assert.equal(totalCharge, BELOW_THRESHOLD_SHIPPING_USD * 2);
   });
 
-  it("charges $3.99 when a vendor bucket is between $10 and $16.50", () => {
+  it("charges $3.99 when a vendor bucket is between $10 and $19.50", () => {
     const { totalCharge } = quoteAddressShipmentShipping({
       items: [{ price: 10, quantity: 1 }],
       currency: "USD",

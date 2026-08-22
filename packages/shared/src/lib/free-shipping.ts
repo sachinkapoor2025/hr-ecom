@@ -11,15 +11,15 @@ import { cartLineUnitTotal } from "./product-addons";
 
 /**
  * Exclusive cutoff: shipping is free when the cart is **above** this USD amount.
- * $16.50 still pays the mid-tier fee.
+ * $19.50 still pays the mid-tier fee.
  */
-export const FREE_SHIPPING_ABOVE_USD = 16.5;
+export const FREE_SHIPPING_ABOVE_USD = 19.5;
 
-/** First subtotal that qualifies for free shipping (above $16.50 → $16.51+). */
-export const FREE_SHIPPING_MIN_SUBTOTAL_USD = 16.51;
+/** First subtotal that qualifies for free shipping (above $19.50 → $19.51+). */
+export const FREE_SHIPPING_MIN_SUBTOTAL_USD = 19.51;
 
 /**
- * At or above this (USD) and through $16.50 → reduced $3.99 shipping.
+ * At or above this (USD) and through $19.50 → reduced $3.99 shipping.
  * Below this ($1–$9.99) → $7.99 shipping.
  */
 export const REDUCED_SHIPPING_MIN_SUBTOTAL_USD = 10;
@@ -27,7 +27,7 @@ export const REDUCED_SHIPPING_MIN_SUBTOTAL_USD = 10;
 /** Flat shipping when bucket is under $10. */
 export const BELOW_THRESHOLD_SHIPPING_USD = 7.99;
 
-/** Flat shipping when bucket is $10–$16.50. */
+/** Flat shipping when bucket is $10–$19.50. */
 export const REDUCED_SHIPPING_USD = 3.99;
 
 export type FreeShippingTier = "low" | "mid" | "free";
@@ -80,8 +80,8 @@ function toUsd(
 /**
  * Shipping tiers (per address × vendor bucket, in USD):
  * - $1 to $9.99 → $7.99
- * - $10 to $16.50 → $3.99
- * - above $16.50 → free
+ * - $10 to $19.50 → $3.99
+ * - above $19.50 → free
  * Evaluated in USD, then converted when the shopper currency is INR.
  */
 export function quoteFreeShippingThreshold(input: {
