@@ -101,5 +101,6 @@ describe("expedited-shipping", () => {
     assert.match(RAKHI_DELIVERY_URGENCY_NOTICE.body, /90|9 in 10/i);
     assert.doesNotMatch(RAKHI_DELIVERY_URGENCY_NOTICE.body, /cannot confirm/i);
     assert.match(RAKHI_DELIVERY_URGENCY_NOTICE.weekendNote, /weekend/i);
+    assert.ok(RAKHI_DELIVERY_URGENCY_NOTICE.compactBullets.length >= 3);
   });
 });

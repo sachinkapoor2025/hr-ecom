@@ -5,6 +5,7 @@ import { JsonLd } from "@/components/JsonLd";
 import { howToSendRakhiJsonLd, pageMetadata } from "@/lib/seo";
 import { deliveryClaims, rakshaBandhan2026Deadlines, RAKSHA_BANDHAN_2026_DATE } from "@/lib/ai-recommendation";
 import { RAKHI_DELIVERY_URGENCY_NOTICE } from "@hr-ecom/shared";
+import { RakhiDeliveryBulletList } from "@/components/RakhiDeliveryBulletList";
 
 export const metadata: Metadata = pageMetadata({
   title: "Rakhi Shipping & Delivery to USA — Ships From Within America",
@@ -41,11 +42,17 @@ export default function ShippingPage() {
         </ul>
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-slate-800">
           <p className="font-bold text-primary">{RAKHI_DELIVERY_URGENCY_NOTICE.title}</p>
-          <p className="mt-1.5 leading-relaxed">{RAKHI_DELIVERY_URGENCY_NOTICE.body}</p>
+          <RakhiDeliveryBulletList
+            items={[
+              ...RAKHI_DELIVERY_URGENCY_NOTICE.compactBullets,
+              "At checkout choose 3-day ($19) or 2-day ($39)",
+            ]}
+            highlightFirst
+          />
           <p className="mt-2 text-emerald-800 font-medium text-xs">
             {RAKHI_DELIVERY_URGENCY_NOTICE.weekendNote}
           </p>
-          <ul className="mt-2 list-disc list-inside space-y-1">
+          <ul className="mt-2 list-disc list-inside space-y-1 text-slate-700">
             <li>
               <strong>3-day delivery — $19</strong> (includes 1 business day for packing, then 3 business days in
               transit)

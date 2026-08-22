@@ -11,6 +11,7 @@ import {
   type CheckoutShippingOptionId,
 } from "@hr-ecom/shared";
 import { useCurrency, type DisplayCurrency } from "@/lib/currency-context";
+import { RakhiDeliveryBulletList } from "@/components/RakhiDeliveryBulletList";
 
 type FormatMoney = (amount: number, currency: DisplayCurrency) => string;
 
@@ -40,7 +41,19 @@ export function ExpeditedShippingPicker({
     <div className={`rounded-xl border border-amber-200 bg-amber-50/60 overflow-hidden ${className}`}>
       <div className="px-3.5 py-3 border-b border-amber-200/80 bg-white/70">
         <p className="text-sm font-bold text-primary">{notice.title}</p>
-        <p className="text-xs sm:text-sm text-slate-700 mt-1.5 leading-relaxed">{notice.body}</p>
+        <RakhiDeliveryBulletList
+          items={[
+            ...notice.compactBullets,
+            `At checkout choose 3-day (${formatMoney(
+              expeditedOptionPriceInCurrency("three_day", currency, usdInrRate),
+              currency
+            )}) or 2-day (${formatMoney(
+              expeditedOptionPriceInCurrency("two_day", currency, usdInrRate),
+              currency
+            )})`,
+          ]}
+          highlightFirst
+        />
         <p className="text-[11px] text-emerald-800 mt-2 font-medium">{notice.weekendNote}</p>
       </div>
 
@@ -127,11 +140,14 @@ export function RakhiWeekendShippingBanner({ className = "" }: { className?: str
       className={`rounded-lg border border-amber-200 bg-amber-50 px-3.5 py-3 text-sm text-slate-800 ${className}`}
     >
       <p className="font-bold text-primary text-sm">{notice.title}</p>
-      <p className="text-xs sm:text-sm text-slate-700 mt-1 leading-relaxed">
-        {notice.compact} At checkout choose 3-day ({format(three, displayCurrency)}) or 2-day (
-        {format(two, displayCurrency)}).
-      </p>
-      <p className="text-[11px] text-emerald-800 mt-1.5 font-medium">{notice.weekendNote}</p>
+      <RakhiDeliveryBulletList
+        items={[
+          ...notice.compactBullets,
+          `At checkout choose 3-day (${format(three, displayCurrency)}) or 2-day (${format(two, displayCurrency)})`,
+        ]}
+        highlightFirst
+      />
+      <p className="text-[11px] text-emerald-800 mt-2 font-medium">{notice.weekendNote}</p>
       <p className="sr-only">
         Reference USD fees: ${EXPEDITED_THREE_DAY_SHIPPING_USD} and ${EXPEDITED_TWO_DAY_SHIPPING_USD}.
       </p>

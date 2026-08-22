@@ -205,6 +205,12 @@ export const RAKHI_DELIVERY_URGENCY_NOTICE = {
     "Order by Monday, August 24 and we'll do our best to reach your brother on Raksha Bandhan (Friday, August 28). About 9 in 10 orders placed by Monday with 3-day ($19) or 2-day ($39) shipping have arrived on festival day. Ordering this weekend? You're still in time — we prioritize packing as soon as USPS reopens.",
   compact:
     "Order by Mon, Aug 24 — ~90% arrive on Rakhi day with 3-day or 2-day at checkout. We'll try our best for every order.",
+  /** Short bullet lines for cart / PDP banners (prices appended in UI). */
+  compactBullets: [
+    "Order by Mon, Aug 24 for Rakhi-day delivery",
+    "~90% arrive on Rakhi day (Aug 28) with 3-day or 2-day at checkout",
+    "We'll try our best for every order",
+  ],
   weekendNote:
     "Weekend orders welcome — place yours now and we'll prioritize packing Monday morning.",
   successRateLabel: "~90% on Rakhi day",
