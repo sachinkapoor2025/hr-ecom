@@ -111,9 +111,6 @@ export const HOME_CATEGORY_PRODUCTS: Record<HomeCategorySlug, HomeProductRef[]> 
       name: "Blue Beads Pearl Gold & Crystal Rakhi Set of 4 | Premium Designer Rakhi for Brother",
     },
     {
-      name: "Blue Sapphire Pearl & Ek Omkar Rakhi Set of 4 | Spiritual Designer Rakhi",
-    },
-    {
       name: "Classic Maroon Designer Single Rakhi Set of 5 – Style 17",
       slug: "classic-maroon-designer-single-rakhi-style-17",
     },

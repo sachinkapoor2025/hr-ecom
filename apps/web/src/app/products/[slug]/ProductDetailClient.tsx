@@ -265,6 +265,12 @@ export function ProductDetailClient({
 
           <ProductCareAccordions product={product} />
 
+          {product.inventory <= 0 ? (
+            <p className="mb-4 rounded-md border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-semibold text-slate-800">
+              Sold out — this Rakhi is currently unavailable and cannot be ordered.
+            </p>
+          ) : null}
+
           {inCart ? (
             <div className="mb-3">
               <div className="flex flex-wrap items-center gap-3 mb-3">

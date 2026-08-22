@@ -2,6 +2,7 @@ import { GetCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import {
   LOW_STOCK_THRESHOLD,
   productKeys,
+  isForceOutOfStockSlug,
   type Order,
   type Product,
 } from "@hr-ecom/shared";
@@ -41,6 +42,7 @@ export async function validateOrderInventory(
   const qtyBySlug = aggregateQuantities(items);
 
   for (const [slug, { qty, name }] of qtyBySlug) {
+    if (isForceOutOfStockSlug(slug)) return `${name} is sold out.`;
     const available = await getProductInventory(slug);
     if (available === null) return `${name} is no longer available.`;
     if (available <= 0) return `${name} is sold out.`;

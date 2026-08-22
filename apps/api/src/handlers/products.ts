@@ -13,6 +13,8 @@ import {
   productMatchesRakhiSetCategory,
   mergeMiniRakhiComboProducts,
   resolveProductImagesForUpsert,
+  withForcedOutOfStockInventory,
+  filterInStockStorefrontProducts,
   type Product,
 } from "@hr-ecom/shared";
 import { docClient, PRODUCTS_TABLE, now, slugify } from "../lib/db";
@@ -27,7 +29,7 @@ function forStorefront(product: Product): Product {
   const stripped = stripVendorPrivateFields(
     withCompetitiveStorefrontPricing(withResolvedProductImages(product))
   );
-  return { ...stripped, allowsAddons } as Product;
+  return withForcedOutOfStockInventory({ ...stripped, allowsAddons } as Product);
 }
 
 function isKidsComboProduct(product: Product): boolean {
@@ -155,7 +157,7 @@ export async function listProducts(event: APIGatewayProxyEventV2) {
     items = mergeMiniRakhiComboProducts(await scanAllProducts());
   }
 
-  items = items.filter((p) => p.published !== false && (p.inventory ?? 0) > 0);
+  items = filterInStockStorefrontProducts(items);
   if (search) {
     items = items.filter(
       (p) =>
@@ -198,8 +200,9 @@ export async function getProduct(event: APIGatewayProxyEventV2) {
   }
 
   if (!item) return notFound("Product not found");
-  const product = item;
+  const product = withForcedOutOfStockInventory(item as Product);
   if (product.published === false) return notFound("Product not found");
+  // Sold-out SKUs stay reachable for SEO but cannot be ordered (inventory forced to 0).
   productGetCache.set(slug, { at: nowMs, product });
   return okCached({ product: forStorefront(product) }, 10);
 }
