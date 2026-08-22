@@ -62,6 +62,7 @@ export * from "./lib/order-status";
 export * from "./lib/carrier-tracking";
 export * from "./lib/order-vendors";
 export * from "./lib/product-addons";
+export * from "./lib/sold-out-products";
 export * from "./lib/mini-rakhi-combos";
 export * from "./lib/flash-sale";
 export * from "./db/keys";

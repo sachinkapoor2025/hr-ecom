@@ -15,6 +15,7 @@ import {
   isFlashComboSaleActive,
   flashComboUnitPriceUsd,
   productUsesFixedStorefrontPrice,
+  isForceOutOfStockSlug,
   type Cart,
   type CartItem,
 } from "@hr-ecom/shared";
@@ -143,6 +144,10 @@ export async function addToCart(event: APIGatewayProxyEventV2) {
     tags?: string[];
     categorySlug?: string;
   };
+
+  if (isForceOutOfStockSlug(product.slug) || product.inventory <= 0) {
+    return badRequest("This product is sold out");
+  }
 
   if (product.inventory < parsed.data.quantity) {
     return badRequest("Insufficient inventory");
@@ -286,6 +291,9 @@ export async function updateCartItem(event: APIGatewayProxyEventV2) {
       } | null) ?? product;
   }
   if (!product) return badRequest("Product not found");
+  if (isForceOutOfStockSlug(productSlug) || product.inventory <= 0) {
+    return badRequest("This product is sold out");
+  }
   if (quantity > product.inventory) return badRequest("Insufficient inventory");
 
   item.quantity = quantity;
