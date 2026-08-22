@@ -34,6 +34,7 @@ import {
   productAllowsAddons,
 } from "@hr-ecom/shared";
 import { EstimatedDeliveryNote } from "@/components/EstimatedDeliveryNote";
+import { RakhiWeekendShippingBanner } from "@/components/ExpeditedShippingPicker";
 import { ProductCareAccordions } from "@/components/ProductCareAccordions";
 import { ScheduleDeliveryPicker } from "@/components/ScheduleDeliveryPicker";
 import type { Product, ProductAddonSelection } from "@hr-ecom/shared";
@@ -248,7 +249,8 @@ export function ProductDetailClient({
             </p>
           )}
 
-          <EstimatedDeliveryNote variant="banner" prefix="Estimated delivery:" className="mb-4" />
+          <EstimatedDeliveryNote variant="banner" prefix="Estimated delivery:" className="mb-3" />
+          <RakhiWeekendShippingBanner className="mb-4" />
 
           <TrustBadges variant="compact" className="mb-5" />
 

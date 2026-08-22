@@ -83,6 +83,13 @@ export const checkoutSchema = z.object({
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD")
     .optional(),
+  /**
+   * Checkout shipping speed:
+   * - standard — free-shipping tiers
+   * - three_day — $19 flat (1 pack day + 3 transit)
+   * - two_day — $39 flat (2 transit)
+   */
+  shippingOption: z.enum(["standard", "three_day", "two_day"]).optional(),
   /** Customer override — must match a returned rate. */
   shippingServiceCode: z.string().optional(),
   shippingRateId: z.string().optional(),
@@ -239,6 +246,8 @@ export const orderSchema = z.object({
   shippingServiceCode: z.string().optional(),
   shippingServiceName: z.string().optional(),
   shippingRateId: z.string().optional(),
+  /** Customer-selected checkout speed (standard / three_day / two_day). */
+  shippingOption: z.enum(["standard", "three_day", "two_day"]).optional(),
   estimatedLabelCost: z.number().optional(),
   labelCost: z.number().optional(),
   labelPdfUrl: z.string().optional(),
