@@ -227,7 +227,7 @@ Admin **Product Sales Intelligence** (`/admin/product-sales`) aggregates **paid 
 5. **Webhook is source of truth** (`POST /webhooks/stripe`, `POST /webhooks/razorpay`) → `paid` + inventory
 6. Safety net: hourly cron reconciles Razorpay `pending_payment` orders against Razorpay capture API; admin can **Sync payment from Razorpay** on the order page
 
-**Temporary Stripe hold:** `STRIPE_PAYMENTS_ENABLED` in `packages/shared/src/constants.ts` (currently `false`) hides Stripe on checkout and blocks new Stripe PaymentIntents. Set it to `true` and redeploy to re-enable. Existing Stripe webhooks still work for any in-flight intents.
+**Stripe toggle:** `STRIPE_PAYMENTS_ENABLED` in `packages/shared/src/constants.ts` (currently `true`). Set to `false` to hide Stripe on checkout and block new Stripe PaymentIntents; Razorpay keeps working. Existing Stripe webhooks still work for any in-flight intents.
 
 Requires GitHub secret `RAZORPAY_WEBHOOK_SECRET` and Razorpay Dashboard webhook to `{API}/webhooks/razorpay` for events `payment.captured`, `order.paid`, `qr_code.credited`.
 
