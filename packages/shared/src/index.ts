@@ -40,6 +40,7 @@ export * from "./lib/product-sales-intelligence";
 export * from "./lib/sales-report";
 export * from "./lib/review-email";
 export * from "./lib/review-request-email-html";
+export * from "./lib/whatsapp-link";
 export * from "./lib/pending-payment-reminder";
 export * from "./lib/viewer-geo";
 export * from "./lib/admin-analytics-tz";

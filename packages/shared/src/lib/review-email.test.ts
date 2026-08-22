@@ -42,6 +42,15 @@ describe("review-request eligibility", () => {
     assert.equal(isReviewEmailDue(base, new Date("2026-08-20T12:01:00.000Z")), true);
   });
 
+  it("does not auto-send again after the review email succeeded (WhatsApp is manual)", () => {
+    const emailSent = {
+      ...base,
+      reviewEmailSentAt: "2026-08-20T12:02:00.000Z",
+    };
+    assert.equal(reviewRequestStillNeeded(emailSent), false);
+    assert.equal(isReviewEmailDue(emailSent, new Date("2026-08-21T12:00:00.000Z")), false);
+  });
+
   it("does not send again after email + WhatsApp succeeded", () => {
     const sent = {
       ...base,
@@ -80,7 +89,7 @@ describe("review-request eligibility", () => {
     assert.equal(isReviewEmailChannelDone(missingEmail), true);
     assert.equal(getReviewEmailChannelStatus(missingEmail).status, "not_available");
     assert.equal(getReviewEmailChannelStatus(missingEmail).label, REVIEW_EMAIL_UNAVAILABLE_LABEL);
-    assert.equal(reviewRequestStillNeeded(missingEmail), true);
+    assert.equal(reviewRequestStillNeeded(missingEmail), false);
   });
 
   it("is not due before the due stamp", () => {
@@ -218,7 +227,7 @@ describe("review-request admin display status", () => {
     assert.equal(getReviewRequestOverallLabel(order), "Review Request: Partially Sent");
     assert.equal(canRetryReviewChannel(order, "email"), false);
     assert.equal(canRetryReviewChannel(order, "whatsapp"), true);
-    assert.equal(reviewRequestStillNeeded(order), true);
+    assert.equal(reviewRequestStillNeeded(order), false);
   });
 
   it("shows Partially Sent when email failed and WhatsApp succeeded", () => {
@@ -311,7 +320,7 @@ describe("review-request admin display status", () => {
     assert.equal(getReviewWhatsAppChannelStatus(order).status, "failed");
     assert.notEqual(getReviewWhatsAppChannelStatus(order).status, "sent");
     assert.equal(canRetryReviewChannel(order, "whatsapp"), true);
-    assert.equal(reviewRequestStillNeeded(order), true);
+    assert.equal(reviewRequestStillNeeded(order), false);
   });
 
   it("allows retrying only the failed channel after a partial send", () => {
@@ -322,7 +331,7 @@ describe("review-request admin display status", () => {
       reviewWhatsAppLastError: "WhatsApp send failed",
       reviewWhatsAppLastAttemptAt: "2026-08-20T12:02:01.000Z",
     };
-    assert.equal(reviewRequestStillNeeded(order), true);
+    assert.equal(reviewRequestStillNeeded(order), false);
     assert.equal(canRetryReviewChannel(order, "email"), false);
     assert.equal(canRetryReviewChannel(order, "whatsapp"), true);
   });

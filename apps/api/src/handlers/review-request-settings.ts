@@ -4,7 +4,9 @@ import {
   reviewRequestSettingsSchema,
   reviewRequestStillNeeded,
   getReviewEmailChannelStatus,
-  getReviewWhatsAppChannelStatus,
+  buildReviewRequestWhatsAppDraft,
+  whatsappDigitsForOrderPhone,
+  buildWhatsAppDeepLink,
 } from "@hr-ecom/shared";
 import { ok, badRequest, forbidden, notFound } from "../lib/response";
 import { requireAdmin } from "../lib/auth";
@@ -56,28 +58,38 @@ export async function retryOrderReviewRequest(event: APIGatewayProxyEventV2) {
 
   const channel = parseRetryChannel(event);
 
+  if (channel === "whatsapp") {
+    const settings = await loadReviewRequestSettings();
+    const phone = order.shippingAddress?.phone?.trim() ?? "";
+    const digits = whatsappDigitsForOrderPhone(phone, order.shippingAddress?.country);
+    const message = buildReviewRequestWhatsAppDraft(order, settings);
+    return ok({
+      alreadySent: false,
+      manual: true,
+      phone,
+      whatsappDigits: digits,
+      message,
+      deepLink: digits ? buildWhatsAppDeepLink(digits, message) : "",
+      result: { email: "skipped", whatsapp: "manual" },
+    });
+  }
+
   if (channel === "email" && getReviewEmailChannelStatus(order).status === "sent") {
     return ok({
       alreadySent: true,
       result: { email: "already_sent", whatsapp: "skipped" },
     });
   }
-  if (channel === "whatsapp" && getReviewWhatsAppChannelStatus(order).status === "sent") {
-    return ok({
-      alreadySent: true,
-      result: { email: "skipped", whatsapp: "already_sent" },
-    });
-  }
   if (!channel && !reviewRequestStillNeeded(order)) {
     return ok({
       alreadySent: true,
-      result: { email: "already_sent", whatsapp: "already_sent" },
+      result: { email: "already_sent", whatsapp: "skipped" },
     });
   }
 
   const result = await dispatchReviewRequest(order, {
-    channels: channel ? [channel] : undefined,
+    channels: ["email"],
     recheckContact: true,
   });
-  return ok({ alreadySent: false, result, channel: channel ?? "all" });
+  return ok({ alreadySent: false, result, channel: channel ?? "email" });
 }

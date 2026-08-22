@@ -48,8 +48,10 @@ export default function ReviewRequestSettingsPage() {
         <h2 className="text-xl font-bold text-primary">Review request</h2>
         <p className="text-sm text-slate-500 mt-1">
           Sent once when an order first becomes <strong>Delivered</strong> or <strong>Complete</strong>.
-          Uses transactional SMTP (<code>order@usarakhi.com</code>), the same sender and layout as
-          other order emails — not marketing Mailercloud. Website reviews are never copied to Google.
+          The review email is sent automatically by transactional SMTP (
+          <code>order@usarakhi.com</code>). WhatsApp is <strong>not</strong> sent automatically
+          (Twilio is not used). Admins send WhatsApp from the order page using the customer&apos;s
+          checkout phone and this template. Website reviews are never copied to Google.
         </p>
       </div>
 
@@ -71,7 +73,7 @@ export default function ReviewRequestSettingsPage() {
             checked={settings.whatsappEnabled}
             onChange={(e) => setSettings({ ...settings, whatsappEnabled: e.target.checked })}
           />
-          Send review request WhatsApp
+          Show WhatsApp template on the order page (manual Send WhatsApp)
         </label>
 
         <label className="block text-sm">

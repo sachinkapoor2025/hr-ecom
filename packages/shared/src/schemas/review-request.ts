@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { displayOrderRef } from "../lib/order-number";
+import { formatOrderStatusLabel } from "../lib/order-status";
 
 /** Placeholders available in review-request email/WhatsApp templates. */
 export const REVIEW_REQUEST_TEMPLATE_VARS = [
@@ -86,6 +88,46 @@ export function omitEmptyGoogleReviewLines(text: string, googleReviewUrl: string
     .replace(/Review us on Google:\s*$/gim, "")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
+}
+
+const DEFAULT_REVIEW_SITE_URL = "https://www.usarakhi.com";
+
+export function reviewRequestTemplateVars(
+  order: {
+    orderId: string;
+    orderNumber?: string | null;
+    status: string;
+    shippingAddress?: { name?: string } | null;
+  },
+  settings: ReviewRequestSettings,
+  siteUrl = DEFAULT_REVIEW_SITE_URL
+): ReviewRequestTemplateVars {
+  const site = siteUrl.replace(/\/$/, "");
+  const name = order.shippingAddress?.name?.split(" ")[0]?.trim() || "there";
+  return {
+    name,
+    orderNumber: displayOrderRef({ orderId: order.orderId, orderNumber: order.orderNumber }),
+    statusLabel: formatOrderStatusLabel(order.status),
+    websiteReviewUrl: settings.websiteReviewUrl || `${site}/reviews`,
+    googleReviewUrl: settings.googleReviewUrl.trim(),
+    siteUrl: site,
+  };
+}
+
+/** Pre-filled WhatsApp review text from the saved admin template. */
+export function buildReviewRequestWhatsAppDraft(
+  order: {
+    orderId: string;
+    orderNumber?: string | null;
+    status: string;
+    shippingAddress?: { name?: string } | null;
+  },
+  settings: ReviewRequestSettings,
+  siteUrl = DEFAULT_REVIEW_SITE_URL
+): string {
+  const vars = reviewRequestTemplateVars(order, settings, siteUrl);
+  const template = omitEmptyGoogleReviewLines(settings.whatsappTemplate, vars.googleReviewUrl);
+  return renderReviewRequestTemplate(template, vars).trim();
 }
 
 export const REVIEW_NOTIFICATION_CHANNELS = ["email", "whatsapp"] as const;

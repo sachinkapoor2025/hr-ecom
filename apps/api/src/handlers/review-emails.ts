@@ -6,18 +6,13 @@ import {
   isDeliveredStatus,
   reviewRequestStillNeeded,
   getReviewEmailChannelStatus,
-  getReviewWhatsAppChannelStatus,
-  displayOrderRef,
-  formatOrderStatusLabel,
-  renderReviewRequestTemplate,
-  omitEmptyGoogleReviewLines,
+  reviewRequestTemplateVars,
   type Order,
   type ReviewRequestSettings,
   type ReviewNotificationLogEntry,
 } from "@hr-ecom/shared";
 import { docClient, ORDERS_TABLE, now } from "../lib/db";
 import { sendReviewRequestEmail } from "../lib/email";
-import { notifyCustomerWhatsApp, reviewRequestWhatsAppMessage } from "../lib/whatsapp";
 import { loadReviewRequestSettings } from "../lib/review-request-settings";
 
 type StoredOrder = Order & {
@@ -262,29 +257,14 @@ async function persistReviewOutcome(opts: {
   }
 }
 
-function validWhatsAppPhone(phone?: string | null): string | null {
-  const raw = phone?.trim();
-  if (!raw) return null;
-  const digits = raw.replace(/\D/g, "");
-  if (digits.length < 10 || digits.length > 15) return null;
-  return raw;
-}
-
 function templateVars(order: Order, settings: ReviewRequestSettings) {
   const site = (process.env.SITE_URL ?? "https://www.usarakhi.com").replace(/\/$/, "");
-  return {
-    name: order.shippingAddress?.name?.split(" ")[0]?.trim() || "there",
-    orderNumber: displayOrderRef(order),
-    statusLabel: formatOrderStatusLabel(order.status),
-    websiteReviewUrl: settings.websiteReviewUrl || `${site}/reviews`,
-    googleReviewUrl: settings.googleReviewUrl.trim(),
-    siteUrl: site,
-  };
+  return reviewRequestTemplateVars(order, settings, site);
 }
 
 function channelEnabled(opts: ReviewDispatchOptions | undefined, channel: ReviewDispatchChannel): boolean {
-  if (!opts?.channels?.length) return true;
-  return opts.channels.includes(channel);
+  const channels = opts?.channels?.length ? opts.channels : (["email"] as ReviewDispatchChannel[]);
+  return channels.includes(channel);
 }
 
 async function sendEmailChannel(
@@ -376,115 +356,16 @@ async function sendEmailChannel(
   return "failed";
 }
 
-async function sendWhatsAppChannel(
-  order: StoredOrder,
-  settings: ReviewRequestSettings,
-  opts?: ReviewDispatchOptions
-): Promise<ReviewDispatchChannelResult> {
-  const waStatus = getReviewWhatsAppChannelStatus(order);
-  if (waStatus.status === "sent") return "already_sent";
-  if (!opts?.recheckContact && waStatus.status === "not_available") {
-    return "not_available";
-  }
-  if (!settings.whatsappEnabled) return "disabled";
-
-  const phone = validWhatsAppPhone(order.shippingAddress?.phone);
-  if (!phone) {
-    await persistReviewOutcome({
-      orderId: order.orderId,
-      channel: "whatsapp",
-      outcome: "not_available",
-      at: now(),
-      customer: order.shippingAddress?.phone,
-      error: "No valid WhatsApp number",
-    });
-    logReviewNotify({
-      channel: "whatsapp",
-      orderId: order.orderId,
-      orderNumber: order.orderNumber,
-      customer: order.shippingAddress?.phone,
-      ok: false,
-      skipped: true,
-      error: "No valid WhatsApp number",
-    });
-    return "not_available";
-  }
-
-  const claimed = await claimChannelLock(order.orderId, "whatsapp", {
-    requireUnsent: waStatus.status !== "not_available",
-  });
-  if (!claimed) return "already_sent";
-
-  const vars = templateVars(order, settings);
-  const template = omitEmptyGoogleReviewLines(settings.whatsappTemplate, vars.googleReviewUrl);
-  const message =
-    renderReviewRequestTemplate(template, vars).trim() ||
-    reviewRequestWhatsAppMessage({
-      name: vars.name,
-      orderId: order.orderId,
-      orderNumber: vars.orderNumber,
-      websiteReviewUrl: vars.websiteReviewUrl,
-      googleReviewUrl: vars.googleReviewUrl || undefined,
-    });
-
-  const wa = await notifyCustomerWhatsApp({
-    phone,
-    context: `review-request-${order.orderId}`,
-    message,
-  });
-  const sentAt = now();
-
-  if (wa?.ok && !wa.skipped) {
-    await persistReviewOutcome({
-      orderId: order.orderId,
-      channel: "whatsapp",
-      outcome: "sent",
-      at: sentAt,
-      customer: phone,
-      provider: wa.provider,
-      messageId: wa.messageId,
-      providerStatus: wa.providerStatus,
-    });
-    logReviewNotify({
-      channel: "whatsapp",
-      orderId: order.orderId,
-      orderNumber: order.orderNumber,
-      customer: phone,
-      ok: true,
-      messageId: wa.messageId,
-    });
-    return "sent";
-  }
-
-  const error =
-    wa?.error ??
-    (wa == null ? "WhatsApp not configured or send skipped" : "WhatsApp send failed");
-  await persistReviewOutcome({
-    orderId: order.orderId,
-    channel: "whatsapp",
-    outcome: "failed",
-    at: sentAt,
-    customer: phone,
-    error,
-    provider: wa?.provider,
-    messageId: wa?.messageId,
-    providerStatus: wa?.providerStatus,
-  });
-  logReviewNotify({
-    channel: "whatsapp",
-    orderId: order.orderId,
-    orderNumber: order.orderNumber,
-    customer: phone,
-    ok: false,
-    error,
-  });
-  return "failed";
+async function sendWhatsAppChannel(): Promise<ReviewDispatchChannelResult> {
+  // Review WhatsApp is sent manually from the admin order page (wa.me).
+  // Do not call Twilio or Meta for this channel.
+  return "skipped";
 }
 
 /**
- * Send the one-time review request (email + WhatsApp) for a delivered/complete order.
- * Never throws. Each channel is independently idempotent. Sent is recorded only after
- * the SMTP / WhatsApp provider returns success.
+ * Send the one-time review email for a delivered/complete order.
+ * WhatsApp is not sent here (admin opens wa.me from the order page).
+ * Never throws. Email is idempotent. Sent is recorded only after SMTP success.
  */
 export async function dispatchReviewRequest(
   order: Order,
@@ -509,12 +390,7 @@ export async function dispatchReviewRequest(
         return "failed" as const;
       })
     : "skipped";
-  const whatsapp = channelEnabled(opts, "whatsapp")
-    ? await sendWhatsAppChannel(stored, settings, opts).catch((err) => {
-        console.error("Review WhatsApp dispatch exception", stored.orderId, err);
-        return "failed" as const;
-      })
-    : "skipped";
+  const whatsapp = channelEnabled(opts, "whatsapp") ? await sendWhatsAppChannel() : "skipped";
   return { email, whatsapp };
 }
 
@@ -522,7 +398,7 @@ export async function dispatchReviewRequest(
 export async function notifyReviewRequestAfterStatusChange(order: Order): Promise<void> {
   if (!isDeliveredStatus(order.status) || !reviewRequestStillNeeded(order)) return;
   try {
-    await dispatchReviewRequest(order);
+    await dispatchReviewRequest(order, { channels: ["email"] });
   } catch (err) {
     console.error("Review request dispatch failed:", order.orderId, err);
   }
@@ -530,15 +406,15 @@ export async function notifyReviewRequestAfterStatusChange(order: Order): Promis
 
 async function processOrder(order: StoredOrder): Promise<"sent" | "skipped" | "failed"> {
   if (!reviewRequestStillNeeded(order) || !isReviewEmailDue(order)) return "skipped";
-  const result = await dispatchReviewRequest(order);
-  const failed = result.email === "failed" || result.whatsapp === "failed";
-  const sent = result.email === "sent" || result.whatsapp === "sent";
+  const result = await dispatchReviewRequest(order, { channels: ["email"] });
+  const failed = result.email === "failed";
+  const sent = result.email === "sent";
   if (failed && !sent) return "failed";
   if (sent) return "sent";
   return "skipped";
 }
 
-/** 15-minute cron: retry unsent/failed review channels for delivered/complete orders. */
+/** 15-minute cron: retry unsent/failed review emails for delivered/complete orders. */
 export async function processDueReviewEmails(): Promise<{
   scanned: number;
   sent: number;
