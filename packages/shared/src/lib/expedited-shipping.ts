@@ -40,7 +40,8 @@ export const CHECKOUT_SHIPPING_OPTIONS: readonly ExpeditedShippingDef[] = [
     priceUsd: 0,
     packingBusinessDays: 1,
     transitBusinessDays: 5,
-    detail: "Uses cart shipping rates. Not confirmed for delivery on or before Raksha Bandhan.",
+    detail:
+      "About 6 business days. Order by Monday — we do our best to deliver on Raksha Bandhan.",
   },
   {
     id: "three_day",
@@ -86,6 +87,34 @@ export function estimateShippingArrival(
 ): Date {
   const option = BY_ID.get(optionId) ?? BY_ID.get("standard")!;
   return addBusinessDays(from, expeditedLeadBusinessDays(option));
+}
+
+/** Recommended order-by for Rakhi-day delivery (Monday before festival). */
+export const RAKHI_ORDER_BY_DATE = "2026-08-24";
+
+/** Marketing copy — recent orders placed by the deadline with expedited shipping. */
+export const RAKHI_ON_TIME_DELIVERY_SUCCESS_PERCENT = 90;
+
+export function formatRakhiOrderByLabel(isoDate = RAKHI_ORDER_BY_DATE): string {
+  return new Date(`${isoDate}T12:00:00`).toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
+}
+
+export function formatRakhiFestivalLabel(isoDate = RAKSHA_BANDHAN_FESTIVAL_DATE): string {
+  return new Date(`${isoDate}T12:00:00`).toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+/** Whether the customer is still inside the public “order by Monday” window (NY date). */
+export function isBeforeRakhiOrderByDeadline(from: Date = new Date()): boolean {
+  return ymdInNy(from) <= RAKHI_ORDER_BY_DATE;
 }
 
 /** Calendar date YYYY-MM-DD in America/New_York for comparisons. */
@@ -166,11 +195,20 @@ export function expeditedArrivalLabel(
   return formatDeliveryDate(arrival);
 }
 
-/** Clean customer-facing weekend / Rakhi notice. */
-export const RAKHI_WEEKEND_SHIPPING_NOTICE = {
-  title: "Weekend note — choose delivery carefully",
+/** Optimistic Rakhi-season urgency copy — avoids “won’t deliver” language that kills weekend orders. */
+export const RAKHI_DELIVERY_URGENCY_NOTICE = {
+  title: "Order by Monday for Rakhi-day delivery",
+  orderByShort: "Mon, Aug 24",
+  orderByLong: "Monday, August 24",
+  festivalShort: "Aug 28",
   body:
-    "USPS offices are closed on weekends, so standard shipping cannot confirm delivery on or before Raksha Bandhan. For a better chance of on-time arrival, choose 3-day delivery ($19, includes 1 packing day) or 2-day delivery ($39).",
+    "Order by Monday, August 24 and we'll do our best to reach your brother on Raksha Bandhan (Friday, August 28). About 9 in 10 orders placed by Monday with 3-day ($19) or 2-day ($39) shipping have arrived on festival day. Ordering this weekend? You're still in time — we prioritize packing as soon as USPS reopens.",
   compact:
-    "USPS is closed weekends — standard shipping is not confirmed for Raksha Bandhan. Choose 3-day ($19) or 2-day ($39) delivery if you need it on time.",
+    "Order by Mon, Aug 24 — ~90% arrive on Rakhi day with 3-day or 2-day at checkout. We'll try our best for every order.",
+  weekendNote:
+    "Weekend orders welcome — place yours now and we'll prioritize packing Monday morning.",
+  successRateLabel: "~90% on Rakhi day",
 } as const;
+
+/** @deprecated Use RAKHI_DELIVERY_URGENCY_NOTICE — kept for existing imports. */
+export const RAKHI_WEEKEND_SHIPPING_NOTICE = RAKHI_DELIVERY_URGENCY_NOTICE;

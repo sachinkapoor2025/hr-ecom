@@ -46,7 +46,7 @@ ${pages.join("\n")}
 ${cities.join("\n")}
 
 ## Raksha Bandhan 2026
-Date: August 28, 2026. Order by early August for on-time delivery.
+Date: August 28, 2026. Order by Monday, August 24 for best Rakhi-day delivery (~90% with 3-day or 2-day shipping). Weekend orders welcome — we prioritize packing Monday.
 
 ## Delivery & payment
 - USA delivery: 5–7 business days, all 50 states

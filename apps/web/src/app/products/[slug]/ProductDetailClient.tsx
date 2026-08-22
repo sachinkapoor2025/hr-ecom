@@ -244,7 +244,7 @@ export function ProductDetailClient({
 
           {lowStock && (
             <p className="text-sm font-semibold text-orange-700 bg-orange-50 border border-orange-100 rounded-md px-3 py-2 mb-3">
-              Only {product.inventory} left in stock — order soon for Raksha Bandhan delivery
+              Only {product.inventory} left in stock — order by Monday for Rakhi-day delivery
             </p>
           )}
 
