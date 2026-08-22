@@ -33,64 +33,64 @@ export const PRODUCT_ADDONS: readonly ProductAddonDef[] = [
   {
     id: "badam-100g",
     name: "Badam (Almonds) — 100 g",
-    priceUsd: 9,
+    priceUsd: 10.5,
     group: "dry-fruits",
     detail: "100 g",
   },
   {
     id: "kaju-100g",
     name: "Kaju (Cashews) — 100 g",
-    priceUsd: 9,
+    priceUsd: 10.5,
     group: "dry-fruits",
     detail: "100 g",
   },
   {
     id: "pista-100g",
     name: "Pista (Pistachios) — 100 g",
-    priceUsd: 9,
+    priceUsd: 10.5,
     group: "dry-fruits",
     detail: "100 g",
   },
   {
     id: "badam-200g",
     name: "Badam (Almonds) — 200 g",
-    priceUsd: 15,
+    priceUsd: 16.5,
     group: "dry-fruits",
     detail: "200 g",
   },
   {
     id: "kaju-200g",
     name: "Kaju (Cashews) — 200 g",
-    priceUsd: 15,
+    priceUsd: 16.5,
     group: "dry-fruits",
     detail: "200 g",
   },
   {
     id: "pista-200g",
     name: "Pista (Pistachios) — 200 g",
-    priceUsd: 15,
+    priceUsd: 16.5,
     group: "dry-fruits",
     detail: "200 g",
   },
   {
     id: "hershey-2pc",
     name: "Hershey’s chocolates (2 pcs)",
-    priceUsd: 5,
+    priceUsd: 6.5,
     group: "chocolates",
     detail: "2 pcs",
   },
   {
-    /** Legacy id — pack is now 3 pcs for $9; keep id so existing carts still resolve. */
+    /** Legacy id — pack is now 3 pcs; keep id so existing carts still resolve. */
     id: "lindt-5pc",
     name: "Lindor chocolates (3 pcs)",
-    priceUsd: 9,
+    priceUsd: 10.5,
     group: "chocolates",
     detail: "3 pcs",
   },
   {
     id: "ferrero-3pc",
     name: "Ferrero Rocher (3 pcs)",
-    priceUsd: 5,
+    priceUsd: 6.5,
     group: "chocolates",
     detail: "3 pcs",
   },
@@ -121,7 +121,7 @@ export function getProductAddon(id: string): ProductAddonDef | undefined {
   return ADDON_BY_ID.get(id);
 }
 
-/** Hide a rakhi add-on on its own product page so the $3.99 deal is only for extras. */
+/** Hide a rakhi add-on on its own product page so the mix-and-match deal is only for extras. */
 export function addonsForProductPage(productSlug: string): readonly ProductAddonDef[] {
   return PRODUCT_ADDONS.filter((a) => a.productSlug !== productSlug);
 }

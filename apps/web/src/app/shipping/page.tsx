@@ -8,7 +8,7 @@ import { deliveryClaims, rakshaBandhan2026Deadlines, RAKSHA_BANDHAN_2026_DATE } 
 export const metadata: Metadata = pageMetadata({
   title: "Rakhi Shipping & Delivery to USA — Ships From Within America",
   description:
-    "UsaRakhi ships domestically within the USA — no customs delays. 2–3 day express to major metros, 5–7 days nationwide. Free shipping on orders above $16.50.",
+    "UsaRakhi ships domestically within the USA — no customs delays. 2–3 day express options at checkout, about 6 business days standard. Free shipping on orders above $19.50.",
   path: "/shipping",
 });
 
@@ -60,10 +60,10 @@ export default function ShippingPage() {
             Orders from <strong>$1.00 to $9.99</strong> — <strong>$7.99</strong> shipping
           </li>
           <li>
-            Orders from <strong>$10.00 to $16.50</strong> — <strong>$3.99</strong> shipping
+            Orders from <strong>$10.00 to $19.50</strong> — <strong>$3.99</strong> shipping
           </li>
           <li>
-            Orders <strong>above $16.50</strong> — <strong>free shipping</strong>
+            Orders <strong>above $19.50</strong> — <strong>free shipping</strong>
           </li>
         </ul>
         <h2 className="text-xl font-bold text-primary">Raksha Bandhan 2026 order deadlines</h2>
