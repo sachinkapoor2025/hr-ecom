@@ -17,8 +17,8 @@ import { VENDOR_ORANGE_COUNTY } from "../constants";
 
 describe("product-addons", () => {
   it("lists chocolates + rakhis only (no dry fruits / Hershey’s)", () => {
-    // 2 chocolates + 8 mix-and-match rakhis
-    assert.equal(PRODUCT_ADDONS.length, 10);
+    // 3 chocolates + 8 mix-and-match rakhis
+    assert.equal(PRODUCT_ADDONS.length, 11);
     assert.equal(PRODUCT_ADDONS.filter((a) => a.group === "dry-fruits").length, 0);
     assert.equal(getProductAddon("badam-100g"), undefined);
     assert.equal(getProductAddon("pista-100g"), undefined);
@@ -29,6 +29,8 @@ describe("product-addons", () => {
     assert.match(getProductAddon("lindt-5pc")?.name ?? "", /Lindor chocolates \(3 pcs\)/);
     assert.equal(getProductAddon("ferrero-3pc")?.priceUsd, 6.5);
     assert.match(getProductAddon("ferrero-3pc")?.name ?? "", /Ferrero Rocher/);
+    assert.equal(getProductAddon("mixed-chocolates-3pc")?.priceUsd, 4.99);
+    assert.match(getProductAddon("mixed-chocolates-3pc")?.name ?? "", /Mixed chocolates \(3 pcs\)/);
     const rakhiAddons = PRODUCT_ADDONS.filter((a) => a.group === "rakhis");
     assert.equal(rakhiAddons.length, 8);
     assert.ok(rakhiAddons.every((a) => a.priceUsd === RAKHI_ADDON_PRICE_USD));

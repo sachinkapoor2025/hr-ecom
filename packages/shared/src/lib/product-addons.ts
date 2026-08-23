@@ -31,7 +31,7 @@ export const MAX_PRODUCT_ADDON_QUANTITY = 10;
 /**
  * Fixed UsaRakhi PDP add-on catalog (USD). Not Dynamo SKUs.
  * Dry fruits (badam/pista/kaju) and Hershey’s removed for peak-season stock.
- * Chocolate names match storefront: Lindor chocolates / Ferrero Rocher.
+ * Chocolate names match storefront: Lindor chocolates / Ferrero Rocher / Mixed chocolates.
  */
 export const PRODUCT_ADDONS: readonly ProductAddonDef[] = [
   {
@@ -46,6 +46,13 @@ export const PRODUCT_ADDONS: readonly ProductAddonDef[] = [
     id: "ferrero-3pc",
     name: "Ferrero Rocher (3 pcs)",
     priceUsd: 6.5,
+    group: "chocolates",
+    detail: "3 pcs",
+  },
+  {
+    id: "mixed-chocolates-3pc",
+    name: "Mixed chocolates (3 pcs)",
+    priceUsd: 4.99,
     group: "chocolates",
     detail: "3 pcs",
   },
