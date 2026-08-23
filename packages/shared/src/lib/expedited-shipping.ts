@@ -12,7 +12,7 @@ export const EXPEDITED_TWO_DAY_SHIPPING_USD = 39;
 
 /**
  * Checkout shipping choice.
- * - `standard` — existing free-shipping tiers ($7.99 / $3.99 / free); not confirmed for Rakhi
+ * - `standard` — always free (no cart minimum); ~6 days delivery
  * - `three_day` — $19; 1 packing business day + 3 transit business days
  * - `two_day` — $39; 2 transit business days (priority pack)
  */

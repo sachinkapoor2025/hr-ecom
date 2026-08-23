@@ -1037,7 +1037,7 @@ function CheckoutPageInner() {
                       footnote={
                         chargedShipmentCount > 0
                           ? `Rates apply per delivery address. ${chargedShipmentCount} of ${multiShippingQuote.perShipment.length} deliveries include shipping (${format(shippingCharge, displayCurrency)} total).`
-                          : "Rates apply per delivery address. All deliveries qualify for free shipping."
+                          : "Standard shipping is free on every delivery. Choose 3-day ($19) or 2-day ($39) if you need it faster."
                       }
                     />
                   ) : (

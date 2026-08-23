@@ -10,25 +10,25 @@ import {
 import { cartLineUnitTotal } from "./product-addons";
 
 /**
- * Exclusive cutoff: shipping is free when the cart is **above** this USD amount.
- * With $20 minimum rakhi prices, $20+ qualifies for free standard shipping.
+ * Standard shipping is always free (no cart minimum).
+ * Expedited 3-day ($19) / 2-day ($39) are separate checkout options.
  */
-export const FREE_SHIPPING_ABOVE_USD = 19.99;
+export const STANDARD_SHIPPING_ALWAYS_FREE = true;
 
-/** First subtotal that qualifies for free shipping (above $19.99 → $20+). */
-export const FREE_SHIPPING_MIN_SUBTOTAL_USD = 20;
+/** @deprecated No minimum — standard shipping is always free. Kept for API/UI compat. */
+export const FREE_SHIPPING_ABOVE_USD = 0;
 
-/**
- * At or above this (USD) and through $19.99 → reduced $3.99 shipping.
- * Below this ($1–$9.99) → $7.99 shipping.
- */
+/** @deprecated No minimum — standard shipping is always free. */
+export const FREE_SHIPPING_MIN_SUBTOTAL_USD = 0;
+
+/** @deprecated Legacy mid-tier threshold (unused while standard shipping is free). */
 export const REDUCED_SHIPPING_MIN_SUBTOTAL_USD = 10;
 
-/** Flat shipping when bucket is under $10. */
-export const BELOW_THRESHOLD_SHIPPING_USD = 7.99;
+/** @deprecated Legacy low-tier fee (unused while standard shipping is free). */
+export const BELOW_THRESHOLD_SHIPPING_USD = 0;
 
-/** Flat shipping when bucket is $10–$19.99. */
-export const REDUCED_SHIPPING_USD = 3.99;
+/** @deprecated Legacy mid-tier fee (unused while standard shipping is free). */
+export const REDUCED_SHIPPING_USD = 0;
 
 export type FreeShippingTier = "low" | "mid" | "free";
 
@@ -44,11 +44,11 @@ export type FreeShippingQuote = {
   aboveAmountInCurrency: number;
   /** Free-shipping threshold expressed in `currency` (first free amount). */
   thresholdInCurrency: number;
-  /** Reduced-shipping ($3.99) threshold expressed in `currency`. */
+  /** Reduced-shipping threshold expressed in `currency`. */
   reducedThresholdInCurrency: number;
-  /** $7.99 tier fee in `currency`. */
+  /** Legacy low-tier fee in `currency`. */
   lowTierFeeInCurrency: number;
-  /** $3.99 tier fee in `currency`. */
+  /** Legacy mid-tier fee in `currency`. */
   midTierFeeInCurrency: number;
   /** Current tier for this bucket. */
   tier: FreeShippingTier;
@@ -68,78 +68,32 @@ function toCurrency(
   );
 }
 
-function toUsd(
-  amount: number,
-  currency: ShopCurrency,
-  usdInrRate: number
-): number {
-  if (currency === "USD") return amount;
-  return convertCurrencyAmount(amount, "INR", "USD", usdInrRate);
-}
-
 /**
- * Shipping tiers (per address × vendor bucket, in USD):
- * - $1 to $9.99 → $7.99
- * - $10 to $19.99 → $3.99
- * - above $19.99 ($20+) → free
- * Evaluated in USD, then converted when the shopper currency is INR.
+ * Standard shipping quote — always free (no cart minimum).
+ * Flash-combo-only buckets still use a flat fee via `quoteAddressShipmentShipping`.
  */
 export function quoteFreeShippingThreshold(input: {
   subtotal: number;
   currency: ShopCurrency;
   usdInrRate: number;
 }): FreeShippingQuote {
-  const { subtotal, currency, usdInrRate } = input;
-  const aboveAmountInCurrency = toCurrency(FREE_SHIPPING_ABOVE_USD, currency, usdInrRate);
-  const thresholdInCurrency = toCurrency(
-    FREE_SHIPPING_MIN_SUBTOTAL_USD,
-    currency,
-    usdInrRate
-  );
-  const reducedThresholdInCurrency = toCurrency(
-    REDUCED_SHIPPING_MIN_SUBTOTAL_USD,
-    currency,
-    usdInrRate
-  );
-  const lowTierFee = toCurrency(BELOW_THRESHOLD_SHIPPING_USD, currency, usdInrRate);
-  const midTierFee = toCurrency(REDUCED_SHIPPING_USD, currency, usdInrRate);
-  const subtotalUsd = toUsd(subtotal, currency, usdInrRate);
-
-  let charge = 0;
-  let qualifiesForFreeShipping = false;
-  let tier: FreeShippingTier = "low";
-  if (subtotalUsd >= FREE_SHIPPING_MIN_SUBTOTAL_USD) {
-    qualifiesForFreeShipping = true;
-    tier = "free";
-    charge = 0;
-  } else if (subtotalUsd >= REDUCED_SHIPPING_MIN_SUBTOTAL_USD) {
-    tier = "mid";
-    charge = midTierFee;
-  } else {
-    tier = "low";
-    charge = lowTierFee;
-  }
-
-  const amountAwayFromFreeShipping = qualifiesForFreeShipping
-    ? 0
-    : Math.max(0, roundForCurrency(thresholdInCurrency - subtotal, currency));
-  const amountAwayFromReducedShipping =
-    tier === "low"
-      ? Math.max(0, roundForCurrency(reducedThresholdInCurrency - subtotal, currency))
-      : 0;
-
+  const { currency, usdInrRate } = input;
   return {
-    charge,
-    qualifiesForFreeShipping,
-    amountAwayFromFreeShipping,
-    amountAwayFromReducedShipping,
-    aboveAmountInCurrency,
-    thresholdInCurrency,
-    reducedThresholdInCurrency,
-    lowTierFeeInCurrency: lowTierFee,
-    midTierFeeInCurrency: midTierFee,
-    tier,
-    belowThresholdFeeInCurrency: charge,
+    charge: 0,
+    qualifiesForFreeShipping: true,
+    amountAwayFromFreeShipping: 0,
+    amountAwayFromReducedShipping: 0,
+    aboveAmountInCurrency: toCurrency(FREE_SHIPPING_ABOVE_USD, currency, usdInrRate),
+    thresholdInCurrency: toCurrency(FREE_SHIPPING_MIN_SUBTOTAL_USD, currency, usdInrRate),
+    reducedThresholdInCurrency: toCurrency(
+      REDUCED_SHIPPING_MIN_SUBTOTAL_USD,
+      currency,
+      usdInrRate
+    ),
+    lowTierFeeInCurrency: 0,
+    midTierFeeInCurrency: 0,
+    tier: "free",
+    belowThresholdFeeInCurrency: 0,
   };
 }
 
@@ -154,7 +108,7 @@ export function shippingVendorKey(item: { vendorSlug?: string }): string {
 
 /**
  * Free-shipping groups: each subtotal is one chargeable bucket
- * (delivery address × vendor). Tiers apply per bucket; total = sum.
+ * (delivery address × vendor). Standard shipping is free per bucket.
  */
 export function quoteShipmentsShipping(input: {
   shipmentSubtotals: number[];
@@ -203,36 +157,24 @@ function flashComboShippingQuote(
   usdInrRate: number
 ): FreeShippingQuote {
   const charge = toCurrency(FLASH_COMBO_SHIPPING_USD, currency, usdInrRate);
-  const aboveAmountInCurrency = toCurrency(FREE_SHIPPING_ABOVE_USD, currency, usdInrRate);
-  const thresholdInCurrency = toCurrency(
-    FREE_SHIPPING_MIN_SUBTOTAL_USD,
-    currency,
-    usdInrRate
-  );
-  const reducedThresholdInCurrency = toCurrency(
-    REDUCED_SHIPPING_MIN_SUBTOTAL_USD,
-    currency,
-    usdInrRate
-  );
   return {
     charge,
     qualifiesForFreeShipping: false,
     amountAwayFromFreeShipping: 0,
     amountAwayFromReducedShipping: 0,
-    aboveAmountInCurrency,
-    thresholdInCurrency,
-    reducedThresholdInCurrency,
-    lowTierFeeInCurrency: toCurrency(BELOW_THRESHOLD_SHIPPING_USD, currency, usdInrRate),
-    midTierFeeInCurrency: toCurrency(REDUCED_SHIPPING_USD, currency, usdInrRate),
+    aboveAmountInCurrency: 0,
+    thresholdInCurrency: 0,
+    reducedThresholdInCurrency: 0,
+    lowTierFeeInCurrency: charge,
+    midTierFeeInCurrency: 0,
     tier: "low",
     belowThresholdFeeInCurrency: charge,
   };
 }
 
 /**
- * Shipping for one delivery address: evaluate tiers per vendor inside that
- * address (UsaRakhi vs Orange County, etc.), then sum.
- * Flash-combo-only buckets use a flat $1 shipping fee.
+ * Shipping for one delivery address: standard is free per vendor bucket.
+ * Flash-combo-only buckets use a flat $0.99 shipping fee.
  */
 export function quoteAddressShipmentShipping(input: {
   items: Array<{
@@ -271,7 +213,6 @@ export function quoteAddressShipmentShipping(input: {
     if (flashOnly) {
       return flashComboShippingQuote(input.currency, input.usdInrRate);
     }
-    // Must include add-ons — otherwise Razorpay totals diverge from checkout UI.
     const subtotal = vendorItems.reduce(
       (sum, i) => sum + cartLineUnitTotal(i) * i.quantity,
       0
