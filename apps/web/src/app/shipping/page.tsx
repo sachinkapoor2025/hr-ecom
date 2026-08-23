@@ -35,10 +35,10 @@ export default function ShippingPage() {
         <h2 className="text-xl font-bold text-primary">Shipping rates</h2>
         <ul className="list-disc list-inside space-y-2">
           <li>
-            Orders <strong>$18 and above</strong> — <strong>free shipping</strong> (6 days)
+            Orders <strong>$20 and above</strong> — <strong>free shipping</strong> (6 days)
           </li>
           <li>
-            Orders from <strong>$10.00 to $17.99</strong> — <strong>$3.99</strong> shipping
+            Orders from <strong>$10.00 to $19.99</strong> — <strong>$3.99</strong> shipping
           </li>
           <li>
             Orders from <strong>$1.00 to $9.99</strong> — <strong>$7.99</strong> shipping

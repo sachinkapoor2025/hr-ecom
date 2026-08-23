@@ -11,15 +11,15 @@ import { cartLineUnitTotal } from "./product-addons";
 
 /**
  * Exclusive cutoff: shipping is free when the cart is **above** this USD amount.
- * With $18 minimum rakhi prices, $18+ qualifies for free standard shipping.
+ * With $20 minimum rakhi prices, $20+ qualifies for free standard shipping.
  */
-export const FREE_SHIPPING_ABOVE_USD = 17.99;
+export const FREE_SHIPPING_ABOVE_USD = 19.99;
 
-/** First subtotal that qualifies for free shipping (above $17.99 → $18+). */
-export const FREE_SHIPPING_MIN_SUBTOTAL_USD = 18;
+/** First subtotal that qualifies for free shipping (above $19.99 → $20+). */
+export const FREE_SHIPPING_MIN_SUBTOTAL_USD = 20;
 
 /**
- * At or above this (USD) and through $17.99 → reduced $3.99 shipping.
+ * At or above this (USD) and through $19.99 → reduced $3.99 shipping.
  * Below this ($1–$9.99) → $7.99 shipping.
  */
 export const REDUCED_SHIPPING_MIN_SUBTOTAL_USD = 10;
@@ -27,7 +27,7 @@ export const REDUCED_SHIPPING_MIN_SUBTOTAL_USD = 10;
 /** Flat shipping when bucket is under $10. */
 export const BELOW_THRESHOLD_SHIPPING_USD = 7.99;
 
-/** Flat shipping when bucket is $10–$17.99. */
+/** Flat shipping when bucket is $10–$19.99. */
 export const REDUCED_SHIPPING_USD = 3.99;
 
 export type FreeShippingTier = "low" | "mid" | "free";
@@ -80,8 +80,8 @@ function toUsd(
 /**
  * Shipping tiers (per address × vendor bucket, in USD):
  * - $1 to $9.99 → $7.99
- * - $10 to $17.99 → $3.99
- * - above $17.99 ($18+) → free
+ * - $10 to $19.99 → $3.99
+ * - above $19.99 ($20+) → free
  * Evaluated in USD, then converted when the shopper currency is INR.
  */
 export function quoteFreeShippingThreshold(input: {
