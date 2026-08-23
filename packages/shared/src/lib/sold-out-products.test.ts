@@ -15,6 +15,8 @@ describe("sold-out-products (Ek Omkar)", () => {
       isForceOutOfStockSlug("blue-sapphire-pearl-ek-omkar-rakhi-set-combo-spiritual-designer-rakhi"),
       true
     );
+    assert.equal(isForceOutOfStockSlug("kids-rakhi-with-hersheys-chocolates"), true);
+    assert.equal(isForceOutOfStockSlug("blue-beads-om-pista-flash-combo"), true);
     assert.equal(isForceOutOfStockSlug("om-single-rakhi"), false);
   });
 

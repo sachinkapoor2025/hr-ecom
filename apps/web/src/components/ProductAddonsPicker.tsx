@@ -235,7 +235,7 @@ function RakhiAddonStrip({
   );
 }
 
-/** UsaRakhi-only extra rakhi, dry fruit & chocolate add-ons (multi-select with quantity). */
+/** UsaRakhi-only extra rakhi & chocolate add-ons (multi-select with quantity). */
 export function ProductAddonsPicker({
   selected,
   onChange,
@@ -298,7 +298,8 @@ export function ProductAddonsPicker({
       <div className="mb-4">
         <p className="text-lg sm:text-xl font-extrabold text-primary tracking-tight">Add extras</p>
         <p className="text-sm sm:text-[15px] text-slate-700 mt-1.5 leading-relaxed">
-          Mix extra designer rakhis at bundle prices. Their own product pages stay at the regular price.
+          Mix extra designer rakhis at bundle prices, or add Lindor chocolates / Ferrero Rocher.
+          Their own product pages stay at the regular price.
         </p>
       </div>
       <div className="space-y-4">
@@ -313,20 +314,24 @@ export function ProductAddonsPicker({
             onSetQuantity={setQuantity}
           />
         ) : null}
-        <AddonGroup
-          title="Dry fruits"
-          items={dryFruits}
-          quantities={quantities}
-          onToggle={toggle}
-          onSetQuantity={setQuantity}
-        />
-        <AddonGroup
-          title="Chocolates"
-          items={chocolates}
-          quantities={quantities}
-          onToggle={toggle}
-          onSetQuantity={setQuantity}
-        />
+        {dryFruits.length > 0 ? (
+          <AddonGroup
+            title="Dry fruits"
+            items={dryFruits}
+            quantities={quantities}
+            onToggle={toggle}
+            onSetQuantity={setQuantity}
+          />
+        ) : null}
+        {chocolates.length > 0 ? (
+          <AddonGroup
+            title="Chocolates"
+            items={chocolates}
+            quantities={quantities}
+            onToggle={toggle}
+            onSetQuantity={setQuantity}
+          />
+        ) : null}
       </div>
       {addonsTotal > 0 ? (
         <p className="mt-3 pt-3 border-t border-slate-200 text-sm font-semibold text-slate-800 flex justify-between gap-3">

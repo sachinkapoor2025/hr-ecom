@@ -227,9 +227,9 @@ export function getProductIncludes(product: ProductLike): string[] {
 
   const items = [...rakhiLines(categorySlug), ...ritualPackets()];
 
-  // Pack includes 2 small Hershey's (SKU HER-RK-10-15) even when description omits brand.
+  // Hershey’s removed — use website chocolate names for shortage replacements.
   if (product.slug === "bhai-bhabhi-lumba-rakhi-set") {
-    items.push("2 small Hershey's chocolates");
+    items.push("3 Ferrero Rocher / Lindor chocolates");
   } else {
     const chocolate = parseChocolateInclude(plain);
     if (chocolate) items.push(chocolate);
