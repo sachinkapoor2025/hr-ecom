@@ -33,7 +33,7 @@ import {
   FLASH_COMBO_SHIPPING_USD,
   productAllowsAddons,
   USARAKHI_STOCK_SHORTAGE_NOTE,
-  VENDOR_ORANGE_COUNTY,
+  shouldShowUsarakhiStockShortageNote,
 } from "@hr-ecom/shared";
 import { RakhiDeliverySummary } from "@/components/RakhiDeliverySummary";
 import { ProductCareAccordions } from "@/components/ProductCareAccordions";
@@ -41,11 +41,6 @@ import type { Product, ProductAddonSelection } from "@hr-ecom/shared";
 import { FastSellingBanner } from "@/components/FastSellingBadge";
 import { looksLikeHtml, shortPlainDescription } from "@/lib/html-text";
 import { getProductIncludes } from "@/lib/product-includes";
-
-function isOrangeCountyProduct(product: Product): boolean {
-  if (product.vendorSlug === VENDOR_ORANGE_COUNTY) return true;
-  return (product.images ?? []).some((src) => src.includes("/uploads/orange-county/"));
-}
 
 type Tab = "description" | "reviews" | "faq";
 
@@ -176,7 +171,7 @@ export function ProductDetailClient({
     cart?.items.filter((i) => i.productSlug === product.slug).reduce((s, i) => s + i.quantity, 0) ?? 0;
   const inCart = cartQuantity > 0;
   const showAddons = product.allowsAddons === true && productAllowsAddons(product);
-  const showStockShortageNote = !isOrangeCountyProduct(product);
+  const showStockShortageNote = shouldShowUsarakhiStockShortageNote(product);
   const lowStock = product.inventory > 0 && product.inventory <= LOW_STOCK_THRESHOLD;
   const fastSelling = isFastSelling(product);
   const unitsSold = getUnitsSold(product);
