@@ -1,5 +1,6 @@
 import { DEFAULT_PRODUCT_INVENTORY } from "../constants";
 import type { Product } from "../schemas/product";
+import { MIN_USARAKHI_STOREFRONT_PRICE_USD } from "./competitive-pricing";
 
 function usd(amount: number): number {
   return Math.round(amount * 100) / 100;
@@ -237,7 +238,10 @@ function membersFor(def: MiniRakhiComboDef): MiniRakhiAddon[] {
 
 export function buildMiniRakhiComboProduct(def: MiniRakhiComboDef): Product {
   const members = membersFor(def);
-  const price = usd(RAKHI_ADDON_BUNDLE_USD[def.size] + MINI_RAKHI_SET_LIST_EXTRA_USD);
+  const price = Math.max(
+    usd(RAKHI_ADDON_BUNDLE_USD[def.size] + MINI_RAKHI_SET_LIST_EXTRA_USD),
+    MIN_USARAKHI_STOREFRONT_PRICE_USD
+  );
   const compareAtPrice = usd(members.reduce((sum, m) => sum + m.standaloneUsd, 0));
   const listItems = members.map((m) => `<li>${m.name}</li>`).join("");
   const names = members.map((m) => m.shortName).join(", ");

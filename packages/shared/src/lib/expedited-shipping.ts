@@ -40,7 +40,7 @@ export const CHECKOUT_SHIPPING_OPTIONS: readonly ExpeditedShippingDef[] = [
     priceUsd: 0,
     packingBusinessDays: 1,
     transitBusinessDays: 5,
-    detail: "About 6 business days nationwide.",
+    detail: "Free shipping — 6 days delivery",
   },
   {
     id: "three_day",
@@ -49,7 +49,7 @@ export const CHECKOUT_SHIPPING_OPTIONS: readonly ExpeditedShippingDef[] = [
     priceUsd: EXPEDITED_THREE_DAY_SHIPPING_USD,
     packingBusinessDays: 1,
     transitBusinessDays: 3,
-    detail: "Confirmed on Rakhi day (Aug 28) — 1 packing day + 3 transit days.",
+    detail: "3-day delivery — $19",
   },
   {
     id: "two_day",
@@ -58,7 +58,7 @@ export const CHECKOUT_SHIPPING_OPTIONS: readonly ExpeditedShippingDef[] = [
     priceUsd: EXPEDITED_TWO_DAY_SHIPPING_USD,
     packingBusinessDays: 0,
     transitBusinessDays: 2,
-    detail: "Confirmed on Rakhi day (Aug 28) — priority pack + 2 transit days.",
+    detail: "2-day delivery — $39",
   },
 ] as const;
 
@@ -194,23 +194,25 @@ export function expeditedArrivalLabel(
   return formatDeliveryDate(arrival);
 }
 
-/** Customer-facing Rakhi delivery copy — standard vs expedited are never mixed. */
+/** Customer-facing shipping options — simple bullets, no calendar dates. */
 export const RAKHI_DELIVERY_MESSAGING = {
-  headline: "Raksha Bandhan delivery — order by Monday, Aug 24",
+  headline: "Shipping options",
   orderByShort: "Mon, Aug 24",
   orderByLong: "Monday, August 24",
   festivalShort: "Aug 28",
-  weekendNote:
-    "Weekend orders welcome — place yours now and we'll prioritize packing Monday morning.",
-  standardTitle: "Standard shipping",
-  standardBullets: [
-    "Order by Mon, Aug 24",
-    "~90% arrive on Rakhi day (Aug 28) — we'll try our best",
+  weekendNote: "",
+  standardTitle: "Choose your delivery",
+  /** Three clear options: free standard, 3-day, 2-day. */
+  shippingBullets: [
+    "Free shipping — 6 days delivery",
+    "3-day delivery — $19",
+    "2-day delivery — $39",
   ],
-  standardBadge: "~90% on Rakhi day",
-  expeditedTitle: "3-day & 2-day shipping",
-  expeditedBullets: ["Confirmed delivery on Rakhi day (Aug 28)"],
-  expeditedBadge: "Confirmed on Rakhi day",
+  standardBullets: ["Free shipping — 6 days delivery"],
+  standardBadge: "Free · 6 days",
+  expeditedTitle: "Faster delivery",
+  expeditedBullets: ["3-day delivery — $19", "2-day delivery — $39"],
+  expeditedBadge: "Faster delivery",
 } as const;
 
 /** @deprecated Use RAKHI_DELIVERY_MESSAGING */
@@ -219,12 +221,9 @@ export const RAKHI_DELIVERY_URGENCY_NOTICE = {
   orderByShort: RAKHI_DELIVERY_MESSAGING.orderByShort,
   orderByLong: RAKHI_DELIVERY_MESSAGING.orderByLong,
   festivalShort: RAKHI_DELIVERY_MESSAGING.festivalShort,
-  body: `${RAKHI_DELIVERY_MESSAGING.standardBullets.join(". ")}. ${RAKHI_DELIVERY_MESSAGING.expeditedBullets[0]} — choose 3-day or 2-day at checkout.`,
-  compact: `${RAKHI_DELIVERY_MESSAGING.standardBullets[1]}. ${RAKHI_DELIVERY_MESSAGING.expeditedBullets[0]}.`,
-  compactBullets: [
-    ...RAKHI_DELIVERY_MESSAGING.standardBullets,
-    RAKHI_DELIVERY_MESSAGING.expeditedBullets[0]!,
-  ],
+  body: RAKHI_DELIVERY_MESSAGING.shippingBullets.join(". "),
+  compact: RAKHI_DELIVERY_MESSAGING.shippingBullets.join(" · "),
+  compactBullets: [...RAKHI_DELIVERY_MESSAGING.shippingBullets],
   weekendNote: RAKHI_DELIVERY_MESSAGING.weekendNote,
   successRateLabel: RAKHI_DELIVERY_MESSAGING.standardBadge,
   confirmedExpeditedLabel: "Confirmed on Rakhi day",

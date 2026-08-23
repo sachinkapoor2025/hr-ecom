@@ -51,7 +51,8 @@ describe("withCompetitiveStorefrontPricing", () => {
       currency: "USD" as const,
       categorySlug: "rakhi-hampers",
     });
-    assert.equal(result.price, 9.1); // 8% under $25
+    // 8% cut would be ~$9.10; storefront floor is $18
+    assert.equal(result.price, 18);
     assert.equal(result.compareAtPrice, 28.3);
   });
 
@@ -70,7 +71,8 @@ describe("withCompetitiveStorefrontPricing", () => {
       compareAtPrice: 22,
       currency: "USD" as const,
     });
-    assert.equal(result.price, 15.64); // 17 * 0.92
+    // 17 * 0.92 = 15.64 → floored to $18
+    assert.equal(result.price, 18);
     assert.equal(result.compareAtPrice, 22);
   });
 
@@ -81,8 +83,8 @@ describe("withCompetitiveStorefrontPricing", () => {
       currency: "USD" as const,
     });
     const twice = withCompetitiveStorefrontPricing(once);
-    assert.equal(once.price, 14.72);
-    assert.equal(twice.price, 14.72);
+    assert.equal(once.price, 18);
+    assert.equal(twice.price, 18);
     assert.equal(twice.compareAtPrice, 22);
     assert.equal(twice.storefrontPricingApplied, true);
   });
