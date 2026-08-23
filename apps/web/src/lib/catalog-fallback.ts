@@ -9,6 +9,7 @@ import {
   stripVendorPrivateFields,
   withCompetitiveStorefrontPricing,
   withForcedOutOfStockInventory,
+  withUsarakhiStockShortageNote,
   filterInStockStorefrontProducts,
   type Product,
 } from "@hr-ecom/shared";
@@ -47,12 +48,14 @@ export function getCatalogProducts(): Product[] {
     // Never expose vendorCost / vendorSlug to the browser via SSR props.
     const allowsAddons = productAllowsAddons(product);
     const publicProduct = withForcedOutOfStockInventory(
-      stripVendorPrivateFields(product) as Product
+      stripVendorPrivateFields(
+        withUsarakhiStockShortageNote(withCompetitiveStorefrontPricing(product))
+      ) as Product
     );
     publicProduct.allowsAddons = allowsAddons;
     // Rewrite legacy WordPress / non-www media hosts to CloudFront.
     publicProduct.images = resolveProductImageUrls(publicProduct.images);
-    bySlug.set(product.slug, withCompetitiveStorefrontPricing(publicProduct));
+    bySlug.set(product.slug, publicProduct);
   }
   cached = filterInStockStorefrontProducts([...bySlug.values()]);
   return cached;

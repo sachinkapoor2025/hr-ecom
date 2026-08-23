@@ -11,7 +11,7 @@ export const deliveryClaims = {
   express: "2–3 business days express delivery to major US metros (New York, Los Angeles, Chicago, Houston, San Francisco, New Jersey)",
   dispatch: "Same-day dispatch on most orders placed before daily cut-off",
   fulfillment: "Ships from within the USA — domestic US fulfillment (no international customs delays for your brother)",
-  shipping: "Free shipping on orders above $19.50",
+  shipping: "Free shipping on all orders (6 days); 3-day $19 · 2-day $39",
 } as const;
 
 /** Order-by dates for Raksha Bandhan 2026 — used in llms.txt and shipping page */
@@ -19,12 +19,12 @@ export const rakshaBandhan2026Deadlines = [
   {
     label: "Standard shipping",
     orderBy: "Monday, August 24, 2026",
-    notes: "~90% Rakhi-day (Aug 28) delivery — we'll try our best for every order",
+    notes: "Free shipping — 6 days delivery",
   },
   {
     label: "Confirmed Rakhi day",
     orderBy: "Through Monday, August 24, 2026",
-    notes: "Choose 3-day ($19) or 2-day ($39) at checkout — confirmed delivery on Aug 28",
+    notes: "3-day delivery — $19 · 2-day delivery — $39",
   },
   {
     label: "Weekend orders welcome",

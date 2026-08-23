@@ -24,8 +24,15 @@ const ELAPSED_KEY = "usarakhi_daily_deal_elapsed";
 const SHOW_AFTER_MS = 30_000;
 const SPIN_MS = 4200;
 
+/**
+ * Hold switch — set true to show Discount of the Day / spin wheel again.
+ * Currently off: wheel is not shown to storefront users.
+ */
+export const SPIN_WHEEL_ENABLED = false;
+
 /** Home, cart, and product detail only — not listing, shipping, blog, etc. */
 export function isSpinWheelPath(pathname: string): boolean {
+  if (!SPIN_WHEEL_ENABLED) return false;
   const path = pathname.replace(/\/+$/, "") || "/";
   if (path === "/") return true;
   if (path === "/cart") return true;

@@ -32,6 +32,8 @@ import {
   flashComboSaleEndsAt,
   FLASH_COMBO_SHIPPING_USD,
   productAllowsAddons,
+  USARAKHI_STOCK_SHORTAGE_NOTE,
+  shouldShowUsarakhiStockShortageNote,
 } from "@hr-ecom/shared";
 import { RakhiDeliverySummary } from "@/components/RakhiDeliverySummary";
 import { ProductCareAccordions } from "@/components/ProductCareAccordions";
@@ -169,6 +171,7 @@ export function ProductDetailClient({
     cart?.items.filter((i) => i.productSlug === product.slug).reduce((s, i) => s + i.quantity, 0) ?? 0;
   const inCart = cartQuantity > 0;
   const showAddons = product.allowsAddons === true && productAllowsAddons(product);
+  const showStockShortageNote = shouldShowUsarakhiStockShortageNote(product);
   const lowStock = product.inventory > 0 && product.inventory <= LOW_STOCK_THRESHOLD;
   const fastSelling = isFastSelling(product);
   const unitsSold = getUnitsSold(product);
@@ -247,6 +250,15 @@ export function ProductDetailClient({
             </p>
           )}
 
+          {showStockShortageNote ? (
+            <div
+              className="mb-4 rounded-lg border border-amber-300 bg-amber-50 px-3.5 py-3 text-sm text-slate-900"
+              role="note"
+            >
+              <p className="font-bold text-primary">Important</p>
+              <p className="mt-1 leading-snug font-medium">{USARAKHI_STOCK_SHORTAGE_NOTE}</p>
+            </div>
+          ) : null}
           <RakhiDeliverySummary datePrefix="Estimated delivery:" className="mb-4" />
 
           <TrustBadges variant="compact" className="mb-5" />

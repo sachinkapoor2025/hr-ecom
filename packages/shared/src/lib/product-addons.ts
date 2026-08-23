@@ -28,59 +28,14 @@ export const RAKHI_ADDON_PRICE_USD = RAKHI_ADDON_BUNDLE_USD[1];
 /** Max packs of a single add-on per cart line. */
 export const MAX_PRODUCT_ADDON_QUANTITY = 10;
 
-/** Fixed UsaRakhi PDP add-on catalog (USD). Not Dynamo SKUs. */
+/**
+ * Fixed UsaRakhi PDP add-on catalog (USD). Not Dynamo SKUs.
+ * Dry fruits (badam/pista/kaju) and Hershey’s removed for peak-season stock.
+ * Chocolate names match storefront: Lindor chocolates / Ferrero Rocher / Mixed chocolates.
+ */
 export const PRODUCT_ADDONS: readonly ProductAddonDef[] = [
   {
-    id: "badam-100g",
-    name: "Badam (Almonds) — 100 g",
-    priceUsd: 10.5,
-    group: "dry-fruits",
-    detail: "100 g",
-  },
-  {
-    id: "kaju-100g",
-    name: "Kaju (Cashews) — 100 g",
-    priceUsd: 10.5,
-    group: "dry-fruits",
-    detail: "100 g",
-  },
-  {
-    id: "pista-100g",
-    name: "Pista (Pistachios) — 100 g",
-    priceUsd: 10.5,
-    group: "dry-fruits",
-    detail: "100 g",
-  },
-  {
-    id: "badam-200g",
-    name: "Badam (Almonds) — 200 g",
-    priceUsd: 16.5,
-    group: "dry-fruits",
-    detail: "200 g",
-  },
-  {
-    id: "kaju-200g",
-    name: "Kaju (Cashews) — 200 g",
-    priceUsd: 16.5,
-    group: "dry-fruits",
-    detail: "200 g",
-  },
-  {
-    id: "pista-200g",
-    name: "Pista (Pistachios) — 200 g",
-    priceUsd: 16.5,
-    group: "dry-fruits",
-    detail: "200 g",
-  },
-  {
-    id: "hershey-2pc",
-    name: "Hershey’s chocolates (2 pcs)",
-    priceUsd: 6.5,
-    group: "chocolates",
-    detail: "2 pcs",
-  },
-  {
-    /** Legacy id — pack is now 3 pcs; keep id so existing carts still resolve. */
+    /** Legacy id — pack is 3 pcs; keep id so existing carts still resolve. */
     id: "lindt-5pc",
     name: "Lindor chocolates (3 pcs)",
     priceUsd: 10.5,
@@ -91,6 +46,13 @@ export const PRODUCT_ADDONS: readonly ProductAddonDef[] = [
     id: "ferrero-3pc",
     name: "Ferrero Rocher (3 pcs)",
     priceUsd: 6.5,
+    group: "chocolates",
+    detail: "3 pcs",
+  },
+  {
+    id: "mixed-chocolates-3pc",
+    name: "Mixed chocolates (3 pcs)",
+    priceUsd: 4.99,
     group: "chocolates",
     detail: "3 pcs",
   },

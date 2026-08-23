@@ -15,6 +15,7 @@ import {
   resolveProductImagesForUpsert,
   withForcedOutOfStockInventory,
   filterInStockStorefrontProducts,
+  withUsarakhiStockShortageNote,
   type Product,
 } from "@hr-ecom/shared";
 import { docClient, PRODUCTS_TABLE, now, slugify } from "../lib/db";
@@ -27,7 +28,9 @@ import { ensureProductInDb } from "../lib/ensure-product";
 function forStorefront(product: Product): Product {
   const allowsAddons = productAllowsAddons(product);
   const stripped = stripVendorPrivateFields(
-    withCompetitiveStorefrontPricing(withResolvedProductImages(product))
+    withUsarakhiStockShortageNote(
+      withCompetitiveStorefrontPricing(withResolvedProductImages(product))
+    )
   );
   return withForcedOutOfStockInventory({ ...stripped, allowsAddons } as Product);
 }

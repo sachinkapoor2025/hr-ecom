@@ -179,7 +179,7 @@ export default function AdminShippingSettingsPage() {
               className="mt-1 w-full border rounded-lg px-3 py-2"
             >
               <option value="free">
-                Free shipping above $19.50 ($7.99 from $1–$9.99; $3.99 from $10–$19.50; absorb label cost)
+                Free shipping on all orders (no minimum). Expedited: 3-day $19 · 2-day $39.
               </option>
               <option value="pass_through">Pass through selected rate to customer</option>
             </select>

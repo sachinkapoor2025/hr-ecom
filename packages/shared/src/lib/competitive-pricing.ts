@@ -51,11 +51,16 @@ type VendorPriced = Priced & {
   slug?: string;
 };
 
+/** Minimum UsaRakhi storefront price (USD) after competitive cuts. */
+export const MIN_USARAKHI_STOREFRONT_PRICE_USD = 20;
+
+
 /**
  * Storefront view of a product: lower selling price + keep/raise compare-at
  * so the original catalog price still shows as strikethrough.
  * Vendor-priced products (e.g. Orange County hampers) keep their sale/list prices as stored.
  * Safe to call more than once — never stacks competitive cuts.
+ * UsaRakhi selling price never goes below $20.
  */
 export function withCompetitiveStorefrontPricing<T extends VendorPriced>(product: T): T {
   // Flash combo price is owned by code — never show a stale Dynamo $3.99.
@@ -71,9 +76,16 @@ export function withCompetitiveStorefrontPricing<T extends VendorPriced>(product
 
   const currency = product.currency ?? "USD";
   const original = product.price;
-  const reduced = applyCompetitivePriceReduction(original, currency);
+  let reduced = applyCompetitivePriceReduction(original, currency);
+  if (currency === "USD") {
+    reduced = Math.max(reduced, MIN_USARAKHI_STOREFRONT_PRICE_USD);
+  }
   if (reduced >= original) {
-    return { ...product, storefrontPricingApplied: true };
+    return {
+      ...product,
+      price: Math.max(original, currency === "USD" ? MIN_USARAKHI_STOREFRONT_PRICE_USD : original),
+      storefrontPricingApplied: true,
+    };
   }
 
   const compareAtPrice = Math.max(product.compareAtPrice ?? 0, original);

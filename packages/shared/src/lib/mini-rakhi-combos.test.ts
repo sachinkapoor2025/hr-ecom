@@ -31,10 +31,10 @@ describe("mini rakhi combos", () => {
       assert.ok(product.images.length >= 2);
       const size = detectRakhiSetSize(product);
       assert.ok(size === 2 || size === 3 || size === 4 || size === 5);
-      if (size === 2) assert.equal(product.price, 8.99);
-      if (size === 3) assert.equal(product.price, 9.99);
-      if (size === 4) assert.equal(product.price, 10.99);
-      if (size === 5) assert.equal(product.price, 11.5);
+      if (size === 2) assert.equal(product.price, 20);
+      if (size === 3) assert.equal(product.price, 20);
+      if (size === 4) assert.equal(product.price, 20);
+      if (size === 5) assert.equal(product.price, 20);
     }
   });
 });

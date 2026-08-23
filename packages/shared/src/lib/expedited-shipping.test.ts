@@ -94,13 +94,13 @@ describe("expedited-shipping", () => {
     assert.equal(shippingOptionServiceCode("standard"), "STANDARD");
   });
 
-  it("uses optimistic Rakhi urgency copy with Monday order-by and ~90% framing", async () => {
-    const { RAKHI_DELIVERY_MESSAGING, RAKHI_ORDER_BY_DATE } = await import("./expedited-shipping");
-    assert.equal(RAKHI_ORDER_BY_DATE, "2026-08-24");
-    assert.match(RAKHI_DELIVERY_MESSAGING.headline, /Monday/i);
-    assert.match(RAKHI_DELIVERY_MESSAGING.standardBullets[1] ?? "", /90/i);
-    assert.doesNotMatch(RAKHI_DELIVERY_MESSAGING.standardBullets[1] ?? "", /3-day|2-day/i);
-    assert.match(RAKHI_DELIVERY_MESSAGING.expeditedBullets[0] ?? "", /Confirmed/i);
-    assert.match(RAKHI_DELIVERY_MESSAGING.weekendNote, /weekend/i);
+  it("lists free 6-day, 3-day $19, and 2-day $39 without calendar dates", async () => {
+    const { RAKHI_DELIVERY_MESSAGING } = await import("./expedited-shipping");
+    assert.deepEqual(RAKHI_DELIVERY_MESSAGING.shippingBullets, [
+      "Free shipping — 6 days delivery",
+      "3-day delivery — $19",
+      "2-day delivery — $39",
+    ]);
+    assert.doesNotMatch(RAKHI_DELIVERY_MESSAGING.shippingBullets.join(" "), /\bAug\b|2026|Monday/i);
   });
 });

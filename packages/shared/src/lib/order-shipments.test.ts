@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { buildOrderShipments, validateShipmentsPartitionCart } from "./order-shipments";
-import { BELOW_THRESHOLD_SHIPPING_USD } from "./free-shipping";
 import type { CartItem } from "../schemas/cart";
 import type { CheckoutShipment } from "../schemas/order";
 
@@ -19,7 +18,7 @@ const addr = (name: string) => ({
 });
 
 describe("buildOrderShipments", () => {
-  it("charges shipping only on under-threshold deliveries", () => {
+  it("charges $0 shipping on every delivery (standard is always free)", () => {
     const cart: CartItem[] = [
       { productSlug: "a", name: "A", price: 20, currency: "USD", quantity: 1 },
       { productSlug: "b", name: "B", price: 21, currency: "USD", quantity: 1 },
@@ -40,11 +39,11 @@ describe("buildOrderShipments", () => {
     if ("error" in built) return;
     assert.equal(built.shipments[0].shipping, 0);
     assert.equal(built.shipments[1].shipping, 0);
-    assert.equal(built.shipments[2].shipping, BELOW_THRESHOLD_SHIPPING_USD);
-    assert.equal(built.shippingTotal, BELOW_THRESHOLD_SHIPPING_USD);
+    assert.equal(built.shipments[2].shipping, 0);
+    assert.equal(built.shippingTotal, 0);
   });
 
-  it("charges per vendor when mixed vendors share one address", () => {
+  it("keeps standard free when mixed vendors share one address", () => {
     const cart: CartItem[] = [
       { productSlug: "a", name: "A", price: 2.75, currency: "USD", quantity: 1 },
       {
@@ -73,8 +72,8 @@ describe("buildOrderShipments", () => {
     });
     assert.ok(!("error" in built));
     if ("error" in built) return;
-    assert.equal(built.shippingTotal, BELOW_THRESHOLD_SHIPPING_USD * 2);
-    assert.equal(built.shipments[0].shipping, BELOW_THRESHOLD_SHIPPING_USD * 2);
+    assert.equal(built.shippingTotal, 0);
+    assert.equal(built.shipments[0].shipping, 0);
   });
 
   it("rejects incomplete partitions", () => {

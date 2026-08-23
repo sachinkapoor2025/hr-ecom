@@ -5,23 +5,23 @@ type Props = {
   highlightFirst?: boolean;
 };
 
-/** Styled bullet list for Rakhi delivery urgency copy. */
+/** Styled bullet list for shipping options. */
 export function RakhiDeliveryBulletList({
   items,
   className = "",
   highlightFirst = false,
 }: Props) {
   return (
-    <ul className={`mt-2 space-y-1.5 ${className}`}>
+    <ul className={`mt-2 space-y-1.5 list-none ${className}`}>
       {items.map((item, index) => (
-        <li key={item} className="flex gap-2 text-xs sm:text-sm text-slate-700 leading-snug">
+        <li key={item} className="flex gap-2.5 text-sm text-slate-800 leading-snug">
           <span
-            className="mt-[0.35rem] h-1.5 w-1.5 shrink-0 rounded-full bg-nav"
+            className="mt-[0.4rem] h-1.5 w-1.5 shrink-0 rounded-full bg-nav"
             aria-hidden
           />
           <span
             className={
-              highlightFirst && index === 0 ? "font-semibold text-primary" : undefined
+              highlightFirst && index === 0 ? "font-semibold text-primary" : "font-medium"
             }
           >
             {item}

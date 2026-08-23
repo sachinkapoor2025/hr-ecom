@@ -109,7 +109,7 @@ export function buildOrderShipments(input: {
     };
   }
 
-  /** Per address × vendor: $1–$9.99 → $7.99; $10–$19.50 → $3.99; above $19.50 → free. */
+  /** Per address × vendor: standard shipping is always free (no cart minimum). */
   const perAddress = built.map((s) =>
     quoteAddressShipmentShipping({
       items: s.items,

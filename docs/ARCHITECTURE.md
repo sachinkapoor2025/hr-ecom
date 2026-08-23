@@ -229,7 +229,7 @@ Admin **Product Sales Intelligence** (`/admin/product-sales`) aggregates **paid 
 
 **Stripe toggle:** `STRIPE_PAYMENTS_ENABLED` in `packages/shared/src/constants.ts` (currently `true`). Set to `false` to hide Stripe on checkout and block new Stripe PaymentIntents; Razorpay keeps working. Existing Stripe webhooks still work for any in-flight intents.
 
-**Rakhi expedited shipping:** Checkout `shippingOption` — `standard` (threshold tiers: $7.99 / $3.99 / free above $19.50), `three_day` ($19 flat: 1 pack + 3 transit business days), or `two_day` ($39 flat: 2 transit). Expedited replaces standard cart shipping. Weekend USPS notice is shown on cart, checkout, and `/shipping`. Logic: `packages/shared/src/lib/expedited-shipping.ts`.
+**Rakhi expedited shipping:** Checkout `shippingOption` — `standard` (always free, no cart minimum), `three_day` ($19 flat), or `two_day` ($39 flat). Expedited replaces standard cart shipping. Logic: `packages/shared/src/lib/expedited-shipping.ts`.
 
 Requires GitHub secret `RAZORPAY_WEBHOOK_SECRET` and Razorpay Dashboard webhook to `{API}/webhooks/razorpay` for events `payment.captured`, `order.paid`, `qr_code.credited`.
 

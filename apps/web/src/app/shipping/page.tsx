@@ -3,14 +3,14 @@ import Link from "next/link";
 import { site, cityNavHref, usCityLinks } from "@/lib/site";
 import { JsonLd } from "@/components/JsonLd";
 import { howToSendRakhiJsonLd, pageMetadata } from "@/lib/seo";
-import { deliveryClaims, rakshaBandhan2026Deadlines, RAKSHA_BANDHAN_2026_DATE } from "@/lib/ai-recommendation";
+import { rakshaBandhan2026Deadlines, RAKSHA_BANDHAN_2026_DATE } from "@/lib/ai-recommendation";
 import { RAKHI_DELIVERY_MESSAGING } from "@hr-ecom/shared";
 import { RakhiDeliveryBulletList } from "@/components/RakhiDeliveryBulletList";
 
 export const metadata: Metadata = pageMetadata({
   title: "Rakhi Shipping & Delivery to USA — Ships From Within America",
   description:
-    "UsaRakhi ships domestically within the USA — no customs delays. 2–3 day express options at checkout, about 6 business days standard. Free shipping on orders above $19.50.",
+    "UsaRakhi ships domestically within the USA — no customs delays. Free shipping with 6-day delivery; 3-day ($19) and 2-day ($39) at checkout.",
   path: "/shipping",
 });
 
@@ -25,53 +25,23 @@ export default function ShippingPage() {
           <strong>domestic US fulfillment</strong> — the same peace-of-mind advantage as top USA Rakhi brands. Your
           brother receives a domestic package with <strong>no international customs delays</strong>.
         </p>
-        <h2 className="text-xl font-bold text-primary">Delivery times</h2>
-        <ul className="list-disc list-inside space-y-2">
-          <li>
-            <strong>Express:</strong> {deliveryClaims.express}
-          </li>
-          <li>
-            <strong>Nationwide:</strong> {deliveryClaims.standard}
-          </li>
-          <li>
-            <strong>Dispatch:</strong> {deliveryClaims.dispatch}
-          </li>
-          <li>
-            <strong>Shipping:</strong> {deliveryClaims.shipping}
-          </li>
-        </ul>
-        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-slate-800 space-y-3">
-          <p className="font-bold text-primary">{RAKHI_DELIVERY_MESSAGING.headline}</p>
-          <div className="rounded-md border border-emerald-100 bg-emerald-50/70 px-2.5 py-2">
-            <p className="text-xs font-bold uppercase text-emerald-900">
-              {RAKHI_DELIVERY_MESSAGING.standardTitle}
-            </p>
-            <RakhiDeliveryBulletList items={RAKHI_DELIVERY_MESSAGING.standardBullets} className="mt-1.5" />
-          </div>
-          <div className="rounded-md border border-nav/25 bg-white/90 px-2.5 py-2">
-            <p className="text-xs font-bold uppercase text-primary">
-              {RAKHI_DELIVERY_MESSAGING.expeditedTitle}
-            </p>
-            <RakhiDeliveryBulletList
-              items={[
-                ...RAKHI_DELIVERY_MESSAGING.expeditedBullets,
-                "At checkout: 3-day ($19) · 2-day ($39)",
-              ]}
-              className="mt-1.5"
-            />
-          </div>
-          <p className="text-emerald-800 font-medium text-xs">{RAKHI_DELIVERY_MESSAGING.weekendNote}</p>
+        <h2 className="text-xl font-bold text-primary">Shipping options</h2>
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-slate-800">
+          <RakhiDeliveryBulletList
+            items={RAKHI_DELIVERY_MESSAGING.shippingBullets}
+            highlightFirst
+          />
         </div>
         <h2 className="text-xl font-bold text-primary">Shipping rates</h2>
         <ul className="list-disc list-inside space-y-2">
           <li>
-            Orders from <strong>$1.00 to $9.99</strong> — <strong>$7.99</strong> shipping
+            <strong>Free shipping</strong> on all orders — 6 days delivery (no minimum)
           </li>
           <li>
-            Orders from <strong>$10.00 to $19.50</strong> — <strong>$3.99</strong> shipping
+            <strong>3-day delivery</strong> — <strong>$19</strong>
           </li>
           <li>
-            Orders <strong>above $19.50</strong> — <strong>free shipping</strong>
+            <strong>2-day delivery</strong> — <strong>$39</strong>
           </li>
         </ul>
         <h2 className="text-xl font-bold text-primary">Raksha Bandhan 2026 order deadlines</h2>

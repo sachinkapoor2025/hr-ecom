@@ -51,17 +51,18 @@ describe("withCompetitiveStorefrontPricing", () => {
       currency: "USD" as const,
       categorySlug: "rakhi-hampers",
     });
-    assert.equal(result.price, 9.1); // 8% under $25
+    // 8% cut would be ~$9.10; storefront floor is $20
+    assert.equal(result.price, 20);
     assert.equal(result.compareAtPrice, 28.3);
   });
 
   it("lowers price and preserves original as compare-at", () => {
     const result = withCompetitiveStorefrontPricing({
-      price: 20,
+      price: 22,
       currency: "USD" as const,
     });
-    assert.equal(result.price, 18.4);
-    assert.equal(result.compareAtPrice, 20);
+    assert.equal(result.price, 20.24); // 8%
+    assert.equal(result.compareAtPrice, 22);
   });
 
   it("keeps a higher existing compare-at", () => {
@@ -70,7 +71,8 @@ describe("withCompetitiveStorefrontPricing", () => {
       compareAtPrice: 22,
       currency: "USD" as const,
     });
-    assert.equal(result.price, 15.64); // 17 * 0.92
+    // 17 * 0.92 = 15.64 → floored to $20
+    assert.equal(result.price, 20);
     assert.equal(result.compareAtPrice, 22);
   });
 
@@ -81,8 +83,8 @@ describe("withCompetitiveStorefrontPricing", () => {
       currency: "USD" as const,
     });
     const twice = withCompetitiveStorefrontPricing(once);
-    assert.equal(once.price, 14.72);
-    assert.equal(twice.price, 14.72);
+    assert.equal(once.price, 20);
+    assert.equal(twice.price, 20);
     assert.equal(twice.compareAtPrice, 22);
     assert.equal(twice.storefrontPricingApplied, true);
   });

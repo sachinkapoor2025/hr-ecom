@@ -1,95 +1,51 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
-  BELOW_THRESHOLD_SHIPPING_USD,
-  FREE_SHIPPING_ABOVE_USD,
-  FREE_SHIPPING_MIN_SUBTOTAL_USD,
-  REDUCED_SHIPPING_MIN_SUBTOTAL_USD,
-  REDUCED_SHIPPING_USD,
   quoteAddressShipmentShipping,
   quoteFreeShippingThreshold,
   quoteShipmentsShipping,
 } from "./free-shipping";
 
 describe("quoteFreeShippingThreshold", () => {
-  it("charges $7.99 when cart is $1–$9.99", () => {
-    const quote = quoteFreeShippingThreshold({
-      subtotal: 3.99,
-      currency: "USD",
-      usdInrRate: 96,
-    });
-    assert.equal(quote.qualifiesForFreeShipping, false);
-    assert.equal(quote.tier, "low");
-    assert.equal(quote.charge, BELOW_THRESHOLD_SHIPPING_USD);
-    assert.ok(
-      Math.abs(quote.amountAwayFromFreeShipping - (FREE_SHIPPING_MIN_SUBTOTAL_USD - 3.99)) < 0.001
-    );
-    assert.ok(
-      Math.abs(quote.amountAwayFromReducedShipping - (REDUCED_SHIPPING_MIN_SUBTOTAL_USD - 3.99)) <
-        0.001
-    );
+  it("is free with no cart minimum", () => {
+    for (const subtotal of [0, 3.99, 10, 19.99, 20, 50]) {
+      const quote = quoteFreeShippingThreshold({
+        subtotal,
+        currency: "USD",
+        usdInrRate: 96,
+      });
+      assert.equal(quote.qualifiesForFreeShipping, true);
+      assert.equal(quote.tier, "free");
+      assert.equal(quote.charge, 0);
+      assert.equal(quote.amountAwayFromFreeShipping, 0);
+    }
   });
 
-  it("charges $3.99 from $10 through $19.50", () => {
-    const atTen = quoteFreeShippingThreshold({
-      subtotal: REDUCED_SHIPPING_MIN_SUBTOTAL_USD,
-      currency: "USD",
-      usdInrRate: 96,
-    });
-    assert.equal(atTen.qualifiesForFreeShipping, false);
-    assert.equal(atTen.tier, "mid");
-    assert.equal(atTen.charge, REDUCED_SHIPPING_USD);
-    assert.equal(atTen.amountAwayFromReducedShipping, 0);
-
-    const atCutoff = quoteFreeShippingThreshold({
-      subtotal: FREE_SHIPPING_ABOVE_USD,
-      currency: "USD",
-      usdInrRate: 96,
-    });
-    assert.equal(atCutoff.qualifiesForFreeShipping, false);
-    assert.equal(atCutoff.charge, REDUCED_SHIPPING_USD);
-  });
-
-  it("is free above $19.50", () => {
+  it("is free for INR carts with no minimum", () => {
     const quote = quoteFreeShippingThreshold({
-      subtotal: FREE_SHIPPING_MIN_SUBTOTAL_USD,
-      currency: "USD",
-      usdInrRate: 96,
+      subtotal: 100,
+      currency: "INR",
+      usdInrRate: 100,
     });
     assert.equal(quote.qualifiesForFreeShipping, true);
     assert.equal(quote.charge, 0);
-    assert.equal(quote.amountAwayFromFreeShipping, 0);
-  });
-
-  it("applies the same USD threshold for INR carts", () => {
-    const rate = 100;
-    const quote = quoteFreeShippingThreshold({
-      subtotal: 600,
-      currency: "INR",
-      usdInrRate: rate,
-    });
-    assert.equal(quote.qualifiesForFreeShipping, false);
-    assert.equal(quote.charge, Math.round(BELOW_THRESHOLD_SHIPPING_USD * rate));
-    assert.equal(quote.thresholdInCurrency, Math.round(FREE_SHIPPING_MIN_SUBTOTAL_USD * rate));
   });
 });
 
 describe("quoteShipmentsShipping", () => {
-  it("applies tiers per delivery bucket", () => {
+  it("charges $0 for every delivery bucket", () => {
     const { totalCharge, perShipment } = quoteShipmentsShipping({
       shipmentSubtotals: [20, 10, 3],
       currency: "USD",
       usdInrRate: 96,
     });
-    assert.equal(perShipment[0].charge, 0);
-    assert.equal(perShipment[1].charge, REDUCED_SHIPPING_USD);
-    assert.equal(perShipment[2].charge, BELOW_THRESHOLD_SHIPPING_USD);
-    assert.equal(totalCharge, REDUCED_SHIPPING_USD + BELOW_THRESHOLD_SHIPPING_USD);
+    assert.equal(perShipment.every((q) => q.charge === 0), true);
+    assert.equal(totalCharge, 0);
   });
 });
 
 describe("quoteAddressShipmentShipping", () => {
-  it("charges per vendor when UsaRakhi and Orange County share an address", () => {
+  it("is free even when vendors share an address with small subtotals", () => {
     const { totalCharge, perVendor } = quoteAddressShipmentShipping({
       items: [
         { price: 3.99, quantity: 1 },
@@ -99,30 +55,17 @@ describe("quoteAddressShipmentShipping", () => {
       currency: "USD",
       usdInrRate: 96,
     });
-    // UsaRakhi $3.99 → $7.99; Orange County $53.99 → free
     assert.equal(perVendor.length, 2);
-    assert.equal(totalCharge, BELOW_THRESHOLD_SHIPPING_USD);
+    assert.equal(totalCharge, 0);
   });
 
-  it("charges $7.99 twice when both vendors are under $10", () => {
+  it("is free for small single-vendor carts", () => {
     const { totalCharge } = quoteAddressShipmentShipping({
-      items: [
-        { price: 3.99, quantity: 1 },
-        { price: 3, quantity: 1, vendorSlug: "orange-county" },
-      ],
+      items: [{ price: 3.99, quantity: 1 }],
       currency: "USD",
       usdInrRate: 96,
     });
-    assert.equal(totalCharge, BELOW_THRESHOLD_SHIPPING_USD * 2);
-  });
-
-  it("charges $3.99 when a vendor bucket is between $10 and $19.50", () => {
-    const { totalCharge } = quoteAddressShipmentShipping({
-      items: [{ price: 10, quantity: 1 }],
-      currency: "USD",
-      usdInrRate: 96,
-    });
-    assert.equal(totalCharge, REDUCED_SHIPPING_USD);
+    assert.equal(totalCharge, 0);
   });
 
   it("charges flat $0.99 shipping for flash-combo-only buckets", () => {
@@ -141,7 +84,7 @@ describe("quoteAddressShipmentShipping", () => {
     assert.equal(perVendor[0]?.charge, 0.99);
   });
 
-  it("counts add-ons toward free-shipping threshold", () => {
+  it("keeps standard free when add-ons are present", () => {
     const { totalCharge } = quoteAddressShipmentShipping({
       items: [
         {

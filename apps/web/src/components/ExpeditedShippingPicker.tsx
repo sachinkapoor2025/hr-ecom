@@ -2,15 +2,11 @@
 
 import {
   CHECKOUT_SHIPPING_OPTIONS,
-  EXPEDITED_THREE_DAY_SHIPPING_USD,
-  EXPEDITED_TWO_DAY_SHIPPING_USD,
   RAKHI_DELIVERY_MESSAGING,
-  canConfirmDeliveryByRakhi,
-  expeditedArrivalLabel,
   expeditedOptionPriceInCurrency,
   type CheckoutShippingOptionId,
 } from "@hr-ecom/shared";
-import { useCurrency, type DisplayCurrency } from "@/lib/currency-context";
+import type { DisplayCurrency } from "@/lib/currency-context";
 import { RakhiDeliverySummary } from "@/components/RakhiDeliverySummary";
 import { RakhiDeliveryBulletList } from "@/components/RakhiDeliveryBulletList";
 
@@ -40,23 +36,13 @@ export function ExpeditedShippingPicker({
   showHeader = true,
 }: Props) {
   const msg = RAKHI_DELIVERY_MESSAGING;
-  const three = formatMoney(
-    expeditedOptionPriceInCurrency("three_day", currency, usdInrRate),
-    currency
-  );
-  const two = formatMoney(
-    expeditedOptionPriceInCurrency("two_day", currency, usdInrRate),
-    currency
-  );
 
   return (
     <div className={`rounded-xl border border-amber-200 bg-amber-50/60 overflow-hidden ${className}`}>
       {showHeader ? (
         <div className="px-3.5 py-3 border-b border-amber-200/80 bg-white/70 space-y-2">
-          <p className="text-sm font-bold text-primary">{msg.expeditedTitle}</p>
-          <RakhiDeliveryBulletList
-            items={[...msg.expeditedBullets, `At checkout: 3-day (${three}) · 2-day (${two})`]}
-          />
+          <p className="text-sm font-bold text-primary">{msg.headline}</p>
+          <RakhiDeliveryBulletList items={msg.shippingBullets} highlightFirst />
         </div>
       ) : null}
 
@@ -64,7 +50,6 @@ export function ExpeditedShippingPicker({
         <legend className="sr-only">Shipping speed</legend>
         {CHECKOUT_SHIPPING_OPTIONS.map((option) => {
           const selected = value === option.id;
-          const canConfirm = canConfirmDeliveryByRakhi(option.id);
           const price =
             option.id === "standard"
               ? standardCharge
@@ -75,7 +60,6 @@ export function ExpeditedShippingPicker({
                 ? "FREE"
                 : formatMoney(standardCharge, currency)
               : formatMoney(price, currency);
-          const eta = expeditedArrivalLabel(option.id);
 
           return (
             <label
@@ -107,21 +91,8 @@ export function ExpeditedShippingPicker({
                     {priceLabel}
                   </span>
                 </span>
-                <span className="block text-xs text-slate-600 mt-1 leading-snug">{option.detail}</span>
-                <span className="mt-1.5 flex flex-wrap items-center gap-2 text-[11px]">
-                  {option.id === "standard" ? (
-                    <span className="rounded-full bg-emerald-50 text-emerald-800 px-2 py-0.5 font-semibold">
-                      {msg.standardBadge} · est. {eta}
-                    </span>
-                  ) : canConfirm ? (
-                    <span className="rounded-full bg-emerald-50 text-emerald-800 px-2 py-0.5 font-semibold">
-                      {msg.expeditedBadge} · est. {eta}
-                    </span>
-                  ) : (
-                    <span className="rounded-full bg-amber-50 text-amber-900 px-2 py-0.5 font-semibold">
-                      Choose 2-day for {msg.expeditedBadge.toLowerCase()} · est. {eta}
-                    </span>
-                  )}
+                <span className="block text-xs text-slate-600 mt-1 leading-snug">
+                  {option.detail}
                 </span>
               </span>
             </label>
