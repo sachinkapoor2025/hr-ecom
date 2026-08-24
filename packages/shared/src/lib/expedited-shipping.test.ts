@@ -95,8 +95,16 @@ describe("expedited-shipping", () => {
   });
 
   it("lists free 6-day, 3-day $19, and 2-day $39 without calendar dates", async () => {
-    const { RAKHI_DELIVERY_MESSAGING } = await import("./expedited-shipping");
+    const { RAKHI_DELIVERY_MESSAGING, RAKHI_LAST_MINUTE_GUARANTEE } = await import(
+      "./expedited-shipping"
+    );
+    assert.equal(
+      RAKHI_DELIVERY_MESSAGING.lastMinuteNote,
+      "Last-minute orders are accepted — Guaranteed delivery by Rakhi"
+    );
+    assert.equal(RAKHI_LAST_MINUTE_GUARANTEE, RAKHI_DELIVERY_MESSAGING.lastMinuteNote);
     assert.deepEqual(RAKHI_DELIVERY_MESSAGING.shippingBullets, [
+      "Last-minute orders are accepted — Guaranteed delivery by Rakhi",
       "Free shipping — 6 days delivery",
       "3-day delivery — $19",
       "2-day delivery — $39",
@@ -119,6 +127,7 @@ describe("expedited-shipping", () => {
     );
     assert.equal(defaultCheckoutShippingOption(ocItems), "three_day");
     assert.deepEqual([...shippingBulletsForCart(ocItems)], [
+      "Last-minute orders are accepted — Guaranteed delivery by Rakhi",
       "3-day delivery — $19",
       "2-day delivery — $39",
     ]);

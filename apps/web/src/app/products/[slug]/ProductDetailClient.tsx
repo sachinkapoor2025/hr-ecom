@@ -34,6 +34,8 @@ import {
   productAllowsAddons,
   USARAKHI_STOCK_SHORTAGE_NOTE,
   shouldShowUsarakhiStockShortageNote,
+  isOrangeCountyVendorProduct,
+  ORANGE_COUNTY_SHIPPING_BULLETS,
 } from "@hr-ecom/shared";
 import { RakhiDeliverySummary } from "@/components/RakhiDeliverySummary";
 import { ProductCareAccordions } from "@/components/ProductCareAccordions";
@@ -172,6 +174,9 @@ export function ProductDetailClient({
   const inCart = cartQuantity > 0;
   const showAddons = product.allowsAddons === true && productAllowsAddons(product);
   const showStockShortageNote = shouldShowUsarakhiStockShortageNote(product);
+  const shippingBullets = isOrangeCountyVendorProduct(product)
+    ? ORANGE_COUNTY_SHIPPING_BULLETS
+    : undefined;
   const lowStock = product.inventory > 0 && product.inventory <= LOW_STOCK_THRESHOLD;
   const fastSelling = isFastSelling(product);
   const unitsSold = getUnitsSold(product);
@@ -259,7 +264,11 @@ export function ProductDetailClient({
               <p className="mt-1 leading-snug font-medium">{USARAKHI_STOCK_SHORTAGE_NOTE}</p>
             </div>
           ) : null}
-          <RakhiDeliverySummary datePrefix="Estimated delivery:" className="mb-4" />
+          <RakhiDeliverySummary
+            datePrefix="Estimated delivery:"
+            className="mb-4"
+            bullets={shippingBullets}
+          />
 
           <TrustBadges variant="compact" className="mb-5" />
 

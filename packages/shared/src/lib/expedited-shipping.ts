@@ -72,7 +72,12 @@ export const ORANGE_COUNTY_CHECKOUT_SHIPPING_OPTIONS = CHECKOUT_SHIPPING_OPTIONS
   (o) => o.id === "three_day" || o.id === "two_day"
 );
 
+/** Peak-season guarantee for last-minute Rakhi orders (expedited OC shipping). */
+export const RAKHI_LAST_MINUTE_GUARANTEE =
+  "Last-minute orders are accepted — Guaranteed delivery by Rakhi";
+
 export const ORANGE_COUNTY_SHIPPING_BULLETS = [
+  RAKHI_LAST_MINUTE_GUARANTEE,
   "3-day delivery — $19",
   "2-day delivery — $39",
 ] as const;
@@ -235,6 +240,8 @@ export function expeditedArrivalLabel(
 /** Customer-facing shipping options — simple bullets, no calendar dates. */
 export const RAKHI_DELIVERY_MESSAGING = {
   headline: "Shipping options",
+  /** Shown above bullets on PDP / cart / checkout. */
+  lastMinuteNote: RAKHI_LAST_MINUTE_GUARANTEE,
   orderByShort: "Mon, Aug 24",
   orderByLong: "Monday, August 24",
   festivalShort: "Aug 28",
@@ -242,6 +249,7 @@ export const RAKHI_DELIVERY_MESSAGING = {
   standardTitle: "Choose your delivery",
   /** Three clear options: free standard, 3-day, 2-day. */
   shippingBullets: [
+    RAKHI_LAST_MINUTE_GUARANTEE,
     "Free shipping — 6 days delivery",
     "3-day delivery — $19",
     "2-day delivery — $39",
@@ -250,7 +258,7 @@ export const RAKHI_DELIVERY_MESSAGING = {
   standardBadge: "Free · 6 days",
   expeditedTitle: "Faster delivery",
   expeditedBullets: ["3-day delivery — $19", "2-day delivery — $39"],
-  expeditedBadge: "Faster delivery",
+  expeditedBadge: "Guaranteed by Rakhi",
 } as const;
 
 export function shippingBulletsForCart(

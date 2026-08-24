@@ -26,6 +26,9 @@ export default function ShippingPage() {
           brother receives a domestic package with <strong>no international customs delays</strong>.
         </p>
         <h2 className="text-xl font-bold text-primary">Shipping options</h2>
+        <p className="text-sm font-semibold text-slate-900">
+          {RAKHI_DELIVERY_MESSAGING.lastMinuteNote}
+        </p>
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-slate-800">
           <RakhiDeliveryBulletList
             items={RAKHI_DELIVERY_MESSAGING.shippingBullets}
@@ -35,7 +38,8 @@ export default function ShippingPage() {
         <h2 className="text-xl font-bold text-primary">Shipping rates</h2>
         <ul className="list-disc list-inside space-y-2">
           <li>
-            <strong>Free shipping</strong> on all orders — 6 days delivery (no minimum)
+            <strong>Last-minute orders accepted</strong> —{" "}
+            <strong>Guaranteed delivery by Rakhi</strong> with 3-day or 2-day shipping
           </li>
           <li>
             <strong>3-day delivery</strong> — <strong>$19</strong>
