@@ -14,7 +14,7 @@ export const EXPEDITED_TWO_DAY_SHIPPING_USD = 39;
 
 /**
  * Checkout shipping choice.
- * - `standard` — UsaRakhi only: $22 min order (top-up shipping below); delivery after Aug 28 · 5 business days
+ * - `standard` — UsaRakhi only: $25 min order (top-up shipping below); delivery after Aug 28 · 5 business days
  * - `three_day` — $19; 1 packing business day + 3 transit business days
  * - `two_day` — $39; 2 transit business days (priority pack)
  * Orange County carts: 3-day / 2-day only (no standard).
@@ -43,7 +43,7 @@ export const CHECKOUT_SHIPPING_OPTIONS: readonly ExpeditedShippingDef[] = [
     priceUsd: 0,
     packingBusinessDays: 1,
     transitBusinessDays: 5,
-    detail: "Standard — delivery after Aug 28 · 5 business days · $22 minimum order",
+    detail: "Standard — delivery after Aug 28 · 5 business days · $25 minimum order",
   },
   {
     id: "three_day",
@@ -239,7 +239,7 @@ export function expeditedArrivalLabel(
 }
 
 export const USARAKHI_SHIPPING_BULLETS = [
-  "Standard delivery — after Aug 28 · 5 business days ($22 minimum; small carts topped up at checkout)",
+  "Standard delivery — after Aug 28 · 5 business days ($25 minimum; small carts topped up at checkout)",
   "Free standard shipping on selected products",
   RAKHI_LAST_MINUTE_GUARANTEE,
   "3-day delivery — $19",
@@ -259,7 +259,7 @@ export const RAKHI_DELIVERY_MESSAGING = {
   shippingBullets: [...USARAKHI_SHIPPING_BULLETS],
   standardBullets: [
     "Standard delivery — after Aug 28 · 5 business days",
-    "Orders under $22: remaining amount added as shipping at checkout",
+    "Orders under $25: remaining amount added as shipping at checkout",
   ],
   standardBadge: "Standard · after Aug 28",
   expeditedTitle: "Faster delivery",

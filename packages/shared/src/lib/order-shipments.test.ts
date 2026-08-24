@@ -18,10 +18,10 @@ const addr = (name: string) => ({
 });
 
 describe("buildOrderShipments", () => {
-  it("charges UsaRakhi minimum top-up per delivery address ($22 floor)", () => {
+  it("charges UsaRakhi minimum top-up per delivery address ($25 floor)", () => {
     const cart: CartItem[] = [
       { productSlug: "a", name: "A", price: 20, currency: "USD", quantity: 1 },
-      { productSlug: "b", name: "B", price: 21, currency: "USD", quantity: 1 },
+      { productSlug: "b", name: "B", price: 24, currency: "USD", quantity: 1 },
       { productSlug: "c", name: "C", price: 3, currency: "USD", quantity: 1 },
     ];
     const shipments: CheckoutShipment[] = [
@@ -37,10 +37,10 @@ describe("buildOrderShipments", () => {
     });
     assert.ok(!("error" in built));
     if ("error" in built) return;
-    assert.equal(built.shipments[0].shipping, 2);
+    assert.equal(built.shipments[0].shipping, 5);
     assert.equal(built.shipments[1].shipping, 1);
-    assert.equal(built.shipments[2].shipping, 19);
-    assert.equal(built.shippingTotal, 22);
+    assert.equal(built.shipments[2].shipping, 22);
+    assert.equal(built.shippingTotal, 28);
   });
 
   it("charges UsaRakhi top-up only for UsaRakhi lines when mixed vendors share one address", () => {
@@ -72,8 +72,8 @@ describe("buildOrderShipments", () => {
     });
     assert.ok(!("error" in built));
     if ("error" in built) return;
-    assert.equal(built.shippingTotal, 19.25);
-    assert.equal(built.shipments[0].shipping, 19.25);
+    assert.equal(built.shippingTotal, 22.25);
+    assert.equal(built.shipments[0].shipping, 22.25);
   });
 
   it("rejects incomplete partitions", () => {

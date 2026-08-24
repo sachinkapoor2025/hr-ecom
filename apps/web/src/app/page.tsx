@@ -14,6 +14,7 @@ import { FlashSaleSection } from "@/components/FlashSaleSection";
 import { HomeSeoSection } from "@/components/HomeSeoSection";
 import { HomeRakshaBandhan2026Section } from "@/components/HomeRakshaBandhan2026Section";
 import { TrustStrip } from "@/components/TrustStrip";
+import { UsarakhiShareEmotionsBanner } from "@/components/UsarakhiShareEmotionsBanner";
 import { IndiaBuyerBanner } from "@/components/IndiaBuyerBanner";
 import { WhyTrustUsSection } from "@/components/WhyTrustUsSection";
 import { JsonLd } from "@/components/JsonLd";
@@ -107,6 +108,7 @@ export default async function HomePage() {
     <div>
       <JsonLd data={[faqJsonLd(faqs), howToSendRakhiJsonLd()]} />
       <HomeHero banners={getHomeBanners()} />
+      <UsarakhiShareEmotionsBanner />
       <CategoryShopIcons />
       <FlashSaleSection product={flashCombo} />
       <TrustStrip />

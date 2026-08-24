@@ -30,7 +30,7 @@ describe("expedited-shipping", () => {
     assert.equal(two?.packingBusinessDays, 0);
     assert.equal(two?.transitBusinessDays, 2);
     assert.equal(CHECKOUT_SHIPPING_OPTIONS.length, 3);
-    assert.match(standard?.detail ?? "", /\$22 minimum/);
+    assert.match(standard?.detail ?? "", /\$25 minimum/);
     assert.match(standard?.detail ?? "", /Aug 28/);
   });
 
@@ -103,7 +103,7 @@ describe("expedited-shipping", () => {
       shippingBulletsForCart,
     } = await import("./expedited-shipping");
 
-    assert.match(RAKHI_DELIVERY_MESSAGING.shippingBullets.join(" "), /\$22 minimum/);
+    assert.match(RAKHI_DELIVERY_MESSAGING.shippingBullets.join(" "), /\$25 minimum/);
     assert.match(RAKHI_DELIVERY_MESSAGING.shippingBullets.join(" "), /selected products/i);
 
     const usaItems = [{ vendorSlug: undefined }, { vendorSlug: "usarakhi" }];

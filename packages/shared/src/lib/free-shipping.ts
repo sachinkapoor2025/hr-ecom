@@ -14,12 +14,12 @@ import { cartLineUnitTotal } from "./product-addons";
  * UsaRakhi standard delivery: cart merchandise must reach this USD subtotal per vendor
  * bucket, or the customer pays the difference as shipping (subtotal + shipping ≥ minimum).
  */
-export const USARAKHI_MIN_ORDER_USD = 22;
+export const USARAKHI_MIN_ORDER_USD = 25;
 
 /** @deprecated Use USARAKHI_MIN_ORDER_USD — kept for admin/shipping snapshot compat. */
 export const FREE_SHIPPING_MIN_SUBTOTAL_USD = USARAKHI_MIN_ORDER_USD;
 
-/** @deprecated UsaRakhi uses $22 minimum top-up, not tiered fees. */
+/** @deprecated UsaRakhi uses $25 minimum top-up, not tiered fees. */
 export const FREE_SHIPPING_ABOVE_USD = USARAKHI_MIN_ORDER_USD;
 
 /** @deprecated Legacy mid-tier threshold (unused). */
@@ -31,10 +31,10 @@ export const BELOW_THRESHOLD_SHIPPING_USD = 0;
 /** @deprecated Legacy mid-tier fee (unused). */
 export const REDUCED_SHIPPING_USD = 0;
 
-/** Standard shipping is not universally free — UsaRakhi uses $22 minimum top-up. */
+/** Standard shipping is not universally free — UsaRakhi uses $25 minimum top-up. */
 export const STANDARD_SHIPPING_ALWAYS_FREE = false;
 
-/** Product tag for always-free standard shipping (even under $22). */
+/** Product tag for always-free standard shipping (even under $25). */
 export const FREE_STANDARD_SHIPPING_TAG = "free-standard-shipping";
 
 export function isFreeStandardShippingProduct(input: {
@@ -86,8 +86,8 @@ function toCurrency(
 }
 
 /**
- * UsaRakhi standard shipping: $22 minimum merchandise per vendor bucket.
- * Below $22, charge (minimum − subtotal) so merchandise + shipping meets the floor.
+ * UsaRakhi standard shipping: $25 minimum merchandise per vendor bucket.
+ * Below $25, charge (minimum − subtotal) so merchandise + shipping meets the floor.
  * Buckets where every line qualifies for free standard shipping pay $0.
  */
 export function quoteUsarakhiStandardShipping(input: {

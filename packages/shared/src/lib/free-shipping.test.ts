@@ -10,19 +10,19 @@ import {
 } from "./free-shipping";
 
 describe("quoteUsarakhiStandardShipping", () => {
-  it("charges the difference when subtotal is below $22", () => {
+  it("charges the difference when subtotal is below $25", () => {
     const quote = quoteUsarakhiStandardShipping({
       subtotal: 15,
       currency: "USD",
       usdInrRate: 96,
     });
-    assert.equal(quote.charge, 7);
+    assert.equal(quote.charge, 10);
     assert.equal(quote.qualifiesForFreeShipping, false);
     assert.equal(quote.tier, "low");
   });
 
-  it("is free at or above $22", () => {
-    for (const subtotal of [22, 25, 50]) {
+  it("is free at or above $25", () => {
+    for (const subtotal of [25, 30, 50]) {
       const quote = quoteUsarakhiStandardShipping({
         subtotal,
         currency: "USD",
@@ -45,14 +45,14 @@ describe("quoteUsarakhiStandardShipping", () => {
     assert.equal(quote.charge, 0);
   });
 
-  it("uses $22 minimum in INR", () => {
+  it("uses $25 minimum in INR", () => {
     const quote = quoteUsarakhiStandardShipping({
       subtotal: 1000,
       currency: "INR",
       usdInrRate: 100,
     });
-    assert.equal(quote.charge, 1200);
-    assert.equal(USARAKHI_MIN_ORDER_USD, 22);
+    assert.equal(quote.charge, 1500);
+    assert.equal(USARAKHI_MIN_ORDER_USD, 25);
   });
 });
 
@@ -68,21 +68,21 @@ describe("isFreeStandardShippingProduct", () => {
 });
 
 describe("quoteShipmentsShipping", () => {
-  it("tops up each subtotal bucket below $22", () => {
+  it("tops up each subtotal bucket below $25", () => {
     const { totalCharge, perShipment } = quoteShipmentsShipping({
       shipmentSubtotals: [20, 10, 25],
       currency: "USD",
       usdInrRate: 96,
     });
-    assert.equal(perShipment[0]!.charge, 2);
-    assert.equal(perShipment[1]!.charge, 12);
+    assert.equal(perShipment[0]!.charge, 5);
+    assert.equal(perShipment[1]!.charge, 15);
     assert.equal(perShipment[2]!.charge, 0);
-    assert.equal(totalCharge, 14);
+    assert.equal(totalCharge, 20);
   });
 });
 
 describe("quoteAddressShipmentShipping", () => {
-  it("applies $22 minimum to UsaRakhi vendor buckets only", () => {
+  it("applies $25 minimum to UsaRakhi vendor buckets only", () => {
     const { totalCharge, perVendor } = quoteAddressShipmentShipping({
       items: [
         { price: 18, quantity: 1 },
@@ -92,9 +92,9 @@ describe("quoteAddressShipmentShipping", () => {
       usdInrRate: 96,
     });
     assert.equal(perVendor.length, 2);
-    assert.equal(perVendor[0]!.charge, 4);
+    assert.equal(perVendor[0]!.charge, 7);
     assert.equal(perVendor[1]!.charge, 0);
-    assert.equal(totalCharge, 4);
+    assert.equal(totalCharge, 7);
   });
 
   it("charges flat $0.99 shipping for flash-combo-only buckets", () => {
@@ -125,6 +125,6 @@ describe("quoteAddressShipmentShipping", () => {
       currency: "USD",
       usdInrRate: 96,
     });
-    assert.equal(totalCharge, 7);
+    assert.equal(totalCharge, 10);
   });
 });
