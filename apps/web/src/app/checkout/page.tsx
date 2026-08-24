@@ -19,7 +19,7 @@ import { TrustBadges } from "@/components/TrustBadges";
 import { CouponInput } from "@/components/CouponInput";
 import { StripePaymentForm } from "@/components/StripePaymentForm";
 import { RazorpayQrPanel } from "@/components/RazorpayQrPanel";
-import { ExpeditedShippingPicker } from "@/components/ExpeditedShippingPicker";
+import { LastMinuteDeliveryTemplate } from "@/components/LastMinuteDeliveryTemplate";
 import { RecipientAddressFields } from "@/components/RecipientAddressFields";
 import { useCheckoutShippingOption } from "@/lib/checkout-shipping-option";
 import { loadWelcomeCoupon } from "@/lib/welcome-coupon";
@@ -808,7 +808,7 @@ function CheckoutPageInner() {
           </p>
         )}
         {!isRetry && shippingQuote.settingsMode !== "pass_through" ? (
-          <ExpeditedShippingPicker
+          <LastMinuteDeliveryTemplate
             value={shippingOption}
             onChange={setShippingOption}
             standardCharge={standardShippingCharge}
@@ -817,6 +817,7 @@ function CheckoutPageInner() {
             usdInrRate={usdInrRate}
             className="mb-6"
             options={checkoutShippingOptions}
+            name="last-minute-delivery-checkout"
           />
         ) : null}
 

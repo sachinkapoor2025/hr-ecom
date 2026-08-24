@@ -9,7 +9,7 @@ import { PaymentMethodIcons } from "@/components/PaymentMethodIcons";
 import { CheckoutLegalNotice } from "@/components/CheckoutLegalNotice";
 import { TrustBadges } from "@/components/TrustBadges";
 import { resolveImageUrl } from "@/lib/images";
-import { ExpeditedShippingPicker } from "@/components/ExpeditedShippingPicker";
+import { LastMinuteDeliveryTemplate } from "@/components/LastMinuteDeliveryTemplate";
 import { useCheckoutShippingOption } from "@/lib/checkout-shipping-option";
 import {
   cartLineUnitTotal,
@@ -204,7 +204,7 @@ export default function CartPage() {
               })}
             </ul>
 
-            <ExpeditedShippingPicker
+            <LastMinuteDeliveryTemplate
               value={shippingOption}
               onChange={setShippingOption}
               standardCharge={0}
@@ -213,6 +213,7 @@ export default function CartPage() {
               usdInrRate={usdInrRate}
               className="mt-8"
               options={shippingOptions}
+              name="last-minute-delivery-cart"
             />
           </div>
 
