@@ -9,8 +9,15 @@ import { PaymentMethodIcons } from "@/components/PaymentMethodIcons";
 import { CheckoutLegalNotice } from "@/components/CheckoutLegalNotice";
 import { TrustBadges } from "@/components/TrustBadges";
 import { resolveImageUrl } from "@/lib/images";
-import { RakhiDeliverySummary } from "@/components/RakhiDeliverySummary";
-import { cartLineUnitTotal, type CartItem } from "@hr-ecom/shared";
+import { LastMinuteDeliveryTemplate } from "@/components/LastMinuteDeliveryTemplate";
+import { useCheckoutShippingOption } from "@/lib/checkout-shipping-option";
+import {
+  cartLineUnitTotal,
+  checkoutShippingOptionsForCart,
+  expeditedOptionPriceInCurrency,
+  shippingOptionServiceName,
+  type CartItem,
+} from "@hr-ecom/shared";
 import type { DisplayCurrency } from "@/lib/currency-context";
 
 function TrashIcon() {
@@ -105,11 +112,14 @@ function AddonList({ item, format }: { item: CartItem; format: (n: number, c: Di
 
 export default function CartPage() {
   const { cart, loading } = useCart();
-  const { format, convert, displayCurrency } = useCurrency();
+  const { format, convert, displayCurrency, usdInrRate } = useCurrency();
+  const items = cart?.items ?? [];
+  const shippingOptions = checkoutShippingOptionsForCart(items);
+  const shippingOptionIds = shippingOptions.map((o) => o.id);
+  const [shippingOption, setShippingOption] = useCheckoutShippingOption(shippingOptionIds, items);
 
   if (loading) return <div className="p-10 text-center text-slate-600">Loading cart...</div>;
 
-  const items = cart?.items ?? [];
   const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
   const cartCurrency = (items[0]?.currency ?? "USD") as DisplayCurrency;
   const total = items.reduce((sum, i) => {
@@ -117,7 +127,8 @@ export default function CartPage() {
     return sum + convert(cartLineUnitTotal(i) * i.quantity, lineCurrency);
   }, 0);
   const currency = displayCurrency;
-  const estimatedTotal = total;
+  const shippingCharge = expeditedOptionPriceInCurrency(shippingOption, currency, usdInrRate);
+  const estimatedTotal = total + shippingCharge;
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 sm:py-10">
@@ -192,6 +203,18 @@ export default function CartPage() {
                 );
               })}
             </ul>
+
+            <LastMinuteDeliveryTemplate
+              value={shippingOption}
+              onChange={setShippingOption}
+              standardCharge={0}
+              formatMoney={format}
+              currency={currency}
+              usdInrRate={usdInrRate}
+              className="mt-8"
+              options={shippingOptions}
+              name="last-minute-delivery-cart"
+            />
           </div>
 
           <aside className="border border-slate-200 rounded-lg bg-white p-5 sm:p-6 lg:sticky lg:top-24">
@@ -203,15 +226,14 @@ export default function CartPage() {
                 <span className="font-medium text-slate-900">{format(total, currency)}</span>
               </div>
               <div className="flex items-center justify-between gap-4">
-                <span className="text-slate-700">Shipping fee</span>
-                <span className="font-medium text-slate-900 text-right">
-                  From $19 at checkout
+                <span className="text-slate-700">
+                  Shipping
+                  <span className="block text-xs text-slate-500 font-normal mt-0.5">
+                    {shippingOptionServiceName(shippingOption)}
+                  </span>
                 </span>
+                <span className="font-medium text-slate-900">{format(shippingCharge, currency)}</span>
               </div>
-              <p className="text-[11px] text-slate-500 leading-snug -mt-1">
-                3-day ($19) or 2-day ($39) — choose at checkout. Last-minute orders accepted with
-                Guaranteed delivery by Rakhi.
-              </p>
               <div className="flex items-center justify-between gap-4 pt-2 border-t border-slate-100">
                 <span className="font-bold text-slate-900">Estimated total</span>
                 <span className="font-bold text-accent text-base">{format(estimatedTotal, currency)}</span>
@@ -226,8 +248,6 @@ export default function CartPage() {
             </div>
 
             <TrustBadges variant="compact" className="mb-4" />
-
-            <RakhiDeliverySummary className="mb-5" />
 
             <Link
               href="/checkout"

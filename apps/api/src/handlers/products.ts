@@ -24,6 +24,11 @@ import { getAuth } from "../lib/auth";
 import { withResolvedProductImages, resolveProductImageUrl } from "../lib/images";
 import { syncInventoryAlertState } from "../lib/inventory";
 import { ensureProductInDb } from "../lib/ensure-product";
+import {
+  healAllPausedUsarakhiProducts,
+  healUsarakhiInventoryIfNeeded,
+  shouldHealUsarakhiInventory,
+} from "../lib/usarakhi-inventory-heal";
 
 function forStorefront(product: Product): Product {
   const allowsAddons = productAllowsAddons(product);
@@ -110,8 +115,9 @@ async function scanAllProducts(): Promise<Product[]> {
     ExclusiveStartKey = result.LastEvaluatedKey as Record<string, unknown> | undefined;
   } while (ExclusiveStartKey);
 
-  productListCache = { at: nowMs, items };
-  return items;
+  const healed = await healAllPausedUsarakhiProducts(items);
+  productListCache = { at: nowMs, items: healed };
+  return healed;
 }
 
 /** Call after product create/update/delete so storefront list stays fresh. */
@@ -161,6 +167,11 @@ export async function listProducts(event: APIGatewayProxyEventV2) {
     items = mergeMiniRakhiComboProducts(await scanAllProducts());
   }
 
+  // Category queries bypass scanAllProducts — heal any paused SKUs in this page too.
+  if (items.some((p) => shouldHealUsarakhiInventory(p))) {
+    items = await healAllPausedUsarakhiProducts(items);
+  }
+
   items = prepareStorefrontProducts(items);
   if (search) {
     items = items.filter(
@@ -204,7 +215,9 @@ export async function getProduct(event: APIGatewayProxyEventV2) {
   }
 
   if (!item) return notFound("Product not found");
-  const product = withForcedOutOfStockInventory(item as Product);
+  const healed = await healUsarakhiInventoryIfNeeded(item as Product);
+  if (healed !== item) invalidateProductListCache(healed.categorySlug);
+  const product = withForcedOutOfStockInventory(healed);
   if (product.published === false) return notFound("Product not found");
   // Sold-out SKUs stay reachable for SEO but cannot be ordered (inventory forced to 0).
   productGetCache.set(slug, { at: nowMs, product });

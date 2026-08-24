@@ -66,7 +66,8 @@ describe("withUsarakhiStockShortageNote", () => {
       vendorSlug: "usarakhi",
     });
     assert.ok(result.description?.includes(USARAKHI_STOCK_SHORTAGE_NOTE));
-    assert.match(result.description ?? "", /3 Ferrero Rocher or 3 Lindor chocolates or 3 Mixed chocolates/);
+    assert.match(result.description ?? "", /whichever chocolate is currently in stock/);
+    assert.match(result.description ?? "", /piece count shown on this page stays the same/);
   });
 
   it("does not append to single rakhi-only products", () => {

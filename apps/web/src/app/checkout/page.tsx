@@ -19,9 +19,9 @@ import { TrustBadges } from "@/components/TrustBadges";
 import { CouponInput } from "@/components/CouponInput";
 import { StripePaymentForm } from "@/components/StripePaymentForm";
 import { RazorpayQrPanel } from "@/components/RazorpayQrPanel";
-import { RakhiDeliverySummary } from "@/components/RakhiDeliverySummary";
-import { ExpeditedShippingPicker } from "@/components/ExpeditedShippingPicker";
+import { LastMinuteDeliveryTemplate } from "@/components/LastMinuteDeliveryTemplate";
 import { RecipientAddressFields } from "@/components/RecipientAddressFields";
+import { useCheckoutShippingOption } from "@/lib/checkout-shipping-option";
 import { loadWelcomeCoupon } from "@/lib/welcome-coupon";
 import {
   emptyShippingAddress,
@@ -48,9 +48,6 @@ import {
   shippingOptionServiceName,
   expeditedArrivalLabel,
   checkoutShippingOptionsForCart,
-  defaultCheckoutShippingOption,
-  shippingBulletsForCart,
-  type CheckoutShippingOptionId,
   type Order,
   type RateQuote,
   type ShippingAddress,
@@ -130,21 +127,15 @@ function CheckoutPageInner() {
     settingsMode: "free",
     customerCharge: 0,
   });
-  const [shippingOption, setShippingOption] = useState<CheckoutShippingOptionId>("three_day");
   const ratesTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const cartItemsForShipping = cart?.items ?? EMPTY_CART_ITEMS;
   const checkoutShippingOptions = checkoutShippingOptionsForCart(cartItemsForShipping);
-  const checkoutShippingBullets = shippingBulletsForCart(cartItemsForShipping);
-
-  useEffect(() => {
-    if (retryOrderId || cartLoading) return;
-    const preferred = defaultCheckoutShippingOption(cartItemsForShipping);
-    const allowed = new Set(checkoutShippingOptions.map((o) => o.id));
-    if (!allowed.has(shippingOption)) {
-      setShippingOption(preferred);
-    }
-  }, [retryOrderId, cartLoading, cart?.items, shippingOption]);
+  const checkoutShippingOptionIds = checkoutShippingOptions.map((o) => o.id);
+  const [shippingOption, setShippingOption] = useCheckoutShippingOption(
+    checkoutShippingOptionIds,
+    cartItemsForShipping
+  );
 
   const isAddressReadyForRates = useCallback((a: ShippingAddress) => {
     return Boolean(
@@ -816,22 +807,17 @@ function CheckoutPageInner() {
             Retrying payment for order <span className="font-mono">{retryOrder!.orderId.slice(0, 8)}…</span>
           </p>
         )}
-        <RakhiDeliverySummary
-          datePrefix="Estimated delivery:"
-          className="mb-4"
-          bullets={checkoutShippingBullets}
-        />
         {!isRetry && shippingQuote.settingsMode !== "pass_through" ? (
-          <ExpeditedShippingPicker
+          <LastMinuteDeliveryTemplate
             value={shippingOption}
             onChange={setShippingOption}
             standardCharge={standardShippingCharge}
             formatMoney={format}
             currency={displayCurrency}
             usdInrRate={usdInrRate}
-            showHeader={false}
             className="mb-6"
             options={checkoutShippingOptions}
+            name="last-minute-delivery-checkout"
           />
         ) : null}
 

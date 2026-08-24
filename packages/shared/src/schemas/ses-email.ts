@@ -292,13 +292,61 @@ export function isValidSesEmail(value: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
 }
 
-/** Replace {{name}}, {{company}}, {{email}} placeholders. */
-export function renderSesTemplate(
-  html: string,
-  vars: { name?: string; company?: string; email?: string }
-): string {
+/** Default values for campaign merge tags (send + admin preview). */
+export const SES_TEMPLATE_PLACEHOLDER_DEFAULTS = {
+  name: "there",
+  company: "",
+  email: "",
+  deliveryOption1: "2 DAYS DELIVERY",
+  deliveryPrice1: "$39",
+  deliveryOption2: "3 DAYS DELIVERY",
+  deliveryPrice2: "$19",
+  shopUrl: "https://www.usarakhi.com",
+  unsubscribeUrl: "https://www.usarakhi.com/email/unsubscribe/preview",
+} as const;
+
+export type SesTemplateVars = {
+  name?: string;
+  company?: string;
+  email?: string;
+  deliveryOption1?: string;
+  deliveryPrice1?: string;
+  deliveryOption2?: string;
+  deliveryPrice2?: string;
+  shopUrl?: string;
+};
+
+/** Replace {{name}}, {{CUSTOMER_NAME}}, delivery, shop, and related placeholders. */
+export function renderSesTemplate(html: string, vars: SesTemplateVars = {}): string {
+  const name = vars.name?.trim() || SES_TEMPLATE_PLACEHOLDER_DEFAULTS.name;
+  const shopUrl = vars.shopUrl?.trim() || SES_TEMPLATE_PLACEHOLDER_DEFAULTS.shopUrl;
   return html
-    .replace(/\{\{\s*name\s*\}\}/gi, vars.name?.trim() || "there")
-    .replace(/\{\{\s*company\s*\}\}/gi, vars.company?.trim() || "")
-    .replace(/\{\{\s*email\s*\}\}/gi, vars.email?.trim() || "");
+    .replace(/\{\{\s*CUSTOMER_NAME\s*\}\}/gi, name)
+    .replace(/\{\{\s*name\s*\}\}/gi, name)
+    .replace(/\{\{\s*company\s*\}\}/gi, vars.company?.trim() || SES_TEMPLATE_PLACEHOLDER_DEFAULTS.company)
+    .replace(/\{\{\s*email\s*\}\}/gi, vars.email?.trim() || SES_TEMPLATE_PLACEHOLDER_DEFAULTS.email)
+    .replace(
+      /\{\{\s*DELIVERY_OPTION_1\s*\}\}/gi,
+      vars.deliveryOption1?.trim() || SES_TEMPLATE_PLACEHOLDER_DEFAULTS.deliveryOption1
+    )
+    .replace(
+      /\{\{\s*DELIVERY_PRICE_1\s*\}\}/gi,
+      vars.deliveryPrice1?.trim() || SES_TEMPLATE_PLACEHOLDER_DEFAULTS.deliveryPrice1
+    )
+    .replace(
+      /\{\{\s*DELIVERY_OPTION_2\s*\}\}/gi,
+      vars.deliveryOption2?.trim() || SES_TEMPLATE_PLACEHOLDER_DEFAULTS.deliveryOption2
+    )
+    .replace(
+      /\{\{\s*DELIVERY_PRICE_2\s*\}\}/gi,
+      vars.deliveryPrice2?.trim() || SES_TEMPLATE_PLACEHOLDER_DEFAULTS.deliveryPrice2
+    )
+    .replace(/\{\{\s*SHOP_URL\s*\}\}/gi, shopUrl);
+}
+
+/** Fill merge tags for Admin desktop/mobile preview (does not send). */
+export function previewSesTemplateHtml(html: string): string {
+  return renderSesTemplate(html, { name: "Priya" })
+    .replace(/\{\{\s*UNSUBSCRIBE_URL\s*\}\}/gi, SES_TEMPLATE_PLACEHOLDER_DEFAULTS.unsubscribeUrl)
+    .replace(/\{\{\s*unsubscribe\s*\}\}/gi, SES_TEMPLATE_PLACEHOLDER_DEFAULTS.unsubscribeUrl);
 }

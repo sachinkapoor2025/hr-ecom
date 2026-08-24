@@ -185,9 +185,13 @@ function ComposeInner() {
     <div className="space-y-6 max-w-3xl">
       <h1 className="text-2xl font-bold text-primary">Compose Email</h1>
       <p className="text-sm text-slate-500">
-        Variables: <code>{"{{name}}"}</code> <code>{"{{company}}"}</code> <code>{"{{email}}"}</code>
+        Variables: <code>{"{{name}}"}</code> <code>{"{{CUSTOMER_NAME}}"}</code>{" "}
+        <code>{"{{company}}"}</code> <code>{"{{email}}"}</code>{" "}
+        <code>{"{{DELIVERY_OPTION_1}}"}</code> <code>{"{{DELIVERY_PRICE_1}}"}</code>{" "}
+        <code>{"{{DELIVERY_OPTION_2}}"}</code> <code>{"{{DELIVERY_PRICE_2}}"}</code>{" "}
+        <code>{"{{SHOP_URL}}"}</code>
         {" · "}
-        Unsubscribe: <code>{"{{unsubscribe}}"}</code>
+        Unsubscribe: <code>{"{{unsubscribe}}"}</code> <code>{"{{UNSUBSCRIBE_URL}}"}</code>
       </p>
 
       <div className="space-y-4 rounded-xl border bg-white p-5">

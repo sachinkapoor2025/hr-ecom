@@ -59,6 +59,27 @@ describe("expedited-shipping", () => {
       }),
       39
     );
+    const merchandise = 25;
+    assert.equal(
+      merchandise +
+        resolveCheckoutShippingCharge({
+          optionId: "three_day",
+          standardCharge: 0,
+          currency: "USD",
+          usdInrRate: 83,
+        }),
+      44
+    );
+    assert.equal(
+      merchandise +
+        resolveCheckoutShippingCharge({
+          optionId: "two_day",
+          standardCharge: 0,
+          currency: "USD",
+          usdInrRate: 83,
+        }),
+      64
+    );
     assert.equal(
       expeditedOptionPriceInCurrency("three_day", "INR", 80),
       1520

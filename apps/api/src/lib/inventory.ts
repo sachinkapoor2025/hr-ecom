@@ -8,6 +8,7 @@ import {
 } from "@hr-ecom/shared";
 import { docClient, PRODUCTS_TABLE, now } from "./db";
 import { notifyLowStock } from "./email";
+import { healUsarakhiInventoryIfNeeded } from "./usarakhi-inventory-heal";
 
 function aggregateQuantities(
   items: { productSlug: string; quantity: number; name: string }[]
@@ -31,7 +32,8 @@ export async function getProductInventory(slug: string): Promise<number | null> 
     })
   );
   if (!result.Item) return null;
-  const inv = (result.Item as Product).inventory;
+  const healed = await healUsarakhiInventoryIfNeeded(result.Item as Product);
+  const inv = healed.inventory;
   return typeof inv === "number" ? inv : 0;
 }
 

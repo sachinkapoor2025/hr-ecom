@@ -95,7 +95,7 @@ export function cartRequiresPaidExpeditedShipping(
 export function checkoutShippingOptionsForCart(
   _items?: Array<{ vendorSlug?: string | null }>
 ): readonly ExpeditedShippingDef[] {
-  // Peak season: no free/standard shipping — 3-day and 2-day only.
+  // Peak season for all carts (UsaRakhi + Orange County): 3-day and 2-day only.
   return ORANGE_COUNTY_CHECKOUT_SHIPPING_OPTIONS;
 }
 

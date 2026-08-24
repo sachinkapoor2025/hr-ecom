@@ -110,6 +110,12 @@ jobs:
           UspsPaymentAuthorizationToken=${USPS_PAYMENT_AUTHORIZATION_TOKEN} \
           OrangeCountyVendorApiKey=${ORANGE_COUNTY_VENDOR_API_KEY}${EXTRA}"
 
+      - name: Restore UsaRakhi inventory after OOS pause
+        env:
+          ENVIRONMENT: prod
+          INVENTORY: "200"
+        run: npx tsx scripts/restore-usarakhi-inventory.ts
+
       # Catalog import OVERWRITES product records and has wiped admin-uploaded images.
       # Run manually only: Actions → Import UsaRakhi Catalog (workflow_dispatch).
 
