@@ -2,18 +2,22 @@ import { VENDOR_ORANGE_COUNTY } from "../constants";
 import { isRakhiSetSizeCategory } from "./rakhi-set-size";
 
 /**
- * Peak-season shortage disclaimer for UsaRakhi chocolate / combo SKUs only
+ * Peak-season disclaimer for UsaRakhi chocolate / combo SKUs only
  * (not Orange County, not single/multi rakhi-only products).
- * Uses storefront names: Ferrero Rocher, Lindor chocolates, Mixed chocolates.
+ * Piece counts on the PDP stay the same; brand may vary with warehouse stock.
  */
 export const USARAKHI_STOCK_SHORTAGE_NOTE =
-  "Rakhi stock about to end — any shortage of Chocolate product will be replaced by 3 Ferrero Rocher or 3 Lindor chocolates or 3 Mixed chocolates.";
+  "Chocolates included with this rakhi: we'll send whichever chocolate is currently in stock (Ferrero Rocher, Lindor, or mixed chocolates). The piece count shown on this page stays the same.";
 
-const NOTE_MARKER = "Rakhi stock about to end";
+const NOTE_MARKER = "Chocolates included with this rakhi";
 
 /** Legacy note text from the first rollout (all UsaRakhi PDPs). */
 const LEGACY_NOTE =
   "Rakhi stock about to end — any shortage of product will be replaced by 3 Ferrero Rocher / Lindor chocolates.";
+
+/** Previous peak-season replacement wording. */
+const LEGACY_NOTE_V2 =
+  "Rakhi stock about to end — any shortage of Chocolate product will be replaced by 3 Ferrero Rocher or 3 Lindor chocolates or 3 Mixed chocolates.";
 
 const CHOCOLATE_OR_EXTRA_SIGNAL =
   /chocolate|chocolates|ferrero|lindor|lindt|hershey|kitkat|dairy\s*milk|snicker|mixed\s*choc|kaju\s*katli|besan\s*ladd|soan\s*papdi|dry\s*fruit|mithai|hamper/i;
@@ -61,20 +65,34 @@ export function shouldShowUsarakhiStockShortageNote(product: StockNoteProduct): 
 
 /** Remove any stock-shortage paragraph we previously appended (old or new wording). */
 export function stripUsarakhiStockShortageNote(description: string): string {
-  if (!description.includes(NOTE_MARKER)) return description;
+  if (
+    !description.includes(NOTE_MARKER) &&
+    !description.includes("Rakhi stock about to end")
+  ) {
+    return description;
+  }
 
   let next = description;
   // HTML blocks we append
   next = next.replace(
-    /\n?<p><strong>Rakhi stock about to end[\s\S]*?<\/strong><\/p>\s*/gi,
+    /\n?<p><strong>(?:Rakhi stock about to end|Chocolates included with this rakhi)[\s\S]*?<\/strong><\/p>\s*/gi,
     ""
   );
   // Plain-text append
-  next = next.replace(/\n\nRakhi stock about to end[^\n]*/gi, "");
+  next = next.replace(
+    /\n\n(?:Rakhi stock about to end|Chocolates included with this rakhi)[^\n]*/gi,
+    ""
+  );
   // Inline leftover
-  next = next.replace(/\s*Rakhi stock about to end[^.]*\./gi, "");
+  next = next.replace(
+    /\s*(?:Rakhi stock about to end|Chocolates included with this rakhi)[^.]*\./gi,
+    ""
+  );
   // Exact legacy/current full strings if still present
-  next = next.replace(LEGACY_NOTE, "").replace(USARAKHI_STOCK_SHORTAGE_NOTE, "");
+  next = next
+    .replace(LEGACY_NOTE, "")
+    .replace(LEGACY_NOTE_V2, "")
+    .replace(USARAKHI_STOCK_SHORTAGE_NOTE, "");
   return next.trim();
 }
 

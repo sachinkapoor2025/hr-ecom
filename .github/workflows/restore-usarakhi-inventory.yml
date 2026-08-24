@@ -1,0 +1,54 @@
+name: Restore UsaRakhi inventory
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Dynamo environment suffix
+        required: true
+        default: prod
+        type: choice
+        options:
+          - prod
+          - staging
+          - dev
+      inventory:
+        description: Target inventory per UsaRakhi SKU
+        required: true
+        default: "200"
+      dry_run:
+        description: Preview only (no writes)
+        required: true
+        default: false
+        type: boolean
+
+env:
+  AWS_REGION: us-east-1
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: ".nvmrc"
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build -w @hr-ecom/shared
+
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Restore UsaRakhi product inventory
+        env:
+          ENVIRONMENT: ${{ inputs.environment }}
+          INVENTORY: ${{ inputs.inventory }}
+          DRY_RUN: ${{ inputs.dry_run && '1' || '' }}
+        run: npx tsx scripts/restore-usarakhi-inventory.ts

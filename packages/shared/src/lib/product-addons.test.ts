@@ -1,9 +1,12 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  DRY_FRUIT_SMALL_PACK_PRICE_USD,
   PRODUCT_ADDONS,
   RAKHI_ADDON_PRICE_USD,
+  addonMaxQuantity,
   addonsForProductPage,
+  availableProductAddons,
   cartAddonSignature,
   cartLineUnitTotal,
   getProductAddon,
@@ -16,30 +19,44 @@ import {
 import { VENDOR_ORANGE_COUNTY } from "../constants";
 
 describe("product-addons", () => {
-  it("lists chocolates + rakhis only (no dry fruits / Hershey’s)", () => {
-    // 3 chocolates + 8 mix-and-match rakhis
-    assert.equal(PRODUCT_ADDONS.length, 11);
-    assert.equal(PRODUCT_ADDONS.filter((a) => a.group === "dry-fruits").length, 0);
+  it("lists dry fruits, in-stock chocolates, and rakhis", () => {
+    // 4 dry fruits + 3 chocolates (1 sold out) + 8 rakhis
+    assert.equal(PRODUCT_ADDONS.length, 15);
+    assert.equal(PRODUCT_ADDONS.filter((a) => a.group === "dry-fruits").length, 4);
     assert.equal(getProductAddon("badam-100g"), undefined);
-    assert.equal(getProductAddon("pista-100g"), undefined);
-    assert.equal(getProductAddon("kaju-100g"), undefined);
-    assert.equal(getProductAddon("hershey-2pc"), undefined);
+    assert.equal(getProductAddon("badam-small-pack")?.priceUsd, DRY_FRUIT_SMALL_PACK_PRICE_USD);
+    assert.match(getProductAddon("badam-small-pack")?.name ?? "", /Small pack of almonds/i);
+    assert.equal(getProductAddon("badam-small-pack")?.detail, "Small pack");
+    assert.equal(getProductAddon("kaju-small-pack")?.stockRemaining, 5);
+    assert.equal(getProductAddon("mixed-nuts-small-pack")?.stockRemaining, 6);
     assert.equal(getProductAddon("lindt-5pc")?.priceUsd, 10.5);
-    assert.equal(getProductAddon("lindt-5pc")?.detail, "3 pcs");
-    assert.match(getProductAddon("lindt-5pc")?.name ?? "", /Lindor chocolates \(3 pcs\)/);
-    assert.equal(getProductAddon("ferrero-3pc")?.priceUsd, 6.5);
-    assert.match(getProductAddon("ferrero-3pc")?.name ?? "", /Ferrero Rocher/);
+    assert.equal(getProductAddon("lindt-5pc")?.stockRemaining, 15);
+    assert.equal(getProductAddon("ferrero-3pc")?.stockRemaining, 0);
     assert.equal(getProductAddon("mixed-chocolates-3pc")?.priceUsd, 4.99);
-    assert.match(getProductAddon("mixed-chocolates-3pc")?.name ?? "", /Mixed chocolates \(3 pcs\)/);
     const rakhiAddons = PRODUCT_ADDONS.filter((a) => a.group === "rakhis");
     assert.equal(rakhiAddons.length, 8);
     assert.ok(rakhiAddons.every((a) => a.priceUsd === RAKHI_ADDON_PRICE_USD));
     assert.equal(getProductAddon("rakhi-om-single-rakhi")?.image?.includes("cloudfront"), true);
+  });
+
+  it("hides sold-out add-ons from the PDP catalog", () => {
+    const available = availableProductAddons();
+    assert.equal(available.some((a) => a.id === "ferrero-3pc"), false);
+    assert.equal(available.some((a) => a.id === "lindt-5pc"), true);
+    assert.equal(available.some((a) => a.id === "badam-small-pack"), true);
     assert.equal(addonsForProductPage("om-single-rakhi").filter((a) => a.group === "rakhis").length, 7);
     assert.equal(
       addonsForProductPage("om-single-rakhi").some((a) => a.id === "rakhi-om-single-rakhi"),
       false
     );
+    assert.equal(addonsForProductPage("om-single-rakhi").some((a) => a.id === "ferrero-3pc"), false);
+  });
+
+  it("caps quantity by warehouse stock", () => {
+    assert.equal(addonMaxQuantity("lindt-5pc"), 10);
+    assert.equal(addonMaxQuantity("kaju-small-pack"), 5);
+    assert.equal(addonMaxQuantity("ferrero-3pc"), 0);
+    assert.equal(addonMaxQuantity("rakhi-om-single-rakhi"), 10);
   });
 
   it("allows addons only for non–Orange County products", () => {
@@ -56,11 +73,11 @@ describe("product-addons", () => {
 
   it("sums addon prices and line unit totals", () => {
     const addons = [
-      { id: "ferrero-3pc", name: "Ferrero Rocher", price: 6.5, quantity: 2 },
+      { id: "mixed-chocolates-3pc", name: "Mixed chocolates", price: 4.99, quantity: 2 },
       { id: "lindt-5pc", name: "Lindor", price: 10.5, quantity: 1 },
     ];
-    assert.equal(sumAddonPrices(addons), 23.5);
-    assert.equal(cartLineUnitTotal({ price: 20, addons }), 43.5);
+    assert.equal(sumAddonPrices(addons), 20.48);
+    assert.equal(Math.round(cartLineUnitTotal({ price: 20, addons }) * 100) / 100, 40.48);
     assert.equal(cartLineUnitTotal({ price: 20 }), 20);
   });
 
@@ -68,24 +85,24 @@ describe("product-addons", () => {
     assert.equal(cartAddonSignature([{ id: "b", quantity: 1 }, { id: "a", quantity: 2 }]), "a:2,b:1");
     assert.equal(cartAddonSignature([]), "");
     assert.notEqual(
-      cartAddonSignature([{ id: "ferrero-3pc", quantity: 1 }]),
-      cartAddonSignature([{ id: "ferrero-3pc", quantity: 2 }])
+      cartAddonSignature([{ id: "mixed-chocolates-3pc", quantity: 1 }]),
+      cartAddonSignature([{ id: "mixed-chocolates-3pc", quantity: 2 }])
     );
   });
 
   it("resolves selections with quantities", () => {
     const ok = resolveProductAddons([
       { id: "lindt-5pc", quantity: 3 },
-      { id: "ferrero-3pc", quantity: 2 },
+      { id: "mixed-chocolates-3pc", quantity: 2 },
     ]);
     assert.equal(ok.ok, true);
     if (ok.ok) {
       assert.equal(ok.addons.length, 2);
-      assert.equal(ok.addons[0]!.id, "ferrero-3pc");
-      assert.equal(ok.addons[0]!.quantity, 2);
-      assert.equal(ok.addons[1]!.quantity, 3);
+      assert.equal(ok.addons[0]!.id, "lindt-5pc");
+      assert.equal(ok.addons[0]!.quantity, 3);
+      assert.equal(ok.addons[1]!.quantity, 2);
     }
-    const fromIds = resolveProductAddonsFromIds(["lindt-5pc", "ferrero-3pc"]);
+    const fromIds = resolveProductAddonsFromIds(["lindt-5pc", "mixed-chocolates-3pc"]);
     assert.equal(fromIds.ok, true);
     if (fromIds.ok) {
       assert.equal(fromIds.addons.every((a) => a.quantity === 1), true);
@@ -94,8 +111,12 @@ describe("product-addons", () => {
     assert.equal(bad.ok, false);
     const removed = resolveProductAddons([{ id: "hershey-2pc", quantity: 1 }]);
     assert.equal(removed.ok, false);
-    const tooMany = resolveProductAddons([{ id: "ferrero-3pc", quantity: 99 }]);
+    const soldOut = resolveProductAddons([{ id: "ferrero-3pc", quantity: 1 }]);
+    assert.equal(soldOut.ok, false);
+    const tooMany = resolveProductAddons([{ id: "kaju-small-pack", quantity: 6 }]);
     assert.equal(tooMany.ok, false);
+    const lindtCap = resolveProductAddons([{ id: "lindt-5pc", quantity: 16 }]);
+    assert.equal(lindtCap.ok, false);
   });
 
   it("prices mixed extra rakhis as a 1–5 bundle", () => {

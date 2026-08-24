@@ -19,8 +19,10 @@ import {
   isUsarakhiStorefrontPaused,
   type Cart,
   type CartItem,
+  type Product,
 } from "@hr-ecom/shared";
 import { docClient, CARTS_TABLE, PRODUCTS_TABLE, now, ttlInDays } from "../lib/db";
+import { healUsarakhiInventoryIfNeeded } from "../lib/usarakhi-inventory-heal";
 import { ok, badRequest, unauthorized } from "../lib/response";
 import { getUserOrSessionKey, getSessionId } from "../lib/auth";
 import { resolveProductImageUrl } from "../lib/images";
@@ -131,7 +133,8 @@ export async function addToCart(event: APIGatewayProxyEventV2) {
   }
   if (!productItem) return badRequest("Product not found");
 
-  const product = productItem as {
+  const healedItem = await healUsarakhiInventoryIfNeeded(productItem as Product);
+  const product = healedItem as {
     slug: string;
     name: string;
     price: number;
@@ -292,6 +295,8 @@ export async function updateCartItem(event: APIGatewayProxyEventV2) {
       } | null) ?? product;
   }
   if (!product) return badRequest("Product not found");
+  const healed = await healUsarakhiInventoryIfNeeded({ ...product, slug: productSlug } as Product);
+  product = healed;
   if (isForceOutOfStockSlug(productSlug) || isUsarakhiStorefrontPaused(product) || product.inventory <= 0) {
     return badRequest("This product is sold out");
   }

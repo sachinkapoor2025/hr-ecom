@@ -1,11 +1,10 @@
 import { VENDOR_ORANGE_COUNTY } from "../constants";
 
 /**
- * Temporary: all UsaRakhi catalog SKUs are sold out on the storefront.
- * They still list with inventory forced to 0 (Sold out stamp); Orange County stays buyable.
- * Flip to false when UsaRakhi inventory is restored.
+ * Temporary: pause all UsaRakhi catalog SKUs (force inventory 0 on storefront).
+ * Orange County stays buyable. Flip to true only when UsaRakhi must be held again.
  */
-export const USARAKHI_STOREFRONT_PAUSED = true;
+export const USARAKHI_STOREFRONT_PAUSED = false;
 
 /**
  * Temporary force-OOS list for SKUs we cannot fulfill (e.g. Ek Omkar rakhi depleted,
@@ -101,8 +100,8 @@ export function sortAvailableProductsFirst<T extends { inventory?: number | null
 }
 
 /**
- * Published storefront catalog: keep sold-out UsaRakhi SKUs visible (inventory 0),
- * Orange County (and other in-stock) first.
+ * Published storefront catalog: force-OOS SKUs stay at inventory 0;
+ * available products listed before sold out.
  */
 export function prepareStorefrontProducts<
   T extends {

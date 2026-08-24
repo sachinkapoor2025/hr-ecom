@@ -5,6 +5,7 @@ import {
   MAX_RAKHI_ADDON_PIECES,
   PRODUCT_ADDONS,
   RAKHI_ADDON_BUNDLE_USD,
+  addonMaxQuantity,
   addonsForProductPage,
   selectedAddonsUsdTotal,
   type ProductAddonDef,
@@ -279,8 +280,11 @@ export function ProductAddonsPicker({
       return;
     }
     const current = quantities.get(id) ?? 0;
+    const stockCap = addonMaxQuantity(id);
     const maxForThis =
-      addonDef(id)?.group === "rakhis" ? current + remaining : MAX_PRODUCT_ADDON_QUANTITY;
+      addonDef(id)?.group === "rakhis"
+        ? current + remaining
+        : Math.min(MAX_PRODUCT_ADDON_QUANTITY, stockCap);
     const nextQty = Math.min(MAX_PRODUCT_ADDON_QUANTITY, maxForThis, quantity);
     if (nextQty < 1) {
       onChange(selected.filter((s) => s.id !== id));
@@ -298,8 +302,8 @@ export function ProductAddonsPicker({
       <div className="mb-4">
         <p className="text-lg sm:text-xl font-extrabold text-primary tracking-tight">Add extras</p>
         <p className="text-sm sm:text-[15px] text-slate-700 mt-1.5 leading-relaxed">
-          Mix extra designer rakhis at bundle prices, or add Lindor chocolates / Ferrero Rocher.
-          Their own product pages stay at the regular price.
+          Mix extra designer rakhis at bundle prices, add chocolates, or add a small pack of dry
+          fruits while supplies last. Rakhi product pages stay at the regular price.
         </p>
       </div>
       <div className="space-y-4">
