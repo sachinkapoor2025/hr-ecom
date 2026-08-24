@@ -93,45 +93,45 @@ export function isUsCityNavLink(link: CityNavLink): boolean {
 
 export const usCityLinks = cityLinks.filter(isUsCityNavLink);
 
-/** Shown on every homepage hero slide (image caption + text panel). */
+/** Shown on every homepage hero slide (image caption + text panel + pill). */
 export const HOME_BANNER_DELIVERY_NOTE =
-  "Guaranteed delivery by Rakhi with 2-day and 3-day express delivery. Charges: 3-day $19 · 2-day $39";
+  "Last Minute Orders accepted · Guaranteed order Delivery by Rakhi - 28 August · 3 days delivery $19 · 2 Days Delivery $39";
 
 export const homeBanners = [
   {
     src: "/banners/banner-1-usa-rakhi-delivery.png",
-    alt: "USA Rakhi Delivery — Guaranteed delivery by Rakhi · 3-day $19 · 2-day $39",
+    alt: "USA Rakhi Delivery — Last Minute Orders accepted · Guaranteed by Rakhi 28 August · 3-day $19 · 2-day $39",
     href: "/products?category=rakhi-combo",
     eyebrow: "RAKSHA BANDHAN · USA DELIVERY",
     title: "Send Beautiful Rakhis to Your Loved Ones in the",
     titleAccent: "USA",
     description: HOME_BANNER_DELIVERY_NOTE,
     cta: "Shop Rakhi Combos",
-    pill: "Guaranteed by Rakhi · 3-day $19 · 2-day $39",
+    pill: HOME_BANNER_DELIVERY_NOTE,
     imageCaption: HOME_BANNER_DELIVERY_NOTE,
   },
   {
     src: "/banners/banner-2-connecting-hearts.png",
-    alt: "UsaRakhi.com — Guaranteed delivery by Rakhi · 3-day $19 · 2-day $39",
+    alt: "UsaRakhi.com — Last Minute Orders accepted · Guaranteed by Rakhi 28 August · 3-day $19 · 2-day $39",
     href: "/products",
     eyebrow: "EVERY SISTER · EVERY BROTHER",
     title: "Connecting Hearts",
     titleAccent: "Across Miles",
     description: HOME_BANNER_DELIVERY_NOTE,
     cta: "Browse All Rakhis",
-    pill: "Guaranteed by Rakhi · 3-day $19 · 2-day $39",
+    pill: HOME_BANNER_DELIVERY_NOTE,
     imageCaption: HOME_BANNER_DELIVERY_NOTE,
   },
   {
     src: "/banners/banner-3-india-usa.png",
-    alt: "Send Rakhi from India to USA — Guaranteed delivery by Rakhi · 3-day $19 · 2-day $39",
+    alt: "Send Rakhi from India to USA — Last Minute Orders accepted · Guaranteed by Rakhi 28 August · 3-day $19 · 2-day $39",
     href: "/products?category=single-rakhi",
     eyebrow: "INDIA → USA",
     title: "Bridge the Distance This",
     titleAccent: "Raksha Bandhan",
     description: HOME_BANNER_DELIVERY_NOTE,
     cta: "Shop Single Rakhis",
-    pill: "Guaranteed by Rakhi · 3-day $19 · 2-day $39",
+    pill: HOME_BANNER_DELIVERY_NOTE,
     imageCaption: HOME_BANNER_DELIVERY_NOTE,
   },
 ] as const;
