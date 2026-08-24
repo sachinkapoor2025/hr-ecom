@@ -680,12 +680,6 @@ function CheckoutPageInner() {
           attribution: getAttributionSnapshotForCheckout(),
           ...(appliedCouponCode ? { couponCode: appliedCouponCode } : {}),
           shippingOption,
-          ...(shippingOption === "standard" && shippingQuote.selected
-            ? {
-                shippingServiceCode: shippingQuote.selected.mailClass,
-                shippingRateId: shippingQuote.selected.rateId,
-              }
-            : {}),
         }),
       });
 
@@ -800,20 +794,7 @@ function CheckoutPageInner() {
 
   const shippingDetailLine = isRetry
     ? null
-    : (() => {
-        if (shippingOption !== "standard") {
-          return `${shippingOptionServiceName(shippingOption)} · est. ${expeditedArrivalLabel(shippingOption)}`;
-        }
-        const selected = shippingQuote.selected;
-        const serviceName = selected?.serviceName ?? "Standard shipping";
-        const deliveryHint = selected?.estimatedDeliveryDate
-          ? ` · arrives by ${new Date(selected.estimatedDeliveryDate).toLocaleDateString(undefined, {
-              month: "short",
-              day: "numeric",
-            })}`
-          : "";
-        return `${serviceName}${deliveryHint}`;
-      })();
+    : `${shippingOptionServiceName(shippingOption)} · est. ${expeditedArrivalLabel(shippingOption)}`;
 
   return (
     <>

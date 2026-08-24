@@ -320,16 +320,14 @@ export async function checkout(event: APIGatewayProxyEventV2) {
     usdInrRate,
   });
 
-  const built =
-    shippingOption === "standard"
-      ? thresholdBuilt
-      : buildOrderShipments({
-          cartItems: orderItems,
-          checkoutShipments,
-          currency: checkoutCurrency as "USD" | "INR",
-          usdInrRate,
-          passThroughShipping: customerShippingCharge,
-        });
+  // Standard shipping is rejected above — always apply the paid expedited charge.
+  const built = buildOrderShipments({
+    cartItems: orderItems,
+    checkoutShipments,
+    currency: checkoutCurrency as "USD" | "INR",
+    usdInrRate,
+    passThroughShipping: customerShippingCharge,
+  });
   if ("error" in built) return badRequest(built.error);
 
   const shipping = built.shippingTotal;
@@ -422,19 +420,8 @@ export async function checkout(event: APIGatewayProxyEventV2) {
     ...(preferredDeliveryDate
       ? { estimatedDeliveryAt: preferredDeliveryDateToIso(preferredDeliveryDate) }
       : {}),
-    ...(shippingOption !== "standard"
-      ? {
-          shippingServiceCode: shippingOptionServiceCode(shippingOption),
-          shippingServiceName: shippingOptionServiceName(shippingOption),
-        }
-      : shippingResult.selected
-        ? {
-            shippingServiceCode: shippingResult.selected.mailClass,
-            shippingServiceName: shippingResult.selected.serviceName,
-            shippingRateId: shippingResult.selected.rateId,
-            estimatedLabelCost: shippingResult.estimatedLabelCost,
-          }
-        : {}),
+    shippingServiceCode: shippingOptionServiceCode(shippingOption),
+    shippingServiceName: shippingOptionServiceName(shippingOption),
     ...(shippingResult.labelStatus && { labelStatus: shippingResult.labelStatus }),
     ...(shippingResult.warning &&
       !shippingResult.selected && {
