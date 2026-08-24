@@ -1,13 +1,11 @@
 import { VENDOR_ORANGE_COUNTY } from "../constants";
-import { isRakhiSetSizeCategory } from "./rakhi-set-size";
 
 /**
- * Peak-season disclaimer for UsaRakhi chocolate / combo SKUs only
- * (not Orange County, not single/multi rakhi-only products).
+ * Peak-season disclaimer for UsaRakhi products that include chocolates.
  * Piece counts on the PDP stay the same; brand may vary with warehouse stock.
  */
 export const USARAKHI_STOCK_SHORTAGE_NOTE =
-  "Chocolates included with this rakhi: we'll send whichever chocolate is currently in stock (Ferrero Rocher, Lindor, or mixed chocolates). The piece count shown on this page stays the same.";
+  "Chocolates included with this rakhi: if the brand shown on this page is out of stock, we'll send Ferrero Rocher, Lindor, or mixed chocolates instead. The piece count stays the same.";
 
 const NOTE_MARKER = "Chocolates included with this rakhi";
 
@@ -19,8 +17,9 @@ const LEGACY_NOTE =
 const LEGACY_NOTE_V2 =
   "Rakhi stock about to end — any shortage of Chocolate product will be replaced by 3 Ferrero Rocher or 3 Lindor chocolates or 3 Mixed chocolates.";
 
-const CHOCOLATE_OR_EXTRA_SIGNAL =
-  /chocolate|chocolates|ferrero|lindor|lindt|hershey|kitkat|dairy\s*milk|snicker|mixed\s*choc|kaju\s*katli|besan\s*ladd|soan\s*papdi|dry\s*fruit|mithai|hamper/i;
+/** Detects chocolate pairing from name, slug, description, tags, or image filenames. */
+export const CHOCOLATE_PRODUCT_SIGNAL =
+  /chocolate|chocolates|ferrero|lindor|lindt|hershey|kitkat|dairy\s*milk|snicker|milky\s*way|mixed\s*choc|rocher|truffle|assorted\s*choc/i;
 
 type StockNoteProduct = {
   description?: string;
@@ -39,28 +38,33 @@ function isOrangeCounty(product: StockNoteProduct): boolean {
 }
 
 function productBlob(product: StockNoteProduct): string {
-  return [product.name, product.description, product.slug, ...(product.tags ?? [])]
+  return [
+    product.name,
+    product.description,
+    product.slug,
+    ...(product.tags ?? []),
+    ...(product.images ?? []),
+  ]
     .filter(Boolean)
     .join(" ");
 }
 
+/** True when the product includes chocolates with the rakhi (any category). */
+export function productIncludesChocolates(product: StockNoteProduct): boolean {
+  return CHOCOLATE_PRODUCT_SIGNAL.test(productBlob(product));
+}
+
 /**
- * True for UsaRakhi products that include chocolates or other extras with the rakhi.
- * False for Orange County and for single / multi rakhi-only SKUs.
+ * True for UsaRakhi products that include chocolates with the rakhi.
+ * False for Orange County and plain rakhi-only SKUs.
  */
 export function shouldShowUsarakhiStockShortageNote(product: StockNoteProduct): boolean {
   if (isOrangeCounty(product)) return false;
 
-  const category = (product.categorySlug ?? "").trim();
-  if (category === "single-rakhi") return false;
-  if (isRakhiSetSizeCategory(category)) return false;
-
   const tags = product.tags ?? [];
-  if (tags.includes("mini-rakhi-set")) return false;
+  if (tags.includes("mini-rakhi-set") && !productIncludesChocolates(product)) return false;
 
-  if (category === "rakhi-hampers") return true;
-
-  return CHOCOLATE_OR_EXTRA_SIGNAL.test(productBlob(product));
+  return productIncludesChocolates(product);
 }
 
 /** Remove any stock-shortage paragraph we previously appended (old or new wording). */
@@ -92,21 +96,26 @@ export function stripUsarakhiStockShortageNote(description: string): string {
   next = next
     .replace(LEGACY_NOTE, "")
     .replace(LEGACY_NOTE_V2, "")
-    .replace(USARAKHI_STOCK_SHORTAGE_NOTE, "");
+    .replace(USARAKHI_STOCK_SHORTAGE_NOTE, "")
+    .replace(
+      "Chocolates included with this rakhi: we'll send whichever chocolate is currently in stock (Ferrero Rocher, Lindor, or mixed chocolates). The piece count shown on this page stays the same.",
+      ""
+    );
   return next.trim();
 }
 
-/** Idempotent: append stock note only for chocolate/extra UsaRakhi products. */
+/** Idempotent: append stock note only for chocolate UsaRakhi products. */
 export function withUsarakhiStockShortageNote<T extends StockNoteProduct>(product: T): T {
   if (isOrangeCounty(product)) return product;
 
   const cleaned = stripUsarakhiStockShortageNote(product.description ?? "");
-  if (!shouldShowUsarakhiStockShortageNote(product)) {
+  const productForCheck = { ...product, description: cleaned };
+  if (!shouldShowUsarakhiStockShortageNote(productForCheck)) {
     if (cleaned === (product.description ?? "")) return product;
     return { ...product, description: cleaned };
   }
 
-  if (cleaned.includes(NOTE_MARKER) && cleaned.includes(USARAKHI_STOCK_SHORTAGE_NOTE)) {
+  if (cleaned.includes(NOTE_MARKER) && cleaned.includes("piece count")) {
     return cleaned === product.description ? product : { ...product, description: cleaned };
   }
 
