@@ -45,7 +45,7 @@ export const PRODUCT_ADDONS: readonly ProductAddonDef[] = [
     priceUsd: DRY_FRUIT_SMALL_PACK_PRICE_USD,
     group: "dry-fruits",
     detail: "Small pack",
-    stockRemaining: 5,
+    stockRemaining: 6,
   },
   {
     id: "kaju-small-pack",
