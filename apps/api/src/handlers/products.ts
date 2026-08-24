@@ -14,7 +14,7 @@ import {
   mergeMiniRakhiComboProducts,
   resolveProductImagesForUpsert,
   withForcedOutOfStockInventory,
-  filterInStockStorefrontProducts,
+  prepareStorefrontProducts,
   withUsarakhiStockShortageNote,
   type Product,
 } from "@hr-ecom/shared";
@@ -27,12 +27,13 @@ import { ensureProductInDb } from "../lib/ensure-product";
 
 function forStorefront(product: Product): Product {
   const allowsAddons = productAllowsAddons(product);
-  const stripped = stripVendorPrivateFields(
+  // Force OOS while vendorSlug is still present (OC detection), then strip private fields.
+  const forced = withForcedOutOfStockInventory(
     withUsarakhiStockShortageNote(
       withCompetitiveStorefrontPricing(withResolvedProductImages(product))
     )
   );
-  return withForcedOutOfStockInventory({ ...stripped, allowsAddons } as Product);
+  return { ...stripVendorPrivateFields(forced), allowsAddons } as Product;
 }
 
 function isKidsComboProduct(product: Product): boolean {
@@ -160,7 +161,7 @@ export async function listProducts(event: APIGatewayProxyEventV2) {
     items = mergeMiniRakhiComboProducts(await scanAllProducts());
   }
 
-  items = filterInStockStorefrontProducts(items);
+  items = prepareStorefrontProducts(items);
   if (search) {
     items = items.filter(
       (p) =>

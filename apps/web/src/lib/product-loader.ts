@@ -1,4 +1,5 @@
 import type { Product } from "@hr-ecom/shared";
+import { sortAvailableProductsFirst } from "@hr-ecom/shared";
 import { api } from "./api";
 import {
   getCatalogProduct,
@@ -100,7 +101,9 @@ export async function loadProductsByCategory(categorySlug: string): Promise<Prod
   } catch {
     products = [];
   }
-  return mergeProductsPreferExisting(products, getCatalogProductsByCategory(categorySlug));
+  return sortAvailableProductsFirst(
+    mergeProductsPreferExisting(products, getCatalogProductsByCategory(categorySlug))
+  );
 }
 
 export async function loadFeaturedProducts(limit = 10): Promise<Product[]> {

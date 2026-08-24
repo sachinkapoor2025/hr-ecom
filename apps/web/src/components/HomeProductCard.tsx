@@ -7,6 +7,7 @@ import { AddToCartControl } from "@/components/AddToCartControl";
 import { WishlistButton } from "@/components/WishlistButton";
 import { FastSellingBadge } from "@/components/FastSellingBadge";
 import { ProductImageRotator } from "@/components/ProductImageRotator";
+import { SoldOutStamp } from "@/components/SoldOutStamp";
 import { useCurrency } from "@/lib/currency-context";
 import { getDiscountPercent } from "@/lib/pricing";
 
@@ -19,14 +20,14 @@ export function HomeProductCard({
 }) {
   const { format } = useCurrency();
   const discount = getDiscountPercent(product.price, product.compareAtPrice);
-  const fastSelling = showFastSellingBadge || isFastSelling(product);
+  const soldOut = (product.inventory ?? 0) <= 0;
+  const fastSelling = !soldOut && (showFastSellingBadge || isFastSelling(product));
 
   return (
     <div className="border border-slate-200 rounded-xl overflow-hidden bg-white hover:shadow-md transition-shadow relative flex h-full flex-col">
       <div className="relative aspect-square w-full shrink-0 overflow-hidden bg-slate-50">
-        {/* Badges stacked top-left; wishlist alone top-right — no overlap on mobile */}
         <div className="absolute top-2 left-2 z-10 flex flex-col items-start gap-1 max-w-[70%] pointer-events-none">
-          {discount !== null && (
+          {discount !== null && !soldOut && (
             <span className="bg-accent text-white text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded shadow-sm">
               {discount}% OFF
             </span>
@@ -41,6 +42,7 @@ export function HomeProductCard({
             staggerKey={product.slug}
             className="absolute inset-0 h-full w-full"
           />
+          {soldOut ? <SoldOutStamp /> : null}
         </Link>
       </div>
       <Link href={`/products/${product.slug}`} className="block flex-1">
@@ -55,14 +57,19 @@ export function HomeProductCard({
                 {format(product.compareAtPrice, product.currency)}
               </span>
             )}
-            {discount !== null && (
+            {discount !== null && !soldOut && (
               <span className="text-xs font-semibold text-green-600 ml-auto shrink-0">{discount}% OFF</span>
+            )}
+            {soldOut && (
+              <span className="text-xs font-bold uppercase tracking-wide text-slate-500 ml-auto shrink-0">
+                Sold out
+              </span>
             )}
           </div>
         </div>
       </Link>
       <div className="mt-auto px-3 pb-3">
-        <AddToCartControl productSlug={product.slug} disabled={product.inventory <= 0} />
+        <AddToCartControl productSlug={product.slug} disabled={soldOut} />
       </div>
     </div>
   );

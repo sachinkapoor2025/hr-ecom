@@ -2,7 +2,7 @@ import { VENDOR_ORANGE_COUNTY } from "../constants";
 
 /**
  * Temporary: all UsaRakhi catalog SKUs are sold out on the storefront.
- * Orange County hampers remain available.
+ * They still list with inventory forced to 0 (Sold out stamp); Orange County stays buyable.
  * Flip to false when UsaRakhi inventory is restored.
  */
 export const USARAKHI_STOREFRONT_PAUSED = true;
@@ -10,7 +10,7 @@ export const USARAKHI_STOREFRONT_PAUSED = true;
 /**
  * Temporary force-OOS list for SKUs we cannot fulfill (e.g. Ek Omkar rakhi depleted,
  * Hershey / dry-fruit SKUs removed from UsaRakhi peak-season catalog).
- * Storefront lists hide these; cart/checkout reject; Dynamo script zeros inventory when AWS prod is available.
+ * Inventory is forced to 0; products still appear as Sold out on the storefront.
  */
 export const FORCE_OUT_OF_STOCK_SLUGS = [
   "ek-omkar-designer-rakhi-for-brother-with-roli-chawal",
@@ -65,6 +65,10 @@ export function isUsarakhiStorefrontPaused(product: {
   return !isOrangeCountyVendorProduct(product);
 }
 
+export function isStorefrontSoldOut(product: { inventory?: number | null }): boolean {
+  return (product.inventory ?? 0) <= 0;
+}
+
 /** Clamp inventory to 0 for force-OOS SKUs and paused UsaRakhi products. */
 export function withForcedOutOfStockInventory<
   T extends {
@@ -80,6 +84,44 @@ export function withForcedOutOfStockInventory<
   return product;
 }
 
+/**
+ * In-stock first, then sold out — keeps shoppers from hunting for buyable SKUs.
+ * Stable within each group (original relative order preserved).
+ */
+export function sortAvailableProductsFirst<T extends { inventory?: number | null }>(
+  products: T[]
+): T[] {
+  const available: T[] = [];
+  const soldOut: T[] = [];
+  for (const product of products) {
+    if (isStorefrontSoldOut(product)) soldOut.push(product);
+    else available.push(product);
+  }
+  return [...available, ...soldOut];
+}
+
+/**
+ * Published storefront catalog: keep sold-out UsaRakhi SKUs visible (inventory 0),
+ * Orange County (and other in-stock) first.
+ */
+export function prepareStorefrontProducts<
+  T extends {
+    slug?: string;
+    inventory?: number;
+    published?: boolean;
+    vendorSlug?: string | null;
+    images?: string[] | null;
+  },
+>(products: T[]): T[] {
+  const prepared = products
+    .map(withForcedOutOfStockInventory)
+    .filter((p) => p.published !== false);
+  return sortAvailableProductsFirst(prepared);
+}
+
+/**
+ * @deprecated Use prepareStorefrontProducts — sold-out SKUs stay listed with inventory 0.
+ */
 export function filterInStockStorefrontProducts<
   T extends {
     slug?: string;
@@ -89,7 +131,5 @@ export function filterInStockStorefrontProducts<
     images?: string[] | null;
   },
 >(products: T[]): T[] {
-  return products
-    .map(withForcedOutOfStockInventory)
-    .filter((p) => p.published !== false && (p.inventory ?? 0) > 0);
+  return prepareStorefrontProducts(products);
 }

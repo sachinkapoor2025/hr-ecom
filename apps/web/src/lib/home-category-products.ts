@@ -3,6 +3,7 @@
  * Does not affect category pages, shop, search, or PDP.
  */
 import type { Product } from "@hr-ecom/shared";
+import { sortAvailableProductsFirst } from "@hr-ecom/shared";
 import { homeCategoryOrder } from "@/lib/site";
 
 type HomeCategorySlug = (typeof homeCategoryOrder)[number];
@@ -218,5 +219,6 @@ export function pickHomeCategoryProducts(products: Product[], categorySlug: stri
     unused.delete(match.slug);
   }
 
-  return ordered;
+  // Buyable Orange County (etc.) first, then sold-out UsaRakhi — avoids confusion.
+  return sortAvailableProductsFirst(ordered);
 }

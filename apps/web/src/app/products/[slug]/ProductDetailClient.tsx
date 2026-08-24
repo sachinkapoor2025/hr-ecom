@@ -6,6 +6,7 @@ import { api } from "@/lib/api";
 import { AddToCartControl } from "@/components/AddToCartControl";
 import { ProductAddonsPicker } from "@/components/ProductAddonsPicker";
 import { ProductImageGallery } from "@/components/ProductImageGallery";
+import { SoldOutStamp } from "@/components/SoldOutStamp";
 import { WishlistButton } from "@/components/WishlistButton";
 import { TrustBadges } from "@/components/TrustBadges";
 import { RakshaBandhanCountdown } from "@/components/RakshaBandhanCountdown";
@@ -207,8 +208,9 @@ export function ProductDetailClient({
     <>
     <div className="max-w-6xl mx-auto px-4 py-6 pb-24 md:pb-12">
       <div className="grid md:grid-cols-2 gap-8 lg:gap-10 items-start">
-        <div>
+        <div className="relative">
           <ProductImageGallery images={galleryImages} alt={product.name} />
+          {product.inventory <= 0 ? <SoldOutStamp /> : null}
         </div>
 
         <div>

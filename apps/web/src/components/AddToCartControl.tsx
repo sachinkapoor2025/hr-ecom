@@ -86,7 +86,7 @@ export function AddToCartControl({
   };
 
   const isDetail = variant === "detail";
-  const addLabel = disabled ? "Out of Stock" : busy ? "Adding..." : isDetail ? "Add to cart" : "Add to cart";
+  const addLabel = disabled ? "Sold out" : busy ? "Adding..." : isDetail ? "Add to cart" : "Add to cart";
 
   if (!inCart || !lineId) {
     return (
