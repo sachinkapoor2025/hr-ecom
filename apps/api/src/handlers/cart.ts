@@ -16,6 +16,7 @@ import {
   flashComboUnitPriceUsd,
   productUsesFixedStorefrontPrice,
   isForceOutOfStockSlug,
+  isFreeStandardShippingProduct,
   isUsarakhiStorefrontPaused,
   type Cart,
   type CartItem,
@@ -206,6 +207,12 @@ export async function addToCart(event: APIGatewayProxyEventV2) {
       : {}),
     ...(product.sku ? { sku: product.sku } : {}),
     ...(couponExcluded ? { couponExcluded: true } : {}),
+    ...(isFreeStandardShippingProduct({
+      productSlug: product.slug,
+      tags: product.tags,
+    })
+      ? { freeStandardShipping: true }
+      : {}),
     ...(addons.length ? { addons } : {}),
   };
 

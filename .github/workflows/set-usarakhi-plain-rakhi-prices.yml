@@ -1,0 +1,52 @@
+name: Set UsaRakhi plain rakhi cost prices
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Dynamo environment suffix
+        required: true
+        default: prod
+        type: choice
+        options:
+          - prod
+          - staging
+          - dev
+      dry_run:
+        description: Preview only (no Dynamo writes)
+        required: true
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
+
+env:
+  AWS_REGION: us-east-1
+
+jobs:
+  set-prices:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: ".nvmrc"
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build -w @hr-ecom/shared
+
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Apply $3 / $5 / $7 cost pricing to eligible UsaRakhi rakhis
+        env:
+          ENVIRONMENT: ${{ inputs.environment }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: npx tsx scripts/set-usarakhi-plain-rakhi-prices.ts

@@ -116,6 +116,11 @@ jobs:
           INVENTORY: "200"
         run: npx tsx scripts/restore-usarakhi-inventory.ts
 
+      - name: Set UsaRakhi plain rakhi cost prices ($3 / $5 / $7)
+        env:
+          ENVIRONMENT: prod
+        run: npx tsx scripts/set-usarakhi-plain-rakhi-prices.ts
+
       # Catalog import OVERWRITES product records and has wiped admin-uploaded images.
       # Run manually only: Actions → Import UsaRakhi Catalog (workflow_dispatch).
 

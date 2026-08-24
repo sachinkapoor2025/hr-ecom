@@ -28,6 +28,7 @@ import {
   isMultiVendorOrder,
   STRIPE_PAYMENTS_ENABLED,
   resolveCheckoutShippingCharge,
+  cartRequiresPaidExpeditedShipping,
   shippingOptionServiceCode,
   shippingOptionServiceName,
   type CheckoutShippingOptionId,
@@ -296,8 +297,13 @@ export async function checkout(event: APIGatewayProxyEventV2) {
   }
 
   const shippingOption = (parsed.data.shippingOption ?? "standard") as CheckoutShippingOptionId;
-  if (shippingOption === "standard") {
-    return badRequest("Choose 3-day ($19) or 2-day ($39) delivery");
+  if (
+    shippingOption === "standard" &&
+    cartRequiresPaidExpeditedShipping(
+      orderItems.map((i) => ({ vendorSlug: i.vendorSlug }))
+    )
+  ) {
+    return badRequest("Orange County orders require 3-day ($19) or 2-day ($39) delivery");
   }
   const standardShippingCharge =
     shippingSettings.customerShippingMode === "pass_through"

@@ -1,7 +1,9 @@
 "use client";
 
-import { RAKHI_DELIVERY_MESSAGING } from "@hr-ecom/shared";
+import { RAKHI_DELIVERY_MESSAGING, USARAKHI_STANDARD_DELIVERY_DETAIL } from "@hr-ecom/shared";
 import { RakhiDeliveryBulletList } from "@/components/RakhiDeliveryBulletList";
+import { StandardShippingMinimumNote } from "@/components/StandardShippingMinimumNote";
+import type { DisplayCurrency } from "@/lib/currency-context";
 
 type Props = {
   /** Kept for call-site compatibility; dates are no longer shown. */
@@ -11,6 +13,12 @@ type Props = {
   bullets?: readonly string[];
   /** Hide the last-minute guarantee line when bullets already include it. */
   showLastMinuteNote?: boolean;
+  /** UsaRakhi: amount to add in products for free standard shipping (omit for OC). */
+  standardTopUpAmount?: number;
+  formatMoney?: (amount: number, currency: DisplayCurrency) => string;
+  currency?: DisplayCurrency;
+  /** Show $25 minimum nudge on PDP / cart hints. */
+  showStandardMinimumNote?: boolean;
 };
 
 /**
@@ -20,6 +28,10 @@ export function RakhiDeliverySummary({
   className = "",
   bullets,
   showLastMinuteNote = true,
+  standardTopUpAmount,
+  formatMoney,
+  currency,
+  showStandardMinimumNote = false,
 }: Props) {
   const msg = RAKHI_DELIVERY_MESSAGING;
   const items = bullets ?? msg.shippingBullets;
@@ -27,6 +39,11 @@ export function RakhiDeliverySummary({
     item.toLowerCase().includes("guaranteed delivery by rakhi")
   );
   const showNote = showLastMinuteNote && !noteAlreadyInBullets;
+  const showMinimum =
+    showStandardMinimumNote &&
+    standardTopUpAmount != null &&
+    formatMoney &&
+    currency;
 
   return (
     <div
@@ -36,6 +53,19 @@ export function RakhiDeliverySummary({
       {showNote ? (
         <p className="mt-1.5 text-sm font-semibold text-slate-900 leading-snug">
           {msg.lastMinuteNote}
+        </p>
+      ) : null}
+      {showMinimum ? (
+        <StandardShippingMinimumNote
+          topUpAmount={standardTopUpAmount}
+          formatMoney={formatMoney}
+          currency={currency}
+          className="mt-2 border-amber-100"
+          compact
+        />
+      ) : showStandardMinimumNote ? (
+        <p className="mt-2 text-xs sm:text-sm font-semibold text-slate-900 leading-snug">
+          {USARAKHI_STANDARD_DELIVERY_DETAIL}
         </p>
       ) : null}
       <RakhiDeliveryBulletList items={items} highlightFirst className="mt-2" />

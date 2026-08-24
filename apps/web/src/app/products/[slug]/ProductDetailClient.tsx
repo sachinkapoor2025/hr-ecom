@@ -37,6 +37,9 @@ import {
   shouldShowUsarakhiStockShortageNote,
   isOrangeCountyVendorProduct,
   ORANGE_COUNTY_SHIPPING_BULLETS,
+  shippingBulletsForCart,
+  isFreeStandardShippingProduct,
+  quoteAddressShipmentShipping,
 } from "@hr-ecom/shared";
 import { RakhiDeliverySummary } from "@/components/RakhiDeliverySummary";
 import { ProductCareAccordions } from "@/components/ProductCareAccordions";
@@ -50,20 +53,29 @@ type Tab = "description" | "reviews" | "faq";
 /** "What's included" checklist under the title — hampers, single, combo, kids, etc. */
 function ProductIncludesPreview({ product }: { product: Product }) {
   const items = getProductIncludes(product);
-  if (items.length === 0) return null;
+  const showChocolateNote = shouldShowUsarakhiStockShortageNote(product);
+  if (items.length === 0 && !showChocolateNote) return null;
   const heading =
     product.categorySlug === "rakhi-hampers" ? "What's included in this hamper" : "What's included";
   return (
     <div className="mb-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
       <p className="text-sm font-semibold text-primary mb-2">{heading}</p>
-      <ul className="grid sm:grid-cols-2 gap-x-4 gap-y-1.5 text-sm text-slate-700">
-        {items.map((item) => (
-          <li key={item} className="flex gap-2">
-            <span className="text-nav shrink-0">✓</span>
-            <span>{item}</span>
-          </li>
-        ))}
-      </ul>
+      {items.length > 0 ? (
+        <ul className="grid sm:grid-cols-2 gap-x-4 gap-y-1.5 text-sm text-slate-700">
+          {items.map((item) => (
+            <li key={item} className="flex gap-2">
+              <span className="text-nav shrink-0">✓</span>
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {showChocolateNote ? (
+        <p className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs sm:text-sm text-slate-800 leading-snug">
+          <span className="font-semibold text-primary">Chocolate note: </span>
+          {USARAKHI_STOCK_SHORTAGE_NOTE}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -115,7 +127,7 @@ export function ProductDetailClient({
   const captureLead = useDebouncedLeadCapture(sessionId);
   const captureLeadNow = useLeadCapture(sessionId);
   const { cart, itemCount } = useCart();
-  const { format } = useCurrency();
+  const { format, displayCurrency, usdInrRate } = useCurrency();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -177,7 +189,24 @@ export function ProductDetailClient({
   const showStockShortageNote = shouldShowUsarakhiStockShortageNote(product);
   const shippingBullets = isOrangeCountyVendorProduct(product)
     ? ORANGE_COUNTY_SHIPPING_BULLETS
-    : undefined;
+    : shippingBulletsForCart([product]);
+  const hasFreeStandardShipping = isFreeStandardShippingProduct(product);
+  const standardTopUpAmount = isOrangeCountyVendorProduct(product) || hasFreeStandardShipping
+    ? 0
+    : quoteAddressShipmentShipping({
+        items: [
+          {
+            price: product.price,
+            quantity: 1,
+            vendorSlug: product.vendorSlug,
+            productSlug: product.slug,
+            freeStandardShipping: hasFreeStandardShipping,
+            addons: addons.map((a) => ({ price: a.price, quantity: a.quantity })),
+          },
+        ],
+        currency: displayCurrency,
+        usdInrRate,
+      }).totalCharge;
   const lowStock = product.inventory > 0 && product.inventory <= LOW_STOCK_THRESHOLD;
   const fastSelling = isFastSelling(product);
   const unitsSold = getUnitsSold(product);
@@ -262,7 +291,7 @@ export function ProductDetailClient({
               className="mb-4 rounded-lg border border-amber-300 bg-amber-50 px-3.5 py-3 text-sm text-slate-900"
               role="note"
             >
-              <p className="font-bold text-primary">Important</p>
+              <p className="font-bold text-primary">Chocolate substitution</p>
               <p className="mt-1 leading-snug font-medium">{USARAKHI_STOCK_SHORTAGE_NOTE}</p>
             </div>
           ) : null}
@@ -270,7 +299,16 @@ export function ProductDetailClient({
             datePrefix="Estimated delivery:"
             className="mb-4"
             bullets={shippingBullets}
+            showStandardMinimumNote={!isOrangeCountyVendorProduct(product)}
+            standardTopUpAmount={standardTopUpAmount}
+            formatMoney={format}
+            currency={displayCurrency}
           />
+          {hasFreeStandardShipping ? (
+            <p className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-900">
+              Free standard shipping on this product.
+            </p>
+          ) : null}
 
           <TrustBadges variant="compact" className="mb-5" />
 

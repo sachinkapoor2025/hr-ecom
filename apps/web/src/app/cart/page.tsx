@@ -10,11 +10,14 @@ import { CheckoutLegalNotice } from "@/components/CheckoutLegalNotice";
 import { TrustBadges } from "@/components/TrustBadges";
 import { resolveImageUrl } from "@/lib/images";
 import { LastMinuteDeliveryTemplate } from "@/components/LastMinuteDeliveryTemplate";
+import { StandardShippingMinimumNote } from "@/components/StandardShippingMinimumNote";
 import { useCheckoutShippingOption } from "@/lib/checkout-shipping-option";
 import {
   cartLineUnitTotal,
   checkoutShippingOptionsForCart,
   expeditedOptionPriceInCurrency,
+  quoteAddressShipmentShipping,
+  resolveCheckoutShippingCharge,
   shippingOptionServiceName,
   type CartItem,
 } from "@hr-ecom/shared";
@@ -127,7 +130,24 @@ export default function CartPage() {
     return sum + convert(cartLineUnitTotal(i) * i.quantity, lineCurrency);
   }, 0);
   const currency = displayCurrency;
-  const shippingCharge = expeditedOptionPriceInCurrency(shippingOption, currency, usdInrRate);
+  const standardShippingCharge = quoteAddressShipmentShipping({
+    items: items.map((item) => ({
+      price: item.price,
+      quantity: item.quantity,
+      vendorSlug: item.vendorSlug,
+      productSlug: item.productSlug,
+      freeStandardShipping: item.freeStandardShipping,
+      addons: item.addons?.map((a) => ({ price: a.price, quantity: a.quantity })),
+    })),
+    currency,
+    usdInrRate,
+  }).totalCharge;
+  const shippingCharge = resolveCheckoutShippingCharge({
+    optionId: shippingOption,
+    standardCharge: standardShippingCharge,
+    currency,
+    usdInrRate,
+  });
   const estimatedTotal = total + shippingCharge;
 
   return (
@@ -207,7 +227,7 @@ export default function CartPage() {
             <LastMinuteDeliveryTemplate
               value={shippingOption}
               onChange={setShippingOption}
-              standardCharge={0}
+              standardCharge={standardShippingCharge}
               formatMoney={format}
               currency={currency}
               usdInrRate={usdInrRate}
@@ -234,6 +254,15 @@ export default function CartPage() {
                 </span>
                 <span className="font-medium text-slate-900">{format(shippingCharge, currency)}</span>
               </div>
+              {shippingOptions.some((o) => o.id === "standard") && shippingOption === "standard" ? (
+                <StandardShippingMinimumNote
+                  topUpAmount={standardShippingCharge}
+                  formatMoney={format}
+                  currency={currency}
+                  className="text-xs"
+                  compact
+                />
+              ) : null}
               <div className="flex items-center justify-between gap-4 pt-2 border-t border-slate-100">
                 <span className="font-bold text-slate-900">Estimated total</span>
                 <span className="font-bold text-accent text-base">{format(estimatedTotal, currency)}</span>

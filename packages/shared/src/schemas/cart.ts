@@ -27,6 +27,8 @@ export const cartItemSchema = z.object({
   sku: z.string().optional(),
   /** Copied from product — flash / fixed deals are not coupon-eligible. */
   couponExcluded: z.boolean().optional(),
+  /** Selected products — always free standard shipping (from product tag). */
+  freeStandardShipping: z.boolean().optional(),
   /** Optional UsaRakhi dry-fruit / chocolate extras on this line. */
   addons: z.array(cartItemAddonSchema).max(20).optional(),
 });

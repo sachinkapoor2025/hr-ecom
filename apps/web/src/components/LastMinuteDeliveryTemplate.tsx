@@ -8,6 +8,7 @@ import {
   type ExpeditedShippingDef,
 } from "@hr-ecom/shared";
 import type { DisplayCurrency } from "@/lib/currency-context";
+import { StandardShippingMinimumNote } from "@/components/StandardShippingMinimumNote";
 
 type FormatMoney = (amount: number, currency: DisplayCurrency) => string;
 
@@ -80,8 +81,8 @@ export function LastMinuteDeliveryTemplate({
           Need Your Order Fast?
         </h2>
         <p className="mt-1.5 text-sm text-slate-600 leading-relaxed">
-          Choose faster delivery by paying an additional delivery fee. Select one option — packed
-          with care and shipped from within the USA.
+          Choose standard delivery (after Aug 28) or pay for faster 3-day / 2-day shipping.
+          Packed with care and shipped from within the USA.
         </p>
       </header>
 
@@ -199,7 +200,13 @@ export function LastMinuteDeliveryTemplate({
                   {standardCharge <= 0 ? "FREE" : formatMoney(standardCharge, currency)}
                 </span>
               </span>
-              <span className="block text-xs text-slate-600 mt-1 leading-snug">{standard.detail}</span>
+              <StandardShippingMinimumNote
+                topUpAmount={standardCharge}
+                formatMoney={formatMoney}
+                currency={currency}
+                className="mt-2"
+                compact
+              />
             </span>
           </label>
         ) : null}

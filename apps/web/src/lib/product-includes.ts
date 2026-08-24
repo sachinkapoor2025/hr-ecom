@@ -1,9 +1,11 @@
 import type { Product } from "@hr-ecom/shared";
+import { productIncludesChocolates } from "@hr-ecom/shared";
 import { looksLikeHtml, stripHtml } from "./html-text";
 
 type ProductLike = Pick<Product, "name" | "description" | "categorySlug" | "tags"> & {
   slug?: string;
   additionalCategorySlugs?: string[];
+  images?: string[];
 };
 
 function hasChocolateSignal(text: string): boolean {
@@ -222,7 +224,7 @@ export function getProductIncludes(product: ProductLike): string[] {
     ];
   }
 
-  const blob = [name, description, ...(tags ?? [])].join(" ");
+  const blob = [name, description, product.slug ?? "", ...(tags ?? []), ...(product.images ?? [])].join(" ");
   const plain = looksLikeHtml(blob) ? stripHtml(blob) : blob;
 
   const items = [...rakhiLines(categorySlug), ...ritualPackets()];
@@ -230,9 +232,9 @@ export function getProductIncludes(product: ProductLike): string[] {
   // Hershey’s removed — use website chocolate names for shortage replacements.
   if (product.slug === "bhai-bhabhi-lumba-rakhi-set") {
     items.push("3 Ferrero Rocher / Lindor chocolates");
-  } else {
-    const chocolate = parseChocolateInclude(plain);
-    if (chocolate) items.push(chocolate);
+  } else if (productIncludesChocolates(product)) {
+    const chocolate = parseChocolateInclude(plain) ?? "Assorted Chocolates";
+    items.push(chocolate);
   }
 
   return [...items, ...shippingIncludeLines()];

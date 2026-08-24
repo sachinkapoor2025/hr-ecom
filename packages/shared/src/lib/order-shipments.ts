@@ -109,7 +109,7 @@ export function buildOrderShipments(input: {
     };
   }
 
-  /** Per address × vendor: standard shipping is always free (no cart minimum). */
+  /** Per address × vendor: UsaRakhi standard uses $25 minimum top-up; OC stays free. */
   const perAddress = built.map((s) =>
     quoteAddressShipmentShipping({
       items: s.items,
