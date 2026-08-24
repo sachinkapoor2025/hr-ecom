@@ -24,7 +24,9 @@ describe("sold-out-products (Ek Omkar)", () => {
     assert.equal(isForceOutOfStockSlug("om-single-rakhi"), false);
   });
 
-  it("zeros inventory but still lists sold-out UsaRakhi after available Orange County", () => {
+  it("keeps force-OOS at zero while regular UsaRakhi stay in stock when unpaused", () => {
+    assert.equal(USARAKHI_STOREFRONT_PAUSED, false);
+
     const zeroed = withForcedOutOfStockInventory({
       slug: "ek-omkar-rakhi-with-lindt-lindor-chocolates-combo",
       inventory: 199,
@@ -43,24 +45,30 @@ describe("sold-out-products (Ek Omkar)", () => {
       { slug: "om-single-rakhi", inventory: 50, published: true },
     ]);
     assert.equal(visible.length, 3);
-    assert.equal(visible[0]?.slug, "oc-hamper");
-    assert.equal(visible[0]?.inventory, 50);
-    assert.equal(visible[1]?.inventory, 0);
+    assert.equal(visible.find((p) => p.slug === "om-single-rakhi")?.inventory, 50);
+    assert.equal(visible.find((p) => p.slug === "oc-hamper")?.inventory, 50);
+    assert.equal(
+      visible.find((p) => p.slug === "ek-omkar-designer-rakhi-for-brother-with-roli-chawal")?.inventory,
+      0
+    );
+    // Available first
+    assert.ok((visible[0]?.inventory ?? 0) > 0);
+    assert.ok((visible[1]?.inventory ?? 0) > 0);
     assert.equal(visible[2]?.inventory, 0);
   });
 });
 
 describe("USARAKHI_STOREFRONT_PAUSED", () => {
-  it("is enabled and zeros non–Orange County inventory", () => {
-    assert.equal(USARAKHI_STOREFRONT_PAUSED, true);
-    assert.equal(isUsarakhiStorefrontPaused({ slug: "om-single-rakhi" }), true);
+  it("is disabled so non–Orange County products keep inventory", () => {
+    assert.equal(USARAKHI_STOREFRONT_PAUSED, false);
+    assert.equal(isUsarakhiStorefrontPaused({ slug: "om-single-rakhi" }), false);
     assert.equal(
       isUsarakhiStorefrontPaused({ slug: "hamper", vendorSlug: VENDOR_ORANGE_COUNTY }),
       false
     );
     assert.equal(
       withForcedOutOfStockInventory({ slug: "om-single-rakhi", inventory: 40 }).inventory,
-      0
+      40
     );
     assert.equal(
       withForcedOutOfStockInventory({
