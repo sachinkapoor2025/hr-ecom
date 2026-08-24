@@ -4,8 +4,6 @@
  * (Gmail / Outlook / Apple Mail / mobile).
  */
 
-import { getLastMinuteRakhiOrdersBannerForEmail } from "./home-page-banners";
-
 const SITE = "https://www.usarakhi.com";
 const LOGO = `${SITE}/logo.png`;
 const FB = `${SITE}/email-templates/icons/facebook.png`;
@@ -20,8 +18,6 @@ const CREAM_PAGE = "#efe4cc";
 const GOLD = "#c9a227";
 const WHITE = "#ffffff";
 
-const lastMinuteBanner = getLastMinuteRakhiOrdersBannerForEmail();
-
 export const LAST_MINUTE_RAKHI_ORDERS_EMAIL_CONFIG = {
   templateId: "last-minute-rakhi-orders",
   name: "Last-Minute Delivery",
@@ -31,9 +27,6 @@ export const LAST_MINUTE_RAKHI_ORDERS_EMAIL_CONFIG = {
   logoUrl: LOGO,
   logoAlt: "UsaRakhi — India and USA hearts joined by a Rakhi thread",
   logoTagline: "Connecting Hearts Across Borders",
-  heroImageUrl: lastMinuteBanner.src,
-  heroImageAlt: lastMinuteBanner.alt,
-  heroImageHref: "{{SHOP_URL}}",
   greeting: "Hi {{CUSTOMER_NAME}},",
   headlineLastMinute: "LAST MINUTE",
   headlineOrders: "ORDERS?",
@@ -212,15 +205,6 @@ export function buildLastMinuteRakhiOrdersEmailHtml(
               <div style="font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:18px;color:${NAVY};padding-top:6px;">
                 🇮🇳 ❤ 🇺🇸 &nbsp; India → USA Rakhi delivery
               </div>
-            </td>
-          </tr>
-
-          <!-- Campaign banner (clickable; layout below stays editable HTML) -->
-          <tr>
-            <td align="center" style="padding:8px 0 0 0;line-height:0;font-size:0;background-color:${CREAM};">
-              <a href="${escAttr(cfg.heroImageHref)}" target="_blank" style="text-decoration:none;">
-                <img class="fluid" src="${escAttr(cfg.heroImageUrl)}" width="600" alt="${escAttr(cfg.heroImageAlt)}" style="display:block;width:100%;max-width:600px;height:auto;border:0;" />
-              </a>
             </td>
           </tr>
 

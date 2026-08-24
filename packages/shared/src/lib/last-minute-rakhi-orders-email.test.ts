@@ -20,7 +20,7 @@ describe("last-minute rakhi orders email", () => {
     assert.match(html, /ORDER NOW/);
     assert.match(html, /Because some bonds can&#39;t wait!/);
     assert.match(html, /SAFE &amp; SECURE DELIVERY/);
-    assert.match(html, /banner-last-minute-rakhi-orders\.png/);
+    assert.doesNotMatch(html, /banner-last-minute-rakhi-orders\.png/);
   });
 
   it("fills merge tags for send and preview without touching unknown tokens", () => {
