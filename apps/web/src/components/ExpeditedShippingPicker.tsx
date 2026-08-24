@@ -3,8 +3,10 @@
 import {
   CHECKOUT_SHIPPING_OPTIONS,
   RAKHI_DELIVERY_MESSAGING,
+  ORANGE_COUNTY_SHIPPING_BULLETS,
   expeditedOptionPriceInCurrency,
   type CheckoutShippingOptionId,
+  type ExpeditedShippingDef,
 } from "@hr-ecom/shared";
 import type { DisplayCurrency } from "@/lib/currency-context";
 import { RakhiDeliverySummary } from "@/components/RakhiDeliverySummary";
@@ -23,6 +25,8 @@ type Props = {
   className?: string;
   /** Hide the summary header when RakhiDeliverySummary is shown above. */
   showHeader?: boolean;
+  /** Subset of options (defaults to all). Orange County carts pass 3-day + 2-day only. */
+  options?: readonly ExpeditedShippingDef[];
 };
 
 export function ExpeditedShippingPicker({
@@ -34,21 +38,24 @@ export function ExpeditedShippingPicker({
   usdInrRate,
   className = "",
   showHeader = true,
+  options = CHECKOUT_SHIPPING_OPTIONS,
 }: Props) {
   const msg = RAKHI_DELIVERY_MESSAGING;
+  const hideStandard = !options.some((o) => o.id === "standard");
+  const bullets = hideStandard ? ORANGE_COUNTY_SHIPPING_BULLETS : msg.shippingBullets;
 
   return (
     <div className={`rounded-xl border border-amber-200 bg-amber-50/60 overflow-hidden ${className}`}>
       {showHeader ? (
         <div className="px-3.5 py-3 border-b border-amber-200/80 bg-white/70 space-y-2">
           <p className="text-sm font-bold text-primary">{msg.headline}</p>
-          <RakhiDeliveryBulletList items={msg.shippingBullets} highlightFirst />
+          <RakhiDeliveryBulletList items={bullets} highlightFirst />
         </div>
       ) : null}
 
       <fieldset className="p-3 space-y-2.5">
         <legend className="sr-only">Shipping speed</legend>
-        {CHECKOUT_SHIPPING_OPTIONS.map((option) => {
+        {options.map((option) => {
           const selected = value === option.id;
           const price =
             option.id === "standard"

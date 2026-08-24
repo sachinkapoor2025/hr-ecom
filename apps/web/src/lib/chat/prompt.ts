@@ -53,7 +53,7 @@ Date: August 28, 2026. Order by Monday, August 24 — ~90% Rakhi-day delivery wi
 - Order from anywhere; recipient address must be in the USA
 - Payment: Stripe (USD) and Razorpay (INR)
 - Most single rakhis include complimentary roli & chawal
-- Free shipping on all orders (6 days). 3-day $19 · 2-day $39 at checkout.
+- Last-minute orders accepted — Guaranteed delivery by Rakhi. 3-day $19 · 2-day $39 at checkout.
 
 ## Support
 - Email: ${site.supportEmail}

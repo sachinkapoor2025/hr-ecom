@@ -20,7 +20,6 @@ import { CouponInput } from "@/components/CouponInput";
 import { StripePaymentForm } from "@/components/StripePaymentForm";
 import { RazorpayQrPanel } from "@/components/RazorpayQrPanel";
 import { RakhiDeliverySummary } from "@/components/RakhiDeliverySummary";
-import { FreeShippingNotice } from "@/components/FreeShippingNotice";
 import { ExpeditedShippingPicker } from "@/components/ExpeditedShippingPicker";
 import { RecipientAddressFields } from "@/components/RecipientAddressFields";
 import { loadWelcomeCoupon } from "@/lib/welcome-coupon";
@@ -41,8 +40,6 @@ import {
   ORDER_STATUS,
   isValidShippingPhone,
   DEFAULT_SENDER_MESSAGE,
-  quoteFreeShippingThreshold,
-  shippingVendorKey,
   cartLineUnitTotal,
   cartHasCouponExcludedItems,
   isFlashComboProduct,
@@ -50,12 +47,17 @@ import {
   resolveCheckoutShippingCharge,
   shippingOptionServiceName,
   expeditedArrivalLabel,
+  checkoutShippingOptionsForCart,
+  defaultCheckoutShippingOption,
+  shippingBulletsForCart,
   type CheckoutShippingOptionId,
   type Order,
   type RateQuote,
   type ShippingAddress,
 } from "@hr-ecom/shared";
 import { resolveImageUrl } from "@/lib/images";
+
+const EMPTY_CART_ITEMS: Array<{ vendorSlug?: string }> = [];
 
 declare global {
   interface Window {
@@ -128,8 +130,21 @@ function CheckoutPageInner() {
     settingsMode: "free",
     customerCharge: 0,
   });
-  const [shippingOption, setShippingOption] = useState<CheckoutShippingOptionId>("standard");
+  const [shippingOption, setShippingOption] = useState<CheckoutShippingOptionId>("three_day");
   const ratesTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const cartItemsForShipping = cart?.items ?? EMPTY_CART_ITEMS;
+  const checkoutShippingOptions = checkoutShippingOptionsForCart(cartItemsForShipping);
+  const checkoutShippingBullets = shippingBulletsForCart(cartItemsForShipping);
+
+  useEffect(() => {
+    if (retryOrderId || cartLoading) return;
+    const preferred = defaultCheckoutShippingOption(cartItemsForShipping);
+    const allowed = new Set(checkoutShippingOptions.map((o) => o.id));
+    if (!allowed.has(shippingOption)) {
+      setShippingOption(preferred);
+    }
+  }, [retryOrderId, cartLoading, cart?.items, shippingOption]);
 
   const isAddressReadyForRates = useCallback((a: ShippingAddress) => {
     return Boolean(
@@ -665,12 +680,6 @@ function CheckoutPageInner() {
           attribution: getAttributionSnapshotForCheckout(),
           ...(appliedCouponCode ? { couponCode: appliedCouponCode } : {}),
           shippingOption,
-          ...(shippingOption === "standard" && shippingQuote.selected
-            ? {
-                shippingServiceCode: shippingQuote.selected.mailClass,
-                shippingRateId: shippingQuote.selected.rateId,
-              }
-            : {}),
         }),
       });
 
@@ -764,15 +773,7 @@ function CheckoutPageInner() {
         displayCurrency,
         usdInrRate
       );
-  const freeShippingQuote =
-    multiShippingQuote.perShipment.find((q) => !q.qualifiesForFreeShipping) ??
-    multiShippingQuote.perShipment[0] ??
-    quoteFreeShippingThreshold({
-      subtotal: displaySubtotal,
-      currency: displayCurrency,
-      usdInrRate,
-    });
-  /** Prefer per-delivery threshold for free mode so shipping shows before address rates load. */
+  /** Prefer per-delivery charge for free mode so shipping shows before address rates load. */
   const standardShippingCharge = isRetry
     ? retryOrder!.shipping
     : shippingQuote.settingsMode === "pass_through"
@@ -790,34 +791,10 @@ function CheckoutPageInner() {
     ? retryOrder!.total
     : Math.max(0, displaySubtotal - discount + shippingCharge);
   const showSplitDelivery = !isRetry && deliveryUnits.length > 1;
-  const chargedShipmentCount = multiShippingQuote.perShipment.filter((q) => q.charge > 0).length;
-  const mixedVendors =
-    !isRetry &&
-    new Set(checkoutItems.map((i) => shippingVendorKey(i))).size > 1;
-  const showMixedVendorShippingException =
-    mixedVendors && multiShippingQuote.perShipment.some((q) => q.charge > 0);
-  const showMultiGroupShippingNotice =
-    !showMixedVendorShippingException && multiShippingQuote.perShipment.length > 1;
 
   const shippingDetailLine = isRetry
     ? null
-    : (() => {
-        if (shippingOption !== "standard") {
-          return `${shippingOptionServiceName(shippingOption)} · est. ${expeditedArrivalLabel(shippingOption)}`;
-        }
-        const selected = shippingQuote.selected;
-        const serviceName = selected?.serviceName ?? "Standard shipping";
-        const deliveryHint = selected?.estimatedDeliveryDate
-          ? ` · arrives by ${new Date(selected.estimatedDeliveryDate).toLocaleDateString(undefined, {
-              month: "short",
-              day: "numeric",
-            })}`
-          : "";
-        if (shippingCharge <= 0) {
-          return `${serviceName}${deliveryHint} (FREE)`;
-        }
-        return `${serviceName}${deliveryHint}`;
-      })();
+    : `${shippingOptionServiceName(shippingOption)} · est. ${expeditedArrivalLabel(shippingOption)}`;
 
   return (
     <>
@@ -839,7 +816,11 @@ function CheckoutPageInner() {
             Retrying payment for order <span className="font-mono">{retryOrder!.orderId.slice(0, 8)}…</span>
           </p>
         )}
-        <RakhiDeliverySummary datePrefix="Estimated delivery:" className="mb-4" />
+        <RakhiDeliverySummary
+          datePrefix="Estimated delivery:"
+          className="mb-4"
+          bullets={checkoutShippingBullets}
+        />
         {!isRetry && shippingQuote.settingsMode !== "pass_through" ? (
           <ExpeditedShippingPicker
             value={shippingOption}
@@ -850,6 +831,7 @@ function CheckoutPageInner() {
             usdInrRate={usdInrRate}
             showHeader={false}
             className="mb-6"
+            options={checkoutShippingOptions}
           />
         ) : null}
 
@@ -1012,46 +994,18 @@ function CheckoutPageInner() {
                   className={
                     shippingCharge > 0
                       ? "font-medium text-slate-900"
-                      : "font-bold text-accent"
+                      : "font-medium text-slate-900"
                   }
                 >
                   {shippingCharge > 0
                     ? format(shippingCharge, displayCurrency)
-                    : "FREE"}
+                    : "Select option"}
                 </span>
               </div>
-              {!isRetry && shippingQuote.settingsMode !== "pass_through" && shippingOption === "standard" && (
-                <>
-                  {showMixedVendorShippingException ? (
-                    <FreeShippingNotice
-                      quote={freeShippingQuote}
-                      formatMoney={format}
-                      currency={displayCurrency}
-                      footnote={`Your items ship from different sellers, so each seller is priced separately (not on the order total). Current shipping fee: ${format(shippingCharge, displayCurrency)}.`}
-                    />
-                  ) : showMultiGroupShippingNotice ? (
-                    <FreeShippingNotice
-                      quote={freeShippingQuote}
-                      formatMoney={format}
-                      currency={displayCurrency}
-                      footnote={
-                        chargedShipmentCount > 0
-                          ? `Rates apply per delivery address. ${chargedShipmentCount} of ${multiShippingQuote.perShipment.length} deliveries include shipping (${format(shippingCharge, displayCurrency)} total).`
-                          : "Standard shipping is free on every delivery. Choose 3-day ($19) or 2-day ($39) if you need it faster."
-                      }
-                    />
-                  ) : (
-                    <FreeShippingNotice
-                      quote={freeShippingQuote}
-                      formatMoney={format}
-                      currency={displayCurrency}
-                    />
-                  )}
-                </>
-              )}
-              {!isRetry && shippingOption !== "standard" ? (
+              {!isRetry ? (
                 <p className="text-[11px] text-slate-500 leading-snug">
-                  Expedited fee replaces standard cart shipping rates for this order.
+                  Last-minute orders accepted — Guaranteed delivery by Rakhi with 3-day ($19) or
+                  2-day ($39) shipping.
                 </p>
               ) : null}
               <div className="flex justify-between gap-4 pt-2 border-t border-slate-200">

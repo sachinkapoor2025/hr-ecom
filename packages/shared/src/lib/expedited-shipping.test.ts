@@ -94,13 +94,47 @@ describe("expedited-shipping", () => {
     assert.equal(shippingOptionServiceCode("standard"), "STANDARD");
   });
 
-  it("lists free 6-day, 3-day $19, and 2-day $39 without calendar dates", async () => {
-    const { RAKHI_DELIVERY_MESSAGING } = await import("./expedited-shipping");
+  it("lists last-minute guarantee with 3-day and 2-day only (no free shipping)", async () => {
+    const { RAKHI_DELIVERY_MESSAGING, RAKHI_LAST_MINUTE_GUARANTEE } = await import(
+      "./expedited-shipping"
+    );
+    assert.equal(
+      RAKHI_DELIVERY_MESSAGING.lastMinuteNote,
+      "Last-minute orders are accepted — Guaranteed delivery by Rakhi"
+    );
+    assert.equal(RAKHI_LAST_MINUTE_GUARANTEE, RAKHI_DELIVERY_MESSAGING.lastMinuteNote);
     assert.deepEqual(RAKHI_DELIVERY_MESSAGING.shippingBullets, [
-      "Free shipping — 6 days delivery",
+      "Last-minute orders are accepted — Guaranteed delivery by Rakhi",
       "3-day delivery — $19",
       "2-day delivery — $39",
     ]);
+    assert.doesNotMatch(RAKHI_DELIVERY_MESSAGING.shippingBullets.join(" "), /free shipping/i);
     assert.doesNotMatch(RAKHI_DELIVERY_MESSAGING.shippingBullets.join(" "), /\bAug\b|2026|Monday/i);
+  });
+
+  it("offers only paid expedited shipping options at checkout", async () => {
+    const {
+      checkoutShippingOptionsForCart,
+      defaultCheckoutShippingOption,
+      shippingBulletsForCart,
+    } = await import("./expedited-shipping");
+    const ocItems = [{ vendorSlug: "orange-county" }, { vendorSlug: "orange-county" }];
+    assert.deepEqual(
+      checkoutShippingOptionsForCart(ocItems).map((o) => o.id),
+      ["three_day", "two_day"]
+    );
+    assert.equal(defaultCheckoutShippingOption(ocItems), "three_day");
+    assert.deepEqual([...shippingBulletsForCart(ocItems)], [
+      "Last-minute orders are accepted — Guaranteed delivery by Rakhi",
+      "3-day delivery — $19",
+      "2-day delivery — $39",
+    ]);
+
+    const mixed = [{ vendorSlug: "orange-county" }, {}];
+    assert.deepEqual(
+      checkoutShippingOptionsForCart(mixed).map((o) => o.id),
+      ["three_day", "two_day"]
+    );
+    assert.equal(defaultCheckoutShippingOption(mixed), "three_day");
   });
 });
