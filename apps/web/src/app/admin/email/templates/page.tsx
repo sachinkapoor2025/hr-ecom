@@ -6,6 +6,7 @@ import { PremiumMarketingEmailEditor } from "@/components/admin/PremiumMarketing
 import { ensureStarterEmailTemplates } from "@/lib/ensure-starter-email-templates";
 import {
   FREE_SHIPPING_TEMPLATE_ID,
+  LAST_MINUTE_RAKHI_ORDERS_TEMPLATE_ID,
   PREMIUM_RAKSHA_BANDHAN_TEMPLATE_ID,
   RAKSHA_BANDHAN_TEMPLATE_ID,
   STARTING_PRICE_TEMPLATE_ID,
@@ -64,6 +65,10 @@ export default function TemplatesPage() {
       setMessage("Premium Raksha Bandhan template installed — edit images, categories, and CTAs below.");
     } else if (updated.includes(PREMIUM_RAKSHA_BANDHAN_TEMPLATE_ID)) {
       setMessage("Premium Raksha Bandhan template upgraded with visual editor fields.");
+    } else if (installed.includes(LAST_MINUTE_RAKHI_ORDERS_TEMPLATE_ID)) {
+      setMessage("Last-Minute Delivery template installed and ready to use.");
+    } else if (updated.includes(LAST_MINUTE_RAKHI_ORDERS_TEMPLATE_ID)) {
+      setMessage("Last-Minute Delivery template updated.");
     } else if (installed.includes(RAKSHA_BANDHAN_TEMPLATE_ID)) {
       setMessage("Raksha Bandhan USA template installed and ready to use.");
     } else if (updated.includes(RAKSHA_BANDHAN_TEMPLATE_ID)) {
@@ -317,8 +322,8 @@ export default function TemplatesPage() {
         <div className="px-4 py-3 border-b">
           <h2 className="text-sm font-semibold text-slate-700">Saved templates</h2>
           <p className="text-xs text-slate-500 mt-0.5">
-            Open a template to edit, preview (desktop + mobile), and save. Use Compose → Email template
-            to load it into a campaign. Existing templates are unchanged.
+            Open a template to edit and save. Use Compose → Email template to load it into a
+            campaign. Existing templates are unchanged.
           </p>
         </div>
         {booting ? (
