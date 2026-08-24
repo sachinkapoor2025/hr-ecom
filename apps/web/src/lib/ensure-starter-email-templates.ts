@@ -25,7 +25,8 @@ async function loadStarterHtml(starter: StarterEmailTemplateMeta): Promise<strin
 /**
  * Ensures packaged starter templates exist in Admin → Templates.
  * HTML-file / buildHtml starters refresh when packaged content changes.
- * Structured (contentFields) starters install once and preserve Admin edits.
+ * Structured templates and starters with preserveAdminEdits install once
+ * and keep Admin edits.
  */
 export async function ensureStarterEmailTemplates(api: ApiClient): Promise<{
   templates: SesTemplate[];
@@ -59,9 +60,13 @@ export async function ensureStarterEmailTemplates(api: ApiClient): Promise<{
       continue;
     }
 
-    // Structured templates: only migrate layout/contentFields if missing; never clobber edits.
-    if (isStructured && starter.preserveAdminEdits !== false) {
-      if (!existing.contentFields || existing.layout !== PREMIUM_MARKETING_EMAIL_LAYOUT) {
+    const preserveEdits = isStructured
+      ? starter.preserveAdminEdits !== false
+      : starter.preserveAdminEdits === true;
+
+    // Structured / opt-in starters: install once; never overwrite Admin edits.
+    if (preserveEdits) {
+      if (isStructured && (!existing.contentFields || existing.layout !== PREMIUM_MARKETING_EMAIL_LAYOUT)) {
         const res = await api<{ template: SesTemplate }>(`/ses-email/templates/${starter.templateId}`, {
           method: "PUT",
           body: JSON.stringify({

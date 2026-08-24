@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { useApiClient } from "@/lib/auth-context";
+import { EmailTemplatePreview } from "@/components/admin/EmailTemplatePreview";
 import { ensureStarterEmailTemplates } from "@/lib/ensure-starter-email-templates";
 import { SES_TIMEZONES, type SesCampaign, type SesTemplate } from "@hr-ecom/shared";
 
@@ -185,9 +186,13 @@ function ComposeInner() {
     <div className="space-y-6 max-w-3xl">
       <h1 className="text-2xl font-bold text-primary">Compose Email</h1>
       <p className="text-sm text-slate-500">
-        Variables: <code>{"{{name}}"}</code> <code>{"{{company}}"}</code> <code>{"{{email}}"}</code>
+        Variables: <code>{"{{name}}"}</code> <code>{"{{CUSTOMER_NAME}}"}</code>{" "}
+        <code>{"{{company}}"}</code> <code>{"{{email}}"}</code>{" "}
+        <code>{"{{DELIVERY_OPTION_1}}"}</code> <code>{"{{DELIVERY_PRICE_1}}"}</code>{" "}
+        <code>{"{{DELIVERY_OPTION_2}}"}</code> <code>{"{{DELIVERY_PRICE_2}}"}</code>{" "}
+        <code>{"{{SHOP_URL}}"}</code>
         {" · "}
-        Unsubscribe: <code>{"{{unsubscribe}}"}</code>
+        Unsubscribe: <code>{"{{unsubscribe}}"}</code> <code>{"{{UNSUBSCRIBE_URL}}"}</code>
       </p>
 
       <div className="space-y-4 rounded-xl border bg-white p-5">
@@ -241,6 +246,7 @@ function ComposeInner() {
             onChange={(e) => setHtmlBody(e.target.value)}
           />
         </label>
+        <EmailTemplatePreview html={htmlBody} />
 
         <div className="flex flex-wrap gap-4 text-sm">
           <label className="flex items-center gap-2">

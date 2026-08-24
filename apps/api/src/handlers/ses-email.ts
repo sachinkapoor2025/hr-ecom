@@ -182,13 +182,16 @@ function appendToHtml(html: string, fragment: string): string {
  */
 function finalizeEmailHtml(html: string, settings: SesSettings, unsubUrl: string): string {
   const unsubLink = `<a href="${unsubUrl}" target="_blank" style="color:#c41e3a;text-decoration:underline">Unsubscribe</a>`;
-  if (/\{\{\s*unsubscribe\s*\}\}/i.test(html)) {
-    return html.replace(/\{\{\s*unsubscribe\s*\}\}/gi, unsubLink);
+  let out = html.replace(/\{\{\s*UNSUBSCRIBE_URL\s*\}\}/gi, unsubUrl);
+  // Existing templates use href="{{unsubscribe}}" — replace with the URL, not a nested <a>.
+  out = out.replace(/(href\s*=\s*["'])\{\{\s*unsubscribe\s*\}\}(["'])/gi, `$1${unsubUrl}$2`);
+  if (/\{\{\s*unsubscribe\s*\}\}/i.test(out)) {
+    return out.replace(/\{\{\s*unsubscribe\s*\}\}/gi, unsubLink);
   }
-  if (/<!DOCTYPE\s+html/i.test(html) || /<\/html>/i.test(html)) {
-    return html;
+  if (/<!DOCTYPE\s+html/i.test(out) || /<\/html>/i.test(out)) {
+    return out;
   }
-  return appendToHtml(html, buildFooter(settings, unsubUrl));
+  return appendToHtml(out, buildFooter(settings, unsubUrl));
 }
 
 /** External social / app links should open directly (not via click-tracking redirect). */

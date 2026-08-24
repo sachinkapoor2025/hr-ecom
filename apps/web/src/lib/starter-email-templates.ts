@@ -10,12 +10,14 @@ import {
   buildRakhiHampersUsaEmailHtml,
   buildIndependenceDayEmailHtml,
   buildRakshaBandhanOrderBy20EmailHtml,
+  buildLastMinuteRakhiOrdersEmailHtml,
   FREE_SHIPPING_EMAIL_CONFIG,
   STARTING_PRICE_EMAIL_CONFIG,
   SHOP_MORE_SAVE_MORE_EMAIL_CONFIG,
   RAKHI_HAMPERS_USA_EMAIL_CONFIG,
   INDEPENDENCE_DAY_EMAIL_CONFIG,
   RAKSHA_BANDHAN_ORDER_BY_20_EMAIL_CONFIG,
+  LAST_MINUTE_RAKHI_ORDERS_EMAIL_CONFIG,
   type MarketingEmailContent,
 } from "@hr-ecom/shared";
 
@@ -45,6 +47,7 @@ export const SHOP_MORE_SAVE_MORE_TEMPLATE_ID = SHOP_MORE_SAVE_MORE_EMAIL_CONFIG.
 export const RAKHI_HAMPERS_USA_TEMPLATE_ID = RAKHI_HAMPERS_USA_EMAIL_CONFIG.templateId;
 export const INDEPENDENCE_DAY_TEMPLATE_ID = INDEPENDENCE_DAY_EMAIL_CONFIG.templateId;
 export const RAKSHA_BANDHAN_ORDER_BY_20_TEMPLATE_ID = RAKSHA_BANDHAN_ORDER_BY_20_EMAIL_CONFIG.templateId;
+export const LAST_MINUTE_RAKHI_ORDERS_TEMPLATE_ID = LAST_MINUTE_RAKHI_ORDERS_EMAIL_CONFIG.templateId;
 
 export const STARTER_EMAIL_TEMPLATES: StarterEmailTemplateMeta[] = [
   {
@@ -102,6 +105,14 @@ export const STARTER_EMAIL_TEMPLATES: StarterEmailTemplateMeta[] = [
     subject: RAKSHA_BANDHAN_ORDER_BY_20_EMAIL_CONFIG.subject,
     buildHtml: () => buildRakshaBandhanOrderBy20EmailHtml(),
     htmlPath: "/email-templates/raksha-bandhan-order-by-20-august.html",
+  },
+  {
+    templateId: LAST_MINUTE_RAKHI_ORDERS_TEMPLATE_ID,
+    name: LAST_MINUTE_RAKHI_ORDERS_EMAIL_CONFIG.name,
+    subject: LAST_MINUTE_RAKHI_ORDERS_EMAIL_CONFIG.subject,
+    buildHtml: () => buildLastMinuteRakhiOrdersEmailHtml(),
+    htmlPath: "/email-templates/last-minute-rakhi-orders.html",
+    preserveAdminEdits: true,
   },
 ];
 

@@ -2,6 +2,8 @@ import type { HomeBanner } from "@/components/BannerCarousel";
 import {
   HOME_PAGE_INDEPENDENCE_DAY_BANNER_ALT,
   HOME_PAGE_INDEPENDENCE_DAY_BANNER_PATH,
+  LAST_MINUTE_RAKHI_ORDERS_BANNER_ALT,
+  LAST_MINUTE_RAKHI_ORDERS_BANNER_PATH,
   RAKSHA_BANDHAN_ORDER_BY_20_BANNER_ALT,
   RAKSHA_BANDHAN_ORDER_BY_20_BANNER_PATH,
 } from "@hr-ecom/shared";
@@ -49,6 +51,23 @@ export const rakshaBandhanOrderBy20Banner: HomeBanner = {
   pill: "Order by 20 August · Guaranteed Delivery · Premium Rakhis",
 };
 
+/** Last-minute Rakhi orders — first homepage slide through Raksha Bandhan 2026. */
+export const LAST_MINUTE_RAKHI_BANNER_STARTS_AT = "2026-08-21T00:00:00.000Z";
+export const LAST_MINUTE_RAKHI_BANNER_ENDS_AT = "2026-08-29T07:00:00.000Z";
+
+export const lastMinuteRakhiOrdersBanner: HomeBanner = {
+  src: LAST_MINUTE_RAKHI_ORDERS_BANNER_PATH,
+  alt: LAST_MINUTE_RAKHI_ORDERS_BANNER_ALT,
+  href: "/products",
+  eyebrow: "LAST MINUTE · RAKSHA BANDHAN",
+  title: "Last Minute Orders? We Deliver Love,",
+  titleAccent: "On Time!",
+  description: "2-day delivery $39 · 3-day delivery $19 · Send Rakhis to loved ones in the USA",
+  cta: "Order Now",
+  pill: "Last Minute Orders · 2-day $39 · 3-day $19 · Guaranteed by Rakhi 28 August",
+  imageFit: "contain",
+};
+
 export function isIndependenceDayHeroActive(now = new Date()): boolean {
   const t = now.getTime();
   const start = new Date(INDEPENDENCE_DAY_HERO_STARTS_AT).getTime();
@@ -56,13 +75,25 @@ export function isIndependenceDayHeroActive(now = new Date()): boolean {
   return t >= start && t < end;
 }
 
+export function isLastMinuteRakhiBannerActive(now = new Date()): boolean {
+  const t = now.getTime();
+  const start = new Date(LAST_MINUTE_RAKHI_BANNER_STARTS_AT).getTime();
+  const end = new Date(LAST_MINUTE_RAKHI_BANNER_ENDS_AT).getTime();
+  return t >= start && t < end;
+}
+
 /**
  * Homepage hero — default `homeBanners` in existing order.
  * Independence Day slide is prepended only while that campaign window is active.
+ * Last-minute Rakhi slide is prepended through Raksha Bandhan 28 August 2026.
  */
 export function getHomeBanners(now = new Date()): readonly HomeBanner[] {
+  const slides: HomeBanner[] = [...homeBanners];
   if (isIndependenceDayHeroActive(now)) {
-    return [independenceDayHeroBanner, ...homeBanners];
+    slides.unshift(independenceDayHeroBanner);
   }
-  return homeBanners;
+  if (isLastMinuteRakhiBannerActive(now)) {
+    slides.unshift(lastMinuteRakhiOrdersBanner);
+  }
+  return slides;
 }

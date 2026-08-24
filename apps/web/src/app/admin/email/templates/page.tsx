@@ -2,10 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useApiClient } from "@/lib/auth-context";
+import { EmailTemplatePreview } from "@/components/admin/EmailTemplatePreview";
 import { PremiumMarketingEmailEditor } from "@/components/admin/PremiumMarketingEmailEditor";
 import { ensureStarterEmailTemplates } from "@/lib/ensure-starter-email-templates";
 import {
   FREE_SHIPPING_TEMPLATE_ID,
+  LAST_MINUTE_RAKHI_ORDERS_TEMPLATE_ID,
   PREMIUM_RAKSHA_BANDHAN_TEMPLATE_ID,
   RAKSHA_BANDHAN_TEMPLATE_ID,
   STARTING_PRICE_TEMPLATE_ID,
@@ -40,7 +42,7 @@ export default function TemplatesPage() {
   const isEditing = Boolean(selectedId);
   const isStructured = layout === PREMIUM_MARKETING_EMAIL_LAYOUT && Boolean(contentFields);
 
-  const previewHtml = useMemo(() => {
+  const compiledHtml = useMemo(() => {
     if (isStructured && contentFields) {
       return buildPremiumMarketingEmailHtml(contentFields);
     }
@@ -64,6 +66,8 @@ export default function TemplatesPage() {
       setMessage("Premium Raksha Bandhan template installed — edit images, categories, and CTAs below.");
     } else if (updated.includes(PREMIUM_RAKSHA_BANDHAN_TEMPLATE_ID)) {
       setMessage("Premium Raksha Bandhan template upgraded with visual editor fields.");
+    } else if (installed.includes(LAST_MINUTE_RAKHI_ORDERS_TEMPLATE_ID)) {
+      setMessage("Last Minute Rakhi Orders template installed and ready to use.");
     } else if (installed.includes(RAKSHA_BANDHAN_TEMPLATE_ID)) {
       setMessage("Raksha Bandhan USA template installed and ready to use.");
     } else if (updated.includes(RAKSHA_BANDHAN_TEMPLATE_ID)) {
@@ -268,27 +272,27 @@ export default function TemplatesPage() {
             {showHtml && (
               <textarea
                 className="w-full border rounded-lg px-3 py-2 text-xs font-mono min-h-[140px] bg-slate-50"
-                value={previewHtml}
+                value={compiledHtml}
                 readOnly
               />
             )}
-            <div className="rounded-xl border overflow-hidden bg-slate-100">
-              <p className="px-3 py-2 text-xs font-medium text-slate-600 border-b bg-white">Live preview</p>
-              <iframe
-                title="Email preview"
-                srcDoc={previewHtml}
-                className="w-full bg-white"
-                style={{ height: 720, border: 0 }}
-                sandbox=""
-              />
-            </div>
+            <EmailTemplatePreview html={compiledHtml} />
           </>
         ) : (
-          <textarea
-            className="w-full border rounded-lg px-3 py-2 text-xs font-mono min-h-[140px]"
-            value={htmlBody}
-            onChange={(e) => setHtmlBody(e.target.value)}
-          />
+          <>
+            <textarea
+              className="w-full border rounded-lg px-3 py-2 text-xs font-mono min-h-[140px]"
+              value={htmlBody}
+              onChange={(e) => setHtmlBody(e.target.value)}
+            />
+            <p className="text-xs text-slate-500">
+              Placeholders: <code>{"{{CUSTOMER_NAME}}"}</code> <code>{"{{DELIVERY_OPTION_1}}"}</code>{" "}
+              <code>{"{{DELIVERY_PRICE_1}}"}</code> <code>{"{{DELIVERY_OPTION_2}}"}</code>{" "}
+              <code>{"{{DELIVERY_PRICE_2}}"}</code> <code>{"{{SHOP_URL}}"}</code>{" "}
+              <code>{"{{UNSUBSCRIBE_URL}}"}</code>
+            </p>
+            <EmailTemplatePreview html={htmlBody} />
+          </>
         )}
 
         <div className="flex flex-wrap items-center gap-2">
@@ -319,8 +323,8 @@ export default function TemplatesPage() {
         <div className="px-4 py-3 border-b">
           <h2 className="text-sm font-semibold text-slate-700">Saved templates</h2>
           <p className="text-xs text-slate-500 mt-0.5">
-            Open <strong>Premium Raksha Bandhan (Editable)</strong> to change logo, banner, categories, promises,
-            and footer without editing HTML. Use Compose → Load template for campaigns.
+            Open a template to edit, preview (desktop + mobile), and save. Use Compose → Email template
+            to load it into a campaign. Existing templates are unchanged.
           </p>
         </div>
         {booting ? (
