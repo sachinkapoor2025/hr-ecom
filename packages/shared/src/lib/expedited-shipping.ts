@@ -6,7 +6,10 @@ import {
 import { VENDOR_ORANGE_COUNTY } from "../constants";
 import { RAKSHA_BANDHAN_FESTIVAL_DATE } from "../schemas/shipping";
 import { addBusinessDays, formatDeliveryDate } from "./delivery";
-import { shippingVendorKey } from "./free-shipping";
+import { shippingVendorKey, USARAKHI_MIN_ORDER_USD } from "./free-shipping";
+
+/** Customer-facing standard delivery line (UsaRakhi). */
+export const USARAKHI_STANDARD_DELIVERY_DETAIL = `Standard — delivery after Aug 28 · 5 business days · $${USARAKHI_MIN_ORDER_USD} minimum order`;
 
 /** Flat rates for Rakhi-season confirmed-delivery upgrades (USD). */
 export const EXPEDITED_THREE_DAY_SHIPPING_USD = 19;
@@ -43,7 +46,7 @@ export const CHECKOUT_SHIPPING_OPTIONS: readonly ExpeditedShippingDef[] = [
     priceUsd: 0,
     packingBusinessDays: 1,
     transitBusinessDays: 5,
-    detail: "Standard — delivery after Aug 28 · 5 business days · $25 minimum order",
+    detail: USARAKHI_STANDARD_DELIVERY_DETAIL,
   },
   {
     id: "three_day",

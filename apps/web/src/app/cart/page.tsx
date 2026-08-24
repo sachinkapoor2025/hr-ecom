@@ -10,6 +10,7 @@ import { CheckoutLegalNotice } from "@/components/CheckoutLegalNotice";
 import { TrustBadges } from "@/components/TrustBadges";
 import { resolveImageUrl } from "@/lib/images";
 import { LastMinuteDeliveryTemplate } from "@/components/LastMinuteDeliveryTemplate";
+import { StandardShippingMinimumNote } from "@/components/StandardShippingMinimumNote";
 import { useCheckoutShippingOption } from "@/lib/checkout-shipping-option";
 import {
   cartLineUnitTotal,
@@ -253,6 +254,15 @@ export default function CartPage() {
                 </span>
                 <span className="font-medium text-slate-900">{format(shippingCharge, currency)}</span>
               </div>
+              {shippingOptions.some((o) => o.id === "standard") && shippingOption === "standard" ? (
+                <StandardShippingMinimumNote
+                  topUpAmount={standardShippingCharge}
+                  formatMoney={format}
+                  currency={currency}
+                  className="text-xs"
+                  compact
+                />
+              ) : null}
               <div className="flex items-center justify-between gap-4 pt-2 border-t border-slate-100">
                 <span className="font-bold text-slate-900">Estimated total</span>
                 <span className="font-bold text-accent text-base">{format(estimatedTotal, currency)}</span>

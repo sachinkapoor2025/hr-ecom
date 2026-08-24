@@ -39,6 +39,7 @@ import {
   ORANGE_COUNTY_SHIPPING_BULLETS,
   shippingBulletsForCart,
   isFreeStandardShippingProduct,
+  quoteAddressShipmentShipping,
 } from "@hr-ecom/shared";
 import { RakhiDeliverySummary } from "@/components/RakhiDeliverySummary";
 import { ProductCareAccordions } from "@/components/ProductCareAccordions";
@@ -126,7 +127,7 @@ export function ProductDetailClient({
   const captureLead = useDebouncedLeadCapture(sessionId);
   const captureLeadNow = useLeadCapture(sessionId);
   const { cart, itemCount } = useCart();
-  const { format } = useCurrency();
+  const { format, displayCurrency, usdInrRate } = useCurrency();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -190,6 +191,22 @@ export function ProductDetailClient({
     ? ORANGE_COUNTY_SHIPPING_BULLETS
     : shippingBulletsForCart([product]);
   const hasFreeStandardShipping = isFreeStandardShippingProduct(product);
+  const standardTopUpAmount = isOrangeCountyVendorProduct(product) || hasFreeStandardShipping
+    ? 0
+    : quoteAddressShipmentShipping({
+        items: [
+          {
+            price: product.price,
+            quantity: 1,
+            vendorSlug: product.vendorSlug,
+            productSlug: product.slug,
+            freeStandardShipping: hasFreeStandardShipping,
+            addons: addons.map((a) => ({ price: a.price, quantity: a.quantity })),
+          },
+        ],
+        currency: displayCurrency,
+        usdInrRate,
+      }).totalCharge;
   const lowStock = product.inventory > 0 && product.inventory <= LOW_STOCK_THRESHOLD;
   const fastSelling = isFastSelling(product);
   const unitsSold = getUnitsSold(product);
@@ -282,6 +299,10 @@ export function ProductDetailClient({
             datePrefix="Estimated delivery:"
             className="mb-4"
             bullets={shippingBullets}
+            showStandardMinimumNote={!isOrangeCountyVendorProduct(product)}
+            standardTopUpAmount={standardTopUpAmount}
+            formatMoney={format}
+            currency={displayCurrency}
           />
           {hasFreeStandardShipping ? (
             <p className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-900">

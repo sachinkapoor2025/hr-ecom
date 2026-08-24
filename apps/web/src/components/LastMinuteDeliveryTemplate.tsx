@@ -8,6 +8,7 @@ import {
   type ExpeditedShippingDef,
 } from "@hr-ecom/shared";
 import type { DisplayCurrency } from "@/lib/currency-context";
+import { StandardShippingMinimumNote } from "@/components/StandardShippingMinimumNote";
 
 type FormatMoney = (amount: number, currency: DisplayCurrency) => string;
 
@@ -199,7 +200,13 @@ export function LastMinuteDeliveryTemplate({
                   {standardCharge <= 0 ? "FREE" : formatMoney(standardCharge, currency)}
                 </span>
               </span>
-              <span className="block text-xs text-slate-600 mt-1 leading-snug">{standard.detail}</span>
+              <StandardShippingMinimumNote
+                topUpAmount={standardCharge}
+                formatMoney={formatMoney}
+                currency={currency}
+                className="mt-2"
+                compact
+              />
             </span>
           </label>
         ) : null}
