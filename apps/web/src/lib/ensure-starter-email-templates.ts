@@ -1,6 +1,7 @@
 import type { SesTemplate } from "@hr-ecom/shared";
 import { PREMIUM_MARKETING_EMAIL_LAYOUT } from "@hr-ecom/shared";
 import {
+  RETIRED_STARTER_TEMPLATE_IDS,
   STARTER_EMAIL_TEMPLATES,
   resolveStarterHtmlBody,
   type StarterEmailTemplateMeta,
@@ -37,6 +38,12 @@ export async function ensureStarterEmailTemplates(api: ApiClient): Promise<{
   const byId = new Map(list.templates.map((t) => [t.templateId, t]));
   const installed: string[] = [];
   const updated: string[] = [];
+
+  for (const retiredId of RETIRED_STARTER_TEMPLATE_IDS) {
+    if (!byId.has(retiredId)) continue;
+    await api(`/ses-email/templates/${retiredId}`, { method: "DELETE" });
+    byId.delete(retiredId);
+  }
 
   for (const starter of STARTER_EMAIL_TEMPLATES) {
     const htmlBody = await loadStarterHtml(starter);
