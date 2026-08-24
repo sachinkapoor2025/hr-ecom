@@ -42,7 +42,7 @@ export default function AboutPage() {
           <li>Single Rakhi, Rakhi Combos, Kids Rakhi, Bhaiya Bhabhi sets, and Lumba Rakhi</li>
           <li>Complimentary roli and chawal with most rakhis</li>
           <li>Rakhi with chocolates — Ferrero Rocher, Lindt, Hershey&apos;s combos</li>
-          <li>Secure payments via Razorpay and Stripe</li>
+          <li>Secure payments via Razorpay</li>
         </ul>
         <h2 className="text-xl font-bold text-primary pt-4">Who we are</h2>
         <p>
