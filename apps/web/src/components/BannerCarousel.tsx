@@ -91,34 +91,22 @@ function deliveryParts(text: string): string[] {
 
 function DeliveryCaption({ text }: { text?: string }) {
   if (!text) return null;
-  const parts = deliveryParts(text);
   return (
-    <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[15] bg-gradient-to-t from-black/80 via-black/50 to-transparent px-3 pb-2.5 pt-8 sm:px-4 sm:pb-3">
-      <ul className="mx-auto max-w-2xl space-y-0.5 text-left sm:text-center">
-        {parts.map((part) => (
-          <li
-            key={part}
-            className="text-[12px] font-extrabold leading-snug text-white drop-shadow-md sm:text-sm md:text-[15px]"
-          >
-            <span className="mr-1.5 text-white/90" aria-hidden>
-              •
-            </span>
-            {part}
-          </li>
-        ))}
-      </ul>
+    <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[15] bg-gradient-to-t from-black/80 via-black/45 to-transparent px-3 pb-2.5 pt-8 sm:px-4 sm:pb-3">
+      <p className="mx-auto max-w-4xl text-center text-[12px] font-extrabold leading-snug text-white drop-shadow-md sm:text-sm md:text-[15px] whitespace-normal">
+        {text}
+      </p>
     </div>
   );
 }
 
+/** Left hero callout — bulleted list (large + bold). */
 function DeliveryHighlight({
   text,
   className = "",
-  align = "left",
 }: {
   text: string;
   className?: string;
-  align?: "left" | "center";
 }) {
   const parts = deliveryParts(text);
   return (
@@ -126,13 +114,9 @@ function DeliveryHighlight({
       className={`rounded-xl border border-blue-100 bg-gradient-to-r from-blue-50 via-sky-50/80 to-blue-50 px-3.5 py-3 shadow-sm sm:px-4 sm:py-3.5 ${className}`}
       role="note"
     >
-      <ul
-        className={`space-y-1.5 text-[13px] font-extrabold leading-snug text-primary sm:text-base md:text-[1.05rem] ${
-          align === "center" ? "mx-auto max-w-2xl text-left sm:text-center" : "text-left"
-        }`}
-      >
+      <ul className="space-y-1.5 text-left text-[13px] font-extrabold leading-snug text-primary sm:text-base md:text-[1.05rem]">
         {parts.map((part, i) => (
-          <li key={part} className="flex gap-2 sm:justify-start">
+          <li key={part} className="flex gap-2">
             <span className="mt-0.5 shrink-0 text-nav" aria-hidden>
               •
             </span>
@@ -140,6 +124,28 @@ function DeliveryHighlight({
           </li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+/** Bottom bar — single line like before, enlarged + bold. */
+function DeliveryPill({ text }: { text: string }) {
+  const parts = deliveryParts(text);
+  return (
+    <div className="flex flex-wrap items-center justify-center gap-2 rounded-full border border-blue-100 bg-gradient-to-r from-blue-100/80 via-sky-50 to-blue-100/80 px-4 py-3 text-center sm:px-6 min-w-0">
+      <svg className="h-4 w-4 shrink-0 text-accent sm:h-5 sm:w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
+        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+      </svg>
+      <p className="min-w-0 break-words text-[13px] font-extrabold leading-snug text-primary sm:text-base md:text-[1.05rem]">
+        {parts.map((part, i) => (
+          <span key={part}>
+            {i > 0 ? <span className="mx-1.5 font-bold text-primary/50">·</span> : null}
+            <span className={i === 0 ? "text-accent" : i === parts.length - 1 ? "text-nav" : "text-primary"}>
+              {part}
+            </span>
+          </span>
+        ))}
+      </p>
     </div>
   );
 }
