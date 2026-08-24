@@ -85,13 +85,28 @@ function bannerImageClass(banner: HomeBanner): string {
     : "object-cover object-center";
 }
 
+function deliveryParts(text: string): string[] {
+  return text.split("·").map((p) => p.trim()).filter(Boolean);
+}
+
 function DeliveryCaption({ text }: { text?: string }) {
   if (!text) return null;
+  const parts = deliveryParts(text);
   return (
-    <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[15] bg-gradient-to-t from-black/90 via-black/70 to-transparent px-2.5 pb-2.5 pt-10 sm:px-4 sm:pb-3.5">
-      <p className="mx-auto max-w-3xl rounded-md bg-amber-400 px-2.5 py-2 text-center text-[12px] font-extrabold leading-snug text-slate-950 shadow-lg sm:px-3 sm:py-2.5 sm:text-sm md:text-base">
-        {text}
-      </p>
+    <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[15] bg-gradient-to-t from-black/80 via-black/50 to-transparent px-3 pb-2.5 pt-8 sm:px-4 sm:pb-3">
+      <ul className="mx-auto max-w-2xl space-y-0.5 text-left sm:text-center">
+        {parts.map((part) => (
+          <li
+            key={part}
+            className="text-[12px] font-extrabold leading-snug text-white drop-shadow-md sm:text-sm md:text-[15px]"
+          >
+            <span className="mr-1.5 text-white/90" aria-hidden>
+              •
+            </span>
+            {part}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -105,30 +120,26 @@ function DeliveryHighlight({
   className?: string;
   align?: "left" | "center";
 }) {
-  const parts = text.split("·").map((p) => p.trim()).filter(Boolean);
+  const parts = deliveryParts(text);
   return (
     <div
-      className={`rounded-xl border-2 border-amber-400 bg-amber-50 px-3.5 py-3 shadow-sm sm:px-4 sm:py-3.5 ${className}`}
+      className={`rounded-xl border border-blue-100 bg-gradient-to-r from-blue-50 via-sky-50/80 to-blue-50 px-3.5 py-3 shadow-sm sm:px-4 sm:py-3.5 ${className}`}
       role="note"
     >
-      <p
-        className={`text-[13px] font-extrabold leading-snug text-slate-900 sm:text-base md:text-[1.05rem] ${
-          align === "center" ? "text-center" : "text-center lg:text-left"
+      <ul
+        className={`space-y-1.5 text-[13px] font-extrabold leading-snug text-primary sm:text-base md:text-[1.05rem] ${
+          align === "center" ? "mx-auto max-w-2xl text-left sm:text-center" : "text-left"
         }`}
       >
         {parts.map((part, i) => (
-          <span key={i}>
-            {i > 0 ? (
-              <span className="mx-1.5 font-black text-accent" aria-hidden>
-                ·
-              </span>
-            ) : null}
-            <span className={i === 0 ? "text-accent" : i >= parts.length - 2 ? "text-nav" : "text-primary"}>
-              {part}
+          <li key={part} className="flex gap-2 sm:justify-start">
+            <span className="mt-0.5 shrink-0 text-nav" aria-hidden>
+              •
             </span>
-          </span>
+            <span className={i === 0 ? "text-accent" : "text-primary"}>{part}</span>
+          </li>
         ))}
-      </p>
+      </ul>
     </div>
   );
 }
