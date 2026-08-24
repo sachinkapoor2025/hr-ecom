@@ -333,11 +333,7 @@ export function BannerCarousel({
         </ul>
 
         <div className="px-4 sm:px-6 pb-4 sm:pb-5 max-w-7xl mx-auto">
-          <DeliveryHighlight
-            text={banner.pill}
-            align="center"
-            className="rounded-2xl border-blue-100 bg-gradient-to-r from-blue-100/80 via-sky-50 to-blue-100/80"
-          />
+          <DeliveryPill text={banner.pill} />
         </div>
       </div>
 
