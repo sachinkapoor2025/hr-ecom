@@ -93,18 +93,16 @@ export function cartRequiresPaidExpeditedShipping(
 }
 
 export function checkoutShippingOptionsForCart(
-  items: Array<{ vendorSlug?: string | null }>
+  _items?: Array<{ vendorSlug?: string | null }>
 ): readonly ExpeditedShippingDef[] {
-  if (cartRequiresPaidExpeditedShipping(items)) {
-    return ORANGE_COUNTY_CHECKOUT_SHIPPING_OPTIONS;
-  }
-  return CHECKOUT_SHIPPING_OPTIONS;
+  // Peak season: no free/standard shipping — 3-day and 2-day only.
+  return ORANGE_COUNTY_CHECKOUT_SHIPPING_OPTIONS;
 }
 
 export function defaultCheckoutShippingOption(
-  items: Array<{ vendorSlug?: string | null }>
+  _items?: Array<{ vendorSlug?: string | null }>
 ): CheckoutShippingOptionId {
-  return cartRequiresPaidExpeditedShipping(items) ? "three_day" : "standard";
+  return "three_day";
 }
 
 export function getCheckoutShippingOption(
@@ -247,26 +245,22 @@ export const RAKHI_DELIVERY_MESSAGING = {
   festivalShort: "Aug 28",
   weekendNote: "",
   standardTitle: "Choose your delivery",
-  /** Three clear options: free standard, 3-day, 2-day. */
+  /** Peak season: guaranteed last-minute + paid expedited only (no free shipping). */
   shippingBullets: [
     RAKHI_LAST_MINUTE_GUARANTEE,
-    "Free shipping — 6 days delivery",
     "3-day delivery — $19",
     "2-day delivery — $39",
   ],
-  standardBullets: ["Free shipping — 6 days delivery"],
-  standardBadge: "Free · 6 days",
+  standardBullets: ["3-day delivery — $19"],
+  standardBadge: "3-day · $19",
   expeditedTitle: "Faster delivery",
   expeditedBullets: ["3-day delivery — $19", "2-day delivery — $39"],
   expeditedBadge: "Guaranteed by Rakhi",
 } as const;
 
 export function shippingBulletsForCart(
-  items: Array<{ vendorSlug?: string | null }>
+  _items?: Array<{ vendorSlug?: string | null }>
 ): readonly string[] {
-  if (cartRequiresPaidExpeditedShipping(items)) {
-    return ORANGE_COUNTY_SHIPPING_BULLETS;
-  }
   return RAKHI_DELIVERY_MESSAGING.shippingBullets;
 }
 

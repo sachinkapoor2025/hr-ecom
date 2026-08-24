@@ -2,10 +2,6 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import {
-  quoteAddressShipmentShipping,
-  quoteFreeShippingThreshold,
-} from "@hr-ecom/shared";
 import { useCart } from "@/lib/cart-context";
 import { useCurrency } from "@/lib/currency-context";
 import { SecureCheckoutBadge } from "@/components/SecureCheckoutBadge";
@@ -14,7 +10,6 @@ import { CheckoutLegalNotice } from "@/components/CheckoutLegalNotice";
 import { TrustBadges } from "@/components/TrustBadges";
 import { resolveImageUrl } from "@/lib/images";
 import { RakhiDeliverySummary } from "@/components/RakhiDeliverySummary";
-import { FreeShippingNotice } from "@/components/FreeShippingNotice";
 import { cartLineUnitTotal, type CartItem } from "@hr-ecom/shared";
 import type { DisplayCurrency } from "@/lib/currency-context";
 
@@ -110,7 +105,7 @@ function AddonList({ item, format }: { item: CartItem; format: (n: number, c: Di
 
 export default function CartPage() {
   const { cart, loading } = useCart();
-  const { format, convert, displayCurrency, usdInrRate } = useCurrency();
+  const { format, convert, displayCurrency } = useCurrency();
 
   if (loading) return <div className="p-10 text-center text-slate-600">Loading cart...</div>;
 
@@ -122,30 +117,7 @@ export default function CartPage() {
     return sum + convert(cartLineUnitTotal(i) * i.quantity, lineCurrency);
   }, 0);
   const currency = displayCurrency;
-  const multiVendorShipping = quoteAddressShipmentShipping({
-    items: items.map((i) => ({
-      price: convert(cartLineUnitTotal(i), (i.currency ?? cartCurrency) as DisplayCurrency),
-      quantity: i.quantity,
-      vendorSlug: i.vendorSlug,
-      productSlug: i.productSlug,
-    })),
-    currency,
-    usdInrRate,
-  });
-  const shippingQuote =
-    multiVendorShipping.perVendor.find((q) => !q.qualifiesForFreeShipping) ??
-    multiVendorShipping.perVendor[0] ??
-    quoteFreeShippingThreshold({
-      subtotal: total,
-      currency,
-      usdInrRate,
-    });
-  const shippingCharge = multiVendorShipping.totalCharge;
-  const estimatedTotal = total + shippingCharge;
-  const mixedVendors = new Set(items.map((i) => i.vendorSlug?.trim() || "usarakhi")).size > 1;
-  /** Mixed sellers + at least one paid shipping bucket: fee applies to that seller only. */
-  const showMixedVendorShippingException =
-    mixedVendors && multiVendorShipping.perVendor.some((q) => q.charge > 0);
+  const estimatedTotal = total;
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 sm:py-10">
@@ -232,35 +204,14 @@ export default function CartPage() {
               </div>
               <div className="flex items-center justify-between gap-4">
                 <span className="text-slate-700">Shipping fee</span>
-                <span
-                  className={
-                    shippingCharge > 0
-                      ? "font-medium text-slate-900"
-                      : "font-bold text-accent"
-                  }
-                >
-                  {shippingCharge > 0 ? format(shippingCharge, currency) : "FREE"}
+                <span className="font-medium text-slate-900 text-right">
+                  From $19 at checkout
                 </span>
               </div>
-              {showMixedVendorShippingException ? (
-                <FreeShippingNotice
-                  quote={shippingQuote}
-                  formatMoney={format}
-                  currency={currency}
-                  footnote={`Your items ship from different sellers, so each seller is priced separately (not on the cart total). Current shipping fee: ${format(shippingCharge, currency)}.`}
-                />
-              ) : (
-                <FreeShippingNotice
-                  quote={shippingQuote}
-                  formatMoney={format}
-                  currency={currency}
-                  footnote={
-                    itemCount > 1
-                      ? "At checkout you can ship each Rakhi to a different US address — rates apply per address."
-                      : undefined
-                  }
-                />
-              )}
+              <p className="text-[11px] text-slate-500 leading-snug -mt-1">
+                3-day ($19) or 2-day ($39) — choose at checkout. Last-minute orders accepted with
+                Guaranteed delivery by Rakhi.
+              </p>
               <div className="flex items-center justify-between gap-4 pt-2 border-t border-slate-100">
                 <span className="font-bold text-slate-900">Estimated total</span>
                 <span className="font-bold text-accent text-base">{format(estimatedTotal, currency)}</span>

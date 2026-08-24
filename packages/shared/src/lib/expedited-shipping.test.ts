@@ -94,7 +94,7 @@ describe("expedited-shipping", () => {
     assert.equal(shippingOptionServiceCode("standard"), "STANDARD");
   });
 
-  it("lists free 6-day, 3-day $19, and 2-day $39 without calendar dates", async () => {
+  it("lists last-minute guarantee with 3-day and 2-day only (no free shipping)", async () => {
     const { RAKHI_DELIVERY_MESSAGING, RAKHI_LAST_MINUTE_GUARANTEE } = await import(
       "./expedited-shipping"
     );
@@ -105,22 +105,20 @@ describe("expedited-shipping", () => {
     assert.equal(RAKHI_LAST_MINUTE_GUARANTEE, RAKHI_DELIVERY_MESSAGING.lastMinuteNote);
     assert.deepEqual(RAKHI_DELIVERY_MESSAGING.shippingBullets, [
       "Last-minute orders are accepted — Guaranteed delivery by Rakhi",
-      "Free shipping — 6 days delivery",
       "3-day delivery — $19",
       "2-day delivery — $39",
     ]);
+    assert.doesNotMatch(RAKHI_DELIVERY_MESSAGING.shippingBullets.join(" "), /free shipping/i);
     assert.doesNotMatch(RAKHI_DELIVERY_MESSAGING.shippingBullets.join(" "), /\bAug\b|2026|Monday/i);
   });
 
-  it("requires paid expedited shipping for Orange County-only carts", async () => {
+  it("offers only paid expedited shipping options at checkout", async () => {
     const {
-      cartRequiresPaidExpeditedShipping,
       checkoutShippingOptionsForCart,
       defaultCheckoutShippingOption,
       shippingBulletsForCart,
     } = await import("./expedited-shipping");
     const ocItems = [{ vendorSlug: "orange-county" }, { vendorSlug: "orange-county" }];
-    assert.equal(cartRequiresPaidExpeditedShipping(ocItems), true);
     assert.deepEqual(
       checkoutShippingOptionsForCart(ocItems).map((o) => o.id),
       ["three_day", "two_day"]
@@ -133,7 +131,10 @@ describe("expedited-shipping", () => {
     ]);
 
     const mixed = [{ vendorSlug: "orange-county" }, {}];
-    assert.equal(cartRequiresPaidExpeditedShipping(mixed), false);
-    assert.equal(defaultCheckoutShippingOption(mixed), "standard");
+    assert.deepEqual(
+      checkoutShippingOptionsForCart(mixed).map((o) => o.id),
+      ["three_day", "two_day"]
+    );
+    assert.equal(defaultCheckoutShippingOption(mixed), "three_day");
   });
 });
