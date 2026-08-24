@@ -16,6 +16,7 @@ import {
   flashComboUnitPriceUsd,
   productUsesFixedStorefrontPrice,
   isForceOutOfStockSlug,
+  isUsarakhiStorefrontPaused,
   type Cart,
   type CartItem,
 } from "@hr-ecom/shared";
@@ -145,7 +146,7 @@ export async function addToCart(event: APIGatewayProxyEventV2) {
     categorySlug?: string;
   };
 
-  if (isForceOutOfStockSlug(product.slug) || product.inventory <= 0) {
+  if (isForceOutOfStockSlug(product.slug) || isUsarakhiStorefrontPaused(product) || product.inventory <= 0) {
     return badRequest("This product is sold out");
   }
 
@@ -291,7 +292,7 @@ export async function updateCartItem(event: APIGatewayProxyEventV2) {
       } | null) ?? product;
   }
   if (!product) return badRequest("Product not found");
-  if (isForceOutOfStockSlug(productSlug) || product.inventory <= 0) {
+  if (isForceOutOfStockSlug(productSlug) || isUsarakhiStorefrontPaused(product) || product.inventory <= 0) {
     return badRequest("This product is sold out");
   }
   if (quantity > product.inventory) return badRequest("Insufficient inventory");

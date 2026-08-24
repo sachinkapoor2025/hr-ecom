@@ -50,12 +50,17 @@ import {
   resolveCheckoutShippingCharge,
   shippingOptionServiceName,
   expeditedArrivalLabel,
+  checkoutShippingOptionsForCart,
+  defaultCheckoutShippingOption,
+  shippingBulletsForCart,
   type CheckoutShippingOptionId,
   type Order,
   type RateQuote,
   type ShippingAddress,
 } from "@hr-ecom/shared";
 import { resolveImageUrl } from "@/lib/images";
+
+const EMPTY_CART_ITEMS: Array<{ vendorSlug?: string }> = [];
 
 declare global {
   interface Window {
@@ -130,6 +135,19 @@ function CheckoutPageInner() {
   });
   const [shippingOption, setShippingOption] = useState<CheckoutShippingOptionId>("standard");
   const ratesTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const cartItemsForShipping = cart?.items ?? EMPTY_CART_ITEMS;
+  const checkoutShippingOptions = checkoutShippingOptionsForCart(cartItemsForShipping);
+  const checkoutShippingBullets = shippingBulletsForCart(cartItemsForShipping);
+
+  useEffect(() => {
+    if (retryOrderId || cartLoading) return;
+    const preferred = defaultCheckoutShippingOption(cartItemsForShipping);
+    const allowed = new Set(checkoutShippingOptions.map((o) => o.id));
+    if (!allowed.has(shippingOption)) {
+      setShippingOption(preferred);
+    }
+  }, [retryOrderId, cartLoading, cart?.items, shippingOption]);
 
   const isAddressReadyForRates = useCallback((a: ShippingAddress) => {
     return Boolean(
@@ -839,7 +857,11 @@ function CheckoutPageInner() {
             Retrying payment for order <span className="font-mono">{retryOrder!.orderId.slice(0, 8)}…</span>
           </p>
         )}
-        <RakhiDeliverySummary datePrefix="Estimated delivery:" className="mb-4" />
+        <RakhiDeliverySummary
+          datePrefix="Estimated delivery:"
+          className="mb-4"
+          bullets={checkoutShippingBullets}
+        />
         {!isRetry && shippingQuote.settingsMode !== "pass_through" ? (
           <ExpeditedShippingPicker
             value={shippingOption}
@@ -850,6 +872,7 @@ function CheckoutPageInner() {
             usdInrRate={usdInrRate}
             showHeader={false}
             className="mb-6"
+            options={checkoutShippingOptions}
           />
         ) : null}
 

@@ -3,8 +3,10 @@ import {
   roundForCurrency,
   type ShopCurrency,
 } from "../currency";
+import { VENDOR_ORANGE_COUNTY } from "../constants";
 import { RAKSHA_BANDHAN_FESTIVAL_DATE } from "../schemas/shipping";
 import { addBusinessDays, formatDeliveryDate } from "./delivery";
+import { shippingVendorKey } from "./free-shipping";
 
 /** Flat rates for Rakhi-season confirmed-delivery upgrades (USD). */
 export const EXPEDITED_THREE_DAY_SHIPPING_USD = 19;
@@ -12,9 +14,10 @@ export const EXPEDITED_TWO_DAY_SHIPPING_USD = 39;
 
 /**
  * Checkout shipping choice.
- * - `standard` — always free (no cart minimum); ~6 days delivery
+ * - `standard` — always free (no cart minimum); ~6 days delivery (UsaRakhi only)
  * - `three_day` — $19; 1 packing business day + 3 transit business days
  * - `two_day` — $39; 2 transit business days (priority pack)
+ * Orange County carts: 3-day / 2-day only (no free standard).
  */
 export const CHECKOUT_SHIPPING_OPTION_IDS = ["standard", "three_day", "two_day"] as const;
 export type CheckoutShippingOptionId = (typeof CHECKOUT_SHIPPING_OPTION_IDS)[number];
@@ -63,6 +66,41 @@ export const CHECKOUT_SHIPPING_OPTIONS: readonly ExpeditedShippingDef[] = [
 ] as const;
 
 const BY_ID = new Map(CHECKOUT_SHIPPING_OPTIONS.map((o) => [o.id, o]));
+
+/** Orange County — paid expedited only (no free standard). */
+export const ORANGE_COUNTY_CHECKOUT_SHIPPING_OPTIONS = CHECKOUT_SHIPPING_OPTIONS.filter(
+  (o) => o.id === "three_day" || o.id === "two_day"
+);
+
+export const ORANGE_COUNTY_SHIPPING_BULLETS = [
+  "3-day delivery — $19",
+  "2-day delivery — $39",
+] as const;
+
+/** True when every cart line is Orange County (no UsaRakhi lines). */
+export function cartRequiresPaidExpeditedShipping(
+  items: Array<{ vendorSlug?: string | null }>
+): boolean {
+  if (!items.length) return false;
+  return items.every(
+    (item) => shippingVendorKey({ vendorSlug: item.vendorSlug ?? undefined }) === VENDOR_ORANGE_COUNTY
+  );
+}
+
+export function checkoutShippingOptionsForCart(
+  items: Array<{ vendorSlug?: string | null }>
+): readonly ExpeditedShippingDef[] {
+  if (cartRequiresPaidExpeditedShipping(items)) {
+    return ORANGE_COUNTY_CHECKOUT_SHIPPING_OPTIONS;
+  }
+  return CHECKOUT_SHIPPING_OPTIONS;
+}
+
+export function defaultCheckoutShippingOption(
+  items: Array<{ vendorSlug?: string | null }>
+): CheckoutShippingOptionId {
+  return cartRequiresPaidExpeditedShipping(items) ? "three_day" : "standard";
+}
 
 export function getCheckoutShippingOption(
   id: string | null | undefined
@@ -214,6 +252,15 @@ export const RAKHI_DELIVERY_MESSAGING = {
   expeditedBullets: ["3-day delivery — $19", "2-day delivery — $39"],
   expeditedBadge: "Faster delivery",
 } as const;
+
+export function shippingBulletsForCart(
+  items: Array<{ vendorSlug?: string | null }>
+): readonly string[] {
+  if (cartRequiresPaidExpeditedShipping(items)) {
+    return ORANGE_COUNTY_SHIPPING_BULLETS;
+  }
+  return RAKHI_DELIVERY_MESSAGING.shippingBullets;
+}
 
 /** @deprecated Use RAKHI_DELIVERY_MESSAGING */
 export const RAKHI_DELIVERY_URGENCY_NOTICE = {

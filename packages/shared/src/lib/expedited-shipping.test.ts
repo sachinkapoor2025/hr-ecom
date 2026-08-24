@@ -103,4 +103,28 @@ describe("expedited-shipping", () => {
     ]);
     assert.doesNotMatch(RAKHI_DELIVERY_MESSAGING.shippingBullets.join(" "), /\bAug\b|2026|Monday/i);
   });
+
+  it("requires paid expedited shipping for Orange County-only carts", async () => {
+    const {
+      cartRequiresPaidExpeditedShipping,
+      checkoutShippingOptionsForCart,
+      defaultCheckoutShippingOption,
+      shippingBulletsForCart,
+    } = await import("./expedited-shipping");
+    const ocItems = [{ vendorSlug: "orange-county" }, { vendorSlug: "orange-county" }];
+    assert.equal(cartRequiresPaidExpeditedShipping(ocItems), true);
+    assert.deepEqual(
+      checkoutShippingOptionsForCart(ocItems).map((o) => o.id),
+      ["three_day", "two_day"]
+    );
+    assert.equal(defaultCheckoutShippingOption(ocItems), "three_day");
+    assert.deepEqual([...shippingBulletsForCart(ocItems)], [
+      "3-day delivery — $19",
+      "2-day delivery — $39",
+    ]);
+
+    const mixed = [{ vendorSlug: "orange-county" }, {}];
+    assert.equal(cartRequiresPaidExpeditedShipping(mixed), false);
+    assert.equal(defaultCheckoutShippingOption(mixed), "standard");
+  });
 });

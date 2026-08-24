@@ -1,3 +1,12 @@
+import { VENDOR_ORANGE_COUNTY } from "../constants";
+
+/**
+ * Temporary: all UsaRakhi catalog SKUs are sold out on the storefront.
+ * Orange County hampers remain available.
+ * Flip to false when UsaRakhi inventory is restored.
+ */
+export const USARAKHI_STOREFRONT_PAUSED = true;
+
 /**
  * Temporary force-OOS list for SKUs we cannot fulfill (e.g. Ek Omkar rakhi depleted,
  * Hershey / dry-fruit SKUs removed from UsaRakhi peak-season catalog).
@@ -38,17 +47,48 @@ export function isForceOutOfStockSlug(slug: string | null | undefined): boolean 
   return FORCE_OUT_OF_STOCK.has(slug.trim());
 }
 
-/** Clamp inventory to 0 for force-OOS SKUs (safe to call on any product-like object). */
-export function withForcedOutOfStockInventory<T extends { slug?: string; inventory?: number }>(
-  product: T
-): T {
-  if (!isForceOutOfStockSlug(product.slug)) return product;
-  return { ...product, inventory: 0 };
+export function isOrangeCountyVendorProduct(product: {
+  vendorSlug?: string | null;
+  images?: string[] | null;
+}): boolean {
+  if ((product.vendorSlug ?? "").trim() === VENDOR_ORANGE_COUNTY) return true;
+  return (product.images ?? []).some((src) => src.includes("/uploads/orange-county/"));
 }
 
-export function filterInStockStorefrontProducts<T extends { slug?: string; inventory?: number; published?: boolean }>(
-  products: T[]
-): T[] {
+/** True when UsaRakhi catalog is paused and this product is not Orange County. */
+export function isUsarakhiStorefrontPaused(product: {
+  vendorSlug?: string | null;
+  images?: string[] | null;
+  slug?: string | null;
+}): boolean {
+  if (!USARAKHI_STOREFRONT_PAUSED) return false;
+  return !isOrangeCountyVendorProduct(product);
+}
+
+/** Clamp inventory to 0 for force-OOS SKUs and paused UsaRakhi products. */
+export function withForcedOutOfStockInventory<
+  T extends {
+    slug?: string;
+    inventory?: number;
+    vendorSlug?: string | null;
+    images?: string[] | null;
+  },
+>(product: T): T {
+  if (isForceOutOfStockSlug(product.slug) || isUsarakhiStorefrontPaused(product)) {
+    return { ...product, inventory: 0 };
+  }
+  return product;
+}
+
+export function filterInStockStorefrontProducts<
+  T extends {
+    slug?: string;
+    inventory?: number;
+    published?: boolean;
+    vendorSlug?: string | null;
+    images?: string[] | null;
+  },
+>(products: T[]): T[] {
   return products
     .map(withForcedOutOfStockInventory)
     .filter((p) => p.published !== false && (p.inventory ?? 0) > 0);

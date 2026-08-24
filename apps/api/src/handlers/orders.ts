@@ -30,6 +30,7 @@ import {
   resolveCheckoutShippingCharge,
   shippingOptionServiceCode,
   shippingOptionServiceName,
+  cartRequiresPaidExpeditedShipping,
   type CheckoutShippingOptionId,
   type Order,
   type OrderStatusHistoryEntry,
@@ -296,6 +297,9 @@ export async function checkout(event: APIGatewayProxyEventV2) {
   }
 
   const shippingOption = (parsed.data.shippingOption ?? "standard") as CheckoutShippingOptionId;
+  if (cartRequiresPaidExpeditedShipping(orderItems) && shippingOption === "standard") {
+    return badRequest("Orange County products require 3-day ($19) or 2-day ($39) delivery");
+  }
   const standardShippingCharge =
     shippingSettings.customerShippingMode === "pass_through"
       ? shippingResult.customerShippingCharge
