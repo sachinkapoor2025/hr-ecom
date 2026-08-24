@@ -52,8 +52,7 @@ export function AccountPaymentsPanel({
       <div>
         <h3 className="font-semibold text-slate-900 mb-1">Preferred payment method</h3>
         <p className="text-sm text-slate-600 mb-4">
-          Choose your default option at checkout. Payments are handled securely by Razorpay — we never
-          store card numbers.
+          Choose your default option at checkout. Card details are handled securely by Stripe or Razorpay — we never store card numbers.
         </p>
         <PaymentMethodPicker value={method} onChange={setMethod} />
         {error && <p className="text-red-500 text-sm mb-2">{error}</p>}

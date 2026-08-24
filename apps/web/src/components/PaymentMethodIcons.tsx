@@ -15,6 +15,12 @@ export function PaymentMethodIcons({ className = "" }: { className?: string }) {
       <span className={`${badge} min-w-[3rem] text-[10px] font-bold text-[#006FCF]`}>AMEX</span>
       <span className={`${badge} min-w-[3rem] text-[10px] font-bold text-[#097969]`}>RuPay</span>
       <span
+        className={`${badge} min-w-[3.5rem] text-[10px] font-bold tracking-tight text-[#635BFF]`}
+        aria-label="Stripe"
+      >
+        stripe
+      </span>
+      <span
         className={`${badge} min-w-[4rem] text-[9px] font-bold tracking-tight text-[#072654]`}
         aria-label="Razorpay"
       >

@@ -66,7 +66,7 @@ export const competitiveAdvantages = [
   {
     title: "Secure global checkout",
     detail:
-      "Razorpay (UPI, cards, and netbanking) with WhatsApp support for custom and urgent orders.",
+      "Stripe (USD — Visa, Mastercard, Amex) and Razorpay (INR — UPI, cards, netbanking). WhatsApp support for custom and urgent orders.",
   },
   {
     title: "California fulfillment & first-season focus",
