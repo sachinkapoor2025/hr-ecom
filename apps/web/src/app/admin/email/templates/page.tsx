@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useApiClient } from "@/lib/auth-context";
-import { EmailTemplatePreview } from "@/components/admin/EmailTemplatePreview";
 import { PremiumMarketingEmailEditor } from "@/components/admin/PremiumMarketingEmailEditor";
 import { ensureStarterEmailTemplates } from "@/lib/ensure-starter-email-templates";
 import {
@@ -273,7 +272,6 @@ export default function TemplatesPage() {
                 readOnly
               />
             )}
-            <EmailTemplatePreview html={compiledHtml} />
           </>
         ) : (
           <>
@@ -288,7 +286,6 @@ export default function TemplatesPage() {
               <code>{"{{DELIVERY_PRICE_2}}"}</code> <code>{"{{SHOP_URL}}"}</code>{" "}
               <code>{"{{UNSUBSCRIBE_URL}}"}</code>
             </p>
-            <EmailTemplatePreview html={htmlBody} />
           </>
         )}
 

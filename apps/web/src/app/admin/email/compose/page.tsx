@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { useApiClient } from "@/lib/auth-context";
-import { EmailTemplatePreview } from "@/components/admin/EmailTemplatePreview";
 import { ensureStarterEmailTemplates } from "@/lib/ensure-starter-email-templates";
 import { SES_TIMEZONES, type SesCampaign, type SesTemplate } from "@hr-ecom/shared";
 
@@ -246,7 +245,6 @@ function ComposeInner() {
             onChange={(e) => setHtmlBody(e.target.value)}
           />
         </label>
-        <EmailTemplatePreview html={htmlBody} />
 
         <div className="flex flex-wrap gap-4 text-sm">
           <label className="flex items-center gap-2">
