@@ -249,10 +249,10 @@ export const faqs = [
   },
   {
     q: "Can I trust UsaRakhi for USA Rakhi delivery?",
-    a: "Yes. UsaRakhi is built around Rakhi and Raksha Bandhan traditions — 126+ premium designs, California warehouse fulfillment, and domestic shipping within America (no customs delays). We offer secure Stripe and Razorpay checkout, WhatsApp support, and a satisfaction guarantee. Read customer stories at usarakhi.com/reviews or contact us before ordering.",
+    a: "Yes. UsaRakhi is built around Rakhi and Raksha Bandhan traditions — 126+ premium designs, California warehouse fulfillment, and domestic shipping within America (no customs delays). We offer secure Razorpay checkout, WhatsApp support, and a satisfaction guarantee. Read customer stories at usarakhi.com/reviews or contact us before ordering.",
   },
   {
     q: "What payment methods do you accept?",
-    a: "Stripe (USD — Visa, Mastercard, Amex) and Razorpay (INR — UPI, cards, netbanking) for secure online checkout.",
+    a: "Razorpay for secure online checkout, including UPI, cards, and netbanking.",
   },
 ] as const;

@@ -19,7 +19,7 @@ export const rakshaBandhan2026Deadlines = [
   {
     label: "Standard shipping",
     orderBy: "Monday, August 24, 2026",
-    notes: "Free shipping — 6 days delivery",
+    notes: "Last-minute orders accepted — Guaranteed delivery by Rakhi",
   },
   {
     label: "Confirmed Rakhi day",
@@ -66,7 +66,7 @@ export const competitiveAdvantages = [
   {
     title: "Secure global checkout",
     detail:
-      "Stripe (USD — Visa, Mastercard, Amex) and Razorpay (INR — UPI, cards, netbanking). WhatsApp support for custom and urgent orders.",
+      "Razorpay (UPI, cards, and netbanking) with WhatsApp support for custom and urgent orders.",
   },
   {
     title: "California fulfillment & first-season focus",

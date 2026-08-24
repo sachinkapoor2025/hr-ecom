@@ -85,12 +85,66 @@ function bannerImageClass(banner: HomeBanner): string {
     : "object-cover object-center";
 }
 
+function deliveryParts(text: string): string[] {
+  return text.split("·").map((p) => p.trim()).filter(Boolean);
+}
+
 function DeliveryCaption({ text }: { text?: string }) {
   if (!text) return null;
   return (
-    <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[15] bg-gradient-to-t from-black/75 via-black/45 to-transparent px-3 pb-2.5 pt-8 sm:px-4 sm:pb-3">
-      <p className="text-center text-[10px] sm:text-xs font-semibold leading-snug text-white drop-shadow-sm">
+    <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[15] bg-gradient-to-t from-black/80 via-black/45 to-transparent px-3 pb-2.5 pt-8 sm:px-4 sm:pb-3">
+      <p className="mx-auto max-w-4xl text-center text-[12px] font-extrabold leading-snug text-white drop-shadow-md sm:text-sm md:text-[15px] whitespace-normal">
         {text}
+      </p>
+    </div>
+  );
+}
+
+/** Left hero callout — bulleted list (large + bold). */
+function DeliveryHighlight({
+  text,
+  className = "",
+}: {
+  text: string;
+  className?: string;
+}) {
+  const parts = deliveryParts(text);
+  return (
+    <div
+      className={`rounded-xl border border-blue-100 bg-gradient-to-r from-blue-50 via-sky-50/80 to-blue-50 px-3.5 py-3 shadow-sm sm:px-4 sm:py-3.5 ${className}`}
+      role="note"
+    >
+      <ul className="space-y-1.5 text-left text-[13px] font-extrabold leading-snug text-primary sm:text-base md:text-[1.05rem]">
+        {parts.map((part, i) => (
+          <li key={part} className="flex gap-2">
+            <span className="mt-0.5 shrink-0 text-nav" aria-hidden>
+              •
+            </span>
+            <span className={i === 0 ? "text-accent" : "text-primary"}>{part}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/** Bottom bar — single line like before, enlarged + bold. */
+function DeliveryPill({ text }: { text: string }) {
+  const parts = deliveryParts(text);
+  return (
+    <div className="flex flex-wrap items-center justify-center gap-2 rounded-full border border-blue-100 bg-gradient-to-r from-blue-100/80 via-sky-50 to-blue-100/80 px-4 py-3 text-center sm:px-6 min-w-0">
+      <svg className="h-4 w-4 shrink-0 text-accent sm:h-5 sm:w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
+        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+      </svg>
+      <p className="min-w-0 break-words text-[13px] font-extrabold leading-snug text-primary sm:text-base md:text-[1.05rem]">
+        {parts.map((part, i) => (
+          <span key={part}>
+            {i > 0 ? <span className="mx-1.5 font-bold text-primary/50">·</span> : null}
+            <span className={i === 0 ? "text-accent" : i === parts.length - 1 ? "text-nav" : "text-primary"}>
+              {part}
+            </span>
+          </span>
+        ))}
       </p>
     </div>
   );
@@ -233,21 +287,7 @@ export function BannerCarousel({
                 <span className="text-nav italic">{banner.titleAccent}</span>
               </p>
 
-              <p className="text-slate-600 text-sm sm:text-base leading-relaxed max-w-md mx-auto lg:mx-0 mb-6">
-                {banner.description}
-              </p>
-
-              {banner.href && (
-                <Link
-                  href={banner.href}
-                  className="inline-flex items-center justify-center rounded-full bg-nav text-white font-semibold text-sm px-7 py-3 hover:bg-primary transition shadow-md shadow-nav/25"
-                >
-                  {banner.cta}
-                  <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
-                </Link>
-              )}
+              <DeliveryHighlight text={banner.description} className="mb-6 max-w-xl mx-auto lg:mx-0" />
 
               <ul className="hidden sm:grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8 max-w-lg mx-auto lg:mx-0">
                 {TRUST_FEATURES.map((f) => (
@@ -281,23 +321,7 @@ export function BannerCarousel({
         </ul>
 
         <div className="px-4 sm:px-6 pb-4 sm:pb-5 max-w-7xl mx-auto">
-          <div className="flex flex-wrap items-center justify-center gap-2 rounded-full bg-gradient-to-r from-blue-100/80 via-sky-50 to-blue-100/80 border border-blue-100 px-4 sm:px-6 py-3 text-center min-w-0">
-            <svg className="w-4 h-4 text-accent shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
-              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-            </svg>
-            <p className="text-xs sm:text-sm text-primary font-medium leading-snug min-w-0 break-words">
-              {banner.pill.split("·").map((part, i, arr) => (
-                <span key={i}>
-                  {i > 0 && " · "}
-                  {i === arr.length - 1 ? (
-                    <span className="text-nav font-semibold">{part.trim()}</span>
-                  ) : (
-                    part.trim()
-                  )}
-                </span>
-              ))}
-            </p>
-          </div>
+          <DeliveryPill text={banner.pill} />
         </div>
       </div>
 

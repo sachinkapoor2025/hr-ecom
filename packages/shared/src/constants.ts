@@ -137,7 +137,7 @@ export const PAYMENT_PROVIDERS = {
  * TEMPORARY kill switch for Stripe checkout (storefront + API).
  * Set to `true` to re-enable Stripe in one change — keep Razorpay as the fallback while this is false.
  */
-export const STRIPE_PAYMENTS_ENABLED = true;
+export const STRIPE_PAYMENTS_ENABLED = false;
 
 /** Default stock when creating products or seeding catalog. */
 export const DEFAULT_PRODUCT_INVENTORY = 200;

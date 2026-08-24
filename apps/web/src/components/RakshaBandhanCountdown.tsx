@@ -43,8 +43,8 @@ export function RakshaBandhanCountdown({ variant = "banner" }: { variant?: Varia
 
   return (
     <div className="bg-gradient-to-r from-primary to-nav text-white px-3 sm:px-4 py-2.5 text-sm">
-      <div className="max-w-7xl mx-auto flex items-center gap-3 justify-between">
-        <p className="min-w-0 flex-1 text-center sm:text-left text-[12px] sm:text-sm leading-snug">
+      <div className="relative max-w-7xl mx-auto flex items-center justify-center gap-3 min-h-[1.75rem]">
+        <p className="min-w-0 text-center text-[12px] sm:text-sm leading-snug px-2 sm:px-24">
           <span className="font-bold">Raksha Bandhan 2026</span> — August 28
           {daysToFestival > 0 && (
             <>
@@ -57,7 +57,9 @@ export function RakshaBandhanCountdown({ variant = "banner" }: { variant?: Varia
             Gift guide
           </Link>
         </p>
-        <StayUpdatedPrompt />
+        <div className="absolute right-0 top-1/2 -translate-y-1/2 hidden sm:block">
+          <StayUpdatedPrompt />
+        </div>
       </div>
     </div>
   );
