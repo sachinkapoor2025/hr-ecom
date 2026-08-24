@@ -19,6 +19,7 @@ describe("expedited-shipping", () => {
   it("defines $19 3-day (with packing) and $39 2-day options", () => {
     const three = getCheckoutShippingOption("three_day");
     const two = getCheckoutShippingOption("two_day");
+    const standard = getCheckoutShippingOption("standard");
     assert.equal(three?.priceUsd, EXPEDITED_THREE_DAY_SHIPPING_USD);
     assert.equal(three?.priceUsd, 19);
     assert.equal(three?.packingBusinessDays, 1);
@@ -29,17 +30,19 @@ describe("expedited-shipping", () => {
     assert.equal(two?.packingBusinessDays, 0);
     assert.equal(two?.transitBusinessDays, 2);
     assert.equal(CHECKOUT_SHIPPING_OPTIONS.length, 3);
+    assert.match(standard?.detail ?? "", /\$22 minimum/);
+    assert.match(standard?.detail ?? "", /Aug 28/);
   });
 
   it("replaces standard threshold charge with flat expedited fees", () => {
     assert.equal(
       resolveCheckoutShippingCharge({
         optionId: "standard",
-        standardCharge: 3.99,
+        standardCharge: 7,
         currency: "USD",
         usdInrRate: 83,
       }),
-      3.99
+      7
     );
     assert.equal(
       resolveCheckoutShippingCharge({
@@ -59,27 +62,6 @@ describe("expedited-shipping", () => {
       }),
       39
     );
-    const merchandise = 25;
-    assert.equal(
-      merchandise +
-        resolveCheckoutShippingCharge({
-          optionId: "three_day",
-          standardCharge: 0,
-          currency: "USD",
-          usdInrRate: 83,
-        }),
-      44
-    );
-    assert.equal(
-      merchandise +
-        resolveCheckoutShippingCharge({
-          optionId: "two_day",
-          standardCharge: 0,
-          currency: "USD",
-          usdInrRate: 83,
-        }),
-      64
-    );
     assert.equal(
       expeditedOptionPriceInCurrency("three_day", "INR", 80),
       1520
@@ -87,13 +69,11 @@ describe("expedited-shipping", () => {
   });
 
   it("never confirms standard shipping for Rakhi; expedited uses business days", () => {
-    // Friday Aug 21 2026 12:00 UTC ≈ morning NY — enough lead for both options.
     const early = new Date("2026-08-21T16:00:00.000Z");
     assert.equal(canConfirmDeliveryByRakhi("standard", early), false);
     assert.equal(canConfirmDeliveryByRakhi("three_day", early), true);
     assert.equal(canConfirmDeliveryByRakhi("two_day", early), true);
 
-    // Wednesday Aug 26 — 3-day+pack (4 BD) slips past Aug 28; 2-day still fits.
     const late = new Date("2026-08-26T16:00:00.000Z");
     assert.equal(canConfirmDeliveryByRakhi("three_day", late), false);
     assert.equal(canConfirmDeliveryByRakhi("two_day", late), true);
@@ -115,30 +95,24 @@ describe("expedited-shipping", () => {
     assert.equal(shippingOptionServiceCode("standard"), "STANDARD");
   });
 
-  it("lists last-minute guarantee with 3-day and 2-day only (no free shipping)", async () => {
-    const { RAKHI_DELIVERY_MESSAGING, RAKHI_LAST_MINUTE_GUARANTEE } = await import(
-      "./expedited-shipping"
-    );
-    assert.equal(
-      RAKHI_DELIVERY_MESSAGING.lastMinuteNote,
-      "Last-minute orders are accepted — Guaranteed delivery by Rakhi"
-    );
-    assert.equal(RAKHI_LAST_MINUTE_GUARANTEE, RAKHI_DELIVERY_MESSAGING.lastMinuteNote);
-    assert.deepEqual(RAKHI_DELIVERY_MESSAGING.shippingBullets, [
-      "Last-minute orders are accepted — Guaranteed delivery by Rakhi",
-      "3-day delivery — $19",
-      "2-day delivery — $39",
-    ]);
-    assert.doesNotMatch(RAKHI_DELIVERY_MESSAGING.shippingBullets.join(" "), /free shipping/i);
-    assert.doesNotMatch(RAKHI_DELIVERY_MESSAGING.shippingBullets.join(" "), /\bAug\b|2026|Monday/i);
-  });
-
-  it("offers only paid expedited shipping options at checkout", async () => {
+  it("lists UsaRakhi standard + expedited options at checkout", async () => {
     const {
+      RAKHI_DELIVERY_MESSAGING,
       checkoutShippingOptionsForCart,
       defaultCheckoutShippingOption,
       shippingBulletsForCart,
     } = await import("./expedited-shipping");
+
+    assert.match(RAKHI_DELIVERY_MESSAGING.shippingBullets.join(" "), /\$22 minimum/);
+    assert.match(RAKHI_DELIVERY_MESSAGING.shippingBullets.join(" "), /selected products/i);
+
+    const usaItems = [{ vendorSlug: undefined }, { vendorSlug: "usarakhi" }];
+    assert.deepEqual(
+      checkoutShippingOptionsForCart(usaItems).map((o) => o.id),
+      ["standard", "three_day", "two_day"]
+    );
+    assert.equal(defaultCheckoutShippingOption(usaItems), "standard");
+
     const ocItems = [{ vendorSlug: "orange-county" }, { vendorSlug: "orange-county" }];
     assert.deepEqual(
       checkoutShippingOptionsForCart(ocItems).map((o) => o.id),
@@ -154,8 +128,8 @@ describe("expedited-shipping", () => {
     const mixed = [{ vendorSlug: "orange-county" }, {}];
     assert.deepEqual(
       checkoutShippingOptionsForCart(mixed).map((o) => o.id),
-      ["three_day", "two_day"]
+      ["standard", "three_day", "two_day"]
     );
-    assert.equal(defaultCheckoutShippingOption(mixed), "three_day");
+    assert.equal(defaultCheckoutShippingOption(mixed), "standard");
   });
 });

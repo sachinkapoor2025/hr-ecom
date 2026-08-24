@@ -3,6 +3,7 @@ import {
   roundForCurrency,
   type ShopCurrency,
 } from "../currency";
+import { VENDOR_ORANGE_COUNTY } from "../constants";
 import {
   FLASH_COMBO_SHIPPING_USD,
   isFlashComboProduct,
@@ -10,25 +11,41 @@ import {
 import { cartLineUnitTotal } from "./product-addons";
 
 /**
- * Standard shipping is always free (no cart minimum).
- * Expedited 3-day ($19) / 2-day ($39) are separate checkout options.
+ * UsaRakhi standard delivery: cart merchandise must reach this USD subtotal per vendor
+ * bucket, or the customer pays the difference as shipping (subtotal + shipping ≥ minimum).
  */
-export const STANDARD_SHIPPING_ALWAYS_FREE = true;
+export const USARAKHI_MIN_ORDER_USD = 22;
 
-/** @deprecated No minimum — standard shipping is always free. Kept for API/UI compat. */
-export const FREE_SHIPPING_ABOVE_USD = 0;
+/** @deprecated Use USARAKHI_MIN_ORDER_USD — kept for admin/shipping snapshot compat. */
+export const FREE_SHIPPING_MIN_SUBTOTAL_USD = USARAKHI_MIN_ORDER_USD;
 
-/** @deprecated No minimum — standard shipping is always free. */
-export const FREE_SHIPPING_MIN_SUBTOTAL_USD = 0;
+/** @deprecated UsaRakhi uses $22 minimum top-up, not tiered fees. */
+export const FREE_SHIPPING_ABOVE_USD = USARAKHI_MIN_ORDER_USD;
 
-/** @deprecated Legacy mid-tier threshold (unused while standard shipping is free). */
+/** @deprecated Legacy mid-tier threshold (unused). */
 export const REDUCED_SHIPPING_MIN_SUBTOTAL_USD = 10;
 
-/** @deprecated Legacy low-tier fee (unused while standard shipping is free). */
+/** @deprecated Legacy low-tier fee (unused). */
 export const BELOW_THRESHOLD_SHIPPING_USD = 0;
 
-/** @deprecated Legacy mid-tier fee (unused while standard shipping is free). */
+/** @deprecated Legacy mid-tier fee (unused). */
 export const REDUCED_SHIPPING_USD = 0;
+
+/** Standard shipping is not universally free — UsaRakhi uses $22 minimum top-up. */
+export const STANDARD_SHIPPING_ALWAYS_FREE = false;
+
+/** Product tag for always-free standard shipping (even under $22). */
+export const FREE_STANDARD_SHIPPING_TAG = "free-standard-shipping";
+
+export function isFreeStandardShippingProduct(input: {
+  productSlug?: string | null;
+  tags?: string[] | null;
+  freeStandardShipping?: boolean | null;
+}): boolean {
+  if (input.freeStandardShipping) return true;
+  if ((input.tags ?? []).includes(FREE_STANDARD_SHIPPING_TAG)) return true;
+  return false;
+}
 
 export type FreeShippingTier = "low" | "mid" | "free";
 
@@ -69,32 +86,81 @@ function toCurrency(
 }
 
 /**
- * Standard shipping quote — always free (no cart minimum).
- * Flash-combo-only buckets still use a flat fee via `quoteAddressShipmentShipping`.
+ * UsaRakhi standard shipping: $22 minimum merchandise per vendor bucket.
+ * Below $22, charge (minimum − subtotal) so merchandise + shipping meets the floor.
+ * Buckets where every line qualifies for free standard shipping pay $0.
+ */
+export function quoteUsarakhiStandardShipping(input: {
+  subtotal: number;
+  currency: ShopCurrency;
+  usdInrRate: number;
+  items?: Array<{
+    productSlug?: string;
+    tags?: string[];
+    freeStandardShipping?: boolean;
+  }>;
+}): FreeShippingQuote {
+  const { subtotal, currency, usdInrRate } = input;
+  const minInCurrency = toCurrency(USARAKHI_MIN_ORDER_USD, currency, usdInrRate);
+  const roundedSubtotal = roundForCurrency(subtotal, currency);
+
+  const allFreeSelected =
+    (input.items?.length ?? 0) > 0 &&
+    input.items!.every((item) => isFreeStandardShippingProduct(item));
+
+  if (allFreeSelected) {
+    return {
+      charge: 0,
+      qualifiesForFreeShipping: true,
+      amountAwayFromFreeShipping: 0,
+      amountAwayFromReducedShipping: 0,
+      aboveAmountInCurrency: minInCurrency,
+      thresholdInCurrency: minInCurrency,
+      reducedThresholdInCurrency: toCurrency(
+        REDUCED_SHIPPING_MIN_SUBTOTAL_USD,
+        currency,
+        usdInrRate
+      ),
+      lowTierFeeInCurrency: 0,
+      midTierFeeInCurrency: 0,
+      tier: "free",
+      belowThresholdFeeInCurrency: 0,
+    };
+  }
+
+  const charge =
+    roundedSubtotal >= minInCurrency
+      ? 0
+      : roundForCurrency(minInCurrency - roundedSubtotal, currency);
+
+  return {
+    charge,
+    qualifiesForFreeShipping: charge === 0,
+    amountAwayFromFreeShipping: charge,
+    amountAwayFromReducedShipping: charge,
+    aboveAmountInCurrency: minInCurrency,
+    thresholdInCurrency: minInCurrency,
+    reducedThresholdInCurrency: toCurrency(
+      REDUCED_SHIPPING_MIN_SUBTOTAL_USD,
+      currency,
+      usdInrRate
+    ),
+    lowTierFeeInCurrency: charge,
+    midTierFeeInCurrency: 0,
+    tier: charge === 0 ? "free" : "low",
+    belowThresholdFeeInCurrency: charge,
+  };
+}
+
+/**
+ * @deprecated Prefer quoteUsarakhiStandardShipping for UsaRakhi buckets.
  */
 export function quoteFreeShippingThreshold(input: {
   subtotal: number;
   currency: ShopCurrency;
   usdInrRate: number;
 }): FreeShippingQuote {
-  const { currency, usdInrRate } = input;
-  return {
-    charge: 0,
-    qualifiesForFreeShipping: true,
-    amountAwayFromFreeShipping: 0,
-    amountAwayFromReducedShipping: 0,
-    aboveAmountInCurrency: toCurrency(FREE_SHIPPING_ABOVE_USD, currency, usdInrRate),
-    thresholdInCurrency: toCurrency(FREE_SHIPPING_MIN_SUBTOTAL_USD, currency, usdInrRate),
-    reducedThresholdInCurrency: toCurrency(
-      REDUCED_SHIPPING_MIN_SUBTOTAL_USD,
-      currency,
-      usdInrRate
-    ),
-    lowTierFeeInCurrency: 0,
-    midTierFeeInCurrency: 0,
-    tier: "free",
-    belowThresholdFeeInCurrency: 0,
-  };
+  return quoteUsarakhiStandardShipping(input);
 }
 
 /** Default vendor bucket for catalog SKUs without `vendorSlug` (UsaRakhi). */
@@ -182,6 +248,8 @@ export function quoteAddressShipmentShipping(input: {
     quantity: number;
     vendorSlug?: string;
     productSlug?: string;
+    tags?: string[];
+    freeStandardShipping?: boolean;
     addons?: Array<{ price: number; quantity: number }>;
   }>;
   currency: ShopCurrency;
@@ -196,6 +264,8 @@ export function quoteAddressShipmentShipping(input: {
       price: number;
       quantity: number;
       productSlug?: string;
+      tags?: string[];
+      freeStandardShipping?: boolean;
       addons?: Array<{ price: number; quantity: number }>;
     }>
   >();
@@ -206,21 +276,44 @@ export function quoteAddressShipmentShipping(input: {
     byVendor.set(key, list);
   }
 
-  const perVendor = [...byVendor.values()].map((vendorItems) => {
+  const perVendor = [...byVendor.entries()].map(([vendorKey, vendorItems]) => {
     const flashOnly =
       vendorItems.length > 0 &&
       vendorItems.every((i) => isFlashComboProduct(i.productSlug));
     if (flashOnly) {
       return flashComboShippingQuote(input.currency, input.usdInrRate);
     }
+
     const subtotal = vendorItems.reduce(
       (sum, i) => sum + cartLineUnitTotal(i) * i.quantity,
       0
     );
-    return quoteFreeShippingThreshold({
+
+    if (vendorKey === VENDOR_ORANGE_COUNTY) {
+      return {
+        charge: 0,
+        qualifiesForFreeShipping: true,
+        amountAwayFromFreeShipping: 0,
+        amountAwayFromReducedShipping: 0,
+        aboveAmountInCurrency: 0,
+        thresholdInCurrency: 0,
+        reducedThresholdInCurrency: 0,
+        lowTierFeeInCurrency: 0,
+        midTierFeeInCurrency: 0,
+        tier: "free" as const,
+        belowThresholdFeeInCurrency: 0,
+      };
+    }
+
+    return quoteUsarakhiStandardShipping({
       subtotal,
       currency: input.currency,
       usdInrRate: input.usdInrRate,
+      items: vendorItems.map((i) => ({
+        productSlug: i.productSlug,
+        tags: i.tags,
+        freeStandardShipping: i.freeStandardShipping,
+      })),
     });
   });
 

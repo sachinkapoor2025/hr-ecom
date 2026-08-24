@@ -37,6 +37,8 @@ import {
   shouldShowUsarakhiStockShortageNote,
   isOrangeCountyVendorProduct,
   ORANGE_COUNTY_SHIPPING_BULLETS,
+  shippingBulletsForCart,
+  isFreeStandardShippingProduct,
 } from "@hr-ecom/shared";
 import { RakhiDeliverySummary } from "@/components/RakhiDeliverySummary";
 import { ProductCareAccordions } from "@/components/ProductCareAccordions";
@@ -177,7 +179,8 @@ export function ProductDetailClient({
   const showStockShortageNote = shouldShowUsarakhiStockShortageNote(product);
   const shippingBullets = isOrangeCountyVendorProduct(product)
     ? ORANGE_COUNTY_SHIPPING_BULLETS
-    : undefined;
+    : shippingBulletsForCart([product]);
+  const hasFreeStandardShipping = isFreeStandardShippingProduct(product);
   const lowStock = product.inventory > 0 && product.inventory <= LOW_STOCK_THRESHOLD;
   const fastSelling = isFastSelling(product);
   const unitsSold = getUnitsSold(product);
@@ -271,6 +274,11 @@ export function ProductDetailClient({
             className="mb-4"
             bullets={shippingBullets}
           />
+          {hasFreeStandardShipping ? (
+            <p className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-900">
+              Free standard shipping on this product.
+            </p>
+          ) : null}
 
           <TrustBadges variant="compact" className="mb-5" />
 

@@ -80,8 +80,8 @@ export function LastMinuteDeliveryTemplate({
           Need Your Order Fast?
         </h2>
         <p className="mt-1.5 text-sm text-slate-600 leading-relaxed">
-          Choose faster delivery by paying an additional delivery fee. Select one option — packed
-          with care and shipped from within the USA.
+          Choose standard delivery (after Aug 28) or pay for faster 3-day / 2-day shipping.
+          Packed with care and shipped from within the USA.
         </p>
       </header>
 

@@ -10,7 +10,7 @@ import { RakhiDeliveryBulletList } from "@/components/RakhiDeliveryBulletList";
 export const metadata: Metadata = pageMetadata({
   title: "Rakhi Shipping & Delivery to USA — Ships From Within America",
   description:
-    "UsaRakhi ships domestically within the USA — no customs delays. Free shipping with 6-day delivery; 3-day ($19) and 2-day ($39) at checkout.",
+    "UsaRakhi ships domestically within the USA — no customs delays. Standard delivery after Aug 28 (5 business days, $22 minimum order). 3-day ($19) and 2-day ($39) for faster Rakhi delivery.",
   path: "/shipping",
 });
 
@@ -37,6 +37,11 @@ export default function ShippingPage() {
         </div>
         <h2 className="text-xl font-bold text-primary">Shipping rates</h2>
         <ul className="list-disc list-inside space-y-2">
+          <li>
+            <strong>Standard delivery (UsaRakhi products)</strong> — after Aug 28 · 5 business days.
+            Orders need a <strong>$22 minimum</strong>; carts below $22 are topped up at checkout.
+            <strong> Free standard shipping on selected products.</strong>
+          </li>
           <li>
             <strong>Last-minute orders accepted</strong> —{" "}
             <strong>Guaranteed delivery by Rakhi</strong> with 3-day or 2-day shipping

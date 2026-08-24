@@ -14,10 +14,10 @@ export const EXPEDITED_TWO_DAY_SHIPPING_USD = 39;
 
 /**
  * Checkout shipping choice.
- * - `standard` — always free (no cart minimum); ~6 days delivery (UsaRakhi only)
+ * - `standard` — UsaRakhi only: $22 min order (top-up shipping below); delivery after Aug 28 · 5 business days
  * - `three_day` — $19; 1 packing business day + 3 transit business days
  * - `two_day` — $39; 2 transit business days (priority pack)
- * Orange County carts: 3-day / 2-day only (no free standard).
+ * Orange County carts: 3-day / 2-day only (no standard).
  */
 export const CHECKOUT_SHIPPING_OPTION_IDS = ["standard", "three_day", "two_day"] as const;
 export type CheckoutShippingOptionId = (typeof CHECKOUT_SHIPPING_OPTION_IDS)[number];
@@ -43,7 +43,7 @@ export const CHECKOUT_SHIPPING_OPTIONS: readonly ExpeditedShippingDef[] = [
     priceUsd: 0,
     packingBusinessDays: 1,
     transitBusinessDays: 5,
-    detail: "Free shipping — 6 days delivery",
+    detail: "Standard — delivery after Aug 28 · 5 business days · $22 minimum order",
   },
   {
     id: "three_day",
@@ -93,16 +93,19 @@ export function cartRequiresPaidExpeditedShipping(
 }
 
 export function checkoutShippingOptionsForCart(
-  _items?: Array<{ vendorSlug?: string | null }>
+  items?: Array<{ vendorSlug?: string | null }>
 ): readonly ExpeditedShippingDef[] {
-  // Peak season for all carts (UsaRakhi + Orange County): 3-day and 2-day only.
-  return ORANGE_COUNTY_CHECKOUT_SHIPPING_OPTIONS;
+  if (cartRequiresPaidExpeditedShipping(items ?? [])) {
+    return ORANGE_COUNTY_CHECKOUT_SHIPPING_OPTIONS;
+  }
+  return CHECKOUT_SHIPPING_OPTIONS;
 }
 
 export function defaultCheckoutShippingOption(
-  _items?: Array<{ vendorSlug?: string | null }>
+  items?: Array<{ vendorSlug?: string | null }>
 ): CheckoutShippingOptionId {
-  return "three_day";
+  if (cartRequiresPaidExpeditedShipping(items ?? [])) return "three_day";
+  return "standard";
 }
 
 export function getCheckoutShippingOption(
@@ -235,6 +238,14 @@ export function expeditedArrivalLabel(
   return formatDeliveryDate(arrival);
 }
 
+export const USARAKHI_SHIPPING_BULLETS = [
+  "Standard delivery — after Aug 28 · 5 business days ($22 minimum; small carts topped up at checkout)",
+  "Free standard shipping on selected products",
+  RAKHI_LAST_MINUTE_GUARANTEE,
+  "3-day delivery — $19",
+  "2-day delivery — $39",
+] as const;
+
 /** Customer-facing shipping options — simple bullets, no calendar dates. */
 export const RAKHI_DELIVERY_MESSAGING = {
   headline: "Shipping options",
@@ -245,22 +256,23 @@ export const RAKHI_DELIVERY_MESSAGING = {
   festivalShort: "Aug 28",
   weekendNote: "",
   standardTitle: "Choose your delivery",
-  /** Peak season: guaranteed last-minute + paid expedited only (no free shipping). */
-  shippingBullets: [
-    RAKHI_LAST_MINUTE_GUARANTEE,
-    "3-day delivery — $19",
-    "2-day delivery — $39",
+  shippingBullets: [...USARAKHI_SHIPPING_BULLETS],
+  standardBullets: [
+    "Standard delivery — after Aug 28 · 5 business days",
+    "Orders under $22: remaining amount added as shipping at checkout",
   ],
-  standardBullets: ["3-day delivery — $19"],
-  standardBadge: "3-day · $19",
+  standardBadge: "Standard · after Aug 28",
   expeditedTitle: "Faster delivery",
   expeditedBullets: ["3-day delivery — $19", "2-day delivery — $39"],
   expeditedBadge: "Guaranteed by Rakhi",
 } as const;
 
 export function shippingBulletsForCart(
-  _items?: Array<{ vendorSlug?: string | null }>
+  items?: Array<{ vendorSlug?: string | null }>
 ): readonly string[] {
+  if (cartRequiresPaidExpeditedShipping(items ?? [])) {
+    return ORANGE_COUNTY_SHIPPING_BULLETS;
+  }
   return RAKHI_DELIVERY_MESSAGING.shippingBullets;
 }
 

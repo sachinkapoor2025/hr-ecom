@@ -15,6 +15,8 @@ import {
   cartLineUnitTotal,
   checkoutShippingOptionsForCart,
   expeditedOptionPriceInCurrency,
+  quoteAddressShipmentShipping,
+  resolveCheckoutShippingCharge,
   shippingOptionServiceName,
   type CartItem,
 } from "@hr-ecom/shared";
@@ -127,7 +129,24 @@ export default function CartPage() {
     return sum + convert(cartLineUnitTotal(i) * i.quantity, lineCurrency);
   }, 0);
   const currency = displayCurrency;
-  const shippingCharge = expeditedOptionPriceInCurrency(shippingOption, currency, usdInrRate);
+  const standardShippingCharge = quoteAddressShipmentShipping({
+    items: items.map((item) => ({
+      price: item.price,
+      quantity: item.quantity,
+      vendorSlug: item.vendorSlug,
+      productSlug: item.productSlug,
+      freeStandardShipping: item.freeStandardShipping,
+      addons: item.addons?.map((a) => ({ price: a.price, quantity: a.quantity })),
+    })),
+    currency,
+    usdInrRate,
+  }).totalCharge;
+  const shippingCharge = resolveCheckoutShippingCharge({
+    optionId: shippingOption,
+    standardCharge: standardShippingCharge,
+    currency,
+    usdInrRate,
+  });
   const estimatedTotal = total + shippingCharge;
 
   return (
@@ -207,7 +226,7 @@ export default function CartPage() {
             <LastMinuteDeliveryTemplate
               value={shippingOption}
               onChange={setShippingOption}
-              standardCharge={0}
+              standardCharge={standardShippingCharge}
               formatMoney={format}
               currency={currency}
               usdInrRate={usdInrRate}

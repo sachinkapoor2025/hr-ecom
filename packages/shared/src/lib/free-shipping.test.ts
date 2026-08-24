@@ -1,71 +1,100 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  FREE_STANDARD_SHIPPING_TAG,
+  USARAKHI_MIN_ORDER_USD,
+  isFreeStandardShippingProduct,
   quoteAddressShipmentShipping,
-  quoteFreeShippingThreshold,
   quoteShipmentsShipping,
+  quoteUsarakhiStandardShipping,
 } from "./free-shipping";
 
-describe("quoteFreeShippingThreshold", () => {
-  it("is free with no cart minimum", () => {
-    for (const subtotal of [0, 3.99, 10, 19.99, 20, 50]) {
-      const quote = quoteFreeShippingThreshold({
+describe("quoteUsarakhiStandardShipping", () => {
+  it("charges the difference when subtotal is below $22", () => {
+    const quote = quoteUsarakhiStandardShipping({
+      subtotal: 15,
+      currency: "USD",
+      usdInrRate: 96,
+    });
+    assert.equal(quote.charge, 7);
+    assert.equal(quote.qualifiesForFreeShipping, false);
+    assert.equal(quote.tier, "low");
+  });
+
+  it("is free at or above $22", () => {
+    for (const subtotal of [22, 25, 50]) {
+      const quote = quoteUsarakhiStandardShipping({
         subtotal,
         currency: "USD",
         usdInrRate: 96,
       });
-      assert.equal(quote.qualifiesForFreeShipping, true);
-      assert.equal(quote.tier, "free");
       assert.equal(quote.charge, 0);
-      assert.equal(quote.amountAwayFromFreeShipping, 0);
+      assert.equal(quote.qualifiesForFreeShipping, true);
     }
   });
 
-  it("is free for INR carts with no minimum", () => {
-    const quote = quoteFreeShippingThreshold({
-      subtotal: 100,
+  it("is free when every line is a selected free-shipping product", () => {
+    const quote = quoteUsarakhiStandardShipping({
+      subtotal: 10,
+      currency: "USD",
+      usdInrRate: 96,
+      items: [
+        { productSlug: "om-single-rakhi", tags: [FREE_STANDARD_SHIPPING_TAG] },
+      ],
+    });
+    assert.equal(quote.charge, 0);
+  });
+
+  it("uses $22 minimum in INR", () => {
+    const quote = quoteUsarakhiStandardShipping({
+      subtotal: 1000,
       currency: "INR",
       usdInrRate: 100,
     });
-    assert.equal(quote.qualifiesForFreeShipping, true);
-    assert.equal(quote.charge, 0);
+    assert.equal(quote.charge, 1200);
+    assert.equal(USARAKHI_MIN_ORDER_USD, 22);
+  });
+});
+
+describe("isFreeStandardShippingProduct", () => {
+  it("detects tag and cart flag", () => {
+    assert.equal(
+      isFreeStandardShippingProduct({ tags: [FREE_STANDARD_SHIPPING_TAG] }),
+      true
+    );
+    assert.equal(isFreeStandardShippingProduct({ freeStandardShipping: true }), true);
+    assert.equal(isFreeStandardShippingProduct({ productSlug: "x" }), false);
   });
 });
 
 describe("quoteShipmentsShipping", () => {
-  it("charges $0 for every delivery bucket", () => {
+  it("tops up each subtotal bucket below $22", () => {
     const { totalCharge, perShipment } = quoteShipmentsShipping({
-      shipmentSubtotals: [20, 10, 3],
+      shipmentSubtotals: [20, 10, 25],
       currency: "USD",
       usdInrRate: 96,
     });
-    assert.equal(perShipment.every((q) => q.charge === 0), true);
-    assert.equal(totalCharge, 0);
+    assert.equal(perShipment[0]!.charge, 2);
+    assert.equal(perShipment[1]!.charge, 12);
+    assert.equal(perShipment[2]!.charge, 0);
+    assert.equal(totalCharge, 14);
   });
 });
 
 describe("quoteAddressShipmentShipping", () => {
-  it("is free even when vendors share an address with small subtotals", () => {
+  it("applies $22 minimum to UsaRakhi vendor buckets only", () => {
     const { totalCharge, perVendor } = quoteAddressShipmentShipping({
       items: [
-        { price: 3.99, quantity: 1 },
-        { price: 3.99, quantity: 1, vendorSlug: "orange-county" },
+        { price: 18, quantity: 1 },
         { price: 50, quantity: 1, vendorSlug: "orange-county" },
       ],
       currency: "USD",
       usdInrRate: 96,
     });
     assert.equal(perVendor.length, 2);
-    assert.equal(totalCharge, 0);
-  });
-
-  it("is free for small single-vendor carts", () => {
-    const { totalCharge } = quoteAddressShipmentShipping({
-      items: [{ price: 3.99, quantity: 1 }],
-      currency: "USD",
-      usdInrRate: 96,
-    });
-    assert.equal(totalCharge, 0);
+    assert.equal(perVendor[0]!.charge, 4);
+    assert.equal(perVendor[1]!.charge, 0);
+    assert.equal(totalCharge, 4);
   });
 
   it("charges flat $0.99 shipping for flash-combo-only buckets", () => {
@@ -84,18 +113,18 @@ describe("quoteAddressShipmentShipping", () => {
     assert.equal(perVendor[0]?.charge, 0.99);
   });
 
-  it("keeps standard free when add-ons are present", () => {
+  it("includes add-ons in the UsaRakhi minimum calculation", () => {
     const { totalCharge } = quoteAddressShipmentShipping({
       items: [
         {
-          price: 3.99,
+          price: 10,
           quantity: 1,
-          addons: [{ price: 20, quantity: 1 }],
+          addons: [{ price: 5, quantity: 1 }],
         },
       ],
       currency: "USD",
       usdInrRate: 96,
     });
-    assert.equal(totalCharge, 0);
+    assert.equal(totalCharge, 7);
   });
 });
