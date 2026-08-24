@@ -16,6 +16,8 @@ export type ProductAddonDef = {
   group: ProductAddonGroup;
   /** Short weight / pack label for UI. */
   detail: string;
+  /** Packs left in warehouse; omit for unlimited (extra rakhis). */
+  stockRemaining?: number;
   /** Catalog slug when this add-on is a real rakhi SKU (standalone product price is unchanged). */
   productSlug?: string;
   /** Storefront image for extra-rakhi cards. */
@@ -28,12 +30,47 @@ export const RAKHI_ADDON_PRICE_USD = RAKHI_ADDON_BUNDLE_USD[1];
 /** Max packs of a single add-on per cart line. */
 export const MAX_PRODUCT_ADDON_QUANTITY = 10;
 
+/** Small dry-fruit add-on (peak-season warehouse packs — no gram weights in copy). */
+export const DRY_FRUIT_SMALL_PACK_PRICE_USD = 9.99;
+
 /**
  * Fixed UsaRakhi PDP add-on catalog (USD). Not Dynamo SKUs.
- * Dry fruits (badam/pista/kaju) and Hershey’s removed for peak-season stock.
+ * `stockRemaining` hides sold-out add-ons on the PDP and caps cart quantity.
  * Chocolate names match storefront: Lindor chocolates / Ferrero Rocher / Mixed chocolates.
  */
 export const PRODUCT_ADDONS: readonly ProductAddonDef[] = [
+  {
+    id: "badam-small-pack",
+    name: "Small pack of almonds (badam)",
+    priceUsd: DRY_FRUIT_SMALL_PACK_PRICE_USD,
+    group: "dry-fruits",
+    detail: "Small pack",
+    stockRemaining: 5,
+  },
+  {
+    id: "kaju-small-pack",
+    name: "Small pack of cashews",
+    priceUsd: DRY_FRUIT_SMALL_PACK_PRICE_USD,
+    group: "dry-fruits",
+    detail: "Small pack",
+    stockRemaining: 5,
+  },
+  {
+    id: "pista-small-pack",
+    name: "Small pack of pistachios",
+    priceUsd: DRY_FRUIT_SMALL_PACK_PRICE_USD,
+    group: "dry-fruits",
+    detail: "Small pack",
+    stockRemaining: 5,
+  },
+  {
+    id: "mixed-nuts-small-pack",
+    name: "Small pack of mixed nuts",
+    priceUsd: DRY_FRUIT_SMALL_PACK_PRICE_USD,
+    group: "dry-fruits",
+    detail: "Small pack",
+    stockRemaining: 6,
+  },
   {
     /** Legacy id — pack is 3 pcs; keep id so existing carts still resolve. */
     id: "lindt-5pc",
@@ -41,6 +78,7 @@ export const PRODUCT_ADDONS: readonly ProductAddonDef[] = [
     priceUsd: 10.5,
     group: "chocolates",
     detail: "3 pcs",
+    stockRemaining: 15,
   },
   {
     id: "ferrero-3pc",
@@ -48,6 +86,7 @@ export const PRODUCT_ADDONS: readonly ProductAddonDef[] = [
     priceUsd: 6.5,
     group: "chocolates",
     detail: "3 pcs",
+    stockRemaining: 0,
   },
   {
     id: "mixed-chocolates-3pc",
@@ -55,6 +94,7 @@ export const PRODUCT_ADDONS: readonly ProductAddonDef[] = [
     priceUsd: 4.99,
     group: "chocolates",
     detail: "3 pcs",
+    stockRemaining: 30,
   },
   ...MINI_RAKHI_ADDONS.map(
     (rakhi): ProductAddonDef => ({
@@ -83,9 +123,26 @@ export function getProductAddon(id: string): ProductAddonDef | undefined {
   return ADDON_BY_ID.get(id);
 }
 
+export function isAddonInStock(def: ProductAddonDef): boolean {
+  return def.stockRemaining === undefined || def.stockRemaining > 0;
+}
+
+/** Add-ons with warehouse stock left (or unlimited rakhis). */
+export function availableProductAddons(): readonly ProductAddonDef[] {
+  return PRODUCT_ADDONS.filter(isAddonInStock);
+}
+
+/** Max quantity a customer can add for one add-on id on a cart line. */
+export function addonMaxQuantity(id: string): number {
+  const def = getProductAddon(id);
+  if (!def) return 0;
+  if (def.stockRemaining === undefined) return MAX_PRODUCT_ADDON_QUANTITY;
+  return Math.min(MAX_PRODUCT_ADDON_QUANTITY, Math.max(0, def.stockRemaining));
+}
+
 /** Hide a rakhi add-on on its own product page so the mix-and-match deal is only for extras. */
 export function addonsForProductPage(productSlug: string): readonly ProductAddonDef[] {
-  return PRODUCT_ADDONS.filter((a) => a.productSlug !== productSlug);
+  return availableProductAddons().filter((a) => a.productSlug !== productSlug);
 }
 
 /** Extra rakhis / dry fruit / chocolate add-ons — UsaRakhi products only. */
@@ -154,6 +211,19 @@ export function normalizeAddonSelections(
     if (!Number.isFinite(qty) || qty < 1) {
       return { ok: false, error: `Invalid add-on quantity for ${id}` };
     }
+    const maxForAddon = addonMaxQuantity(id);
+    if (maxForAddon < 1) {
+      return { ok: false, error: `${id} is sold out` };
+    }
+    if (qty > maxForAddon) {
+      return {
+        ok: false,
+        error:
+          maxForAddon === 1
+            ? `Only 1 pack of this add-on is available`
+            : `Only ${maxForAddon} packs of this add-on are available`,
+      };
+    }
     if (qty > MAX_PRODUCT_ADDON_QUANTITY) {
       return {
         ok: false,
@@ -185,6 +255,19 @@ export function resolveProductAddons(
   for (const sel of normalized.selections) {
     const def = getProductAddon(sel.id);
     if (!def) return { ok: false, error: `Unknown add-on: ${sel.id}` };
+    if (!isAddonInStock(def)) {
+      return { ok: false, error: `${def.name} is sold out` };
+    }
+    const maxQty = addonMaxQuantity(sel.id);
+    if (sel.quantity > maxQty) {
+      return {
+        ok: false,
+        error:
+          maxQty === 1
+            ? `Only 1 pack of ${def.name} is available`
+            : `Only ${maxQty} packs of ${def.name} are available`,
+      };
+    }
     addons.push({
       id: def.id,
       name: def.name,
