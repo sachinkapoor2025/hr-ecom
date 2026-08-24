@@ -4,16 +4,18 @@ import Link from "next/link";
 import type { Product } from "@hr-ecom/shared";
 import { WishlistButton } from "@/components/WishlistButton";
 import { ProductImageRotator } from "@/components/ProductImageRotator";
+import { SoldOutStamp } from "@/components/SoldOutStamp";
 import { useCurrency } from "@/lib/currency-context";
 import { getDiscountPercent } from "@/lib/pricing";
 
 export function ProductCard({ product }: { product: Product }) {
   const { format } = useCurrency();
   const discount = getDiscountPercent(product.price, product.compareAtPrice);
+  const soldOut = (product.inventory ?? 0) <= 0;
 
   return (
     <div className="group border border-slate-200 rounded-xl overflow-hidden hover:shadow-lg transition-shadow bg-white relative">
-      {discount && (
+      {discount && !soldOut && (
         <span className="absolute top-3 left-3 z-10 bg-accent text-white text-xs font-bold px-2 py-1 rounded">
           {discount}% OFF
         </span>
@@ -27,6 +29,7 @@ export function ProductCard({ product }: { product: Product }) {
             staggerKey={product.slug}
             className="absolute inset-0 h-full w-full"
           />
+          {soldOut ? <SoldOutStamp /> : null}
         </Link>
       </div>
       <Link href={`/products/${product.slug}`} className="block p-4">
@@ -40,8 +43,13 @@ export function ProductCard({ product }: { product: Product }) {
               {format(product.compareAtPrice, product.currency)}
             </p>
           )}
-          {discount !== null && (
+          {discount !== null && !soldOut && (
             <span className="text-xs font-semibold text-green-600 ml-auto shrink-0">{discount}% OFF</span>
+          )}
+          {soldOut && (
+            <span className="text-xs font-bold uppercase tracking-wide text-slate-500 ml-auto shrink-0">
+              Sold out
+            </span>
           )}
         </div>
       </Link>

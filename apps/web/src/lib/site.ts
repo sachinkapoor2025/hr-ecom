@@ -93,42 +93,46 @@ export function isUsCityNavLink(link: CityNavLink): boolean {
 
 export const usCityLinks = cityLinks.filter(isUsCityNavLink);
 
+/** Shown on every homepage hero slide (image caption + text panel + pill). */
+export const HOME_BANNER_DELIVERY_NOTE =
+  "Last Minute Orders accepted · Guaranteed order Delivery by Rakhi - 28 August · 3 days delivery $19 · 2 Days Delivery $39";
+
 export const homeBanners = [
   {
     src: "/banners/banner-1-usa-rakhi-delivery.png",
-    alt: "USA Rakhi Delivery — Send Beautiful Rakhis to Your Loved Ones in the USA",
+    alt: "USA Rakhi Delivery — Last Minute Orders accepted · Guaranteed by Rakhi 28 August · 3-day $19 · 2-day $39",
     href: "/products?category=rakhi-combo",
     eyebrow: "RAKSHA BANDHAN · USA DELIVERY",
     title: "Send Beautiful Rakhis to Your Loved Ones in the",
     titleAccent: "USA",
-    description:
-      "Premium designer rakhis with express shipping across all 50 states. Same-day dispatch on most orders.",
+    description: HOME_BANNER_DELIVERY_NOTE,
     cta: "Shop Rakhi Combos",
-    pill: "Premium Rakhis · Express Shipping · Celebrate Raksha Bandhan",
+    pill: HOME_BANNER_DELIVERY_NOTE,
+    imageCaption: HOME_BANNER_DELIVERY_NOTE,
   },
   {
     src: "/banners/banner-2-connecting-hearts.png",
-    alt: "UsaRakhi.com — Connecting hearts across miles",
+    alt: "UsaRakhi.com — Last Minute Orders accepted · Guaranteed by Rakhi 28 August · 3-day $19 · 2-day $39",
     href: "/products",
     eyebrow: "EVERY SISTER · EVERY BROTHER",
     title: "Connecting Hearts",
     titleAccent: "Across Miles",
-    description:
-      "Distance may keep you apart, but the bond between siblings remains strong. Delivered with love to your brother.",
+    description: HOME_BANNER_DELIVERY_NOTE,
     cta: "Browse All Rakhis",
-    pill: "Trusted by sisters worldwide · Free shipping on selected orders",
+    pill: HOME_BANNER_DELIVERY_NOTE,
+    imageCaption: HOME_BANNER_DELIVERY_NOTE,
   },
   {
     src: "/banners/banner-3-india-usa.png",
-    alt: "Send Rakhi from India to USA — Premium Rakhis with Express Shipping",
+    alt: "Send Rakhi from India to USA — Last Minute Orders accepted · Guaranteed by Rakhi 28 August · 3-day $19 · 2-day $39",
     href: "/products?category=single-rakhi",
     eyebrow: "INDIA → USA",
     title: "Bridge the Distance This",
     titleAccent: "Raksha Bandhan",
-    description:
-      "From India to America — send single rakhis, combos, and gifts with reliable USA delivery you can count on.",
+    description: HOME_BANNER_DELIVERY_NOTE,
     cta: "Shop Single Rakhis",
-    pill: "Single Rakhis · Kids Rakhi · Bhaiya Bhabhi Sets",
+    pill: HOME_BANNER_DELIVERY_NOTE,
+    imageCaption: HOME_BANNER_DELIVERY_NOTE,
   },
 ] as const;
 

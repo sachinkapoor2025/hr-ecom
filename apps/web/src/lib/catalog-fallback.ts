@@ -10,7 +10,8 @@ import {
   withCompetitiveStorefrontPricing,
   withForcedOutOfStockInventory,
   withUsarakhiStockShortageNote,
-  filterInStockStorefrontProducts,
+  prepareStorefrontProducts,
+  sortAvailableProductsFirst,
   type Product,
 } from "@hr-ecom/shared";
 
@@ -47,17 +48,17 @@ export function getCatalogProducts(): Product[] {
   ]) {
     // Never expose vendorCost / vendorSlug to the browser via SSR props.
     const allowsAddons = productAllowsAddons(product);
-    const publicProduct = withForcedOutOfStockInventory(
-      stripVendorPrivateFields(
-        withUsarakhiStockShortageNote(withCompetitiveStorefrontPricing(product))
-      ) as Product
+    // Force OOS while vendorSlug is still present (OC detection), then strip private fields.
+    const forced = withForcedOutOfStockInventory(
+      withUsarakhiStockShortageNote(withCompetitiveStorefrontPricing(product))
     );
+    const publicProduct = stripVendorPrivateFields(forced) as Product;
     publicProduct.allowsAddons = allowsAddons;
     // Rewrite legacy WordPress / non-www media hosts to CloudFront.
     publicProduct.images = resolveProductImageUrls(publicProduct.images);
     bySlug.set(product.slug, publicProduct);
   }
-  cached = filterInStockStorefrontProducts([...bySlug.values()]);
+  cached = prepareStorefrontProducts([...bySlug.values()]);
   return cached;
 }
 
@@ -111,6 +112,7 @@ export function getCatalogProductsByCategory(categorySlug: string): Product[] {
 /**
  * Merge catalog fallback into API results. API prices always win for shared slugs —
  * catalog JSON can be stale (e.g. Om Single Rakhi at $1.50 vs live $14.72).
+ * Available (in-stock) products are listed before sold-out UsaRakhi SKUs.
  */
 export function mergeProductsPreferExisting(
   existing: Product[],
@@ -120,5 +122,5 @@ export function mergeProductsPreferExisting(
   for (const product of additions) {
     if (!bySlug.has(product.slug)) bySlug.set(product.slug, product);
   }
-  return [...bySlug.values()];
+  return sortAvailableProductsFirst([...bySlug.values()]);
 }

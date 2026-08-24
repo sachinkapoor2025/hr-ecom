@@ -14,6 +14,8 @@ export interface HomeBanner {
   description: string;
   cta: string;
   pill: string;
+  /** Short line shown on the banner image (e.g. delivery guarantee). */
+  imageCaption?: string;
   /**
    * How the slide image fills the hero frame.
    * Default `cover` matches existing banners; use `contain` for taller art
@@ -81,6 +83,17 @@ function bannerImageClass(banner: HomeBanner): string {
   return banner.imageFit === "contain"
     ? "object-contain object-center"
     : "object-cover object-center";
+}
+
+function DeliveryCaption({ text }: { text?: string }) {
+  if (!text) return null;
+  return (
+    <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[15] bg-gradient-to-t from-black/75 via-black/45 to-transparent px-3 pb-2.5 pt-8 sm:px-4 sm:pb-3">
+      <p className="text-center text-[10px] sm:text-xs font-semibold leading-snug text-white drop-shadow-sm">
+        {text}
+      </p>
+    </div>
+  );
 }
 
 function SlideImage({
@@ -206,6 +219,8 @@ export function BannerCarousel({
                   </button>
                 </>
               )}
+
+              <DeliveryCaption text={banner.imageCaption} />
             </div>
           </div>
 
