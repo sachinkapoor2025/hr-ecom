@@ -28,9 +28,8 @@ describe("expedited-shipping", () => {
     assert.equal(expeditedLeadBusinessDays(three!), 4);
     assert.equal(two?.priceUsd, EXPEDITED_TWO_DAY_SHIPPING_USD);
     assert.equal(CHECKOUT_SHIPPING_OPTIONS.length, 3);
-    assert.match(standard?.detail ?? "", /\$25 minimum/);
-    assert.doesNotMatch(standard?.detail ?? "", /Aug 28/);
-    assert.match(three?.detail ?? "", /August 29/);
+    assert.match(standard?.detail ?? "", /Free shipping on \$25 minimum/);
+    assert.match(three?.detail ?? "", /August 28–29/);
   });
 
   it("replaces standard threshold charge with flat 3-day fee", () => {
@@ -58,7 +57,7 @@ describe("expedited-shipping", () => {
     );
   });
 
-  it("never confirms Rakhi-day delivery; 3-day arrives August 29", () => {
+  it("never confirms Rakhi-day delivery; 3-day window is August 28–29", () => {
     const early = new Date("2026-08-21T16:00:00.000Z");
     assert.equal(canConfirmDeliveryByRakhi("standard", early), false);
     assert.equal(canConfirmDeliveryByRakhi("three_day", early), false);
@@ -89,8 +88,8 @@ describe("expedited-shipping", () => {
       shippingBulletsForCart,
     } = await import("./expedited-shipping");
 
-    assert.match(RAKHI_DELIVERY_MESSAGING.shippingBullets.join(" "), /\$25 minimum/);
-    assert.match(RAKHI_DELIVERY_MESSAGING.shippingBullets.join(" "), /August 29/);
+    assert.match(RAKHI_DELIVERY_MESSAGING.shippingBullets.join(" "), /Free shipping on \$25 minimum/);
+    assert.match(RAKHI_DELIVERY_MESSAGING.shippingBullets.join(" "), /August 28–29/);
     assert.doesNotMatch(RAKHI_DELIVERY_MESSAGING.shippingBullets.join(" "), /2-day/);
     assert.doesNotMatch(
       RAKHI_DELIVERY_MESSAGING.shippingBullets.join(" "),
@@ -111,7 +110,7 @@ describe("expedited-shipping", () => {
     );
     assert.equal(defaultCheckoutShippingOption(ocItems), "standard");
     assert.deepEqual([...shippingBulletsForCart(ocItems)], [
-      "Standard delivery · 5 business days · $25 minimum order",
+      "Standard USA delivery · 5 business days · Free shipping on $25 minimum cart value",
       "Orders under $25: remaining amount added as shipping at checkout",
     ]);
 

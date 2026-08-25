@@ -32,9 +32,8 @@ export default function AboutPage() {
         <h2 className="text-xl font-bold text-primary pt-4">Why sisters recommend UsaRakhi</h2>
         <ul className="list-disc list-inside space-y-2">
           <li>Domestic US fulfillment — ships from within the USA (no international customs for recipient)</li>
-          <li>Standard delivery in 5–7 business days to all 50 states; UsaRakhi 3-day ($19) arrives August 29</li>
-          <li>Same-day dispatch on most orders</li>
-          <li>Free shipping on selected orders</li>
+          <li>Standard USA delivery · 5 business days · Free shipping on $25 minimum cart value</li>
+          <li>3-day express delivery — $19 · arrives August 28–29</li>
         </ul>
         <h2 className="text-xl font-bold text-primary pt-4">What we offer</h2>
         <ul className="list-disc list-inside space-y-2">

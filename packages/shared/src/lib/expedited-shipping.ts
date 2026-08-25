@@ -6,14 +6,15 @@ import {
 import { VENDOR_ORANGE_COUNTY } from "../constants";
 import { RAKSHA_BANDHAN_FESTIVAL_DATE } from "../schemas/shipping";
 import { addBusinessDays, formatDeliveryDate } from "./delivery";
-import { shippingVendorKey, USARAKHI_MIN_ORDER_USD } from "./free-shipping";
+import { shippingVendorKey } from "./free-shipping";
 
 /** Customer-facing standard delivery line (all vendors). */
-export const USARAKHI_STANDARD_DELIVERY_DETAIL = `Standard delivery · 5 business days · $${USARAKHI_MIN_ORDER_USD} minimum order`;
+export const USARAKHI_STANDARD_DELIVERY_DETAIL =
+  "Standard USA delivery · 5 business days · Free shipping on $25 minimum cart value";
 
-/** Stated arrival for UsaRakhi 3-day (1 packing day + 3 transit) — not Rakhi day. */
+/** Stated arrival window for UsaRakhi 3-day express (1 packing day + 3 transit). */
 export const USARAKHI_THREE_DAY_ARRIVAL_YMD = "2026-08-29";
-export const USARAKHI_THREE_DAY_ARRIVAL_LABEL = "August 29";
+export const USARAKHI_THREE_DAY_ARRIVAL_LABEL = "August 28–29";
 
 /** Flat rate for UsaRakhi 3-day upgrade (USD). 2-day is no longer offered. */
 export const EXPEDITED_THREE_DAY_SHIPPING_USD = 19;
@@ -54,12 +55,12 @@ export const CHECKOUT_SHIPPING_OPTIONS: readonly ExpeditedShippingDef[] = [
   },
   {
     id: "three_day",
-    label: "3-day delivery",
+    label: "3-day express delivery",
     shortLabel: "3-day",
     priceUsd: EXPEDITED_THREE_DAY_SHIPPING_USD,
     packingBusinessDays: 1,
     transitBusinessDays: 3,
-    detail: `3-day delivery — $19 · arrives ${USARAKHI_THREE_DAY_ARRIVAL_LABEL} (1 packing day + 3 transit days)`,
+    detail: `3-day express delivery — $19 · arrives ${USARAKHI_THREE_DAY_ARRIVAL_LABEL}`,
   },
   {
     id: "two_day",
@@ -86,9 +87,9 @@ export const USARAKHI_CHECKOUT_SHIPPING_OPTIONS = CHECKOUT_SHIPPING_OPTIONS.filt
 /** Orange County — standard only ($25 minimum). */
 export const ORANGE_COUNTY_CHECKOUT_SHIPPING_OPTIONS = STANDARD_CHECKOUT_SHIPPING_OPTIONS;
 
-/** @deprecated 2-day / Rakhi-day guarantee is no longer offered. */
+/** Customer-facing 3-day express line. */
 export const RAKHI_LAST_MINUTE_GUARANTEE =
-  `UsaRakhi 3-day delivery arrives ${USARAKHI_THREE_DAY_ARRIVAL_LABEL} — not on Rakhi day`;
+  `3-day express delivery — $19 · arrives ${USARAKHI_THREE_DAY_ARRIVAL_LABEL}`;
 
 export const ORANGE_COUNTY_SHIPPING_BULLETS = [
   USARAKHI_STANDARD_DELIVERY_DETAIL,
@@ -262,7 +263,7 @@ export function resolveCheckoutShippingCharge(input: {
 }
 
 export function shippingOptionServiceName(optionId: CheckoutShippingOptionId): string {
-  if (optionId === "three_day") return "3-Day Delivery";
+  if (optionId === "three_day") return "3-Day Express Delivery";
   if (optionId === "two_day") return "2-Day Delivery";
   return "Standard shipping";
 }
@@ -277,17 +278,21 @@ export function expeditedArrivalLabel(
   optionId: CheckoutShippingOptionId,
   from: Date = new Date()
 ): string {
+  if (optionId === "three_day" && ymdInNy(from) <= USARAKHI_THREE_DAY_ARRIVAL_YMD) {
+    return USARAKHI_THREE_DAY_ARRIVAL_LABEL;
+  }
   const arrival = estimateShippingArrival(optionId, from);
   return formatDeliveryDate(arrival);
 }
 
 export const USARAKHI_SHIPPING_BULLETS = [
-  "Standard delivery — 5 business days ($25 minimum; small carts topped up at checkout)",
-  "Free standard shipping on selected products",
-  `UsaRakhi 3-day delivery — $19 · arrives ${USARAKHI_THREE_DAY_ARRIVAL_LABEL} (1 packing day + 3 transit days)`,
+  "Standard USA delivery",
+  "5 business days",
+  "Free shipping on $25 minimum cart value",
+  `3-day express delivery — $19 · arrives ${USARAKHI_THREE_DAY_ARRIVAL_LABEL}`,
 ] as const;
 
-/** Customer-facing shipping options — no Rakhi-day guarantee. */
+/** Customer-facing shipping options. */
 export const RAKHI_DELIVERY_MESSAGING = {
   headline: "Shipping options",
   lastMinuteNote: RAKHI_LAST_MINUTE_GUARANTEE,
@@ -298,13 +303,14 @@ export const RAKHI_DELIVERY_MESSAGING = {
   standardTitle: "Choose your delivery",
   shippingBullets: [...USARAKHI_SHIPPING_BULLETS],
   standardBullets: [
-    "Standard delivery — 5 business days",
-    "Orders under $25: remaining amount added as shipping at checkout",
+    "Standard USA delivery",
+    "5 business days",
+    "Free shipping on $25 minimum cart value",
   ],
-  standardBadge: "Standard · 5 business days",
-  expeditedTitle: "Faster delivery",
+  standardBadge: "Standard USA delivery · 5 business days",
+  expeditedTitle: "Express delivery",
   expeditedBullets: [
-    `3-day delivery — $19 · arrives ${USARAKHI_THREE_DAY_ARRIVAL_LABEL}`,
+    `3-day express delivery — $19 · arrives ${USARAKHI_THREE_DAY_ARRIVAL_LABEL}`,
   ],
   expeditedBadge: `Arrives ${USARAKHI_THREE_DAY_ARRIVAL_LABEL}`,
 } as const;

@@ -993,10 +993,10 @@ function CheckoutPageInner() {
               {!isRetry ? (
                 <p className="text-[11px] text-slate-500 leading-snug">
                   {checkoutShippingOptions.some((o) => o.id === "three_day")
-                    ? "Standard delivery is 5 business days with a $25 minimum per vendor. UsaRakhi 3-day delivery is $19 and arrives August 29 — not on Rakhi day."
+                    ? "Standard USA delivery · 5 business days · Free shipping on $25 minimum cart value. 3-day express delivery — $19 · arrives August 28–29."
                     : cartHasMultipleShippingVendors(checkoutItems)
-                      ? "Standard delivery is 5 business days. Shipping is calculated separately — UsaRakhi and Orange County each need a $25 minimum."
-                      : "Standard delivery is 5 business days with a $25 minimum. Carts under $25 pay the remaining amount as shipping."}
+                      ? "Standard USA delivery · 5 business days. Free shipping on $25 minimum per vendor — UsaRakhi and Orange County are calculated separately."
+                      : "Standard USA delivery · 5 business days · Free shipping on $25 minimum cart value."}
                 </p>
               ) : null}
               <div className="flex justify-between gap-4 pt-2 border-t border-slate-200">

@@ -1472,7 +1472,7 @@ export const RAKSHA_BANDHAN_ORDER_BY_20_EMAIL_CONFIG = {
   name: "Raksha Bandhan — Shop Rakhi for USA Delivery",
   subject: "❤️ Raksha Bandhan is just around the corner! Shop Rakhi for the USA",
   preheader:
-    "Shop Single Rakhi, Combos, Hampers & Kids Rakhi from UsaRakhi. Standard 5-day delivery. UsaRakhi 3-day ($19) arrives August 29.",
+    "Shop Single Rakhi, Combos, Hampers & Kids Rakhi from UsaRakhi. Standard USA delivery · 5 business days · Free shipping on $25 minimum. 3-day express $19 arrives August 28–29.",
   logoUrl: LOGO,
   logoHref: SITE,
   logoTagline: "Connecting Hearts Across Borders",
@@ -1483,9 +1483,9 @@ export const RAKSHA_BANDHAN_ORDER_BY_20_EMAIL_CONFIG = {
   ctaText: "SHOP RAKHI NOW",
   ctaHref: `${SITE}/products?category=rakhi-combo`,
   urgencyEyebrow: "LIMITED TIME · RAKSHA BANDHAN 2026",
-  urgencyHeadline: "Shop now — standard USA delivery or UsaRakhi 3-day (arrives August 29)",
+  urgencyHeadline: "Standard USA delivery · 5 business days · 3-day express $19 arrives August 28–29",
   urgencyBody:
-    "Shop premium rakhis for USA delivery — standard 5 business days with a $25 minimum, or UsaRakhi 3-day delivery ($19) arriving August 29. Premium packaging, roli & chawal on most designs, and domestic USA delivery from California.",
+    "Shop premium rakhis for USA delivery — Standard USA delivery · 5 business days · Free shipping on $25 minimum cart value. 3-day express delivery — $19 · arrives August 28–29. Premium packaging, roli & chawal on most designs, and domestic USA delivery from California.",
   categoriesHeading: "Shop Rakhi Collections",
   categoriesSubheading: "Single Rakhi, Combos, Hampers & Kids Rakhi — ready to gift across America.",
   categories: [

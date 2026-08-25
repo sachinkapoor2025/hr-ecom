@@ -10,7 +10,7 @@ import { RakhiDeliveryBulletList } from "@/components/RakhiDeliveryBulletList";
 export const metadata: Metadata = pageMetadata({
   title: "Rakhi Shipping & Delivery to USA — Ships From Within America",
   description:
-    "UsaRakhi ships domestically within the USA — no customs delays. Standard delivery in 5 business days ($25 minimum per vendor). UsaRakhi 3-day delivery ($19) arrives August 29.",
+    "UsaRakhi ships domestically within the USA — no customs delays. Standard USA delivery · 5 business days · Free shipping on $25 minimum cart value. 3-day express delivery — $19 · arrives August 28–29.",
   path: "/shipping",
 });
 
@@ -38,19 +38,17 @@ export default function ShippingPage() {
         <h2 className="text-xl font-bold text-primary">Shipping rates</h2>
         <ul className="list-disc list-inside space-y-2">
           <li>
-            <strong>Standard delivery</strong> — 5 business days. Orders need a{" "}
-            <strong>${USARAKHI_MIN_ORDER_USD} minimum per vendor</strong>; carts below $
-            {USARAKHI_MIN_ORDER_USD} are topped up at checkout (the remaining amount becomes the
-            shipping charge). <strong>Free standard shipping on selected products.</strong>
+            <strong>Standard USA delivery</strong> — 5 business days.{" "}
+            <strong>Free shipping on ${USARAKHI_MIN_ORDER_USD} minimum cart value</strong>. Carts
+            below ${USARAKHI_MIN_ORDER_USD} pay the remaining amount as shipping.
           </li>
           <li>
             <strong>Orange County products</strong> — standard delivery only. The same $
-            {USARAKHI_MIN_ORDER_USD} minimum applies.
+            {USARAKHI_MIN_ORDER_USD} free-shipping minimum applies.
           </li>
           <li>
-            <strong>UsaRakhi 3-day delivery</strong> — <strong>$19</strong> · arrives{" "}
-            <strong>August 29</strong> (1 packing day + 3 transit days). This is{" "}
-            <strong>not Rakhi-day delivery</strong> (August 28).
+            <strong>3-day express delivery</strong> — <strong>$19</strong> · arrives{" "}
+            <strong>August 28–29</strong>.
           </li>
           <li>
             <strong>Mixed carts</strong> (Orange County + UsaRakhi in the same order) — shipping is

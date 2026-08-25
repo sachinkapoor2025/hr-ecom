@@ -46,7 +46,7 @@ function TruckIcon({ className = "h-5 w-5" }: { className?: string }) {
 
 /**
  * Delivery picker used on cart and checkout.
- * UsaRakhi carts may choose 3-day ($19, arrives Aug 29). OC and mixed carts are standard only.
+ * UsaRakhi carts may choose 3-day express ($19, arrives Aug 28–29). OC and mixed carts are standard only.
  */
 export function LastMinuteDeliveryTemplate({
   value,
@@ -79,8 +79,8 @@ export function LastMinuteDeliveryTemplate({
         </h2>
         <p className="mt-1.5 text-sm text-slate-600 leading-relaxed">
           {threeDay
-            ? `Standard delivery is 5 business days. UsaRakhi 3-day delivery is $${EXPEDITED_THREE_DAY_SHIPPING_USD} and arrives ${USARAKHI_THREE_DAY_ARRIVAL_LABEL} (1 packing day + 3 transit days) — not on Rakhi day.`
-            : `Standard delivery · 5 business days. Carts under $${USARAKHI_MIN_ORDER_USD} pay the remaining amount as shipping.`}
+            ? `Standard USA delivery · 5 business days · Free shipping on $25 minimum cart value. 3-day express delivery — $${EXPEDITED_THREE_DAY_SHIPPING_USD} · arrives ${USARAKHI_THREE_DAY_ARRIVAL_LABEL}.`
+            : `Standard USA delivery · 5 business days · Free shipping on $${USARAKHI_MIN_ORDER_USD} minimum cart value.`}
         </p>
         {multiVendor ? (
           <p className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs sm:text-sm font-semibold text-amber-950 leading-snug">
@@ -210,8 +210,7 @@ function ThreeDayCard({
           Additional delivery fee
         </span>
         <span className="mt-2 text-sm text-slate-600 leading-snug">
-          1 packing day + 3 transit days. Arrives {USARAKHI_THREE_DAY_ARRIVAL_LABEL} — not on Rakhi
-          day (August 28).
+          3-day express delivery. Arrives {USARAKHI_THREE_DAY_ARRIVAL_LABEL}.
         </span>
       </label>
 
@@ -225,7 +224,7 @@ function ThreeDayCard({
             : "bg-white text-primary border border-primary/20 hover:bg-primary hover:text-white"
         }`}
       >
-        Choose 3-Day Delivery
+        Choose 3-Day Express
       </button>
     </div>
   );
