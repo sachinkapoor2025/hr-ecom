@@ -43,6 +43,7 @@ const navItems: NavItem[] = [
     ],
   },
   { type: "link", href: "/admin/products", label: "Products" },
+  { type: "link", href: "/admin/reviews", label: "Reviews" },
   { type: "link", href: "/admin/categories", label: "Categories" },
   { type: "link", href: "/admin/shipping", label: "Shipping" },
   {

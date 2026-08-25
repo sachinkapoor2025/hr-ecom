@@ -1,5 +1,10 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { testimonials } from "@/lib/site";
+import { api } from "@/lib/api";
+import type { PublicProductReview } from "@hr-ecom/shared";
 
 function StarRating({ rating }: { rating: number }) {
   return (
@@ -19,21 +24,60 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
+type PreviewItem = { key: string; name: string; rating: number; text: string };
+
+function toPreview(reviews: PublicProductReview[]): PreviewItem[] {
+  return reviews.map((r) => ({
+    key: r.reviewId,
+    name: r.authorName,
+    rating: r.rating,
+    text: r.body,
+  }));
+}
+
+const fallbackPreview: PreviewItem[] = testimonials.map((t) => ({
+  key: t.name,
+  name: t.name,
+  rating: t.rating,
+  text: t.text,
+}));
+
 /** Site-wide customer reviews preview for product pages (social proof). */
 export function ProductReviewsPreview() {
-  const avg = testimonials.reduce((s, t) => s + t.rating, 0) / testimonials.length;
-  const preview = testimonials.slice(0, 2);
+  const [items, setItems] = useState<PreviewItem[]>(fallbackPreview);
+  const [count, setCount] = useState(testimonials.length);
+
+  useEffect(() => {
+    let cancelled = false;
+    api<{ reviews: PublicProductReview[] }>("/reviews", { revalidate: false })
+      .then((d) => {
+        if (cancelled) return;
+        const live = d.reviews ?? [];
+        if (!live.length) return;
+        setItems(toPreview(live));
+        setCount(live.length);
+      })
+      .catch(() => {
+        /* keep curated fallback */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const avg = items.reduce((s, t) => s + t.rating, 0) / (items.length || 1);
+  const preview = items.slice(0, 2);
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
         <StarRating rating={Math.round(avg)} />
         <span className="text-sm font-semibold text-slate-800">{avg.toFixed(1)} / 5</span>
-        <span className="text-xs text-slate-500">from {testimonials.length} customer stories</span>
+        <span className="text-xs text-slate-500">from {count} customer stories</span>
       </div>
       <ul className="space-y-3">
         {preview.map((t) => (
-          <li key={t.name} className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-3">
+          <li key={t.key} className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-3">
             <div className="flex items-center gap-2 mb-1">
               <span className="font-semibold text-sm text-slate-800">{t.name}</span>
               <StarRating rating={t.rating} />

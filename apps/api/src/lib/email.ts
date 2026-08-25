@@ -411,7 +411,11 @@ https://www.usarakhi.com`,
 export async function notifyAdminLead(lead: LeadCaptureInput): Promise<EmailSendResult> {
   const message = lead.metadata?.message?.trim();
   const isContact = lead.source === "contact";
-  const isReview = lead.source === "review";
+
+  // Customer reviews publish immediately — no approval email.
+  if (lead.source === "review") {
+    return { ok: true, skipped: true };
+  }
 
   if (isContact && lead.name && lead.email && message) {
     return sendContactEmails({
@@ -497,7 +501,7 @@ export async function notifyAdminLead(lead: LeadCaptureInput): Promise<EmailSend
     return { ok: false, skipped: true, error: "SMTP not configured" };
   }
 
-  const isEnquiry = isContact || isReview || Boolean(message);
+  const isEnquiry = isContact || Boolean(message);
   if (!isEnquiry) return { ok: true, skipped: true };
 
   const lines = [
@@ -507,7 +511,6 @@ export async function notifyAdminLead(lead: LeadCaptureInput): Promise<EmailSend
     lead.phone ? `Phone: ${lead.phone}` : null,
     lead.page ? `Page: ${lead.page}` : null,
     lead.productSlug ? `Product: ${lead.productSlug}` : null,
-    isReview ? "\nReview moderation: Do not publish this review until the owner approves it and the customer gives permission." : null,
     message ? `\nMessage:\n${message}` : null,
     lead.metadata && Object.keys(lead.metadata).length > 0
       ? `\nMetadata: ${JSON.stringify(lead.metadata, null, 2)}`
@@ -519,9 +522,7 @@ export async function notifyAdminLead(lead: LeadCaptureInput): Promise<EmailSend
 
   return sendEmail({
     to: adminNotifyAddresses(),
-    subject: isReview
-      ? `[${SITE_NAME}] Review submitted for approval`
-      : `[${SITE_NAME}] New enquiry — ${formatLeadSource(lead.source)}`,
+    subject: `[${SITE_NAME}] New enquiry — ${formatLeadSource(lead.source)}`,
     text: lines,
     replyTo: lead.email,
   });

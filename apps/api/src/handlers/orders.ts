@@ -186,11 +186,11 @@ export async function captureLead(event: APIGatewayProxyEventV2) {
 
   const emailResult = await notifyAdminLead(leadPayload);
   const isStayUpdated = leadPayload.metadata?.stayUpdated === "1";
-  // Contact/review must deliver email. Spin coupons with email must notify. Stay Updated
+  // Contact must deliver email. Spin coupons with email must notify. Stay Updated
   // already persisted the lead — don't fail the subscribe UX if admin SMTP blips.
+  // Reviews publish immediately and no longer require an approval email.
   const emailRequired =
     leadPayload.source === "contact" ||
-    leadPayload.source === "review" ||
     (leadPayload.source === "newsletter" && Boolean(email) && !isStayUpdated);
 
   if (emailRequired && emailResult.skipped) {

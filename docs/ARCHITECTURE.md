@@ -94,7 +94,11 @@ When admin (or Orange County vendor tracking) changes order status (accepted, pr
 | GET | `/products` | List/search products |
 | GET | `/products/{slug}` | Product detail |
 | GET | `/products/{slug}/reviews` | Published product reviews |
-| POST | `/products/{slug}/reviews` | Admin: create/moderate a review |
+| POST | `/products/{slug}/reviews` | Admin: create a product review (published by default) |
+| GET | `/reviews` | Published customer reviews (site-wide + product) |
+| POST | `/reviews` | Public: submit a review — published immediately, no approval email |
+| GET | `/admin/reviews` | Admin: list all customer reviews |
+| DELETE | `/admin/reviews/{productSlug}/{reviewId}` | Admin: remove a review from DynamoDB and the storefront |
 | POST | `/products` | Admin: create product |
 | PUT | `/products/{slug}` | Admin: update |
 | DELETE | `/products/{slug}` | Admin: delete |
@@ -147,6 +151,8 @@ When admin (or Orange County vendor tracking) changes order status (accepted, pr
 | POST | `/webhooks/stripe` | Stripe webhook |
 
 **Product add-ons (UsaRakhi only):** Fixed dry-fruit / chocolate extras (`packages/shared/src/lib/product-addons.ts`). Shown on PDP when `allowsAddons` is true (non–Orange County). Shoppers pick quantity per add-on (1–10); nested on `CartItem.addons` with `quantity`; line totals include `price × quantity`. Merge key includes quantities. OC products reject addons server-side.
+
+**Customer reviews:** Public `POST /reviews` writes a published item on the products table (`PRODUCT#_site` / `REVIEW#id`, GSI1 `ENTITY#REVIEW`). There is no approval queue and no admin email on submit — the review is shown on `/reviews` immediately. Admin **Reviews** (`/admin/reviews`) can permanently delete a review (`DELETE /admin/reviews/{productSlug}/{reviewId}`), which removes it from DynamoDB and the storefront. Delivered-order **review request** emails (ask the customer to write a review) are unchanged.
 
 ### Scale notes (catalog / concurrency)
 
@@ -286,7 +292,7 @@ See `apps/web/.env.example` and `infrastructure/template.yaml` Parameters sectio
 
 ## Future Extensions (prompt-ready)
 
-- Wishlist, reviews, coupons, inventory alerts
+- Wishlist, coupons, inventory alerts
 - Email (SES), SMS (SNS)
 - Multi-currency, multi-language
 - Analytics (Plausible / GA4)
