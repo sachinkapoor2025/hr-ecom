@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { SITE_REVIEW_SLUG, type ProductReview } from "@hr-ecom/shared";
+import type { ProductReview } from "@hr-ecom/shared";
+
+const SITE_REVIEW_SLUG = "_site";
 import { useApiClient } from "@/lib/auth-context";
 
 function formatWhen(iso?: string): string {

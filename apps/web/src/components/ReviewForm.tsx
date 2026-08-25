@@ -45,6 +45,7 @@ export function ReviewForm() {
       });
 
       setSent(true);
+      window.dispatchEvent(new Event("usarakhi:reviews-updated"));
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not submit review");

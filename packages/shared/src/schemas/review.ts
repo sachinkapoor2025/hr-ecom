@@ -71,6 +71,7 @@ export const submitCustomerReviewSchema = z.object({
 export type SubmitCustomerReviewInput = z.infer<typeof submitCustomerReviewSchema>;
 
 export function toPublicReview(review: ProductReview): PublicProductReview {
-  const { authorEmail: _email, ...rest } = review;
+  const { authorEmail: _omit, ...rest } = review;
+  void _omit;
   return rest;
 }

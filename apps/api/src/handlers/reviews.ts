@@ -28,7 +28,11 @@ type StoredReview = ProductReview & {
 };
 
 function withoutDbKeys(item: StoredReview): ProductReview {
-  const { PK: _pk, SK: _sk, GSI1PK: _g1pk, GSI1SK: _g1sk, ...rest } = item;
+  const { PK, SK, GSI1PK, GSI1SK, ...rest } = item;
+  void PK;
+  void SK;
+  void GSI1PK;
+  void GSI1SK;
   return rest;
 }
 
@@ -122,7 +126,7 @@ export async function listProductReviews(event: APIGatewayProxyEventV2) {
 }
 
 /** Public feed of published reviews (site-wide + product). */
-export async function listPublishedReviews() {
+export async function listPublishedReviews(_event: APIGatewayProxyEventV2) {
   const reviews = (await queryReviewsByGsi())
     .map(withoutDbKeys)
     .filter((r) => r.published !== false)

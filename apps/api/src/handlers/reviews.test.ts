@@ -70,7 +70,7 @@ describe("customer review publish + admin remove", () => {
     const reviewId = created.body.review.reviewId as string;
     const productSlug = created.body.review.productSlug as string;
 
-    const publicList = parse(await reviews.listPublishedReviews());
+    const publicList = parse(await reviews.listPublishedReviews(event({})));
     assert.equal(publicList.status, 200);
     assert.equal(
       publicList.body.reviews.some((r: { reviewId: string }) => r.reviewId === reviewId),
@@ -95,7 +95,7 @@ describe("customer review publish + admin remove", () => {
     assert.equal(deleted.status, 200);
     assert.equal(deleted.body.deleted, true);
 
-    const after = parse(await reviews.listPublishedReviews());
+    const after = parse(await reviews.listPublishedReviews(event({})));
     assert.equal(
       after.body.reviews.some((r: { reviewId: string }) => r.reviewId === reviewId),
       false
