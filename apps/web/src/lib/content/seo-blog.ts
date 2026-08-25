@@ -158,7 +158,7 @@ function uniqueFaqs(entry: SeoBlogEntry, topic: string, theme: Theme): { q: stri
     return [
       {
         q: `How many days does ${topic.toLowerCase()} usually take?`,
-        a: "UsaRakhi ships from within the USA. Most orders arrive nationwide in 5–7 business days; major metros often see 2–3 day express. That is calendar time after dispatch — not a guess about customs.",
+        a: "UsaRakhi ships from within the USA. Most orders arrive nationwide in 5–7 business days. UsaRakhi 3-day delivery ($19) arrives August 29. That is calendar time after dispatch — not a guess about customs.",
       },
       {
         q: `Will I get confirmation or tracking for ${topic.toLowerCase()}?`,
@@ -393,7 +393,7 @@ function uniqueFaqs(entry: SeoBlogEntry, topic: string, theme: Theme): { q: stri
       },
       {
         q: `How long should I allow for ${topic.toLowerCase()} before August 28, 2026?`,
-        a: "Plan 5–7 business days nationwide, or 2–3 days express to major metros. The stress-free order window is late July through August 1.",
+        a: "Plan 5–7 business days nationwide. UsaRakhi 3-day delivery arrives August 29 and is not Rakhi-day delivery.",
       },
       {
         q: `Will ${topic.toLowerCase()} require my brother to deal with US customs?`,

@@ -992,8 +992,11 @@ function CheckoutPageInner() {
               </div>
               {!isRetry ? (
                 <p className="text-[11px] text-slate-500 leading-snug">
-                  Last-minute orders accepted — Guaranteed delivery by Rakhi with 3-day ($19) or
-                  2-day ($39) shipping.
+                  {checkoutShippingOptions.some((o) => o.id === "three_day")
+                    ? "Standard delivery is 5 business days with a $25 minimum per vendor. UsaRakhi 3-day delivery is $19 and arrives August 29 — not on Rakhi day."
+                    : cartHasMultipleShippingVendors(checkoutItems)
+                      ? "Standard delivery is 5 business days. Shipping is calculated separately — UsaRakhi and Orange County each need a $25 minimum."
+                      : "Standard delivery is 5 business days with a $25 minimum. Carts under $25 pay the remaining amount as shipping."}
                 </p>
               ) : null}
               <div className="flex justify-between gap-4 pt-2 border-t border-slate-200">

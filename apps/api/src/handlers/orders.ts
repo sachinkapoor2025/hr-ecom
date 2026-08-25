@@ -28,7 +28,7 @@ import {
   isMultiVendorOrder,
   STRIPE_PAYMENTS_ENABLED,
   resolveCheckoutShippingCharge,
-  cartRequiresPaidExpeditedShipping,
+  cartAllowsThreeDayShipping,
   shippingOptionServiceCode,
   shippingOptionServiceName,
   type CheckoutShippingOptionId,
@@ -297,13 +297,15 @@ export async function checkout(event: APIGatewayProxyEventV2) {
   }
 
   const shippingOption = (parsed.data.shippingOption ?? "standard") as CheckoutShippingOptionId;
-  if (
-    shippingOption === "standard" &&
-    cartRequiresPaidExpeditedShipping(
-      orderItems.map((i) => ({ vendorSlug: i.vendorSlug }))
-    )
-  ) {
-    return badRequest("Orange County orders require 3-day ($19) or 2-day ($39) delivery");
+  const shippingCartItems = orderItems.map((i) => ({
+    vendorSlug: i.vendorSlug,
+    image: i.image,
+  }));
+  if (shippingOption === "two_day") {
+    return badRequest("2-day delivery is no longer available");
+  }
+  if (shippingOption === "three_day" && !cartAllowsThreeDayShipping(shippingCartItems)) {
+    return badRequest("3-day delivery is only available for UsaRakhi products");
   }
   const standardShippingCharge =
     shippingSettings.customerShippingMode === "pass_through"
@@ -326,7 +328,6 @@ export async function checkout(event: APIGatewayProxyEventV2) {
     usdInrRate,
   });
 
-  // Standard shipping is rejected above — always apply the paid expedited charge.
   const built = buildOrderShipments({
     cartItems: orderItems,
     checkoutShipments,

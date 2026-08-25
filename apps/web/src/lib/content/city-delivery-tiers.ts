@@ -4,7 +4,7 @@
  * Secondary cities share one thin template driven by this data file.
  */
 
-/** 2–3 day express metros — keep differentiated landing content. */
+/** Major metros — keep differentiated landing content. */
 export const EXPRESS_METRO_SLUGS = [
   "new-york",
   "los-angeles",

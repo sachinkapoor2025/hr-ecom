@@ -36,8 +36,6 @@ import {
   getProductAddon,
   USARAKHI_STOCK_SHORTAGE_NOTE,
   shouldShowUsarakhiStockShortageNote,
-  isOrangeCountyVendorProduct,
-  ORANGE_COUNTY_SHIPPING_BULLETS,
   shippingBulletsForCart,
   isFreeStandardShippingProduct,
   quoteAddressShipmentShipping,
@@ -188,11 +186,9 @@ export function ProductDetailClient({
   const inCart = cartQuantity > 0;
   const showAddons = product.allowsAddons === true && productAllowsAddons(product);
   const showStockShortageNote = shouldShowUsarakhiStockShortageNote(product);
-  const shippingBullets = isOrangeCountyVendorProduct(product)
-    ? ORANGE_COUNTY_SHIPPING_BULLETS
-    : shippingBulletsForCart([product]);
+  const shippingBullets = shippingBulletsForCart([product]);
   const hasFreeStandardShipping = isFreeStandardShippingProduct(product);
-  const standardTopUpAmount = isOrangeCountyVendorProduct(product) || hasFreeStandardShipping
+  const standardTopUpAmount = hasFreeStandardShipping
     ? 0
     : quoteAddressShipmentShipping({
         items: [
@@ -200,6 +196,7 @@ export function ProductDetailClient({
             price: product.price,
             quantity: 1,
             vendorSlug: product.vendorSlug,
+            images: product.images,
             productSlug: product.slug,
             freeStandardShipping: hasFreeStandardShipping,
             addons: addons.flatMap((a) => {
@@ -286,7 +283,7 @@ export function ProductDetailClient({
 
           {lowStock && (
             <p className="text-sm font-semibold text-orange-700 bg-orange-50 border border-orange-100 rounded-md px-3 py-2 mb-3">
-              Only {product.inventory} left in stock — order by Monday for Rakhi-day delivery
+              Only {product.inventory} left in stock — order soon
             </p>
           )}
 
@@ -303,7 +300,7 @@ export function ProductDetailClient({
             datePrefix="Estimated delivery:"
             className="mb-4"
             bullets={shippingBullets}
-            showStandardMinimumNote={!isOrangeCountyVendorProduct(product)}
+            showStandardMinimumNote
             standardTopUpAmount={standardTopUpAmount}
             formatMoney={format}
             currency={displayCurrency}

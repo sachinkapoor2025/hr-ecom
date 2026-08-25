@@ -178,7 +178,7 @@ function looksLikeOrangeCountyImage(src: string | null | undefined): boolean {
 
 /**
  * Normalize cart/product vendor for per-vendor shipping buckets.
- * Orange County is never merged into the UsaRakhi $25 minimum — OC subtotal is ignored.
+ * Orange County is never merged into the UsaRakhi $25 minimum — each vendor is quoted separately.
  * Infers OC from image path when older cart lines lack `vendorSlug`.
  */
 export function shippingVendorKey(item: ShippingVendorSource): string {
@@ -268,7 +268,8 @@ function flashComboShippingQuote(
 }
 
 /**
- * Shipping for one delivery address: standard is free per vendor bucket.
+ * Shipping for one delivery address: $25 minimum per vendor bucket
+ * (UsaRakhi and Orange County are quoted separately).
  * Flash-combo-only buckets use a flat $0.99 shipping fee.
  */
 export function quoteAddressShipmentShipping(input: {
@@ -307,7 +308,7 @@ export function quoteAddressShipmentShipping(input: {
     byVendor.set(key, list);
   }
 
-  const perVendor = [...byVendor.entries()].map(([vendorKey, vendorItems]) => {
+  const perVendor = [...byVendor.entries()].map(([, vendorItems]) => {
     const flashOnly =
       vendorItems.length > 0 &&
       vendorItems.every((i) => isFlashComboProduct(i.productSlug));
@@ -319,22 +320,6 @@ export function quoteAddressShipmentShipping(input: {
       (sum, i) => sum + cartLineUnitTotal(i) * i.quantity,
       0
     );
-
-    if (vendorKey === VENDOR_ORANGE_COUNTY) {
-      return {
-        charge: 0,
-        qualifiesForFreeShipping: true,
-        amountAwayFromFreeShipping: 0,
-        amountAwayFromReducedShipping: 0,
-        aboveAmountInCurrency: 0,
-        thresholdInCurrency: 0,
-        reducedThresholdInCurrency: 0,
-        lowTierFeeInCurrency: 0,
-        midTierFeeInCurrency: 0,
-        tier: "free" as const,
-        belowThresholdFeeInCurrency: 0,
-      };
-    }
 
     return quoteUsarakhiStandardShipping({
       subtotal,

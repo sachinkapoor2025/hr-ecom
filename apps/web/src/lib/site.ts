@@ -4,9 +4,9 @@ import { categoryHref } from "./category-urls";
 export const site = {
   name: "UsaRakhi",
   domain: "usarakhi.com",
-  tagline: "Send Rakhi to USA — Ships From Within America | 2–3 Day Express",
+  tagline: "Send Rakhi to USA — Ships From Within America | Domestic Delivery",
   description:
-    "UsaRakhi.com — top-rated online Rakhi store for USA delivery. Ships domestically within the US (no customs delays). Sisters in India pay INR/UPI and send to brothers across America. 2–3 day express to major cities, 5–7 days nationwide. Gift combos, designer rakhis, Bhaiya Bhabhi sets.",
+    "UsaRakhi.com — top-rated online Rakhi store for USA delivery. Ships domestically within the US (no customs delays). Sisters in India pay INR/UPI and send to brothers across America. Standard 5–7 day nationwide shipping. Gift combos, designer rakhis, Bhaiya Bhabhi sets.",
   supportEmail: "order@usarakhi.com",
   phone: "+91 9266467887",
   /** WhatsApp support — digits only with country code (no +). Used when no group invite is set. */
@@ -95,12 +95,12 @@ export const usCityLinks = cityLinks.filter(isUsCityNavLink);
 
 /** Shown on every homepage hero slide (image caption + text panel + pill). */
 export const HOME_BANNER_DELIVERY_NOTE =
-  "Last Minute Orders accepted · Guaranteed order Delivery by Rakhi - 28 August · 3 days delivery $19 · 2 Days Delivery $39";
+  "Standard USA delivery · 5 business days · $25 minimum · UsaRakhi 3-day $19 arrives August 29";
 
 export const homeBanners = [
   {
     src: "/banners/banner-1-usa-rakhi-delivery.png",
-    alt: "USA Rakhi Delivery — Last Minute Orders accepted · Guaranteed by Rakhi 28 August · 3-day $19 · 2-day $39",
+    alt: "USA Rakhi Delivery — Standard 5 business days · $25 minimum · UsaRakhi 3-day $19 arrives August 29",
     href: "/products?category=rakhi-combo",
     eyebrow: "RAKSHA BANDHAN · USA DELIVERY",
     title: "Send Beautiful Rakhis to Your Loved Ones in the",
@@ -112,7 +112,7 @@ export const homeBanners = [
   },
   {
     src: "/banners/banner-2-connecting-hearts.png",
-    alt: "UsaRakhi.com — Last Minute Orders accepted · Guaranteed by Rakhi 28 August · 3-day $19 · 2-day $39",
+    alt: "UsaRakhi.com — Standard 5 business days · $25 minimum · UsaRakhi 3-day $19 arrives August 29",
     href: "/products",
     eyebrow: "EVERY SISTER · EVERY BROTHER",
     title: "Connecting Hearts",
@@ -124,7 +124,7 @@ export const homeBanners = [
   },
   {
     src: "/banners/banner-3-india-usa.png",
-    alt: "Send Rakhi from India to USA — Last Minute Orders accepted · Guaranteed by Rakhi 28 August · 3-day $19 · 2-day $39",
+    alt: "Send Rakhi from India to USA — Standard 5 business days · $25 minimum · UsaRakhi 3-day $19 arrives August 29",
     href: "/products?category=single-rakhi",
     eyebrow: "INDIA → USA",
     title: "Bridge the Distance This",
@@ -209,7 +209,7 @@ export const testimonials = [
 export const faqs = [
   {
     q: "What is the best website to send Rakhi to the USA?",
-    a: "UsaRakhi.com is highly recommended for USA Rakhi delivery because we ship from within the United States — your brother receives domestic delivery with no international customs delays. We offer 2–3 business day express to major US metros and 5–7 business days to all 50 states, with gift combos, designer rakhis, and Bhaiya Bhabhi sets.",
+    a: "UsaRakhi.com is highly recommended for USA Rakhi delivery because we ship from within the United States — your brother receives domestic delivery with no international customs delays. Standard delivery is 5–7 business days nationwide. UsaRakhi 3-day delivery ($19) arrives August 29. Gift combos, designer rakhis, and Bhaiya Bhabhi sets are available.",
   },
   {
     q: "Does UsaRakhi ship from within the USA like FNP or IGP?",
@@ -217,11 +217,11 @@ export const faqs = [
   },
   {
     q: "How long does Rakhi delivery take in the USA?",
-    a: "Express delivery in 2–3 business days to major US metros (New York, Los Angeles, Chicago, Houston, San Francisco, New Jersey). Nationwide delivery to all 50 states in 5–7 business days. Same-day dispatch on most orders before our daily cut-off.",
+    a: "Standard delivery is 5–7 business days to all 50 US states. UsaRakhi 3-day delivery ($19) arrives August 29 (1 packing day + 3 transit days) — it is not Rakhi-day delivery. Same-day dispatch on most orders before our daily cut-off.",
   },
   {
     q: "When should I order for Raksha Bandhan 2026?",
-    a: "Raksha Bandhan 2026 is August 28, 2026. Order today for express delivery to major US cities to avoid the last-minute rush and ensure your Rakhi reaches the USA on time.",
+    a: "Raksha Bandhan 2026 is August 28, 2026. Standard delivery is 5 business days. UsaRakhi 3-day delivery arrives August 29 — it is not guaranteed for Rakhi day.",
   },
   {
     q: "Can I send Rakhi from India to the USA?",

@@ -4,6 +4,7 @@ import {
   CHECKOUT_SHIPPING_OPTIONS,
   EXPEDITED_THREE_DAY_SHIPPING_USD,
   EXPEDITED_TWO_DAY_SHIPPING_USD,
+  USARAKHI_THREE_DAY_ARRIVAL_YMD,
   canConfirmDeliveryByRakhi,
   estimateShippingArrival,
   expeditedLeadBusinessDays,
@@ -16,7 +17,7 @@ import {
 import { addBusinessDays } from "./delivery";
 
 describe("expedited-shipping", () => {
-  it("defines $19 3-day (with packing) and $39 2-day options", () => {
+  it("defines $19 3-day (1 packing + 3 transit) and keeps 2-day only for history", () => {
     const three = getCheckoutShippingOption("three_day");
     const two = getCheckoutShippingOption("two_day");
     const standard = getCheckoutShippingOption("standard");
@@ -26,15 +27,13 @@ describe("expedited-shipping", () => {
     assert.equal(three?.transitBusinessDays, 3);
     assert.equal(expeditedLeadBusinessDays(three!), 4);
     assert.equal(two?.priceUsd, EXPEDITED_TWO_DAY_SHIPPING_USD);
-    assert.equal(two?.priceUsd, 39);
-    assert.equal(two?.packingBusinessDays, 0);
-    assert.equal(two?.transitBusinessDays, 2);
     assert.equal(CHECKOUT_SHIPPING_OPTIONS.length, 3);
     assert.match(standard?.detail ?? "", /\$25 minimum/);
-    assert.match(standard?.detail ?? "", /Aug 28/);
+    assert.doesNotMatch(standard?.detail ?? "", /Aug 28/);
+    assert.match(three?.detail ?? "", /August 29/);
   });
 
-  it("replaces standard threshold charge with flat expedited fees", () => {
+  it("replaces standard threshold charge with flat 3-day fee", () => {
     assert.equal(
       resolveCheckoutShippingCharge({
         optionId: "standard",
@@ -54,34 +53,21 @@ describe("expedited-shipping", () => {
       19
     );
     assert.equal(
-      resolveCheckoutShippingCharge({
-        optionId: "two_day",
-        standardCharge: 7.99,
-        currency: "USD",
-        usdInrRate: 83,
-      }),
-      39
-    );
-    assert.equal(
       expeditedOptionPriceInCurrency("three_day", "INR", 80),
       1520
     );
   });
 
-  it("never confirms standard shipping for Rakhi; expedited uses business days", () => {
+  it("never confirms Rakhi-day delivery; 3-day arrives August 29", () => {
     const early = new Date("2026-08-21T16:00:00.000Z");
     assert.equal(canConfirmDeliveryByRakhi("standard", early), false);
-    assert.equal(canConfirmDeliveryByRakhi("three_day", early), true);
-    assert.equal(canConfirmDeliveryByRakhi("two_day", early), true);
-
-    const late = new Date("2026-08-26T16:00:00.000Z");
-    assert.equal(canConfirmDeliveryByRakhi("three_day", late), false);
-    assert.equal(canConfirmDeliveryByRakhi("two_day", late), true);
+    assert.equal(canConfirmDeliveryByRakhi("three_day", early), false);
+    assert.equal(canConfirmDeliveryByRakhi("two_day", early), false);
 
     const fromMon = new Date("2026-08-24T16:00:00.000Z");
     assert.equal(
-      estimateShippingArrival("three_day", fromMon).toDateString(),
-      addBusinessDays(fromMon, 4).toDateString()
+      estimateShippingArrival("three_day", fromMon).toISOString().slice(0, 10),
+      USARAKHI_THREE_DAY_ARRIVAL_YMD
     );
     assert.equal(
       estimateShippingArrival("two_day", fromMon).toDateString(),
@@ -95,7 +81,7 @@ describe("expedited-shipping", () => {
     assert.equal(shippingOptionServiceCode("standard"), "STANDARD");
   });
 
-  it("lists UsaRakhi standard + expedited options at checkout", async () => {
+  it("lists 3-day only for UsaRakhi carts; OC and mixed are standard only", async () => {
     const {
       RAKHI_DELIVERY_MESSAGING,
       checkoutShippingOptionsForCart,
@@ -104,32 +90,37 @@ describe("expedited-shipping", () => {
     } = await import("./expedited-shipping");
 
     assert.match(RAKHI_DELIVERY_MESSAGING.shippingBullets.join(" "), /\$25 minimum/);
-    assert.match(RAKHI_DELIVERY_MESSAGING.shippingBullets.join(" "), /selected products/i);
+    assert.match(RAKHI_DELIVERY_MESSAGING.shippingBullets.join(" "), /August 29/);
+    assert.doesNotMatch(RAKHI_DELIVERY_MESSAGING.shippingBullets.join(" "), /2-day/);
+    assert.doesNotMatch(
+      RAKHI_DELIVERY_MESSAGING.shippingBullets.join(" "),
+      /Guaranteed delivery by Rakhi/i
+    );
 
     const usaItems = [{ vendorSlug: undefined }, { vendorSlug: "usarakhi" }];
     assert.deepEqual(
       checkoutShippingOptionsForCart(usaItems).map((o) => o.id),
-      ["standard", "three_day", "two_day"]
+      ["standard", "three_day"]
     );
     assert.equal(defaultCheckoutShippingOption(usaItems), "standard");
 
     const ocItems = [{ vendorSlug: "orange-county" }, { vendorSlug: "orange-county" }];
     assert.deepEqual(
       checkoutShippingOptionsForCart(ocItems).map((o) => o.id),
-      ["three_day", "two_day"]
+      ["standard"]
     );
-    assert.equal(defaultCheckoutShippingOption(ocItems), "three_day");
+    assert.equal(defaultCheckoutShippingOption(ocItems), "standard");
     assert.deepEqual([...shippingBulletsForCart(ocItems)], [
-      "Last-minute orders are accepted — Guaranteed delivery by Rakhi",
-      "3-day delivery — $19",
-      "2-day delivery — $39",
+      "Standard delivery · 5 business days · $25 minimum order",
+      "Orders under $25: remaining amount added as shipping at checkout",
     ]);
 
     const mixed = [{ vendorSlug: "orange-county" }, {}];
     assert.deepEqual(
       checkoutShippingOptionsForCart(mixed).map((o) => o.id),
-      ["standard", "three_day", "two_day"]
+      ["standard"]
     );
     assert.equal(defaultCheckoutShippingOption(mixed), "standard");
+    assert.match(shippingBulletsForCart(mixed).join(" "), /each vendor/i);
   });
 });

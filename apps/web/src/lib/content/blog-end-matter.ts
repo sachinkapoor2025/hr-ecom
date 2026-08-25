@@ -333,7 +333,7 @@ export const handwrittenBlogEndMatter: Record<
       },
       {
         q: "How fast do these sets arrive in the USA?",
-        a: "Typically 5–7 business days nationwide, with 2–3 day express to major metros, because the shipment is domestic — not an import.",
+        a: "Typically 5–7 business days nationwide. UsaRakhi 3-day delivery ($19) arrives August 29, because the shipment is domestic — not an import.",
       },
     ],
   },
@@ -491,7 +491,7 @@ export const handwrittenBlogEndMatter: Record<
       },
       {
         q: "How fast is domestic Rakhi delivery compared with India Post?",
-        a: "Typically 5–7 business days nationwide and 2–3 days express to major metros, versus 2–4 weeks (or longer) for many international parcels — with none of the customs stall.",
+        a: "Typically 5–7 business days nationwide, versus 2–4 weeks (or longer) for many international parcels — with none of the customs stall.",
       },
       {
         q: "Is domestic shipping only useful if I live in India?",
