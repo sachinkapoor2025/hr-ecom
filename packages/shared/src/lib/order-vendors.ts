@@ -13,9 +13,22 @@ export type VendorFulfillment = {
   updatedAt?: string;
 };
 
-export function lineVendorKey(item: { vendorSlug?: string | null }): string {
+export function lineVendorKey(item: {
+  vendorSlug?: string | null;
+  image?: string | null;
+  images?: string[] | null;
+}): string {
   const slug = item.vendorSlug?.trim();
-  return slug || VENDOR_USARAKHI;
+  if (slug === VENDOR_ORANGE_COUNTY) return VENDOR_ORANGE_COUNTY;
+  if (slug) return slug;
+  const imgs = [
+    ...(item.image ? [item.image] : []),
+    ...((item.images ?? []).filter(Boolean) as string[]),
+  ];
+  if (imgs.some((src) => src.includes("/uploads/orange-county/"))) {
+    return VENDOR_ORANGE_COUNTY;
+  }
+  return VENDOR_USARAKHI;
 }
 
 export function vendorDisplayLabel(slug: string): string {

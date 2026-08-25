@@ -3,10 +3,12 @@ import { describe, it } from "node:test";
 import {
   FREE_STANDARD_SHIPPING_TAG,
   USARAKHI_MIN_ORDER_USD,
+  cartHasMultipleShippingVendors,
   isFreeStandardShippingProduct,
   quoteAddressShipmentShipping,
   quoteShipmentsShipping,
   quoteUsarakhiStandardShipping,
+  shippingVendorKey,
 } from "./free-shipping";
 
 describe("quoteUsarakhiStandardShipping", () => {
@@ -67,6 +69,31 @@ describe("isFreeStandardShippingProduct", () => {
   });
 });
 
+describe("shippingVendorKey / cartHasMultipleShippingVendors", () => {
+  it("infers orange-county from image path", () => {
+    assert.equal(
+      shippingVendorKey({
+        image: "/uploads/orange-county/foo.webp",
+      }),
+      "orange-county"
+    );
+  });
+
+  it("detects mixed vendor carts", () => {
+    assert.equal(
+      cartHasMultipleShippingVendors([
+        { vendorSlug: undefined },
+        { vendorSlug: "orange-county" },
+      ]),
+      true
+    );
+    assert.equal(
+      cartHasMultipleShippingVendors([{ vendorSlug: undefined }, {}]),
+      false
+    );
+  });
+});
+
 describe("quoteShipmentsShipping", () => {
   it("tops up each subtotal bucket below $25", () => {
     const { totalCharge, perShipment } = quoteShipmentsShipping({
@@ -95,6 +122,35 @@ describe("quoteAddressShipmentShipping", () => {
     assert.equal(perVendor[0]!.charge, 7);
     assert.equal(perVendor[1]!.charge, 0);
     assert.equal(totalCharge, 7);
+  });
+
+  it("does not let Orange County dollars cover the UsaRakhi $25 minimum", () => {
+    const { totalCharge, perVendor } = quoteAddressShipmentShipping({
+      items: [
+        { price: 5, quantity: 1, productSlug: "om-single-rakhi" },
+        { price: 40, quantity: 1, vendorSlug: "orange-county" },
+      ],
+      currency: "USD",
+      usdInrRate: 96,
+    });
+    assert.equal(perVendor.length, 2);
+    assert.equal(totalCharge, 20);
+  });
+
+  it("infers Orange County from image when vendorSlug is missing", () => {
+    const { totalCharge } = quoteAddressShipmentShipping({
+      items: [
+        { price: 5, quantity: 1, productSlug: "om-single-rakhi" },
+        {
+          price: 40,
+          quantity: 1,
+          image: "https://cdn.example.com/uploads/orange-county/hamper.webp",
+        },
+      ],
+      currency: "USD",
+      usdInrRate: 96,
+    });
+    assert.equal(totalCharge, 20);
   });
 
   it("charges flat $0.99 shipping for flash-combo-only buckets", () => {

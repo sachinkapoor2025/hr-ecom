@@ -157,7 +157,13 @@ export function quoteShippingFromDeliveryUnits(
 ): { totalCharge: number; perShipment: FreeShippingQuote[] } {
   const groups = new Map<
     string,
-    Array<{ price: number; quantity: number; vendorSlug?: string; productSlug: string }>
+    Array<{
+      price: number;
+      quantity: number;
+      vendorSlug?: string;
+      productSlug: string;
+      image?: string;
+    }>
   >();
 
   for (const unit of units) {
@@ -171,8 +177,9 @@ export function quoteShippingFromDeliveryUnits(
     list.push({
       price: unit.price,
       quantity: 1,
-      vendorSlug: unit.vendorSlug,
+      vendorSlug: unit.vendorSlug ?? (vendorKey === "orange-county" ? "orange-county" : undefined),
       productSlug: unit.productSlug,
+      image: unit.image,
     });
     groups.set(groupKey, list);
   }
