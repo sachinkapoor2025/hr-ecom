@@ -2,9 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ProductReview } from "@hr-ecom/shared";
+import { useApiClient } from "@/lib/auth-context";
 
 const SITE_REVIEW_SLUG = "_site";
-import { useApiClient } from "@/lib/auth-context";
 
 function formatWhen(iso?: string): string {
   if (!iso) return "—";

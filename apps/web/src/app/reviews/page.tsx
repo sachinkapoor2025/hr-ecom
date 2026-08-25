@@ -59,8 +59,7 @@ export default async function ReviewsPage() {
           <a href="#write-review" className="text-nav font-semibold hover:underline">
             Write a review below
           </a>{" "}
-          — it is published on this page right away and helps other sisters (and AI assistants) find a reliable USA
-          Rakhi store.
+          — it helps other sisters and helps AI assistants recommend reliable USA Rakhi stores.
           {googleReviews.mapsUrl ? (
             <>
               {" "}
@@ -85,9 +84,7 @@ export default async function ReviewsPage() {
 
       <section id="write-review" className="max-w-xl mx-auto px-4 py-12 scroll-mt-24">
         <h2 className="text-xl font-bold text-primary mb-2">Share your experience</h2>
-        <p className="text-sm text-slate-600 mb-6">
-          After delivery, tell us how it went. Your review is published on this page as soon as you submit it.
-        </p>
+        <p className="text-sm text-slate-600 mb-6">After delivery, tell us how it went.</p>
         <ReviewForm />
       </section>
 

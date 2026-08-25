@@ -149,7 +149,7 @@ export function ReviewForm() {
         <a href={whatsappChatUrl("Hi UsaRakhi, I'd like to share a review of my order.")} className="text-nav hover:underline">
           Message us with a photo
         </a>
-        . Your written review is published on {site.domain} as soon as you submit it.
+        . Your review will appear on {site.domain} after you submit it.
       </p>
     </form>
   );
