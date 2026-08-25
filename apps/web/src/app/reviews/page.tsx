@@ -3,6 +3,7 @@ import Link from "next/link";
 import { GoogleReviews } from "@/components/GoogleReviews";
 import { getGoogleReviews } from "@/lib/google-reviews";
 import { ReviewForm } from "@/components/ReviewForm";
+import { PublishedReviewsLoader } from "@/components/PublishedReviewsLoader";
 import { JsonLd } from "@/components/JsonLd";
 import { trustFacts } from "@/lib/trust";
 import { site, testimonials } from "@/lib/site";
@@ -79,11 +80,11 @@ export default async function ReviewsPage() {
 
       <GoogleReviews data={googleReviews} />
 
+      <PublishedReviewsLoader />
+
       <section id="write-review" className="max-w-xl mx-auto px-4 py-12 scroll-mt-24">
         <h2 className="text-xl font-bold text-primary mb-2">Share your experience</h2>
-        <p className="text-sm text-slate-600 mb-6">
-          After delivery, tell us how it went. We verify orders before featuring reviews on the site.
-        </p>
+        <p className="text-sm text-slate-600 mb-6">After delivery, tell us how it went.</p>
         <ReviewForm />
       </section>
 

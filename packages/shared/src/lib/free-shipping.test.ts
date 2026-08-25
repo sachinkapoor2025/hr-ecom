@@ -109,7 +109,7 @@ describe("quoteShipmentsShipping", () => {
 });
 
 describe("quoteAddressShipmentShipping", () => {
-  it("applies $25 minimum to UsaRakhi vendor buckets only", () => {
+  it("applies $25 minimum separately to UsaRakhi and Orange County buckets", () => {
     const { totalCharge, perVendor } = quoteAddressShipmentShipping({
       items: [
         { price: 18, quantity: 1 },
@@ -135,6 +135,30 @@ describe("quoteAddressShipmentShipping", () => {
     });
     assert.equal(perVendor.length, 2);
     assert.equal(totalCharge, 20);
+  });
+
+  it("applies the $25 minimum to Orange County-only carts", () => {
+    const { totalCharge, perVendor } = quoteAddressShipmentShipping({
+      items: [{ price: 18, quantity: 1, vendorSlug: "orange-county" }],
+      currency: "USD",
+      usdInrRate: 96,
+    });
+    assert.equal(perVendor.length, 1);
+    assert.equal(perVendor[0]!.charge, 7);
+    assert.equal(totalCharge, 7);
+  });
+
+  it("charges both vendors when a mixed cart is under $25 on each side", () => {
+    const { totalCharge, perVendor } = quoteAddressShipmentShipping({
+      items: [
+        { price: 15, quantity: 1, productSlug: "om-single-rakhi" },
+        { price: 20, quantity: 1, vendorSlug: "orange-county" },
+      ],
+      currency: "USD",
+      usdInrRate: 96,
+    });
+    assert.equal(perVendor.length, 2);
+    assert.equal(totalCharge, 15);
   });
 
   it("infers Orange County from image when vendorSlug is missing", () => {

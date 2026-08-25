@@ -22,7 +22,7 @@ export const RAKSHA_BANDHAN_ORDER_BY_20_BANNER_PATH =
 export const RAKSHA_BANDHAN_ORDER_BY_20_BANNER_URL = `${SITE_ORIGIN}${RAKSHA_BANDHAN_ORDER_BY_20_BANNER_PATH}`;
 
 export const RAKSHA_BANDHAN_ORDER_BY_20_BANNER_ALT =
-  "Raksha Bandhan Aug 28 — Standard ~90% Rakhi-day · 3-day/2-day confirmed | UsaRakhi" as const;
+  "Raksha Bandhan — Standard USA delivery · 5 business days · 3-day express $19 arrives August 28–29 | UsaRakhi" as const;
 
 /** Last-minute delivery campaign graphic (email hero — not a homepage carousel slide). */
 export const LAST_MINUTE_RAKHI_ORDERS_BANNER_PATH =
@@ -31,7 +31,7 @@ export const LAST_MINUTE_RAKHI_ORDERS_BANNER_PATH =
 export const LAST_MINUTE_RAKHI_ORDERS_BANNER_URL = `${SITE_ORIGIN}${LAST_MINUTE_RAKHI_ORDERS_BANNER_PATH}`;
 
 export const LAST_MINUTE_RAKHI_ORDERS_BANNER_ALT =
-  "Last Minute Orders? We deliver love, on time — 2-day $39, 3-day $19 | UsaRakhi" as const;
+  "Standard USA delivery · 5 business days · Free shipping on $25 min · 3-day express $19 arrives August 28–29 | UsaRakhi" as const;
 
 /**
  * First homepage banner image for marketing emails.

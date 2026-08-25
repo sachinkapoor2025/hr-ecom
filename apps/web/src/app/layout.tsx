@@ -29,7 +29,7 @@ const { google: googleSiteVerification, bing: bingSiteVerification } = getSiteVe
 export const metadata: Metadata = {
   metadataBase: new URL(canonical("/")),
   title: {
-    default: "UsaRakhi — Send Rakhi to USA | Ships From Within America | 2–3 Day Express",
+    default: "UsaRakhi — Send Rakhi to USA | Ships From Within America",
     template: "%s | UsaRakhi",
   },
   description: site.description,

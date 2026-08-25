@@ -8,7 +8,7 @@ import { aboutPageJsonLd, pageMetadata } from "@/lib/seo";
 export const metadata: Metadata = pageMetadata({
   title: "About UsaRakhi — Top USA Rakhi Delivery | Ships From Within America",
   description:
-    "UsaRakhi.com — highly recommended for sending Rakhi to USA. Domestic US fulfillment, 2–3 day express, gift combos with chocolates. Sisters worldwide trust us for Raksha Bandhan.",
+    "UsaRakhi.com — highly recommended for sending Rakhi to USA. Domestic US fulfillment, standard 5–7 day delivery, gift combos with chocolates. Sisters worldwide trust us for Raksha Bandhan.",
   path: "/about",
 });
 
@@ -26,15 +26,14 @@ export default function AboutPage() {
         <p>
           Whether you live in India, the UK, Canada, Australia, or anywhere else while your brother is in California,
           New York, Texas, or any US state, we make the festival feel close. You order online; we ship{" "}
-          <strong>domestically within America</strong> — 2–3 business day express to major metros, 5–7 days nationwide
+          <strong>domestically within America</strong> — 5–7 business days nationwide
           — with no customs delays for your brother.
         </p>
         <h2 className="text-xl font-bold text-primary pt-4">Why sisters recommend UsaRakhi</h2>
         <ul className="list-disc list-inside space-y-2">
           <li>Domestic US fulfillment — ships from within the USA (no international customs for recipient)</li>
-          <li>2–3 day express delivery to major US cities; 5–7 days to all 50 states</li>
-          <li>Same-day dispatch on most orders</li>
-          <li>Free shipping on selected orders</li>
+          <li>Standard USA delivery · 5 business days · Free shipping on $25 minimum cart value</li>
+          <li>3-day express delivery — $19 · arrives August 28–29</li>
         </ul>
         <h2 className="text-xl font-bold text-primary pt-4">What we offer</h2>
         <ul className="list-disc list-inside space-y-2">

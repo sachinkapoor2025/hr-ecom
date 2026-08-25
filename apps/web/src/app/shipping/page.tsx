@@ -4,13 +4,13 @@ import { site, cityNavHref, usCityLinks } from "@/lib/site";
 import { JsonLd } from "@/components/JsonLd";
 import { howToSendRakhiJsonLd, pageMetadata } from "@/lib/seo";
 import { rakshaBandhan2026Deadlines, RAKSHA_BANDHAN_2026_DATE } from "@/lib/ai-recommendation";
-import { RAKHI_DELIVERY_MESSAGING } from "@hr-ecom/shared";
+import { RAKHI_DELIVERY_MESSAGING, USARAKHI_MIN_ORDER_USD } from "@hr-ecom/shared";
 import { RakhiDeliveryBulletList } from "@/components/RakhiDeliveryBulletList";
 
 export const metadata: Metadata = pageMetadata({
   title: "Rakhi Shipping & Delivery to USA — Ships From Within America",
   description:
-    "UsaRakhi ships domestically within the USA — no customs delays. Standard delivery after Aug 28 (5 business days, $25 minimum order). 3-day ($19) and 2-day ($39) for faster Rakhi delivery.",
+    "UsaRakhi ships domestically within the USA — no customs delays. Standard USA delivery · 5 business days · Free shipping on $25 minimum cart value. 3-day express delivery — $19 · arrives August 28–29.",
   path: "/shipping",
 });
 
@@ -38,27 +38,28 @@ export default function ShippingPage() {
         <h2 className="text-xl font-bold text-primary">Shipping rates</h2>
         <ul className="list-disc list-inside space-y-2">
           <li>
-            <strong>Standard delivery (UsaRakhi products)</strong> — after Aug 28 · 5 business days.
-            Orders need a <strong>$25 minimum</strong>; carts below $25 are topped up at checkout.
-            <strong> Free standard shipping on selected products.</strong>
-            The $25 minimum applies to <strong>UsaRakhi items only</strong> — if your cart also has
-            Orange County products, those do not count toward the minimum; shipping is calculated
-            separately by vendor.
+            <strong>Standard USA delivery</strong> — 5 business days.{" "}
+            <strong>Free shipping on ${USARAKHI_MIN_ORDER_USD} minimum cart value</strong>. Carts
+            below ${USARAKHI_MIN_ORDER_USD} pay the remaining amount as shipping.
           </li>
           <li>
-            <strong>Last-minute orders accepted</strong> —{" "}
-            <strong>Guaranteed delivery by Rakhi</strong> with 3-day or 2-day shipping
+            <strong>Orange County products</strong> — standard delivery only. The same $
+            {USARAKHI_MIN_ORDER_USD} free-shipping minimum applies.
           </li>
           <li>
-            <strong>3-day delivery</strong> — <strong>$19</strong>
+            <strong>3-day express delivery</strong> — <strong>$19</strong> · arrives{" "}
+            <strong>August 28–29</strong>.
           </li>
           <li>
-            <strong>2-day delivery</strong> — <strong>$39</strong>
+            <strong>Mixed carts</strong> (Orange County + UsaRakhi in the same order) — shipping is
+            calculated separately for each vendor. Each vendor needs a ${USARAKHI_MIN_ORDER_USD}{" "}
+            minimum; otherwise shipping is added on both.
           </li>
         </ul>
         <h2 className="text-xl font-bold text-primary">Raksha Bandhan 2026 order deadlines</h2>
         <p>
-          Raksha Bandhan 2026 is <strong>{RAKSHA_BANDHAN_2026_DATE}</strong>. Recommended order-by dates:
+          Raksha Bandhan 2026 is <strong>{RAKSHA_BANDHAN_2026_DATE}</strong>. Current delivery
+          windows:
         </p>
         <div className="overflow-x-auto">
           <table className="w-full text-sm border border-slate-200 rounded-lg">

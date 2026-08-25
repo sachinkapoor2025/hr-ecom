@@ -9,11 +9,11 @@ type Props = {
   /** Kept for call-site compatibility; dates are no longer shown. */
   datePrefix?: string;
   className?: string;
-  /** Override bullets (e.g. Orange County: guarantee + 3-day / 2-day). */
+  /** Override bullets (e.g. Orange County standard-only). */
   bullets?: readonly string[];
-  /** Hide the last-minute guarantee line when bullets already include it. */
+  /** Hide the 3-day arrival note when bullets already include it. */
   showLastMinuteNote?: boolean;
-  /** UsaRakhi: amount to add in products for free standard shipping (omit for OC). */
+  /** Amount to add in products for free standard shipping. */
   standardTopUpAmount?: number;
   formatMoney?: (amount: number, currency: DisplayCurrency) => string;
   currency?: DisplayCurrency;
@@ -22,7 +22,7 @@ type Props = {
 };
 
 /**
- * Shipping options + last-minute Rakhi delivery guarantee.
+ * Shipping options: standard USA delivery, free shipping on $25, 3-day express arriving Aug 28–29.
  */
 export function RakhiDeliverySummary({
   className = "",
@@ -36,9 +36,10 @@ export function RakhiDeliverySummary({
   const msg = RAKHI_DELIVERY_MESSAGING;
   const items = bullets ?? msg.shippingBullets;
   const noteAlreadyInBullets = items.some((item) =>
-    item.toLowerCase().includes("guaranteed delivery by rakhi")
+    item.toLowerCase().includes("august 28")
   );
-  const showNote = showLastMinuteNote && !noteAlreadyInBullets;
+  const hasThreeDay = items.some((item) => item.toLowerCase().includes("3-day"));
+  const showNote = showLastMinuteNote && !noteAlreadyInBullets && hasThreeDay;
   const showMinimum =
     showStandardMinimumNote &&
     standardTopUpAmount != null &&

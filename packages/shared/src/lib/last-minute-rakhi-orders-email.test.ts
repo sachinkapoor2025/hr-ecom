@@ -26,10 +26,10 @@ describe("last-minute rakhi orders email", () => {
   it("fills merge tags for send and preview without touching unknown tokens", () => {
     const sent = renderSesTemplate(html, { name: "Asha" });
     assert.match(sent, /Hi Asha,/);
-    assert.match(sent, /2 DAYS DELIVERY/);
-    assert.match(sent, /\$39/);
     assert.match(sent, /3 DAYS DELIVERY/);
     assert.match(sent, /\$19/);
+    assert.match(sent, /STANDARD DELIVERY/);
+    assert.match(sent, /\$25 MIN/);
     assert.match(sent, /https:\/\/www\.usarakhi\.com/);
     assert.match(sent, /\{\{UNSUBSCRIBE_URL\}\}/);
 

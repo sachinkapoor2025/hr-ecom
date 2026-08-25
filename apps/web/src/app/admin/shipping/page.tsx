@@ -179,7 +179,7 @@ export default function AdminShippingSettingsPage() {
               className="mt-1 w-full border rounded-lg px-3 py-2"
             >
               <option value="free">
-                UsaRakhi standard ($25 min top-up) + 3-day $19 · 2-day $39. OC: expedited only.
+                Standard USA delivery · 5 business days · Free shipping on $25 min. 3-day express $19 arrives Aug 28–29.
               </option>
               <option value="pass_through">Pass through selected rate to customer</option>
             </select>

@@ -44,9 +44,9 @@ export const rakshaBandhanOrderBy20Banner: HomeBanner = {
   title: "Raksha Bandhan is just around the",
   titleAccent: "corner!",
   description:
-    "Order by 20 August for Guaranteed Delivery Before Rakhi. Shop premium Single Rakhi, Combos, Hampers & more.",
+    "Shop premium Single Rakhi, Combos, Hampers & more. Standard USA delivery · 5 business days · Free shipping on $25 minimum. 3-day express $19 arrives August 28–29.",
   cta: "Shop Rakhi Now",
-  pill: "Order by 20 August · Guaranteed Delivery · Premium Rakhis",
+  pill: "Standard USA delivery · 5 business days · 3-day express $19 arrives August 28–29",
 };
 
 export function isIndependenceDayHeroActive(now = new Date()): boolean {

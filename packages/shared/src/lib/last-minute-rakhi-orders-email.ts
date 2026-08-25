@@ -23,7 +23,7 @@ export const LAST_MINUTE_RAKHI_ORDERS_EMAIL_CONFIG = {
   name: "Last-Minute Delivery",
   subject: "Last Minute Orders? We Deliver Love, On Time! — UsaRakhi",
   preheader:
-    "Last minute Rakhi orders to the USA — 2-day delivery $39, 3-day delivery $19. We deliver love, on time.",
+    "3-day express delivery $19 arrives August 28–29. Standard USA delivery · 5 business days · Free shipping on $25 minimum. We deliver love, on time.",
   logoUrl: LOGO,
   logoAlt: "UsaRakhi — India and USA hearts joined by a Rakhi thread",
   logoTagline: "Connecting Hearts Across Borders",
@@ -34,10 +34,10 @@ export const LAST_MINUTE_RAKHI_ORDERS_EMAIL_CONFIG = {
   bodyMessage:
     "Send Rakhis to your loved ones in the USA with our fast & reliable delivery.",
   deliveryOption1: "{{DELIVERY_OPTION_1}}",
-  deliveryBadge1: "2 DAYS",
+  deliveryBadge1: "3 DAYS",
   deliveryPrice1: "{{DELIVERY_PRICE_1}}",
   deliveryOption2: "{{DELIVERY_OPTION_2}}",
-  deliveryBadge2: "3 DAYS",
+  deliveryBadge2: "STANDARD",
   deliveryPrice2: "{{DELIVERY_PRICE_2}}",
   trustItems: [
     { icon: "🛡️", label: "SAFE & SECURE DELIVERY" },

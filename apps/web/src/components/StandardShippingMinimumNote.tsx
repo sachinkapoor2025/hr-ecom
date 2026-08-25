@@ -4,7 +4,7 @@ import { USARAKHI_MIN_ORDER_USD, USARAKHI_STANDARD_DELIVERY_DETAIL } from "@hr-e
 import type { DisplayCurrency } from "@/lib/currency-context";
 
 type Props = {
-  /** Amount still needed in UsaRakhi product value for free standard shipping (0 = already free). */
+  /** Amount still needed for free standard shipping (0 = already free). */
   topUpAmount: number;
   formatMoney: (amount: number, currency: DisplayCurrency) => string;
   currency: DisplayCurrency;
@@ -15,8 +15,7 @@ type Props = {
 };
 
 /**
- * UsaRakhi standard shipping: $25 minimum + “add $X more for free shipping” nudge.
- * Orange County merchandise never counts toward the UsaRakhi minimum.
+ * Standard shipping: $25 minimum per vendor + “add $X more for free shipping” nudge.
  */
 export function StandardShippingMinimumNote({
   topUpAmount,
@@ -37,8 +36,9 @@ export function StandardShippingMinimumNote({
           }`}
         >
           You selected products from different vendors — shipping is calculated separately for
-          each. The ${USARAKHI_MIN_ORDER_USD} minimum (and free standard shipping) applies only to
-          UsaRakhi items; Orange County products do not count toward that minimum.
+          each. UsaRakhi and Orange County each need a ${USARAKHI_MIN_ORDER_USD} minimum. If either
+          is below ${USARAKHI_MIN_ORDER_USD}, the remaining amount is added as shipping for that
+          vendor.
         </p>
       ) : null}
       <p className={`font-semibold text-primary ${compact ? "text-xs sm:text-sm" : ""}`}>
@@ -46,15 +46,18 @@ export function StandardShippingMinimumNote({
       </p>
       {topUpAmount > 0 ? (
         <p className={`mt-1.5 font-semibold text-emerald-800 ${compact ? "text-xs sm:text-sm" : ""}`}>
-          Add {formatMoney(topUpAmount, currency)} more in UsaRakhi products to get free standard
-          shipping.
+          {multiVendor
+            ? `Shipping of ${formatMoney(topUpAmount, currency)} will be added unless you add more products so each vendor reaches $${USARAKHI_MIN_ORDER_USD}.`
+            : `Add ${formatMoney(topUpAmount, currency)} more in products to get free standard shipping.`}
         </p>
       ) : (
         <p className={`mt-1.5 font-semibold text-emerald-700 ${compact ? "text-xs sm:text-sm" : ""}`}>
-          Your UsaRakhi items qualify for free standard shipping.
+          {multiVendor
+            ? "Both vendors qualify for free standard shipping."
+            : "Your order qualifies for free standard shipping."}
         </p>
       )}
-      <p className="mt-1 text-xs text-slate-600">Delivery in 5 business days · ships after Aug 28.</p>
+      <p className="mt-1 text-xs text-slate-600">Standard USA delivery · 5 business days.</p>
     </div>
   );
 }

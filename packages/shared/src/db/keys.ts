@@ -25,7 +25,7 @@ export const reviewKeys = {
   pk: (productSlug: string) => `PRODUCT#${productSlug}`,
   sk: (reviewId: string) => `REVIEW#${reviewId}`,
   skPrefix: () => "REVIEW#" as const,
-  /** GSI1: global published review feed by date */
+  /** GSI1: global review feed by date (storefront + admin) */
   gsi1pk: () => "ENTITY#REVIEW" as const,
   gsi1sk: (createdAt: string, reviewId: string) => `${createdAt}#${reviewId}`,
 };

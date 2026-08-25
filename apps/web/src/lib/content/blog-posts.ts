@@ -1181,7 +1181,7 @@ export const blogPosts: BlogPost[] = [
       {
         heading: "What domestic fulfillment quietly changes",
         paragraphs: [
-          "The website checkout looks the same. The difference is the last mile. UsaRakhi’s California-based team packs rakhis — most with roli and chawal, combos assembled in the same box — and ships with trusted US carriers. 5–7 business days nationwide. 2–3 day express to major metros. Same-day dispatch on most orders before cut-off.",
+          "The website checkout looks the same. The difference is the last mile. UsaRakhi’s California-based team packs rakhis — most with roli and chawal, combos assembled in the same box — and ships with trusted US carriers. Standard USA delivery · 5 business days · Free shipping on $25 minimum cart value. 3-day express delivery — $19 · arrives August 28–29. Same-day dispatch on most orders before cut-off.",
           "It is not magic. Weekends exist. Wrong ZIP codes still bounce. Order in the July 25 – August 1 window if you want zero drama before August 28. Use express around August 5–6 for big cities. Write the apartment number. Share tracking. Message WhatsApp if the date is tight — guessing is how customs stories start, even on domestic routes.",
         ],
       },

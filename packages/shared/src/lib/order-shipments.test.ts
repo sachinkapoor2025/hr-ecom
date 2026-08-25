@@ -43,7 +43,7 @@ describe("buildOrderShipments", () => {
     assert.equal(built.shippingTotal, 28);
   });
 
-  it("charges UsaRakhi top-up only for UsaRakhi lines when mixed vendors share one address", () => {
+  it("charges $25 minimum separately for UsaRakhi and Orange County on a mixed cart", () => {
     const cart: CartItem[] = [
       { productSlug: "a", name: "A", price: 2.75, currency: "USD", quantity: 1 },
       {
@@ -72,8 +72,8 @@ describe("buildOrderShipments", () => {
     });
     assert.ok(!("error" in built));
     if ("error" in built) return;
-    assert.equal(built.shippingTotal, 22.25);
-    assert.equal(built.shipments[0].shipping, 22.25);
+    assert.equal(built.shippingTotal, 44.5);
+    assert.equal(built.shipments[0].shipping, 44.5);
   });
 
   it("rejects incomplete partitions", () => {

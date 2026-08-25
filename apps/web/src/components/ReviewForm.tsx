@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { site, whatsappChatUrl } from "@/lib/site";
 import { useSessionId } from "@/lib/session";
 import { api } from "@/lib/api";
 
 export function ReviewForm() {
+  const router = useRouter();
   const sessionId = useSessionId();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -29,25 +31,22 @@ export function ReviewForm() {
         throw new Error("Please write at least a few sentences about your experience.");
       }
 
-      await api("/leads", {
+      await api("/reviews", {
         method: "POST",
         sessionId: sid,
         body: JSON.stringify({
-          sessionId: sid,
-          name,
-          email,
-          page: "/reviews",
-          source: "review",
-          metadata: {
-            message: review.trim(),
-            rating,
-            city: city.trim(),
-            orderId: orderId.trim(),
-          },
+          authorName: name.trim(),
+          email: email.trim(),
+          rating,
+          body: review.trim(),
+          city: city.trim() || undefined,
+          orderId: orderId.trim() || undefined,
         }),
       });
 
       setSent(true);
+      window.dispatchEvent(new Event("usarakhi:reviews-updated"));
+      router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not submit review");
     } finally {
@@ -60,8 +59,8 @@ export function ReviewForm() {
       <div className="border border-green-200 bg-green-50 rounded-xl p-6 text-green-900">
         <p className="font-bold text-lg mb-2">Thank you for sharing!</p>
         <p className="text-sm leading-relaxed">
-          Your review was sent to the UsaRakhi owner for approval. We will contact you for permission before displaying
-          it on the website.
+          Your review is now live on {site.domain}. Thank you for helping other sisters choose with
+          confidence.
         </p>
         <Link href="/products" className="inline-block mt-4 text-sm font-semibold text-nav hover:underline">
           Continue shopping →
@@ -150,7 +149,7 @@ export function ReviewForm() {
         <a href={whatsappChatUrl("Hi UsaRakhi, I'd like to share a review of my order.")} className="text-nav hover:underline">
           Message us with a photo
         </a>
-        . We will review your submission first and ask for your permission before publishing it on {site.domain}.
+        . Your review will appear on {site.domain} after you submit it.
       </p>
     </form>
   );

@@ -46,14 +46,15 @@ ${pages.join("\n")}
 ${cities.join("\n")}
 
 ## Raksha Bandhan 2026
-Date: August 28, 2026. Order by Monday, August 24 — ~90% Rakhi-day delivery with standard shipping. 3-day or 2-day at checkout = confirmed delivery on Rakhi day. Weekend orders welcome.
+Date: August 28, 2026. Standard USA delivery · 5 business days · Free shipping on $25 minimum cart value. 3-day express delivery — $19 · arrives August 28–29. Orange County products use standard delivery only.
 
 ## Delivery & payment
-- USA delivery: 5–7 business days, all 50 states
+- USA delivery: Standard USA delivery · 5 business days · Free shipping on $25 minimum cart value
+- 3-day express delivery — $19 · arrives August 28–29 (UsaRakhi products)
 - Order from anywhere; recipient address must be in the USA
 - Payment: Stripe (USD) and Razorpay (INR)
 - Most single rakhis include complimentary roli & chawal
-- Last-minute orders accepted — Guaranteed delivery by Rakhi. 3-day $19 · 2-day $39 at checkout.
+- Mixed UsaRakhi + Orange County carts: $25 free-shipping minimum is calculated separately per vendor
 
 ## Support
 - Email: ${site.supportEmail}
