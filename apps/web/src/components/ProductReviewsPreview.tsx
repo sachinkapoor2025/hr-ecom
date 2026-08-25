@@ -45,7 +45,7 @@ const fallbackPreview: PreviewItem[] = testimonials.map((t) => ({
 /** Site-wide customer reviews preview for product pages (social proof). */
 export function ProductReviewsPreview() {
   const [items, setItems] = useState<PreviewItem[]>(fallbackPreview);
-  const [count, setCount] = useState(testimonials.length);
+  const [count, setCount] = useState<number>(testimonials.length);
 
   useEffect(() => {
     let cancelled = false;
