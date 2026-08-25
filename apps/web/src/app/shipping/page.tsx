@@ -41,6 +41,9 @@ export default function ShippingPage() {
             <strong>Standard delivery (UsaRakhi products)</strong> — after Aug 28 · 5 business days.
             Orders need a <strong>$25 minimum</strong>; carts below $25 are topped up at checkout.
             <strong> Free standard shipping on selected products.</strong>
+            The $25 minimum applies to <strong>UsaRakhi items only</strong> — if your cart also has
+            Orange County products, those do not count toward the minimum; shipping is calculated
+            separately by vendor.
           </li>
           <li>
             <strong>Last-minute orders accepted</strong> —{" "}

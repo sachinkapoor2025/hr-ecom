@@ -48,6 +48,7 @@ import {
   shippingOptionServiceName,
   expeditedArrivalLabel,
   checkoutShippingOptionsForCart,
+  cartHasMultipleShippingVendors,
   type Order,
   type RateQuote,
   type ShippingAddress,
@@ -818,6 +819,7 @@ function CheckoutPageInner() {
             className="mb-6"
             options={checkoutShippingOptions}
             name="last-minute-delivery-checkout"
+            multiVendor={cartHasMultipleShippingVendors(checkoutItems)}
           />
         ) : null}
 

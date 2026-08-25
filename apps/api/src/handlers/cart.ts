@@ -17,7 +17,10 @@ import {
   productUsesFixedStorefrontPrice,
   isForceOutOfStockSlug,
   isFreeStandardShippingProduct,
+  isOrangeCountyVendorProduct,
   isUsarakhiStorefrontPaused,
+  shippingVendorKey,
+  VENDOR_ORANGE_COUNTY,
   type Cart,
   type CartItem,
   type Product,
@@ -40,6 +43,17 @@ function ensureLineIds(items: CartItem[]): CartItem[] {
   );
 }
 
+/** Backfill missing Orange County vendorSlug so $25 min never mixes OC + UsaRakhi. */
+function ensureVendorSlugs(items: CartItem[]): CartItem[] {
+  return items.map((item) => {
+    const key = shippingVendorKey(item);
+    if (key === VENDOR_ORANGE_COUNTY && item.vendorSlug !== VENDOR_ORANGE_COUNTY) {
+      return { ...item, vendorSlug: VENDOR_ORANGE_COUNTY };
+    }
+    return item;
+  });
+}
+
 async function getCart(userKey: string): Promise<Cart & { createdAt?: string }> {
   const result = await docClient.send(
     new GetCommand({
@@ -48,7 +62,7 @@ async function getCart(userKey: string): Promise<Cart & { createdAt?: string }> 
     })
   );
   const raw = (result.Item as Cart & { createdAt?: string }) ?? { items: [], updatedAt: now() };
-  return { ...raw, items: ensureLineIds(raw.items ?? []) };
+  return { ...raw, items: ensureVendorSlugs(ensureLineIds(raw.items ?? [])) };
 }
 
 /** Single Put — avoids a second Get on every cart write. */
@@ -59,7 +73,7 @@ async function saveCart(
 ) {
   const timestamp = now();
   const createdAt = cart.createdAt ?? timestamp;
-  const items = ensureLineIds(cart.items ?? []);
+  const items = ensureVendorSlugs(ensureLineIds(cart.items ?? []));
   const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
   const value = items.reduce((sum, i) => sum + cartLineUnitTotal(i) * i.quantity, 0);
 
@@ -96,11 +110,15 @@ export async function getCartHandler(event: APIGatewayProxyEventV2) {
     ...item,
     image: item.image ? resolveProductImageUrl(item.image) : item.image,
   }));
-  // Persist backfilled lineIds so subsequent updates work.
-  if ((raw.items ?? []).some((i) => !i.lineId)) {
-    await saveCart(userKey, { ...raw, items }, getSessionId(event));
+  const healed = ensureVendorSlugs(items);
+  // Persist backfilled lineIds / vendorSlug so shipping rules stay correct.
+  const needsPersist =
+    (raw.items ?? []).some((i) => !i.lineId) ||
+    healed.some((item, idx) => item.vendorSlug !== (raw.items ?? [])[idx]?.vendorSlug);
+  if (needsPersist) {
+    await saveCart(userKey, { ...raw, items: healed }, getSessionId(event));
   }
-  return ok({ cart: { items, updatedAt: raw.updatedAt ?? now() } });
+  return ok({ cart: { items: healed, updatedAt: raw.updatedAt ?? now() } });
 }
 
 export async function addToCart(event: APIGatewayProxyEventV2) {
@@ -193,6 +211,10 @@ export async function addToCart(event: APIGatewayProxyEventV2) {
       cartAddonSignature(i.addons) === signature
   );
 
+  const vendorSlug =
+    product.vendorSlug?.trim() ||
+    (isOrangeCountyVendorProduct(product) ? VENDOR_ORANGE_COUNTY : undefined);
+
   const item: CartItem = {
     lineId: uuidv4(),
     productSlug: product.slug,
@@ -201,7 +223,7 @@ export async function addToCart(event: APIGatewayProxyEventV2) {
     currency: product.currency,
     quantity: parsed.data.quantity,
     image: resolveProductImageUrl(product.images?.[0]),
-    ...(product.vendorSlug ? { vendorSlug: product.vendorSlug } : {}),
+    ...(vendorSlug ? { vendorSlug } : {}),
     ...(typeof product.vendorCost === "number" && product.vendorCost >= 0
       ? { vendorCost: product.vendorCost }
       : {}),

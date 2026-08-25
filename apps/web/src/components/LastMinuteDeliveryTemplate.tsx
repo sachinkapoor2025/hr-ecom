@@ -25,6 +25,8 @@ export type LastMinuteDeliveryTemplateProps = {
   options?: readonly ExpeditedShippingDef[];
   /** Radio group name — keep unique if two templates ever share a page. */
   name?: string;
+  /** Cart mixes UsaRakhi + Orange County — shipping rules apply per vendor. */
+  multiVendor?: boolean;
 };
 
 const CARD_ORDER: CheckoutShippingOptionId[] = ["two_day", "three_day"];
@@ -61,6 +63,7 @@ export function LastMinuteDeliveryTemplate({
   className = "",
   options = checkoutShippingOptionsForCart(),
   name = "shippingOption",
+  multiVendor = false,
 }: LastMinuteDeliveryTemplateProps) {
   const cards = CARD_ORDER.map((id) => options.find((o) => o.id === id)).filter(
     (o): o is ExpeditedShippingDef => Boolean(o)
@@ -84,6 +87,13 @@ export function LastMinuteDeliveryTemplate({
           Choose standard delivery (after Aug 28) or pay for faster 3-day / 2-day shipping.
           Packed with care and shipped from within the USA.
         </p>
+        {multiVendor ? (
+          <p className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs sm:text-sm font-semibold text-amber-950 leading-snug">
+            You selected products from different vendors — shipping charges are applied
+            individually. The $25 free-shipping minimum counts UsaRakhi products only (Orange
+            County items are excluded from that minimum).
+          </p>
+        ) : null}
       </header>
 
       <fieldset className="p-3 sm:p-4">
@@ -206,6 +216,7 @@ export function LastMinuteDeliveryTemplate({
                 currency={currency}
                 className="mt-2"
                 compact
+                multiVendor={multiVendor}
               />
             </span>
           </label>

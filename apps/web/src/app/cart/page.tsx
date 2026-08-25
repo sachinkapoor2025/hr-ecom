@@ -14,6 +14,7 @@ import { StandardShippingMinimumNote } from "@/components/StandardShippingMinimu
 import { useCheckoutShippingOption } from "@/lib/checkout-shipping-option";
 import {
   cartLineUnitTotal,
+  cartHasMultipleShippingVendors,
   checkoutShippingOptionsForCart,
   expeditedOptionPriceInCurrency,
   quoteAddressShipmentShipping,
@@ -130,11 +131,13 @@ export default function CartPage() {
     return sum + convert(cartLineUnitTotal(i) * i.quantity, lineCurrency);
   }, 0);
   const currency = displayCurrency;
+  const multiVendor = cartHasMultipleShippingVendors(items);
   const standardShippingCharge = quoteAddressShipmentShipping({
     items: items.map((item) => ({
       price: item.price,
       quantity: item.quantity,
       vendorSlug: item.vendorSlug,
+      image: item.image,
       productSlug: item.productSlug,
       freeStandardShipping: item.freeStandardShipping,
       addons: item.addons?.map((a) => ({ price: a.price, quantity: a.quantity })),
@@ -234,6 +237,7 @@ export default function CartPage() {
               className="mt-8"
               options={shippingOptions}
               name="last-minute-delivery-cart"
+              multiVendor={multiVendor}
             />
           </div>
 
@@ -261,6 +265,7 @@ export default function CartPage() {
                   currency={currency}
                   className="text-xs"
                   compact
+                  multiVendor={multiVendor}
                 />
               ) : null}
               <div className="flex items-center justify-between gap-4 pt-2 border-t border-slate-100">

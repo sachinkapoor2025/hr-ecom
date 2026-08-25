@@ -33,6 +33,7 @@ import {
   flashComboSaleEndsAt,
   FLASH_COMBO_SHIPPING_USD,
   productAllowsAddons,
+  getProductAddon,
   USARAKHI_STOCK_SHORTAGE_NOTE,
   shouldShowUsarakhiStockShortageNote,
   isOrangeCountyVendorProduct,
@@ -201,7 +202,10 @@ export function ProductDetailClient({
             vendorSlug: product.vendorSlug,
             productSlug: product.slug,
             freeStandardShipping: hasFreeStandardShipping,
-            addons: addons.map((a) => ({ price: a.price, quantity: a.quantity })),
+            addons: addons.flatMap((a) => {
+              const def = getProductAddon(a.id);
+              return def ? [{ price: def.priceUsd, quantity: a.quantity }] : [];
+            }),
           },
         ],
         currency: displayCurrency,

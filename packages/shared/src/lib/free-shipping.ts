@@ -166,10 +166,39 @@ export function quoteFreeShippingThreshold(input: {
 /** Default vendor bucket for catalog SKUs without `vendorSlug` (UsaRakhi). */
 export const SHIPPING_VENDOR_USARAKHI = "usarakhi";
 
-/** Normalize cart/product vendor for per-vendor free-shipping buckets. */
-export function shippingVendorKey(item: { vendorSlug?: string }): string {
+type ShippingVendorSource = {
+  vendorSlug?: string | null;
+  image?: string | null;
+  images?: string[] | null;
+};
+
+function looksLikeOrangeCountyImage(src: string | null | undefined): boolean {
+  return Boolean(src && src.includes("/uploads/orange-county/"));
+}
+
+/**
+ * Normalize cart/product vendor for per-vendor shipping buckets.
+ * Orange County is never merged into the UsaRakhi $25 minimum — OC subtotal is ignored.
+ * Infers OC from image path when older cart lines lack `vendorSlug`.
+ */
+export function shippingVendorKey(item: ShippingVendorSource): string {
   const slug = item.vendorSlug?.trim();
-  return slug || SHIPPING_VENDOR_USARAKHI;
+  if (slug === VENDOR_ORANGE_COUNTY) return VENDOR_ORANGE_COUNTY;
+  if (slug) return slug;
+  const imgs = [
+    ...(item.image ? [item.image] : []),
+    ...((item.images ?? []).filter(Boolean) as string[]),
+  ];
+  if (imgs.some(looksLikeOrangeCountyImage)) return VENDOR_ORANGE_COUNTY;
+  return SHIPPING_VENDOR_USARAKHI;
+}
+
+/** True when cart has both UsaRakhi and Orange County (or other) shipping vendors. */
+export function cartHasMultipleShippingVendors(
+  items: ShippingVendorSource[]
+): boolean {
+  const keys = new Set(items.map((item) => shippingVendorKey(item)));
+  return keys.size > 1;
 }
 
 /**
@@ -247,6 +276,8 @@ export function quoteAddressShipmentShipping(input: {
     price: number;
     quantity: number;
     vendorSlug?: string;
+    image?: string;
+    images?: string[];
     productSlug?: string;
     tags?: string[];
     freeStandardShipping?: boolean;
