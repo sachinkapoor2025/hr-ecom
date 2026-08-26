@@ -29,7 +29,7 @@ describe("expedited-shipping", () => {
     assert.equal(two?.priceUsd, EXPEDITED_TWO_DAY_SHIPPING_USD);
     assert.equal(CHECKOUT_SHIPPING_OPTIONS.length, 3);
     assert.match(standard?.detail ?? "", /Free shipping on \$25 minimum/);
-    assert.match(three?.detail ?? "", /August 28–29/);
+    assert.match(three?.detail ?? "", /August 29–30/);
   });
 
   it("replaces standard threshold charge with flat 3-day fee", () => {
@@ -57,7 +57,7 @@ describe("expedited-shipping", () => {
     );
   });
 
-  it("never confirms Rakhi-day delivery; 3-day window is August 28–29", () => {
+  it("never confirms Rakhi-day delivery; 3-day window is August 29–30", () => {
     const early = new Date("2026-08-21T16:00:00.000Z");
     assert.equal(canConfirmDeliveryByRakhi("standard", early), false);
     assert.equal(canConfirmDeliveryByRakhi("three_day", early), false);
@@ -89,7 +89,7 @@ describe("expedited-shipping", () => {
     } = await import("./expedited-shipping");
 
     assert.match(RAKHI_DELIVERY_MESSAGING.shippingBullets.join(" "), /Free shipping on \$25 minimum/);
-    assert.match(RAKHI_DELIVERY_MESSAGING.shippingBullets.join(" "), /August 28–29/);
+    assert.match(RAKHI_DELIVERY_MESSAGING.shippingBullets.join(" "), /August 29–30/);
     assert.doesNotMatch(RAKHI_DELIVERY_MESSAGING.shippingBullets.join(" "), /2-day/);
     assert.doesNotMatch(
       RAKHI_DELIVERY_MESSAGING.shippingBullets.join(" "),

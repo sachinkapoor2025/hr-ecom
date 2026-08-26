@@ -348,7 +348,7 @@ export function OrderConfirmation({ order, paid }: OrderConfirmationProps) {
               <div>
                 <p className="font-semibold text-slate-900 text-sm">USA delivery</p>
                 <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                  Ships domestically within America. Standard USA delivery · 5 business days · Free shipping on $25 minimum. 3-day express $19 arrives August 28–29.
+                  Ships domestically within America. Standard USA delivery · 5 business days · Free shipping on $25 minimum. 3-day express $19 arrives August 29–30.
                 </p>
               </div>
             </div>

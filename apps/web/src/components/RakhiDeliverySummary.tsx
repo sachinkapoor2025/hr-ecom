@@ -22,7 +22,7 @@ type Props = {
 };
 
 /**
- * Shipping options: standard USA delivery, free shipping on $25, 3-day express arriving Aug 28–29.
+ * Shipping options: standard USA delivery, free shipping on $25, 3-day express arriving Aug 29–30.
  */
 export function RakhiDeliverySummary({
   className = "",
@@ -36,7 +36,7 @@ export function RakhiDeliverySummary({
   const msg = RAKHI_DELIVERY_MESSAGING;
   const items = bullets ?? msg.shippingBullets;
   const noteAlreadyInBullets = items.some((item) =>
-    item.toLowerCase().includes("august 28")
+    item.toLowerCase().includes("august 29")
   );
   const hasThreeDay = items.some((item) => item.toLowerCase().includes("3-day"));
   const showNote = showLastMinuteNote && !noteAlreadyInBullets && hasThreeDay;

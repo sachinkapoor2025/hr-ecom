@@ -333,7 +333,7 @@ export const handwrittenBlogEndMatter: Record<
       },
       {
         q: "How fast do these sets arrive in the USA?",
-        a: "Typically 5 business days nationwide with free shipping on a $25 minimum cart value. 3-day express delivery ($19) arrives August 28–29, because the shipment is domestic — not an import.",
+        a: "Typically 5 business days nationwide with free shipping on a $25 minimum cart value. 3-day express delivery ($19) arrives August 29–30, because the shipment is domestic — not an import.",
       },
     ],
   },

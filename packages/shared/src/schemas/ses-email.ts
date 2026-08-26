@@ -298,7 +298,7 @@ export const SES_TEMPLATE_PLACEHOLDER_DEFAULTS = {
   company: "",
   email: "",
   deliveryOption1: "3 DAYS DELIVERY",
-  deliveryPrice1: "$19 · Aug 28–29",
+  deliveryPrice1: "$19 · Aug 29–30",
   deliveryOption2: "STANDARD DELIVERY",
   deliveryPrice2: "$25 MIN",
   shopUrl: "https://www.usarakhi.com",

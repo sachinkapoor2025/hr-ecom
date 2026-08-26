@@ -13,8 +13,8 @@ export const USARAKHI_STANDARD_DELIVERY_DETAIL =
   "Standard USA delivery · 5 business days · Free shipping on $25 minimum cart value";
 
 /** Stated arrival window for UsaRakhi 3-day express (1 packing day + 3 transit). */
-export const USARAKHI_THREE_DAY_ARRIVAL_YMD = "2026-08-29";
-export const USARAKHI_THREE_DAY_ARRIVAL_LABEL = "August 28–29";
+export const USARAKHI_THREE_DAY_ARRIVAL_YMD = "2026-08-30";
+export const USARAKHI_THREE_DAY_ARRIVAL_LABEL = "August 29–30";
 
 /** Flat rate for UsaRakhi 3-day upgrade (USD). 2-day is no longer offered. */
 export const EXPEDITED_THREE_DAY_SHIPPING_USD = 19;
@@ -24,7 +24,7 @@ export const EXPEDITED_TWO_DAY_SHIPPING_USD = 39;
 /**
  * Checkout shipping choice.
  * - `standard` — all vendors: $25 min merchandise per vendor (top-up shipping below); 5 business days
- * - `three_day` — UsaRakhi-only carts: $19; 1 packing business day + 3 transit business days; arrives Aug 29
+ * - `three_day` — UsaRakhi-only carts: $19; 1 packing business day + 3 transit business days; arrives Aug 29–30
  * - `two_day` — kept for historical orders only (not offered at checkout)
  */
 export const CHECKOUT_SHIPPING_OPTION_IDS = ["standard", "three_day", "two_day"] as const;
@@ -124,7 +124,7 @@ export function cartIsMixedShippingVendors(items: ShippingCartItem[]): boolean {
 }
 
 /**
- * 3-day ($19, arrives Aug 29) is only offered on UsaRakhi-only carts.
+ * 3-day ($19, arrives Aug 29–30) is only offered on UsaRakhi-only carts.
  * Orange County and mixed carts use standard delivery with the $25 rule.
  */
 export function cartAllowsThreeDayShipping(items: ShippingCartItem[]): boolean {
