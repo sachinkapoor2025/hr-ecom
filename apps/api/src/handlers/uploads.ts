@@ -6,10 +6,18 @@ import fs from "fs";
 import path from "path";
 import { ok, badRequest, forbidden } from "../lib/response";
 import { getAuth } from "../lib/auth";
+import { IMAGE_CACHE_CONTROL, allVariantObjectKeys } from "@hr-ecom/shared";
 
 const BUCKET = process.env.UPLOAD_BUCKET;
 const CDN_DOMAIN = process.env.CLOUDFRONT_DOMAIN;
 const LOCAL_UPLOAD_DIR = path.join(process.cwd(), "uploads");
+const ALLOWED_UPLOAD_TYPES = new Set([
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+]);
 
 function getS3(): S3Client | null {
   if (!BUCKET || process.env.USE_LOCAL_UPLOADS === "true") return null;
@@ -58,7 +66,10 @@ async function deleteStoredImage(imageUrl: string): Promise<boolean> {
 
   const s3 = getS3();
   if (!s3 || !BUCKET) return false;
-  await s3.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: key }));
+  const keys = [key, ...allVariantObjectKeys(key)];
+  await Promise.all(
+    keys.map((k) => s3.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: k })))
+  );
   return true;
 }
 
@@ -73,6 +84,10 @@ export async function getUploadUrl(event: APIGatewayProxyEventV2) {
   const folder = (body.folder as string | undefined)?.trim();
 
   if (!filename) return badRequest("filename required");
+  const normalizedType = contentType.toLowerCase();
+  if (!ALLOWED_UPLOAD_TYPES.has(normalizedType)) {
+    return badRequest("Only JPEG, PNG, WebP, or GIF uploads are allowed");
+  }
 
   const ext = path.extname(filename) || ".jpg";
   const prefix =
@@ -99,6 +114,7 @@ export async function getUploadUrl(event: APIGatewayProxyEventV2) {
     Bucket: BUCKET,
     Key: key,
     ContentType: contentType,
+    CacheControl: IMAGE_CACHE_CONTROL,
     ...(productSlug ? { Metadata: { "product-slug": productSlug } } : {}),
   });
 

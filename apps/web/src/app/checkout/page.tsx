@@ -53,7 +53,7 @@ import {
   type RateQuote,
   type ShippingAddress,
 } from "@hr-ecom/shared";
-import { resolveImageUrl } from "@/lib/images";
+import { VariantImg } from "@/components/VariantImg";
 
 const EMPTY_CART_ITEMS: Array<{ vendorSlug?: string }> = [];
 
@@ -854,11 +854,13 @@ function CheckoutPageInner() {
                     >
                       <div className="flex gap-3 items-start">
                         {unit.image ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={resolveImageUrl(unit.image)}
+                          <VariantImg
+                            src={unit.image}
+                            variant="thumb"
                             alt=""
                             className="w-14 h-14 rounded-md object-cover border border-slate-100 shrink-0"
+                            width={56}
+                            height={56}
                           />
                         ) : (
                           <div className="w-14 h-14 rounded-md bg-slate-100 shrink-0" />

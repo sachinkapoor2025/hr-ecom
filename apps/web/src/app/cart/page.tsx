@@ -8,8 +8,8 @@ import { SecureCheckoutBadge } from "@/components/SecureCheckoutBadge";
 import { PaymentMethodIcons } from "@/components/PaymentMethodIcons";
 import { CheckoutLegalNotice } from "@/components/CheckoutLegalNotice";
 import { TrustBadges } from "@/components/TrustBadges";
-import { resolveImageUrl } from "@/lib/images";
 import { LastMinuteDeliveryTemplate } from "@/components/LastMinuteDeliveryTemplate";
+import { VariantImg } from "@/components/VariantImg";
 import { StandardShippingMinimumNote } from "@/components/StandardShippingMinimumNote";
 import { useCheckoutShippingOption } from "@/lib/checkout-shipping-option";
 import {
@@ -187,8 +187,14 @@ export default function CartPage() {
                       className="shrink-0 w-24 h-24 sm:w-28 sm:h-28 rounded-lg overflow-hidden bg-slate-50 border border-slate-100"
                     >
                       {item.image ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={resolveImageUrl(item.image)} alt={item.name} className="w-full h-full object-cover" />
+                        <VariantImg
+                          src={item.image}
+                          variant="thumb"
+                          alt={item.name}
+                          className="w-full h-full object-cover"
+                          width={112}
+                          height={112}
+                        />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs">No image</div>
                       )}

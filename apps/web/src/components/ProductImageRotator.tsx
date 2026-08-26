@@ -2,17 +2,16 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { resolveImageUrl } from "@/lib/images";
-import {
-  selectDisplayableProductImages,
-  type SizedProductImage,
-} from "@hr-ecom/shared";
+import { selectDisplayableProductImages, type SizedProductImage } from "@hr-ecom/shared";
+import { measureProductImageUrl } from "@/lib/measure-product-image";
+import { VariantImg } from "@/components/VariantImg";
 
 const ROTATE_MS = 4000;
 
 /**
  * Auto-rotates through a product's gallery images on listing cards.
- * Pauses while hovered; only advances when the card is on-screen.
- * Skips tiny vendor thumbnails (e.g. 100×100) once real dimensions are known.
+ * Probes tiny thumbnails only (not full originals) so CloudFront bytes stay small.
+ * Renders the visible card + next card — never the whole gallery at once.
  */
 export function ProductImageRotator({
   images,
@@ -55,17 +54,12 @@ export function ProductImageRotator({
     };
 
     resolved.forEach((url) => {
-      const img = new Image();
-      img.onload = () => {
-        measured.push({ url, width: img.naturalWidth, height: img.naturalHeight });
+      measureProductImageUrl(url).then((sized) => {
+        if (cancelled) return;
+        measured.push(sized);
         remaining -= 1;
         if (remaining === 0) finish();
-      };
-      img.onerror = () => {
-        remaining -= 1;
-        if (remaining === 0) finish();
-      };
-      img.src = url;
+      });
     });
 
     return () => {
@@ -108,6 +102,11 @@ export function ProductImageRotator({
     );
   }
 
+  const display = urls.length > 0 ? urls : resolved.slice(0, 1);
+  const visibleIdx = new Set<number>();
+  if (display.length > 0) visibleIdx.add(index);
+  if (display.length > 1) visibleIdx.add((index + 1) % display.length);
+
   return (
     <div
       ref={setRoot}
@@ -115,25 +114,26 @@ export function ProductImageRotator({
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
-      {urls.map((src, i) => (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          key={`${src}-${i}`}
-          src={src}
-          alt={i === 0 ? alt : ""}
-          aria-hidden={i !== index}
-          className={`absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-500 ease-out ${
-            i === index ? "opacity-100" : "opacity-0"
-          }`}
-          loading={priority && i === 0 ? "eager" : "lazy"}
-          decoding="async"
-          width={1200}
-          height={1200}
-        />
-      ))}
-      {urls.length > 1 && (
+      {display.map((src, i) =>
+        visibleIdx.has(i) ? (
+          <VariantImg
+            key={`${src}-${i}`}
+            src={src}
+            variant="card"
+            alt={i === 0 ? alt : ""}
+            ariaHidden={i !== index}
+            className={`absolute inset-0 h-full w-full object-cover object-center transition-opacity duration-500 ease-out ${
+              i === index ? "opacity-100" : "opacity-0"
+            }`}
+            loading={priority && i === 0 ? "eager" : "lazy"}
+            width={640}
+            height={640}
+          />
+        ) : null
+      )}
+      {display.length > 1 && (
         <div className="absolute bottom-2 left-1/2 z-[1] flex -translate-x-1/2 gap-1" aria-hidden>
-          {urls.map((_, i) => (
+          {display.map((_, i) => (
             <span
               key={i}
               className={`h-1.5 w-1.5 rounded-full transition-colors ${

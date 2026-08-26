@@ -1,4 +1,4 @@
-.PHONY: build-ApiFunction build-VendorApiFunction build-ReviewEmailsCronFunction build-SesEmailCronFunction build-BounceSyncFunction api-deps api-bundle
+.PHONY: build-ApiFunction build-VendorApiFunction build-ReviewEmailsCronFunction build-SesEmailCronFunction build-BounceSyncFunction build-ImageOptimizeFunction api-deps api-bundle
 
 api-deps:
 	npm ci
@@ -65,3 +65,18 @@ build-ReviewEmailsCronFunction: api-bundle
 build-SesEmailCronFunction: api-bundle
 
 build-BounceSyncFunction: api-bundle
+
+# Separate artifact: sharp native binary for linux/arm64 (Lambda architecture).
+# Do not bundle sharp into the API function — it would bloat every request path.
+build-ImageOptimizeFunction:
+	mkdir -p $(ARTIFACTS_DIR)
+	npx esbuild apps/api/src/image-optimize.ts \
+		--bundle \
+		--platform=node \
+		--target=es2022 \
+		--minify \
+		--outfile=$(ARTIFACTS_DIR)/index.js \
+		--external:sharp \
+		--external:@aws-sdk/client-s3
+	printf '%s\n' '{"name":"image-optimize","private":true,"dependencies":{"sharp":"0.33.5"}}' > $(ARTIFACTS_DIR)/package.json
+	npm install --omit=dev --prefix $(ARTIFACTS_DIR) --cpu=arm64 --os=linux --libc=glibc
