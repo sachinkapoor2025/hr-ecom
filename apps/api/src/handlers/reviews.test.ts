@@ -85,6 +85,9 @@ describe("customer review publish + admin remove", () => {
     assert.equal(adminList.status, 200);
     const adminRow = adminList.body.reviews.find((r: { reviewId: string }) => r.reviewId === reviewId);
     assert.equal(adminRow?.authorEmail, "neha@example.com");
+    assert.equal(adminRow?.origin, "catalog");
+    assert.equal(adminRow?.status, "published");
+    assert.equal(adminRow?.canDelete, true);
 
     const forbidden = parse(await reviews.deleteReview(event({ pathParameters: { productSlug, reviewId } })));
     assert.equal(forbidden.status, 403);
@@ -117,5 +120,59 @@ describe("customer review publish + admin remove", () => {
     );
     assert.equal(created.status, 201);
     assert.equal(created.body.review.published, true);
+  });
+
+  it("lists historical lead reviews alongside catalog reviews without duplicating or mutating leads", async () => {
+    const { PutCommand, GetCommand } = await import("@aws-sdk/lib-dynamodb");
+    const { docClient, CUSTOMERS_TABLE } = await import("../lib/db");
+    const { customerKeys } = await import("@hr-ecom/shared");
+
+    const createdAt = "2026-08-02T15:00:00.000Z";
+    const leadItem = {
+      leadId: "hist-lead-1",
+      sessionId: "sess-review-hist",
+      name: "Priya",
+      email: "priya-hist@example.com",
+      page: "/reviews",
+      source: "review",
+      metadata: {
+        message: "Historical review from before the admin Reviews section existed.",
+        rating: "5",
+        city: "Fremont, CA",
+        orderId: "OC10005",
+      },
+      PK: customerKeys.pk("sess-review-hist"),
+      SK: customerKeys.leadSk(createdAt),
+      GSI1PK: customerKeys.gsi1pk(),
+      GSI1SK: customerKeys.gsi1sk(createdAt),
+      createdAt,
+      updatedAt: createdAt,
+    };
+
+    await docClient.send(new PutCommand({ TableName: CUSTOMERS_TABLE, Item: leadItem }));
+
+    const adminList = parse(await reviews.listAdminReviews(event({ admin: true })));
+    assert.equal(adminList.status, 200);
+    const historical = adminList.body.reviews.find(
+      (r: { reviewId: string }) => r.reviewId === "lead:hist-lead-1"
+    );
+    assert.ok(historical);
+    assert.equal(historical.origin, "legacy_lead");
+    assert.equal(historical.status, "historical");
+    assert.equal(historical.canDelete, false);
+    assert.equal(historical.authorName, "Priya");
+    assert.equal(historical.rating, 5);
+    assert.equal(historical.orderId, "OC10005");
+    assert.equal(historical.published, false);
+    assert.ok((adminList.body.counts?.historical ?? 0) >= 1);
+
+    const after = await docClient.send(
+      new GetCommand({
+        TableName: CUSTOMERS_TABLE,
+        Key: { PK: leadItem.PK, SK: leadItem.SK },
+      })
+    );
+    assert.equal(after.Item?.leadId, "hist-lead-1");
+    assert.equal((after.Item?.metadata as { message?: string })?.message, leadItem.metadata.message);
   });
 });

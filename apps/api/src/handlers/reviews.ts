@@ -1,30 +1,39 @@
 /**
  * Product + site reviews — DynamoDB items under PRODUCT#slug / REVIEW#id.
- * Customer submissions are published immediately. Admin can delete any review.
+ * Customer submissions are published immediately. Admin can delete catalog reviews.
+ * Historical reviews submitted via POST /leads (source=review) are listed in admin
+ * as read-only — they are never copied, updated, or deleted by this handler.
  * Aggregate lives on product META as ratingAggregate for Product JSON-LD.
  */
 import { QueryCommand, PutCommand, GetCommand, UpdateCommand, DeleteCommand } from "@aws-sdk/lib-dynamodb";
+import type { QueryCommandInput } from "@aws-sdk/lib-dynamodb";
 import type { APIGatewayProxyEventV2 } from "aws-lambda";
 import {
   createProductReviewSchema,
   submitCustomerReviewSchema,
   productKeys,
   reviewKeys,
+  customerKeys,
   SITE_REVIEW_SLUG,
   toPublicReview,
+  mergeAdminReviews,
+  type AdminReview,
+  type AdminReviewOrderItem,
+  type LegacyReviewLead,
   type ProductReview,
   type ProductRatingAggregate,
 } from "@hr-ecom/shared";
 import { randomUUID } from "crypto";
-import { docClient, PRODUCTS_TABLE, now } from "../lib/db";
+import { docClient, PRODUCTS_TABLE, CUSTOMERS_TABLE, now } from "../lib/db";
 import { ok, created, badRequest, forbidden, notFound } from "../lib/response";
 import { getAuth, requireAdmin } from "../lib/auth";
+import { resolveOrderByIdOrNumber } from "../lib/order-numbers";
 
 type StoredReview = ProductReview & {
   PK: string;
   SK: string;
-  GSI1PK: string;
-  GSI1SK: string;
+  GSI1PK?: string;
+  GSI1SK?: string;
 };
 
 function withoutDbKeys(item: StoredReview): ProductReview {
@@ -36,26 +45,136 @@ function withoutDbKeys(item: StoredReview): ProductReview {
   return rest;
 }
 
-async function queryReviewsByGsi(): Promise<StoredReview[]> {
-  const items: StoredReview[] = [];
+async function queryAllItems(
+  input: Omit<QueryCommandInput, "ExclusiveStartKey">,
+  maxPages = 50
+): Promise<Record<string, unknown>[]> {
+  const items: Record<string, unknown>[] = [];
   let ExclusiveStartKey: Record<string, unknown> | undefined;
   let pages = 0;
   do {
     const result = await docClient.send(
-      new QueryCommand({
-        TableName: PRODUCTS_TABLE,
-        IndexName: "GSI1",
-        KeyConditionExpression: "GSI1PK = :pk",
-        ExpressionAttributeValues: { ":pk": reviewKeys.gsi1pk() },
-        ScanIndexForward: false,
-        ExclusiveStartKey,
-      })
+      new QueryCommand({ ...input, ExclusiveStartKey })
     );
-    if (result.Items?.length) items.push(...(result.Items as StoredReview[]));
+    if (result.Items?.length) items.push(...(result.Items as Record<string, unknown>[]));
     ExclusiveStartKey = result.LastEvaluatedKey as Record<string, unknown> | undefined;
     pages += 1;
-  } while (ExclusiveStartKey && pages < 50);
+  } while (ExclusiveStartKey && pages < maxPages);
   return items;
+}
+
+async function queryReviewsByGsi(): Promise<StoredReview[]> {
+  return queryAllItems({
+    TableName: PRODUCTS_TABLE,
+    IndexName: "GSI1",
+    KeyConditionExpression: "GSI1PK = :pk",
+    ExpressionAttributeValues: { ":pk": reviewKeys.gsi1pk() },
+    ScanIndexForward: false,
+  }) as Promise<StoredReview[]>;
+}
+
+/** Site-wide reviews (PRODUCT#_site) even if a row is missing GSI1 keys. */
+async function querySitePartitionReviews(): Promise<StoredReview[]> {
+  return queryAllItems({
+    TableName: PRODUCTS_TABLE,
+    KeyConditionExpression: "PK = :pk AND begins_with(SK, :sk)",
+    ExpressionAttributeValues: {
+      ":pk": reviewKeys.pk(SITE_REVIEW_SLUG),
+      ":sk": reviewKeys.skPrefix(),
+    },
+  }) as Promise<StoredReview[]>;
+}
+
+function mergeCatalogReviews(gsi: StoredReview[], site: StoredReview[]): ProductReview[] {
+  const byId = new Map<string, ProductReview>();
+  for (const item of [...gsi, ...site]) {
+    const review = withoutDbKeys(item);
+    if (!review.reviewId || byId.has(review.reviewId)) continue;
+    byId.set(review.reviewId, review);
+  }
+  return [...byId.values()];
+}
+
+async function queryLegacyReviewLeads(): Promise<LegacyReviewLead[]> {
+  const items = await queryAllItems(
+    {
+      TableName: CUSTOMERS_TABLE,
+      IndexName: "GSI1",
+      KeyConditionExpression: "GSI1PK = :pk",
+      FilterExpression: "#source = :source",
+      ExpressionAttributeNames: { "#source": "source" },
+      ExpressionAttributeValues: {
+        ":pk": customerKeys.gsi1pk(),
+        ":source": "review",
+      },
+      ScanIndexForward: false,
+    },
+    100
+  );
+  return items as LegacyReviewLead[];
+}
+
+function chunkIds(ids: string[], size: number): string[][] {
+  const chunks: string[][] = [];
+  for (let i = 0; i < ids.length; i += size) chunks.push(ids.slice(i, i + size));
+  return chunks;
+}
+
+async function enrichAdminReviewsWithOrders(reviews: AdminReview[]): Promise<AdminReview[]> {
+  const orderIds = [
+    ...new Set(reviews.map((r) => r.orderId?.trim()).filter((id): id is string => Boolean(id))),
+  ];
+  if (!orderIds.length) return reviews;
+
+  const byRef = new Map<
+    string,
+    {
+      orderId: string;
+      orderNumber?: string;
+      status?: string;
+      items: AdminReviewOrderItem[];
+    }
+  >();
+
+  for (const group of chunkIds(orderIds, 8)) {
+    const resolved = await Promise.all(
+      group.map(async (ref) => {
+        try {
+          const order = await resolveOrderByIdOrNumber(ref);
+          return { ref, order };
+        } catch {
+          return { ref, order: undefined };
+        }
+      })
+    );
+    for (const { ref, order } of resolved) {
+      if (!order) continue;
+      byRef.set(ref, {
+        orderId: order.orderId,
+        orderNumber: order.orderNumber,
+        status: order.status,
+        items: (order.items ?? []).map((item) => ({
+          name: item.name,
+          productSlug: item.productSlug,
+          quantity: item.quantity,
+        })),
+      });
+    }
+  }
+
+  return reviews.map((review) => {
+    const ref = review.orderId?.trim();
+    if (!ref) return review;
+    const order = byRef.get(ref);
+    if (!order) return review;
+    return {
+      ...review,
+      resolvedOrderId: order.orderId,
+      orderNumber: order.orderNumber,
+      orderStatus: order.status,
+      orderItems: order.items,
+    };
+  });
 }
 
 async function recomputeAggregate(productSlug: string): Promise<ProductRatingAggregate | null> {
@@ -135,11 +254,29 @@ export async function listPublishedReviews(_event: APIGatewayProxyEventV2) {
   return ok({ reviews }, { "Cache-Control": "no-store" });
 }
 
-/** Admin: all reviews including unpublished leftovers. */
+/** Admin: catalog reviews plus historical lead submissions (read-only merge). */
 export async function listAdminReviews(event: APIGatewayProxyEventV2) {
   if (!requireAdmin(event)) return forbidden("Admin required");
-  const reviews = (await queryReviewsByGsi()).map(withoutDbKeys);
-  return ok({ reviews });
+
+  const [gsiReviews, siteReviews, leads] = await Promise.all([
+    queryReviewsByGsi(),
+    querySitePartitionReviews(),
+    queryLegacyReviewLeads(),
+  ]);
+
+  const catalog = mergeCatalogReviews(gsiReviews, siteReviews);
+  const merged = mergeAdminReviews(catalog, leads);
+  const reviews = await enrichAdminReviewsWithOrders(merged);
+
+  return ok({
+    reviews,
+    counts: {
+      total: reviews.length,
+      catalog: reviews.filter((r) => r.origin === "catalog").length,
+      historical: reviews.filter((r) => r.origin === "legacy_lead").length,
+      published: reviews.filter((r) => r.status === "published").length,
+    },
+  });
 }
 
 function buildReviewItem(

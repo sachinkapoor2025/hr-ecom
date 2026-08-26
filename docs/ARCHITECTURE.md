@@ -98,7 +98,7 @@ When admin (or Orange County vendor tracking) changes order status (accepted, pr
 | POST | `/products/{slug}/reviews` | Admin: create a product review (published by default) |
 | GET | `/reviews` | Published customer reviews (site-wide + product) |
 | POST | `/reviews` | Public: submit a review — published immediately, no approval email |
-| GET | `/admin/reviews` | Admin: list all customer reviews |
+| GET | `/admin/reviews` | Admin: list catalog reviews and historical `/leads` reviews (`source=review`); read-only merge |
 | DELETE | `/admin/reviews/{productSlug}/{reviewId}` | Admin: remove a review from DynamoDB and the storefront |
 | POST | `/products` | Admin: create product |
 | PUT | `/products/{slug}` | Admin: update |
@@ -153,7 +153,7 @@ When admin (or Orange County vendor tracking) changes order status (accepted, pr
 
 **Product add-ons (UsaRakhi only):** Fixed dry-fruit / chocolate extras (`packages/shared/src/lib/product-addons.ts`). Shown on PDP when `allowsAddons` is true (non–Orange County). Shoppers pick quantity per add-on (1–10); nested on `CartItem.addons` with `quantity`; line totals include `price × quantity`. Merge key includes quantities. OC products reject addons server-side.
 
-**Customer reviews:** Public `POST /reviews` writes a published item on the products table (`PRODUCT#_site` / `REVIEW#id`, GSI1 `ENTITY#REVIEW`). There is no approval queue and no admin email on submit — the review is shown on `/reviews` immediately. Admin **Reviews** (`/admin/reviews`) can permanently delete a review (`DELETE /admin/reviews/{productSlug}/{reviewId}`), which removes it from DynamoDB and the storefront. Delivered-order **review request** emails (ask the customer to write a review) are unchanged.
+**Customer reviews:** Public `POST /reviews` writes a published item on the products table (`PRODUCT#_site` / `REVIEW#id`, GSI1 `ENTITY#REVIEW`). There is no approval queue and no admin email on submit — the review is shown on `/reviews` immediately. **Before** that endpoint existed, shoppers submitted reviews via `POST /leads` (`source: "review"`, body/rating/order in `metadata`) on the customers table (`SESSION#` / `LEAD#`). Admin **Reviews** (`GET /admin/reviews`) lists both sources in one feed (catalog + historical leads), with order number/items when `orderId` resolves. Historical leads are **not** copied into the products table and are not deleted by this page. Admin can permanently delete a **catalog** review (`DELETE /admin/reviews/{productSlug}/{reviewId}`), which removes it from DynamoDB and the storefront. Delivered-order **review request** emails (ask the customer to write a review) are unchanged.
 
 ### Scale notes (catalog / concurrency)
 

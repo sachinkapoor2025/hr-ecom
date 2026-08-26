@@ -34,6 +34,56 @@ export type ProductReview = z.infer<typeof productReviewSchema> & {
 /** Storefront payload — never includes author email. */
 export type PublicProductReview = Omit<ProductReview, "authorEmail">;
 
+/** Where an admin-list row was loaded from. Catalog writes are never copied from leads. */
+export const ADMIN_REVIEW_ORIGIN = {
+  CATALOG: "catalog",
+  LEGACY_LEAD: "legacy_lead",
+} as const;
+export type AdminReviewOrigin = (typeof ADMIN_REVIEW_ORIGIN)[keyof typeof ADMIN_REVIEW_ORIGIN];
+
+/** Display status in Admin → Reviews. Historical leads were never published. */
+export const ADMIN_REVIEW_STATUS = {
+  PUBLISHED: "published",
+  UNPUBLISHED: "unpublished",
+  HISTORICAL: "historical",
+} as const;
+export type AdminReviewStatus = (typeof ADMIN_REVIEW_STATUS)[keyof typeof ADMIN_REVIEW_STATUS];
+
+export type AdminReviewOrderItem = {
+  name: string;
+  productSlug: string;
+  quantity: number;
+};
+
+/**
+ * Unified admin row: live catalog reviews plus pre–Review Management lead submissions.
+ * Read-only mapping — does not persist or rewrite DynamoDB items.
+ */
+export type AdminReview = {
+  reviewId: string;
+  productSlug: string;
+  authorName: string;
+  rating?: number;
+  title?: string;
+  body: string;
+  source: ProductReview["source"] | "lead";
+  published: boolean;
+  verifiedPurchase?: boolean;
+  authorEmail?: string;
+  city?: string;
+  orderId?: string;
+  createdAt: string;
+  updatedAt: string;
+  origin: AdminReviewOrigin;
+  status: AdminReviewStatus;
+  canDelete: boolean;
+  leadId?: string;
+  orderNumber?: string;
+  resolvedOrderId?: string;
+  orderStatus?: string;
+  orderItems?: AdminReviewOrderItem[];
+};
+
 /** Aggregate denormalized on the product record for Product JSON-LD. */
 export const productRatingAggregateSchema = z.object({
   ratingValue: z.number().min(1).max(5),
