@@ -26,6 +26,7 @@ import {
   defaultReviewRequestSettings,
 } from "../schemas/review-request";
 import { buildReviewRequestEmailHtml } from "./review-request-email-html";
+import { containsEmoji } from "./strip-emojis";
 
 describe("review-request eligibility", () => {
   const base = {
@@ -146,13 +147,14 @@ describe("review-request templates", () => {
     const subject = renderReviewRequestTemplate(DEFAULT_REVIEW_REQUEST_EMAIL_SUBJECT, vars);
     assert.equal(subject, "Your UsaRakhi order #US10360 has been delivered!");
     const body = renderReviewRequestTemplate(DEFAULT_REVIEW_REQUEST_EMAIL_TEXT, vars);
-    assert.match(body, /^Hi Priya ❤️/);
-    assert.match(body, /Your UsaRakhi order #US10360 has been delivered! 🎁/);
+    assert.match(body, /^Hi Priya,/);
+    assert.match(body, /Your UsaRakhi order #US10360 has been delivered!/);
     assert.match(body, /We hope your brother loved the Rakhi/);
     assert.match(body, /share your experience/);
-    assert.match(body, /👉 Share Your Review:\nhttps:\/\/www\.usarakhi\.com\/reviews/);
+    assert.match(body, /Share Your Review:\nhttps:\/\/www\.usarakhi\.com\/reviews/);
     assert.match(body, /Thank you for choosing UsaRakhi/);
     assert.equal(body.includes("Google"), false);
+    assert.equal(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(body), false);
   });
 
   it("upgrades stored legacy templates to the current shared copy", () => {
@@ -189,6 +191,37 @@ We hope your brother loved his Rakhi.`,
     assert.equal(upgraded.whatsappTemplate, DEFAULT_REVIEW_REQUEST_WHATSAPP);
   });
 
+  it("upgrades the previous emoji review template and strips leftover emoji from custom copy", () => {
+    const emojiTemplate = `Hi {{name}} ❤️
+
+Your UsaRakhi order #{{orderNumber}} has been delivered! 🎁
+
+We hope your brother loved the Rakhi and that our little surprise made your celebration more special. 😊
+
+Could you take just a minute to share your experience with us? ⭐ Your feedback means a lot to us and helps other families shop with confidence.
+
+👉 Share Your Review:
+{{websiteReviewUrl}}
+
+Thank you for choosing UsaRakhi and being a part of our journey! ❤️`;
+    const upgraded = withCurrentReviewCopy({
+      ...defaultReviewRequestSettings,
+      emailTextTemplate: emojiTemplate,
+      whatsappTemplate: emojiTemplate,
+    });
+    assert.equal(upgraded.emailTextTemplate, DEFAULT_REVIEW_REQUEST_EMAIL_TEXT);
+    assert.equal(upgraded.whatsappTemplate, DEFAULT_REVIEW_REQUEST_WHATSAPP);
+    assert.equal(containsEmoji(upgraded.emailTextTemplate), false);
+    assert.equal(containsEmoji(DEFAULT_REVIEW_REQUEST_EMAIL_TEXT), false);
+
+    const custom = withCurrentReviewCopy({
+      ...defaultReviewRequestSettings,
+      emailTextTemplate: "Hi {{name}} 🎁 — thanks for your order.",
+    });
+    assert.equal(custom.emailTextTemplate, "Hi {{name}} — thanks for your order.");
+    assert.equal(containsEmoji(custom.emailTextTemplate), false);
+  });
+
   it("drops Google CTA from the default template when no Google URL is set", () => {
     const text = omitEmptyGoogleReviewLines(DEFAULT_REVIEW_REQUEST_EMAIL_TEXT, "");
     assert.equal(text.includes("Google"), false);
@@ -202,11 +235,12 @@ We hope your brother loved his Rakhi.`,
       websiteReviewUrl: vars.websiteReviewUrl,
     });
     assert.equal(html.includes("<!DOCTYPE"), false);
-    assert.match(html, /Hi Priya ❤️/);
+    assert.match(html, /Hi Priya,/);
     assert.match(html, /Your UsaRakhi order #US10360 has been delivered!/);
     assert.match(html, /Share Your Review/);
     assert.equal(html.includes(vars.websiteReviewUrl), true);
     assert.equal(html.includes("Review us on Google"), false);
+    assert.equal(/[\u{1F300}-\u{1FAFF}]/u.test(html), false);
   });
 
   it("omits the Google button when no Google URL is provided", () => {

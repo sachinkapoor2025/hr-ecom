@@ -57,11 +57,12 @@ describe("buildReviewRequestWhatsAppDraft", () => {
         googleReviewUrl: "https://search.google.com/local/writereview?placeid=abc",
       }
     );
-    assert.match(text, /Hi Priya ❤️/);
-    assert.match(text, /Your UsaRakhi order #US10360 has been delivered! 🎁/);
+    assert.match(text, /Hi Priya,/);
+    assert.match(text, /Your UsaRakhi order #US10360 has been delivered!/);
     assert.match(text, /https:\/\/www\.usarakhi\.com\/reviews/);
     assert.match(text, /Thank you for choosing UsaRakhi/);
     assert.equal(text.includes("Google"), false);
+    assert.equal(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(text), false);
   });
 });
 

@@ -40,6 +40,7 @@ export * from "./lib/product-sales";
 export * from "./lib/product-sales-intelligence";
 export * from "./lib/sales-report";
 export * from "./lib/admin-reviews";
+export * from "./lib/strip-emojis";
 export * from "./lib/review-email";
 export * from "./lib/review-request-email-html";
 export * from "./lib/whatsapp-link";
