@@ -64,6 +64,12 @@ const routes: Route[] = [
   { method: "POST", pattern: /^\/reviews$/, handler: reviews.submitCustomerReview },
   { method: "GET", pattern: /^\/admin\/reviews$/, handler: reviews.listAdminReviews },
   {
+    method: "PATCH",
+    pattern: /^\/admin\/reviews\/([^/]+)\/([^/]+)$/,
+    handler: reviews.updateReviewStatus,
+    params: ["productSlug", "reviewId"],
+  },
+  {
     method: "DELETE",
     pattern: /^\/admin\/reviews\/([^/]+)\/([^/]+)$/,
     handler: reviews.deleteReview,

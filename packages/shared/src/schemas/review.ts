@@ -41,13 +41,32 @@ export const ADMIN_REVIEW_ORIGIN = {
 } as const;
 export type AdminReviewOrigin = (typeof ADMIN_REVIEW_ORIGIN)[keyof typeof ADMIN_REVIEW_ORIGIN];
 
-/** Display status in Admin → Reviews. Historical leads were never published. */
+/** Display / editable status in Admin → Reviews. */
 export const ADMIN_REVIEW_STATUS = {
   PUBLISHED: "published",
-  UNPUBLISHED: "unpublished",
   HISTORICAL: "historical",
 } as const;
 export type AdminReviewStatus = (typeof ADMIN_REVIEW_STATUS)[keyof typeof ADMIN_REVIEW_STATUS];
+
+/** Admin toggle: Published (on the website) or Historical (admin-only). */
+export const updateAdminReviewStatusSchema = z.object({
+  status: z.enum([ADMIN_REVIEW_STATUS.PUBLISHED, ADMIN_REVIEW_STATUS.HISTORICAL]),
+  origin: z.enum([ADMIN_REVIEW_ORIGIN.CATALOG, ADMIN_REVIEW_ORIGIN.LEGACY_LEAD]).optional(),
+  sessionId: z
+    .string()
+    .trim()
+    .min(1)
+    .max(200)
+    .optional()
+    .transform((v) => (v ? v : undefined)),
+  createdAt: z
+    .string()
+    .trim()
+    .min(1)
+    .optional()
+    .transform((v) => (v ? v : undefined)),
+});
+export type UpdateAdminReviewStatusInput = z.infer<typeof updateAdminReviewStatusSchema>;
 
 export type AdminReviewOrderItem = {
   name: string;
@@ -78,6 +97,7 @@ export type AdminReview = {
   status: AdminReviewStatus;
   canDelete: boolean;
   leadId?: string;
+  sessionId?: string;
   orderNumber?: string;
   resolvedOrderId?: string;
   orderStatus?: string;

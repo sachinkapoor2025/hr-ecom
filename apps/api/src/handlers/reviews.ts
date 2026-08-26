@@ -1,8 +1,9 @@
 /**
  * Product + site reviews — DynamoDB items under PRODUCT#slug / REVIEW#id.
  * Customer submissions are published immediately. Admin can delete catalog reviews.
- * Historical reviews submitted via POST /leads (source=review) are listed in admin
- * as read-only — they are never copied, updated, or deleted by this handler.
+ * Historical reviews submitted via POST /leads (source=review) are listed in admin.
+ * Admin can toggle Published (storefront) vs Historical (admin-only) without copying
+ * or deleting the original lead/catalog row.
  * Aggregate lives on product META as ratingAggregate for Product JSON-LD.
  */
 import { QueryCommand, PutCommand, GetCommand, UpdateCommand, DeleteCommand } from "@aws-sdk/lib-dynamodb";
@@ -11,12 +12,17 @@ import type { APIGatewayProxyEventV2 } from "aws-lambda";
 import {
   createProductReviewSchema,
   submitCustomerReviewSchema,
+  updateAdminReviewStatusSchema,
   productKeys,
   reviewKeys,
   customerKeys,
   SITE_REVIEW_SLUG,
   toPublicReview,
   mergeAdminReviews,
+  mergePublishedStorefrontReviews,
+  catalogReviewToAdmin,
+  legacyLeadToAdminReview,
+  reviewStatusFromPublished,
   type AdminReview,
   type AdminReviewOrderItem,
   type LegacyReviewLead,
@@ -244,12 +250,15 @@ export async function listProductReviews(event: APIGatewayProxyEventV2) {
   return ok({ reviews });
 }
 
-/** Public feed of published reviews (site-wide + product). */
+/** Public feed of published reviews (site-wide + product + published historical leads). */
 export async function listPublishedReviews(_event: APIGatewayProxyEventV2) {
-  const reviews = (await queryReviewsByGsi())
-    .map(withoutDbKeys)
-    .filter((r) => r.published !== false)
-    .map(toPublicReview);
+  const [gsiReviews, siteReviews, leads] = await Promise.all([
+    queryReviewsByGsi(),
+    querySitePartitionReviews(),
+    queryLegacyReviewLeads(),
+  ]);
+  const catalog = mergeCatalogReviews(gsiReviews, siteReviews);
+  const reviews = mergePublishedStorefrontReviews(catalog, leads);
 
   return ok({ reviews }, { "Cache-Control": "no-store" });
 }
@@ -273,7 +282,7 @@ export async function listAdminReviews(event: APIGatewayProxyEventV2) {
     counts: {
       total: reviews.length,
       catalog: reviews.filter((r) => r.origin === "catalog").length,
-      historical: reviews.filter((r) => r.origin === "legacy_lead").length,
+      historical: reviews.filter((r) => r.status === "historical").length,
       published: reviews.filter((r) => r.status === "published").length,
     },
   });
@@ -363,6 +372,106 @@ export async function createProductReview(event: APIGatewayProxyEventV2) {
   if (item.published) await recomputeAggregate(slug);
 
   return created({ review: withoutDbKeys(item) });
+}
+
+function isLegacyReviewId(reviewId: string): boolean {
+  return reviewId.startsWith("lead:");
+}
+
+async function setCatalogReviewPublished(
+  productSlug: string,
+  reviewId: string,
+  published: boolean
+): Promise<AdminReview | null> {
+  const existing = await docClient.send(
+    new GetCommand({
+      TableName: PRODUCTS_TABLE,
+      Key: { PK: reviewKeys.pk(productSlug), SK: reviewKeys.sk(reviewId) },
+    })
+  );
+  if (!existing.Item) return null;
+
+  const ts = now();
+  const createdAt = String(existing.Item.createdAt ?? ts);
+  await docClient.send(
+    new UpdateCommand({
+      TableName: PRODUCTS_TABLE,
+      Key: { PK: reviewKeys.pk(productSlug), SK: reviewKeys.sk(reviewId) },
+      UpdateExpression:
+        "SET published = :p, updatedAt = :u, GSI1PK = if_not_exists(GSI1PK, :gsi1pk), GSI1SK = if_not_exists(GSI1SK, :gsi1sk)",
+      ExpressionAttributeValues: {
+        ":p": published,
+        ":u": ts,
+        ":gsi1pk": reviewKeys.gsi1pk(),
+        ":gsi1sk": reviewKeys.gsi1sk(createdAt, reviewId),
+      },
+    })
+  );
+  await recomputeAggregate(productSlug);
+
+  const updated = await docClient.send(
+    new GetCommand({
+      TableName: PRODUCTS_TABLE,
+      Key: { PK: reviewKeys.pk(productSlug), SK: reviewKeys.sk(reviewId) },
+    })
+  );
+  return catalogReviewToAdmin(withoutDbKeys(updated.Item as StoredReview));
+}
+
+async function setLegacyLeadReviewPublished(
+  sessionId: string,
+  createdAt: string,
+  published: boolean
+): Promise<AdminReview | null> {
+  const existing = await docClient.send(
+    new GetCommand({
+      TableName: CUSTOMERS_TABLE,
+      Key: {
+        PK: customerKeys.pk(sessionId),
+        SK: customerKeys.leadSk(createdAt),
+      },
+    })
+  );
+  if (!existing.Item || existing.Item.source !== "review") return null;
+
+  const updatedItem = {
+    ...existing.Item,
+    published,
+    updatedAt: now(),
+  };
+  await docClient.send(new PutCommand({ TableName: CUSTOMERS_TABLE, Item: updatedItem }));
+  return legacyLeadToAdminReview(updatedItem as LegacyReviewLead);
+}
+
+/** Admin: Published (on the website) or Historical (admin-only). Does not copy or delete rows. */
+export async function updateReviewStatus(event: APIGatewayProxyEventV2) {
+  if (!requireAdmin(event)) return forbidden("Admin required");
+
+  const productSlug = event.pathParameters?.productSlug?.trim();
+  const reviewId = event.pathParameters?.reviewId?.trim();
+  if (!productSlug || !reviewId) return badRequest("productSlug and reviewId required");
+
+  const parsed = updateAdminReviewStatusSchema.safeParse(JSON.parse(event.body ?? "{}"));
+  if (!parsed.success) return badRequest(parsed.error.message);
+
+  const published = parsed.data.status === "published";
+  const treatAsLead =
+    parsed.data.origin === "legacy_lead" || isLegacyReviewId(reviewId);
+
+  if (treatAsLead) {
+    const sessionId = parsed.data.sessionId?.trim();
+    const createdAt = parsed.data.createdAt?.trim();
+    if (!sessionId || !createdAt) {
+      return badRequest("sessionId and createdAt are required to update a historical review");
+    }
+    const review = await setLegacyLeadReviewPublished(sessionId, createdAt, published);
+    if (!review) return notFound("Review not found");
+    return ok({ review, status: reviewStatusFromPublished(published) });
+  }
+
+  const review = await setCatalogReviewPublished(productSlug, reviewId, published);
+  if (!review) return notFound("Review not found");
+  return ok({ review, status: reviewStatusFromPublished(published) });
 }
 
 /** Admin: permanently remove a review from DynamoDB and the storefront. */

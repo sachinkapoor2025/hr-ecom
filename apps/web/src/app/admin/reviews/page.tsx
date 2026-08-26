@@ -24,14 +24,11 @@ function formatWhen(iso?: string): string {
 
 function statusBadgeClass(status: AdminReviewStatus): string {
   if (status === ADMIN_REVIEW_STATUS.PUBLISHED) return "bg-green-100 text-green-800";
-  if (status === ADMIN_REVIEW_STATUS.UNPUBLISHED) return "bg-amber-100 text-amber-800";
   return "bg-slate-200 text-slate-700";
 }
 
 function statusLabelForReview(status: AdminReviewStatus): string {
-  if (status === ADMIN_REVIEW_STATUS.PUBLISHED) return "Published";
-  if (status === ADMIN_REVIEW_STATUS.UNPUBLISHED) return "Unpublished";
-  return "Historical";
+  return status === ADMIN_REVIEW_STATUS.PUBLISHED ? "Published" : "Historical";
 }
 
 type SortKey = "createdAt" | "rating" | "authorName" | "status";
@@ -41,6 +38,7 @@ export default function AdminReviewsPage() {
   const [reviews, setReviews] = useState<AdminReview[]>([]);
   const [loading, setLoading] = useState(true);
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const [savingStatusId, setSavingStatusId] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
@@ -76,7 +74,7 @@ export default function AdminReviewsPage() {
     () => ({
       total: reviews.length,
       published: reviews.filter((r) => r.status === ADMIN_REVIEW_STATUS.PUBLISHED).length,
-      historical: reviews.filter((r) => r.origin === ADMIN_REVIEW_ORIGIN.LEGACY_LEAD).length,
+      historical: reviews.filter((r) => r.status === ADMIN_REVIEW_STATUS.HISTORICAL).length,
     }),
     [reviews]
   );
@@ -131,6 +129,38 @@ export default function AdminReviewsPage() {
     }
   };
 
+  const changeStatus = async (review: AdminReview, status: AdminReviewStatus) => {
+    if (review.status === status) return;
+    setSavingStatusId(review.reviewId);
+    setMessage("");
+    setError("");
+    try {
+      const res = await apiClient<{ review: AdminReview }>(
+        `/admin/reviews/${encodeURIComponent(review.productSlug)}/${encodeURIComponent(review.reviewId)}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({
+            status,
+            origin: review.origin,
+            sessionId: review.sessionId,
+            createdAt: review.createdAt,
+          }),
+        }
+      );
+      const next = res.review ?? { ...review, status, published: status === ADMIN_REVIEW_STATUS.PUBLISHED };
+      setReviews((prev) => prev.map((r) => (r.reviewId === review.reviewId ? { ...r, ...next } : r)));
+      setMessage(
+        status === ADMIN_REVIEW_STATUS.PUBLISHED
+          ? `Published review by ${review.authorName}. It is now shown on the website.`
+          : `Marked review by ${review.authorName} as Historical. It is hidden from the website.`
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not update review status");
+    } finally {
+      setSavingStatusId(null);
+    }
+  };
+
   const exportReviews = () => {
     downloadCsv(`customer-reviews-${new Date().toISOString().slice(0, 10)}.csv`, [
       ["Customer", "Email", "City", "Rating", "Review", "Order", "Products", "Status", "Origin", "Submitted"],
@@ -162,10 +192,10 @@ export default function AdminReviewsPage() {
     <div className="max-w-6xl mx-auto px-4 py-10">
       <h1 className="text-2xl font-bold mb-2">Customer reviews</h1>
       <p className="text-sm text-slate-600 mb-6">
-        New reviews publish on the website as soon as a customer submits them. Older reviews
-        submitted before this page existed are listed here as <strong>Historical</strong> (they stay
-        in the original lead records and are not copied or changed). Remove spam from published
-        catalog reviews only.
+        New reviews publish on the website as soon as a customer submits them. Use the status
+        control to show a review on the website (<strong>Published</strong>) or keep it in Admin
+        only (<strong>Historical</strong>). Changing status does not copy or delete the original
+        review.
       </p>
 
       <div className="grid grid-cols-3 gap-4 mb-6">
@@ -196,7 +226,6 @@ export default function AdminReviewsPage() {
         >
           <option value="all">All statuses</option>
           <option value={ADMIN_REVIEW_STATUS.PUBLISHED}>Published</option>
-          <option value={ADMIN_REVIEW_STATUS.UNPUBLISHED}>Unpublished</option>
           <option value={ADMIN_REVIEW_STATUS.HISTORICAL}>Historical</option>
         </select>
         <select
@@ -337,14 +366,23 @@ export default function AdminReviewsPage() {
                       <p className="text-slate-600 leading-relaxed whitespace-pre-wrap">{review.body}</p>
                     </td>
                     <td className="py-3 px-4">
-                      <span
-                        className={`inline-block text-[11px] font-semibold px-2 py-0.5 rounded-full ${statusBadgeClass(review.status)}`}
+                      <select
+                        value={review.status}
+                        disabled={savingStatusId === review.reviewId}
+                        onChange={(e) =>
+                          void changeStatus(review, e.target.value as AdminReviewStatus)
+                        }
+                        className={`text-xs font-semibold border rounded-lg px-2 py-1.5 ${statusBadgeClass(review.status)} disabled:opacity-50`}
+                        aria-label={`Status for review by ${review.authorName}`}
                       >
-                        {statusLabelForReview(review.status)}
-                      </span>
-                      {review.origin === ADMIN_REVIEW_ORIGIN.LEGACY_LEAD ? (
-                        <p className="text-[11px] text-slate-400 mt-1">Not on website</p>
-                      ) : null}
+                        <option value={ADMIN_REVIEW_STATUS.PUBLISHED}>Published</option>
+                        <option value={ADMIN_REVIEW_STATUS.HISTORICAL}>Historical</option>
+                      </select>
+                      <p className="text-[11px] text-slate-400 mt-1">
+                        {review.status === ADMIN_REVIEW_STATUS.PUBLISHED
+                          ? "Shown on website"
+                          : "Hidden from website"}
+                      </p>
                     </td>
                     <td className="py-3 px-4 text-xs text-slate-500 whitespace-nowrap">
                       {formatWhen(review.createdAt)}
@@ -360,7 +398,7 @@ export default function AdminReviewsPage() {
                           {removingId === review.reviewId ? "Removing…" : "Remove review"}
                         </button>
                       ) : (
-                        <span className="text-[11px] text-slate-400">Read-only</span>
+                        <span className="text-[11px] text-slate-400">—</span>
                       )}
                     </td>
                   </tr>

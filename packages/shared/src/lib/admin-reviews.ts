@@ -2,8 +2,11 @@ import {
   ADMIN_REVIEW_ORIGIN,
   ADMIN_REVIEW_STATUS,
   SITE_REVIEW_SLUG,
+  toPublicReview,
   type AdminReview,
+  type AdminReviewStatus,
   type ProductReview,
+  type PublicProductReview,
 } from "../schemas/review";
 
 /** Lead row as stored on CUSTOMERS_TABLE (SESSION# / LEAD#). */
@@ -17,8 +20,18 @@ export type LegacyReviewLead = {
   source?: string;
   createdAt?: string;
   updatedAt?: string;
+  /** Admin visibility: true = shown on the storefront. */
+  published?: boolean;
   metadata?: Record<string, string | undefined>;
 };
+
+export function reviewStatusFromPublished(published: boolean): AdminReviewStatus {
+  return published ? ADMIN_REVIEW_STATUS.PUBLISHED : ADMIN_REVIEW_STATUS.HISTORICAL;
+}
+
+export function isLegacyLeadReviewPublished(lead: LegacyReviewLead): boolean {
+  return lead.published === true;
+}
 
 function trimText(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
@@ -66,7 +79,7 @@ export function catalogReviewToAdmin(review: ProductReview): AdminReview {
     createdAt: review.createdAt,
     updatedAt: review.updatedAt,
     origin: ADMIN_REVIEW_ORIGIN.CATALOG,
-    status: published ? ADMIN_REVIEW_STATUS.PUBLISHED : ADMIN_REVIEW_STATUS.UNPUBLISHED,
+    status: reviewStatusFromPublished(published),
     canDelete: true,
   };
 }
@@ -86,6 +99,7 @@ export function legacyLeadToAdminReview(lead: LegacyReviewLead): AdminReview | n
   const city = trimText(lead.metadata?.city) || undefined;
   const orderId = trimText(lead.metadata?.orderId) || undefined;
   const productSlug = trimText(lead.productSlug) || SITE_REVIEW_SLUG;
+  const published = isLegacyLeadReviewPublished(lead);
 
   return {
     reviewId: `lead:${leadId}`,
@@ -94,17 +108,71 @@ export function legacyLeadToAdminReview(lead: LegacyReviewLead): AdminReview | n
     rating: parseLeadRating(lead.metadata?.rating),
     body,
     source: "lead",
-    published: false,
+    published,
     authorEmail: trimText(lead.email) || undefined,
     city,
     orderId,
     createdAt,
     updatedAt: trimText(lead.updatedAt) || createdAt,
     origin: ADMIN_REVIEW_ORIGIN.LEGACY_LEAD,
-    status: ADMIN_REVIEW_STATUS.HISTORICAL,
+    status: reviewStatusFromPublished(published),
     canDelete: false,
     leadId,
+    sessionId: trimText(lead.sessionId) || undefined,
   };
+}
+
+/** Storefront payload for a lead the admin has marked Published. */
+export function legacyLeadToPublicReview(lead: LegacyReviewLead): PublicProductReview | null {
+  if (!isLegacyLeadReviewPublished(lead)) return null;
+  const admin = legacyLeadToAdminReview(lead);
+  if (!admin) return null;
+  return toPublicReview({
+    reviewId: admin.reviewId,
+    productSlug: admin.productSlug,
+    authorName: admin.authorName,
+    rating: admin.rating ?? 5,
+    title: admin.title,
+    body: admin.body,
+    source: "site",
+    published: true,
+    authorEmail: admin.authorEmail,
+    city: admin.city,
+    orderId: admin.orderId,
+    createdAt: admin.createdAt,
+    updatedAt: admin.updatedAt,
+  });
+}
+
+/**
+ * Public /reviews feed: published catalog rows plus published historical leads.
+ * Catalog wins on the same customer+body so a status change never doubles a review.
+ */
+export function mergePublishedStorefrontReviews(
+  catalog: ProductReview[],
+  leads: LegacyReviewLead[]
+): PublicProductReview[] {
+  const byId = new Map<string, PublicProductReview>();
+  const fingerprints = new Set<string>();
+
+  for (const review of catalog) {
+    if (!review.reviewId || review.published === false) continue;
+    if (byId.has(review.reviewId)) continue;
+    const publicReview = toPublicReview(review);
+    byId.set(publicReview.reviewId, publicReview);
+    fingerprints.add(adminReviewDedupeKey(publicReview));
+  }
+
+  for (const lead of leads) {
+    const publicReview = legacyLeadToPublicReview(lead);
+    if (!publicReview || byId.has(publicReview.reviewId)) continue;
+    const key = adminReviewDedupeKey(publicReview);
+    if (fingerprints.has(key)) continue;
+    byId.set(publicReview.reviewId, publicReview);
+    fingerprints.add(key);
+  }
+
+  return [...byId.values()].sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
 }
 
 /**

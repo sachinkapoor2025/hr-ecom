@@ -175,4 +175,164 @@ describe("customer review publish + admin remove", () => {
     assert.equal(after.Item?.leadId, "hist-lead-1");
     assert.equal((after.Item?.metadata as { message?: string })?.message, leadItem.metadata.message);
   });
+
+  it("lets admin hide a new review from the website and publish it again without duplicating", async () => {
+    const created = parse(
+      await reviews.submitCustomerReview(
+        event({
+          body: {
+            authorName: "Kavita",
+            email: "kavita-status@example.com",
+            rating: 5,
+            body: "UsaRakhi delivery to California was fast and the set looked exactly like the photos.",
+          },
+        })
+      )
+    );
+    assert.equal(created.status, 201);
+    const reviewId = created.body.review.reviewId as string;
+    const productSlug = created.body.review.productSlug as string;
+
+    const hidden = parse(
+      await reviews.updateReviewStatus(
+        event({
+          admin: true,
+          pathParameters: { productSlug, reviewId },
+          body: { status: "historical" },
+        })
+      )
+    );
+    assert.equal(hidden.status, 200);
+    assert.equal(hidden.body.review.status, "historical");
+    assert.equal(hidden.body.review.published, false);
+
+    const publicHidden = parse(await reviews.listPublishedReviews(event({})));
+    assert.equal(
+      publicHidden.body.reviews.some((r: { reviewId: string }) => r.reviewId === reviewId),
+      false
+    );
+
+    const adminHidden = parse(await reviews.listAdminReviews(event({ admin: true })));
+    const adminRow = adminHidden.body.reviews.find((r: { reviewId: string }) => r.reviewId === reviewId);
+    assert.equal(adminRow?.status, "historical");
+
+    const shown = parse(
+      await reviews.updateReviewStatus(
+        event({
+          admin: true,
+          pathParameters: { productSlug, reviewId },
+          body: { status: "published" },
+        })
+      )
+    );
+    assert.equal(shown.status, 200);
+    assert.equal(shown.body.review.status, "published");
+
+    const publicShown = parse(await reviews.listPublishedReviews(event({})));
+    assert.equal(
+      publicShown.body.reviews.filter((r: { reviewId: string }) => r.reviewId === reviewId).length,
+      1
+    );
+  });
+
+  it("publishes a historical lead onto the website and can hide it again without copying or deleting", async () => {
+    const { PutCommand, GetCommand } = await import("@aws-sdk/lib-dynamodb");
+    const { docClient, CUSTOMERS_TABLE } = await import("../lib/db");
+    const { customerKeys } = await import("@hr-ecom/shared");
+
+    const createdAt = "2026-08-03T10:00:00.000Z";
+    const leadItem = {
+      leadId: "hist-lead-status-1",
+      sessionId: "sess-review-status",
+      name: "Meera",
+      email: "meera-status@example.com",
+      page: "/reviews",
+      source: "review",
+      metadata: {
+        message: "The Rakhi arrived on time for my brother in New Jersey and the box was lovely.",
+        rating: "5",
+        city: "Edison, NJ",
+        orderId: "US10022",
+      },
+      PK: customerKeys.pk("sess-review-status"),
+      SK: customerKeys.leadSk(createdAt),
+      GSI1PK: customerKeys.gsi1pk(),
+      GSI1SK: customerKeys.gsi1sk(createdAt),
+      createdAt,
+      updatedAt: createdAt,
+    };
+    await docClient.send(new PutCommand({ TableName: CUSTOMERS_TABLE, Item: leadItem }));
+
+    const beforePublic = parse(await reviews.listPublishedReviews(event({})));
+    assert.equal(
+      beforePublic.body.reviews.some((r: { reviewId: string }) => r.reviewId === "lead:hist-lead-status-1"),
+      false
+    );
+
+    const published = parse(
+      await reviews.updateReviewStatus(
+        event({
+          admin: true,
+          pathParameters: { productSlug: "_site", reviewId: "lead:hist-lead-status-1" },
+          body: {
+            status: "published",
+            origin: "legacy_lead",
+            sessionId: leadItem.sessionId,
+            createdAt,
+          },
+        })
+      )
+    );
+    assert.equal(published.status, 200);
+    assert.equal(published.body.review.status, "published");
+    assert.equal(published.body.review.origin, "legacy_lead");
+
+    const publicShown = parse(await reviews.listPublishedReviews(event({})));
+    const publicMatches = publicShown.body.reviews.filter(
+      (r: { reviewId: string }) => r.reviewId === "lead:hist-lead-status-1"
+    );
+    assert.equal(publicMatches.length, 1);
+    assert.equal(publicMatches[0].authorName, "Meera");
+    assert.equal(publicMatches[0].authorEmail, undefined);
+
+    const historical = parse(
+      await reviews.updateReviewStatus(
+        event({
+          admin: true,
+          pathParameters: { productSlug: "_site", reviewId: "lead:hist-lead-status-1" },
+          body: {
+            status: "historical",
+            origin: "legacy_lead",
+            sessionId: leadItem.sessionId,
+            createdAt,
+          },
+        })
+      )
+    );
+    assert.equal(historical.status, 200);
+    assert.equal(historical.body.review.status, "historical");
+
+    const publicHidden = parse(await reviews.listPublishedReviews(event({})));
+    assert.equal(
+      publicHidden.body.reviews.some((r: { reviewId: string }) => r.reviewId === "lead:hist-lead-status-1"),
+      false
+    );
+
+    const adminList = parse(await reviews.listAdminReviews(event({ admin: true })));
+    const adminRow = adminList.body.reviews.find(
+      (r: { reviewId: string }) => r.reviewId === "lead:hist-lead-status-1"
+    );
+    assert.ok(adminRow);
+    assert.equal(adminRow.status, "historical");
+
+    const stored = await docClient.send(
+      new GetCommand({
+        TableName: CUSTOMERS_TABLE,
+        Key: { PK: leadItem.PK, SK: leadItem.SK },
+      })
+    );
+    assert.equal(stored.Item?.leadId, "hist-lead-status-1");
+    assert.equal((stored.Item?.metadata as { message?: string })?.message, leadItem.metadata.message);
+    assert.equal(stored.Item?.published, false);
+  });
 });

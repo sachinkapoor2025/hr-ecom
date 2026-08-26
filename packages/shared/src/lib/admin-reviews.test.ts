@@ -10,6 +10,7 @@ import {
   catalogReviewToAdmin,
   legacyLeadToAdminReview,
   mergeAdminReviews,
+  mergePublishedStorefrontReviews,
 } from "./admin-reviews";
 
 const catalogReview: ProductReview = {
@@ -121,5 +122,50 @@ describe("admin review merge (catalog + historical leads)", () => {
     assert.equal(merged.length, 1);
     assert.equal(merged[0]?.origin, ADMIN_REVIEW_ORIGIN.CATALOG);
     assert.equal(merged[0]?.reviewId, catalogReview.reviewId);
+  });
+
+  it("treats unpublished catalog reviews as Historical", () => {
+    const row = catalogReviewToAdmin({ ...catalogReview, published: false });
+    assert.equal(row.status, ADMIN_REVIEW_STATUS.HISTORICAL);
+    assert.equal(row.published, false);
+  });
+
+  it("includes a published historical lead on the storefront and hides it again when unpublished", () => {
+    const lead = {
+      leadId: "pub-1",
+      sessionId: "sess-1",
+      source: "review" as const,
+      name: "Priya",
+      email: "priya@example.com",
+      createdAt: "2026-08-10T12:00:00.000Z",
+      published: true,
+      metadata: {
+        message: "My brother loved the Rakhi. Packaging and delivery were excellent.",
+        rating: "5",
+      },
+    };
+    const published = mergePublishedStorefrontReviews([], [lead]);
+    assert.equal(published.length, 1);
+    assert.equal(published[0]?.reviewId, "lead:pub-1");
+    assert.equal(published[0]?.authorName, "Priya");
+    assert.equal("authorEmail" in published[0]!, false);
+
+    const hidden = mergePublishedStorefrontReviews([], [{ ...lead, published: false }]);
+    assert.equal(hidden.length, 0);
+  });
+
+  it("does not duplicate a catalog review when the matching lead is also published", () => {
+    const lead = {
+      leadId: "same",
+      source: "review" as const,
+      name: "Neha",
+      email: "neha@example.com",
+      createdAt: "2026-08-20T00:00:00.000Z",
+      published: true,
+      metadata: { message: catalogReview.body, rating: "5" },
+    };
+    const published = mergePublishedStorefrontReviews([catalogReview], [lead]);
+    assert.equal(published.length, 1);
+    assert.equal(published[0]?.reviewId, catalogReview.reviewId);
   });
 });
