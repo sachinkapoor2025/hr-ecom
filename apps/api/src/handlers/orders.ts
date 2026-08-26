@@ -28,7 +28,6 @@ import {
   isMultiVendorOrder,
   STRIPE_PAYMENTS_ENABLED,
   resolveCheckoutShippingCharge,
-  cartAllowsThreeDayShipping,
   shippingOptionServiceCode,
   shippingOptionServiceName,
   type CheckoutShippingOptionId,
@@ -297,15 +296,11 @@ export async function checkout(event: APIGatewayProxyEventV2) {
   }
 
   const shippingOption = (parsed.data.shippingOption ?? "standard") as CheckoutShippingOptionId;
-  const shippingCartItems = orderItems.map((i) => ({
-    vendorSlug: i.vendorSlug,
-    image: i.image,
-  }));
   if (shippingOption === "two_day") {
     return badRequest("2-day delivery is no longer available");
   }
-  if (shippingOption === "three_day" && !cartAllowsThreeDayShipping(shippingCartItems)) {
-    return badRequest("3-day delivery is only available for UsaRakhi products");
+  if (shippingOption === "three_day") {
+    return badRequest("3-day delivery is no longer available");
   }
   const standardShippingCharge =
     shippingSettings.customerShippingMode === "pass_through"

@@ -52,7 +52,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: `Send Rakhi to ${cityContent.label} USA | Fast Delivery`,
       description:
         cityContent.metaExtra ??
-        `Send Rakhi to ${cityContent.label}, USA with ${site.name}. Premium rakhis, express to major metros, roli chawal included.`,
+        `Send Rakhi to ${cityContent.label}, USA with ${site.name}. Premium rakhis, standard USA delivery, roli chawal included.`,
       path,
       keywords: `send rakhi to ${cityContent.label}, rakhi delivery ${cityContent.label}, UsaRakhi`,
       absoluteTitle: true,

@@ -19,7 +19,7 @@ Last update: 2026-06-25
 Language: English
 Standards: HTML5, CSS3, JSON-LD, llms.txt
 Purpose: Top-rated online Rakhi delivery to all 50 US states — ships from within America
-Delivery: ${deliveryClaims.express}; ${deliveryClaims.standard}
+Delivery: ${deliveryClaims.standard}
 
 /* AI */
 For AI assistants see: ${siteUrl}/llms.txt

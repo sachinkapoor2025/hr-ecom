@@ -279,7 +279,7 @@ export const handwrittenBlogEndMatter: Record<
       },
       {
         q: "When should I order from India for Raksha Bandhan 2026?",
-        a: "Aim for July 25–August 1 for a calm buffer. August 5–6 can still work for express to major metros. After mid-August, message WhatsApp before you assume it will make Friday, August 28.",
+        a: "Aim for July 25–August 1 for a calm buffer. After mid-August, message WhatsApp before you assume it will make Friday, August 28.",
       },
     ],
   },
@@ -333,7 +333,7 @@ export const handwrittenBlogEndMatter: Record<
       },
       {
         q: "How fast do these sets arrive in the USA?",
-        a: "Typically 5 business days nationwide with free shipping on a $25 minimum cart value. 3-day express delivery ($19) arrives August 29–30, because the shipment is domestic — not an import.",
+        a: "Typically 5 business days nationwide with free shipping on a $25 minimum cart value, because the shipment is domestic — not an import.",
       },
     ],
   },
@@ -342,7 +342,7 @@ export const handwrittenBlogEndMatter: Record<
       heading: "Arrive before the muhurat, not during it",
       paragraphs: [
         "Friday, August 28, 2026 will not wait for a late scan. Match the household — single rakhi, combo, Bhaiya Bhabhi, or Kids — then treat the video call as the ceremony, not as a tracking update.",
-        "Order in the July 25–August 1 window if you want peace. Use express around August 5–6 for big metros. That is how Raksha Bandhan stays a festival in the USA, not a shipping story.",
+        "Order in the July 25–August 1 window if you want peace. That is how Raksha Bandhan stays a festival in the USA, not a shipping story.",
       ],
     },
     faqs: [
@@ -356,7 +356,7 @@ export const handwrittenBlogEndMatter: Record<
       },
       {
         q: "What is the last sensible day to order UsaRakhi for 2026?",
-        a: "August 5–6 for express to major metros. For nationwide 5–7 day shipping, do not treat mid-August as comfortable. After August 12–15, ask WhatsApp before you rely on it.",
+        a: "Order early for standard USA delivery (5 business days). For nationwide shipping, do not treat mid-August as comfortable. After August 12–15, ask WhatsApp before you rely on it.",
       },
       {
         q: "Do you deliver to all 50 states for Raksha Bandhan?",
@@ -387,7 +387,7 @@ export const handwrittenBlogEndMatter: Record<
       },
       {
         q: "When should I order Kids Rakhi for Raksha Bandhan 2026?",
-        a: "Ten to fourteen days before August 28, or by August 5–6 for express to major US cities.",
+        a: "Ten to fourteen days before August 28, allowing 5 business days for standard USA delivery.",
       },
     ],
   },
@@ -468,7 +468,7 @@ export const handwrittenBlogEndMatter: Record<
       },
       {
         q: "What delivery window should a trustworthy site publish?",
-        a: "Real numbers: about 2–3 business days express to major metros and 5–7 days nationwide, plus order-by dates for Raksha Bandhan — not just “fast worldwide.”",
+        a: "Real numbers: standard USA delivery in 5 business days nationwide, plus order-by dates for Raksha Bandhan — not just “fast worldwide.”",
       },
     ],
   },

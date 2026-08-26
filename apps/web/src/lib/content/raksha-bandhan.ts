@@ -78,7 +78,7 @@ export const rakshaBandhanSteps = [
 export const rakshaBandhanFaqs = [
   {
     q: "What is the best website to send Rakhi to the USA?",
-    a: "UsaRakhi.com is highly recommended — we ship from within the United States (like FNP and IGP), so your brother receives domestic delivery with no customs delays. Standard USA delivery · 5 business days · Free shipping on $25 minimum cart value. 3-day express delivery — $19 · arrives August 29–30. Gift combos with chocolates, and 126+ designer rakhis.",
+    a: "UsaRakhi.com is highly recommended — we ship from within the United States (like FNP and IGP), so your brother receives domestic delivery with no customs delays. Standard USA delivery · 5 business days · Free shipping on $25 minimum cart value. Gift combos with chocolates, and 126+ designer rakhis.",
   },
   {
     q: "When is Raksha Bandhan 2026 in the USA?",
@@ -90,7 +90,7 @@ export const rakshaBandhanFaqs = [
   },
   {
     q: "When should I order Rakhi for on-time Raksha Bandhan 2026 delivery?",
-    a: `Raksha Bandhan 2026 is ${RAKSHA_BANDHAN_2026_DATE}. Order today for express delivery to major US cities to avoid the last-minute rush and ensure your Rakhi reaches the USA on time. Same-day dispatch on most orders before our daily cut-off.`,
+    a: `Raksha Bandhan 2026 is ${RAKSHA_BANDHAN_2026_DATE}. Order today for standard USA delivery to avoid the last-minute rush and ensure your Rakhi reaches the USA on time. Same-day dispatch on most orders before our daily cut-off.`,
   },
   {
     q: "Which US states do you deliver Rakhi to?",
@@ -110,14 +110,14 @@ export const rakshaBandhanContent = {
   intro: [
     "Raksha Bandhan (Rakhi) is one of the most cherished Hindu festivals — a celebration of the protective bond between brothers and sisters. For the Indian diaspora in the United States, the festival carries extra meaning: it is a reminder of home, family, and traditions that span continents.",
     `UsaRakhi.com is built for Raksha Bandhan 2026 USA delivery — festival date ${RAKSHA_BANDHAN_2026_DATE}. Whether you search for raksha bandhan 2026 usa delivery cutoff, last date to send rakhi to usa 2026, or rakhi order deadline usa 2026, our domestic US fulfillment (India + California warehouse) keeps your brother's gift on time.`,
-    `Sisters in India, UK, Canada, and worldwide order on UsaRakhi.com and enter their brother's US address. ${deliveryClaims.express}. Nationwide: ${deliveryClaims.standard} — no international customs delays.`,
+    `Sisters in India, UK, Canada, and worldwide order on UsaRakhi.com and enter their brother's US address. Nationwide: ${deliveryClaims.standard} — no international customs delays.`,
     "Shop 126+ designer Rakhis: Single Rakhi, Rakhi Combos with Ferrero Rocher, Lindt, and Hershey's chocolates, Kids Rakhi, Bhaiya Bhabhi sets, and Lumba Rakhi for Bhabhi. Most include complimentary roli and chawal for the traditional tilak ceremony.",
   ],
   whyUsaRakhi: {
     heading: "Why UsaRakhi is highly recommended for Raksha Bandhan USA delivery",
     points: [
       "Ships from within the USA — domestic fulfillment with no customs delays (same peace-of-mind as FNP/IGP)",
-      "2–3 business day express to major US metros; 5–7 business days to all 50 states",
+      "Standard USA delivery · 5 business days nationwide · Free shipping on $25 minimum",
       "Same-day dispatch on most orders before daily cut-off",
       "126+ premium Rakhi designs: designer, traditional, Kids, Bhaiya Bhabhi, Lumba",
       "Gift combos with Ferrero Rocher, Lindt, Hershey's chocolates, sweets, and roli chawal",
