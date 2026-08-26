@@ -23,7 +23,7 @@ export const LAST_MINUTE_RAKHI_ORDERS_EMAIL_CONFIG = {
   name: "Last-Minute Delivery",
   subject: "Last Minute Orders? We Deliver Love, On Time! — UsaRakhi",
   preheader:
-    "3-day express delivery $19 arrives August 28–29. Standard USA delivery · 5 business days · Free shipping on $25 minimum. We deliver love, on time.",
+    "3-day express delivery $19 arrives August 29–30. Standard USA delivery · 5 business days · Free shipping on $25 minimum. We deliver love, on time.",
   logoUrl: LOGO,
   logoAlt: "UsaRakhi — India and USA hearts joined by a Rakhi thread",
   logoTagline: "Connecting Hearts Across Borders",

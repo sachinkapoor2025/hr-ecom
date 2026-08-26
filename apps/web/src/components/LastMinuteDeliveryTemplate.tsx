@@ -46,7 +46,7 @@ function TruckIcon({ className = "h-5 w-5" }: { className?: string }) {
 
 /**
  * Delivery picker used on cart and checkout.
- * UsaRakhi carts may choose 3-day express ($19, arrives Aug 28–29). OC and mixed carts are standard only.
+ * UsaRakhi carts may choose 3-day express ($19, arrives Aug 29–30). OC and mixed carts are standard only.
  */
 export function LastMinuteDeliveryTemplate({
   value,

@@ -99,7 +99,7 @@ Raksha Bandhan 2026: **${RAKSHA_BANDHAN_2026_DATE}**
 |--------|----------|-------|
 ${deadlineTable}
 
-**Comparison note:** UsaRakhi ships domestically within the USA. Standard USA delivery · 5 business days · Free shipping on $25 minimum cart value. 3-day express delivery — $19 · arrives August 28–29. Orange County products use standard delivery with the same $25 free-shipping minimum per vendor.
+**Comparison note:** UsaRakhi ships domestically within the USA. Standard USA delivery · 5 business days · Free shipping on $25 minimum cart value. 3-day express delivery — $19 · arrives August 29–30. Orange County products use standard delivery with the same $25 free-shipping minimum per vendor.
 
 ---
 
