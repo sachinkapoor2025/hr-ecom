@@ -1,13 +1,7 @@
 import nodemailer from "nodemailer";
 import crypto from "crypto";
 import type SMTPTransport from "nodemailer/lib/smtp-transport";
-import type { Order, Product, CartItem } from "@hr-ecom/shared";
-import type { LeadCaptureInput } from "@hr-ecom/shared";
-import nodemailer from "nodemailer";
-import crypto from "crypto";
-import type SMTPTransport from "nodemailer/lib/smtp-transport";
-import type { Order, Product, CartItem } from "@hr-ecom/shared";
-import type { LeadCaptureInput } from "@hr-ecom/shared";
+import type { Order, Product, CartItem, LeadCaptureInput } from "@hr-ecom/shared";
 import {
   ORDER_STATUS,
   WELCOME_DISCOUNT_PERCENT,
