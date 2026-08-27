@@ -7,6 +7,7 @@ import { AddToCartControl } from "@/components/AddToCartControl";
 import { HomeProductCard } from "@/components/HomeProductCard";
 import { useCurrency, type DisplayCurrency } from "@/lib/currency-context";
 import { getDiscountPercent } from "@/lib/pricing";
+import { VariantImg } from "@/components/VariantImg";
 
 type Props = {
   recommendedProducts: Product[];
@@ -70,8 +71,14 @@ export function WishlistPageClient({ recommendedProducts }: Props) {
                 </button>
                 <Link href={`/products/${item.slug}`} className="block w-full h-full">
                   {item.image ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                    <VariantImg
+                      src={item.image}
+                      variant="card"
+                      alt={item.name}
+                      className="w-full h-full object-cover"
+                      width={640}
+                      height={640}
+                    />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-slate-400 text-sm">No image</div>
                   )}

@@ -10,7 +10,7 @@ import { RakhiDeliveryBulletList } from "@/components/RakhiDeliveryBulletList";
 export const metadata: Metadata = pageMetadata({
   title: "Rakhi Shipping & Delivery to USA — Ships From Within America",
   description:
-    "UsaRakhi ships domestically within the USA — no customs delays. Standard USA delivery · 5 business days · Free shipping on $25 minimum cart value. 3-day express delivery — $19 · arrives August 29–30.",
+    "UsaRakhi ships domestically within the USA — no customs delays. Standard USA delivery · 5 business days · Free shipping on $25 minimum cart value.",
   path: "/shipping",
 });
 
@@ -45,10 +45,6 @@ export default function ShippingPage() {
           <li>
             <strong>Orange County products</strong> — standard delivery only. The same $
             {USARAKHI_MIN_ORDER_USD} free-shipping minimum applies.
-          </li>
-          <li>
-            <strong>3-day express delivery</strong> — <strong>$19</strong> · arrives{" "}
-            <strong>August 29–30</strong>.
           </li>
           <li>
             <strong>Mixed carts</strong> (Orange County + UsaRakhi in the same order) — shipping is

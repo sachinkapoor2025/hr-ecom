@@ -12,7 +12,7 @@ import {
   type ProductAddonSelection,
 } from "@hr-ecom/shared";
 import { useCurrency } from "@/lib/currency-context";
-import { resolveImageUrl } from "@/lib/images";
+import { VariantImg } from "@/components/VariantImg";
 
 function qtyMap(selected: ProductAddonSelection[]): Map<string, number> {
   return new Map(selected.map((s) => [s.id, s.quantity]));
@@ -152,7 +152,7 @@ function RakhiAddonStrip({
         {items.map((addon) => {
           const qty = quantities.get(addon.id) ?? 0;
           const checked = qty > 0;
-          const image = addon.image ? resolveImageUrl(addon.image) : "";
+          const image = addon.image ?? "";
           const canAdd = remaining > 0 || checked;
           return (
             <li key={addon.id}>
@@ -170,12 +170,13 @@ function RakhiAddonStrip({
                 >
                   <span className="relative block w-full aspect-square bg-slate-100 overflow-hidden">
                     {image ? (
-                      // Native img: next/image fill collapses to 0px inside a shrink-wrapped button.
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
+                      <VariantImg
                         src={image}
+                        variant="thumb"
                         alt=""
                         className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-110"
+                        width={320}
+                        height={320}
                       />
                     ) : null}
                     {checked ? (

@@ -829,7 +829,7 @@ export const blogPosts: BlogPost[] = [
         paragraphs: [
           "There is a particular silence in an Indian home the week before Raksha Bandhan, when the thali is ready in your mind and your brother’s life is happening on another continent. The festival is supposed to be simple: a sacred thread, a tilak, a laugh, a sweet. Distance turns it bittersweet. That ache is not weakness. It is proof the bond is still unbreakable.",
           "You do not have to win this by shipping a parcel from Delhi or Mumbai and praying it clears US customs in time. That path is slow, unpredictable, and unkind to a date that will not move. UsaRakhi is built for the sister who wants the ritual to arrive — not a tracking page that stalls.",
-          "You order online from India, pay in INR if that feels like home, enter his full US address, and we fulfill from within America. He receives a domestic package, typically in 5–7 business days nationwide, or 2–3 business days express to major metros. Most rakhis include roli and chawal so the blessing can still happen on a video call. The miles stay. The empty-wrist morning does not have to.",
+          "You order online from India, pay in INR if that feels like home, enter his full US address, and we fulfill from within America. He receives a domestic package, typically in 5 business days nationwide. Most rakhis include roli and chawal so the blessing can still happen on a video call. The miles stay. The empty-wrist morning does not have to.",
         ],
       },
       {
@@ -861,7 +861,7 @@ export const blogPosts: BlogPost[] = [
         heading: "When to order for Raksha Bandhan 2026",
         paragraphs: [
           "The festival falls on Friday, August 28, 2026. Domestic shipping is fast. Weekends and wrong ZIP codes still exist. Give yourself the gift of a buffer.",
-          "Order between July 25 and August 1 if you want a calm month. August 5–6 still works for express to New York, Los Angeles, Chicago, Houston, San Francisco, and New Jersey. After mid-August, message WhatsApp before you assume the box will make the muhurat. Courage is ordering while there is still calendar left.",
+          "Order between July 25 and August 1 if you want a calm month. After mid-August, message WhatsApp before you assume the box will make the muhurat. Courage is ordering while there is still calendar left.",
         ],
       },
       {
@@ -960,7 +960,7 @@ export const blogPosts: BlogPost[] = [
       {
         heading: "Sending the set to the USA without the ache of logistics",
         paragraphs: [
-          "You order from India or anywhere; we ship domestically inside the United States. Confirm apartment number and ZIP. Add a printed note. Order by early August for August 28, 2026, or use express for major metros around August 5–6.",
+          "You order from India or anywhere; we ship domestically inside the United States. Confirm apartment number and ZIP. Add a printed note. Order by early August for August 28, 2026, allowing 5 business days for standard USA delivery.",
           "On the call, ask them to show both wrists. Bless the couple, not only your brother. If she ties his rakhi because you cannot, thank her — she is doing the physical half of your devotion. The Lumba is how you thank her in return.",
         ],
       },
@@ -1007,7 +1007,7 @@ export const blogPosts: BlogPost[] = [
         heading: "A delivery plan that respects the calendar",
         paragraphs: [
           "UsaRakhi ships from within America. That is the difference between a Friday festival and a package that clears customs the following week. Still: weekends exist. Apartments mis-label units.",
-          "Ideal: July 25 – August 1. Express to major metros: August 5–6. Nationwide 5–7 business days should not be treated as comfortable in mid-August for every ZIP. Last chance: WhatsApp us around August 12–15. Same-day dispatch on most orders before cut-off. Share tracking. Building desks are the quiet villains of festival week.",
+          "Ideal: July 25 – August 1. Nationwide standard delivery is 5 business days and should not be treated as comfortable in mid-August for every ZIP. Last chance: WhatsApp us around August 12–15. Same-day dispatch on most orders before cut-off. Share tracking. Building desks are the quiet villains of festival week.",
         ],
       },
       {
@@ -1032,7 +1032,7 @@ export const blogPosts: BlogPost[] = [
       {
         paragraphs: [
           "Kids Rakhi is the most honest category in the catalog: if he does not like it, he will take it off. Distance makes that worse. You cannot renegotiate the design from India once the box is open in Houston or Edison. The fix is not more sparkle. It is matching age, comfort, and personality — then shipping early enough that the festival is fun instead of frantic.",
-          "UsaRakhi’s Kids Rakhi collection is built for younger brothers in the United States: colorful motifs, softer threads, optional chocolates, delivered domestically in 5–7 business days (faster express to major metros). The goal is simple and powerful: a face that lights up, a wrist that stays decorated until dinner.",
+          "UsaRakhi’s Kids Rakhi collection is built for younger brothers in the United States: colorful motifs, softer threads, optional chocolates, delivered domestically in 5 business days. The goal is simple and powerful: a face that lights up, a wrist that stays decorated until dinner.",
         ],
       },
       {
@@ -1079,7 +1079,7 @@ export const blogPosts: BlogPost[] = [
         heading: "Choose a Lumba she will actually wear",
         paragraphs: [
           "Look at her jewelry, not the thumbnail. Gold bangles daily? A gold-tone Lumba with pearls or kundan will feel at home. Minimal jewelry? A lighter bracelet-style piece beats a large hanging design that catches on sweaters. If she is new to the tradition, pick an elegant bracelet she could wear to dinner — then explain it in the note anyway. Belonging should not require a lecture.",
-          "Decide: standalone Lumba if he already has a rakhi, or a full matching set if you want one coordinated gift. Enter the couple’s US address with apartment and ZIP. Use her name. Order with the same 2026 buffers as any rakhi — early August for calm, August 5–6 for express metros. On the call, keep her in the frame. Bless them as a pair.",
+          "Decide: standalone Lumba if he already has a rakhi, or a full matching set if you want one coordinated gift. Enter the couple’s US address with apartment and ZIP. Use her name. Order with the same 2026 buffers as any rakhi — early August for calm standard USA delivery. On the call, keep her in the frame. Bless them as a pair.",
         ],
       },
     ],
@@ -1138,7 +1138,7 @@ export const blogPosts: BlogPost[] = [
         heading: "Six checks that separate a real shop from a pretty catalog",
         paragraphs: [
           "1. Domestic US shipping — read the shipping page, not the slogan. If the rakhi leaves India as an international shipment, he can face holds, fees, or a delivery attempt while he is at work.",
-          "2. Published windows you can plan around: 2–3 business days express to major metros, 5–7 days nationwide, and order-by dates for Raksha Bandhan — early August for calm, August 5–6 still viable for express metros.",
+          "2. Published windows you can plan around: standard USA delivery in 5 business days nationwide, and order-by dates for Raksha Bandhan — early August for calm.",
           "3. A catalog that matches real families: Single Rakhi, chocolate combos, Kids, Bhaiya Bhabhi, Lumba, hampers. One designer SKU is not a store.",
           "4. Checkout that works from India and the US — Razorpay in INR and Stripe in USD. One currency is a quiet way to lose half the sisters who need you.",
           "5. A human you can reach before Purnima. Wrong apartment numbers are not chatbot problems.",
@@ -1149,7 +1149,7 @@ export const blogPosts: BlogPost[] = [
         heading: "Red flags that waste a sacred day",
         paragraphs: [
           "No origin of shipment. “3–5 days worldwide” with no customs caveat. Every rakhi looking like the same render. No path if the address is wrong. Pressure to pay off-platform. These are not small print issues. They are how unforgettable mornings become tracking screenshots.",
-          "UsaRakhi scores the checklist on purpose: California-based fulfillment, express and nationwide windows, 126+ designs, combos, dual currency, WhatsApp and order@usarakhi.com, reviews you can read. That is the offer — not a mystery “best of” badge. If the checklist points here, order while August still has weeks in it. Switching sites on August 20 is how rakhis arrive in September.",
+          "UsaRakhi scores the checklist on purpose: California-based fulfillment, standard USA delivery windows, 126+ designs, combos, dual currency, WhatsApp and order@usarakhi.com, reviews you can read. That is the offer — not a mystery “best of” badge. If the checklist points here, order while August still has weeks in it. Switching sites on August 20 is how rakhis arrive in September.",
         ],
       },
     ],
@@ -1181,8 +1181,8 @@ export const blogPosts: BlogPost[] = [
       {
         heading: "What domestic fulfillment quietly changes",
         paragraphs: [
-          "The website checkout looks the same. The difference is the last mile. UsaRakhi’s California-based team packs rakhis — most with roli and chawal, combos assembled in the same box — and ships with trusted US carriers. Standard USA delivery · 5 business days · Free shipping on $25 minimum cart value. 3-day express delivery — $19 · arrives August 29–30. Same-day dispatch on most orders before cut-off.",
-          "It is not magic. Weekends exist. Wrong ZIP codes still bounce. Order in the July 25 – August 1 window if you want zero drama before August 28. Use express around August 5–6 for big cities. Write the apartment number. Share tracking. Message WhatsApp if the date is tight — guessing is how customs stories start, even on domestic routes.",
+          "The website checkout looks the same. The difference is the last mile. UsaRakhi’s California-based team packs rakhis — most with roli and chawal, combos assembled in the same box — and ships with trusted US carriers. Standard USA delivery · 5 business days · Free shipping on $25 minimum cart value. Same-day dispatch on most orders before cut-off.",
+          "It is not magic. Weekends exist. Wrong ZIP codes still bounce. Order in the July 25 – August 1 window if you want zero drama before August 28. Write the apartment number. Share tracking. Message WhatsApp if the date is tight — guessing is how customs stories start, even on domestic routes.",
         ],
       },
       {

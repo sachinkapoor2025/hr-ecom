@@ -12,11 +12,11 @@ import { shippingVendorKey } from "./free-shipping";
 export const USARAKHI_STANDARD_DELIVERY_DETAIL =
   "Standard USA delivery · 5 business days · Free shipping on $25 minimum cart value";
 
-/** Stated arrival window for UsaRakhi 3-day express (1 packing day + 3 transit). */
+/** Historical 3-day window — kept for old orders only (not offered at checkout). */
 export const USARAKHI_THREE_DAY_ARRIVAL_YMD = "2026-08-30";
 export const USARAKHI_THREE_DAY_ARRIVAL_LABEL = "August 29–30";
 
-/** Flat rate for UsaRakhi 3-day upgrade (USD). 2-day is no longer offered. */
+/** @deprecated 3-day express is no longer offered at checkout. */
 export const EXPEDITED_THREE_DAY_SHIPPING_USD = 19;
 /** @deprecated 2-day delivery is no longer offered at checkout. */
 export const EXPEDITED_TWO_DAY_SHIPPING_USD = 39;
@@ -24,8 +24,7 @@ export const EXPEDITED_TWO_DAY_SHIPPING_USD = 39;
 /**
  * Checkout shipping choice.
  * - `standard` — all vendors: $25 min merchandise per vendor (top-up shipping below); 5 business days
- * - `three_day` — UsaRakhi-only carts: $19; 1 packing business day + 3 transit business days; arrives Aug 29–30
- * - `two_day` — kept for historical orders only (not offered at checkout)
+ * - `three_day` / `two_day` — historical orders only (not offered at checkout)
  */
 export const CHECKOUT_SHIPPING_OPTION_IDS = ["standard", "three_day", "two_day"] as const;
 export type CheckoutShippingOptionId = (typeof CHECKOUT_SHIPPING_OPTION_IDS)[number];
@@ -60,7 +59,7 @@ export const CHECKOUT_SHIPPING_OPTIONS: readonly ExpeditedShippingDef[] = [
     priceUsd: EXPEDITED_THREE_DAY_SHIPPING_USD,
     packingBusinessDays: 1,
     transitBusinessDays: 3,
-    detail: `3-day express delivery — $19 · arrives ${USARAKHI_THREE_DAY_ARRIVAL_LABEL}`,
+    detail: "3-day express delivery — no longer available",
   },
   {
     id: "two_day",
@@ -79,17 +78,14 @@ export const STANDARD_CHECKOUT_SHIPPING_OPTIONS = CHECKOUT_SHIPPING_OPTIONS.filt
   (o) => o.id === "standard"
 );
 
-/** UsaRakhi-only carts may choose standard or 3-day. */
-export const USARAKHI_CHECKOUT_SHIPPING_OPTIONS = CHECKOUT_SHIPPING_OPTIONS.filter(
-  (o) => o.id === "standard" || o.id === "three_day"
-);
+/** UsaRakhi carts — standard only (3-day is no longer offered). */
+export const USARAKHI_CHECKOUT_SHIPPING_OPTIONS = STANDARD_CHECKOUT_SHIPPING_OPTIONS;
 
 /** Orange County — standard only ($25 minimum). */
 export const ORANGE_COUNTY_CHECKOUT_SHIPPING_OPTIONS = STANDARD_CHECKOUT_SHIPPING_OPTIONS;
 
-/** Customer-facing 3-day express line. */
-export const RAKHI_LAST_MINUTE_GUARANTEE =
-  `3-day express delivery — $19 · arrives ${USARAKHI_THREE_DAY_ARRIVAL_LABEL}`;
+/** @deprecated 3-day express is no longer offered; same as standard copy. */
+export const RAKHI_LAST_MINUTE_GUARANTEE = USARAKHI_STANDARD_DELIVERY_DETAIL;
 
 export const ORANGE_COUNTY_SHIPPING_BULLETS = [
   USARAKHI_STANDARD_DELIVERY_DETAIL,
@@ -123,13 +119,9 @@ export function cartIsMixedShippingVendors(items: ShippingCartItem[]): boolean {
   return vendorKeysForCart(items).size > 1;
 }
 
-/**
- * 3-day ($19, arrives Aug 29–30) is only offered on UsaRakhi-only carts.
- * Orange County and mixed carts use standard delivery with the $25 rule.
- */
-export function cartAllowsThreeDayShipping(items: ShippingCartItem[]): boolean {
-  if (!items.length) return true;
-  return [...vendorKeysForCart(items)].every((key) => key !== VENDOR_ORANGE_COUNTY);
+/** 3-day express is no longer offered at checkout. */
+export function cartAllowsThreeDayShipping(_items: ShippingCartItem[]): boolean {
+  return false;
 }
 
 /** @deprecated OC no longer requires paid expedited — always false. */
@@ -138,11 +130,8 @@ export function cartRequiresPaidExpeditedShipping(_items: ShippingCartItem[]): b
 }
 
 export function checkoutShippingOptionsForCart(
-  items?: ShippingCartItem[]
+  _items?: ShippingCartItem[]
 ): readonly ExpeditedShippingDef[] {
-  if (cartAllowsThreeDayShipping(items ?? [])) {
-    return USARAKHI_CHECKOUT_SHIPPING_OPTIONS;
-  }
   return STANDARD_CHECKOUT_SHIPPING_OPTIONS;
 }
 
@@ -247,7 +236,7 @@ export function expeditedOptionPriceInCurrency(
 
 /**
  * Final customer shipping charge for checkout.
- * 3-day replaces threshold / flash rates with the flat $19 upgrade (UsaRakhi-only carts).
+ * Expedited options are not offered; new checkouts use standard threshold / flash rates.
  */
 export function resolveCheckoutShippingCharge(input: {
   optionId: CheckoutShippingOptionId;
@@ -289,13 +278,12 @@ export const USARAKHI_SHIPPING_BULLETS = [
   "Standard USA delivery",
   "5 business days",
   "Free shipping on $25 minimum cart value",
-  `3-day express delivery — $19 · arrives ${USARAKHI_THREE_DAY_ARRIVAL_LABEL}`,
 ] as const;
 
 /** Customer-facing shipping options. */
 export const RAKHI_DELIVERY_MESSAGING = {
   headline: "Shipping options",
-  lastMinuteNote: RAKHI_LAST_MINUTE_GUARANTEE,
+  lastMinuteNote: USARAKHI_STANDARD_DELIVERY_DETAIL,
   orderByShort: "Mon, Aug 24",
   orderByLong: "Monday, August 24",
   festivalShort: "Aug 28",
@@ -308,11 +296,9 @@ export const RAKHI_DELIVERY_MESSAGING = {
     "Free shipping on $25 minimum cart value",
   ],
   standardBadge: "Standard USA delivery · 5 business days",
-  expeditedTitle: "Express delivery",
-  expeditedBullets: [
-    `3-day express delivery — $19 · arrives ${USARAKHI_THREE_DAY_ARRIVAL_LABEL}`,
-  ],
-  expeditedBadge: `Arrives ${USARAKHI_THREE_DAY_ARRIVAL_LABEL}`,
+  expeditedTitle: "Standard delivery",
+  expeditedBullets: [...USARAKHI_SHIPPING_BULLETS],
+  expeditedBadge: "Standard USA delivery · 5 business days",
 } as const;
 
 export function shippingBulletsForCart(items?: ShippingCartItem[]): readonly string[] {
@@ -337,7 +323,7 @@ export const RAKHI_DELIVERY_URGENCY_NOTICE = {
   compactBullets: [...RAKHI_DELIVERY_MESSAGING.shippingBullets],
   weekendNote: RAKHI_DELIVERY_MESSAGING.weekendNote,
   successRateLabel: RAKHI_DELIVERY_MESSAGING.standardBadge,
-  confirmedExpeditedLabel: `Arrives ${USARAKHI_THREE_DAY_ARRIVAL_LABEL}`,
+  confirmedExpeditedLabel: USARAKHI_STANDARD_DELIVERY_DETAIL,
 } as const;
 
 /** @deprecated Use RAKHI_DELIVERY_URGENCY_NOTICE — kept for existing imports. */

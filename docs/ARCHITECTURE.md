@@ -76,6 +76,7 @@ leads/sessions; products re-seed via `import:usarakhi`).
 | `ReviewEmailsCronFunction` | Every 15 minutes | Review emails + abandoned cart + pending-payment reminders |
 | `ReviewEmailsCronFunction` (`task: trackingSync`) | Every 15 minutes | **USPS tracking sync** for active shipments (`processUspsTrackingSync`) |
 | `ReviewEmailsCronFunction` (review path) | As due | One-time **review request** (email + WhatsApp) for **Delivered** / **Complete** if a channel still failed; primary send is immediate on first status change |
+| `ImageOptimizeFunction` | S3 Object Created (EventBridge) | Writes `thumb` / `card` / `gallery` / `zoom` WebP siblings next to product images. Storefront prefers those URLs and falls back to the original if a variant is missing. |
 
 When admin (or Orange County vendor tracking) changes order status (accepted, processing, shipped, delivered, complete, cancelled, refunded, or paid), the API emails **both** the customer at `shippingAddress.email` and the ops inbox (`order@usarakhi.com` / `NOTIFY_EMAIL`) via **SMTP** (`notifyCustomerOrderStatusChange` in `apps/api/src/lib/email.ts` — same transactional path as paid confirmation). Admin copy includes customer contact, items, tracking, and an admin order link so the team need not open the portal for every update. **Marketing campaigns** (`/ses-email/*`, admin Email) send via **marketing SMTP** (default Mailercloud `smtp-prod.mailrcld.com:587`) configured under Admin → Email → Settings; Amazon SES API remains an optional legacy transport if `marketingTransport=ses`. Transactional `SMTP_*` env is separate and unchanged. Shipped emails include carrier/tracking when present. `pending_payment` → `cancelled` skips the customer/status pair (admin payment-failed alert only).
 
@@ -97,7 +98,8 @@ When admin (or Orange County vendor tracking) changes order status (accepted, pr
 | POST | `/products/{slug}/reviews` | Admin: create a product review (published by default) |
 | GET | `/reviews` | Published customer reviews (site-wide + product) |
 | POST | `/reviews` | Public: submit a review — published immediately, no approval email |
-| GET | `/admin/reviews` | Admin: list all customer reviews |
+| GET | `/admin/reviews` | Admin: list catalog reviews and historical `/leads` reviews (`source=review`); read-only merge |
+| PATCH | `/admin/reviews/{productSlug}/{reviewId}` | Admin: set status `published` (on website) or `historical` (admin-only) |
 | DELETE | `/admin/reviews/{productSlug}/{reviewId}` | Admin: remove a review from DynamoDB and the storefront |
 | POST | `/products` | Admin: create product |
 | PUT | `/products/{slug}` | Admin: update |
@@ -152,7 +154,7 @@ When admin (or Orange County vendor tracking) changes order status (accepted, pr
 
 **Product add-ons (UsaRakhi only):** Fixed dry-fruit / chocolate extras (`packages/shared/src/lib/product-addons.ts`). Shown on PDP when `allowsAddons` is true (non–Orange County). Shoppers pick quantity per add-on (1–10); nested on `CartItem.addons` with `quantity`; line totals include `price × quantity`. Merge key includes quantities. OC products reject addons server-side.
 
-**Customer reviews:** Public `POST /reviews` writes a published item on the products table (`PRODUCT#_site` / `REVIEW#id`, GSI1 `ENTITY#REVIEW`). There is no approval queue and no admin email on submit — the review is shown on `/reviews` immediately. Admin **Reviews** (`/admin/reviews`) can permanently delete a review (`DELETE /admin/reviews/{productSlug}/{reviewId}`), which removes it from DynamoDB and the storefront. Delivered-order **review request** emails (ask the customer to write a review) are unchanged.
+**Customer reviews:** Public `POST /reviews` writes a published item on the products table (`PRODUCT#_site` / `REVIEW#id`, GSI1 `ENTITY#REVIEW`). There is no approval queue and no admin email on submit — the review is shown on `/reviews` immediately. **Before** that endpoint existed, shoppers submitted reviews via `POST /leads` (`source: "review"`, body/rating/order in `metadata`) on the customers table (`SESSION#` / `LEAD#`). Admin **Reviews** (`GET /admin/reviews`) lists both sources in one feed (catalog + historical leads), with order number/items when `orderId` resolves. Admins set **Published** vs **Historical** via `PATCH /admin/reviews/{productSlug}/{reviewId}` (`{ status }`). Published reviews appear on `/reviews`; Historical reviews stay in the admin list only. Status changes set `published` on the existing catalog or lead item — they do not copy, duplicate, or delete review content. Admin can permanently delete a **catalog** review (`DELETE /admin/reviews/{productSlug}/{reviewId}`), which removes it from DynamoDB and the storefront. Delivered-order **review request** emails (ask the customer to write a review) are unchanged.
 
 ### Scale notes (catalog / concurrency)
 
@@ -235,7 +237,7 @@ Admin **Product Sales Intelligence** (`/admin/product-sales`) aggregates **paid 
 
 **Stripe toggle:** `STRIPE_PAYMENTS_ENABLED` in `packages/shared/src/constants.ts` (currently `true`). Set to `false` to hide Stripe on checkout and block new Stripe PaymentIntents; Razorpay keeps working. Existing Stripe webhooks still work for any in-flight intents.
 
-**Checkout shipping:** `shippingOption` — `standard` (Standard USA delivery, 5 business days, free shipping on $25 minimum cart value per vendor), or `three_day` (UsaRakhi-only carts, $19 express, arrives August 29–30). Orange County and mixed carts are standard only. 2-day is no longer offered. Logic: `packages/shared/src/lib/expedited-shipping.ts` and `packages/shared/src/lib/free-shipping.ts`.
+**Checkout shipping:** `shippingOption` — `standard` only (Standard USA delivery, 5 business days, free shipping on $25 minimum cart value per vendor). `three_day` and `two_day` are kept for historical orders and rejected on new checkouts. Logic: `packages/shared/src/lib/expedited-shipping.ts` and `packages/shared/src/lib/free-shipping.ts`.
 
 Requires GitHub secret `RAZORPAY_WEBHOOK_SECRET` and Razorpay Dashboard webhook to `{API}/webhooks/razorpay` for events `payment.captured`, `order.paid`, `qr_code.credited`.
 

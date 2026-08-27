@@ -13,6 +13,7 @@ import {
 } from "@hr-ecom/shared";
 import { formatMoney, paginate, downloadCsv } from "@/lib/admin-utils";
 import { TableControls } from "@/components/admin/TableControls";
+import { compressProductImage } from "@/lib/compress-product-image";
 
 export default function AdminProductsPage() {
   const apiClient = useApiClient();
@@ -300,12 +301,13 @@ export default function AdminProductsPage() {
     setUploadingSlug(slug);
     try {
       for (const file of selectedFiles) {
-        const contentType = file.type || "image/jpeg";
+        const compressed = await compressProductImage(file);
+        const contentType = compressed.type || "image/jpeg";
         const presign = await apiClient<{ uploadUrl: string; publicUrl: string }>("/uploads/presign", {
           method: "POST",
-          body: JSON.stringify({ filename: file.name, contentType, productSlug: slug }),
+          body: JSON.stringify({ filename: compressed.name, contentType, productSlug: slug }),
         });
-        await fetch(presign.uploadUrl, { method: "PUT", body: file, headers: { "Content-Type": contentType } });
+        await fetch(presign.uploadUrl, { method: "PUT", body: compressed, headers: { "Content-Type": contentType } });
         await apiClient(`/products/${slug}/images`, {
           method: "POST",
           body: JSON.stringify({ imageUrl: presign.publicUrl }),

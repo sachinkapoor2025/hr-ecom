@@ -61,7 +61,7 @@ export function buildLocationContent(location: SeoLocation) {
       },
       {
         q: `When should I order for Raksha Bandhan 2026?`,
-        a: "Raksha Bandhan 2026 is August 28, 2026. Order today for express delivery to major US cities to avoid the last-minute rush and ensure your Rakhi reaches the USA on time.",
+        a: "Raksha Bandhan 2026 is August 28, 2026. Order today for standard USA delivery to major US cities to avoid the last-minute rush and ensure your Rakhi reaches the USA on time.",
       },
     ],
   };

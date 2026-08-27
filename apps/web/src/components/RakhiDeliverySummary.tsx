@@ -11,7 +11,7 @@ type Props = {
   className?: string;
   /** Override bullets (e.g. Orange County standard-only). */
   bullets?: readonly string[];
-  /** Hide the 3-day arrival note when bullets already include it. */
+  /** Optional extra note above the bullets. */
   showLastMinuteNote?: boolean;
   /** Amount to add in products for free standard shipping. */
   standardTopUpAmount?: number;
@@ -22,12 +22,11 @@ type Props = {
 };
 
 /**
- * Shipping options: standard USA delivery, free shipping on $25, 3-day express arriving Aug 29–30.
+ * Shipping options: standard USA delivery, 5 business days, free shipping on $25.
  */
 export function RakhiDeliverySummary({
   className = "",
   bullets,
-  showLastMinuteNote = true,
   standardTopUpAmount,
   formatMoney,
   currency,
@@ -35,11 +34,6 @@ export function RakhiDeliverySummary({
 }: Props) {
   const msg = RAKHI_DELIVERY_MESSAGING;
   const items = bullets ?? msg.shippingBullets;
-  const noteAlreadyInBullets = items.some((item) =>
-    item.toLowerCase().includes("august 29")
-  );
-  const hasThreeDay = items.some((item) => item.toLowerCase().includes("3-day"));
-  const showNote = showLastMinuteNote && !noteAlreadyInBullets && hasThreeDay;
   const showMinimum =
     showStandardMinimumNote &&
     standardTopUpAmount != null &&
@@ -51,11 +45,6 @@ export function RakhiDeliverySummary({
       className={`rounded-lg border border-amber-200 bg-amber-50 px-3.5 py-3 text-sm text-slate-800 ${className}`}
     >
       <p className="font-bold text-primary text-sm">{msg.headline}</p>
-      {showNote ? (
-        <p className="mt-1.5 text-sm font-semibold text-slate-900 leading-snug">
-          {msg.lastMinuteNote}
-        </p>
-      ) : null}
       {showMinimum ? (
         <StandardShippingMinimumNote
           topUpAmount={standardTopUpAmount}

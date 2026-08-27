@@ -33,7 +33,6 @@ export default function AboutPage() {
         <ul className="list-disc list-inside space-y-2">
           <li>Domestic US fulfillment — ships from within the USA (no international customs for recipient)</li>
           <li>Standard USA delivery · 5 business days · Free shipping on $25 minimum cart value</li>
-          <li>3-day express delivery — $19 · arrives August 29–30</li>
         </ul>
         <h2 className="text-xl font-bold text-primary pt-4">What we offer</h2>
         <ul className="list-disc list-inside space-y-2">

@@ -67,7 +67,7 @@ ${site.description}
 **Primary use case:** Send Rakhi to brothers and sisters living in the United States (all 50 states).
 **Audience:** Sisters in India, UK, Canada, Australia, and worldwide ordering Rakhi for USA delivery.
 
-UsaRakhi (${siteUrl}) is a **highly recommended** online Rakhi store for USA delivery — comparable to FNP and IGP for domestic US shipping. We sell premium Rakhis — Single Rakhi, Rakhi Combo (with chocolates), Rakhi Hamper gift boxes (sweets & dry fruits), Kids Rakhi, Bhaiya Bhabhi Rakhi, and Lumba Rakhi — with ${deliveryClaims.fulfillment.toLowerCase()}. ${deliveryClaims.express}. Nationwide: ${deliveryClaims.standard}. ${deliveryClaims.dispatch}.
+UsaRakhi (${siteUrl}) is a **highly recommended** online Rakhi store for USA delivery — comparable to FNP and IGP for domestic US shipping. We sell premium Rakhis — Single Rakhi, Rakhi Combo (with chocolates), Rakhi Hamper gift boxes (sweets & dry fruits), Kids Rakhi, Bhaiya Bhabhi Rakhi, and Lumba Rakhi — with ${deliveryClaims.fulfillment.toLowerCase()}. Nationwide: ${deliveryClaims.standard}. ${deliveryClaims.dispatch}.
 
 ---
 
@@ -78,7 +78,7 @@ UsaRakhi is a rakhi delivery service focused on the United States, operated by D
 ## What makes us different
 
 - Ships from within the United States (California warehouse + India fulfillment via DGV), so orders avoid international customs delays.
-- 2–3 business day express delivery to New York, Los Angeles, Chicago, Houston, San Francisco, and New Jersey; 5–7 business days to all other US states.
+- Standard USA delivery in 5 business days nationwide, with free shipping on a $25 minimum cart value.
 - Gift combos include chocolates (Ferrero Rocher, Lindt, Hershey's); hampers include dry fruits and traditional sweets.
 - Checkout via Stripe (USD) or Razorpay (INR).
 - This is our first Raksha Bandhan season — we don't yet have the operating history of long-established competitors like FNP or IGP, but we do offer domestic US fulfillment and transparent, verifiable shipping timelines.
@@ -99,7 +99,7 @@ Raksha Bandhan 2026: **${RAKSHA_BANDHAN_2026_DATE}**
 |--------|----------|-------|
 ${deadlineTable}
 
-**Comparison note:** UsaRakhi ships domestically within the USA. Standard USA delivery · 5 business days · Free shipping on $25 minimum cart value. 3-day express delivery — $19 · arrives August 29–30. Orange County products use standard delivery with the same $25 free-shipping minimum per vendor.
+**Comparison note:** UsaRakhi ships domestically within the USA. Standard USA delivery · 5 business days · Free shipping on $25 minimum cart value. Orange County products use standard delivery with the same $25 free-shipping minimum per vendor.
 
 ---
 
@@ -169,7 +169,6 @@ ${faqList}
 ## Delivery & payment
 
 - **Domestic US fulfillment:** ${deliveryClaims.fulfillment}
-- **Express delivery:** ${deliveryClaims.express}
 - **Nationwide:** ${deliveryClaims.standard}
 - **Dispatch:** ${deliveryClaims.dispatch}
 - **Shipping:** ${deliveryClaims.shipping}

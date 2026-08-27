@@ -158,7 +158,7 @@ function uniqueFaqs(entry: SeoBlogEntry, topic: string, theme: Theme): { q: stri
     return [
       {
         q: `How many days does ${topic.toLowerCase()} usually take?`,
-        a: "UsaRakhi ships from within the USA. Standard USA delivery is 5 business days with free shipping on a $25 minimum cart value. 3-day express delivery ($19) arrives August 29–30. That is calendar time after dispatch — not a guess about customs.",
+        a: "UsaRakhi ships from within the USA. Standard USA delivery is 5 business days with free shipping on a $25 minimum cart value. That is calendar time after dispatch — not a guess about customs.",
       },
       {
         q: `Will I get confirmation or tracking for ${topic.toLowerCase()}?`,
@@ -166,11 +166,11 @@ function uniqueFaqs(entry: SeoBlogEntry, topic: string, theme: Theme): { q: stri
       },
       {
         q: "Does a later scan mean the rakhi missed Raksha Bandhan?",
-        a: "Not if you ordered with a buffer. A scan on August 29 is what you avoid by ordering in late July or by August 5–6 for express metros.",
+        a: "Not if you ordered with a buffer. A scan on August 29 is what you avoid by ordering in late July or early August for standard USA delivery.",
       },
       {
         q: "Can I still order if I am already inside the last two weeks?",
-        a: "Message WhatsApp with the ZIP code before you assume. Express can still rescue some metros; remote addresses need honesty, not hope.",
+        a: "Message WhatsApp with the ZIP code before you assume. Remote addresses need honesty, not hope.",
       },
     ];
   }
@@ -179,7 +179,7 @@ function uniqueFaqs(entry: SeoBlogEntry, topic: string, theme: Theme): { q: stri
     return [
       {
         q: `When is the best time for ${topic.toLowerCase()}?`,
-        a: "For Raksha Bandhan 2026 (August 28), the calm window is July 25–August 1. August 5–6 still works for express to New York, Los Angeles, Chicago, Houston, San Francisco, and New Jersey.",
+        a: "For Raksha Bandhan 2026 (August 28), the calm window is July 25–August 1. Order early for standard USA delivery (5 business days).",
       },
       {
         q: "What should a first-time USA Rakhi order include besides the thread?",
@@ -393,7 +393,7 @@ function uniqueFaqs(entry: SeoBlogEntry, topic: string, theme: Theme): { q: stri
       },
       {
         q: `How long should I allow for ${topic.toLowerCase()} before August 28, 2026?`,
-        a: "Plan standard USA delivery in 5 business days, or 3-day express delivery ($19) arriving August 29–30.",
+        a: "Plan standard USA delivery in 5 business days.",
       },
       {
         q: `Will ${topic.toLowerCase()} require my brother to deal with US customs?`,
@@ -652,7 +652,7 @@ function templateSections(entry: SeoBlogEntry): BlogPost["sections"] {
       heading: `How to order ${topic} for a US address`,
       paragraphs: [
         `Pick the collection that matches this topic, add the full US address (apartment or suite, city, state, ZIP), and pay in INR or USD. UsaRakhi packs and ships from within America — that is the part that keeps ${topic.toLowerCase()} from becoming a customs story.`,
-        `For Raksha Bandhan 2026 (Friday, August 28), use late July–August 1 for a calm buffer, or August 5–6 for express to major metros. ${shopLineFor(theme)}`,
+        `For Raksha Bandhan 2026 (Friday, August 28), use late July–August 1 for a calm buffer, then allow 5 business days for standard USA delivery. ${shopLineFor(theme)}`,
       ],
     },
   ];
@@ -708,7 +708,7 @@ function deliverySections(entry: SeoBlogEntry, topic: string): BlogPost["section
     {
       heading: `A calm 2026 timeline for ${topic}`,
       paragraphs: [
-        "Stress-free: order between July 25 and August 1. Recommended express to major metros: August 5–6. Last-chance metros: message WhatsApp around August 12–15 before you assume it will make August 28.",
+        "Stress-free: order between July 25 and August 1. Standard USA delivery is 5 business days. Last-chance metros: message WhatsApp around August 12–15 before you assume it will make August 28.",
         "Share tracking with him. Building desks, gated communities, and roommate chaos are the quiet villains of festival week. A text that says “it is coming Thursday” is an act of care.",
       ],
     },

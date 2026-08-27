@@ -498,6 +498,9 @@ Resources:
         BlockPublicPolicy: true
         IgnorePublicAcls: true
         RestrictPublicBuckets: true
+      NotificationConfiguration:
+        EventBridgeConfiguration:
+          EventBridgeEnabled: true
       CorsConfiguration:
         CorsRules:
           - AllowedHeaders: ["*"]
@@ -548,8 +551,8 @@ Resources:
           AllowedMethods: [GET, HEAD, OPTIONS]
           CachedMethods: [GET, HEAD]
           Compress: true
-          ForwardedValues:
-            QueryString: false
+          # CachingOptimized — long TTL, no query/cookie forwarding (images are immutable keys).
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
 
   SesDomainIdentity:
     Type: AWS::SES::EmailIdentity
@@ -902,6 +905,35 @@ Resources:
             Schedule: rate(1 hour)
             Description: Promote hard-bounced marketing recipients onto SUPPRESS# skip list
             Enabled: true
+    Metadata:
+      BuildMethod: makefile
+
+  # Upload-time WebP variants (thumb/card/gallery/zoom). S3 event → EventBridge → Lambda.
+  # Not Lambda@Edge: peak GET traffic must not pay for resize.
+  ImageOptimizeFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub hr-ecom-image-optimize-${Environment}
+      Handler: index.handler
+      CodeUri: ..
+      Timeout: 120
+      MemorySize: 2048
+      Policies:
+        - S3CrudPolicy:
+            BucketName: !Ref UploadBucket
+      Events:
+        ObjectCreated:
+          Type: EventBridgeRule
+          Properties:
+            Pattern:
+              source:
+                - aws.s3
+              detail-type:
+                - Object Created
+              detail:
+                bucket:
+                  name:
+                    - !Ref UploadBucket
     Metadata:
       BuildMethod: makefile
 

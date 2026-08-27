@@ -1,11 +1,10 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { site, whatsappChatUrl } from "@/lib/site";
 import { SiteLogoLink } from "@/components/SiteLogo";
 import { TrustBadges } from "@/components/TrustBadges";
-import { resolveImageUrl } from "@/lib/images";
+import { VariantImg } from "@/components/VariantImg";
 import { carrierTrackingUrl } from "@/lib/tracking-url";
 import { OrderFulfillmentTimeline } from "@/components/OrderFulfillmentTimeline";
 import { badgeClass } from "@/lib/order-status";
@@ -134,12 +133,13 @@ export function OrderConfirmation({ order, paid }: OrderConfirmationProps) {
               <li key={item.productSlug} className="flex gap-4 py-4">
                 <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-slate-100 bg-slate-50">
                   {item.image ? (
-                    <Image
-                      src={resolveImageUrl(item.image)}
+                    <VariantImg
+                      src={item.image}
+                      variant="thumb"
                       alt={item.name}
-                      fill
-                      className="object-cover"
-                      sizes="64px"
+                      className="h-16 w-16 object-cover"
+                      width={64}
+                      height={64}
                     />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center text-2xl">🎀</div>
@@ -348,7 +348,7 @@ export function OrderConfirmation({ order, paid }: OrderConfirmationProps) {
               <div>
                 <p className="font-semibold text-slate-900 text-sm">USA delivery</p>
                 <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                  Ships domestically within America. Standard USA delivery · 5 business days · Free shipping on $25 minimum. 3-day express $19 arrives August 29–30.
+                  Ships domestically within America. Standard USA delivery · 5 business days · Free shipping on $25 minimum.
                 </p>
               </div>
             </div>

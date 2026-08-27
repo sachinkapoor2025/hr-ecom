@@ -53,7 +53,7 @@ import {
   type RateQuote,
   type ShippingAddress,
 } from "@hr-ecom/shared";
-import { resolveImageUrl } from "@/lib/images";
+import { VariantImg } from "@/components/VariantImg";
 
 const EMPTY_CART_ITEMS: Array<{ vendorSlug?: string }> = [];
 
@@ -854,11 +854,13 @@ function CheckoutPageInner() {
                     >
                       <div className="flex gap-3 items-start">
                         {unit.image ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={resolveImageUrl(unit.image)}
+                          <VariantImg
+                            src={unit.image}
+                            variant="thumb"
                             alt=""
                             className="w-14 h-14 rounded-md object-cover border border-slate-100 shrink-0"
+                            width={56}
+                            height={56}
                           />
                         ) : (
                           <div className="w-14 h-14 rounded-md bg-slate-100 shrink-0" />
@@ -992,11 +994,9 @@ function CheckoutPageInner() {
               </div>
               {!isRetry ? (
                 <p className="text-[11px] text-slate-500 leading-snug">
-                  {checkoutShippingOptions.some((o) => o.id === "three_day")
-                    ? "Standard USA delivery · 5 business days · Free shipping on $25 minimum cart value. 3-day express delivery — $19 · arrives August 29–30."
-                    : cartHasMultipleShippingVendors(checkoutItems)
-                      ? "Standard USA delivery · 5 business days. Free shipping on $25 minimum per vendor — UsaRakhi and Orange County are calculated separately."
-                      : "Standard USA delivery · 5 business days · Free shipping on $25 minimum cart value."}
+                  {cartHasMultipleShippingVendors(checkoutItems)
+                    ? "Standard USA delivery · 5 business days. Free shipping on $25 minimum per vendor — UsaRakhi and Orange County are calculated separately."
+                    : "Standard USA delivery · 5 business days · Free shipping on $25 minimum cart value."}
                 </p>
               ) : null}
               <div className="flex justify-between gap-4 pt-2 border-t border-slate-200">

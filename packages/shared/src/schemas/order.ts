@@ -86,8 +86,7 @@ export const checkoutSchema = z.object({
   /**
    * Checkout shipping speed:
    * - standard — $25 min per vendor (top-up below)
-   * - three_day — UsaRakhi only; $19 flat (1 pack day + 3 transit, arrives Aug 29–30)
-   * - two_day — historical orders only (not offered)
+   * - three_day / two_day — historical orders only (not offered)
    */
   shippingOption: z.enum(["standard", "three_day", "two_day"]).optional(),
   /** Customer override — must match a returned rate. */

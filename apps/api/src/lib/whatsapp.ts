@@ -4,6 +4,8 @@
  * credentials / phone are missing.
  */
 
+import { stripEmojis } from "@hr-ecom/shared";
+
 export type WhatsAppSendResult = {
   ok: boolean;
   skipped?: boolean;
@@ -111,12 +113,12 @@ export function orderPaidWhatsAppMessage(input: {
 }): string {
   const hi = input.name ? `Hi ${input.name}` : "Hi";
   const shortId = input.orderId.slice(0, 8).toUpperCase();
-  return `${hi}! Payment received for your ${SITE} order #${shortId}.
+  return stripEmojis(`${hi}! Payment received for your ${SITE} order #${shortId}.
 
 Total: ${input.totalLabel}
 Track: ${SITE_URL()}/orders/${input.orderId}
 
-We deliver to all 50 US states in 5–7 business days after dispatch.`;
+We deliver to all 50 US states in 5–7 business days after dispatch.`);
 }
 
 export function orderStatusWhatsAppMessage(input: {
@@ -132,6 +134,7 @@ export function orderStatusWhatsAppMessage(input: {
   const orderUrl = `${SITE_URL()}/orders/${input.orderId}`;
   const total = input.totalLabel ? `\nTotal: ${input.totalLabel}` : "";
 
+  let message: string | null;
   switch (input.status) {
     case "paid":
       return orderPaidWhatsAppMessage({
@@ -140,11 +143,14 @@ export function orderStatusWhatsAppMessage(input: {
         totalLabel: input.totalLabel ?? "",
       });
     case "accepted":
-      return `${hi}! We've accepted your Rakhi order #${shortId}.${total}\n\nTrack: ${orderUrl}`;
+      message = `${hi}! We've accepted your Rakhi order #${shortId}.${total}\n\nTrack: ${orderUrl}`;
+      break;
     case "on_hold":
-      return `${hi}! Order #${shortId} is temporarily on hold while we review it.${total}\n\nWe'll update you soon. ${orderUrl}`;
+      message = `${hi}! Order #${shortId} is temporarily on hold while we review it.${total}\n\nWe'll update you soon. ${orderUrl}`;
+      break;
     case "processing":
-      return `${hi}! Order #${shortId} is being packed at our warehouse.${total}\n\nTrack: ${orderUrl}`;
+      message = `${hi}! Order #${shortId} is being packed at our warehouse.${total}\n\nTrack: ${orderUrl}`;
+      break;
     case "shipped": {
       const track = [
         input.carrier ? `Carrier: ${input.carrier}` : null,
@@ -152,19 +158,25 @@ export function orderStatusWhatsAppMessage(input: {
       ]
         .filter(Boolean)
         .join("\n");
-      return `${hi}! Your Rakhi order #${shortId} has shipped!\n${track || "Tracking will appear on your order page shortly."}${total}\n\nTrack: ${orderUrl}`;
+      message = `${hi}! Your Rakhi order #${shortId} has shipped!\n${track || "Tracking will appear on your order page shortly."}${total}\n\nTrack: ${orderUrl}`;
+      break;
     }
     case "delivered":
-      return `${hi}! Order #${shortId} is marked delivered. We hope your brother loves his Rakhi!\n\n${orderUrl}`;
+      message = `${hi}! Order #${shortId} is marked delivered. We hope your brother loves his Rakhi!\n\n${orderUrl}`;
+      break;
     case "complete":
-      return `${hi}! Order #${shortId} is complete. Thank you for celebrating with ${SITE}.\n\nLeave a review: ${SITE_URL()}/reviews`;
+      message = `${hi}! Order #${shortId} is complete. Thank you for celebrating with ${SITE}.\n\nLeave a review: ${SITE_URL()}/reviews`;
+      break;
     case "cancelled":
-      return `${hi}! Order #${shortId} has been cancelled.${total}\n\nQuestions? Reply here or visit ${orderUrl}`;
+      message = `${hi}! Order #${shortId} has been cancelled.${total}\n\nQuestions? Reply here or visit ${orderUrl}`;
+      break;
     case "refunded":
-      return `${hi}! A refund for order #${shortId} has been processed.${total}\n\nIt may take a few business days to appear. ${orderUrl}`;
+      message = `${hi}! A refund for order #${shortId} has been processed.${total}\n\nIt may take a few business days to appear. ${orderUrl}`;
+      break;
     default:
-      return null;
+      message = null;
   }
+  return message ? stripEmojis(message) : null;
 }
 
 export function pendingPaymentWhatsAppMessage(input: {
@@ -195,11 +207,11 @@ export function reviewRequestWhatsAppMessage(input: {
   const googleLine = input.googleReviewUrl?.trim()
     ? `\nReview us on Google: ${input.googleReviewUrl.trim()}`
     : "";
-  return `${hi}! Thank you — your ${SITE} order ${ref} is delivered.
+  return stripEmojis(`${hi}! Thank you — your ${SITE} order ${ref} is delivered.
 
 Leave a review: ${siteReview}${googleLine}
 
-We hope your brother loved his Rakhi.`;
+We hope your brother loved his Rakhi.`);
 }
 
 export function contactAckWhatsAppMessage(input: { name?: string }): string {
@@ -506,7 +518,10 @@ export async function notifyCustomerWhatsApp(input: {
   context?: string;
 }): Promise<WhatsAppSendResult | null> {
   const phone = input.phone?.trim();
-  const message = input.message?.trim();
+  const rawMessage = input.message?.trim();
+  const isOrderNotify =
+    input.context === "order-paid" || Boolean(input.context?.startsWith("order-status-"));
+  const message = rawMessage && isOrderNotify ? stripEmojis(rawMessage).trim() : rawMessage;
   if (!phone || !message) return null;
   if (!whatsappApiConfigured()) return null;
 

@@ -4,6 +4,7 @@ import {
   SITE_REVIEW_SLUG,
   submitCustomerReviewSchema,
   createProductReviewSchema,
+  updateAdminReviewStatusSchema,
   toPublicReview,
   type ProductReview,
 } from "./review";
@@ -60,5 +61,16 @@ describe("customer review submit", () => {
     const publicReview = toPublicReview(review);
     assert.equal("authorEmail" in publicReview, false);
     assert.equal(publicReview.authorName, "Neha");
+  });
+
+  it("accepts published and historical admin status updates", () => {
+    assert.equal(updateAdminReviewStatusSchema.parse({ status: "published" }).status, "published");
+    const historical = updateAdminReviewStatusSchema.parse({
+      status: "historical",
+      sessionId: "sess-1",
+      createdAt: "2026-08-01T00:00:00.000Z",
+    });
+    assert.equal(historical.status, "historical");
+    assert.equal(historical.sessionId, "sess-1");
   });
 });

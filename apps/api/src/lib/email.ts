@@ -1,8 +1,7 @@
 import nodemailer from "nodemailer";
 import crypto from "crypto";
 import type SMTPTransport from "nodemailer/lib/smtp-transport";
-import type { Order, Product, CartItem } from "@hr-ecom/shared";
-import type { LeadCaptureInput } from "@hr-ecom/shared";
+import type { Order, Product, CartItem, LeadCaptureInput } from "@hr-ecom/shared";
 import {
   ORDER_STATUS,
   WELCOME_DISCOUNT_PERCENT,
@@ -15,6 +14,7 @@ import {
   omitEmptyGoogleReviewLines,
   withCurrentReviewCopy,
   buildReviewRequestEmailHtml,
+  stripEmojis,
   type ReviewRequestSettings,
   type ReviewRequestTemplateVars,
 } from "@hr-ecom/shared";
@@ -612,8 +612,8 @@ export async function notifyAdminOrderPaid(order: Order): Promise<EmailSendResul
   if (customerEmail && customerEmail.includes("@")) {
     await sendEmail({
       to: customerEmail,
-      subject: `Order confirmed — ${SITE_NAME}`,
-      text: `Hi${order.shippingAddress?.name ? ` ${order.shippingAddress.name}` : ""},
+      subject: stripEmojis(`Order confirmed — ${SITE_NAME}`),
+      text: stripEmojis(`Hi${order.shippingAddress?.name ? ` ${order.shippingAddress.name}` : ""},
 
 Thank you for your order! Payment has been received.
 
@@ -624,7 +624,7 @@ We deliver to all 50 US states in 5–7 business days after dispatch.
 
 Questions? Reply to this email or WhatsApp us.
 
-— ${SITE_NAME} Team`,
+— ${SITE_NAME} Team`),
     });
   }
 
@@ -860,6 +860,10 @@ Depending on your bank or payment method, the credit may take a few business day
   }
 }
 
+function withoutEmoji(content: { subject: string; body: string }): { subject: string; body: string } {
+  return { subject: stripEmojis(content.subject), body: stripEmojis(content.body) };
+}
+
 /**
  * Daily SMTP reminder while an order is still pending_payment (through 28 Aug 2026).
  * Do NOT use SES — transactional path only.
@@ -997,10 +1001,11 @@ export async function notifyCustomerOrderStatusChange(order: Order): Promise<Ema
     return { ok: false, skipped: true, error: "SMTP not configured" };
   }
 
-  const content = customerStatusEmailContent(order);
-  if (!content) {
+  const contentRaw = customerStatusEmailContent(order);
+  if (!contentRaw) {
     return { ok: true, skipped: true };
   }
+  const content = withoutEmoji(contentRaw);
 
   const adminResult = await notifyAdminOrderStatusChange(order);
   if (!adminResult.ok && !adminResult.skipped) {
@@ -1152,9 +1157,9 @@ export async function sendReviewRequestEmail(
   const subjectTemplate = omitEmptyGoogleReviewLines(resolved.emailSubjectTemplate, vars.googleReviewUrl);
   const textTemplate = omitEmptyGoogleReviewLines(resolved.emailTextTemplate, vars.googleReviewUrl);
   const subject =
-    renderReviewRequestTemplate(subjectTemplate, vars).trim() ||
+    stripEmojis(renderReviewRequestTemplate(subjectTemplate, vars)).trim() ||
     `Your ${SITE_NAME} order #${vars.orderNumber} has been delivered!`;
-  const text = renderReviewRequestTemplate(textTemplate, vars).trim();
+  const text = stripEmojis(renderReviewRequestTemplate(textTemplate, vars)).trim();
   const html = buildReviewRequestEmailHtml({
     bodyText: text,
     websiteReviewUrl: vars.websiteReviewUrl,

@@ -3,9 +3,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { resolveImageUrls } from "@/lib/images";
 import {
+  productImageVariantUrl,
   selectDisplayableProductImages,
   type SizedProductImage,
 } from "@hr-ecom/shared";
+import { measureProductImageUrl } from "@/lib/measure-product-image";
+import { VariantImg } from "@/components/VariantImg";
 
 interface ProductImageGalleryProps {
   images: string[];
@@ -93,17 +96,12 @@ export function ProductImageGallery({ images, alt }: ProductImageGalleryProps) {
     };
 
     resolved.forEach((url) => {
-      const img = new Image();
-      img.onload = () => {
-        measured.push({ url, width: img.naturalWidth, height: img.naturalHeight });
+      measureProductImageUrl(url).then((sized) => {
+        if (cancelled) return;
+        measured.push(sized);
         remaining -= 1;
         if (remaining === 0) finish();
-      };
-      img.onerror = () => {
-        remaining -= 1;
-        if (remaining === 0) finish();
-      };
-      img.src = url;
+      });
     });
 
     return () => {
@@ -235,14 +233,13 @@ export function ProductImageGallery({ images, alt }: ProductImageGalleryProps) {
           onKeyDown={(e) => e.key === "Enter" && setLightbox(true)}
           aria-label="Open image zoom"
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            ref={imgRef}
+          <VariantImg
+            imgRef={imgRef}
             src={current}
+            variant="gallery"
             alt={`${alt} — image ${selected + 1} of ${imgs.length}`}
             onLoad={() => setImageBounds(updateBounds())}
             className="w-full h-full object-contain p-2 transition-transform duration-200 group-hover:scale-[1.02] md:group-hover:scale-100 select-none"
-            draggable={false}
           />
 
           {showZoom && (
@@ -262,7 +259,7 @@ export function ProductImageGallery({ images, alt }: ProductImageGalleryProps) {
                 style={{
                   width: ZOOM_PANEL_SIZE,
                   height: ZOOM_PANEL_SIZE,
-                  backgroundImage: `url(${current})`,
+                  backgroundImage: `url(${productImageVariantUrl(current, "gallery")})`,
                   backgroundRepeat: "no-repeat",
                   backgroundSize: `${imageBounds.width * ZOOM_LEVEL}px ${imageBounds.height * ZOOM_LEVEL}px`,
                   backgroundPosition: `${lens.bgX}px ${lens.bgY}px`,
@@ -314,8 +311,7 @@ export function ProductImageGallery({ images, alt }: ProductImageGalleryProps) {
                   i === selected ? "border-nav ring-2 ring-nav/20" : "border-slate-200 hover:border-slate-300"
                 }`}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={src} alt="" className="w-full h-full object-cover" />
+                <VariantImg src={src} variant="thumb" alt="" className="w-full h-full object-cover" />
               </button>
             ))}
           </div>
@@ -360,13 +356,15 @@ export function ProductImageGallery({ images, alt }: ProductImageGalleryProps) {
             </>
           )}
 
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={current}
-            alt={alt}
-            className="max-w-full max-h-[85vh] object-contain"
-            onClick={(e) => e.stopPropagation()}
-          />
+          <div onClick={(e) => e.stopPropagation()}>
+            <VariantImg
+              src={current}
+              variant="zoom"
+              alt={alt}
+              className="max-w-full max-h-[85vh] object-contain"
+              loading="eager"
+            />
+          </div>
 
           {imgs.length > 1 && (
             <div className="mt-4 flex gap-2 overflow-x-auto max-w-full px-2">
@@ -382,8 +380,7 @@ export function ProductImageGallery({ images, alt }: ProductImageGalleryProps) {
                     i === selected ? "border-white" : "border-white/30 opacity-70"
                   }`}
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={src} alt="" className="w-full h-full object-cover" />
+                  <VariantImg src={src} variant="thumb" alt="" className="w-full h-full object-cover" />
                 </button>
               ))}
             </div>

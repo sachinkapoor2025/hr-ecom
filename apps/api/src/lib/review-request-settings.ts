@@ -37,7 +37,7 @@ export async function loadReviewRequestSettings(): Promise<ReviewRequestSettings
 export async function saveReviewRequestSettings(
   settings: ReviewRequestSettings
 ): Promise<ReviewRequestSettings> {
-  const parsed = reviewRequestSettingsSchema.parse(settings);
+  const parsed = withCurrentReviewCopy(reviewRequestSettingsSchema.parse(settings));
   await docClient.send(
     new PutCommand({
       TableName: CONFIG_TABLE,

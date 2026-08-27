@@ -19,7 +19,7 @@ export function buildSecondaryCityFaqs(city: SecondaryCity) {
     },
     {
       q: `When should I order for Raksha Bandhan 2026?`,
-      a: "Raksha Bandhan 2026 is August 28, 2026. Order today for express delivery to major US cities to avoid the last-minute rush and ensure your Rakhi reaches the USA on time.",
+      a: "Raksha Bandhan 2026 is August 28, 2026. Order today for standard USA delivery to major US cities to avoid the last-minute rush and ensure your Rakhi reaches the USA on time.",
     },
   ] as const;
 }
@@ -49,8 +49,8 @@ export function SecondaryCityLanding({ city }: { city: SecondaryCity }) {
       <section>
         <h3 className="text-lg font-semibold text-primary mb-3">Delivery to {city.name}</h3>
         <p className="mb-3">
-          Standard delivery to {place} is 5–7 business days after dispatch. Nearby express coverage
-          for major metros is listed on our{" "}
+          Standard delivery to {place} is 5–7 business days after dispatch. Nearby major-metro coverage
+          is listed on our{" "}
           <Link
             href={locationPublicPath(city.nearbyMetroSlug)}
             className="text-nav font-medium hover:underline"

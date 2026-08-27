@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useApiClient, useAuth } from "@/lib/auth-context";
 import { listAllBlogPosts } from "@/lib/content/blog-posts";
+import { compressProductImage } from "@/lib/compress-product-image";
 
 export default function AdminBlogImagesPage() {
   const apiClient = useApiClient();
@@ -83,18 +84,19 @@ export default function AdminBlogImagesPage() {
       setUploading(slug);
       setMessage("");
       try {
-        const contentType = file.type || "image/jpeg";
+        const compressed = await compressProductImage(file);
+        const contentType = compressed.type || "image/jpeg";
         const presign = await apiClient<{ uploadUrl: string; publicUrl: string }>("/uploads/presign", {
           method: "POST",
           body: JSON.stringify({
-            filename: file.name,
+            filename: compressed.name,
             contentType,
             folder: "blog",
           }),
         });
         const uploadRes = await fetch(presign.uploadUrl, {
           method: "PUT",
-          body: file,
+          body: compressed,
           headers: { "Content-Type": contentType },
         });
         if (!uploadRes.ok) {
