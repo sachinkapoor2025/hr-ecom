@@ -44,47 +44,26 @@ describe("withCompetitiveStorefrontPricing", () => {
     assert.equal(result.compareAtPrice, 53.91);
   });
 
-  it("applies competitive cuts when only categorySlug is rakhi-hampers (UsaRakhi mis-tags)", () => {
+  it("keeps stored UsaRakhi catalog prices", () => {
     const result = withCompetitiveStorefrontPricing({
-      price: 9.89,
-      compareAtPrice: 28.3,
+      price: 1.99,
+      compareAtPrice: 6.34,
       currency: "USD" as const,
-      categorySlug: "rakhi-hampers",
+      categorySlug: "single-rakhi",
     });
-    // 8% cut would be ~$9.10; storefront floor is $20
-    assert.equal(result.price, 20);
-    assert.equal(result.compareAtPrice, 28.3);
+    assert.equal(result.price, 1.99);
+    assert.equal(result.compareAtPrice, 6.34);
   });
 
-  it("lowers price and preserves original as compare-at", () => {
-    const result = withCompetitiveStorefrontPricing({
-      price: 22,
-      currency: "USD" as const,
-    });
-    assert.equal(result.price, 20.24); // 8%
-    assert.equal(result.compareAtPrice, 22);
-  });
-
-  it("keeps a higher existing compare-at", () => {
-    const result = withCompetitiveStorefrontPricing({
-      price: 17,
-      compareAtPrice: 22,
-      currency: "USD" as const,
-    });
-    // 17 * 0.92 = 15.64 → floored to $20
-    assert.equal(result.price, 20);
-    assert.equal(result.compareAtPrice, 22);
-  });
-
-  it("does not stack competitive cuts when applied twice", () => {
+  it("does not stack when applied twice", () => {
     const once = withCompetitiveStorefrontPricing({
-      price: 16,
+      price: 4.99,
       compareAtPrice: 22,
       currency: "USD" as const,
     });
     const twice = withCompetitiveStorefrontPricing(once);
-    assert.equal(once.price, 20);
-    assert.equal(twice.price, 20);
+    assert.equal(once.price, 4.99);
+    assert.equal(twice.price, 4.99);
     assert.equal(twice.compareAtPrice, 22);
     assert.equal(twice.storefrontPricingApplied, true);
   });

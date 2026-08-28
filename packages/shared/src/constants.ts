@@ -158,15 +158,12 @@ export const VENDOR_USARAKHI = "usarakhi" as const;
 export const ORANGE_COUNTY_CATEGORY_SLUG = "rakhi-hampers" as const;
 
 /**
- * Hamper pricing from vendor cost (Excel). Uses retail margin on selling price:
- *   sale price = cost × 2.0  → 50% margin before coupons  ((P−C)/P)
- *   list/compare-at = cost × 2.5 → sale badge (~20% off list)
- *
- * After spin-the-wheel 6–10% off sale price, net margin stays ~44–47%
- * (≈40–44%+ band at the higher discount end).
+ * Orange County pricing from vendor cost:
+ *   sale price = cost × 1.35  → 35% markup on vendor price
+ *   list/compare-at = cost × 1.75 → strikethrough vs sale
  */
-export const ORANGE_COUNTY_LIST_MARKUP = 2.5;
-export const ORANGE_COUNTY_SALE_MARKUP = 2.0;
+export const ORANGE_COUNTY_LIST_MARKUP = 1.75;
+export const ORANGE_COUNTY_SALE_MARKUP = 1.35;
 
 /** Email restock alert when inventory drops to this level or below. */
 export const LOW_STOCK_THRESHOLD = 10;

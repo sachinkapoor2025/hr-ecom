@@ -10,7 +10,7 @@ import { shippingVendorKey } from "./free-shipping";
 
 /** Customer-facing standard delivery line (all vendors). */
 export const USARAKHI_STANDARD_DELIVERY_DETAIL =
-  "Standard USA delivery · 5 business days · Free shipping on $25 minimum cart value";
+  "Standard USA delivery · 5 business days · Free shipping on $15 minimum cart value";
 
 /** Historical 3-day window — kept for old orders only (not offered at checkout). */
 export const USARAKHI_THREE_DAY_ARRIVAL_YMD = "2026-08-30";
@@ -23,7 +23,7 @@ export const EXPEDITED_TWO_DAY_SHIPPING_USD = 39;
 
 /**
  * Checkout shipping choice.
- * - `standard` — all vendors: $25 min merchandise per vendor (top-up shipping below); 5 business days
+ * - `standard` — UsaRakhi: $15 min merchandise (top-up shipping below); OC: always free; 5 business days
  * - `three_day` / `two_day` — historical orders only (not offered at checkout)
  */
 export const CHECKOUT_SHIPPING_OPTION_IDS = ["standard", "three_day", "two_day"] as const;
@@ -81,21 +81,22 @@ export const STANDARD_CHECKOUT_SHIPPING_OPTIONS = CHECKOUT_SHIPPING_OPTIONS.filt
 /** UsaRakhi carts — standard only (3-day is no longer offered). */
 export const USARAKHI_CHECKOUT_SHIPPING_OPTIONS = STANDARD_CHECKOUT_SHIPPING_OPTIONS;
 
-/** Orange County — standard only ($25 minimum). */
+/** Orange County — standard delivery, always free shipping. */
 export const ORANGE_COUNTY_CHECKOUT_SHIPPING_OPTIONS = STANDARD_CHECKOUT_SHIPPING_OPTIONS;
 
 /** @deprecated 3-day express is no longer offered; same as standard copy. */
 export const RAKHI_LAST_MINUTE_GUARANTEE = USARAKHI_STANDARD_DELIVERY_DETAIL;
 
 export const ORANGE_COUNTY_SHIPPING_BULLETS = [
-  USARAKHI_STANDARD_DELIVERY_DETAIL,
-  "Orders under $25: remaining amount added as shipping at checkout",
+  "Standard USA delivery",
+  "5 business days",
+  "Free shipping on all Orange County products",
 ] as const;
 
 export const MIXED_VENDOR_SHIPPING_BULLETS = [
   "Shipping is calculated separately for each vendor",
-  "UsaRakhi and Orange County each need a $25 minimum — otherwise the remaining amount is added as shipping for that vendor",
-  USARAKHI_STANDARD_DELIVERY_DETAIL,
+  "UsaRakhi: free shipping on $15 minimum — otherwise the remaining amount is added as shipping",
+  "Orange County: free shipping on all products",
 ] as const;
 
 type ShippingCartItem = {
@@ -277,7 +278,7 @@ export function expeditedArrivalLabel(
 export const USARAKHI_SHIPPING_BULLETS = [
   "Standard USA delivery",
   "5 business days",
-  "Free shipping on $25 minimum cart value",
+  "Free shipping on $15 minimum cart value",
 ] as const;
 
 /** Customer-facing shipping options. */
@@ -293,7 +294,7 @@ export const RAKHI_DELIVERY_MESSAGING = {
   standardBullets: [
     "Standard USA delivery",
     "5 business days",
-    "Free shipping on $25 minimum cart value",
+    "Free shipping on $15 minimum cart value",
   ],
   standardBadge: "Standard USA delivery · 5 business days",
   expeditedTitle: "Standard delivery",

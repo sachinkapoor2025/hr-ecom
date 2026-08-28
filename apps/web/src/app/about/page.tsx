@@ -32,7 +32,7 @@ export default function AboutPage() {
         <h2 className="text-xl font-bold text-primary pt-4">Why sisters recommend UsaRakhi</h2>
         <ul className="list-disc list-inside space-y-2">
           <li>Domestic US fulfillment — ships from within the USA (no international customs for recipient)</li>
-          <li>Standard USA delivery · 5 business days · Free shipping on $25 minimum cart value</li>
+          <li>Standard USA delivery · 5 business days · Free shipping on $15 minimum cart value</li>
         </ul>
         <h2 className="text-xl font-bold text-primary pt-4">What we offer</h2>
         <ul className="list-disc list-inside space-y-2">

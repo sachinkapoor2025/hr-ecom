@@ -10,7 +10,7 @@ import { RakhiDeliveryBulletList } from "@/components/RakhiDeliveryBulletList";
 export const metadata: Metadata = pageMetadata({
   title: "Rakhi Shipping & Delivery to USA — Ships From Within America",
   description:
-    "UsaRakhi ships domestically within the USA — no customs delays. Standard USA delivery · 5 business days · Free shipping on $25 minimum cart value.",
+    "UsaRakhi ships domestically within the USA — no customs delays. Standard USA delivery · 5 business days · Free shipping on $15 minimum cart value.",
   path: "/shipping",
 });
 
@@ -43,13 +43,12 @@ export default function ShippingPage() {
             below ${USARAKHI_MIN_ORDER_USD} pay the remaining amount as shipping.
           </li>
           <li>
-            <strong>Orange County products</strong> — standard delivery only. The same $
-            {USARAKHI_MIN_ORDER_USD} free-shipping minimum applies.
+            <strong>Orange County products</strong> — free shipping on all products.
           </li>
           <li>
             <strong>Mixed carts</strong> (Orange County + UsaRakhi in the same order) — shipping is
-            calculated separately for each vendor. Each vendor needs a ${USARAKHI_MIN_ORDER_USD}{" "}
-            minimum; otherwise shipping is added on both.
+            calculated separately. UsaRakhi needs a ${USARAKHI_MIN_ORDER_USD}{" "}
+            minimum; Orange County ships free.
           </li>
         </ul>
         <h2 className="text-xl font-bold text-primary">Raksha Bandhan 2026 order deadlines</h2>

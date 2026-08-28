@@ -28,7 +28,7 @@ describe("expedited-shipping", () => {
     assert.equal(expeditedLeadBusinessDays(three!), 4);
     assert.equal(two?.priceUsd, EXPEDITED_TWO_DAY_SHIPPING_USD);
     assert.equal(CHECKOUT_SHIPPING_OPTIONS.length, 3);
-    assert.match(standard?.detail ?? "", /Free shipping on \$25 minimum/);
+    assert.match(standard?.detail ?? "", /Free shipping on \$15 minimum/);
     assert.match(three?.detail ?? "", /no longer available/);
   });
 
@@ -88,7 +88,7 @@ describe("expedited-shipping", () => {
       shippingBulletsForCart,
     } = await import("./expedited-shipping");
 
-    assert.match(RAKHI_DELIVERY_MESSAGING.shippingBullets.join(" "), /Free shipping on \$25 minimum/);
+    assert.match(RAKHI_DELIVERY_MESSAGING.shippingBullets.join(" "), /Free shipping on \$15 minimum/);
     assert.doesNotMatch(RAKHI_DELIVERY_MESSAGING.shippingBullets.join(" "), /August 29–30/);
     assert.doesNotMatch(RAKHI_DELIVERY_MESSAGING.shippingBullets.join(" "), /3-day/);
     assert.doesNotMatch(RAKHI_DELIVERY_MESSAGING.shippingBullets.join(" "), /2-day/);
@@ -111,8 +111,9 @@ describe("expedited-shipping", () => {
     );
     assert.equal(defaultCheckoutShippingOption(ocItems), "standard");
     assert.deepEqual([...shippingBulletsForCart(ocItems)], [
-      "Standard USA delivery · 5 business days · Free shipping on $25 minimum cart value",
-      "Orders under $25: remaining amount added as shipping at checkout",
+      "Standard USA delivery",
+      "5 business days",
+      "Free shipping on all Orange County products",
     ]);
 
     const mixed = [{ vendorSlug: "orange-county" }, {}];

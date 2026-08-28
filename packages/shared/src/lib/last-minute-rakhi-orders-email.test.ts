@@ -29,7 +29,7 @@ describe("last-minute rakhi orders email", () => {
     assert.match(sent, /STANDARD DELIVERY/);
     assert.match(sent, /5 BUSINESS DAYS/);
     assert.match(sent, /STANDARD DELIVERY/);
-    assert.match(sent, /\$25 MIN/);
+    assert.match(sent, /\$15 MIN/);
     assert.match(sent, /https:\/\/www\.usarakhi\.com/);
     assert.match(sent, /\{\{UNSUBSCRIBE_URL\}\}/);
 

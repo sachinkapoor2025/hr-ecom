@@ -158,7 +158,7 @@ function uniqueFaqs(entry: SeoBlogEntry, topic: string, theme: Theme): { q: stri
     return [
       {
         q: `How many days does ${topic.toLowerCase()} usually take?`,
-        a: "UsaRakhi ships from within the USA. Standard USA delivery is 5 business days with free shipping on a $25 minimum cart value. That is calendar time after dispatch — not a guess about customs.",
+        a: "UsaRakhi ships from within the USA. Standard USA delivery is 5 business days with free shipping on a $15 minimum cart value. That is calendar time after dispatch — not a guess about customs.",
       },
       {
         q: `Will I get confirmation or tracking for ${topic.toLowerCase()}?`,

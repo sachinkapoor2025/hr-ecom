@@ -179,7 +179,7 @@ export default function AdminShippingSettingsPage() {
               className="mt-1 w-full border rounded-lg px-3 py-2"
             >
               <option value="free">
-                Standard USA delivery · 5 business days · Free shipping on $25 min.
+                Standard USA delivery · 5 business days · Free shipping on $15 min.
               </option>
               <option value="pass_through">Pass through selected rate to customer</option>
             </select>

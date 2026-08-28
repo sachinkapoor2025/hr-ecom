@@ -14,12 +14,12 @@ import { cartLineUnitTotal } from "./product-addons";
  * UsaRakhi standard delivery: cart merchandise must reach this USD subtotal per vendor
  * bucket, or the customer pays the difference as shipping (subtotal + shipping ≥ minimum).
  */
-export const USARAKHI_MIN_ORDER_USD = 25;
+export const USARAKHI_MIN_ORDER_USD = 15;
 
 /** @deprecated Use USARAKHI_MIN_ORDER_USD — kept for admin/shipping snapshot compat. */
 export const FREE_SHIPPING_MIN_SUBTOTAL_USD = USARAKHI_MIN_ORDER_USD;
 
-/** @deprecated UsaRakhi uses $25 minimum top-up, not tiered fees. */
+/** @deprecated UsaRakhi uses $15 minimum top-up, not tiered fees. */
 export const FREE_SHIPPING_ABOVE_USD = USARAKHI_MIN_ORDER_USD;
 
 /** @deprecated Legacy mid-tier threshold (unused). */
@@ -31,10 +31,10 @@ export const BELOW_THRESHOLD_SHIPPING_USD = 0;
 /** @deprecated Legacy mid-tier fee (unused). */
 export const REDUCED_SHIPPING_USD = 0;
 
-/** Standard shipping is not universally free — UsaRakhi uses $25 minimum top-up. */
+/** Standard shipping is not universally free — UsaRakhi uses $15 minimum top-up. */
 export const STANDARD_SHIPPING_ALWAYS_FREE = false;
 
-/** Product tag for always-free standard shipping (even under $25). */
+/** Product tag for always-free standard shipping (even under $15). */
 export const FREE_STANDARD_SHIPPING_TAG = "free-standard-shipping";
 
 export function isFreeStandardShippingProduct(input: {
@@ -86,8 +86,8 @@ function toCurrency(
 }
 
 /**
- * UsaRakhi standard shipping: $25 minimum merchandise per vendor bucket.
- * Below $25, charge (minimum − subtotal) so merchandise + shipping meets the floor.
+ * UsaRakhi standard shipping: $15 minimum merchandise per vendor bucket.
+ * Below $15, charge (minimum − subtotal) so merchandise + shipping meets the floor.
  * Buckets where every line qualifies for free standard shipping pay $0.
  */
 export function quoteUsarakhiStandardShipping(input: {
@@ -178,7 +178,7 @@ function looksLikeOrangeCountyImage(src: string | null | undefined): boolean {
 
 /**
  * Normalize cart/product vendor for per-vendor shipping buckets.
- * Orange County is never merged into the UsaRakhi $25 minimum — each vendor is quoted separately.
+ * Orange County is never merged into the UsaRakhi $15 minimum — each vendor is quoted separately.
  * Infers OC from image path when older cart lines lack `vendorSlug`.
  */
 export function shippingVendorKey(item: ShippingVendorSource): string {
@@ -247,6 +247,30 @@ export function vendorSubtotalsForItems(
   return [...byVendor.values()];
 }
 
+function alwaysFreeShippingQuote(
+  currency: ShopCurrency,
+  usdInrRate: number
+): FreeShippingQuote {
+  const minInCurrency = toCurrency(USARAKHI_MIN_ORDER_USD, currency, usdInrRate);
+  return {
+    charge: 0,
+    qualifiesForFreeShipping: true,
+    amountAwayFromFreeShipping: 0,
+    amountAwayFromReducedShipping: 0,
+    aboveAmountInCurrency: minInCurrency,
+    thresholdInCurrency: minInCurrency,
+    reducedThresholdInCurrency: toCurrency(
+      REDUCED_SHIPPING_MIN_SUBTOTAL_USD,
+      currency,
+      usdInrRate
+    ),
+    lowTierFeeInCurrency: 0,
+    midTierFeeInCurrency: 0,
+    tier: "free",
+    belowThresholdFeeInCurrency: 0,
+  };
+}
+
 function flashComboShippingQuote(
   currency: ShopCurrency,
   usdInrRate: number
@@ -268,8 +292,9 @@ function flashComboShippingQuote(
 }
 
 /**
- * Shipping for one delivery address: $25 minimum per vendor bucket
- * (UsaRakhi and Orange County are quoted separately).
+ * Shipping for one delivery address:
+ * UsaRakhi uses a $15 merchandise minimum (top-up shipping below).
+ * Orange County is always free shipping.
  * Flash-combo-only buckets use a flat $0.99 shipping fee.
  */
 export function quoteAddressShipmentShipping(input: {
@@ -308,7 +333,11 @@ export function quoteAddressShipmentShipping(input: {
     byVendor.set(key, list);
   }
 
-  const perVendor = [...byVendor.entries()].map(([, vendorItems]) => {
+  const perVendor = [...byVendor.entries()].map(([vendorKey, vendorItems]) => {
+    if (vendorKey === VENDOR_ORANGE_COUNTY) {
+      return alwaysFreeShippingQuote(input.currency, input.usdInrRate);
+    }
+
     const flashOnly =
       vendorItems.length > 0 &&
       vendorItems.every((i) => isFlashComboProduct(i.productSlug));

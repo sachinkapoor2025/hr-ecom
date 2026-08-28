@@ -12,19 +12,19 @@ import {
 } from "./free-shipping";
 
 describe("quoteUsarakhiStandardShipping", () => {
-  it("charges the difference when subtotal is below $25", () => {
+  it("charges the difference when subtotal is below $15", () => {
     const quote = quoteUsarakhiStandardShipping({
-      subtotal: 15,
+      subtotal: 9,
       currency: "USD",
       usdInrRate: 96,
     });
-    assert.equal(quote.charge, 10);
+    assert.equal(quote.charge, 6);
     assert.equal(quote.qualifiesForFreeShipping, false);
     assert.equal(quote.tier, "low");
   });
 
-  it("is free at or above $25", () => {
-    for (const subtotal of [25, 30, 50]) {
+  it("is free at or above $15", () => {
+    for (const subtotal of [15, 20, 50]) {
       const quote = quoteUsarakhiStandardShipping({
         subtotal,
         currency: "USD",
@@ -47,14 +47,14 @@ describe("quoteUsarakhiStandardShipping", () => {
     assert.equal(quote.charge, 0);
   });
 
-  it("uses $25 minimum in INR", () => {
+  it("uses $15 minimum in INR", () => {
     const quote = quoteUsarakhiStandardShipping({
       subtotal: 1000,
       currency: "INR",
       usdInrRate: 100,
     });
-    assert.equal(quote.charge, 1500);
-    assert.equal(USARAKHI_MIN_ORDER_USD, 25);
+    assert.equal(quote.charge, 500);
+    assert.equal(USARAKHI_MIN_ORDER_USD, 15);
   });
 });
 
@@ -95,36 +95,36 @@ describe("shippingVendorKey / cartHasMultipleShippingVendors", () => {
 });
 
 describe("quoteShipmentsShipping", () => {
-  it("tops up each subtotal bucket below $25", () => {
+  it("tops up each subtotal bucket below $15", () => {
     const { totalCharge, perShipment } = quoteShipmentsShipping({
-      shipmentSubtotals: [20, 10, 25],
+      shipmentSubtotals: [10, 5, 15],
       currency: "USD",
       usdInrRate: 96,
     });
     assert.equal(perShipment[0]!.charge, 5);
-    assert.equal(perShipment[1]!.charge, 15);
+    assert.equal(perShipment[1]!.charge, 10);
     assert.equal(perShipment[2]!.charge, 0);
-    assert.equal(totalCharge, 20);
+    assert.equal(totalCharge, 15);
   });
 });
 
 describe("quoteAddressShipmentShipping", () => {
-  it("applies $25 minimum separately to UsaRakhi and Orange County buckets", () => {
+  it("applies $15 minimum to UsaRakhi and free shipping to Orange County", () => {
     const { totalCharge, perVendor } = quoteAddressShipmentShipping({
       items: [
-        { price: 18, quantity: 1 },
-        { price: 50, quantity: 1, vendorSlug: "orange-county" },
+        { price: 9, quantity: 1 },
+        { price: 8, quantity: 1, vendorSlug: "orange-county" },
       ],
       currency: "USD",
       usdInrRate: 96,
     });
     assert.equal(perVendor.length, 2);
-    assert.equal(perVendor[0]!.charge, 7);
+    assert.equal(perVendor[0]!.charge, 6);
     assert.equal(perVendor[1]!.charge, 0);
-    assert.equal(totalCharge, 7);
+    assert.equal(totalCharge, 6);
   });
 
-  it("does not let Orange County dollars cover the UsaRakhi $25 minimum", () => {
+  it("does not let Orange County dollars cover the UsaRakhi $15 minimum", () => {
     const { totalCharge, perVendor } = quoteAddressShipmentShipping({
       items: [
         { price: 5, quantity: 1, productSlug: "om-single-rakhi" },
@@ -134,31 +134,31 @@ describe("quoteAddressShipmentShipping", () => {
       usdInrRate: 96,
     });
     assert.equal(perVendor.length, 2);
-    assert.equal(totalCharge, 20);
+    assert.equal(totalCharge, 10);
   });
 
-  it("applies the $25 minimum to Orange County-only carts", () => {
+  it("gives Orange County-only carts free shipping", () => {
     const { totalCharge, perVendor } = quoteAddressShipmentShipping({
-      items: [{ price: 18, quantity: 1, vendorSlug: "orange-county" }],
+      items: [{ price: 8, quantity: 1, vendorSlug: "orange-county" }],
       currency: "USD",
       usdInrRate: 96,
     });
     assert.equal(perVendor.length, 1);
-    assert.equal(perVendor[0]!.charge, 7);
-    assert.equal(totalCharge, 7);
+    assert.equal(perVendor[0]!.charge, 0);
+    assert.equal(totalCharge, 0);
   });
 
-  it("charges both vendors when a mixed cart is under $25 on each side", () => {
+  it("charges only UsaRakhi when a mixed cart is under $15 on that side", () => {
     const { totalCharge, perVendor } = quoteAddressShipmentShipping({
       items: [
-        { price: 15, quantity: 1, productSlug: "om-single-rakhi" },
-        { price: 20, quantity: 1, vendorSlug: "orange-county" },
+        { price: 9, quantity: 1, productSlug: "om-single-rakhi" },
+        { price: 8, quantity: 1, vendorSlug: "orange-county" },
       ],
       currency: "USD",
       usdInrRate: 96,
     });
     assert.equal(perVendor.length, 2);
-    assert.equal(totalCharge, 15);
+    assert.equal(totalCharge, 6);
   });
 
   it("infers Orange County from image when vendorSlug is missing", () => {
@@ -174,7 +174,7 @@ describe("quoteAddressShipmentShipping", () => {
       currency: "USD",
       usdInrRate: 96,
     });
-    assert.equal(totalCharge, 20);
+    assert.equal(totalCharge, 10);
   });
 
   it("charges flat $0.99 shipping for flash-combo-only buckets", () => {
@@ -205,6 +205,6 @@ describe("quoteAddressShipmentShipping", () => {
       currency: "USD",
       usdInrRate: 96,
     });
-    assert.equal(totalCharge, 10);
+    assert.equal(totalCharge, 0);
   });
 });
