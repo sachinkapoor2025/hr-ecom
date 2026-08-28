@@ -42,12 +42,16 @@ function AccountLoginForm() {
 
   const finishLogin = async () => {
     const authUser = await login(email, password);
-    if (redirect.startsWith("/admin") && !authUser.isAdmin) {
-      setError("You don't have permission to access that area.");
-      logout();
+    if (redirect.startsWith("/admin")) {
+      if (!authUser.isAdmin) {
+        setError("You don't have permission to access the admin portal.");
+        router.push("/account");
+        return;
+      }
+      router.push(redirect);
       return;
     }
-    router.push(redirect.startsWith("/account") ? redirect : "/account");
+    router.push(redirect.startsWith("/") ? redirect : "/account");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

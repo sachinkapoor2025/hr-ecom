@@ -72,6 +72,7 @@ export * from "./lib/usarakhi-plain-rakhi";
 export * from "./lib/usarakhi-catalog-pricing";
 export * from "./lib/mini-rakhi-combos";
 export * from "./lib/flash-sale";
+export * from "./lib/cognito-groups";
 export * from "./db/keys";
 export * from "./constants";
 export * from "./currency";

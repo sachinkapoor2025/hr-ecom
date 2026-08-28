@@ -1,4 +1,5 @@
 import type { APIGatewayProxyEventV2 } from "aws-lambda";
+import { cognitoHasGroup } from "@hr-ecom/shared";
 
 export interface AuthContext {
   userId: string;
@@ -36,14 +37,14 @@ export function getAuth(event: APIGatewayProxyEventV2): AuthContext | null {
 
   try {
     const payload = JSON.parse(Buffer.from(token.split(".")[1], "base64url").toString());
-    const groups: string[] = payload["cognito:groups"] ?? [];
-    const isSuperAdmin = groups.includes("super-admin");
-    const isEmailMarketer = groups.includes("email") || isSuperAdmin;
+    const groups = payload["cognito:groups"];
+    const isSuperAdmin = cognitoHasGroup(groups, "super-admin");
+    const isEmailMarketer = cognitoHasGroup(groups, "email") || isSuperAdmin;
     return {
       userId: payload.sub as string,
       email: (payload.email as string) ?? "",
       isSuperAdmin,
-      isAdmin: groups.includes("admin") || isSuperAdmin,
+      isAdmin: cognitoHasGroup(groups, "admin") || isSuperAdmin,
       isEmailMarketer,
     };
   } catch {
