@@ -1,4 +1,4 @@
-name: Set UsaRakhi plain rakhi cost prices
+name: Apply catalog price reset
 
 on:
   workflow_dispatch:
@@ -45,8 +45,12 @@ jobs:
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Apply $3 / $5 / $7 cost pricing to eligible UsaRakhi rakhis
+      - name: Apply OC vendor+35% and UsaRakhi $1.99 / $2.50 / $2.99 / $4.99 tiers
         env:
           ENVIRONMENT: ${{ inputs.environment }}
-          DRY_RUN: ${{ inputs.dry_run }}
-        run: npx tsx scripts/set-usarakhi-plain-rakhi-prices.ts
+        run: |
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            npx tsx scripts/apply-catalog-price-reset.ts --dry-run
+          else
+            npx tsx scripts/apply-catalog-price-reset.ts --apply
+          fi

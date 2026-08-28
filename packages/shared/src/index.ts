@@ -68,6 +68,7 @@ export * from "./lib/order-vendors";
 export * from "./lib/product-addons";
 export * from "./lib/sold-out-products";
 export * from "./lib/usarakhi-stock-note";
+export * from "./lib/usarakhi-plain-rakhi";
 export * from "./lib/usarakhi-catalog-pricing";
 export * from "./lib/mini-rakhi-combos";
 export * from "./lib/flash-sale";
