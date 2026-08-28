@@ -5,7 +5,11 @@ import {
   locationPublicPath,
   seoOccasionKeywords,
 } from "@/lib/content/seo-data";
-import { PRICES_DROPPED_EYEBROW } from "@/lib/prices-dropped-copy";
+import {
+  HOME_BANNER_DELIVERY_NOTE,
+  PRICES_DROPPED_BODY,
+  PRICES_DROPPED_EYEBROW,
+} from "@/lib/prices-dropped-copy";
 
 export function HomeRakshaBandhan2026Section() {
   const caCities = californiaWarehouseLocations().slice(0, 6);
@@ -19,13 +23,9 @@ export function HomeRakshaBandhan2026Section() {
         <div className="text-center mb-8">
           <p className="text-sm uppercase tracking-widest text-white/75 mb-2">{PRICES_DROPPED_EYEBROW}</p>
           <h2 id="rb2026-heading" className="text-2xl md:text-3xl font-bold mb-2">
-            Send Rakhi to USA — a design of love, any day
+            {PRICES_DROPPED_BODY}
           </h2>
-          <p className="text-sm text-white/75 mt-2 max-w-2xl mx-auto">
-            You do not need a festival date to tie the thread. Prices have dropped. Shop designer
-            rakhis with domestic USA shipping from our California warehouse — a token of love for
-            your brother, whenever you send it.
-          </p>
+          <p className="text-sm text-white/75 mt-2 max-w-2xl mx-auto">{HOME_BANNER_DELIVERY_NOTE}</p>
         </div>
 
         <div className="flex flex-wrap justify-center gap-3 text-sm mb-8">
