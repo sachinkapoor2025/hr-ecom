@@ -2,10 +2,16 @@
 export const PRICES_DROPPED_EYEBROW = "Prices dropped";
 
 export const PRICES_DROPPED_HEADLINE =
-  "You can still send Rakhi — a design of love for your brother";
+  "A rakhi is a sign of love — it does not depend on a day.";
+
+export const PRICES_DROPPED_ACCENT = "Prices dropped.";
+
+export const PRICES_DROPPED_CTA = "Still not ordered. Place your order now.";
 
 export const PRICES_DROPPED_BODY =
-  "The festival may be over, but the bond is not. A rakhi is a design of love you can send any day — it does not depend on a date. Prices have dropped so you can still share that blessing: singles from $1.99, sets of 2 from $2.50, sets of 3 from $2.99, and rakhi with chocolate from $4.99.";
+  "A rakhi is a sign of love — it does not depend on a day. Prices dropped. Still not ordered. Place your order now.";
 
-export const PRICES_DROPPED_STRIP =
-  "Prices dropped · You can still send Rakhi — a design of love for your brother, any day";
+export const PRICES_DROPPED_STRIP = PRICES_DROPPED_BODY;
+
+export const HOME_BANNER_DELIVERY_NOTE =
+  "Standard USA delivery · 5 business days. Delivery · Free shipping on $15 minimum";

@@ -15,8 +15,12 @@ export function PricesDroppedStrip({ variant = "banner" }: { variant?: Variant }
   if (variant === "inline") {
     return (
       <p className="text-sm text-slate-700">
-        <span className="font-semibold text-accent">Prices dropped.</span> You can still send
-        Rakhi — a design of love for your brother, any day.
+        A rakhi is a sign of love — it does not depend on a day. Prices dropped. Still not
+        ordered.{" "}
+        <Link href="/products" className="font-semibold text-nav hover:underline">
+          Place your order now
+        </Link>
+        .
       </p>
     );
   }
@@ -28,7 +32,7 @@ export function PricesDroppedStrip({ variant = "banner" }: { variant?: Variant }
           <span className="font-bold">{PRICES_DROPPED_STRIP}</span>
           {" · "}
           <Link href="/products" className="underline underline-offset-2 hover:text-white/90">
-            Shop now
+            Place your order now
           </Link>
         </p>
         <div className="absolute right-0 top-1/2 -translate-y-1/2 hidden sm:block">

@@ -6,6 +6,12 @@ import {
   RAKSHA_BANDHAN_ORDER_BY_20_BANNER_PATH,
 } from "@hr-ecom/shared";
 import { homeBanners } from "@/lib/site";
+import {
+  HOME_BANNER_DELIVERY_NOTE,
+  PRICES_DROPPED_ACCENT,
+  PRICES_DROPPED_CTA,
+  PRICES_DROPPED_HEADLINE,
+} from "@/lib/prices-dropped-copy";
 
 /**
  * Independence Day homepage hero campaign (server/UTC clock).
@@ -39,14 +45,14 @@ export const independenceDayHeroBanner: HomeBanner = {
 export const rakshaBandhanOrderBy20Banner: HomeBanner = {
   src: RAKSHA_BANDHAN_ORDER_BY_20_BANNER_PATH,
   alt: RAKSHA_BANDHAN_ORDER_BY_20_BANNER_ALT,
-  href: "/products?category=rakhi-combo",
-  eyebrow: "PRICES DROPPED · SEND LOVE ANYTIME",
-  title: "You can still send Rakhi — a design of",
-  titleAccent: "love",
-  description:
-    "The festival date does not decide the bond. Prices dropped. Standard USA delivery · 5 business days · Free shipping on $15 minimum.",
-  cta: "Shop Rakhi Now",
-  pill: "Standard USA delivery · 5 business days · Free shipping on $15 minimum",
+  href: "/products",
+  eyebrow: "PRICES DROPPED · PLACE YOUR ORDER NOW",
+  title: PRICES_DROPPED_HEADLINE,
+  titleAccent: PRICES_DROPPED_ACCENT,
+  subtitle: PRICES_DROPPED_CTA,
+  description: HOME_BANNER_DELIVERY_NOTE,
+  cta: "Place your order now",
+  pill: HOME_BANNER_DELIVERY_NOTE,
 };
 
 export function isIndependenceDayHeroActive(now = new Date()): boolean {

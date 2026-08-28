@@ -1,5 +1,13 @@
 import { cdnUploadUrl } from "@hr-ecom/shared";
 import { categoryHref } from "./category-urls";
+import {
+  HOME_BANNER_DELIVERY_NOTE,
+  PRICES_DROPPED_ACCENT,
+  PRICES_DROPPED_CTA,
+  PRICES_DROPPED_HEADLINE,
+} from "./prices-dropped-copy";
+
+export { HOME_BANNER_DELIVERY_NOTE };
 
 export const site = {
   name: "UsaRakhi",
@@ -94,44 +102,44 @@ export function isUsCityNavLink(link: CityNavLink): boolean {
 export const usCityLinks = cityLinks.filter(isUsCityNavLink);
 
 /** Shown on every homepage hero slide (image caption + text panel + pill). */
-export const HOME_BANNER_DELIVERY_NOTE =
-  "Standard USA delivery · 5 business days · Free shipping on $15 minimum";
 
 export const homeBanners = [
   {
     src: "/banners/banner-1-usa-rakhi-delivery.png",
-    alt: "Prices dropped — still send Rakhi to USA. A design of love for your brother, any day.",
-    href: "/products?category=rakhi-combo",
-    eyebrow: "PRICES DROPPED · SEND LOVE ANYTIME",
-    title: "You can still send Rakhi to your brother in the",
-    titleAccent: "USA",
-    description:
-      "A rakhi is a design of love — it does not depend on a date. Prices dropped. Standard USA delivery · 5 business days · Free shipping on $15 minimum.",
-    cta: "Shop Rakhi Combos",
+    alt: "A rakhi is a sign of love — it does not depend on a day. Prices dropped. Still not ordered. Place your order now.",
+    href: "/products",
+    eyebrow: "PRICES DROPPED · PLACE YOUR ORDER NOW",
+    title: PRICES_DROPPED_HEADLINE,
+    titleAccent: PRICES_DROPPED_ACCENT,
+    subtitle: PRICES_DROPPED_CTA,
+    description: HOME_BANNER_DELIVERY_NOTE,
+    cta: "Place your order now",
     pill: HOME_BANNER_DELIVERY_NOTE,
     imageCaption: HOME_BANNER_DELIVERY_NOTE,
   },
   {
     src: "/banners/banner-2-connecting-hearts.png",
-    alt: "UsaRakhi.com — Standard USA delivery · 5 business days · Free shipping on $15 minimum",
+    alt: "UsaRakhi.com — Standard USA delivery · 5 business days. Delivery · Free shipping on $15 minimum",
     href: "/products",
     eyebrow: "EVERY SISTER · EVERY BROTHER",
     title: "Connecting Hearts",
     titleAccent: "Across Miles",
+    subtitle: PRICES_DROPPED_CTA,
     description: HOME_BANNER_DELIVERY_NOTE,
-    cta: "Browse All Rakhis",
+    cta: "Place your order now",
     pill: HOME_BANNER_DELIVERY_NOTE,
     imageCaption: HOME_BANNER_DELIVERY_NOTE,
   },
   {
     src: "/banners/banner-3-india-usa.png",
-    alt: "Send Rakhi from India to USA — Standard USA delivery · 5 business days · Free shipping on $15 minimum",
+    alt: "Send Rakhi from India to USA — Standard USA delivery · 5 business days. Delivery · Free shipping on $15 minimum",
     href: "/products?category=single-rakhi",
     eyebrow: "INDIA → USA",
-    title: "Bridge the Distance With a",
-    titleAccent: "Design of Love",
+    title: PRICES_DROPPED_HEADLINE,
+    titleAccent: PRICES_DROPPED_ACCENT,
+    subtitle: PRICES_DROPPED_CTA,
     description: HOME_BANNER_DELIVERY_NOTE,
-    cta: "Shop Single Rakhis",
+    cta: "Place your order now",
     pill: HOME_BANNER_DELIVERY_NOTE,
     imageCaption: HOME_BANNER_DELIVERY_NOTE,
   },

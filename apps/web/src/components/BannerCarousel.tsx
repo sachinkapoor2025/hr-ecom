@@ -11,6 +11,8 @@ export interface HomeBanner {
   eyebrow: string;
   title: string;
   titleAccent: string;
+  /** Line under the headline (e.g. “Still not ordered. Place your order now.”). */
+  subtitle?: string;
   description: string;
   cta: string;
   pill: string;
@@ -286,6 +288,18 @@ export function BannerCarousel({
                 {banner.title}{" "}
                 <span className="text-nav italic">{banner.titleAccent}</span>
               </p>
+
+              {banner.subtitle ? (
+                <p className="mb-5 text-lg sm:text-xl font-bold text-accent leading-snug">
+                  {banner.href ? (
+                    <Link href={banner.href} className="hover:underline underline-offset-4">
+                      {banner.subtitle}
+                    </Link>
+                  ) : (
+                    banner.subtitle
+                  )}
+                </p>
+              ) : null}
 
               <DeliveryHighlight text={banner.description} className="mb-6 max-w-xl mx-auto lg:mx-0" />
 
