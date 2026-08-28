@@ -106,7 +106,7 @@ export const usCityLinks = cityLinks.filter(isUsCityNavLink);
 export const homeBanners = [
   {
     src: "/banners/banner-1-usa-rakhi-delivery.png",
-    alt: "A rakhi is a sign of love — it does not depend on a date. Prices dropped. Still not ordered. Place your order now.",
+    alt: "A rakhi is a sign of love — it does not depend on a day. Prices dropped. Still not ordered. Place your order now.",
     href: "/products",
     eyebrow: "PRICES DROPPED · PLACE YOUR ORDER NOW",
     title: PRICES_DROPPED_HEADLINE,
