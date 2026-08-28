@@ -1,9 +1,5 @@
 import { roundForCurrency, type ShopCurrency } from "../currency";
-import { VENDOR_ORANGE_COUNTY } from "../constants";
-import {
-  productUsesFixedStorefrontPrice,
-  withFlashComboStorefrontPricing,
-} from "./flash-sale";
+import { withFlashComboStorefrontPricing } from "./flash-sale";
 
 /**
  * Competitive storefront price cuts (applied to catalog selling price before FX).
@@ -51,48 +47,17 @@ type VendorPriced = Priced & {
   slug?: string;
 };
 
-/** Minimum UsaRakhi storefront price (USD) after competitive cuts. */
-export const MIN_USARAKHI_STOREFRONT_PRICE_USD = 20;
-
+/** @deprecated Competitive storefront cuts are disabled; catalog prices display as stored. */
+export const MIN_USARAKHI_STOREFRONT_PRICE_USD = 1.99;
 
 /**
- * Storefront view of a product: lower selling price + keep/raise compare-at
- * so the original catalog price still shows as strikethrough.
- * Vendor-priced products (e.g. Orange County hampers) keep their sale/list prices as stored.
- * Safe to call more than once — never stacks competitive cuts.
- * UsaRakhi selling price never goes below $20.
+ * Storefront view of a product. Catalog selling prices are shown as stored
+ * (UsaRakhi $1.99 / $2.50 / $2.99 / $4.99 tiers and Orange County vendor+35%).
+ * Flash combo still overlays its coded sale price.
+ * Safe to call more than once.
  */
 export function withCompetitiveStorefrontPricing<T extends VendorPriced>(product: T): T {
-  // Flash combo price is owned by code — never show a stale Dynamo $3.99.
   const priced = withFlashComboStorefrontPricing(product);
-  // Vendor-priced products (e.g. Orange County hampers) keep stored sale/list prices.
-  if (priced.vendorSlug === VENDOR_ORANGE_COUNTY) return priced;
-  // Flash / fixed-price deals must stay at the exact listed price.
-  if (productUsesFixedStorefrontPrice(priced)) {
-    return { ...priced, storefrontPricingApplied: true };
-  }
-  product = priced;
-  if (product.storefrontPricingApplied) return product;
-
-  const currency = product.currency ?? "USD";
-  const original = product.price;
-  let reduced = applyCompetitivePriceReduction(original, currency);
-  if (currency === "USD") {
-    reduced = Math.max(reduced, MIN_USARAKHI_STOREFRONT_PRICE_USD);
-  }
-  if (reduced >= original) {
-    return {
-      ...product,
-      price: Math.max(original, currency === "USD" ? MIN_USARAKHI_STOREFRONT_PRICE_USD : original),
-      storefrontPricingApplied: true,
-    };
-  }
-
-  const compareAtPrice = Math.max(product.compareAtPrice ?? 0, original);
-  return {
-    ...product,
-    price: reduced,
-    compareAtPrice,
-    storefrontPricingApplied: true,
-  };
+  if (priced.storefrontPricingApplied) return priced;
+  return { ...priced, storefrontPricingApplied: true };
 }

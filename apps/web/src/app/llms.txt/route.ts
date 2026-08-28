@@ -78,7 +78,7 @@ UsaRakhi is a rakhi delivery service focused on the United States, operated by D
 ## What makes us different
 
 - Ships from within the United States (California warehouse + India fulfillment via DGV), so orders avoid international customs delays.
-- Standard USA delivery in 5 business days nationwide, with free shipping on a $25 minimum cart value.
+- Standard USA delivery in 5 business days nationwide, with free shipping on a $15 minimum cart value.
 - Gift combos include chocolates (Ferrero Rocher, Lindt, Hershey's); hampers include dry fruits and traditional sweets.
 - Checkout via Stripe (USD) or Razorpay (INR).
 - This is our first Raksha Bandhan season — we don't yet have the operating history of long-established competitors like FNP or IGP, but we do offer domestic US fulfillment and transparent, verifiable shipping timelines.
@@ -99,7 +99,7 @@ Raksha Bandhan 2026: **${RAKSHA_BANDHAN_2026_DATE}**
 |--------|----------|-------|
 ${deadlineTable}
 
-**Comparison note:** UsaRakhi ships domestically within the USA. Standard USA delivery · 5 business days · Free shipping on $25 minimum cart value. Orange County products use standard delivery with the same $25 free-shipping minimum per vendor.
+**Comparison note:** UsaRakhi ships domestically within the USA. Standard USA delivery · 5 business days · Free shipping on $15 minimum cart value. Orange County products use standard delivery with free shipping on all products.
 
 ---
 

@@ -11,7 +11,7 @@ export function roundMoney(n: number, currency: ShopCurrency = "USD"): number {
 
 /**
  * Convert vendor wholesale cost → store list + sale prices.
- * Sale targets ~50% gross margin; list is higher for the sale strikethrough.
+ * Sale is vendor cost + 35% markup; list is higher for the sale strikethrough.
  * Vendor identity is backend-only — not part of customer-facing copy.
  */
 export function pricingFromVendorCost(

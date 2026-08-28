@@ -122,22 +122,22 @@ describe("product-addons", () => {
   it("prices mixed extra rakhis as a 1–5 bundle", () => {
     const one = resolveProductAddons([{ id: "rakhi-ganesh-single-rakhi", quantity: 1 }]);
     assert.equal(one.ok, true);
-    if (one.ok) assert.equal(sumAddonPrices(one.addons), 5.49);
+    if (one.ok) assert.equal(sumAddonPrices(one.addons), 1.99);
 
     const two = resolveProductAddons([
       { id: "rakhi-ganesh-single-rakhi", quantity: 1 },
       { id: "rakhi-pearl-single-rakhi", quantity: 1 },
     ]);
     assert.equal(two.ok, true);
-    if (two.ok) assert.equal(sumAddonPrices(two.addons), 7.49);
+    if (two.ok) assert.equal(sumAddonPrices(two.addons), 2.5);
 
     const five = resolveProductAddons([{ id: "rakhi-ganesh-single-rakhi", quantity: 5 }]);
     assert.equal(five.ok, true);
-    if (five.ok) assert.equal(sumAddonPrices(five.addons), 10);
+    if (five.ok) assert.equal(sumAddonPrices(five.addons), 3.99);
 
     const six = resolveProductAddons([{ id: "rakhi-ganesh-single-rakhi", quantity: 6 }]);
     assert.equal(six.ok, false);
 
-    assert.equal(selectedAddonsUsdTotal([{ id: "rakhi-om-single-rakhi", quantity: 3 }]), 8.49);
+    assert.equal(selectedAddonsUsdTotal([{ id: "rakhi-om-single-rakhi", quantity: 3 }]), 2.99);
   });
 });

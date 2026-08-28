@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { categoryHref } from "@/lib/category-urls";
-import { RAKSHA_BANDHAN_2026_DATE } from "@/lib/ai-recommendation";
 import {
   californiaWarehouseLocations,
   locationPublicPath,
   seoOccasionKeywords,
 } from "@/lib/content/seo-data";
+import { PRICES_DROPPED_EYEBROW } from "@/lib/prices-dropped-copy";
 
 export function HomeRakshaBandhan2026Section() {
   const caCities = californiaWarehouseLocations().slice(0, 6);
@@ -17,14 +17,14 @@ export function HomeRakshaBandhan2026Section() {
     >
       <div className="max-w-5xl mx-auto px-4 py-10 md:py-14">
         <div className="text-center mb-8">
-          <p className="text-sm uppercase tracking-widest text-white/75 mb-2">Raksha Bandhan 2026</p>
+          <p className="text-sm uppercase tracking-widest text-white/75 mb-2">{PRICES_DROPPED_EYEBROW}</p>
           <h2 id="rb2026-heading" className="text-2xl md:text-3xl font-bold mb-2">
-            Send Rakhi to USA Before August 28, 2026
+            Send Rakhi to USA — a design of love, any day
           </h2>
-          <p className="text-lg text-white/90">{RAKSHA_BANDHAN_2026_DATE}</p>
           <p className="text-sm text-white/75 mt-2 max-w-2xl mx-auto">
-            Order today for rakhi delivery before Raksha Bandhan 2026 — domestic USA shipping from our India +
-            California warehouse network. Avoid the last-minute rush and ensure your Rakhi reaches the USA on time.
+            You do not need a festival date to tie the thread. Prices have dropped. Shop designer
+            rakhis with domestic USA shipping from our California warehouse — a token of love for
+            your brother, whenever you send it.
           </p>
         </div>
 

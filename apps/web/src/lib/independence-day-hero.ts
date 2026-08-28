@@ -40,13 +40,13 @@ export const rakshaBandhanOrderBy20Banner: HomeBanner = {
   src: RAKSHA_BANDHAN_ORDER_BY_20_BANNER_PATH,
   alt: RAKSHA_BANDHAN_ORDER_BY_20_BANNER_ALT,
   href: "/products?category=rakhi-combo",
-  eyebrow: "RAKSHA BANDHAN · ORDER BY 20 AUGUST",
-  title: "Raksha Bandhan is just around the",
-  titleAccent: "corner!",
+  eyebrow: "PRICES DROPPED · SEND LOVE ANYTIME",
+  title: "You can still send Rakhi — a design of",
+  titleAccent: "love",
   description:
-    "Shop premium Single Rakhi, Combos, Hampers & more. Standard USA delivery · 5 business days · Free shipping on $25 minimum.",
+    "The festival date does not decide the bond. Prices dropped. Standard USA delivery · 5 business days · Free shipping on $15 minimum.",
   cta: "Shop Rakhi Now",
-  pill: "Standard USA delivery · 5 business days · Free shipping on $25 minimum",
+  pill: "Standard USA delivery · 5 business days · Free shipping on $15 minimum",
 };
 
 export function isIndependenceDayHeroActive(now = new Date()): boolean {

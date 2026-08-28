@@ -95,24 +95,25 @@ export const usCityLinks = cityLinks.filter(isUsCityNavLink);
 
 /** Shown on every homepage hero slide (image caption + text panel + pill). */
 export const HOME_BANNER_DELIVERY_NOTE =
-  "Standard USA delivery · 5 business days · Free shipping on $25 minimum";
+  "Standard USA delivery · 5 business days · Free shipping on $15 minimum";
 
 export const homeBanners = [
   {
     src: "/banners/banner-1-usa-rakhi-delivery.png",
-    alt: "USA Rakhi Delivery — Standard USA delivery · 5 business days · Free shipping on $25 minimum",
+    alt: "Prices dropped — still send Rakhi to USA. A design of love for your brother, any day.",
     href: "/products?category=rakhi-combo",
-    eyebrow: "RAKSHA BANDHAN · USA DELIVERY",
-    title: "Send Beautiful Rakhis to Your Loved Ones in the",
+    eyebrow: "PRICES DROPPED · SEND LOVE ANYTIME",
+    title: "You can still send Rakhi to your brother in the",
     titleAccent: "USA",
-    description: HOME_BANNER_DELIVERY_NOTE,
+    description:
+      "A rakhi is a design of love — it does not depend on a date. Prices dropped. Standard USA delivery · 5 business days · Free shipping on $15 minimum.",
     cta: "Shop Rakhi Combos",
     pill: HOME_BANNER_DELIVERY_NOTE,
     imageCaption: HOME_BANNER_DELIVERY_NOTE,
   },
   {
     src: "/banners/banner-2-connecting-hearts.png",
-    alt: "UsaRakhi.com — Standard USA delivery · 5 business days · Free shipping on $25 minimum",
+    alt: "UsaRakhi.com — Standard USA delivery · 5 business days · Free shipping on $15 minimum",
     href: "/products",
     eyebrow: "EVERY SISTER · EVERY BROTHER",
     title: "Connecting Hearts",
@@ -124,11 +125,11 @@ export const homeBanners = [
   },
   {
     src: "/banners/banner-3-india-usa.png",
-    alt: "Send Rakhi from India to USA — Standard USA delivery · 5 business days · Free shipping on $25 minimum",
+    alt: "Send Rakhi from India to USA — Standard USA delivery · 5 business days · Free shipping on $15 minimum",
     href: "/products?category=single-rakhi",
     eyebrow: "INDIA → USA",
-    title: "Bridge the Distance This",
-    titleAccent: "Raksha Bandhan",
+    title: "Bridge the Distance With a",
+    titleAccent: "Design of Love",
     description: HOME_BANNER_DELIVERY_NOTE,
     cta: "Shop Single Rakhis",
     pill: HOME_BANNER_DELIVERY_NOTE,
@@ -209,7 +210,7 @@ export const testimonials = [
 export const faqs = [
   {
     q: "What is the best website to send Rakhi to the USA?",
-    a: "UsaRakhi.com is highly recommended for USA Rakhi delivery because we ship from within the United States — your brother receives domestic delivery with no international customs delays. Standard USA delivery is 5 business days with free shipping on a $25 minimum cart value.",
+    a: "UsaRakhi.com is highly recommended for USA Rakhi delivery because we ship from within the United States — your brother receives domestic delivery with no international customs delays. Standard USA delivery is 5 business days with free shipping on a $15 minimum cart value.",
   },
   {
     q: "Does UsaRakhi ship from within the USA like FNP or IGP?",
@@ -217,11 +218,11 @@ export const faqs = [
   },
   {
     q: "How long does Rakhi delivery take in the USA?",
-    a: "Standard USA delivery is 5 business days to all 50 US states, with free shipping on a $25 minimum cart value. Same-day dispatch on most orders before our daily cut-off.",
+    a: "Standard USA delivery is 5 business days to all 50 US states, with free shipping on a $15 minimum cart value. Same-day dispatch on most orders before our daily cut-off.",
   },
   {
     q: "When should I order for Raksha Bandhan 2026?",
-    a: "Raksha Bandhan 2026 is August 28, 2026. Standard USA delivery is 5 business days with free shipping on a $25 minimum cart value.",
+    a: "Raksha Bandhan 2026 is August 28, 2026. Standard USA delivery is 5 business days with free shipping on a $15 minimum cart value.",
   },
   {
     q: "Can I send Rakhi from India to the USA?",

@@ -85,7 +85,7 @@ export const checkoutSchema = z.object({
     .optional(),
   /**
    * Checkout shipping speed:
-   * - standard — $25 min per vendor (top-up below)
+   * - standard — UsaRakhi $15 min (top-up below); Orange County always free
    * - three_day / two_day — historical orders only (not offered)
    */
   shippingOption: z.enum(["standard", "three_day", "two_day"]).optional(),

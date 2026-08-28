@@ -9,7 +9,7 @@ import { ProductImageGallery } from "@/components/ProductImageGallery";
 import { SoldOutStamp } from "@/components/SoldOutStamp";
 import { WishlistButton } from "@/components/WishlistButton";
 import { TrustBadges } from "@/components/TrustBadges";
-import { RakshaBandhanCountdown } from "@/components/RakshaBandhanCountdown";
+import { PricesDroppedStrip } from "@/components/PricesDroppedStrip";
 import { ProductReviewsPreview } from "@/components/ProductReviewsPreview";
 import { StickyAddToCartBar } from "@/components/StickyAddToCartBar";
 import { useSessionId, useDebouncedLeadCapture, useLeadCapture } from "@/lib/session";
@@ -276,7 +276,7 @@ export function ProductDetailClient({
           <ProductIncludesPreview product={product} />
 
           <div className="mb-3">
-            <RakshaBandhanCountdown variant="inline" />
+            <PricesDroppedStrip variant="inline" />
           </div>
 
           {fastSelling && <FastSellingBanner unitsSold={unitsSold} />}

@@ -46,14 +46,14 @@ ${pages.join("\n")}
 ${cities.join("\n")}
 
 ## Raksha Bandhan 2026
-Date: August 28, 2026. Standard USA delivery · 5 business days · Free shipping on $25 minimum cart value. Orange County products use standard delivery only.
+Date: August 28, 2026. Standard USA delivery · 5 business days · Free shipping on $15 minimum cart value. Orange County products use standard delivery with free shipping.
 
 ## Delivery & payment
-- USA delivery: Standard USA delivery · 5 business days · Free shipping on $25 minimum cart value
+- USA delivery: Standard USA delivery · 5 business days · Free shipping on $15 minimum cart value
 - Order from anywhere; recipient address must be in the USA
 - Payment: Stripe (USD) and Razorpay (INR)
 - Most single rakhis include complimentary roli & chawal
-- Mixed UsaRakhi + Orange County carts: $25 free-shipping minimum is calculated separately per vendor
+- Mixed UsaRakhi + Orange County carts: UsaRakhi $15 free-shipping minimum; Orange County always free
 
 ## Support
 - Email: ${site.supportEmail}

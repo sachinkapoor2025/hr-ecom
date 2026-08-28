@@ -15,6 +15,7 @@ import { useCheckoutShippingOption } from "@/lib/checkout-shipping-option";
 import {
   cartLineUnitTotal,
   cartHasMultipleShippingVendors,
+  cartIsOrangeCountyOnly,
   checkoutShippingOptionsForCart,
   expeditedOptionPriceInCurrency,
   quoteAddressShipmentShipping,
@@ -132,6 +133,7 @@ export default function CartPage() {
   }, 0);
   const currency = displayCurrency;
   const multiVendor = cartHasMultipleShippingVendors(items);
+  const orangeCountyOnly = cartIsOrangeCountyOnly(items);
   const standardShippingCharge = quoteAddressShipmentShipping({
     items: items.map((item) => ({
       price: item.price,
@@ -244,6 +246,7 @@ export default function CartPage() {
               options={shippingOptions}
               name="last-minute-delivery-cart"
               multiVendor={multiVendor}
+              orangeCountyOnly={orangeCountyOnly}
             />
           </div>
 
@@ -272,6 +275,7 @@ export default function CartPage() {
                   className="text-xs"
                   compact
                   multiVendor={multiVendor}
+                  orangeCountyOnly={orangeCountyOnly}
                 />
               ) : null}
               <div className="flex items-center justify-between gap-4 pt-2 border-t border-slate-100">

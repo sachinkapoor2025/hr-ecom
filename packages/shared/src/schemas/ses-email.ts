@@ -300,7 +300,7 @@ export const SES_TEMPLATE_PLACEHOLDER_DEFAULTS = {
   deliveryOption1: "STANDARD DELIVERY",
   deliveryPrice1: "5 BUSINESS DAYS",
   deliveryOption2: "STANDARD DELIVERY",
-  deliveryPrice2: "$25 MIN",
+  deliveryPrice2: "$15 MIN",
   shopUrl: "https://www.usarakhi.com",
   unsubscribeUrl: "https://www.usarakhi.com/email/unsubscribe/preview",
 } as const;

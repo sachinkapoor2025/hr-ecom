@@ -1,6 +1,5 @@
 import { DEFAULT_PRODUCT_INVENTORY } from "../constants";
 import type { Product } from "../schemas/product";
-import { MIN_USARAKHI_STOREFRONT_PRICE_USD } from "./competitive-pricing";
 
 function usd(amount: number): number {
   return Math.round(amount * 100) / 100;
@@ -10,15 +9,15 @@ function usd(amount: number): number {
 export const MAX_RAKHI_ADDON_PIECES = 5;
 
 export const RAKHI_ADDON_BUNDLE_USD = {
-  1: 5.49,
-  2: 7.49,
-  3: 8.49,
-  4: 9.49,
-  5: 10,
+  1: 1.99,
+  2: 2.5,
+  3: 2.99,
+  4: 3.49,
+  5: 3.99,
 } as const;
 
-/** Set-of-N catalog SKUs are $1.50 above the matching add-on mix (= +$3 vs prior set list price). */
-export const MINI_RAKHI_SET_LIST_EXTRA_USD = 1.5;
+/** Set-of-N catalog SKUs match the add-on mix totals. */
+export const MINI_RAKHI_SET_LIST_EXTRA_USD = 0;
 
 export type MiniRakhiAddon = {
   slug: string;
@@ -36,7 +35,7 @@ export const MINI_RAKHI_ADDONS: readonly MiniRakhiAddon[] = [
     shortName: "Blue Beads Pearl",
     image:
       "https://d301af4ndyn9qx.cloudfront.net/uploads/2026/03/50dada5d-eb61-454a-8fe4-51eb5e420753-e1775488586506.webp",
-    standaloneUsd: 6.34,
+    standaloneUsd: 1.99,
   },
   {
     slug: "ganesh-single-rakhi",
@@ -44,7 +43,7 @@ export const MINI_RAKHI_ADDONS: readonly MiniRakhiAddon[] = [
     shortName: "Ganesh",
     image:
       "https://d301af4ndyn9qx.cloudfront.net/uploads/2026/03/Ganesh-single-rakhi-e1775489480917.webp",
-    standaloneUsd: 6.34,
+    standaloneUsd: 1.99,
   },
   {
     slug: "mutiple-stone-single-rakhi",
@@ -52,7 +51,7 @@ export const MINI_RAKHI_ADDONS: readonly MiniRakhiAddon[] = [
     shortName: "Multi Stone",
     image:
       "https://d301af4ndyn9qx.cloudfront.net/uploads/2026/03/Muticolour-stone-single-rakhi-e1775490341282.webp",
-    standaloneUsd: 6.34,
+    standaloneUsd: 1.99,
   },
   {
     slug: "om-rakhi-with-roli-chawal-for-brother",
@@ -60,7 +59,7 @@ export const MINI_RAKHI_ADDONS: readonly MiniRakhiAddon[] = [
     shortName: "Om with Roli Chawal",
     image:
       "https://d301af4ndyn9qx.cloudfront.net/uploads/2026/05/WhatsApp-Image-2026-05-06-at-10.36.39-PM-2.jpeg",
-    standaloneUsd: 6.34,
+    standaloneUsd: 1.99,
   },
   {
     slug: "pearl-single-rakhi",
@@ -68,7 +67,7 @@ export const MINI_RAKHI_ADDONS: readonly MiniRakhiAddon[] = [
     shortName: "Pearl",
     image:
       "https://d301af4ndyn9qx.cloudfront.net/uploads/2026/03/pearl-single-rakhi-e1779467005952.webp",
-    standaloneUsd: 6.34,
+    standaloneUsd: 1.99,
   },
   {
     slug: "red-rubi-single-stone-rakhi",
@@ -76,7 +75,7 @@ export const MINI_RAKHI_ADDONS: readonly MiniRakhiAddon[] = [
     shortName: "Red Rubi",
     image:
       "https://d301af4ndyn9qx.cloudfront.net/uploads/2026/03/ec34d0c6-c4e4-4f31-9f9b-958bc2b4a96d-e1776002916322.jpeg",
-    standaloneUsd: 6.34,
+    standaloneUsd: 1.99,
   },
   {
     slug: "pearl-rakhi-with-gold-single-rakhi",
@@ -84,7 +83,7 @@ export const MINI_RAKHI_ADDONS: readonly MiniRakhiAddon[] = [
     shortName: "Pearl Gold",
     image:
       "https://d301af4ndyn9qx.cloudfront.net/uploads/2026/03/Pearl-Rakhi-with-Gold-Single-e1779466657774.webp",
-    standaloneUsd: 6.71,
+    standaloneUsd: 1.99,
   },
   {
     slug: "om-single-rakhi",
@@ -92,7 +91,7 @@ export const MINI_RAKHI_ADDONS: readonly MiniRakhiAddon[] = [
     shortName: "Om Single",
     image:
       "https://d301af4ndyn9qx.cloudfront.net/uploads/2026/03/Om-Single-Rakhi-1-e1779466859856.png",
-    standaloneUsd: 9.89,
+    standaloneUsd: 1.99,
   },
 ];
 
@@ -238,10 +237,7 @@ function membersFor(def: MiniRakhiComboDef): MiniRakhiAddon[] {
 
 export function buildMiniRakhiComboProduct(def: MiniRakhiComboDef): Product {
   const members = membersFor(def);
-  const price = Math.max(
-    usd(RAKHI_ADDON_BUNDLE_USD[def.size] + MINI_RAKHI_SET_LIST_EXTRA_USD),
-    MIN_USARAKHI_STOREFRONT_PRICE_USD
-  );
+  const price = usd(RAKHI_ADDON_BUNDLE_USD[def.size] + MINI_RAKHI_SET_LIST_EXTRA_USD);
   const compareAtPrice = usd(members.reduce((sum, m) => sum + m.standaloneUsd, 0));
   const listItems = members.map((m) => `<li>${m.name}</li>`).join("");
   const names = members.map((m) => m.shortName).join(", ");

@@ -333,7 +333,7 @@ export const handwrittenBlogEndMatter: Record<
       },
       {
         q: "How fast do these sets arrive in the USA?",
-        a: "Typically 5 business days nationwide with free shipping on a $25 minimum cart value, because the shipment is domestic — not an import.",
+        a: "Typically 5 business days nationwide with free shipping on a $15 minimum cart value, because the shipment is domestic — not an import.",
       },
     ],
   },

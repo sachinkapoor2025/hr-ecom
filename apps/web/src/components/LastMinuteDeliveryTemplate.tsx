@@ -25,6 +25,8 @@ export type LastMinuteDeliveryTemplateProps = {
   name?: string;
   /** Cart mixes UsaRakhi + Orange County — shipping rules apply per vendor. */
   multiVendor?: boolean;
+  /** Cart is Orange County only — always free shipping. */
+  orangeCountyOnly?: boolean;
 };
 
 /**
@@ -40,6 +42,7 @@ export function LastMinuteDeliveryTemplate({
   options = checkoutShippingOptionsForCart(),
   name = "shippingOption",
   multiVendor = false,
+  orangeCountyOnly = false,
 }: LastMinuteDeliveryTemplateProps) {
   const standard = options.find((o) => o.id === "standard");
 
@@ -57,14 +60,15 @@ export function LastMinuteDeliveryTemplate({
           Delivery
         </h2>
         <p className="mt-1.5 text-sm text-slate-600 leading-relaxed">
-          Standard USA delivery · 5 business days · Free shipping on ${USARAKHI_MIN_ORDER_USD}{" "}
-          minimum cart value.
+          {orangeCountyOnly
+            ? "Standard USA delivery · 5 business days · Free shipping on all Orange County products."
+            : `Standard USA delivery · 5 business days · Free shipping on $${USARAKHI_MIN_ORDER_USD} minimum cart value.`}
         </p>
         {multiVendor ? (
           <p className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs sm:text-sm font-semibold text-amber-950 leading-snug">
             You selected products from different vendors — shipping is calculated separately.
-            UsaRakhi and Orange County each need a ${USARAKHI_MIN_ORDER_USD} minimum; otherwise
-            the remaining amount is added as shipping for that vendor.
+            UsaRakhi needs a ${USARAKHI_MIN_ORDER_USD} minimum; Orange County products always ship
+            free.
           </p>
         ) : null}
       </header>
@@ -105,6 +109,7 @@ export function LastMinuteDeliveryTemplate({
                 className="mt-2"
                 compact
                 multiVendor={multiVendor}
+                orangeCountyOnly={orangeCountyOnly}
               />
             </span>
           </label>

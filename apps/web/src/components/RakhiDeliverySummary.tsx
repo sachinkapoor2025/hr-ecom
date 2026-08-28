@@ -17,12 +17,12 @@ type Props = {
   standardTopUpAmount?: number;
   formatMoney?: (amount: number, currency: DisplayCurrency) => string;
   currency?: DisplayCurrency;
-  /** Show $25 minimum nudge on PDP / cart hints. */
+  /** Show $15 minimum nudge on PDP / cart hints. */
   showStandardMinimumNote?: boolean;
 };
 
 /**
- * Shipping options: standard USA delivery, 5 business days, free shipping on $25.
+ * Shipping options: standard USA delivery, 5 business days, free shipping on $15.
  */
 export function RakhiDeliverySummary({
   className = "",
