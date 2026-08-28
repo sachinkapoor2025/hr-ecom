@@ -100,12 +100,13 @@ export const HOME_BANNER_DELIVERY_NOTE =
 export const homeBanners = [
   {
     src: "/banners/banner-1-usa-rakhi-delivery.png",
-    alt: "USA Rakhi Delivery — Standard USA delivery · 5 business days · Free shipping on $15 minimum",
+    alt: "Prices dropped — still send Rakhi to USA. A design of love for your brother, any day.",
     href: "/products?category=rakhi-combo",
-    eyebrow: "RAKSHA BANDHAN · USA DELIVERY",
-    title: "Send Beautiful Rakhis to Your Loved Ones in the",
+    eyebrow: "PRICES DROPPED · SEND LOVE ANYTIME",
+    title: "You can still send Rakhi to your brother in the",
     titleAccent: "USA",
-    description: HOME_BANNER_DELIVERY_NOTE,
+    description:
+      "A rakhi is a design of love — it does not depend on a date. Prices dropped. Standard USA delivery · 5 business days · Free shipping on $15 minimum.",
     cta: "Shop Rakhi Combos",
     pill: HOME_BANNER_DELIVERY_NOTE,
     imageCaption: HOME_BANNER_DELIVERY_NOTE,
@@ -127,8 +128,8 @@ export const homeBanners = [
     alt: "Send Rakhi from India to USA — Standard USA delivery · 5 business days · Free shipping on $15 minimum",
     href: "/products?category=single-rakhi",
     eyebrow: "INDIA → USA",
-    title: "Bridge the Distance This",
-    titleAccent: "Raksha Bandhan",
+    title: "Bridge the Distance With a",
+    titleAccent: "Design of Love",
     description: HOME_BANNER_DELIVERY_NOTE,
     cta: "Shop Single Rakhis",
     pill: HOME_BANNER_DELIVERY_NOTE,
