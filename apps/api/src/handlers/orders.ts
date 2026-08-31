@@ -483,31 +483,28 @@ export async function listOrders(event: APIGatewayProxyEventV2) {
 }
 
 /** List fields only — omit trackingEvents, shipments, attribution, review logs (Lambda 6MB cap). */
-const ADMIN_ORDER_LIST_PROJECTION = [
-  "orderId",
-  "orderNumber",
-  "#st",
-  "total",
-  "currency",
-  "createdAt",
-  "updatedAt",
-  "trackingNumber",
-  "carrier",
-  "paymentProvider",
-  "shippingAddress",
-  "estimatedDeliveryAt",
-  "deliveredAt",
-  "labelStatus",
-  "shippingServiceName",
-  "vendorSlugs",
-  "vendorFulfillments",
-  "#items",
-].join(", ");
-
 const ADMIN_ORDER_LIST_ATTR_NAMES = {
+  "#oid": "orderId",
+  "#onum": "orderNumber",
   "#st": "status",
+  "#tot": "total",
+  "#cur": "currency",
+  "#ca": "createdAt",
+  "#ua": "updatedAt",
+  "#tn": "trackingNumber",
+  "#car": "carrier",
+  "#pp": "paymentProvider",
+  "#sa": "shippingAddress",
+  "#eda": "estimatedDeliveryAt",
+  "#da": "deliveredAt",
+  "#ls": "labelStatus",
+  "#ssn": "shippingServiceName",
+  "#vs": "vendorSlugs",
+  "#vf": "vendorFulfillments",
   "#items": "items",
 };
+
+const ADMIN_ORDER_LIST_PROJECTION = Object.keys(ADMIN_ORDER_LIST_ATTR_NAMES).join(", ");
 
 type AdminOrderListItem = {
   orderId: string;
