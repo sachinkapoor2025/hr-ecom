@@ -482,10 +482,102 @@ export async function listOrders(event: APIGatewayProxyEventV2) {
   return ok({ orders: result.Items ?? [] });
 }
 
+/** List fields only — omit trackingEvents, shipments, attribution, review logs (Lambda 6MB cap). */
+const ADMIN_ORDER_LIST_PROJECTION = [
+  "orderId",
+  "orderNumber",
+  "#st",
+  "total",
+  "currency",
+  "createdAt",
+  "updatedAt",
+  "trackingNumber",
+  "carrier",
+  "paymentProvider",
+  "shippingAddress",
+  "estimatedDeliveryAt",
+  "deliveredAt",
+  "labelStatus",
+  "shippingServiceName",
+  "vendorSlugs",
+  "vendorFulfillments",
+  "#items",
+].join(", ");
+
+const ADMIN_ORDER_LIST_ATTR_NAMES = {
+  "#st": "status",
+  "#items": "items",
+};
+
+type AdminOrderListItem = {
+  orderId: string;
+  orderNumber?: string;
+  status: string;
+  total: number;
+  currency: string;
+  createdAt: string;
+  updatedAt: string;
+  trackingNumber?: string;
+  carrier?: string;
+  paymentProvider?: string;
+  shippingAddress: { name: string; email: string; phone?: string };
+  estimatedDeliveryAt?: string;
+  deliveredAt?: string;
+  labelStatus?: StoredOrder["labelStatus"];
+  shippingServiceName?: string;
+  vendorSlugs?: string[];
+  vendorFulfillments?: VendorFulfillment[];
+  items: Array<{ vendorSlug?: string; sku?: string; name?: string; image?: string }>;
+};
+
+function toAdminOrderListItem(order: StoredOrder): AdminOrderListItem {
+  const addr = order.shippingAddress;
+  return {
+    orderId: order.orderId,
+    ...(order.orderNumber ? { orderNumber: order.orderNumber } : {}),
+    status: order.status,
+    total: order.total,
+    currency: order.currency,
+    createdAt: order.createdAt,
+    updatedAt: order.updatedAt,
+    ...(order.trackingNumber ? { trackingNumber: order.trackingNumber } : {}),
+    ...(order.carrier ? { carrier: order.carrier } : {}),
+    ...(order.paymentProvider ? { paymentProvider: order.paymentProvider } : {}),
+    shippingAddress: {
+      name: addr?.name ?? "",
+      email: addr?.email ?? "",
+      ...(addr?.phone ? { phone: addr.phone } : {}),
+    },
+    ...(order.estimatedDeliveryAt ? { estimatedDeliveryAt: order.estimatedDeliveryAt } : {}),
+    ...(order.deliveredAt ? { deliveredAt: order.deliveredAt } : {}),
+    ...(order.labelStatus ? { labelStatus: order.labelStatus } : {}),
+    ...(order.shippingServiceName ? { shippingServiceName: order.shippingServiceName } : {}),
+    ...(order.vendorSlugs?.length ? { vendorSlugs: order.vendorSlugs } : {}),
+    ...(order.vendorFulfillments?.length
+      ? {
+          vendorFulfillments: order.vendorFulfillments.map((f) => ({
+            vendorSlug: f.vendorSlug,
+            ...(f.trackingNumber ? { trackingNumber: f.trackingNumber } : {}),
+            ...(f.carrier ? { carrier: f.carrier } : {}),
+            ...(f.status ? { status: f.status } : {}),
+          })),
+        }
+      : {}),
+    items: (order.items ?? []).map((i) => ({
+      ...(i.vendorSlug ? { vendorSlug: i.vendorSlug } : {}),
+      ...(i.sku ? { sku: i.sku } : {}),
+      ...(i.name ? { name: i.name } : {}),
+      ...(i.image ? { image: i.image } : {}),
+    })),
+  };
+}
+
 async function queryAllOrdersByIndex(params: {
   indexName: "GSI2" | "GSI3";
   keyConditionExpression: string;
   expressionAttributeValues: Record<string, string>;
+  projectionExpression?: string;
+  expressionAttributeNames?: Record<string, string>;
   maxPages?: number;
 }) {
   const items: StoredOrder[] = [];
@@ -500,6 +592,12 @@ async function queryAllOrdersByIndex(params: {
         IndexName: params.indexName,
         KeyConditionExpression: params.keyConditionExpression,
         ExpressionAttributeValues: params.expressionAttributeValues,
+        ...(params.projectionExpression
+          ? { ProjectionExpression: params.projectionExpression }
+          : {}),
+        ...(params.expressionAttributeNames
+          ? { ExpressionAttributeNames: params.expressionAttributeNames }
+          : {}),
         ScanIndexForward: false,
         ExclusiveStartKey,
         Limit: 100,
@@ -517,22 +615,23 @@ export async function listAdminOrders(event: APIGatewayProxyEventV2) {
   if (!requireAdmin(event)) return forbidden();
 
   const status = event.queryStringParameters?.status;
+  const raw = status
+    ? await queryAllOrdersByIndex({
+        indexName: "GSI3",
+        keyConditionExpression: "GSI3PK = :pk",
+        expressionAttributeValues: { ":pk": orderKeys.gsi3pk(status) },
+        projectionExpression: ADMIN_ORDER_LIST_PROJECTION,
+        expressionAttributeNames: ADMIN_ORDER_LIST_ATTR_NAMES,
+      })
+    : await queryAllOrdersByIndex({
+        indexName: "GSI2",
+        keyConditionExpression: "GSI2PK = :pk",
+        expressionAttributeValues: { ":pk": orderKeys.gsi2pk() },
+        projectionExpression: ADMIN_ORDER_LIST_PROJECTION,
+        expressionAttributeNames: ADMIN_ORDER_LIST_ATTR_NAMES,
+      });
 
-  if (status) {
-    const orders = await queryAllOrdersByIndex({
-      indexName: "GSI3",
-      keyConditionExpression: "GSI3PK = :pk",
-      expressionAttributeValues: { ":pk": orderKeys.gsi3pk(status) },
-    });
-    return ok({ orders });
-  }
-
-  const orders = await queryAllOrdersByIndex({
-    indexName: "GSI2",
-    keyConditionExpression: "GSI2PK = :pk",
-    expressionAttributeValues: { ":pk": orderKeys.gsi2pk() },
-  });
-
+  const orders = raw.map(toAdminOrderListItem);
   return ok({ orders });
 }
 
