@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { categoryHref } from "@/lib/category-urls";
-import { api } from "@/lib/api";
 import { applyInlineLinks } from "@/lib/inline-links";
 import { homepageInlineLinks } from "@/lib/content/page-inline-links";
 import { HomeHero } from "@/components/HomeHero";
@@ -12,7 +11,6 @@ import { HomeProductCard } from "@/components/HomeProductCard";
 import { FastSellingSection } from "@/components/FastSellingSection";
 import { FlashSaleSection } from "@/components/FlashSaleSection";
 import { HomeSeoSection } from "@/components/HomeSeoSection";
-import { HomeRakshaBandhan2026Section } from "@/components/HomeRakshaBandhan2026Section";
 import { TrustStrip } from "@/components/TrustStrip";
 import { UsarakhiShareEmotionsBanner } from "@/components/UsarakhiShareEmotionsBanner";
 import { IndiaBuyerBanner } from "@/components/IndiaBuyerBanner";
@@ -28,15 +26,15 @@ import {
 import { pickHomeCategoryProducts } from "@/lib/home-category-products";
 import { loadProducts } from "@/lib/product-loader";
 import { faqJsonLd, howToSendRakhiJsonLd, pageMetadata } from "@/lib/seo";
-import { FLASH_COMBO_SALE_SLUG, isFlashComboSaleActive, type Product, type Category } from "@hr-ecom/shared";
+import { FLASH_COMBO_SALE_SLUG, isFlashComboSaleActive, type Product } from "@hr-ecom/shared";
 
 export const metadata: Metadata = pageMetadata({
-  title: "Send Rakhi to USA Online | Rakhi Delivery USA | UsaRakhi",
+  title: "Diwali & Bhai Dooj Gifts USA | Festive Hampers | UsaRakhi",
   description:
-    "Send rakhi to USA with domestic delivery — order from India with INR/UPI, or buy rakhi online USA. Designer rakhis, combos, 5–7 day nationwide shipping from our California warehouse.",
+    "Shop Diwali and Bhai Dooj gift hampers with USA delivery — sweets, dry fruits, chocolates, and pooja sets shipped domestically.",
   path: "/",
   keywords:
-    "send rakhi to usa, rakhi delivery usa, buy rakhi online usa, send rakhi to usa from india, order rakhi from india to usa, rakhi store usa, usa rakhi shop online, rakhi gifts to usa, nationwide rakhi delivery usa, pay inr rakhi usa",
+    "diwali gifts usa, bhai dooj gifts usa, diwali hamper usa, bhai dooj hamper, send diwali gifts to usa, pooja set usa, kaju katli gift box usa",
 });
 
 /** Same as PDP: always render from live product API so listing prices cannot drift. */
@@ -45,50 +43,20 @@ export const revalidate = 0;
 
 export default async function HomePage() {
   let products: Product[] = [];
-  let categories: Category[] = [];
 
   try {
-    const [liveProducts, categoriesData] = await Promise.all([
-      loadProducts(),
-      api<{ categories: Category[] }>("/categories", { revalidate: false }),
-    ]);
-    products = liveProducts;
-    categories = categoriesData.categories;
+    products = await loadProducts();
   } catch {
     products = [];
-    categories = [];
   }
 
-  // Orange County hampers (and other catalog fallbacks) may not be in API yet.
-  // Prefer live API prices — catalog JSON can be stale for shared slugs.
   for (const slug of homeCategoryOrder) {
     products = mergeProductsPreferExisting(products, getCatalogProductsByCategory(slug));
   }
-  if (!categories.some((c) => c.slug === "rakhi-hampers")) {
-    const now = new Date().toISOString();
-    categories = [
-      ...categories,
-      {
-        name: "Rakhi Hamper",
-        slug: "rakhi-hampers",
-        description: "Premium Rakhi gift hampers for USA delivery.",
-        published: true,
-        sortOrder: 15,
-        createdAt: now,
-        updatedAt: now,
-      },
-    ];
-  }
 
-  // Home-page-only display labels under category product sections.
-  // Does not change category names, URLs, slugs, nav, or SEO elsewhere.
   const homeCategoryDisplayNames: Record<(typeof homeCategoryOrder)[number], string> = {
-    "single-rakhi": "Single Rakhi To USA",
-    "rakhi-combo": "Rakhi Combo To USA",
-    "rakhi-hampers": "Rakhi Hamper To USA",
-    "bhaiya-bhabhi-rakhi": "Bhaiya Bhabhi Rakhi To USA",
-    "kids-rakhi": "Kids Rakhi To USA",
-    "lumba-rakhi": "Lumba Rakhi To USA",
+    "bhai-dooj": "Bhai Dooj Gifts",
+    diwali: "Diwali Gifts",
   };
 
   // Home-only curated lists + order (does not change category/shop/search pages).
@@ -143,34 +111,26 @@ export default async function HomePage() {
 
       <section className="max-w-4xl mx-auto px-4 py-10 text-center">
         <h1 className="text-2xl md:text-3xl font-bold text-primary mb-4">
-          Send Rakhi to USA — Free Shipping | Premium Online Rakhi Delivery
+          Diwali &amp; Bhai Dooj Gifts — Delivered Across the USA
         </h1>
         <p className="text-slate-600 leading-relaxed mb-4">
           {applyInlineLinks(
-            `${site.name} helps sisters in India, UK, Canada, Australia, and worldwide send rakhi to USA with reliable rakhi delivery USA across all 50 states. Shop 140+ designer rakhis — Single Rakhi, Combos with chocolates, rakhi gift hamper boxes with sweets and dry fruits, Kids Rakhi, Bhaiya Bhabhi sets, and Lumba Rakhi — delivered in 5–7 business days with roli chawal included. Order rakhi to USA from India in minutes at our online rakhi store USA.`,
+            `${site.name} ships festive gift hampers from within the United States. Shop Bhai Dooj boxes with sweets, dry fruits, and chocolates, and Diwali hampers with pooja sets, toran, rangoli, and mithai — delivered in about 5 business days.`,
             homepageInlineLinks
           )}
         </p>
         <div className="flex flex-wrap justify-center gap-3 text-sm">
-          <Link href="/raksha-bandhan" className="text-nav font-semibold hover:underline">
-            Raksha Bandhan 2026 →
+          <Link href={categoryHref("bhai-dooj")} className="text-nav font-semibold hover:underline">
+            Bhai Dooj gifts →
           </Link>
-          <Link href="/send-rakhi-from-india" className="text-nav font-semibold hover:underline">
-            Order from India (INR/UPI) →
-          </Link>
-          <Link href="/blog/send-rakhi-to-usa-from-india" className="text-nav font-semibold hover:underline">
-            Send from India guide →
-          </Link>
-          <Link href={categoryHref("rakhi-hampers")} className="text-nav font-semibold hover:underline">
-            Rakhi Hampers →
+          <Link href={categoryHref("diwali")} className="text-nav font-semibold hover:underline">
+            Diwali gifts →
           </Link>
           <Link href="/shipping" className="text-nav font-semibold hover:underline">
             Shipping info →
           </Link>
         </div>
       </section>
-
-      <HomeRakshaBandhan2026Section />
 
       <WhyTrustUsSection />
 

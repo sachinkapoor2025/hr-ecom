@@ -1,6 +1,7 @@
 import { UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import {
   DEFAULT_PRODUCT_INVENTORY,
+  RAKHI_SEASON_PAUSED_TAG,
   USARAKHI_STOREFRONT_PAUSED,
   VENDOR_ORANGE_COUNTY,
   isForceOutOfStockSlug,
@@ -19,9 +20,11 @@ function isOrangeCounty(product: Pick<Product, "vendorSlug" | "images">): boolea
 
 /** True for UsaRakhi SKUs zeroed by the bulk OOS script (tagged), not admin manual OOS. */
 export function shouldHealUsarakhiInventory(
-  product: Pick<Product, "slug" | "tags" | "vendorSlug" | "images">
+  product: Pick<Product, "slug" | "tags" | "vendorSlug" | "images" | "published">
 ): boolean {
   if (USARAKHI_STOREFRONT_PAUSED) return false;
+  if (product.published === false) return false;
+  if ((product.tags ?? []).includes(RAKHI_SEASON_PAUSED_TAG)) return false;
   const slug = product.slug?.trim();
   if (!slug || isOrangeCounty(product) || isForceOutOfStockSlug(slug)) return false;
   return (product.tags ?? []).includes(USARAKHI_OOS_PAUSE_TAG);

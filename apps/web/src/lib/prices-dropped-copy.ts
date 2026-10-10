@@ -1,15 +1,14 @@
 /** Evergreen post-festival storefront copy — no calendar deadline. */
 export const PRICES_DROPPED_EYEBROW = "Prices dropped";
 
-export const PRICES_DROPPED_HEADLINE =
-  "A rakhi is a sign of love — it does not depend on a day.";
+export const PRICES_DROPPED_HEADLINE = "Diwali and Bhai Dooj gifts";
 
-export const PRICES_DROPPED_ACCENT = "Prices dropped.";
+export const PRICES_DROPPED_ACCENT = "shipped across the USA.";
 
-export const PRICES_DROPPED_CTA = "Still not ordered. Place your order now.";
+export const PRICES_DROPPED_CTA = "Sweets, dry fruits, chocolates, and pooja sets.";
 
 export const PRICES_DROPPED_BODY =
-  "A rakhi is a sign of love — it does not depend on a day. Prices dropped. Still not ordered. Place your order now.";
+  "Diwali and Bhai Dooj gifts shipped across the USA. Sweets, dry fruits, chocolates, and pooja sets.";
 
 export const PRICES_DROPPED_STRIP = PRICES_DROPPED_BODY;
 

@@ -7,6 +7,7 @@ import {
   VENDOR_ORANGE_COUNTY,
   ORANGE_COUNTY_CATEGORY_SLUG,
   ORANGE_COUNTY_PRODUCT_INVENTORY,
+  RAKHI_SEASON_PAUSED_TAG,
   categoryKeys,
   productKeys,
   metaDescription,
@@ -100,6 +101,10 @@ export async function ensureOrangeCountyProductInDb(slug: string): Promise<Recor
   );
 
   if (existing.Item) {
+    const tags = Array.isArray(existing.Item.tags) ? (existing.Item.tags as string[]) : [];
+    if (existing.Item.published === false || tags.includes(RAKHI_SEASON_PAUSED_TAG)) {
+      return existing.Item as Record<string, unknown>;
+    }
     const inv = Number(existing.Item.inventory ?? 0);
     if (inv < ORANGE_COUNTY_PRODUCT_INVENTORY || existing.Item.vendorSlug !== VENDOR_ORANGE_COUNTY) {
       await docClient.send(

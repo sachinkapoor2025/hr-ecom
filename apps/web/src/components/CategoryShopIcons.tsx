@@ -65,7 +65,7 @@ export function CategoryShopIcons() {
   return (
     <section
       className="w-full overflow-x-clip border-b border-slate-100 bg-gradient-to-b from-[#fff7f0] to-white"
-      aria-label="Shop Rakhi by category"
+      aria-label="Shop by category"
     >
       <div className="relative mx-auto min-w-0 max-w-7xl px-3 py-5 sm:px-4 sm:py-8">
         <ScrollArrow direction="left" onClick={() => scrollBy(-1)} disabled={!canLeft} />

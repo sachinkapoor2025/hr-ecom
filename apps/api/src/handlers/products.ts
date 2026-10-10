@@ -11,7 +11,6 @@ import {
   productAllowsAddons,
   isRakhiSetSizeCategory,
   productMatchesRakhiSetCategory,
-  mergeMiniRakhiComboProducts,
   resolveProductImagesForUpsert,
   withForcedOutOfStockInventory,
   prepareStorefrontProducts,
@@ -136,7 +135,7 @@ export async function listProducts(event: APIGatewayProxyEventV2) {
 
   if (category) {
     if (isRakhiSetSizeCategory(category)) {
-      const all = mergeMiniRakhiComboProducts(await scanAllProducts());
+      const all = await scanAllProducts();
       items = all.filter((product) => productMatchesRakhiSetCategory(product, category));
     } else if (category === "rakhi-combo") {
       const [combo, kids, hampers] = await Promise.all([
@@ -149,10 +148,15 @@ export async function listProducts(event: APIGatewayProxyEventV2) {
       for (const product of hampers) {
         if (product.additionalCategorySlugs?.includes("rakhi-combo")) bySlug.set(product.slug, product);
       }
-      items = mergeMiniRakhiComboProducts([...bySlug.values()]);
+      items = [...bySlug.values()];
     } else if (category === "rakhi-hampers") {
       items = await queryProductsByCategory(category);
-    } else {
+    } else if (
+      category === "single-rakhi" ||
+      category === "kids-rakhi" ||
+      category === "lumba-rakhi" ||
+      category === "bhaiya-bhabhi-rakhi"
+    ) {
       const [primary, hampers] = await Promise.all([
         queryProductsByCategory(category),
         queryProductsByCategory("rakhi-hampers"),
@@ -162,9 +166,11 @@ export async function listProducts(event: APIGatewayProxyEventV2) {
         if (product.additionalCategorySlugs?.includes(category)) bySlug.set(product.slug, product);
       }
       items = [...bySlug.values()];
+    } else {
+      items = await queryProductsByCategory(category);
     }
   } else {
-    items = mergeMiniRakhiComboProducts(await scanAllProducts());
+    items = await scanAllProducts();
   }
 
   // Category queries bypass scanAllProducts — heal any paused SKUs in this page too.

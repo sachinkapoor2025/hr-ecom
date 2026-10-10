@@ -314,7 +314,9 @@ export function Header() {
                     >
                       {item.label}
                     </Link>
-                    <RakhiSetsMenu active={isRakhiSetsActive} />
+                    {rakhiSetsMenu.items.length > 0 ? (
+                      <RakhiSetsMenu active={isRakhiSetsActive} />
+                    ) : null}
                   </span>
                 );
               }
@@ -373,6 +375,7 @@ export function Header() {
                       >
                         {item.label}
                       </Link>
+                      {rakhiSetsMenu.items.length > 0 ? (
                       <div>
                         <button
                           type="button"
@@ -409,6 +412,7 @@ export function Header() {
                           </div>
                         )}
                       </div>
+                      ) : null}
                     </div>
                   );
                 }

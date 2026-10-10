@@ -83,9 +83,9 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
     });
   }
   return pageMetadata({
-    title: "Shop Rakhi — Send Rakhi to USA Online",
+    title: "Shop Diwali & Bhai Dooj Gifts — USA Delivery",
     description:
-      "Browse 126+ premium Rakhis — single, combo, kids, Bhaiya Bhabhi & Lumba. Send Rakhi to all 50 US states. Order from India worldwide.",
+      "Browse Diwali and Bhai Dooj gift hampers — sweets, dry fruits, chocolates, and pooja sets with domestic USA shipping.",
     path: "/products",
   });
 }
@@ -115,7 +115,7 @@ export default async function ProductsPage({ searchParams }: Props) {
     ? `Search: ${search}`
     : category
       ? categories.find((c) => c.slug === category)?.name ?? category.replace(/-/g, " ")
-      : "Shop Rakhi — Send to USA";
+      : "Shop festive gifts";
 
   const sortedCategories = orderCategories(categories);
   const categoryMap = new Map(categories.map((c) => [c.slug, c]));
@@ -140,8 +140,8 @@ export default async function ProductsPage({ searchParams }: Props) {
       </div>
       {!search && !category && (
         <p className="text-slate-600 mb-8 max-w-2xl">
-          Premium Rakhis for Raksha Bandhan — delivered to all 50 US states. Order from India, UK, Canada, or
-          anywhere; enter your brother&apos;s US address at checkout.
+          Diwali and Bhai Dooj gift hampers — sweets, dry fruits, chocolates, and pooja sets, shipped within
+          the United States.
         </p>
       )}
 

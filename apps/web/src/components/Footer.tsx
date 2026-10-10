@@ -21,8 +21,7 @@ export function Footer() {
           <div className="col-span-2 lg:col-span-3">
             <SiteLogoLink size="desktop" className="mb-5" />
             <p className="text-white/80 leading-relaxed mb-4 max-w-xs">
-              Send Rakhi to USA from India, UK, Canada &amp; worldwide. Premium Rakhis delivered to all 50 US
-              states.
+              Diwali and Bhai Dooj gift hampers delivered across the United States.
             </p>
             <div className="space-y-2 text-white/90">
               <p>
@@ -80,7 +79,7 @@ export function Footer() {
 
           {/* Shop */}
           <div className="min-w-0 lg:col-span-2">
-            <p className="font-semibold text-white mb-3 sm:mb-4">Shop Rakhi</p>
+            <p className="font-semibold text-white mb-3 sm:mb-4">Shop</p>
             <ul className="space-y-2 text-white/80">
               {rakhiSetsMenu.items.map((n) => (
                 <li key={n.href}>

@@ -15,10 +15,9 @@ export function PricesDroppedStrip({ variant = "banner" }: { variant?: Variant }
   if (variant === "inline") {
     return (
       <p className="text-sm text-slate-700">
-        A rakhi is a sign of love — it does not depend on a day. Prices dropped. Still not
-        ordered.{" "}
+        Diwali and Bhai Dooj gifts, shipped across the USA.{" "}
         <Link href="/products" className="font-semibold text-nav hover:underline">
-          Place your order now
+          Shop festive hampers
         </Link>
         .
       </p>

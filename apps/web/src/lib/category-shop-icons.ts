@@ -1,4 +1,4 @@
-import { cdnUploadUrl, resolveProductImageUrl } from "@hr-ecom/shared";
+import { resolveProductImageUrl } from "@hr-ecom/shared";
 import { categoryHref } from "@/lib/category-urls";
 
 export type CategoryShopIcon = {
@@ -13,72 +13,50 @@ function iconSrc(pathOrCdn: string): string {
   return resolveProductImageUrl(pathOrCdn) || pathOrCdn;
 }
 
-/**
- * FNP-style “shop by category” icons on the homepage.
- * Each tile opens the matching category or collection of related products.
- */
+const CDN = "https://d301af4ndyn9qx.cloudfront.net/uploads/orange-county";
+
+/** Homepage shop-by-category tiles for the festive catalog. */
 export const CATEGORY_SHOP_ICONS: CategoryShopIcon[] = [
   {
-    id: "set-of-2",
-    label: "Set of 2 Rakhi",
-    href: categoryHref("2-set-rakhi"),
-    imageSrc: iconSrc("/uploads/orange-county/TFPRD00315-337/TFPRD00315-337-SETOF2.jpg"),
-    imageAlt: "Set of 2 designer Rakhis",
+    id: "bhai-dooj",
+    label: "Bhai Dooj",
+    href: categoryHref("bhai-dooj"),
+    imageSrc: iconSrc(`${CDN}/TFUSBD2601/TFUSBD2601_1.jpg`),
+    imageAlt: "Bhai Dooj gift hamper",
   },
   {
-    id: "rakhi-hampers",
-    label: "Rakhi Hampers",
-    href: categoryHref("rakhi-hampers"),
-    imageSrc: iconSrc("/uploads/orange-county/TFUSRH2026-24/TFUSRH2026-24a.jpg"),
-    imageAlt: "Premium Rakhi gift hamper",
+    id: "diwali",
+    label: "Diwali",
+    href: categoryHref("diwali"),
+    imageSrc: iconSrc(`${CDN}/TFUSDW2620/TFUSDW2620_1.jpg`),
+    imageAlt: "Diwali gift hamper",
   },
   {
-    id: "with-sweets",
+    id: "sweets",
     label: "With Sweets",
-    href: "/collections/rakhi-with-sweets",
-    imageSrc: iconSrc("/uploads/orange-county/TFUSRH2026-38/TFUSRH2026-38a.jpg"),
-    imageAlt: "Rakhi gift hamper with sweets",
+    href: "/products?search=kaju",
+    imageSrc: iconSrc(`${CDN}/TFUSBD2603/TFUSBD2603_1.jpg`),
+    imageAlt: "Festive gift with kaju katli",
   },
   {
-    id: "with-chocolates",
-    label: "With Chocolates",
-    href: "/collections/rakhi-with-chocolates",
-    imageSrc: cdnUploadUrl("2026/05/fercho.png"),
-    imageAlt: "Rakhi with Ferrero Rocher chocolates",
+    id: "dry-fruits",
+    label: "Dry Fruits",
+    href: "/products?search=pistachio",
+    imageSrc: iconSrc(`${CDN}/TFUSBD2606/TFUSBD2606_1.jpg`),
+    imageAlt: "Dry fruit gift box",
   },
   {
-    id: "with-dryfruits",
-    label: "With Dryfruits",
-    href: "/collections/rakhi-with-dryfruits",
-    imageSrc: iconSrc("/uploads/orange-county/TFUSA003/TFUSA003A.jpg"),
-    imageAlt: "Rakhi with dry fruits and nuts",
+    id: "chocolates",
+    label: "Chocolates",
+    href: "/products?search=ferrero",
+    imageSrc: iconSrc(`${CDN}/TFUSBD2613/TFUSBD2613_1.jpg`),
+    imageAlt: "Chocolate gift box",
   },
   {
-    id: "single-rakhi",
-    label: "Single Rakhi",
-    href: categoryHref("single-rakhi"),
-    imageSrc: cdnUploadUrl("2026/03/Om-Single-Rakhi-1-e1779466859856.png"),
-    imageAlt: "Single designer Om Rakhi",
-  },
-  {
-    id: "bhaiya-bhabhi",
-    label: "For Bhaiya Bhabhi",
-    href: categoryHref("bhaiya-bhabhi-rakhi"),
-    imageSrc: cdnUploadUrl("2026/04/Bhai-Bhabhi-Lumba-Rakhi-Set-e1776082926101.jpg"),
-    imageAlt: "Bhaiya Bhabhi Rakhi set",
-  },
-  {
-    id: "rakhi-combos",
-    label: "Rakhi Combos",
-    href: categoryHref("rakhi-combo"),
-    imageSrc: cdnUploadUrl("2026/04/Chhota-Bheem-Kids-Rakhi-with-Assorted-Chocolates-e1775565435556.jpg"),
-    imageAlt: "Rakhi combo gift pack",
-  },
-  {
-    id: "rakhi-sets",
-    label: "Rakhi Sets",
-    href: "/collections/rakhi-sets",
-    imageSrc: iconSrc("/uploads/orange-county/MD005SET5/MD005SET5.jpg"),
-    imageAlt: "Multi-piece Rakhi sets",
+    id: "pooja",
+    label: "Pooja Sets",
+    href: "/products?search=pooja",
+    imageSrc: iconSrc(`${CDN}/TFUSDW2621/TFUSDW2621_1.jpg`),
+    imageAlt: "Diwali pooja gift set",
   },
 ];

@@ -158,6 +158,13 @@ export const VENDOR_USARAKHI = "usarakhi" as const;
 export const ORANGE_COUNTY_CATEGORY_SLUG = "rakhi-hampers" as const;
 
 /**
+ * Raksha Bandhan 2026 catalog is closed. Tagged products stay in DynamoDB for
+ * order history and admin profit, but storefront listings and PDPs hide them.
+ * Deploy must not restock these rows.
+ */
+export const RAKHI_SEASON_PAUSED_TAG = "rakhi-season-paused-2026-10" as const;
+
+/**
  * Orange County pricing from vendor cost:
  *   sale price = cost × 1.35  → 35% markup on vendor price
  *   list/compare-at = cost × 1.75 → strikethrough vs sale

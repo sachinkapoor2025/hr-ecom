@@ -1,5 +1,5 @@
 import type { Product } from "@hr-ecom/shared";
-import { sortAvailableProductsFirst } from "@hr-ecom/shared";
+import { isRakhiSeasonPaused, sortAvailableProductsFirst } from "@hr-ecom/shared";
 import { api } from "./api";
 import {
   getCatalogProduct,
@@ -54,6 +54,7 @@ function isProductMissingError(err: unknown): boolean {
 export async function loadProduct(slug: string): Promise<Product | null> {
   try {
     const data = await api<{ product: Product }>(`/products/${slug}`, FRESH_PRODUCT_FETCH);
+    if (isRakhiSeasonPaused(data.product) || (data.product.inventory ?? 0) <= 0) return null;
     return rememberProduct(data.product);
   } catch (err) {
     const stale = memoryProduct(slug);
@@ -81,7 +82,9 @@ export async function loadProducts(params?: {
 
   try {
     const data = await api<{ products: Product[] }>(`/products${qs}`, FRESH_PRODUCT_FETCH);
-    return rememberProducts(data.products);
+    return rememberProducts(
+      data.products.filter((product) => !isRakhiSeasonPaused(product) && (product.inventory ?? 0) > 0)
+    );
   } catch {
     if (params?.category) {
       return getCatalogProductsByCategory(params.category);
