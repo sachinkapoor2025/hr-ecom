@@ -55,8 +55,12 @@ export default async function HomePage() {
   }
 
   const homeCategoryDisplayNames: Record<(typeof homeCategoryOrder)[number], string> = {
-    "bhai-dooj": "Bhai Dooj Gifts",
-    diwali: "Diwali Gifts",
+    "bhai-dooj": "Bhai Dooj Combo",
+    diwali: "Diwali Combo",
+    "sweet-combos": "Sweet Combos",
+    "dry-fruit-combos": "Dry Fruit Combos",
+    "chocolate-combos": "Chocolate Combos",
+    "pooja-sets": "Pooja Sets",
   };
 
   // Home-only curated lists + order (does not change category/shop/search pages).

@@ -42,8 +42,12 @@ export const rakhiSetsMenu: {
 
 export const navItems = [
   { label: "Home", href: "/" },
-  { label: "Bhai Dooj", href: categoryHref("bhai-dooj"), category: "bhai-dooj" },
-  { label: "Diwali", href: categoryHref("diwali"), category: "diwali" },
+  { label: "Bhai Dooj Combo", href: categoryHref("bhai-dooj"), category: "bhai-dooj" },
+  { label: "Diwali Combo", href: categoryHref("diwali"), category: "diwali" },
+  { label: "Sweet Combos", href: categoryHref("sweet-combos"), category: "sweet-combos" },
+  { label: "Dry Fruit Combos", href: categoryHref("dry-fruit-combos"), category: "dry-fruit-combos" },
+  { label: "Chocolate Combos", href: categoryHref("chocolate-combos"), category: "chocolate-combos" },
+  { label: "Pooja Sets", href: categoryHref("pooja-sets"), category: "pooja-sets" },
   { label: "Shop All", href: "/products" },
 ] as const;
 
@@ -152,7 +156,14 @@ export const promoBanners = [
 ] as const;
 
 /** Homepage sections for the 2026 festive catalog. */
-export const homeCategoryOrder = ["bhai-dooj", "diwali"] as const;
+export const homeCategoryOrder = [
+  "bhai-dooj",
+  "diwali",
+  "sweet-combos",
+  "dry-fruit-combos",
+  "chocolate-combos",
+  "pooja-sets",
+] as const;
 
 /** Virtual multi-piece set filters (nav dropdown + SEO landing pages). */
 export const setSizeCategoryOrder = ["2-set-rakhi", "3-set-rakhi", "4-set-rakhi", "5-set-rakhi"] as const;

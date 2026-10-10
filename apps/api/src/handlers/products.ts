@@ -167,7 +167,16 @@ export async function listProducts(event: APIGatewayProxyEventV2) {
       }
       items = [...bySlug.values()];
     } else {
-      items = await queryProductsByCategory(category);
+      const [primary, bhaiDooj, diwali] = await Promise.all([
+        queryProductsByCategory(category),
+        queryProductsByCategory("bhai-dooj"),
+        queryProductsByCategory("diwali"),
+      ]);
+      const bySlug = new Map(primary.map((p) => [p.slug, p]));
+      for (const product of [...bhaiDooj, ...diwali]) {
+        if (product.additionalCategorySlugs?.includes(category)) bySlug.set(product.slug, product);
+      }
+      items = [...bySlug.values()];
     }
   } else {
     items = await scanAllProducts();

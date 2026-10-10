@@ -162,10 +162,38 @@ def description(name: str, category: str, items: list[str], sku: str) -> str:
     )
 
 
+EXTRA_CATEGORY = {
+    "sweets": "sweet-combos",
+    "dry-fruits": "dry-fruit-combos",
+    "chocolates": "chocolate-combos",
+    "pooja": "pooja-sets",
+}
+
+KEEP_CATEGORIES = {
+    "bhai-dooj",
+    "diwali",
+    "sweet-combos",
+    "dry-fruit-combos",
+    "chocolate-combos",
+    "pooja-sets",
+}
+
+
+def extra_category_slugs(tags: list[str]) -> list[str]:
+    return [EXTRA_CATEGORY[tag] for tag in tags if tag in EXTRA_CATEGORY]
+
+
+def festival_prices(cost: float) -> tuple[float, float]:
+    """List price is double the vendor cost. Sale price is 15% off that list."""
+    compare = round_usd(cost * 2)
+    price = round_usd(compare * 0.85)
+    return price, compare
+
+
 def tags_for(items: list[str], category: str) -> list[str]:
     blob = " ".join(items).lower()
     tags = ["festival-2026", "gift-hamper", "usa-delivery", category, "orange-county"]
-    if re.search(r"kaju|laddoo|ladoo|mithai|sweet", blob):
+    if re.search(r"kaju|laddoo|ladoo|laddo|mithai|sweet", blob):
         tags.append("sweets")
     if re.search(r"ferrero|chocolate|skittles|m&m", blob):
         tags.append("chocolates")
@@ -199,7 +227,7 @@ def main() -> None:
     categories = [
         (
             "bhai-dooj",
-            "Bhai Dooj Gifts",
+            "Bhai Dooj Combo",
             "Bhai Dooj gift hampers for USA delivery — sweets, dry fruits, chocolates, kumkum, and greeting cards shipped domestically.",
             "Bhai Dooj Gifts USA | Sweet & Dry Fruit Hampers",
             "Shop Bhai Dooj gift boxes for USA delivery. Kaju katli, dry fruits, chocolates, and puja sets shipped within the United States.",
@@ -207,11 +235,43 @@ def main() -> None:
         ),
         (
             "diwali",
-            "Diwali Gifts",
+            "Diwali Combo",
             "Diwali gift hampers for USA delivery — pooja sets, toran, rangoli, sweets, and dry fruits shipped domestically.",
             "Diwali Gifts USA | Pooja Sets & Festive Hampers",
             "Shop Diwali hampers for USA delivery. Metal pooja sets, toran, rangoli, besan laddoo, and dry fruits shipped within the United States.",
             2,
+        ),
+        (
+            "sweet-combos",
+            "Sweet Combos",
+            "Festive sweet combos for USA delivery — kaju katli, besan laddoo, and mithai gift boxes shipped domestically.",
+            "Sweet Combos USA | Festive Mithai Gift Boxes",
+            "Shop sweet gift combos for USA delivery. Kaju katli and besan laddoo hampers shipped within the United States.",
+            3,
+        ),
+        (
+            "dry-fruit-combos",
+            "Dry Fruit Combos",
+            "Dry fruit gift combos for USA delivery — almonds, pistachios, cashews, and mixed nuts shipped domestically.",
+            "Dry Fruit Combos USA | Festive Nut Gift Boxes",
+            "Shop dry fruit gift combos for USA delivery. Almonds, pistachios, and cashews shipped within the United States.",
+            4,
+        ),
+        (
+            "chocolate-combos",
+            "Chocolate Combos",
+            "Chocolate gift combos for USA delivery — Ferrero Rocher, M&M's, and Skittles boxes shipped domestically.",
+            "Chocolate Combos USA | Festive Chocolate Gift Boxes",
+            "Shop chocolate gift combos for USA delivery. Ferrero Rocher, M&M's, and Skittles boxes shipped within the United States.",
+            5,
+        ),
+        (
+            "pooja-sets",
+            "Pooja Sets",
+            "Pooja gift sets for USA delivery — thali, toran, rangoli, kumkum, and metal pooja boxes shipped domestically.",
+            "Pooja Sets USA | Festive Pooja Gift Hampers",
+            "Shop pooja gift sets for USA delivery. Thali, toran, rangoli, and metal pooja boxes shipped within the United States.",
+            6,
         ),
     ]
     for slug, name, desc, seo_title, seo_desc, sort_order in categories:
@@ -239,8 +299,9 @@ def main() -> None:
 
     for row in rows:
         cost = row["vendorCost"]
-        price = round_usd(cost * 1.35)
-        compare = round_usd(cost * 1.75)
+        price, compare = festival_prices(cost)
+        tags = tags_for(row["items"], row["categorySlug"])
+        extras = extra_category_slugs(tags)
         files = images_for(row["sku"])
         urls = []
         for file in files:
@@ -268,7 +329,8 @@ def main() -> None:
             "images": urls,
             "sku": row["sku"],
             "inventory": 500,
-            "tags": tags_for(row["items"], row["categorySlug"]),
+            "tags": tags,
+            **({"additionalCategorySlugs": extras} if extras else {}),
             "vendorSlug": "orange-county",
             "vendorCost": cost,
             "seoTitle": f"{row['name']} | USA Delivery",
@@ -330,7 +392,7 @@ def main() -> None:
                 continue
             slug = item.get("slug")
             if pk.startswith("CATEGORY#"):
-                if not slug or slug in {"bhai-dooj", "diwali"} or item.get("published") is False:
+                if not slug or slug in KEEP_CATEGORIES or item.get("published") is False:
                     continue
                 print(f"{'WOULD UNPUBLISH' if DRY_RUN else 'UNPUBLISH'} CATEGORY {slug}")
                 if not DRY_RUN:

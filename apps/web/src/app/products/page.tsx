@@ -122,7 +122,9 @@ export default async function ProductsPage({ searchParams }: Props) {
   const productsByCategory = homeCategoryOrder.map((slug) => ({
     slug,
     name: categoryMap.get(slug)?.name ?? slug.replace(/-/g, " "),
-    products: products.filter((p) => p.categorySlug === slug),
+    products: products.filter(
+      (p) => p.categorySlug === slug || p.additionalCategorySlugs?.includes(slug)
+    ),
   }));
   const showGrouped = !search && !category;
 

@@ -4,7 +4,7 @@
  * The workbook in this drop only contains Bhai Dooj (19) and Diwali (6).
  * There are no Karwa Chauth rows.
  *
- * - Sale price = vendor TP × 1.35, compare-at = TP × 1.75
+ * - List price = vendor TP × 2. Sale price is 15% off that list. vendorCost stays the sheet TP.
  * - vendorCost stores the vendor TP for admin profit
  * - inventory = 500
  * - Earlier Rakhi products (UsaRakhi + Orange County) are set to inventory 0
@@ -26,8 +26,8 @@ import {
   VENDOR_ORANGE_COUNTY,
   categoryKeys,
   metaDescription,
-  pricingFromVendorCost,
   productKeys,
+  roundMoney,
   resolveProductImagesForUpsert,
 } from "@hr-ecom/shared";
 
@@ -52,7 +52,28 @@ const MIME: Record<string, string> = {
   ".webp": "image/webp",
 };
 
-const KEEP_CATEGORIES = new Set(["bhai-dooj", "diwali"]);
+const KEEP_CATEGORIES = new Set([
+  "bhai-dooj",
+  "diwali",
+  "sweet-combos",
+  "dry-fruit-combos",
+  "chocolate-combos",
+  "pooja-sets",
+]);
+
+const EXTRA_CATEGORY: Record<string, string> = {
+  sweets: "sweet-combos",
+  "dry-fruits": "dry-fruit-combos",
+  chocolates: "chocolate-combos",
+  pooja: "pooja-sets",
+};
+
+/** List price is double the vendor cost. Sale price is 15% off that list. */
+function festivalPrices(vendorCost: number): { vendorCost: number; price: number; compareAtPrice: number } {
+  const compareAtPrice = roundMoney(vendorCost * 2, "USD");
+  const price = roundMoney(compareAtPrice * 0.85, "USD");
+  return { vendorCost: roundMoney(vendorCost, "USD"), price, compareAtPrice };
+}
 
 type NamedProduct = { name: string; categorySlug: "bhai-dooj" | "diwali" };
 
@@ -146,7 +167,7 @@ function buildDescription(name: string, categorySlug: string, items: string[], s
 function contentTags(items: string[], categorySlug: string): string[] {
   const blob = items.join(" ").toLowerCase();
   const tags = ["festival-2026", "gift-hamper", "usa-delivery", categorySlug, "orange-county"];
-  if (/kaju|laddoo|ladoo|mithai|sweet/.test(blob)) tags.push("sweets");
+  if (/kaju|laddoo|ladoo|laddo|mithai|sweet/.test(blob)) tags.push("sweets");
   if (/ferrero|chocolate|skittles|m&m/.test(blob)) tags.push("chocolates");
   if (/almond|pistachio|cashew|dry fruit|mixed nut/.test(blob)) tags.push("dry-fruits");
   if (/pooja|puja|thali|toran|rangoli|kumkum|shubh/.test(blob)) tags.push("pooja");
@@ -262,7 +283,7 @@ async function main() {
 
   const categories = [
     {
-      name: "Bhai Dooj Gifts",
+      name: "Bhai Dooj Combo",
       slug: "bhai-dooj",
       description:
         "Bhai Dooj gift hampers for USA delivery — sweets, dry fruits, chocolates, kumkum, and greeting cards shipped domestically.",
@@ -273,7 +294,7 @@ async function main() {
       sortOrder: 1,
     },
     {
-      name: "Diwali Gifts",
+      name: "Diwali Combo",
       slug: "diwali",
       description:
         "Diwali gift hampers for USA delivery — pooja sets, toran, rangoli, sweets, and dry fruits shipped domestically.",
@@ -282,6 +303,50 @@ async function main() {
         "Shop Diwali hampers for USA delivery. Metal pooja sets, toran, rangoli, besan laddoo, and dry fruits shipped within the United States."
       ),
       sortOrder: 2,
+    },
+    {
+      name: "Sweet Combos",
+      slug: "sweet-combos",
+      description:
+        "Festive sweet combos for USA delivery — kaju katli, besan laddoo, and mithai gift boxes shipped domestically.",
+      seoTitle: "Sweet Combos USA | Festive Mithai Gift Boxes",
+      seoDescription: metaDescription(
+        "Shop sweet gift combos for USA delivery. Kaju katli and besan laddoo hampers shipped within the United States."
+      ),
+      sortOrder: 3,
+    },
+    {
+      name: "Dry Fruit Combos",
+      slug: "dry-fruit-combos",
+      description:
+        "Dry fruit gift combos for USA delivery — almonds, pistachios, cashews, and mixed nuts shipped domestically.",
+      seoTitle: "Dry Fruit Combos USA | Festive Nut Gift Boxes",
+      seoDescription: metaDescription(
+        "Shop dry fruit gift combos for USA delivery. Almonds, pistachios, and cashews shipped within the United States."
+      ),
+      sortOrder: 4,
+    },
+    {
+      name: "Chocolate Combos",
+      slug: "chocolate-combos",
+      description:
+        "Chocolate gift combos for USA delivery — Ferrero Rocher, M&M's, and Skittles boxes shipped domestically.",
+      seoTitle: "Chocolate Combos USA | Festive Chocolate Gift Boxes",
+      seoDescription: metaDescription(
+        "Shop chocolate gift combos for USA delivery. Ferrero Rocher, M&M's, and Skittles boxes shipped within the United States."
+      ),
+      sortOrder: 5,
+    },
+    {
+      name: "Pooja Sets",
+      slug: "pooja-sets",
+      description:
+        "Pooja gift sets for USA delivery — thali, toran, rangoli, kumkum, and metal pooja boxes shipped domestically.",
+      seoTitle: "Pooja Sets USA | Festive Pooja Gift Hampers",
+      seoDescription: metaDescription(
+        "Shop pooja gift sets for USA delivery. Thali, toran, rangoli, and metal pooja boxes shipped within the United States."
+      ),
+      sortOrder: 6,
     },
   ];
 
@@ -311,7 +376,11 @@ async function main() {
   }
 
   for (const row of rows) {
-    const priced = pricingFromVendorCost(row.vendorCost, "USD");
+    const priced = festivalPrices(row.vendorCost);
+    const tags = contentTags(row.items, row.categorySlug);
+    const additionalCategorySlugs = tags
+      .map((tag) => EXTRA_CATEGORY[tag])
+      .filter((slug): slug is string => Boolean(slug));
     const files = imagesForSku(row.sku);
     const imageUrls: string[] = [];
     for (const file of files) {
@@ -339,7 +408,8 @@ async function main() {
       images: imageUrls,
       sku: row.sku,
       inventory: ORANGE_COUNTY_PRODUCT_INVENTORY,
-      tags: contentTags(row.items, row.categorySlug),
+      tags,
+      ...(additionalCategorySlugs.length > 0 ? { additionalCategorySlugs } : {}),
       vendorSlug: VENDOR_ORANGE_COUNTY,
       vendorCost: priced.vendorCost,
       seoTitle: `${row.name} | USA Delivery`,
