@@ -705,6 +705,335 @@ export const categoryRichContent: Record<string, CategoryRichContent> = {
     ],
     relatedCategories: relatedExcept("rakhi-hampers"),
   },
+  "bhai-dooj": {
+    slug: "bhai-dooj",
+    headline: "Bhai Dooj gift boxes for a brother in the United States",
+    intro: [
+      "Bhai Dooj is the festival when a sister marks her brother’s forehead and the family shares sweets. This page lists the Bhai Dooj hampers in the current catalog: ready-packed boxes, not a custom assortment. A listing might be kaju katli with kumkum, almonds and pistachios, a Ferrero Rocher box, mixed dry fruits, or a pooja set with besan laddoo. The product name is the contents.",
+      "Two dry-fruit boxes state a weight in the name — 266 g and 131 g. Other boxes do not publish a gram weight in the title, so do not assume one. Kids-oriented listings are named as such, including an M&M’s and markers gift. If you need a Diwali pooja hamper instead of a brother gift, use the Diwali page.",
+    ],
+    delivery: {
+      heading: "How these Bhai Dooj boxes are delivered",
+      paragraphs: [
+        "Enter a delivery address in the United States. The parcel is fulfilled domestically, so it is not held for international customs. Orange County products include free shipping, and standard delivery is 5 business days.",
+      ],
+    },
+    highlights: {
+      heading: "What the Bhai Dooj grid actually contains",
+      items: [
+        "Kaju katli paired with kumkum, cashews, or Ferrero Rocher on specific boxes",
+        "Nut boxes: almonds and pistachios, cashews, pistachios alone, and mixed nuts",
+        "Chocolate boxes that name Ferrero Rocher, M&M’s, or Skittles",
+        "Pooja-set boxes that include a thali or kumkum plus a sweet or nuts",
+      ],
+    },
+    whyUs: {
+      heading: "Before you add a Bhai Dooj box to the cart",
+      bullets: [
+        "Read the included list on the product page — that list is the box",
+        "A second category such as sweets or pooja does not add extra items",
+        "Mixed carts with another vendor follow the shipping page",
+      ],
+    },
+    howTo: {
+      heading: "How to send a Bhai Dooj hamper",
+      steps: [
+        "Choose one box from the grid and open its included list.",
+        "Add it to the cart and enter the US delivery address.",
+        "Pay at checkout. Orange County items on this page ship free.",
+        "Allow 5 business days for standard domestic delivery.",
+      ],
+    },
+    faqs: [
+      {
+        q: "Can I swap the sweet or the nuts inside a Bhai Dooj box?",
+        a: "No. Each hamper is packed as the product page describes it. Pick a different listing if you want a different combination.",
+      },
+      {
+        q: "Do all Bhai Dooj boxes include kumkum?",
+        a: "Only the listings that name kumkum or a pooja set. A nut-only or chocolate-only box does not include it unless the product says so.",
+      },
+      {
+        q: "Where do these boxes ship?",
+        a: "To a United States address, as a domestic parcel. Standard delivery is 5 business days, and Orange County products include free shipping.",
+      },
+    ],
+    relatedCategories: [
+      { label: "Diwali combos", href: categoryHref("diwali"), text: "Pooja, toran, and rangoli hampers for Diwali." },
+      { label: "Sweet combos", href: categoryHref("sweet-combos"), text: "Boxes that include kaju katli or besan laddoo." },
+      { label: "Pooja sets", href: categoryHref("pooja-sets"), text: "Thali, kumkum, toran, and related puja items." },
+    ],
+  },
+  diwali: {
+    slug: "diwali",
+    headline: "Diwali hampers with pooja items, sweets, and dry fruits",
+    intro: [
+      "The Diwali page is a short list of festival hampers, each built around a pooja or decor item plus something to eat. The catalog names are specific: a toran and rangoli with besan laddoo; a metal pooja set with besan laddoo; a metal pooja set with kaju katli; Shubh Labh and rangoli with dry fruit; a pooja set with Ferrero Rocher and almonds; and a metal pooja set with kaju katli and pistachios.",
+      "That is the whole Diwali group. If a box you want is missing here, it is filed under Bhai Dooj instead. Nothing is added at checkout beyond the included list on the product you open.",
+    ],
+    delivery: {
+      heading: "Diwali delivery inside the United States",
+      paragraphs: [
+        "These hampers ship to a US address from within the country. Orange County products include free shipping. Standard delivery is 5 business days. A cart that also contains another vendor is priced for shipping the way the shipping page describes.",
+      ],
+    },
+    highlights: {
+      heading: "How the six Diwali hampers differ",
+      items: [
+        "Decor-led: toran, rangoli, and Shubh Labh, packed with a sweet or dry fruit",
+        "Metal pooja sets paired with besan laddoo, kaju katli, or kaju katli and pistachios",
+        "One pooja set that names Ferrero Rocher and almonds",
+      ],
+    },
+    whyUs: {
+      heading: "What to confirm on a Diwali listing",
+      bullets: [
+        "Whether the pooja piece is a thali set, toran, or rangoli",
+        "Which sweet or nut is packed with it",
+        "The photo and included list match before you pay",
+      ],
+    },
+    howTo: {
+      heading: "How to order a Diwali hamper",
+      steps: [
+        "Open the hamper whose name matches the pooja item you want.",
+        "Check the included list, then add that hamper to the cart.",
+        "Enter the US address and pay at checkout.",
+        "Track the domestic shipment. Standard delivery is 5 business days.",
+      ],
+    },
+    faqs: [
+      {
+        q: "Are Diwali and Bhai Dooj the same boxes?",
+        a: "No. Diwali listings are the pooja and decor hampers named on this page. Bhai Dooj has its own, longer list of brother gift boxes.",
+      },
+      {
+        q: "Can I add an extra sweet to a Diwali hamper?",
+        a: "The box ships as listed. Choose another product if you want a different sweet or nut.",
+      },
+      {
+        q: "Is shipping free on these Diwali hampers?",
+        a: "Orange County products include free shipping. See the shipping page if the cart mixes vendors.",
+      },
+    ],
+    relatedCategories: [
+      { label: "Bhai Dooj combos", href: categoryHref("bhai-dooj"), text: "Brother gift boxes for Bhai Dooj." },
+      { label: "Pooja sets", href: categoryHref("pooja-sets"), text: "Every hamper that includes a puja item." },
+      { label: "Sweet combos", href: categoryHref("sweet-combos"), text: "Hampers that include kaju katli or laddoo." },
+    ],
+  },
+  "sweet-combos": {
+    slug: "sweet-combos",
+    headline: "Festive boxes that include an Indian sweet",
+    intro: [
+      "Sweet combos are not a separate mithai counter. This page gathers Diwali and Bhai Dooj hampers whose contents include a sweet — in this catalog, kaju katli or besan laddoo. A box of only nuts or only chocolate stays on the dry-fruit or chocolate page unless the listing also names a sweet.",
+      "The sweet is one part of the hamper. A Bhai Dooj kaju katli and kumkum box appears here because of the kaju katli, and it also appears on Bhai Dooj and, when kumkum is included, on pooja sets. You are seeing the same product from the sweet angle.",
+    ],
+    delivery: {
+      heading: "Shipping for sweet hampers",
+      paragraphs: [
+        "Delivery is domestic within the United States. Orange County products include free shipping, with standard delivery in 5 business days. The sweet named on the card is the sweet that is packed.",
+      ],
+    },
+    highlights: {
+      heading: "Sweets named in the current catalog",
+      items: [
+        "Kaju katli, including boxes that also hold kumkum, cashews, or Ferrero Rocher",
+        "Besan laddoo with a Diwali toran and rangoli, or with a metal pooja set",
+        "A Bhai Dooj pooja set that names besan laddoo",
+      ],
+    },
+    whyUs: {
+      heading: "Use this page when the sweet is the priority",
+      bullets: [
+        "You want kaju katli rather than a nut-only box",
+        "You want besan laddoo with a Diwali pooja item",
+        "You will still open the product to see everything else in the box",
+      ],
+    },
+    howTo: {
+      heading: "How to shop sweet combos",
+      steps: [
+        "Scan names for kaju katli or besan laddoo.",
+        "Open the product and read the full included list.",
+        "Add that hamper and check out with a US address.",
+      ],
+    },
+    faqs: [
+      {
+        q: "Which sweets are in these combos?",
+        a: "The current listings name kaju katli or besan laddoo. A product does not include a sweet that is absent from its own list.",
+      },
+      {
+        q: "Why does the same box appear under Bhai Dooj and here?",
+        a: "Bhai Dooj is the occasion. This page is the sweet filter. One hamper can match both.",
+      },
+    ],
+    relatedCategories: [
+      { label: "Bhai Dooj combos", href: categoryHref("bhai-dooj"), text: "All Bhai Dooj boxes, with or without a sweet." },
+      { label: "Diwali combos", href: categoryHref("diwali"), text: "Diwali pooja hampers, including those with laddoo or kaju katli." },
+      { label: "Dry fruit combos", href: categoryHref("dry-fruit-combos"), text: "Boxes built around nuts and dry fruit." },
+    ],
+  },
+  "dry-fruit-combos": {
+    slug: "dry-fruit-combos",
+    headline: "Festive boxes built around nuts and dry fruits",
+    intro: [
+      "Dry fruit combos are the hampers that name almonds, pistachios, cashews, mixed nuts, or mixed dry fruits. Some are nut boxes on their own, such as the pistachio gift box and the mixed nuts gift box. Others put nuts next to a sweet, chocolate, or pooja item, such as kaju katli with cashews, or a Diwali metal pooja set with kaju katli and pistachios.",
+      "Two Bhai Dooj mixed dry fruit boxes give a weight in the product name: 266 g and 131 g. Use those names when the size matters. Other nut listings do not put a weight in the title.",
+    ],
+    delivery: {
+      heading: "Delivery for dry fruit hampers",
+      paragraphs: [
+        "The box ships to a United States address as a domestic parcel. Orange County products include free shipping. Standard delivery is 5 business days.",
+      ],
+    },
+    highlights: {
+      heading: "Nut listings you can tell apart by name",
+      items: [
+        "Almonds and pistachios together, pistachios alone, and mixed nuts",
+        "Kaju katli with cashews, and Ferrero Rocher with almonds",
+        "Mixed dry fruits in the 266 g box and the 131 g box",
+      ],
+    },
+    whyUs: {
+      heading: "When this filter is the right one",
+      bullets: [
+        "The gift should include nuts, whether or not a sweet is also packed",
+        "You want the smaller or larger mixed dry fruit box by the weight in its name",
+        "You do not want a chocolate-only box with no nuts",
+      ],
+    },
+    howTo: {
+      heading: "How to choose a dry fruit box",
+      steps: [
+        "Pick the nut named in the title, or the mixed dry fruit weight you want.",
+        "Confirm on the product page whether a sweet, chocolate, or pooja item is also inside.",
+        "Check out with the US delivery address.",
+      ],
+    },
+    faqs: [
+      {
+        q: "Is every dry fruit box the same mix?",
+        a: "No. Almonds, pistachios, cashews, mixed nuts, and mixed dry fruits are different listings. The product name is the mix.",
+      },
+      {
+        q: "Do the gram weights apply to every nut box?",
+        a: "Only the two mixed dry fruit boxes titled 266 g and 131 g. Other products do not state those weights.",
+      },
+    ],
+    relatedCategories: [
+      { label: "Sweet combos", href: categoryHref("sweet-combos"), text: "Boxes that include kaju katli or besan laddoo." },
+      { label: "Chocolate combos", href: categoryHref("chocolate-combos"), text: "Boxes that name a chocolate brand." },
+      { label: "Bhai Dooj combos", href: categoryHref("bhai-dooj"), text: "The full Bhai Dooj list." },
+    ],
+  },
+  "chocolate-combos": {
+    slug: "chocolate-combos",
+    headline: "Festive boxes that name a chocolate",
+    intro: [
+      "Chocolate combos are Diwali and Bhai Dooj hampers whose included list names a chocolate. In this catalog those names are Ferrero Rocher, M&M’s, and Skittles. A box is here because of that chocolate, not because every hamper on the site contains one.",
+      "Read the rest of the name before you assume the box is only chocolate. Examples include kaju katli with Ferrero Rocher, Ferrero with almonds and kumkum, M&M’s with Ferrero Rocher, Skittles with mixed nuts, a Diwali pooja set with Ferrero and almonds, and an M&M’s and markers gift for a child.",
+    ],
+    delivery: {
+      heading: "Shipping for chocolate hampers",
+      paragraphs: [
+        "These boxes ship inside the United States. Orange County products include free shipping, and standard delivery is 5 business days. The brand on the product title is the chocolate that is packed.",
+      ],
+    },
+    highlights: {
+      heading: "Chocolate pairings in the catalog",
+      items: [
+        "Ferrero Rocher with kaju katli, with almonds, or with a Diwali pooja set",
+        "M&M’s alone, with Ferrero Rocher, or with markers",
+        "Skittles alone, with mixed nuts, or with M&M’s",
+      ],
+    },
+    whyUs: {
+      heading: "Compare chocolates by the title",
+      bullets: [
+        "Ferrero Rocher when you want a wrapped chocolate beside an Indian sweet or nuts",
+        "M&M’s or Skittles when the listing says so, including the kids markers gift",
+        "Another page if the hamper does not name a chocolate at all",
+      ],
+    },
+    howTo: {
+      heading: "How to shop chocolate combos",
+      steps: [
+        "Choose the brand written on the card.",
+        "Open the product to see whether nuts, sweets, kumkum, or a pooja item are included.",
+        "Place the order for a US address.",
+      ],
+    },
+    faqs: [
+      {
+        q: "Do you pack Ferrero Rocher, M&M’s, and Skittles in every combo?",
+        a: "No. Each box includes only the chocolate named on that product.",
+      },
+      {
+        q: "Is the M&M’s and markers box a chocolate hamper?",
+        a: "It is listed here because it includes M&M’s. The markers are part of that same product, as the name says.",
+      },
+    ],
+    relatedCategories: [
+      { label: "Sweet combos", href: categoryHref("sweet-combos"), text: "Kaju katli and besan laddoo hampers." },
+      { label: "Dry fruit combos", href: categoryHref("dry-fruit-combos"), text: "Almond, pistachio, cashew, and mixed nut boxes." },
+      { label: "Bhai Dooj combos", href: categoryHref("bhai-dooj"), text: "Brother gift boxes, including the chocolate ones." },
+    ],
+  },
+  "pooja-sets": {
+    slug: "pooja-sets",
+    headline: "Pooja hampers for Diwali and Bhai Dooj",
+    intro: [
+      "Pooja sets are hampers that include a puja or decor piece: kumkum, a puja thali, a metal pooja set, a toran, rangoli, or Shubh Labh. The page is a filter across both festivals. A Bhai Dooj kumkum box and a Diwali metal pooja set can both appear here.",
+      "The puja item is packed with whatever else that product names — kaju katli, besan laddoo, pistachios, cashews, almonds, or Ferrero Rocher. A nut box with no kumkum and no thali is not a pooja set.",
+    ],
+    delivery: {
+      heading: "Delivery for pooja hampers",
+      paragraphs: [
+        "Ship to a United States address. The parcel is sent domestically. Orange County products include free shipping, and standard delivery is 5 business days.",
+      ],
+    },
+    highlights: {
+      heading: "Pooja pieces named on the products",
+      items: [
+        "Kumkum with kaju katli, almonds, or Ferrero Rocher on Bhai Dooj boxes",
+        "A puja thali with pistachios, and pooja sets with kaju katli and cashews or with besan laddoo",
+        "Diwali metal pooja sets, plus toran, rangoli, and Shubh Labh hampers",
+      ],
+    },
+    whyUs: {
+      heading: "Pick the puja item first",
+      bullets: [
+        "Kumkum when the Bhai Dooj tilak is the point of the gift",
+        "A metal pooja set or thali when the box should hold a puja piece",
+        "Toran, rangoli, or Shubh Labh when the gift is for decorating at Diwali",
+      ],
+    },
+    howTo: {
+      heading: "How to order a pooja hamper",
+      steps: [
+        "Choose the listing whose name includes the puja item you want.",
+        "Read what is packed with it — sweet, nuts, or chocolate.",
+        "Check out for a US address. Orange County items ship free.",
+      ],
+    },
+    faqs: [
+      {
+        q: "Does every pooja set include a metal thali?",
+        a: "No. Some listings are kumkum boxes. Metal pooja sets and a puja thali are separate products, named that way.",
+      },
+      {
+        q: "Are toran and rangoli on this page?",
+        a: "Yes, when they are part of a Diwali hamper. Those hampers are also on the Diwali page.",
+      },
+    ],
+    relatedCategories: [
+      { label: "Diwali combos", href: categoryHref("diwali"), text: "The Diwali pooja and decor hampers." },
+      { label: "Bhai Dooj combos", href: categoryHref("bhai-dooj"), text: "Bhai Dooj boxes, including kumkum gifts." },
+      { label: "Sweet combos", href: categoryHref("sweet-combos"), text: "Hampers that include kaju katli or laddoo." },
+    ],
+  },
 };
 
 /**

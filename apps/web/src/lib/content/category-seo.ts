@@ -63,6 +63,42 @@ export const categoryPageSeo: Record<
       "Order Rakhi hamper gift boxes to USA with designer rakhis, kaju katli, dry fruits, and festive sweets. Fast domestic USA delivery, clear what's-included lists, and secure online shopping.",
     h1: "Send Rakhi Hamper to USA",
   },
+  "bhai-dooj": {
+    title: "Bhai Dooj Gift Hampers USA | Combos for Brother",
+    description:
+      "Shop Bhai Dooj gift boxes for a brother in the USA — kaju katli, dry fruits, chocolates, kumkum, and pooja sets. Domestic shipping, contents listed on each product.",
+    h1: "Bhai Dooj Combos for USA Delivery",
+  },
+  diwali: {
+    title: "Diwali Gift Hampers USA | Pooja Sets & Sweets",
+    description:
+      "Shop Diwali hampers for USA delivery — pooja sets, toran, rangoli, besan laddoo, kaju katli, and dry fruits. Each box lists exactly what is packed.",
+    h1: "Diwali Combos for USA Delivery",
+  },
+  "sweet-combos": {
+    title: "Sweet Combos USA | Kaju Katli & Besan Laddoo Hampers",
+    description:
+      "Browse festive hampers that include Indian sweets such as kaju katli or besan laddoo. Domestic USA delivery. See each product for the full box.",
+    h1: "Sweet Combos for USA Delivery",
+  },
+  "dry-fruit-combos": {
+    title: "Dry Fruit Combos USA | Nuts & Dry Fruit Gift Boxes",
+    description:
+      "Shop festive boxes with almonds, pistachios, cashews, or mixed dry fruits for USA delivery. Weights are the ones printed on each listing.",
+    h1: "Dry Fruit Combos for USA Delivery",
+  },
+  "chocolate-combos": {
+    title: "Chocolate Combos USA | Festive Chocolate Gift Boxes",
+    description:
+      "Browse Diwali and Bhai Dooj boxes that include Ferrero Rocher, M&M's, or Skittles. The chocolate in the box is the one named on the product.",
+    h1: "Chocolate Combos for USA Delivery",
+  },
+  "pooja-sets": {
+    title: "Pooja Sets USA | Diwali & Bhai Dooj Puja Hampers",
+    description:
+      "Shop pooja hampers for USA delivery — thali sets, kumkum, toran, rangoli, and Shubh Labh, packed with the sweets or nuts named on each product.",
+    h1: "Pooja Sets for USA Delivery",
+  },
 };
 
 export function getCategoryPageSeo(slug: string) {
