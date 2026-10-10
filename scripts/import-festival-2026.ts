@@ -4,7 +4,7 @@
  * The workbook in this drop only contains Bhai Dooj (19) and Diwali (6).
  * There are no Karwa Chauth rows.
  *
- * - List price = vendor TP × 2. Sale price is 15% off that list. vendorCost stays the sheet TP.
+ * - List price = vendor TP × 2.5. Sale price is 15% off that list. vendorCost stays the sheet TP.
  * - vendorCost stores the vendor TP for admin profit
  * - inventory = 500
  * - Earlier Rakhi products (UsaRakhi + Orange County) are set to inventory 0
@@ -68,9 +68,9 @@ const EXTRA_CATEGORY: Record<string, string> = {
   pooja: "pooja-sets",
 };
 
-/** List price is double the vendor cost. Sale price is 15% off that list. */
+/** List price is 2.5× the vendor cost. Sale price is 15% off that list. */
 function festivalPrices(vendorCost: number): { vendorCost: number; price: number; compareAtPrice: number } {
-  const compareAtPrice = roundMoney(vendorCost * 2, "USD");
+  const compareAtPrice = roundMoney(vendorCost * 2.5, "USD");
   const price = roundMoney(compareAtPrice * 0.85, "USD");
   return { vendorCost: roundMoney(vendorCost, "USD"), price, compareAtPrice };
 }

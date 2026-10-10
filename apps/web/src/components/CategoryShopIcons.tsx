@@ -65,7 +65,7 @@ export function CategoryShopIcons() {
   return (
     <section
       className="w-full overflow-x-clip border-b border-slate-100 bg-gradient-to-b from-[#fff7f0] to-white"
-      aria-label="Shop by category"
+      aria-label="Festive hamper photos"
     >
       <div className="relative mx-auto min-w-0 max-w-7xl px-3 py-5 sm:px-4 sm:py-8">
         <ScrollArrow direction="left" onClick={() => scrollBy(-1)} disabled={!canLeft} />
@@ -79,15 +79,15 @@ export function CategoryShopIcons() {
             <Link
               key={item.id}
               href={item.href}
-              className="group flex w-[28%] max-w-[6.5rem] shrink-0 snap-start flex-col items-center gap-1.5 sm:w-[6.75rem] sm:max-w-none sm:gap-2"
+              className="group flex w-[22%] max-w-[5.5rem] shrink-0 snap-start flex-col items-center gap-1.5 sm:w-[6.25rem] sm:max-w-none sm:gap-2"
             >
               <span className="relative aspect-square w-full overflow-hidden rounded-2xl bg-[#fde8d8] shadow-sm ring-1 ring-black/5 transition group-hover:shadow-md group-hover:ring-nav/30">
                 <Image
                   src={item.imageSrc}
                   alt={item.imageAlt}
                   fill
-                  sizes="(max-width: 640px) 28vw, 108px"
-                  className="object-contain p-1.5 transition duration-300 group-hover:scale-105 sm:p-2"
+                  sizes="(max-width: 640px) 22vw, 100px"
+                  className="object-cover transition duration-300 group-hover:scale-105"
                 />
               </span>
               <span className="line-clamp-2 w-full px-0.5 text-center text-[10px] font-medium leading-snug text-slate-800 sm:text-xs">

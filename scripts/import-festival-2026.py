@@ -184,8 +184,8 @@ def extra_category_slugs(tags: list[str]) -> list[str]:
 
 
 def festival_prices(cost: float) -> tuple[float, float]:
-    """List price is double the vendor cost. Sale price is 15% off that list."""
-    compare = round_usd(cost * 2)
+    """List price is 2.5× the vendor cost. Sale price is 15% off that list."""
+    compare = round_usd(cost * 2.5)
     price = round_usd(compare * 0.85)
     return price, compare
 
