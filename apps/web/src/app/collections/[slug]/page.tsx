@@ -8,6 +8,7 @@ import {
   allCollectionSlugs,
   getCollection,
 } from "@/lib/collections";
+import { getCollectionGuide } from "@/lib/content/collection-guides";
 import { loadProducts } from "@/lib/product-loader";
 import { getCatalogProducts, mergeProductsPreferExisting } from "@/lib/catalog-fallback";
 import { breadcrumbJsonLd, pageMetadata } from "@/lib/seo";
@@ -49,6 +50,7 @@ export default async function CollectionPage({ params }: Props) {
   }
   products = mergeProductsPreferExisting(products, getCatalogProducts());
   const filtered = collection.filter(products).filter((p) => p.published !== false);
+  const guide = getCollectionGuide(slug);
 
   const crumbs = [
     { label: "Home", href: "/" },
@@ -88,6 +90,33 @@ export default async function CollectionPage({ params }: Props) {
           ))}
         </div>
       )}
+
+      {guide ? (
+        <section className="mt-12 pt-10 border-t border-slate-200 max-w-3xl text-slate-700 leading-relaxed">
+          <h2 className="text-xl font-bold text-primary mb-3">{guide.heading}</h2>
+          {guide.paragraphs.map((para) => (
+            <p key={para} className="mb-4">
+              {para}
+            </p>
+          ))}
+          <h3 className="text-lg font-semibold text-primary mb-2">{guide.pointsHeading}</h3>
+          <ul className="list-disc pl-5 space-y-2 mb-4">
+            {guide.points.map((point) => (
+              <li key={point}>{point}</li>
+            ))}
+          </ul>
+          <p className="text-sm">
+            {guide.links.map((link, i) => (
+              <span key={link.href}>
+                {i > 0 ? " · " : null}
+                <Link href={link.href} className="text-nav font-semibold hover:underline">
+                  {link.label}
+                </Link>
+              </span>
+            ))}
+          </p>
+        </section>
+      ) : null}
     </div>
   );
 }

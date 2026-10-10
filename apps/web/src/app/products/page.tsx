@@ -8,7 +8,7 @@ import { SearchTracker } from "@/components/SearchTracker";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { pageMetadata } from "@/lib/seo";
 import { loadProducts } from "@/lib/product-loader";
-import type { Product, Category } from "@hr-ecom/shared";
+import { USARAKHI_MIN_ORDER_USD, type Product, type Category } from "@hr-ecom/shared";
 import { categoryHref } from "@/lib/category-urls";
 import { homeCategoryOrder, orderCategories } from "@/lib/site";
 
@@ -190,6 +190,44 @@ export default async function ProductsPage({ searchParams }: Props) {
       ) : (
         <ProductGrid products={products} sort={sort} />
       )}
+
+      {showGrouped ? (
+        <section className="mt-12 pt-10 border-t border-slate-200 max-w-3xl text-slate-700 leading-relaxed">
+          <h2 className="text-xl font-bold text-primary mb-3">How to shop rakhi for a USA address</h2>
+          <p className="mb-4">
+            The shop is grouped by the kind of rakhi you are sending. Open a category when you already know the
+            recipient: a single thread for your brother, a combo when chocolates should be in the same box, a hamper
+            for sweets or dry fruits, a kids design, a Lumba for Bhabhi, or a Bhaiya Bhabhi set for both of them.
+          </p>
+          <p className="mb-4">
+            You can order from India, the UK, Canada, or anywhere else. At checkout, enter your brother&apos;s address
+            in the United States. UsaRakhi fulfills inside America, so he receives a domestic parcel. Standard
+            delivery is 5–7 business days, and shipping is free once the cart reaches the $
+            {USARAKHI_MIN_ORDER_USD} minimum. Most rakhis include roli and chawal for the tilak.
+          </p>
+          <h3 className="text-lg font-semibold text-primary mb-2">If you are comparing more than one gift</h3>
+          <ul className="list-disc pl-5 space-y-2 mb-4">
+            <li>Use the category chips above to leave the full shop and see one type of rakhi.</li>
+            <li>Price-band collections list what is actually at or under $10, $20, or $30.</li>
+            <li>
+              Sisters paying from India can use INR and Razorpay, including UPI. USD checkout uses Stripe.
+            </li>
+          </ul>
+          <p className="text-sm">
+            <Link href="/shipping" className="text-nav font-semibold hover:underline">
+              Shipping and delivery
+            </Link>
+            {" · "}
+            <Link href="/send-rakhi-from-india" className="text-nav font-semibold hover:underline">
+              Send rakhi from India
+            </Link>
+            {" · "}
+            <Link href="/faq" className="text-nav font-semibold hover:underline">
+              FAQ
+            </Link>
+          </p>
+        </section>
+      ) : null}
     </div>
   );
 }
