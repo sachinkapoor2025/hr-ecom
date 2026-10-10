@@ -2,7 +2,6 @@ import { readFileSync, existsSync } from "fs";
 import { join } from "path";
 import {
   isRakhiSetSizeCategory,
-  allMiniRakhiComboProducts,
   productAllowsAddons,
   productMatchesRakhiSetCategory,
   resolveProductImageUrls,
@@ -12,6 +11,7 @@ import {
   withUsarakhiStockShortageNote,
   prepareStorefrontProducts,
   sortAvailableProductsFirst,
+  isRakhiSeasonPaused,
   type Product,
 } from "@hr-ecom/shared";
 
@@ -37,15 +37,15 @@ function loadCatalogFile(filename: string): Product[] {
   return data.products ?? [];
 }
 
-/** Read bundled catalog JSON — reliable during CI static generation when API is rate-limited. */
+/**
+ * Storefront fallback catalog.
+ * Rakhi-season JSON is intentionally not loaded — those SKUs are paused in DynamoDB.
+ */
 export function getCatalogProducts(): Product[] {
   if (cached) return cached;
   const bySlug = new Map<string, Product>();
-  for (const product of [
-    ...loadCatalogFile("usarakhi-catalog.json"),
-    ...loadCatalogFile("orange-county-hampers.json"),
-    ...allMiniRakhiComboProducts(),
-  ]) {
+  for (const product of loadCatalogFile("festival-2026.json")) {
+    if (isRakhiSeasonPaused(product)) continue;
     // Never expose vendorCost / vendorSlug to the browser via SSR props.
     const allowsAddons = productAllowsAddons(product);
     // Force OOS while vendorSlug is still present (OC detection), then strip private fields.

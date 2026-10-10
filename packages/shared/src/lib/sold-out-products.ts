@@ -1,4 +1,4 @@
-import { VENDOR_ORANGE_COUNTY } from "../constants";
+import { RAKHI_SEASON_PAUSED_TAG, VENDOR_ORANGE_COUNTY } from "../constants";
 
 /**
  * Temporary: pause all UsaRakhi catalog SKUs (force inventory 0 on storefront).
@@ -66,6 +66,11 @@ export function isUsarakhiStorefrontPaused(product: {
 
 export function isStorefrontSoldOut(product: { inventory?: number | null }): boolean {
   return (product.inventory ?? 0) <= 0;
+}
+
+/** Closed Rakhi-season SKUs. Hidden from the shop; kept for admin and past orders. */
+export function isRakhiSeasonPaused(product: { tags?: string[] | null }): boolean {
+  return (product.tags ?? []).includes(RAKHI_SEASON_PAUSED_TAG);
 }
 
 /** Clamp inventory to 0 for force-OOS SKUs and paused UsaRakhi products. */

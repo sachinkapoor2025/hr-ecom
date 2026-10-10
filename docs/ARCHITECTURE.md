@@ -171,7 +171,7 @@ When admin (or Orange County vendor tracking) changes order status (accepted, pr
 | GET | `/orders` | User orders |
 | GET | `/orders/{orderId}` | Order detail (owner/admin) — includes tracking sync fields |
 | GET | `/orders/{orderId}/tracking` | Owner/admin: tracking snapshot (status, carrier events, last sync) |
-| GET | `/admin/orders` | Admin: list orders (filter `?status=`) |
+| GET | `/admin/orders` | Admin: list orders (compact list fields only — no trackingEvents/shipments; filter `?status=`) |
 | GET | `/admin/orders/{orderId}` | Admin: order detail |
 | POST | `/admin/orders/{orderId}/tracking/sync` | Admin: refresh USPS tracking and advance order status if changed |
 | GET | `/admin/analytics/order-routes` | Admin: Order Route overview list (first/last touch per order). UI: `/admin/analytics?tab=order-routes` |

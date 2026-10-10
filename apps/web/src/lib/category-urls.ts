@@ -13,6 +13,12 @@ export const CATEGORY_PUBLIC_SLUG: Record<string, string> = {
   "lumba-rakhi": "lumba-rakhi-to-usa",
   "bhaiya-bhabhi-rakhi": "bhaiya-bhabhi-rakhi-to-usa",
   "rakhi-hampers": "rakhi-hampers-to-usa",
+  "bhai-dooj": "bhai-dooj-to-usa",
+  diwali: "diwali-to-usa",
+  "sweet-combos": "sweet-combos-to-usa",
+  "dry-fruit-combos": "dry-fruit-combos-to-usa",
+  "chocolate-combos": "chocolate-combos-to-usa",
+  "pooja-sets": "pooja-sets-to-usa",
 };
 
 const PUBLIC_TO_INTERNAL = Object.fromEntries(

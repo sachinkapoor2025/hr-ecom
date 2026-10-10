@@ -23,7 +23,9 @@ function CitiesMenu({ onNavigate }: { onNavigate?: () => void }) {
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-haspopup="true"
-        className={`btn-nav gap-1 ${open ? "btn-nav-active" : ""}`}
+        className={`inline-flex items-center justify-center gap-1 rounded-full px-3.5 py-2 text-sm font-semibold whitespace-nowrap transition ${
+          open ? "bg-white text-primary" : "text-white hover:bg-white/15"
+        }`}
       >
         Location
         <span className={`text-xs transition-transform ${open ? "rotate-180" : ""}`}>▼</span>
@@ -301,29 +303,28 @@ export function Header() {
       </div>
 
       {/* Desktop nav */}
-      <nav className="hidden md:block border-t border-slate-100 bg-white overflow-visible">
-        <div className="max-w-7xl mx-auto px-4 py-2.5">
-          <div className="flex flex-wrap items-center gap-2">
+      <nav className="hidden md:block bg-primary overflow-visible">
+        <div className="max-w-7xl mx-auto px-3">
+          <div className="flex flex-wrap items-center justify-center gap-1 py-2">
             {navItems.map((item) => {
+              const active = isActive(item.href, "category" in item ? item.category : undefined);
+              const linkClass = `inline-flex items-center justify-center rounded-full px-3.5 py-2 text-sm font-semibold whitespace-nowrap transition ${
+                active ? "bg-white text-primary" : "text-white hover:bg-white/15"
+              }`;
               if (item.href === "/") {
                 return (
                   <span key={item.href} className="contents">
-                    <Link
-                      href={item.href}
-                      className={`btn-nav ${isActive(item.href) ? "btn-nav-active" : ""}`}
-                    >
+                    <Link href={item.href} className={linkClass}>
                       {item.label}
                     </Link>
-                    <RakhiSetsMenu active={isRakhiSetsActive} />
+                    {rakhiSetsMenu.items.length > 0 ? (
+                      <RakhiSetsMenu active={isRakhiSetsActive} />
+                    ) : null}
                   </span>
                 );
               }
               return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`btn-nav ${isActive(item.href, "category" in item ? item.category : undefined) ? "btn-nav-active" : ""}`}
-                >
+                <Link key={item.href} href={item.href} className={linkClass}>
                   {item.label}
                 </Link>
               );
@@ -373,6 +374,7 @@ export function Header() {
                       >
                         {item.label}
                       </Link>
+                      {rakhiSetsMenu.items.length > 0 ? (
                       <div>
                         <button
                           type="button"
@@ -409,6 +411,7 @@ export function Header() {
                           </div>
                         )}
                       </div>
+                      ) : null}
                     </div>
                   );
                 }
