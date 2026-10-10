@@ -7,10 +7,10 @@ import type { ProductSort } from "@/components/ProductSortBar";
 import { SearchTracker } from "@/components/SearchTracker";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { pageMetadata } from "@/lib/seo";
-import { loadProducts } from "@/lib/product-loader";
+import { loadProducts, loadProductsByCategory } from "@/lib/product-loader";
 import type { Product, Category } from "@hr-ecom/shared";
 import { categoryHref } from "@/lib/category-urls";
-import { homeCategoryOrder, orderCategories } from "@/lib/site";
+import { homeCategoryOrder } from "@/lib/site";
 
 /** Match PDP: no ISR HTML with stale product prices. */
 export const dynamic = "force-dynamic";
@@ -90,18 +90,28 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   });
 }
 
+const FESTIVAL_CATEGORY_NAMES: Record<(typeof homeCategoryOrder)[number], string> = {
+  "bhai-dooj": "Bhai Dooj Combo",
+  diwali: "Diwali Combo",
+  "sweet-combos": "Sweet Combos",
+  "dry-fruit-combos": "Dry Fruit Combos",
+  "chocolate-combos": "Chocolate Combos",
+  "pooja-sets": "Pooja Sets",
+};
+
 export default async function ProductsPage({ searchParams }: Props) {
   const params = await searchParams;
   const search = params.search;
   const category = params.category;
   const sort = resolveSort(params.sort);
+  const showGrouped = !search && !category;
 
   let products: Product[] = [];
   let categories: Category[] = [];
 
   try {
     const [liveProducts, categoriesData] = await Promise.all([
-      loadProducts({ search, category }),
+      search || category ? loadProducts({ search, category }) : Promise.resolve([]),
       api<{ categories: Category[] }>("/categories", { revalidate: false }),
     ]);
     products = liveProducts;
@@ -111,22 +121,31 @@ export default async function ProductsPage({ searchParams }: Props) {
     categories = [];
   }
 
+  const categoryMap = new Map(categories.map((c) => [c.slug, c]));
+  const productsByCategory = showGrouped
+    ? await Promise.all(
+        homeCategoryOrder.map(async (slug) => ({
+          slug,
+          name: categoryMap.get(slug)?.name ?? FESTIVAL_CATEGORY_NAMES[slug],
+          products: await loadProductsByCategory(slug),
+        }))
+      )
+    : [];
+  const shopCategories = homeCategoryOrder.map((slug) => ({
+    slug,
+    name: categoryMap.get(slug)?.name ?? FESTIVAL_CATEGORY_NAMES[slug],
+  }));
+  const visibleCount = showGrouped
+    ? productsByCategory.reduce((count, section) => count + section.products.length, 0)
+    : products.length;
+
   const h1 = search
     ? `Search: ${search}`
     : category
-      ? categories.find((c) => c.slug === category)?.name ?? category.replace(/-/g, " ")
+      ? categories.find((c) => c.slug === category)?.name ??
+        FESTIVAL_CATEGORY_NAMES[category as (typeof homeCategoryOrder)[number]] ??
+        category.replace(/-/g, " ")
       : "Shop festive gifts";
-
-  const sortedCategories = orderCategories(categories);
-  const categoryMap = new Map(categories.map((c) => [c.slug, c]));
-  const productsByCategory = homeCategoryOrder.map((slug) => ({
-    slug,
-    name: categoryMap.get(slug)?.name ?? slug.replace(/-/g, " "),
-    products: products.filter(
-      (p) => p.categorySlug === slug || p.additionalCategorySlugs?.includes(slug)
-    ),
-  }));
-  const showGrouped = !search && !category;
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
@@ -147,7 +166,7 @@ export default async function ProductsPage({ searchParams }: Props) {
         </p>
       )}
 
-      {categories.length > 0 && (
+      {!search && (
         <div className="flex flex-wrap gap-2 mb-8">
           <Link
             href="/products"
@@ -155,7 +174,7 @@ export default async function ProductsPage({ searchParams }: Props) {
           >
             All
           </Link>
-          {sortedCategories.map((c) => (
+          {shopCategories.map((c) => (
             <Link
               key={c.slug}
               href={categoryHref(c.slug)}
@@ -167,7 +186,7 @@ export default async function ProductsPage({ searchParams }: Props) {
         </div>
       )}
 
-      {products.length === 0 ? (
+      {visibleCount === 0 ? (
         <p className="text-slate-600">No products found. Try another category or search term.</p>
       ) : showGrouped ? (
         <div className="space-y-10">
