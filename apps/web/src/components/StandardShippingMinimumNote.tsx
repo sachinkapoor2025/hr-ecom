@@ -12,10 +12,12 @@ type Props = {
   compact?: boolean;
   /** Cart mixes UsaRakhi + Orange County (or other vendors). */
   multiVendor?: boolean;
+  /** Cart is Orange County only — always free shipping. */
+  orangeCountyOnly?: boolean;
 };
 
 /**
- * Standard shipping: $25 minimum per vendor + “add $X more for free shipping” nudge.
+ * Standard shipping: UsaRakhi $15 minimum; Orange County always free.
  */
 export function StandardShippingMinimumNote({
   topUpAmount,
@@ -24,6 +26,7 @@ export function StandardShippingMinimumNote({
   className = "",
   compact = false,
   multiVendor = false,
+  orangeCountyOnly = false,
 }: Props) {
   return (
     <div
@@ -35,26 +38,31 @@ export function StandardShippingMinimumNote({
             compact ? "text-xs sm:text-sm" : "text-sm"
           }`}
         >
-          You selected products from different vendors — shipping is calculated separately for
-          each. UsaRakhi and Orange County each need a ${USARAKHI_MIN_ORDER_USD} minimum. If either
-          is below ${USARAKHI_MIN_ORDER_USD}, the remaining amount is added as shipping for that
-          vendor.
+          You selected products from different vendors — shipping is calculated separately.
+          UsaRakhi needs a ${USARAKHI_MIN_ORDER_USD} minimum (remaining amount is added as
+          shipping). Orange County products always ship free.
         </p>
       ) : null}
       <p className={`font-semibold text-primary ${compact ? "text-xs sm:text-sm" : ""}`}>
-        {USARAKHI_STANDARD_DELIVERY_DETAIL}
+        {orangeCountyOnly
+          ? "Standard USA delivery · 5 business days · Free shipping on all Orange County products."
+          : USARAKHI_STANDARD_DELIVERY_DETAIL}
       </p>
       {topUpAmount > 0 ? (
         <p className={`mt-1.5 font-semibold text-emerald-800 ${compact ? "text-xs sm:text-sm" : ""}`}>
           {multiVendor
-            ? `Shipping of ${formatMoney(topUpAmount, currency)} will be added unless you add more products so each vendor reaches $${USARAKHI_MIN_ORDER_USD}.`
-            : `Add ${formatMoney(topUpAmount, currency)} more in products to get free standard shipping.`}
+            ? `Shipping of ${formatMoney(topUpAmount, currency)} will be added unless you add more UsaRakhi products to reach $${USARAKHI_MIN_ORDER_USD}.`
+            : orangeCountyOnly
+              ? "Orange County products include free standard shipping."
+              : `Add ${formatMoney(topUpAmount, currency)} more in products to get free standard shipping.`}
         </p>
       ) : (
         <p className={`mt-1.5 font-semibold text-emerald-700 ${compact ? "text-xs sm:text-sm" : ""}`}>
           {multiVendor
-            ? "Both vendors qualify for free standard shipping."
-            : "Your order qualifies for free standard shipping."}
+            ? "UsaRakhi qualifies for the $15 free-shipping minimum. Orange County ships free."
+            : orangeCountyOnly
+              ? "Orange County products include free standard shipping."
+              : "Your order qualifies for free standard shipping."}
         </p>
       )}
       <p className="mt-1 text-xs text-slate-600">Standard USA delivery · 5 business days.</p>

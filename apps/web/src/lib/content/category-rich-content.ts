@@ -307,7 +307,7 @@ export const categoryRichContent: Record<string, CategoryRichContent> = {
       },
       {
         q: "When should I order for Raksha Bandhan 2026?",
-        a: "Raksha Bandhan 2026 is August 28, 2026. Order today for express delivery to major US cities to avoid the last-minute rush and ensure your Rakhi reaches the USA on time.",
+        a: "Raksha Bandhan 2026 is August 28, 2026. Order today for standard USA delivery to avoid the last-minute rush and ensure your Rakhi reaches the USA on time.",
       },
     ],
     relatedCategories: relatedExcept("bhaiya-bhabhi-rakhi"),

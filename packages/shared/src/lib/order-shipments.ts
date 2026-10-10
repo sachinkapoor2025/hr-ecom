@@ -109,7 +109,7 @@ export function buildOrderShipments(input: {
     };
   }
 
-  /** Per address × vendor: UsaRakhi standard uses $25 minimum top-up; OC stays free. */
+  /** Per address × vendor: UsaRakhi standard uses $15 minimum top-up; OC is free. */
   const perAddress = built.map((s) =>
     quoteAddressShipmentShipping({
       items: s.items,

@@ -1,7 +1,7 @@
 /**
  * Import Orange County "USA single Rakhi catalogue 2026" sheet + images.
  *
- * Pricing: sale = vendorCost × 1.6 (60% profit), compareAt = vendorCost × 2.0
+ * Pricing: sale = vendorCost × 1.35 (35% markup), compareAt = vendorCost × 1.75
  * Category: single-rakhi (homepage section). vendorSlug=orange-county for vendor API.
  *
  * Usage:
@@ -53,8 +53,8 @@ const CATALOG_OUT = join(ROOT, "scripts/data/orange-county-single-rakhi-2026.jso
 const API_CATALOG = join(ROOT, "apps/api/src/data/orange-county-hampers.json");
 const SCRIPTS_HAMPERS = join(ROOT, "scripts/data/orange-county-hampers.json");
 
-const SALE_MARKUP = 1.6; // 60% profit
-const LIST_MARKUP = 2.0;
+const SALE_MARKUP = 1.35; // vendor cost + 35%
+const LIST_MARKUP = 1.75;
 
 const MIME: Record<string, string> = {
   ".jpg": "image/jpeg",
@@ -543,7 +543,7 @@ async function importToAws(products: BuiltProduct[]) {
       status,
     });
     console.log(
-      `• ${row.sku} → $${row.price} (${row.vendorCost}×1.6) images=${imageUrls.length} /products/${row.slug}`
+      `• ${row.sku} → $${row.price} (${row.vendorCost}×1.35) images=${imageUrls.length} /products/${row.slug}`
     );
   }
 

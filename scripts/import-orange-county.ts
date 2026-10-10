@@ -2,7 +2,7 @@
  * Import Orange County Rakhi Hampers from scripts/data/orange-county-hampers.json
  * (generate first: COPY_IMAGES=1 npm run generate:orange-county-catalog).
  *
- * Pricing already applied in the catalog JSON (sale = cost × 2.0, list = cost × 2.5).
+ * Pricing already applied in the catalog JSON (sale = cost × 1.35, list = cost × 1.75).
  * Products tagged vendorSlug=orange-county, category=rakhi-hampers (+ additionalCategorySlugs).
  *
  * Usage:

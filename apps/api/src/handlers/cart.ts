@@ -43,7 +43,7 @@ function ensureLineIds(items: CartItem[]): CartItem[] {
   );
 }
 
-/** Backfill missing Orange County vendorSlug so $25 min never mixes OC + UsaRakhi. */
+/** Backfill missing Orange County vendorSlug so $15 min never mixes OC + UsaRakhi. */
 function ensureVendorSlugs(items: CartItem[]): CartItem[] {
   return items.map((item) => {
     const key = shippingVendorKey(item);

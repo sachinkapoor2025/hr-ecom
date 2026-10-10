@@ -7,10 +7,10 @@ import type { ProductSort } from "@/components/ProductSortBar";
 import { SearchTracker } from "@/components/SearchTracker";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { pageMetadata } from "@/lib/seo";
-import { loadProducts } from "@/lib/product-loader";
-import { USARAKHI_MIN_ORDER_USD, type Product, type Category } from "@hr-ecom/shared";
+import { loadProducts, loadProductsByCategory } from "@/lib/product-loader";
+import type { Product, Category } from "@hr-ecom/shared";
 import { categoryHref } from "@/lib/category-urls";
-import { homeCategoryOrder, orderCategories } from "@/lib/site";
+import { homeCategoryOrder } from "@/lib/site";
 
 /** Match PDP: no ISR HTML with stale product prices. */
 export const dynamic = "force-dynamic";
@@ -83,25 +83,35 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
     });
   }
   return pageMetadata({
-    title: "Shop Rakhi — Send Rakhi to USA Online",
+    title: "Shop Diwali & Bhai Dooj Gifts — USA Delivery",
     description:
-      "Browse 126+ premium Rakhis — single, combo, kids, Bhaiya Bhabhi & Lumba. Send Rakhi to all 50 US states. Order from India worldwide.",
+      "Browse Diwali and Bhai Dooj gift hampers — sweets, dry fruits, chocolates, and pooja sets with domestic USA shipping.",
     path: "/products",
   });
 }
+
+const FESTIVAL_CATEGORY_NAMES: Record<(typeof homeCategoryOrder)[number], string> = {
+  "bhai-dooj": "Bhai Dooj Combo",
+  diwali: "Diwali Combo",
+  "sweet-combos": "Sweet Combos",
+  "dry-fruit-combos": "Dry Fruit Combos",
+  "chocolate-combos": "Chocolate Combos",
+  "pooja-sets": "Pooja Sets",
+};
 
 export default async function ProductsPage({ searchParams }: Props) {
   const params = await searchParams;
   const search = params.search;
   const category = params.category;
   const sort = resolveSort(params.sort);
+  const showGrouped = !search && !category;
 
   let products: Product[] = [];
   let categories: Category[] = [];
 
   try {
     const [liveProducts, categoriesData] = await Promise.all([
-      loadProducts({ search, category }),
+      search || category ? loadProducts({ search, category }) : Promise.resolve([]),
       api<{ categories: Category[] }>("/categories", { revalidate: false }),
     ]);
     products = liveProducts;
@@ -111,20 +121,31 @@ export default async function ProductsPage({ searchParams }: Props) {
     categories = [];
   }
 
+  const categoryMap = new Map(categories.map((c) => [c.slug, c]));
+  const productsByCategory = showGrouped
+    ? await Promise.all(
+        homeCategoryOrder.map(async (slug) => ({
+          slug,
+          name: categoryMap.get(slug)?.name ?? FESTIVAL_CATEGORY_NAMES[slug],
+          products: await loadProductsByCategory(slug),
+        }))
+      )
+    : [];
+  const shopCategories = homeCategoryOrder.map((slug) => ({
+    slug,
+    name: categoryMap.get(slug)?.name ?? FESTIVAL_CATEGORY_NAMES[slug],
+  }));
+  const visibleCount = showGrouped
+    ? productsByCategory.reduce((count, section) => count + section.products.length, 0)
+    : products.length;
+
   const h1 = search
     ? `Search: ${search}`
     : category
-      ? categories.find((c) => c.slug === category)?.name ?? category.replace(/-/g, " ")
-      : "Shop Rakhi — Send to USA";
-
-  const sortedCategories = orderCategories(categories);
-  const categoryMap = new Map(categories.map((c) => [c.slug, c]));
-  const productsByCategory = homeCategoryOrder.map((slug) => ({
-    slug,
-    name: categoryMap.get(slug)?.name ?? slug.replace(/-/g, " "),
-    products: products.filter((p) => p.categorySlug === slug),
-  }));
-  const showGrouped = !search && !category;
+      ? categories.find((c) => c.slug === category)?.name ??
+        FESTIVAL_CATEGORY_NAMES[category as (typeof homeCategoryOrder)[number]] ??
+        category.replace(/-/g, " ")
+      : "Shop festive gifts";
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
@@ -140,12 +161,12 @@ export default async function ProductsPage({ searchParams }: Props) {
       </div>
       {!search && !category && (
         <p className="text-slate-600 mb-8 max-w-2xl">
-          Premium Rakhis for Raksha Bandhan — delivered to all 50 US states. Order from India, UK, Canada, or
-          anywhere; enter your brother&apos;s US address at checkout.
+          Diwali and Bhai Dooj gift hampers — sweets, dry fruits, chocolates, and pooja sets, shipped within
+          the United States.
         </p>
       )}
 
-      {categories.length > 0 && (
+      {!search && (
         <div className="flex flex-wrap gap-2 mb-8">
           <Link
             href="/products"
@@ -153,7 +174,7 @@ export default async function ProductsPage({ searchParams }: Props) {
           >
             All
           </Link>
-          {sortedCategories.map((c) => (
+          {shopCategories.map((c) => (
             <Link
               key={c.slug}
               href={categoryHref(c.slug)}
@@ -165,7 +186,7 @@ export default async function ProductsPage({ searchParams }: Props) {
         </div>
       )}
 
-      {products.length === 0 ? (
+      {visibleCount === 0 ? (
         <p className="text-slate-600">No products found. Try another category or search term.</p>
       ) : showGrouped ? (
         <div className="space-y-10">
@@ -193,37 +214,36 @@ export default async function ProductsPage({ searchParams }: Props) {
 
       {showGrouped ? (
         <section className="mt-12 pt-10 border-t border-slate-200 max-w-3xl text-slate-700 leading-relaxed">
-          <h2 className="text-xl font-bold text-primary mb-3">How to shop rakhi for a USA address</h2>
+          <h2 className="text-xl font-bold text-primary mb-3">How to choose a Diwali or Bhai Dooj hamper</h2>
           <p className="mb-4">
-            The shop is grouped by the kind of rakhi you are sending. Open a category when you already know the
-            recipient: a single thread for your brother, a combo when chocolates should be in the same box, a hamper
-            for sweets or dry fruits, a kids design, a Lumba for Bhabhi, or a Bhaiya Bhabhi set for both of them.
+            This shop lists ready-to-gift hampers for two festivals. Bhai Dooj combos are boxes for a brother:
+            individual listings pair kaju katli, nuts, chocolates, kumkum, or a pooja set. Diwali combos pair pooja
+            items — a thali, toran, rangoli, or Shubh Labh — with sweets or dry fruits. The name on each card is the
+            contents of that box, not a menu you assemble yourself.
           </p>
           <p className="mb-4">
-            You can order from India, the UK, Canada, or anywhere else. At checkout, enter your brother&apos;s address
-            in the United States. UsaRakhi fulfills inside America, so he receives a domestic parcel. Standard
-            delivery is 5–7 business days, and shipping is free once the cart reaches the $
-            {USARAKHI_MIN_ORDER_USD} minimum. Most rakhis include roli and chawal for the tilak.
+            Sweet, dry fruit, chocolate, and pooja groups collect the same hampers by what is inside, so one box can
+            appear in more than one group. Open the product page for the included list. Weights and piece counts are
+            only what that listing states. These hampers ship inside the United States. Orange County products on
+            this shop include free shipping, and standard delivery is 5 business days.
           </p>
-          <h3 className="text-lg font-semibold text-primary mb-2">If you are comparing more than one gift</h3>
+          <h3 className="text-lg font-semibold text-primary mb-2">A practical way to compare boxes</h3>
           <ul className="list-disc pl-5 space-y-2 mb-4">
-            <li>Use the category chips above to leave the full shop and see one type of rakhi.</li>
-            <li>Price-band collections list what is actually at or under $10, $20, or $30.</li>
-            <li>
-              Sisters paying from India can use INR and Razorpay, including UPI. USD checkout uses Stripe.
-            </li>
+            <li>Start with Bhai Dooj or Diwali if you already know the occasion.</li>
+            <li>Use a food or pooja filter when the occasion is set and the contents are not.</li>
+            <li>Mixed carts with other vendors follow the rules on the shipping page.</li>
           </ul>
           <p className="text-sm">
+            <Link href={categoryHref("bhai-dooj")} className="text-nav font-semibold hover:underline">
+              Bhai Dooj combos
+            </Link>
+            {" · "}
+            <Link href={categoryHref("diwali")} className="text-nav font-semibold hover:underline">
+              Diwali combos
+            </Link>
+            {" · "}
             <Link href="/shipping" className="text-nav font-semibold hover:underline">
-              Shipping and delivery
-            </Link>
-            {" · "}
-            <Link href="/send-rakhi-from-india" className="text-nav font-semibold hover:underline">
-              Send rakhi from India
-            </Link>
-            {" · "}
-            <Link href="/faq" className="text-nav font-semibold hover:underline">
-              FAQ
+              Shipping
             </Link>
           </p>
         </section>

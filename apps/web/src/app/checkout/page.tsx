@@ -49,6 +49,7 @@ import {
   expeditedArrivalLabel,
   checkoutShippingOptionsForCart,
   cartHasMultipleShippingVendors,
+  cartIsOrangeCountyOnly,
   type Order,
   type RateQuote,
   type ShippingAddress,
@@ -820,6 +821,7 @@ function CheckoutPageInner() {
             options={checkoutShippingOptions}
             name="last-minute-delivery-checkout"
             multiVendor={cartHasMultipleShippingVendors(checkoutItems)}
+            orangeCountyOnly={cartIsOrangeCountyOnly(checkoutItems)}
           />
         ) : null}
 
@@ -994,11 +996,9 @@ function CheckoutPageInner() {
               </div>
               {!isRetry ? (
                 <p className="text-[11px] text-slate-500 leading-snug">
-                  {checkoutShippingOptions.some((o) => o.id === "three_day")
-                    ? "Standard USA delivery · 5 business days · Free shipping on $25 minimum cart value. 3-day express delivery — $19 · arrives August 29–30."
-                    : cartHasMultipleShippingVendors(checkoutItems)
-                      ? "Standard USA delivery · 5 business days. Free shipping on $25 minimum per vendor — UsaRakhi and Orange County are calculated separately."
-                      : "Standard USA delivery · 5 business days · Free shipping on $25 minimum cart value."}
+                  {cartHasMultipleShippingVendors(checkoutItems)
+                    ? "Standard USA delivery · 5 business days. UsaRakhi: free shipping on $15 minimum. Orange County: free shipping on all products."
+                    : "Standard USA delivery · 5 business days · Free shipping on $15 minimum cart value."}
                 </p>
               ) : null}
               <div className="flex justify-between gap-4 pt-2 border-t border-slate-200">

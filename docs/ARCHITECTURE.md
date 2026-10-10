@@ -171,7 +171,7 @@ When admin (or Orange County vendor tracking) changes order status (accepted, pr
 | GET | `/orders` | User orders |
 | GET | `/orders/{orderId}` | Order detail (owner/admin) — includes tracking sync fields |
 | GET | `/orders/{orderId}/tracking` | Owner/admin: tracking snapshot (status, carrier events, last sync) |
-| GET | `/admin/orders` | Admin: list orders (filter `?status=`) |
+| GET | `/admin/orders` | Admin: list orders (compact list fields only — no trackingEvents/shipments; filter `?status=`) |
 | GET | `/admin/orders/{orderId}` | Admin: order detail |
 | POST | `/admin/orders/{orderId}/tracking/sync` | Admin: refresh USPS tracking and advance order status if changed |
 | GET | `/admin/analytics/order-routes` | Admin: Order Route overview list (first/last touch per order). UI: `/admin/analytics?tab=order-routes` |
@@ -237,7 +237,7 @@ Admin **Product Sales Intelligence** (`/admin/product-sales`) aggregates **paid 
 
 **Stripe toggle:** `STRIPE_PAYMENTS_ENABLED` in `packages/shared/src/constants.ts` (currently `true`). Set to `false` to hide Stripe on checkout and block new Stripe PaymentIntents; Razorpay keeps working. Existing Stripe webhooks still work for any in-flight intents.
 
-**Checkout shipping:** `shippingOption` — `standard` (Standard USA delivery, 5 business days, free shipping on $25 minimum cart value per vendor), or `three_day` (UsaRakhi-only carts, $19 express, arrives August 29–30). Orange County and mixed carts are standard only. 2-day is no longer offered. Logic: `packages/shared/src/lib/expedited-shipping.ts` and `packages/shared/src/lib/free-shipping.ts`.
+**Checkout shipping:** `shippingOption` — `standard` only (UsaRakhi: Standard USA delivery, 5 business days, free shipping on $15 minimum cart value; Orange County: always free). `three_day` and `two_day` are kept for historical orders and rejected on new checkouts. Logic: `packages/shared/src/lib/expedited-shipping.ts` and `packages/shared/src/lib/free-shipping.ts`.
 
 Requires GitHub secret `RAZORPAY_WEBHOOK_SECRET` and Razorpay Dashboard webhook to `{API}/webhooks/razorpay` for events `payment.captured`, `order.paid`, `qr_code.credited`.
 

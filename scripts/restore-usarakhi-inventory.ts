@@ -17,6 +17,7 @@ import {
 import {
   DEFAULT_PRODUCT_INVENTORY,
   FORCE_OUT_OF_STOCK_SLUGS,
+  RAKHI_SEASON_PAUSED_TAG,
   VENDOR_ORANGE_COUNTY,
   productKeys,
 } from "@hr-ecom/shared";
@@ -36,6 +37,7 @@ const FORCE_OOS = new Set<string>(FORCE_OUT_OF_STOCK_SLUGS);
 type ProductRow = {
   slug?: string;
   inventory?: number;
+  published?: boolean;
   vendorSlug?: string;
   tags?: string[];
   images?: string[];
@@ -70,6 +72,7 @@ async function main() {
   let updated = 0;
   let skippedOc = 0;
   let skippedForceOos = 0;
+  let skippedPaused = 0;
   let skippedAlready = 0;
   let skippedInvalid = 0;
 
@@ -87,8 +90,12 @@ async function main() {
       skippedForceOos += 1;
       continue;
     }
-
     const tags = Array.isArray(p.tags) ? p.tags : [];
+    if (p.published === false || tags.includes(RAKHI_SEASON_PAUSED_TAG)) {
+      skippedPaused += 1;
+      continue;
+    }
+
     const nextTags = tags.filter((t) => t !== OOS_TAG);
     const inventory = p.inventory ?? 0;
     const needsInventory = inventory < TARGET_INVENTORY;
@@ -127,6 +134,7 @@ async function main() {
         updated,
         skippedOc,
         skippedForceOos,
+        skippedPaused,
         skippedAlready,
         skippedInvalid,
         scanned: items.length,

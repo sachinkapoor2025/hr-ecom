@@ -1,5 +1,12 @@
 import { cdnUploadUrl } from "@hr-ecom/shared";
 import { categoryHref } from "./category-urls";
+import {
+  HOME_BANNER_DELIVERY_NOTE,
+  PRICES_DROPPED_ACCENT,
+  PRICES_DROPPED_HEADLINE,
+} from "./prices-dropped-copy";
+
+export { HOME_BANNER_DELIVERY_NOTE };
 
 export const site = {
   name: "UsaRakhi",
@@ -24,26 +31,24 @@ export const site = {
   accentColor: "#e11d48",
 } as const;
 
-/** Dropdown under "Rakhi Sets USA" — Single + multi-piece set filters. */
-export const rakhiSetsMenu = {
+/** Rakhi set dropdown is closed for the festival season. Header hides this when empty. */
+export const rakhiSetsMenu: {
+  label: string;
+  items: readonly { label: string; href: string; category: string }[];
+} = {
   label: "Rakhi Sets USA",
-  items: [
-    { label: "Single Rakhi to USA", href: categoryHref("single-rakhi"), category: "single-rakhi" },
-    { label: "Set of 2 Rakhis", href: categoryHref("2-set-rakhi"), category: "2-set-rakhi" },
-    { label: "Set of 3 Rakhis", href: categoryHref("3-set-rakhi"), category: "3-set-rakhi" },
-    { label: "Set of 4 Rakhis", href: categoryHref("4-set-rakhi"), category: "4-set-rakhi" },
-    { label: "Set of 5 Rakhis", href: categoryHref("5-set-rakhi"), category: "5-set-rakhi" },
-  ],
-} as const;
+  items: [],
+};
 
 export const navItems = [
   { label: "Home", href: "/" },
-  { label: "Bhaiya Bhabhi Rakhi", href: categoryHref("bhaiya-bhabhi-rakhi"), category: "bhaiya-bhabhi-rakhi" },
-  { label: "Kids Rakhi", href: categoryHref("kids-rakhi"), category: "kids-rakhi" },
-  { label: "Lumba Rakhi", href: categoryHref("lumba-rakhi"), category: "lumba-rakhi" },
-  { label: "Rakhi Combo", href: categoryHref("rakhi-combo"), category: "rakhi-combo" },
-  { label: "Rakhi Hamper", href: categoryHref("rakhi-hampers"), category: "rakhi-hampers" },
-  { label: "Raksha Bandhan", href: "/raksha-bandhan" },
+  { label: "Bhai Dooj Combo", href: categoryHref("bhai-dooj"), category: "bhai-dooj" },
+  { label: "Diwali Combo", href: categoryHref("diwali"), category: "diwali" },
+  { label: "Sweet Combos", href: categoryHref("sweet-combos"), category: "sweet-combos" },
+  { label: "Dry Fruit Combos", href: categoryHref("dry-fruit-combos"), category: "dry-fruit-combos" },
+  { label: "Chocolate Combos", href: categoryHref("chocolate-combos"), category: "chocolate-combos" },
+  { label: "Pooja Sets", href: categoryHref("pooja-sets"), category: "pooja-sets" },
+  { label: "Shop All", href: "/products" },
 ] as const;
 
 /** Nav / footer location links. Optional `href` + `menuLabel` for country landings (not US city pages). */
@@ -94,43 +99,46 @@ export function isUsCityNavLink(link: CityNavLink): boolean {
 export const usCityLinks = cityLinks.filter(isUsCityNavLink);
 
 /** Shown on every homepage hero slide (image caption + text panel + pill). */
-export const HOME_BANNER_DELIVERY_NOTE =
-  "Standard USA delivery · 5 business days · Free shipping on $25 minimum · 3-day express $19 arrives August 29–30";
+
+const FESTIVAL_CDN = "https://d301af4ndyn9qx.cloudfront.net/uploads/orange-county";
 
 export const homeBanners = [
   {
-    src: "/banners/banner-1-usa-rakhi-delivery.png",
-    alt: "USA Rakhi Delivery — Standard USA delivery · 5 business days · Free shipping on $25 minimum · 3-day express $19 arrives August 29–30",
-    href: "/products?category=rakhi-combo",
-    eyebrow: "RAKSHA BANDHAN · USA DELIVERY",
-    title: "Send Beautiful Rakhis to Your Loved Ones in the",
-    titleAccent: "USA",
+    src: `${FESTIVAL_CDN}/TFUSDW2620/TFUSDW2620_1.jpg`,
+    alt: "Diwali gift hamper with toran, rangoli, besan laddoo, and almonds — USA delivery",
+    href: categoryHref("diwali"),
+    eyebrow: "DIWALI 2026",
+    title: "Diwali gifts,",
+    titleAccent: "delivered in the USA",
+    subtitle: "Toran, rangoli, pooja sets, sweets, and dry fruits.",
     description: HOME_BANNER_DELIVERY_NOTE,
-    cta: "Shop Rakhi Combos",
+    cta: "Shop Diwali",
     pill: HOME_BANNER_DELIVERY_NOTE,
     imageCaption: HOME_BANNER_DELIVERY_NOTE,
   },
   {
-    src: "/banners/banner-2-connecting-hearts.png",
-    alt: "UsaRakhi.com — Standard USA delivery · 5 business days · Free shipping on $25 minimum · 3-day express $19 arrives August 29–30",
+    src: `${FESTIVAL_CDN}/TFUSBD2601/TFUSBD2601_1.jpg`,
+    alt: "Bhai Dooj gift box with kaju katli, kumkum, and a greeting card — USA delivery",
+    href: categoryHref("bhai-dooj"),
+    eyebrow: "BHAI DOOJ 2026",
+    title: "Bhai Dooj hampers",
+    titleAccent: "for your brother",
+    subtitle: "Sweets, dry fruits, chocolates, and puja sets.",
+    description: HOME_BANNER_DELIVERY_NOTE,
+    cta: "Shop Bhai Dooj",
+    pill: HOME_BANNER_DELIVERY_NOTE,
+    imageCaption: HOME_BANNER_DELIVERY_NOTE,
+  },
+  {
+    src: `${FESTIVAL_CDN}/TFUSDW2624/TFUSDW2624_1.jpg`,
+    alt: "Diwali metal pooja gift set with Ferrero Rocher and almonds — USA delivery",
     href: "/products",
-    eyebrow: "EVERY SISTER · EVERY BROTHER",
-    title: "Connecting Hearts",
-    titleAccent: "Across Miles",
+    eyebrow: "FESTIVE GIFTS · USA DELIVERY",
+    title: PRICES_DROPPED_HEADLINE,
+    titleAccent: PRICES_DROPPED_ACCENT,
+    subtitle: "Ships from within the United States.",
     description: HOME_BANNER_DELIVERY_NOTE,
-    cta: "Browse All Rakhis",
-    pill: HOME_BANNER_DELIVERY_NOTE,
-    imageCaption: HOME_BANNER_DELIVERY_NOTE,
-  },
-  {
-    src: "/banners/banner-3-india-usa.png",
-    alt: "Send Rakhi from India to USA — Standard USA delivery · 5 business days · Free shipping on $25 minimum · 3-day express $19 arrives August 29–30",
-    href: "/products?category=single-rakhi",
-    eyebrow: "INDIA → USA",
-    title: "Bridge the Distance This",
-    titleAccent: "Raksha Bandhan",
-    description: HOME_BANNER_DELIVERY_NOTE,
-    cta: "Shop Single Rakhis",
+    cta: "Shop all gifts",
     pill: HOME_BANNER_DELIVERY_NOTE,
     imageCaption: HOME_BANNER_DELIVERY_NOTE,
   },
@@ -147,21 +155,21 @@ export const promoBanners = [
   },
 ] as const;
 
-/** Homepage Rakhi sections (after Fast Selling): Single → Combo → Hamper → others */
+/** Homepage sections for the 2026 festive catalog. */
 export const homeCategoryOrder = [
-  "single-rakhi",
-  "rakhi-combo",
-  "rakhi-hampers",
-  "bhaiya-bhabhi-rakhi",
-  "kids-rakhi",
-  "lumba-rakhi",
+  "bhai-dooj",
+  "diwali",
+  "sweet-combos",
+  "dry-fruit-combos",
+  "chocolate-combos",
+  "pooja-sets",
 ] as const;
 
 /** Virtual multi-piece set filters (nav dropdown + SEO landing pages). */
 export const setSizeCategoryOrder = ["2-set-rakhi", "3-set-rakhi", "4-set-rakhi", "5-set-rakhi"] as const;
 
-/** All browsable category slugs (home sections + set-size landings). */
-export const categoryOrder = [...homeCategoryOrder, ...setSizeCategoryOrder] as const;
+/** Browsable shop categories. Rakhi-season landings stay off the storefront. */
+export const categoryOrder = [...homeCategoryOrder] as const;
 
 /** Sort API categories to match site display order (home + shop). */
 export function orderCategories<T extends { slug: string }>(categories: readonly T[]): T[] {
@@ -209,7 +217,7 @@ export const testimonials = [
 export const faqs = [
   {
     q: "What is the best website to send Rakhi to the USA?",
-    a: "UsaRakhi.com is highly recommended for USA Rakhi delivery because we ship from within the United States — your brother receives domestic delivery with no international customs delays. Standard USA delivery is 5 business days with free shipping on a $25 minimum cart value. 3-day express delivery is $19 and arrives August 29–30.",
+    a: "UsaRakhi.com is highly recommended for USA Rakhi delivery because we ship from within the United States — your brother receives domestic delivery with no international customs delays. Standard USA delivery is 5 business days with free shipping on a $15 minimum cart value.",
   },
   {
     q: "Does UsaRakhi ship from within the USA like FNP or IGP?",
@@ -217,11 +225,11 @@ export const faqs = [
   },
   {
     q: "How long does Rakhi delivery take in the USA?",
-    a: "Standard USA delivery is 5 business days to all 50 US states, with free shipping on a $25 minimum cart value. 3-day express delivery is $19 and arrives August 29–30. Same-day dispatch on most orders before our daily cut-off.",
+    a: "Standard USA delivery is 5 business days to all 50 US states, with free shipping on a $15 minimum cart value. Same-day dispatch on most orders before our daily cut-off.",
   },
   {
     q: "When should I order for Raksha Bandhan 2026?",
-    a: "Raksha Bandhan 2026 is August 28, 2026. Standard USA delivery is 5 business days with free shipping on a $25 minimum cart value. 3-day express delivery ($19) arrives August 29–30.",
+    a: "Raksha Bandhan 2026 is August 28, 2026. Standard USA delivery is 5 business days with free shipping on a $15 minimum cart value.",
   },
   {
     q: "Can I send Rakhi from India to the USA?",

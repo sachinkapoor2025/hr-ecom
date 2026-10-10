@@ -10,7 +10,7 @@ import { CurrencySwitcher } from "@/components/CurrencySwitcher";
 import { WhatsAppFloat } from "@/components/WhatsAppFloat";
 import { TrackingProvider } from "@/components/TrackingProvider";
 import { JsonLd } from "@/components/JsonLd";
-import { RakshaBandhanCountdown } from "@/components/RakshaBandhanCountdown";
+import { PricesDroppedStrip } from "@/components/PricesDroppedStrip";
 import { ClientDeferredWidgets } from "@/components/ClientDeferredWidgets";
 import { AnalyticsScripts, GoogleAnalytics } from "@/components/AnalyticsScripts";
 import { site } from "@/lib/site";
@@ -113,7 +113,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <WishlistProvider>
             <CurrencyProvider>
             <TrackingProvider />
-            <RakshaBandhanCountdown />
+            <PricesDroppedStrip />
             <HeaderShell />
             <main className="flex-1">{children}</main>
             <FooterShell />

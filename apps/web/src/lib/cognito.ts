@@ -6,6 +6,7 @@ import {
   AuthenticationDetails,
   CognitoUserAttribute,
 } from "amazon-cognito-identity-js";
+import { cognitoHasGroup } from "@hr-ecom/shared";
 
 const poolId = process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID;
 const clientId = process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID;
@@ -90,15 +91,15 @@ export function login(email: string, password: string): Promise<AuthUser> {
       onSuccess: (session) => {
         const token = session.getIdToken().getJwtToken();
         const payload = session.getIdToken().decodePayload();
-        const groups: string[] = payload["cognito:groups"] ?? [];
-        const isSuperAdmin = groups.includes("super-admin");
+        const groups = payload["cognito:groups"];
+        const isSuperAdmin = cognitoHasGroup(groups, "super-admin");
         const authUser: AuthUser = {
           email,
           name: payload.name as string | undefined,
           token,
           isSuperAdmin,
-          isAdmin: groups.includes("admin") || isSuperAdmin,
-          isEmailMarketer: groups.includes("email") || isSuperAdmin,
+          isAdmin: cognitoHasGroup(groups, "admin") || isSuperAdmin,
+          isEmailMarketer: cognitoHasGroup(groups, "email") || isSuperAdmin,
         };
         storeAuth(authUser);
         resolve(authUser);

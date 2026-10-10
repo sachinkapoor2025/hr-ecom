@@ -140,6 +140,7 @@ export default function AdminOrdersPage() {
   const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [tab, setTab] = useState("all");
   const [statusMulti, setStatusMulti] = useState<Set<string>>(new Set());
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
@@ -169,9 +170,13 @@ export default function AdminOrdersPage() {
 
   const loadOrders = useCallback(() => {
     setLoading(true);
+    setLoadError(null);
     apiClient<{ orders: Order[] }>("/admin/orders")
-      .then((d) => setOrders(d.orders))
-      .catch(() => setOrders([]))
+      .then((d) => setOrders(d.orders ?? []))
+      .catch((err: unknown) => {
+        setOrders([]);
+        setLoadError(err instanceof Error ? err.message : "Failed to load orders");
+      })
       .finally(() => setLoading(false));
   }, [apiClient]);
 
@@ -223,6 +228,7 @@ export default function AdminOrdersPage() {
       if (!q) return true;
       return (
         o.orderId.toLowerCase().includes(q) ||
+        (o.orderNumber ?? "").toLowerCase().includes(q) ||
         o.shippingAddress?.name?.toLowerCase().includes(q) ||
         o.shippingAddress?.email?.toLowerCase().includes(q) ||
         o.shippingAddress?.phone?.toLowerCase().includes(q)
@@ -528,6 +534,18 @@ export default function AdminOrdersPage() {
 
       {loading ? (
         <p className="text-slate-500">Loading orders…</p>
+      ) : loadError ? (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          <p className="font-medium">Could not load orders</p>
+          <p className="mt-1">{loadError}</p>
+          <button
+            type="button"
+            onClick={loadOrders}
+            className="mt-2 text-sm underline hover:no-underline"
+          >
+            Try again
+          </button>
+        </div>
       ) : pageItems.length === 0 ? (
         <p className="text-slate-600">No orders found.</p>
       ) : (

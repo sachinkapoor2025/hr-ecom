@@ -27,7 +27,7 @@ export const trustHighlights = [
   {
     icon: "🚚",
     title: "Fast nationwide delivery",
-    detail: `${deliveryClaims.express}. ${deliveryClaims.standard}. ${deliveryClaims.dispatch}.`,
+    detail: `${deliveryClaims.standard}. ${deliveryClaims.dispatch}.`,
   },
   {
     icon: "🎁",
