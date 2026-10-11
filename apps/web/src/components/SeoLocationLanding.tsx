@@ -26,21 +26,21 @@ function warehouseCopy(location: SeoLocation): string {
 
 export function buildLocationContent(location: SeoLocation) {
   const place = displayName(location);
-  const primaryKw = location.keywords[0] ?? `send rakhi to ${location.name.toLowerCase()}`;
+  const primaryKw = location.keywords[0] ?? `send gifts to ${location.name.toLowerCase()}`;
   const isState = location.region === "state";
 
   return {
     headline: isState
-      ? `Send Rakhi to ${place} — Online USA Delivery for Raksha Bandhan`
-      : `Send Rakhi to ${place} — Fast USA Rakhi Delivery`,
+      ? `Send Gifts to ${place} — Online USA Delivery for Raksha Bandhan`
+      : `Send Gifts to ${place} — Fast USA Gifts Delivery`,
     intro: [
       `Looking for ${primaryKw}? ${site.name} delivers premium rakhis to ${place} with domestic USA shipping — no customs delays for your brother. Sisters in India, the UK, Canada, Australia, and worldwide order online; we fulfill from our US operations including a California warehouse team.${warehouseCopy(location)}`,
       `Shop single rakhis, designer sets, kids rakhis, Bhaiya Bhabhi pairs, Lumba rakhis, and chocolate combos. Most orders include complimentary roli (kumkum) and chawal (rice) for the traditional tilak ceremony on Raksha Bandhan.`,
     ],
     delivery: {
       heading: location.isCaliforniaWarehouse
-        ? `Fast Rakhi Delivery to ${place} from Our California Warehouse`
-        : `Rakhi Delivery Across ${place}`,
+        ? `Fast Gifts Delivery to ${place} from Our California Warehouse`
+        : `Gifts Delivery Across ${place}`,
       paragraphs: [
         location.isCaliforniaWarehouse
           ? `Orders to ${place} benefit from our California-based fulfillment — many shipments dispatch quickly for 2–5 business day delivery across the metro area after processing. We use trusted US carriers with tracking.`
@@ -50,11 +50,11 @@ export function buildLocationContent(location: SeoLocation) {
     },
     faqs: [
       {
-        q: `Can I send rakhi to ${place} from India?`,
+        q: `Can I send gifts to ${place} from India?`,
         a: `Yes. Enter the ${place} delivery address at checkout on UsaRakhi.com. We ship domestically within the USA so your brother avoids international customs.`,
       },
       {
-        q: `How long does rakhi delivery take to ${place}?`,
+        q: `How long does gifts delivery take to ${place}?`,
         a: location.isCaliforniaWarehouse
           ? `Many ${place} orders arrive in 2–5 business days after dispatch from our California warehouse team.`
           : `Most orders to ${place} arrive in 5–7 business days after dispatch.`,
@@ -119,7 +119,7 @@ export function SeoLocationLanding({ location, related }: Props) {
 
         <aside className="space-y-6">
           <section className="bg-slate-50 rounded-xl p-6">
-            <h3 className="text-lg font-semibold text-primary mb-4">Shop Rakhi for {place}</h3>
+            <h3 className="text-lg font-semibold text-primary mb-4">Shop Gifts for {place}</h3>
             <ul className="space-y-3 text-sm">
               {sharedCategories.map((cat) => (
                 <li key={cat.slug}>
@@ -133,13 +133,13 @@ export function SeoLocationLanding({ location, related }: Props) {
           </section>
 
           <section className="bg-nav text-white rounded-xl p-6">
-            <h3 className="text-lg font-semibold mb-2">Order Rakhi to {place}</h3>
+            <h3 className="text-lg font-semibold mb-2">Order Gifts to {place}</h3>
             <p className="text-sm text-white/90 mb-4">Need help with address or delivery timing? We respond on WhatsApp and email.</p>
             <div className="flex flex-wrap gap-3 text-sm">
               <Link href="/" className="bg-white text-nav px-4 py-2 rounded-lg font-medium hover:bg-slate-100">
                 Shop UsaRakhi home
               </Link>
-              <a href={whatsappChatUrl(`Hi, I want to send rakhi to ${place}.`)} target="_blank" rel="noopener noreferrer" className="border border-white/60 px-4 py-2 rounded-lg hover:bg-white/10">
+              <a href={whatsappChatUrl(`Hi, I want to send gifts to ${place}.`)} target="_blank" rel="noopener noreferrer" className="border border-white/60 px-4 py-2 rounded-lg hover:bg-white/10">
                 WhatsApp
               </a>
             </div>
@@ -148,7 +148,7 @@ export function SeoLocationLanding({ location, related }: Props) {
       </div>
 
       <section className="mt-10 pt-8 border-t border-slate-200">
-        <h3 className="text-xl font-semibold text-primary mb-6">FAQ — Send Rakhi to {place}</h3>
+        <h3 className="text-xl font-semibold text-primary mb-6">FAQ — Send Gifts to {place}</h3>
         <div className="grid md:grid-cols-2 gap-6">
           {content.faqs.map((faq) => (
             <div key={faq.q} className="bg-white border border-slate-100 rounded-xl p-5">
@@ -161,11 +161,11 @@ export function SeoLocationLanding({ location, related }: Props) {
 
       {related.length > 0 && (
         <section className="mt-10 p-6 bg-slate-50 rounded-xl text-sm">
-          <h2 className="font-semibold text-primary mb-3">Also deliver Rakhi nearby</h2>
+          <h2 className="font-semibold text-primary mb-3">Also deliver Gifts nearby</h2>
           <div className="flex flex-wrap gap-x-4 gap-y-2">
             {related.map((loc) => (
               <Link key={loc.slug} href={locationPublicPath(loc.slug)} className="text-nav hover:underline">
-                Send Rakhi to {displayName(loc)}
+                Send Gifts to {displayName(loc)}
               </Link>
             ))}
           </div>

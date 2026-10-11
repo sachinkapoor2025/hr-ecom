@@ -31,12 +31,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const content = getCityContent(slug);
   if (!city) return { title: "City" };
   return pageMetadata({
-    title: `Send Rakhi to ${city.label} USA | Fast Delivery`,
+    title: `Send Gifts to ${city.label} USA | Fast Delivery`,
     description:
       content?.metaExtra ??
-      `Send Rakhi to ${city.label}, USA with ${site.name}. Premium rakhis, 5–7 day delivery, roli chawal included. Order from India worldwide.`,
-    path: `/send-rakhi-to-${slug}`,
-    keywords: `send rakhi to ${city.label}, rakhi delivery ${city.label}, rakhi USA ${city.label}, online rakhi ${city.label}, raksha bandhan ${city.label}, UsaRakhi`,
+      `Send Gifts to ${city.label}, USA with ${site.name}. Premium gifts, 5–7 day delivery, roli chawal included. Order from India worldwide.`,
+    path: `/send-gifts-to-${slug}`,
+    keywords: `send gifts to ${city.label}, gifts delivery ${city.label}, gifts USA ${city.label}, UsaRakhi`,
   });
 }
 
@@ -57,22 +57,22 @@ export default async function CityPage({ params }: Props) {
 
   const crumbs = [
     { label: "Home", href: "/" },
-    { label: `Rakhi to ${city.label}` },
+    { label: `Gifts to ${city.label}` },
   ];
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-10">
       <JsonLd
         data={[
-          breadcrumbJsonLd(crumbs.map((c) => ({ name: c.label, path: c.href ?? `/send-rakhi-to-${slug}` }))),
+          breadcrumbJsonLd(crumbs.map((c) => ({ name: c.label, path: c.href ?? `/send-gifts-to-${slug}` }))),
           faqJsonLd(content.faqs),
           serviceAreaJsonLd({ label: city.label, slug, state: content.state }),
         ]}
       />
       <Breadcrumbs items={crumbs} />
-      <h1 className="text-3xl font-bold text-primary mb-2">Send Rakhi to {city.label}, USA</h1>
+      <h1 className="text-3xl font-bold text-primary mb-2">Send Gifts to {city.label}, USA</h1>
       <p className="text-slate-600 mb-8 max-w-3xl">
-        Premium Rakhi delivery to {city.label} in 5–7 business days. Order from India, UK, Canada, or
+        Premium gifts delivery to {city.label} in 5–7 business days. Order from India, UK, Canada, or
         anywhere — we ship domestically within America.
       </p>
 
@@ -93,7 +93,7 @@ export default async function CityPage({ params }: Props) {
       <CityContentSection content={content} />
 
       <section className="mt-12 p-6 bg-slate-50 rounded-xl text-sm text-slate-600">
-        <h2 className="font-semibold text-primary mb-2">Also deliver Rakhi to</h2>
+        <h2 className="font-semibold text-primary mb-2">Also deliver Gifts to</h2>
         <div className="flex flex-wrap gap-x-4 gap-y-2">
           {usCityLinks
             .filter((c) => c.slug !== slug)

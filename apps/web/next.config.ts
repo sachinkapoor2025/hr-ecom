@@ -14,15 +14,22 @@ const nextConfig: NextConfig = {
       ...categoryRedirectRules(),
       ...legacyRedirectRules(),
       // Prefer 301 over Next's default 308 for permanent:true so crawlers treat these as classic permanent moves.
-      // Legacy /cities/* → canonical /send-rakhi-to-* (handled by locations/[slug] dynamic route).
-      { source: "/cities/:slug", destination: "/send-rakhi-to-:slug", statusCode: 301 },
-      { source: "/cities/:slug/", destination: "/send-rakhi-to-:slug", statusCode: 301 },
+      // Legacy /cities/* → canonical /send-gifts-to-* (handled by locations/[slug] dynamic route).
+      { source: "/cities/:slug", destination: "/send-gifts-to-:slug", statusCode: 301 },
+      { source: "/cities/:slug/", destination: "/send-gifts-to-:slug", statusCode: 301 },
+      // Previous location URLs → current gifts URLs.
+      { source: "/send-rakhi-to-:slug", destination: "/send-gifts-to-:slug", statusCode: 301 },
+      { source: "/send-rakhi-to/:city", destination: "/send-gifts-to-:city", statusCode: 301 },
+      { source: "/send-rakhi-to/:city/", destination: "/send-gifts-to-:city", statusCode: 301 },
+      { source: "/rakhi-from-uk", destination: "/gifts-from-uk", statusCode: 301 },
+      { source: "/rakhi-from-uk/", destination: "/gifts-from-uk", statusCode: 301 },
+      { source: "/rakhi-from-canada", destination: "/gifts-from-canada", statusCode: 301 },
+      { source: "/rakhi-from-canada/", destination: "/gifts-from-canada", statusCode: 301 },
       // Slash form → hyphenated canonical (keeps one public URL per city).
-      { source: "/send-rakhi-to/:city", destination: "/send-rakhi-to-:city", statusCode: 301 },
-      { source: "/send-rakhi-to/:city/", destination: "/send-rakhi-to-:city", statusCode: 301 },
-      // Country landings — trailing-slash → canonical (not US city /send-rakhi-to-* pages).
-      { source: "/rakhi-from-uk/", destination: "/rakhi-from-uk", statusCode: 301 },
-      { source: "/rakhi-from-canada/", destination: "/rakhi-from-canada", statusCode: 301 },
+      { source: "/send-gifts-to/:city", destination: "/send-gifts-to-:city", statusCode: 301 },
+      { source: "/send-gifts-to/:city/", destination: "/send-gifts-to-:city", statusCode: 301 },
+      { source: "/gifts-from-uk/", destination: "/gifts-from-uk", statusCode: 301 },
+      { source: "/gifts-from-canada/", destination: "/gifts-from-canada", statusCode: 301 },
       // Blog article trailing slash → canonical slug (SEO stub upgraded to full guide).
       {
         source: "/blog/what-to-gift-bhabhi-on-raksha-bandhan/",
@@ -41,7 +48,7 @@ const nextConfig: NextConfig = {
     return [
       ...categoryRewriteRules(),
       // All city/state landings (express + secondary + other) → one dynamic handler.
-      { source: "/send-rakhi-to-:slug", destination: "/locations/:slug" },
+      { source: "/send-gifts-to-:slug", destination: "/locations/:slug" },
     ];
   },
   images: {

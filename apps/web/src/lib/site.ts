@@ -51,15 +51,15 @@ export const navItems = [
 export type CityNavLink = {
   label: string;
   slug: string;
-  /** When set, used instead of `/send-rakhi-to-${slug}` (UK / Canada country pages). */
+  /** When set, used instead of `/send-gifts-to-${slug}` (UK / Canada country pages). */
   href?: string;
-  /** Cities dropdown label; defaults to `Rakhi to ${label}`. */
+  /** Cities dropdown label; defaults to `Gifts to ${label}`. */
   menuLabel?: string;
 };
 
 export const cityLinks: readonly CityNavLink[] = [
-  { label: "UK", slug: "uk", href: "/rakhi-from-uk", menuLabel: "Rakhi from UK" },
-  { label: "Canada", slug: "canada", href: "/rakhi-from-canada", menuLabel: "Rakhi from Canada" },
+  { label: "UK", slug: "uk", href: "/gifts-from-uk", menuLabel: "Gifts from UK" },
+  { label: "Canada", slug: "canada", href: "/gifts-from-canada", menuLabel: "Gifts from Canada" },
   { label: "California", slug: "california" },
   { label: "New York", slug: "new-york" },
   { label: "Texas", slug: "texas" },
@@ -80,11 +80,11 @@ export const cityLinks: readonly CityNavLink[] = [
 ];
 
 export function cityNavHref(link: CityNavLink): string {
-  return link.href ?? `/send-rakhi-to-${link.slug}`;
+  return link.href ?? `/send-gifts-to-${link.slug}`;
 }
 
 export function cityNavMenuLabel(link: CityNavLink): string {
-  return link.menuLabel ?? `Rakhi to ${link.label}`;
+  return link.menuLabel ?? `Gifts to ${link.label}`;
 }
 
 /** US metro/state city pages only (excludes UK / Canada country landings). */

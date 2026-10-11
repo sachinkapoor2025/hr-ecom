@@ -56,14 +56,14 @@ function stateContent(
     slug,
     label,
     region: "state",
-    headline: `Send Rakhi to ${label}, USA — Online Delivery for Raksha Bandhan`,
-    metaExtra: `Premium rakhi delivery to ${label} in 5–7 business days. Order from India, UK, Canada worldwide.`,
+    headline: `Send Gifts to ${label}, USA — Online Delivery for Raksha Bandhan`,
+    metaExtra: `Premium gifts delivery to ${label} in 5–7 business days. Order from India, UK, Canada worldwide.`,
     intro: [
       `Celebrating Raksha Bandhan when your brother lives in ${label}? UsaRakhi delivers premium rakhis across every city and town in ${label} — from major metros to suburban neighborhoods. Sisters in India, the UK, Canada, Australia, and worldwide order on our site; we ship domestically within the United States so your brother receives his rakhi without international customs delays.`,
       `Choose single rakhis, designer sets, kids rakhis, Bhaiya Bhabhi pairs, Lumba rakhis, and chocolate combos. Most orders include complimentary roli (kumkum) and chawal (rice) for the traditional tilak ceremony. ${extraIntro ?? ""}`.trim(),
     ],
     delivery: {
-      heading: `Rakhi Delivery Across ${label}`,
+      heading: `Gifts Delivery Across ${label}`,
       paragraphs: [
         `UsaRakhi ships to all addresses in ${label} — home, apartment, office, or university dorm. Standard delivery takes 5–7 business days after dispatch. Orders placed before our daily cut-off ship the same business day when inventory allows.`,
         `We use trusted US carriers for tracking and reliable last-mile delivery. You'll receive order confirmation by email, and our support team can help with address verification or delivery questions before Raksha Bandhan.`,
@@ -81,11 +81,11 @@ function stateContent(
         "Pay in USD (Stripe) or INR (Razorpay) from anywhere",
         "Rakhi combos with Ferrero Rocher, Lindt, and Hershey's",
         "WhatsApp and email support for order help",
-        "Trusted by sisters sending rakhi from India to USA",
+        "Trusted by sisters sending gifts from India to USA",
       ],
     },
     howTo: {
-      heading: `How to Send Rakhi to Your Brother in ${label}`,
+      heading: `How to Send Gifts to Your Brother in ${label}`,
       steps: [
         "Browse rakhis above or shop by category — Single, Combo, Kids, Bhaiya Bhabhi, Lumba.",
         "Add to cart and enter your brother's full US address in " + label + " at checkout.",
@@ -96,11 +96,11 @@ function stateContent(
     },
     faqs: [
       {
-        q: `How long does rakhi delivery take in ${label}?`,
+        q: `How long does gifts delivery take in ${label}?`,
         a: `Most orders reach ${label} addresses in 5–7 business days after dispatch. Order early for Raksha Bandhan 2026 (August 28, 2026) to allow extra time.`,
       },
       {
-        q: `Can I send rakhi to ${label} from India?`,
+        q: `Can I send gifts to ${label} from India?`,
         a: `Yes. Enter your brother's ${label} shipping address at checkout. We accept orders worldwide and deliver domestically within the United States.`,
       },
       {
@@ -128,7 +128,7 @@ const cityPages: CityPageContent[] = [
     "Oakland",
     "Long Beach",
     "Silicon Valley",
-  ], "California has one of the largest Indian-American communities in the USA — perfect for sending rakhi to brothers in LA, the Bay Area, or San Diego."),
+  ], "California has one of the largest Indian-American communities in the USA — perfect for sending gifts to brothers in LA, the Bay Area, or San Diego."),
   stateContent("new-york", "New York", [
     "New York City (Manhattan, Brooklyn, Queens)",
     "Buffalo",
@@ -138,7 +138,7 @@ const cityPages: CityPageContent[] = [
     "Yonkers",
     "Long Island",
     "Westchester",
-  ], "From NYC boroughs to upstate communities, we deliver rakhi across New York State."),
+  ], "From NYC boroughs to upstate communities, we deliver gifts across New York State."),
   stateContent("texas", "Texas", [
     "Houston",
     "Dallas",
@@ -148,7 +148,7 @@ const cityPages: CityPageContent[] = [
     "Plano",
     "Irving",
     "Arlington",
-  ], "Texas siblings stay connected on Raksha Bandhan with reliable rakhi delivery to Houston, Dallas, Austin, and beyond."),
+  ], "Texas siblings stay connected on Raksha Bandhan with reliable gifts delivery to Houston, Dallas, Austin, and beyond."),
   stateContent("florida", "Florida", [
     "Miami",
     "Orlando",
@@ -167,20 +167,20 @@ const cityPages: CityPageContent[] = [
     "Woodbridge",
     "Iselin",
     "Fort Lee",
-  ], "Many sisters in India send rakhi to brothers in New Jersey's vibrant Indian-American communities — Edison, Iselin, and Jersey City are popular delivery areas."),
+  ], "Many sisters in India send gifts to brothers in New Jersey's vibrant Indian-American communities — Edison, Iselin, and Jersey City are popular delivery areas."),
   {
     slug: "los-angeles",
     label: "Los Angeles",
     region: "city",
     state: "California",
-    headline: "Send Rakhi to Los Angeles, California — USA Delivery",
-    metaExtra: "Send rakhi to LA, Hollywood, Pasadena, Irvine & all of Los Angeles County. 5–7 day USA delivery.",
+    headline: "Send Gifts to Los Angeles, California — USA Delivery",
+    metaExtra: "Send gifts to LA, Hollywood, Pasadena, Irvine & all of Los Angeles County. 5–7 day USA delivery.",
     intro: [
       "Los Angeles is home to one of America's largest Indian diaspora communities. If your brother lives in LA — whether in Downtown, the San Fernando Valley, West LA, or Orange County nearby — UsaRakhi makes Raksha Bandhan feel close despite the distance.",
       "Order from India, the UK, Canada, or anywhere in the world. We ship domestically within the USA, delivering premium rakhis to Los Angeles addresses in 5–7 business days with tracking and careful packaging.",
     ],
     delivery: {
-      heading: "Rakhi Delivery in Los Angeles & Southern California",
+      heading: "Gifts Delivery in Los Angeles & Southern California",
       paragraphs: [
         "We deliver to all Los Angeles neighborhoods, LA County cities, and nearby Southern California areas. Standard shipping is 5–7 business days. Same-day dispatch applies to orders placed before our daily cut-off.",
         "Whether your brother is in an apartment near UCLA, a home in Pasadena, or an office in Downtown LA, enter the complete US address at checkout for reliable delivery.",
@@ -208,7 +208,7 @@ const cityPages: CityPageContent[] = [
       ],
     },
     howTo: {
-      heading: "Send Rakhi to Los Angeles in 5 Easy Steps",
+      heading: "Send Gifts to Los Angeles in 5 Easy Steps",
       steps: [
         "Pick a rakhi from our LA collection above.",
         "Add to cart and enter your brother's Los Angeles address.",
@@ -219,11 +219,11 @@ const cityPages: CityPageContent[] = [
     },
     faqs: [
       {
-        q: "Do you deliver rakhi to Los Angeles from India?",
+        q: "Do you deliver gifts to Los Angeles from India?",
         a: "Yes. Order on UsaRakhi.com from India, enter the LA delivery address, and pay in INR. We ship domestically within America.",
       },
       {
-        q: "How fast is rakhi delivery to LA?",
+        q: "How fast is gifts delivery to LA?",
         a: "Typically 5–7 business days after dispatch to Los Angeles and most Southern California addresses.",
       },
       {
@@ -238,14 +238,14 @@ const cityPages: CityPageContent[] = [
     label: "San Francisco",
     region: "city",
     state: "California",
-    headline: "Send Rakhi to San Francisco & Bay Area — USA Delivery",
-    metaExtra: "Rakhi delivery to San Francisco, Oakland, San Jose & Bay Area. Order from India worldwide.",
+    headline: "Send Gifts to San Francisco & Bay Area — USA Delivery",
+    metaExtra: "Gifts delivery to San Francisco, Oakland, San Jose & Bay Area. Order from India worldwide.",
     intro: [
-      "The San Francisco Bay Area — including San Francisco, Oakland, San Jose, and Silicon Valley — has a thriving Indian-American community. UsaRakhi helps sisters send rakhi to brothers across the Bay Area with premium designs and dependable US delivery.",
+      "The San Francisco Bay Area — including San Francisco, Oakland, San Jose, and Silicon Valley — has a thriving Indian-American community. UsaRakhi helps sisters send gifts to brothers across the Bay Area with premium designs and dependable US delivery.",
       "Order from anywhere worldwide. We fulfill and ship within the United States, so your Bay Area delivery avoids international shipping uncertainty.",
     ],
     delivery: {
-      heading: "Bay Area Rakhi Delivery",
+      heading: "Bay Area Gifts Delivery",
       paragraphs: [
         "We deliver to San Francisco city, the Peninsula, East Bay (Oakland, Fremont), and South Bay (San Jose, Sunnyvale). Delivery takes 5–7 business days after dispatch.",
         "Tech professionals and students in the Bay Area often receive rakhis from sisters abroad — we pack orders carefully for a festival-ready unboxing.",
@@ -266,7 +266,7 @@ const cityPages: CityPageContent[] = [
       ],
     },
     howTo: {
-      heading: "How to Send Rakhi to San Francisco",
+      heading: "How to Send Gifts to San Francisco",
       steps: [
         "Select a rakhi from our shop.",
         "Enter the Bay Area US address at checkout.",
@@ -292,14 +292,14 @@ const cityPages: CityPageContent[] = [
     label: "Chicago",
     region: "city",
     state: "Illinois",
-    headline: "Send Rakhi to Chicago, Illinois — USA Online Delivery",
-    metaExtra: "Send rakhi to Chicago, Naperville, Schaumburg & Chicagoland. Fast USA delivery from UsaRakhi.",
+    headline: "Send Gifts to Chicago, Illinois — USA Online Delivery",
+    metaExtra: "Send gifts to Chicago, Naperville, Schaumburg & Chicagoland. Fast USA delivery from UsaRakhi.",
     intro: [
-      "Chicago and the greater Chicagoland area — including Naperville, Schaumburg, and Evanston — have strong Indian-American communities. Send rakhi to your brother in Chicago with UsaRakhi's premium collection and reliable domestic US shipping.",
+      "Chicago and the greater Chicagoland area — including Naperville, Schaumburg, and Evanston — have strong Indian-American communities. Send gifts to your brother in Chicago with UsaRakhi's premium collection and reliable domestic US shipping.",
       "Sisters across India and the diaspora order here for Raksha Bandhan. We deliver to Illinois addresses in 5–7 business days.",
     ],
     delivery: {
-      heading: "Chicago & Illinois Rakhi Delivery",
+      heading: "Chicago & Illinois Gifts Delivery",
       paragraphs: [
         "We ship to Chicago proper, suburban Cook County, DuPage County, and greater Illinois. Orders dispatch quickly and arrive in 5–7 business days.",
         "Winter or summer, your rakhi arrives beautifully packed with roli chawal on most designs — ready for the Raksha Bandhan ceremony.",
@@ -320,7 +320,7 @@ const cityPages: CityPageContent[] = [
       ],
     },
     howTo: {
-      heading: "Send Rakhi to Chicago",
+      heading: "Send Gifts to Chicago",
       steps: [
         "Browse and add rakhis to cart.",
         "Enter Chicago-area US address.",
@@ -331,7 +331,7 @@ const cityPages: CityPageContent[] = [
     },
     faqs: [
       {
-        q: "How long to deliver rakhi to Chicago?",
+        q: "How long to deliver gifts to Chicago?",
         a: "Typically 5–7 business days after dispatch to Chicago and most Illinois addresses.",
       },
       {
@@ -346,8 +346,8 @@ const cityPages: CityPageContent[] = [
     label: "Houston",
     region: "city",
     state: "Texas",
-    headline: "Send Rakhi to Houston, Texas — USA Rakhi Delivery",
-    metaExtra: "Rakhi delivery to Houston, Sugar Land, Katy & Greater Houston. Order from India to USA.",
+    headline: "Send Gifts to Houston, Texas — USA Gifts Delivery",
+    metaExtra: "Gifts delivery to Houston, Sugar Land, Katy & Greater Houston. Order from India to USA.",
     intro: [
       "Houston is one of the fastest-growing Indian-American hubs in Texas. Whether your brother lives in Sugar Land, Katy, the Energy Corridor, or central Houston, UsaRakhi delivers premium rakhis for Raksha Bandhan with dependable US shipping.",
       "Order from India, the UK, Canada, or anywhere — we ship domestically within America to Houston addresses in 5–7 business days.",
@@ -356,7 +356,7 @@ const cityPages: CityPageContent[] = [
       heading: "Houston & Greater Texas Delivery",
       paragraphs: [
         "We deliver throughout Houston, Harris County, and nearby Texas communities. Standard delivery is 5–7 business days with email confirmation.",
-        "Popular for sisters sending rakhi from India to brothers working in Houston's tech, medical, and energy sectors.",
+        "Popular for sisters sending gifts from India to brothers working in Houston's tech, medical, and energy sectors.",
       ],
     },
     areas: {
@@ -374,7 +374,7 @@ const cityPages: CityPageContent[] = [
       ],
     },
     howTo: {
-      heading: "How to Send Rakhi to Houston",
+      heading: "How to Send Gifts to Houston",
       steps: [
         "Choose rakhis from our Houston collection.",
         "Enter Houston US address at checkout.",
@@ -389,7 +389,7 @@ const cityPages: CityPageContent[] = [
         a: "Yes. We deliver to all Houston suburbs including Sugar Land, Katy, Pearland, and The Woodlands.",
       },
       {
-        q: "Can I send rakhi from Mumbai to Houston?",
+        q: "Can I send gifts from Mumbai to Houston?",
         a: "Yes. Order on UsaRakhi.com, enter the Houston address, and pay in INR via Razorpay.",
       },
     ],
