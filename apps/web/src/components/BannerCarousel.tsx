@@ -71,9 +71,9 @@ const TRUST_FEATURES = [
 
 function Eyebrow({ text }: { text: string }) {
   return (
-    <div className="flex items-center justify-center gap-3 mb-4">
+    <div className="flex items-center justify-center lg:justify-start gap-3 mb-4">
       <span className="h-px w-8 sm:w-12 bg-gradient-to-r from-transparent to-nav/60" aria-hidden />
-      <p className="text-[10px] sm:text-xs font-bold tracking-[0.2em] text-primary/80 uppercase text-center">
+      <p className="text-[10px] sm:text-xs font-bold tracking-[0.2em] text-primary/80 uppercase text-center lg:text-left">
         {text}
       </p>
       <span className="h-px w-8 sm:w-12 bg-gradient-to-l from-transparent to-nav/60" aria-hidden />
@@ -165,7 +165,7 @@ function SlideImage({
       alt={banner.alt}
       fill
       className={bannerImageClass(banner)}
-      sizes="100vw"
+      sizes="(max-width: 1023px) 100vw, 768px"
       priority={priority}
       fetchPriority={priority ? "high" : "auto"}
       loading={priority ? "eager" : "lazy"}
@@ -217,8 +217,8 @@ export function BannerCarousel({
       aria-label="Featured promotions"
     >
       <div className="relative overflow-hidden bg-white border-b border-slate-100">
-        <div className="relative w-full max-w-7xl mx-auto min-w-0">
-          <div className="relative w-full min-w-0 max-w-full">
+        <div className="relative w-full max-w-7xl mx-auto min-w-0 lg:grid lg:grid-cols-[2fr_3fr] lg:gap-6 lg:items-center lg:px-4 lg:py-4">
+          <div className="order-1 lg:order-2 relative w-full min-w-0 max-w-full">
             <div className="relative w-full max-w-full aspect-[1024/384] overflow-hidden bg-[#fffaf4]">
               {/* Server LCP image for slide 0 */}
               {lcpImage ? (
@@ -280,7 +280,7 @@ export function BannerCarousel({
             </div>
           </div>
 
-          <div className="text-center z-10 min-w-0 px-4 py-6 sm:py-8">
+          <div className="order-2 lg:order-1 text-center lg:text-left z-10 min-w-0 px-4 py-6 sm:py-8 lg:py-0 lg:pl-2 lg:pr-4">
             <div key={banner.src}>
               <Eyebrow text={banner.eyebrow} />
 
@@ -301,17 +301,29 @@ export function BannerCarousel({
                 </p>
               ) : null}
 
-              <DeliveryHighlight text={banner.description} className="mb-6 max-w-xl mx-auto" />
+              <DeliveryHighlight text={banner.description} className="mb-6 max-w-xl mx-auto lg:mx-0" />
 
-              <ul className="hidden sm:grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8 max-w-lg mx-auto">
+              {banner.href ? (
+                <Link
+                  href={banner.href}
+                  className="inline-flex items-center justify-center rounded-full bg-nav text-white font-semibold text-sm px-7 py-3 hover:bg-primary transition shadow-md shadow-nav/25"
+                >
+                  {banner.cta}
+                  <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
+                </Link>
+              ) : null}
+
+              <ul className="hidden sm:grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8 max-w-lg mx-auto lg:mx-0">
                 {TRUST_FEATURES.map((f) => (
-                  <li key={f.label} className="flex flex-col items-center gap-2">
+                  <li key={f.label} className="flex flex-col items-center lg:items-start gap-2">
                     <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white border border-blue-100 text-nav shadow-sm">
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.75}>
                         {f.icon}
                       </svg>
                     </span>
-                    <span className="text-[11px] font-semibold text-primary/90 leading-tight text-center">
+                    <span className="text-[11px] font-semibold text-primary/90 leading-tight text-center lg:text-left">
                       {f.label}
                     </span>
                   </li>
