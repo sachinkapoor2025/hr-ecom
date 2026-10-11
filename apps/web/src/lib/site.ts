@@ -1,10 +1,6 @@
 import { cdnUploadUrl } from "@hr-ecom/shared";
 import { categoryHref } from "./category-urls";
-import {
-  HOME_BANNER_DELIVERY_NOTE,
-  PRICES_DROPPED_ACCENT,
-  PRICES_DROPPED_HEADLINE,
-} from "./prices-dropped-copy";
+import { HOME_BANNER_DELIVERY_NOTE } from "./prices-dropped-copy";
 
 export { HOME_BANNER_DELIVERY_NOTE };
 
@@ -100,47 +96,42 @@ export const usCityLinks = cityLinks.filter(isUsCityNavLink);
 
 /** Shown on every homepage hero slide (image caption + text panel + pill). */
 
-const FESTIVAL_CDN = "https://d301af4ndyn9qx.cloudfront.net/uploads/orange-county";
-
 export const homeBanners = [
   {
-    src: `${FESTIVAL_CDN}/TFUSDW2620/TFUSDW2620_1.jpg`,
-    alt: "Diwali gift hamper with toran, rangoli, besan laddoo, and almonds — USA delivery",
-    href: categoryHref("diwali"),
-    eyebrow: "DIWALI 2026",
-    title: "Diwali gifts,",
-    titleAccent: "delivered in the USA",
-    subtitle: "Toran, rangoli, pooja sets, sweets, and dry fruits.",
-    description: HOME_BANNER_DELIVERY_NOTE,
-    cta: "Shop Diwali",
-    pill: HOME_BANNER_DELIVERY_NOTE,
-    imageCaption: HOME_BANNER_DELIVERY_NOTE,
-  },
-  {
-    src: `${FESTIVAL_CDN}/TFUSBD2601/TFUSBD2601_1.jpg`,
-    alt: "Bhai Dooj gift box with kaju katli, kumkum, and a greeting card — USA delivery",
-    href: categoryHref("bhai-dooj"),
-    eyebrow: "BHAI DOOJ 2026",
-    title: "Bhai Dooj hampers",
-    titleAccent: "for your brother",
-    subtitle: "Sweets, dry fruits, chocolates, and puja sets.",
-    description: HOME_BANNER_DELIVERY_NOTE,
-    cta: "Shop Bhai Dooj",
-    pill: HOME_BANNER_DELIVERY_NOTE,
-    imageCaption: HOME_BANNER_DELIVERY_NOTE,
-  },
-  {
-    src: `${FESTIVAL_CDN}/TFUSDW2624/TFUSDW2624_1.jpg`,
-    alt: "Diwali metal pooja gift set with Ferrero Rocher and almonds — USA delivery",
+    src: "/banners/banner-diwali-bhai-dooj.jpg",
+    alt: "Diwali and Bhai Dooj — Celebrate the bond of love. Festivals of lights and lifelong bonds. Shop the festive collection.",
     href: "/products",
-    eyebrow: "FESTIVE GIFTS · USA DELIVERY",
-    title: PRICES_DROPPED_HEADLINE,
-    titleAccent: PRICES_DROPPED_ACCENT,
-    subtitle: "Ships from within the United States.",
+    eyebrow: "CELEBRATE THE BOND OF LOVE",
+    title: "Diwali &",
+    titleAccent: "Bhai Dooj",
+    subtitle: "Festivals of lights and lifelong bonds.",
     description: HOME_BANNER_DELIVERY_NOTE,
-    cta: "Shop all gifts",
+    cta: "Shop festive collection",
     pill: HOME_BANNER_DELIVERY_NOTE,
-    imageCaption: HOME_BANNER_DELIVERY_NOTE,
+  },
+  {
+    src: "/banners/banner-diwali-gifts.jpg",
+    alt: "Diwali gifts — Share the joy, spread the light. Shop Diwali gifts with USA delivery.",
+    href: categoryHref("diwali"),
+    eyebrow: "DIWALI GIFTS",
+    title: "Diwali",
+    titleAccent: "Gifts",
+    subtitle: "Share the joy, spread the light.",
+    description: HOME_BANNER_DELIVERY_NOTE,
+    cta: "Shop Diwali gifts",
+    pill: HOME_BANNER_DELIVERY_NOTE,
+  },
+  {
+    src: "/banners/banner-bhai-dooj-gifts.jpg",
+    alt: "Bhai Dooj gifts — Celebrate the eternal bond of love and care with thoughtful gifts.",
+    href: categoryHref("bhai-dooj"),
+    eyebrow: "BHAI DOOJ GIFTS",
+    title: "Bhai Dooj",
+    titleAccent: "Gifts",
+    subtitle: "Make the bond with your brother more special with thoughtful gifts.",
+    description: HOME_BANNER_DELIVERY_NOTE,
+    cta: "Shop now",
+    pill: HOME_BANNER_DELIVERY_NOTE,
   },
 ] as const;
 

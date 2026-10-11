@@ -21,7 +21,7 @@ export function HomeHero({ banners }: { banners: readonly HomeBanner[] }) {
       alt={first.alt}
       fill
       className={imageClass}
-      sizes="(max-width: 1023px) 100vw, 768px"
+      sizes="100vw"
       priority
       fetchPriority="high"
     />

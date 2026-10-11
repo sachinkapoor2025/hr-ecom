@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { categoryHref } from "@/lib/category-urls";
-import { site, categoryOrder, homeBanners } from "@/lib/site";
+import { site, categoryOrder } from "@/lib/site";
 import { homeCityLinks } from "@/lib/content/home-seo";
 import { rakshaBandhanInlineLinks } from "@/lib/content/page-inline-links";
 import { applyInlineLinks } from "@/lib/inline-links";
@@ -27,7 +27,11 @@ export const metadata: Metadata = pageMetadata({
 });
 
 export default function RakshaBandhanPage() {
-  const hero = homeBanners[0];
+  const hero = {
+    src: "https://d301af4ndyn9qx.cloudfront.net/uploads/orange-county/TFUSDW2620/TFUSDW2620_1.jpg",
+    alt: "Diwali gift hamper with toran, rangoli, besan laddoo, and almonds — USA delivery",
+    eyebrow: "DIWALI 2026",
+  };
   const content = rakshaBandhanContent;
 
   return (
