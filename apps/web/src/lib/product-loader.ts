@@ -1,6 +1,7 @@
 import type { Product } from "@hr-ecom/shared";
 import { isRakhiSeasonPaused, sortAvailableProductsFirst } from "@hr-ecom/shared";
 import { api } from "./api";
+import { homeCategoryOrder } from "./site";
 import {
   getCatalogProduct,
   getCatalogProducts,
@@ -112,6 +113,26 @@ export async function loadProductsByCategory(categorySlug: string): Promise<Prod
 export async function loadFeaturedProducts(limit = 10): Promise<Product[]> {
   const products = await loadProducts();
   return products.slice(0, limit);
+}
+
+function isPurchasableStorefrontProduct(product: Product): boolean {
+  return product.published !== false && !isRakhiSeasonPaused(product) && (product.inventory ?? 0) > 0;
+}
+
+/**
+ * Products currently shown on the shop: festive categories, in stock, and not
+ * paused for the closed Rakhi season.
+ */
+export async function loadVisibleStorefrontProducts(): Promise<Product[]> {
+  const groups = await Promise.all(homeCategoryOrder.map((slug) => loadProductsByCategory(slug)));
+  const bySlug = new Map<string, Product>();
+  for (const group of groups) {
+    for (const product of group) {
+      if (!isPurchasableStorefrontProduct(product) || bySlug.has(product.slug)) continue;
+      bySlug.set(product.slug, product);
+    }
+  }
+  return [...bySlug.values()];
 }
 
 export async function loadRelatedProducts(categorySlug: string, excludeSlug: string): Promise<Product[]> {

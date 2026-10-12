@@ -7,6 +7,12 @@ import { trustFacts } from "@/lib/trust";
 const FACEBOOK_URL = "https://www.facebook.com/usarakhi/";
 const INSTAGRAM_URL = "https://www.instagram.com/usarakhi/";
 
+/**
+ * Temporary for the Diwali and Bhai Dooj season.
+ * Set to true to show Raksha Bandhan footer links again. Pages, URLs, and content stay in place.
+ */
+const SHOW_RAKHI_SEASON_FOOTER_LINKS = false;
+
 /** Footer Shop Rakhi labels only — append "to USA" without changing shared nav/URLs. */
 function shopRakhiFooterLabel(label: string): string {
   return /to\s+usa$/i.test(label.trim()) ? label : `${label} to USA`;
@@ -81,13 +87,14 @@ export function Footer() {
           <div className="min-w-0 lg:col-span-2">
             <p className="font-semibold text-white mb-3 sm:mb-4">Shop</p>
             <ul className="space-y-2 text-white/80">
-              {rakhiSetsMenu.items.map((n) => (
-                <li key={n.href}>
-                  <Link href={n.href} className="hover:text-white hover:underline">
-                    {shopRakhiFooterLabel(n.label)}
-                  </Link>
-                </li>
-              ))}
+              {SHOW_RAKHI_SEASON_FOOTER_LINKS &&
+                rakhiSetsMenu.items.map((n) => (
+                  <li key={n.href}>
+                    <Link href={n.href} className="hover:text-white hover:underline">
+                      {shopRakhiFooterLabel(n.label)}
+                    </Link>
+                  </li>
+                ))}
               {navItems
                 .filter((n) => "category" in n)
                 .map((n) => (
@@ -109,8 +116,20 @@ export function Footer() {
           <div className="min-w-0 lg:col-span-2">
             <p className="font-semibold text-white mb-3 sm:mb-4">Help &amp; Info</p>
             <ul className="space-y-2 text-white/80">
-              <li><Link href="/send-rakhi-from-india" className="hover:text-white hover:underline">Send Rakhi from India</Link></li>
-              <li><Link href="/raksha-bandhan" className="hover:text-white hover:underline">Raksha Bandhan 2026</Link></li>
+              {SHOW_RAKHI_SEASON_FOOTER_LINKS && (
+                <>
+                  <li>
+                    <Link href="/send-rakhi-from-india" className="hover:text-white hover:underline">
+                      Send Rakhi from India
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/raksha-bandhan" className="hover:text-white hover:underline">
+                      Raksha Bandhan 2026
+                    </Link>
+                  </li>
+                </>
+              )}
               <li><Link href="/blog" className="hover:text-white hover:underline">Blog &amp; Guides</Link></li>
               <li><Link href="/shipping" className="hover:text-white hover:underline">Shipping &amp; Delivery</Link></li>
               <li><Link href="/faq" className="hover:text-white hover:underline">FAQ</Link></li>

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import type { Product } from "@hr-ecom/shared";
 import { useWishlist } from "@/lib/wishlist-context";
 import { AddToCartControl } from "@/components/AddToCartControl";
@@ -10,30 +11,50 @@ import { getDiscountPercent } from "@/lib/pricing";
 import { VariantImg } from "@/components/VariantImg";
 
 type Props = {
+  /** In-stock products currently shown on the shop. Saved items outside this list are hidden. */
+  visibleProducts: Product[];
   recommendedProducts: Product[];
 };
 
-export function WishlistPageClient({ recommendedProducts }: Props) {
-  const { items, remove } = useWishlist();
+export function WishlistPageClient({ visibleProducts, recommendedProducts }: Props) {
+  const { items, ready, remove, retainVisible } = useWishlist();
   const { format } = useCurrency();
+  const [synced, setSynced] = useState(false);
+
+  useEffect(() => {
+    if (!ready) return;
+    retainVisible(visibleProducts);
+    setSynced(true);
+  }, [ready, retainVisible, visibleProducts]);
 
   const wishlistSlugs = new Set(items.map((item) => item.slug));
-  const suggestions = recommendedProducts.filter((p) => !wishlistSlugs.has(p.slug)).slice(0, 5);
+  const suggestions = recommendedProducts.filter((p) => !wishlistSlugs.has(p.slug)).slice(0, 8);
+
+  if (!ready || !synced) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-16">
+        <h1 className="text-3xl font-bold text-primary mb-3">Wish Lists</h1>
+        <p className="text-slate-600">Loading your saved gifts…</p>
+      </div>
+    );
+  }
 
   if (items.length === 0) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-16">
         <div className="max-w-3xl mx-auto text-center mb-12">
           <h1 className="text-3xl font-bold text-primary mb-3">Wish Lists</h1>
-          <p className="text-slate-600 mb-6">Your saved Rakhis will appear here. Tap the heart on any product to save it.</p>
+          <p className="text-slate-600 mb-6">
+            Your saved gifts will appear here. Tap the heart on any product to save it.
+          </p>
           <Link href="/products" className="text-nav font-semibold hover:underline">
-            Browse Rakhi collection →
+            Browse Diwali and Bhai Dooj gifts →
           </Link>
         </div>
 
         {suggestions.length > 0 && (
           <section>
-            <h2 className="text-lg font-bold text-primary mb-4">You may also like</h2>
+            <h2 className="text-lg font-bold text-primary mb-4">Diwali and Bhai Dooj gifts</h2>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 items-stretch">
               {suggestions.map((p) => (
                 <HomeProductCard key={p.slug} product={p} />
@@ -112,7 +133,7 @@ export function WishlistPageClient({ recommendedProducts }: Props) {
 
       {suggestions.length > 0 && (
         <section className="mt-12 pt-10 border-t border-slate-200">
-          <h2 className="text-lg font-bold text-primary mb-4">You may also like</h2>
+          <h2 className="text-lg font-bold text-primary mb-4">Diwali and Bhai Dooj gifts</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 items-stretch">
             {suggestions.map((p) => (
               <HomeProductCard key={p.slug} product={p} />
