@@ -2,12 +2,26 @@
 
 import { categoryHref } from "@/lib/category-urls";
 
+export interface CategoryRichSection {
+  heading: string;
+  paragraphs?: string[];
+  items?: string[];
+  steps?: string[];
+  /** Prose shown after the list or steps. */
+  closing?: string[];
+}
+
 export interface CategoryRichContent {
   slug: string;
   headline: string;
   intro: string[];
-  delivery: { heading: string; paragraphs: string[] };
-  highlights: {
+  /**
+   * Ordered article blocks. When set, these replace delivery / highlights /
+   * tradition / whyUs / howTo so the page can follow a specific outline.
+   */
+  sections?: CategoryRichSection[];
+  delivery?: { heading: string; paragraphs: string[] };
+  highlights?: {
     heading: string;
     /** Checklist bullets (omit when using paragraphs instead). */
     items: string[];
@@ -15,10 +29,15 @@ export interface CategoryRichContent {
     paragraphs?: string[];
   };
   tradition?: { heading: string; paragraphs: string[] };
-  whyUs: { heading: string; bullets: string[] };
-  howTo: { heading: string; steps: string[] };
+  whyUs?: { heading: string; bullets: string[] };
+  howTo?: { heading: string; steps: string[] };
   faqs: { q: string; a: string }[];
+  /** Overrides the default FAQ heading. */
+  faqHeading?: string;
   relatedCategories: { label: string; href: string; text: string }[];
+  /** Overrides the default related-collections heading. */
+  relatedHeading?: string;
+  support?: { heading: string; body: string; whatsappText: string };
 }
 
 const relatedAll = [
@@ -707,225 +726,220 @@ export const categoryRichContent: Record<string, CategoryRichContent> = {
   },
   "bhai-dooj": {
     slug: "bhai-dooj",
-    headline: "Bhai Dooj gift boxes for a brother in the United States",
+    headline: "Send Bhai Dooj Gifts to the USA",
     intro: [
-      "Bhai Dooj is the festival when a sister marks her brother’s forehead and the family shares sweets. This page lists the Bhai Dooj hampers in the current catalog: ready-packed boxes, not a custom assortment. A listing might be kaju katli with kumkum, almonds and pistachios, a Ferrero Rocher box, mixed dry fruits, or a pooja set with besan laddoo. The product name is the contents.",
-      "Two dry-fruit boxes state a weight in the name — 266 g and 131 g. Other boxes do not publish a gram weight in the title, so do not assume one. Kids-oriented listings are named as such, including an M&M’s and markers gift. If you need a Diwali pooja hamper instead of a brother gift, use the Diwali page.",
+      "Celebrate the beautiful bond between brothers and sisters with thoughtful **Bhai Dooj gifts to the USA**. With UsaRakhi, you can **send Bhai Dooj gifts to your brother in the USA**, including traditional Indian sweets, dry fruits, chocolates, and festive pooja gift hampers. Explore our collection of **Bhai Dooj gift boxes delivered across the USA** and choose a special gift to make the occasion memorable.",
     ],
-    delivery: {
-      heading: "How these Bhai Dooj boxes are delivered",
-      paragraphs: [
-        "Enter a delivery address in the United States. The parcel is fulfilled domestically, so it is not held for international customs. Orange County products include free shipping, and standard delivery is 5 business days.",
-      ],
-    },
-    highlights: {
-      heading: "What the Bhai Dooj grid actually contains",
-      items: [
-        "Kaju katli paired with kumkum, cashews, or Ferrero Rocher on specific boxes",
-        "Nut boxes: almonds and pistachios, cashews, pistachios alone, and mixed nuts",
-        "Chocolate boxes that name Ferrero Rocher, M&M’s, or Skittles",
-        "Pooja-set boxes that include a thali or kumkum plus a sweet or nuts",
-      ],
-    },
-    whyUs: {
-      heading: "Before you add a Bhai Dooj box to the cart",
-      bullets: [
-        "Read the included list on the product page — that list is the box",
-        "A second category such as sweets or pooja does not add extra items",
-        "Mixed carts with another vendor follow the shipping page",
-      ],
-    },
-    howTo: {
-      heading: "How to send a Bhai Dooj hamper",
-      steps: [
-        "Choose one box from the grid and open its included list.",
-        "Add it to the cart and enter the US delivery address.",
-        "Pay at checkout. Orange County items on this page ship free.",
-        "Allow 5 business days for standard domestic delivery.",
-      ],
-    },
-    faqs: [
+    sections: [
       {
-        q: "Can I swap the sweet or the nuts inside a Bhai Dooj box?",
-        a: "No. Each hamper is packed as the product page describes it. Pick a different listing if you want a different combination.",
+        heading: "How to Send Bhai Dooj Gifts to the USA",
+        paragraphs: [
+          "Sending **Bhai Dooj gifts to the USA** is simple. Browse our collection of **Bhai Dooj gift hampers**, select your preferred gift box, and enter the recipient's US delivery address at checkout. Standard domestic delivery takes approximately 5 business days. Eligible products shipped to Orange County include free shipping.",
+          "Choose from **kaju katli gift boxes, dry fruit hampers, chocolate gift boxes, and Bhai Dooj pooja sets**. Check each product description to confirm the items included in your selected hamper.",
+        ],
       },
       {
-        q: "Do all Bhai Dooj boxes include kumkum?",
-        a: "Only the listings that name kumkum or a pooja set. A nut-only or chocolate-only box does not include it unless the product says so.",
-      },
-      {
-        q: "Where do these boxes ship?",
-        a: "To a United States address, as a domestic parcel. Standard delivery is 5 business days, and Orange County products include free shipping.",
+        heading: "Best Bhai Dooj Gifts for Brothers in the USA",
+        paragraphs: [
+          "Looking for the perfect **Bhai Dooj gift for your brother in the USA**? Explore traditional Indian sweets, premium dry fruits, chocolates, and festive gift combinations. Our **Bhai Dooj gifts delivered in the USA** help you celebrate this special Indian festival with family, even when you live far apart.",
+        ],
       },
     ],
+    faqs: [],
+    support: {
+      heading: "Need help choosing a Bhai Dooj gift?",
+      body: "Contact our team for help choosing a Bhai Dooj gift box and confirming US delivery information.",
+      whatsappText: "Hi, I need help with Bhai Dooj gifts.",
+    },
     relatedCategories: [
-      { label: "Diwali combos", href: categoryHref("diwali"), text: "Pooja, toran, and rangoli hampers for Diwali." },
-      { label: "Sweet combos", href: categoryHref("sweet-combos"), text: "Boxes that include kaju katli or besan laddoo." },
-      { label: "Pooja sets", href: categoryHref("pooja-sets"), text: "Thali, kumkum, toran, and related puja items." },
+      { label: "Diwali Combos", href: categoryHref("diwali"), text: "Festive Diwali gift hampers with sweets, dry fruits, and pooja essentials." },
+      { label: "Sweet Combos", href: categoryHref("sweet-combos"), text: "Indian sweet gift hampers featuring kaju katli and besan laddoo." },
+      { label: "Dry Fruit Combos", href: categoryHref("dry-fruit-combos"), text: "Almond, pistachio, cashew, and mixed dry fruit gift boxes." },
     ],
   },
   diwali: {
     slug: "diwali",
-    headline: "Diwali hampers with pooja items, sweets, and dry fruits",
+    headline: "Send Diwali Gifts to the USA",
     intro: [
-      "The Diwali page is a short list of festival hampers, each built around a pooja or decor item plus something to eat. The catalog names are specific: a toran and rangoli with besan laddoo; a metal pooja set with besan laddoo; a metal pooja set with kaju katli; Shubh Labh and rangoli with dry fruit; a pooja set with Ferrero Rocher and almonds; and a metal pooja set with kaju katli and pistachios.",
-      "That is the whole Diwali group. If a box you want is missing here, it is filed under Bhai Dooj instead. Nothing is added at checkout beyond the included list on the product you open.",
+      "Celebrate the festival of lights with beautiful **Diwali gifts to the USA** from UsaRakhi. Explore festive **Diwali gift hampers** featuring traditional Indian sweets, dry fruits, pooja sets, torans, rangoli, and decorative items. Whether you want to **send Diwali gifts to your family in the USA** or surprise loved ones with a thoughtful festive hamper, choose from a collection of gifts for the special occasion.",
     ],
-    delivery: {
-      heading: "Diwali delivery inside the United States",
-      paragraphs: [
-        "These hampers ship to a US address from within the country. Orange County products include free shipping. Standard delivery is 5 business days. A cart that also contains another vendor is priced for shipping the way the shipping page describes.",
-      ],
-    },
-    highlights: {
-      heading: "How the six Diwali hampers differ",
-      items: [
-        "Decor-led: toran, rangoli, and Shubh Labh, packed with a sweet or dry fruit",
-        "Metal pooja sets paired with besan laddoo, kaju katli, or kaju katli and pistachios",
-        "One pooja set that names Ferrero Rocher and almonds",
-      ],
-    },
-    whyUs: {
-      heading: "What to confirm on a Diwali listing",
-      bullets: [
-        "Whether the pooja piece is a thali set, toran, or rangoli",
-        "Which sweet or nut is packed with it",
-        "The photo and included list match before you pay",
-      ],
-    },
-    howTo: {
-      heading: "How to order a Diwali hamper",
-      steps: [
-        "Open the hamper whose name matches the pooja item you want.",
-        "Check the included list, then add that hamper to the cart.",
-        "Enter the US address and pay at checkout.",
-        "Track the domestic shipment. Standard delivery is 5 business days.",
-      ],
-    },
-    faqs: [
+    sections: [
       {
-        q: "Are Diwali and Bhai Dooj the same boxes?",
-        a: "No. Diwali listings are the pooja and decor hampers named on this page. Bhai Dooj has its own, longer list of brother gift boxes.",
+        heading: "How to Send Diwali Gifts to the USA",
+        paragraphs: [
+          "Sending **Diwali gifts to the USA** is simple with UsaRakhi. Browse our collection of **Diwali gift hampers**, select your preferred combination of pooja essentials, sweets, or dry fruits, and enter the recipient's US delivery address at checkout. Standard domestic delivery takes approximately 5 business days. Eligible products shipped to Orange County include free shipping.",
+        ],
       },
       {
-        q: "Can I add an extra sweet to a Diwali hamper?",
-        a: "The box ships as listed. Choose another product if you want a different sweet or nut.",
-      },
-      {
-        q: "Is shipping free on these Diwali hampers?",
-        a: "Orange County products include free shipping. See the shipping page if the cart mixes vendors.",
+        heading: "Explore Diwali Gift Hampers for Every Celebration",
+        paragraphs: [
+          "Choose from **Diwali pooja gift sets**, **Indian sweet gift boxes**, and **dry fruit gift hampers** to celebrate Diwali with your loved ones. Each hamper contains the items specified on its product page, so check the included-items list before placing your order.",
+        ],
       },
     ],
+    faqs: [],
+    support: {
+      heading: "Need help choosing a Diwali gift?",
+      body: "Contact our team for help choosing a Diwali gift hamper and confirming US delivery information.",
+      whatsappText: "Hi, I need help with Diwali gifts.",
+    },
     relatedCategories: [
-      { label: "Bhai Dooj combos", href: categoryHref("bhai-dooj"), text: "Brother gift boxes for Bhai Dooj." },
-      { label: "Pooja sets", href: categoryHref("pooja-sets"), text: "Every hamper that includes a puja item." },
-      { label: "Sweet combos", href: categoryHref("sweet-combos"), text: "Hampers that include kaju katli or laddoo." },
+      { label: "Bhai Dooj Combos", href: categoryHref("bhai-dooj"), text: "Bhai Dooj gift boxes with sweets, dry fruits, chocolates, and pooja sets." },
+      { label: "Sweet Combos", href: categoryHref("sweet-combos"), text: "Indian sweet gift hampers featuring kaju katli and besan laddoo." },
+      { label: "Dry Fruit Combos", href: categoryHref("dry-fruit-combos"), text: "Dry fruit gift hampers delivered across the USA." },
     ],
   },
   "sweet-combos": {
     slug: "sweet-combos",
-    headline: "Festive boxes that include an Indian sweet",
+    headline: "Send Sweet Hampers and Gifts to the USA",
     intro: [
-      "Sweet combos are not a separate mithai counter. This page gathers Diwali and Bhai Dooj hampers whose contents include a sweet — in this catalog, kaju katli or besan laddoo. A box of only nuts or only chocolate stays on the dry-fruit or chocolate page unless the listing also names a sweet.",
-      "The sweet is one part of the hamper. A Bhai Dooj kaju katli and kumkum box appears here because of the kaju katli, and it also appears on Bhai Dooj and, when kumkum is included, on pooja sets. You are seeing the same product from the sweet angle.",
+      "Celebrate special occasions with traditional Indian sweets from UsaRakhi. Explore our collection of **sweet gift hampers to the USA** featuring kaju katli, besan laddoo, and festive gift combinations. Whether you want to **send sweet hampers to family in the USA** for Diwali or Bhai Dooj, discover thoughtful Indian sweet gifts for your loved ones.",
     ],
-    delivery: {
-      heading: "Shipping for sweet hampers",
-      paragraphs: [
-        "Delivery is domestic within the United States. Orange County products include free shipping, with standard delivery in 5 business days. The sweet named on the card is the sweet that is packed.",
-      ],
-    },
-    highlights: {
-      heading: "Sweets named in the current catalog",
-      items: [
-        "Kaju katli, including boxes that also hold kumkum, cashews, or Ferrero Rocher",
-        "Besan laddoo with a Diwali toran and rangoli, or with a metal pooja set",
-        "A Bhai Dooj pooja set that names besan laddoo",
-      ],
-    },
-    whyUs: {
-      heading: "Use this page when the sweet is the priority",
-      bullets: [
-        "You want kaju katli rather than a nut-only box",
-        "You want besan laddoo with a Diwali pooja item",
-        "You will still open the product to see everything else in the box",
-      ],
-    },
-    howTo: {
-      heading: "How to shop sweet combos",
-      steps: [
-        "Scan names for kaju katli or besan laddoo.",
-        "Open the product and read the full included list.",
-        "Add that hamper and check out with a US address.",
-      ],
-    },
-    faqs: [
+    sections: [
       {
-        q: "Which sweets are in these combos?",
-        a: "The current listings name kaju katli or besan laddoo. A product does not include a sweet that is absent from its own list.",
+        heading: "Send Indian Sweet Hampers to the USA",
+        paragraphs: [
+          "Looking to **send gifts to the USA** for a special occasion? Choose from our selection of Indian sweet gift boxes featuring traditional mithai paired with festive decorations, pooja essentials, or dry fruits. Our collection includes selected **kaju katli gift hampers** and **besan laddoo gift boxes** for Diwali and Bhai Dooj celebrations.",
+          "Each hamper contains the items listed on its product page. Check the complete included-items list before placing your order to ensure you select the right **sweet gift hamper**.",
+        ],
       },
       {
-        q: "Why does the same box appear under Bhai Dooj and here?",
-        a: "Bhai Dooj is the occasion. This page is the sweet filter. One hamper can match both.",
+        heading: "Sweet Hampers for Diwali and Bhai Dooj",
+        paragraphs: [
+          "Explore festive **Indian sweet hampers delivered across the USA** and choose a combination that suits your family and friends.",
+        ],
+        items: [
+          "**Kaju Katli Gift Hampers:** Selected boxes featuring kaju katli with kumkum, cashews, or Ferrero Rocher.",
+          "**Besan Laddoo Gift Boxes:** Festive combinations featuring besan laddoo with a Diwali toran, rangoli, or metal pooja set.",
+          "**Bhai Dooj Sweet Hampers:** Selected gift boxes featuring traditional Indian sweets and festive essentials.",
+        ],
+      },
+      {
+        heading: "Domestic Delivery for Sweet Gift Hampers",
+        paragraphs: [
+          "When you **send sweet hampers to the USA** through UsaRakhi, your order is fulfilled domestically within the United States. Standard delivery takes approximately 5 business days. Eligible products shipped to Orange County include free shipping. Check the applicable shipping policy for other destinations and mixed-vendor orders.",
+        ],
+      },
+      {
+        heading: "How to Send Sweet Gifts to the USA",
+        steps: [
+          "Browse our collection of **Indian sweet gift hampers**.",
+          "Select a hamper featuring kaju katli or besan laddoo.",
+          "Review the product details and included items.",
+          "Enter the recipient's US delivery address at checkout.",
+          "Complete your order and check the applicable delivery details.",
+        ],
       },
     ],
+    faqs: [],
+    support: {
+      heading: "Need Help Choosing a Sweet Gift Hamper?",
+      body: "Find thoughtful **Indian sweet gifts to send to the USA** for Diwali, Bhai Dooj, and other special occasions. Contact our team on WhatsApp for help selecting a hamper and confirming delivery information.",
+      whatsappText: "Hi, I need help choosing a sweet gift hamper.",
+    },
     relatedCategories: [
-      { label: "Bhai Dooj combos", href: categoryHref("bhai-dooj"), text: "All Bhai Dooj boxes, with or without a sweet." },
-      { label: "Diwali combos", href: categoryHref("diwali"), text: "Diwali pooja hampers, including those with laddoo or kaju katli." },
-      { label: "Dry fruit combos", href: categoryHref("dry-fruit-combos"), text: "Boxes built around nuts and dry fruit." },
+      { label: "Dry Fruit Combos", href: categoryHref("dry-fruit-combos"), text: "Dry fruit gift hampers with almonds, pistachios, cashews, and mixed nuts." },
+      { label: "Diwali Combos", href: categoryHref("diwali"), text: "Diwali gift hampers with pooja essentials, sweets, and dry fruits." },
+      { label: "Bhai Dooj Combos", href: categoryHref("bhai-dooj"), text: "Bhai Dooj gifts delivered across the USA for brothers and sisters." },
     ],
   },
   "dry-fruit-combos": {
     slug: "dry-fruit-combos",
-    headline: "Festive boxes built around nuts and dry fruits",
+    headline: "Send Dry Fruit Gifts to the USA",
     intro: [
-      "Dry fruit combos are the hampers that name almonds, pistachios, cashews, mixed nuts, or mixed dry fruits. Some are nut boxes on their own, such as the pistachio gift box and the mixed nuts gift box. Others put nuts next to a sweet, chocolate, or pooja item, such as kaju katli with cashews, or a Diwali metal pooja set with kaju katli and pistachios.",
-      "Two Bhai Dooj mixed dry fruit boxes give a weight in the product name: 266 g and 131 g. Use those names when the size matters. Other nut listings do not put a weight in the title.",
+      "Looking to **send dry fruit gifts to the USA** for Diwali, Bhai Dooj, or another special occasion? Explore UsaRakhi's collection of **dry fruit gift hampers** featuring almonds, pistachios, cashews, mixed nuts, and assorted dry fruits. Choose from individual nut boxes and festive gift combinations that pair dry fruits with traditional Indian sweets, chocolates, or pooja essentials.",
+      "Whether you want to **send gifts to the USA** for family or friends, our **dry fruit gift boxes** offer thoughtful options for festive celebrations and special moments.",
     ],
-    delivery: {
-      heading: "Delivery for dry fruit hampers",
-      paragraphs: [
-        "The box ships to a United States address as a domestic parcel. Orange County products include free shipping. Standard delivery is 5 business days.",
-      ],
-    },
-    highlights: {
-      heading: "Nut listings you can tell apart by name",
-      items: [
-        "Almonds and pistachios together, pistachios alone, and mixed nuts",
-        "Kaju katli with cashews, and Ferrero Rocher with almonds",
-        "Mixed dry fruits in the 266 g box and the 131 g box",
-      ],
-    },
-    whyUs: {
-      heading: "When this filter is the right one",
-      bullets: [
-        "The gift should include nuts, whether or not a sweet is also packed",
-        "You want the smaller or larger mixed dry fruit box by the weight in its name",
-        "You do not want a chocolate-only box with no nuts",
-      ],
-    },
-    howTo: {
-      heading: "How to choose a dry fruit box",
-      steps: [
-        "Pick the nut named in the title, or the mixed dry fruit weight you want.",
-        "Confirm on the product page whether a sweet, chocolate, or pooja item is also inside.",
-        "Check out with the US delivery address.",
-      ],
-    },
+    sections: [
+      {
+        heading: "Explore Dry Fruit Gift Combos",
+        paragraphs: [
+          "Our **dry fruit combos for USA delivery** include a variety of nut selections and festive combinations. Some hampers contain only nuts, such as pistachio gift boxes and mixed nut boxes. Others combine dry fruits with sweets, chocolates, or pooja items, including kaju katli with cashews and a Diwali metal pooja set with kaju katli and pistachios.",
+          "Selected Bhai Dooj mixed dry fruit gift boxes are available in **266 g and 131 g** options, as stated in their product names. Other dry fruit listings may not specify a weight in the title, so check the product details before ordering.",
+        ],
+      },
+      {
+        heading: "Dry Fruit Gift Delivery in the USA",
+        paragraphs: [
+          "When you **send dry fruit hampers to the USA** through UsaRakhi, your order is fulfilled domestically within the United States. Standard delivery takes approximately **5 business days**, and eligible products shipped to Orange County include free shipping. Check the applicable shipping policy for other destinations and mixed-vendor orders.",
+        ],
+      },
+      {
+        heading: "Dry Fruit Gift Boxes Available in Our Collection",
+        paragraphs: ["Discover different **dry fruit gift boxes delivered across the USA**, including:"],
+        items: [
+          "**Almonds and Pistachios:** Festive nut combinations featuring almonds and pistachios.",
+          "**Pistachio Gift Boxes:** Gift boxes featuring pistachios as the main product.",
+          "**Mixed Nut Gift Hampers:** Combinations of mixed nuts and dry fruits.",
+          "**Sweet and Dry Fruit Combos:** Selected hampers featuring kaju katli with cashews.",
+          "**Chocolate and Dry Fruit Gifts:** Selected combinations featuring Ferrero Rocher with almonds.",
+          "**Bhai Dooj Dry Fruit Hampers:** Mixed dry fruit boxes available in the listed 266 g and 131 g options.",
+        ],
+        closing: [
+          "Each product contains the items specified on its product page. Review the included-items list to confirm whether your selected hamper also contains sweets, chocolates, or pooja essentials.",
+        ],
+      },
+      {
+        heading: "How to Choose the Right Dry Fruit Gift Hamper",
+        paragraphs: [
+          "Looking for the right **dry fruit gift hamper for family in the USA**? Follow these simple tips:",
+        ],
+        items: [
+          "Choose the nut variety named in the product title.",
+          "Select the 266 g or 131 g mixed dry fruit box if you prefer one of those listed sizes.",
+          "Check whether the hamper includes additional sweets, chocolates, or pooja items.",
+          "Review the product details and shipping charges before checkout.",
+        ],
+      },
+      {
+        heading: "How to Send Dry Fruit Gifts to the USA",
+        paragraphs: ["Ordering **dry fruit gift hampers online** is simple with UsaRakhi."],
+        steps: [
+          "Browse the dry fruit gift collection.",
+          "Select your preferred nut variety or mixed dry fruit hamper.",
+          "Check the product description and included items.",
+          "Enter the recipient's US delivery address at checkout.",
+          "Complete your payment and review the delivery details.",
+        ],
+      },
+    ],
     faqs: [
       {
-        q: "Is every dry fruit box the same mix?",
-        a: "No. Almonds, pistachios, cashews, mixed nuts, and mixed dry fruits are different listings. The product name is the mix.",
+        q: "Are all dry fruit gift boxes the same?",
+        a: "No. The collection includes different listings featuring almonds, pistachios, cashews, mixed nuts, and assorted dry fruits. Check the product name and included-items list to confirm the exact combination.",
       },
       {
-        q: "Do the gram weights apply to every nut box?",
-        a: "Only the two mixed dry fruit boxes titled 266 g and 131 g. Other products do not state those weights.",
+        q: "Do all dry fruit gift boxes include a stated weight?",
+        a: "No. The two mixed dry fruit boxes with weights specified in their names are 266 g and 131 g. Other listings may not state a weight in the product title.",
+      },
+      {
+        q: "Can I send dry fruit gifts to family in the USA?",
+        a: "Yes. Select a dry fruit gift hamper, enter a valid US delivery address at checkout, and complete your order online.",
       },
     ],
+    faqHeading: "Frequently Asked Questions About Dry Fruit Gift Hampers",
+    relatedHeading: "Explore More Gift Collections",
+    support: {
+      heading: "Need Help Choosing Dry Fruit Combos?",
+      body: "Looking to **send dry fruit hampers to the USA** for a festive occasion? Contact our team for help choosing a suitable gift box and confirming delivery information.",
+      whatsappText: "Hi, I need help with dry fruit combos.",
+    },
     relatedCategories: [
-      { label: "Sweet combos", href: categoryHref("sweet-combos"), text: "Boxes that include kaju katli or besan laddoo." },
-      { label: "Chocolate combos", href: categoryHref("chocolate-combos"), text: "Boxes that name a chocolate brand." },
-      { label: "Bhai Dooj combos", href: categoryHref("bhai-dooj"), text: "The full Bhai Dooj list." },
+      {
+        label: "Sweet Combos",
+        href: categoryHref("sweet-combos"),
+        text: "Explore Indian sweet gift hampers featuring kaju katli, besan laddoo, and selected festive combinations.",
+      },
+      {
+        label: "Chocolate Combos",
+        href: categoryHref("chocolate-combos"),
+        text: "Discover selected chocolate gift hampers featuring named chocolate brands and festive combinations.",
+      },
+      {
+        label: "Bhai Dooj Combos",
+        href: categoryHref("bhai-dooj"),
+        text: "Browse the full collection of Bhai Dooj gifts delivered across the USA, including dry fruit boxes, sweets, chocolates, and pooja gift sets.",
+      },
     ],
   },
   "chocolate-combos": {

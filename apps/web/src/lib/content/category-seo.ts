@@ -64,28 +64,28 @@ export const categoryPageSeo: Record<
     h1: "Send Rakhi Hamper to USA",
   },
   "bhai-dooj": {
-    title: "Bhai Dooj Gift Hampers USA | Combos for Brother",
+    title: "Send Bhai Dooj Gifts to the USA | USA Rakhi",
     description:
-      "Shop Bhai Dooj gift boxes for a brother in the USA — kaju katli, dry fruits, chocolates, kumkum, and pooja sets. Domestic shipping, contents listed on each product.",
-    h1: "Bhai Dooj Combos for USA Delivery",
+      "Send Bhai Dooj gifts to your brother in the USA — Indian sweets, dry fruits, chocolates, and pooja hampers. Domestic delivery in about 5 business days.",
+    h1: "Send Bhai Dooj Gifts to the USA",
   },
   diwali: {
-    title: "Diwali Gift Hampers USA | Pooja Sets & Sweets",
+    title: "Send Diwali Gifts to the USA | USA Rakhi",
     description:
-      "Shop Diwali hampers for USA delivery — pooja sets, toran, rangoli, besan laddoo, kaju katli, and dry fruits. Each box lists exactly what is packed.",
-    h1: "Diwali Combos for USA Delivery",
+      "Send Diwali gifts to the USA. Festive hampers with Indian sweets, dry fruits, pooja sets, torans, and rangoli. Domestic delivery in about 5 business days.",
+    h1: "Send Diwali Gifts to the USA",
   },
   "sweet-combos": {
-    title: "Sweet Combos USA | Kaju Katli & Besan Laddoo Hampers",
+    title: "Send Sweet Hampers and Gifts to the USA | USA Rakhi",
     description:
-      "Browse festive hampers that include Indian sweets such as kaju katli or besan laddoo. Domestic USA delivery. See each product for the full box.",
-    h1: "Sweet Combos for USA Delivery",
+      "Send sweet hampers to the USA. Indian gift boxes with kaju katli, besan laddoo, and festive combinations for Diwali and Bhai Dooj.",
+    h1: "Send Sweet Hampers and Gifts to the USA",
   },
   "dry-fruit-combos": {
-    title: "Dry Fruit Combos USA | Nuts & Dry Fruit Gift Boxes",
+    title: "Dry Fruit Gift Hampers Delivered Across the USA | USA Rakhi",
     description:
-      "Shop festive boxes with almonds, pistachios, cashews, or mixed dry fruits for USA delivery. Weights are the ones printed on each listing.",
-    h1: "Dry Fruit Combos for USA Delivery",
+      "Send dry fruit gift hampers to the USA. Almonds, pistachios, cashews, and mixed nuts for Diwali, Bhai Dooj, and other special occasions.",
+    h1: "Dry Fruit Gift Hampers Delivered Across the USA",
   },
   "chocolate-combos": {
     title: "Chocolate Combos USA | Festive Chocolate Gift Boxes",

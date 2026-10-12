@@ -5,7 +5,7 @@ import { pageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = pageMetadata({
   title: "Terms & Conditions",
-  description: `Terms and conditions for shopping on ${site.name} — Rakhi delivery to the USA.`,
+  description: `Terms and conditions for shopping on ${site.name}.com — Diwali and Bhai Dooj gift delivery in the United States.`,
   path: "/terms",
 });
 
@@ -15,28 +15,70 @@ export default function TermsPage() {
       <h1 className="text-3xl font-bold text-primary mb-6">Terms &amp; Conditions</h1>
       <div className="space-y-6 text-slate-700 leading-relaxed text-sm sm:text-base">
         <p>
-          Welcome to {site.name}.com. By placing an order on our website, you agree to the following terms.
+          Welcome to {site.name}.com. By accessing our website or placing an order, you agree to the following Terms
+          &amp; Conditions. Please read them carefully before making a purchase.
         </p>
-        <h2 className="text-xl font-bold text-primary">Orders &amp; delivery</h2>
+
+        <h2 className="text-xl font-bold text-primary">1. Orders &amp; Delivery</h2>
         <p>
-          We deliver Rakhis to addresses within the United States. Delivery times are estimates (typically 5–7
-          business days) and may vary by location. You are responsible for providing an accurate US shipping address
-          at checkout.
+          UsaRakhi delivers Diwali and Bhai Dooj gift combos to addresses within the United States. Estimated delivery
+          time is typically <strong>5–7 business days</strong>, depending on the delivery location and other
+          circumstances.
         </p>
-        <h2 className="text-xl font-bold text-primary">Pricing &amp; payment</h2>
         <p>
-          Prices are shown in USD or INR at checkout. Payment is processed securely through Stripe (USD) or Razorpay
-          (INR). We do not store card details on our servers.
+          Customers are responsible for providing a complete and accurate US shipping address and valid contact details
+          at checkout. Delivery delays may occur due to unforeseen circumstances, courier issues, or other factors
+          beyond our control.
         </p>
-        <h2 className="text-xl font-bold text-primary">Cancellations &amp; support</h2>
+
+        <h2 className="text-xl font-bold text-primary">2. Pricing &amp; Payment</h2>
+        <p>Product prices are displayed in the applicable currency, USD or INR, as shown at checkout.</p>
         <p>
-          For order changes, cancellations, or delivery issues, contact us at{" "}
+          Payments are processed securely through Stripe for USD transactions or Razorpay for INR transactions. UsaRakhi
+          does not store customers’ card details on its servers.
+        </p>
+        <p>
+          Customers are responsible for reviewing the final order total and applicable charges before completing
+          payment.
+        </p>
+
+        <h2 className="text-xl font-bold text-primary">3. Cancellations &amp; Order Changes</h2>
+        <p>
+          For cancellation requests or changes to an existing order, please contact our support team as soon as
+          possible. Requests are subject to order processing status and applicable cancellation policies.
+        </p>
+
+        <h2 className="text-xl font-bold text-primary">4. Delivery Issues &amp; Customer Support</h2>
+        <p>If you experience a delivery issue or need assistance with your order, please contact us using the details below:</p>
+        <ul className="list-disc pl-5 space-y-1">
+          <li>
+            <strong>Email:</strong>{" "}
+            <a href={`mailto:${site.supportEmail}`} className="text-nav underline">
+              {site.supportEmail}
+            </a>
+          </li>
+          <li>
+            <strong>WhatsApp:</strong> {site.whatsappDisplay}
+          </li>
+        </ul>
+        <p>Our support team will assist you with your order-related queries.</p>
+
+        <h2 className="text-xl font-bold text-primary">5. Changes to These Terms</h2>
+        <p>
+          UsaRakhi reserves the right to update or modify these Terms &amp; Conditions when necessary. Any changes will
+          be published on this page.
+        </p>
+
+        <h2 className="text-xl font-bold text-primary">6. Contact Us</h2>
+        <p>
+          For questions regarding these Terms &amp; Conditions, please contact us at{" "}
           <a href={`mailto:${site.supportEmail}`} className="text-nav underline">
             {site.supportEmail}
-          </a>{" "}
-          or WhatsApp {site.whatsappDisplay}.
+          </a>
+          .
         </p>
-        <p className="text-slate-500 text-sm">Last updated: July 2026</p>
+
+        <p className="text-slate-500 text-sm">Last updated: October 2026</p>
         <p>
           <Link href="/" className="text-nav font-semibold hover:underline">
             ← Back to home
