@@ -145,15 +145,14 @@ jobs:
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: ${{ env.AWS_REGION }}
       - uses: aws-actions/setup-sam@v3
-      - name: Publish API code to hr-ecom-api-dev
+      - name: Deploy the dev API stack
         working-directory: infrastructure
         run: |
-          sam build ApiFunction
-          (cd .aws-sam/build/ApiFunction && zip -qr "$RUNNER_TEMP/api-dev.zip" .)
-          aws lambda update-function-code \
-            --function-name hr-ecom-api-dev \
-            --zip-file "fileb://$RUNNER_TEMP/api-dev.zip"
-          aws lambda wait function-updated --function-name hr-ecom-api-dev
+          # CloudFormation updates the function. A direct lambda:UpdateFunctionCode
+          # call is not allowed for this deploy user (AWS CLI exit 254).
+          sam build && sam deploy --no-confirm-changeset --no-fail-on-empty-changeset \
+            --config-env default \
+            --parameter-overrides Environment=dev
 
   deploy-web:
     runs-on: ubuntu-latest
