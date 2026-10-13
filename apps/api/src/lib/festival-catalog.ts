@@ -2,12 +2,17 @@
  * Festival 2026 hampers are the storefront fallback catalog
  * (scripts/data/festival-2026.json). Cart and product detail must resolve
  * the same slugs. Existing DynamoDB rows are never updated.
+ *
+ * The Lambda bundle inlines apps/api/src/data/festival-2026.json because
+ * esbuild rewrites __dirname to the build machine path, so a file copied
+ * next to the handler is not visible through __dirname alone.
  */
 import { existsSync, readFileSync } from "fs";
 import { join } from "path";
 import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import { productKeys } from "@hr-ecom/shared";
 import { docClient, PRODUCTS_TABLE, now } from "./db";
+import catalogJson from "../data/festival-2026.json";
 
 type FestivalProduct = {
   name: string;
@@ -35,27 +40,42 @@ type FestivalProduct = {
 
 let bySlug: Map<string, FestivalProduct> | null = null;
 
+function productsBySlug(data: { products?: FestivalProduct[] } | null | undefined): Map<string, FestivalProduct> {
+  return new Map(
+    (data?.products ?? []).filter((product) => product.slug).map((product) => [product.slug, product])
+  );
+}
+
+/** Inlined by esbuild so add-to-cart works when the Lambda filesystem copy is missing. */
+const importedBySlug = productsBySlug(catalogJson as { products?: FestivalProduct[] });
+
 export function festivalCatalogPaths(): string[] {
+  const lambdaRoot = process.env.LAMBDA_TASK_ROOT?.trim();
   return [
+    ...(lambdaRoot ? [join(lambdaRoot, "festival-2026.json")] : []),
+    join(process.cwd(), "festival-2026.json"),
     join(__dirname, "festival-2026.json"),
     join(process.cwd(), "scripts/data/festival-2026.json"),
     join(process.cwd(), "../scripts/data/festival-2026.json"),
     join(process.cwd(), "../../scripts/data/festival-2026.json"),
     join(process.cwd(), "../../../scripts/data/festival-2026.json"),
+    join(process.cwd(), "apps/api/src/data/festival-2026.json"),
+    join(process.cwd(), "../apps/api/src/data/festival-2026.json"),
   ];
 }
 
 function loadBySlug(): Map<string, FestivalProduct> {
   if (bySlug) return bySlug;
   const path = festivalCatalogPaths().find((candidate) => existsSync(candidate));
-  if (!path) {
-    bySlug = new Map();
-    return bySlug;
+  if (path) {
+    const data = JSON.parse(readFileSync(path, "utf8")) as { products?: FestivalProduct[] };
+    const fromDisk = productsBySlug(data);
+    if (fromDisk.size > 0) {
+      bySlug = fromDisk;
+      return bySlug;
+    }
   }
-  const data = JSON.parse(readFileSync(path, "utf8")) as { products?: FestivalProduct[] };
-  bySlug = new Map(
-    (data.products ?? []).filter((product) => product.slug).map((product) => [product.slug, product])
-  );
+  bySlug = importedBySlug;
   return bySlug;
 }
 
