@@ -1,5 +1,6 @@
 import { allSeoBlogSlugs, seoBlogPostToBlogPost } from "./seo-blog";
 import { applyHandwrittenEndMatter } from "./blog-end-matter";
+import { festivalBlogPosts } from "./festival-blogs";
 
 export interface BlogFaqItem {
   q: string;
@@ -19,6 +20,8 @@ export interface BlogPost {
   faqs?: BlogFaqItem[];
   closing?: { heading: string; paragraphs: string[] };
   relatedCategory?: string;
+  /** Comma-separated SEO keywords. Falls back to site defaults when omitted. */
+  keywords?: string;
 }
 
 export const blogPosts: BlogPost[] = [
@@ -1195,15 +1198,17 @@ export const blogPosts: BlogPost[] = [
   },
 ];
 
+const handwrittenBlogPosts: BlogPost[] = [...festivalBlogPosts, ...blogPosts];
+
 export function getBlogPost(slug: string): BlogPost | undefined {
-  const hand = blogPosts.find((p) => p.slug === slug);
+  const hand = handwrittenBlogPosts.find((p) => p.slug === slug);
   if (hand) return applyHandwrittenEndMatter(hand);
   return seoBlogPostToBlogPost(slug);
 }
 
 export function listAllBlogPosts(): BlogPost[] {
-  const handSlugs = new Set(blogPosts.map((p) => p.slug));
-  const handwritten = blogPosts.map((p) => applyHandwrittenEndMatter(p));
+  const handSlugs = new Set(handwrittenBlogPosts.map((p) => p.slug));
+  const handwritten = handwrittenBlogPosts.map((p) => applyHandwrittenEndMatter(p));
   const seoOnly = allSeoBlogSlugs()
     .filter((s) => !handSlugs.has(s))
     .map((s) => seoBlogPostToBlogPost(s))

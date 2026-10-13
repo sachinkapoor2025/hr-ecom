@@ -137,6 +137,11 @@ export function Footer() {
               <li><Link href="/about" className="hover:text-white hover:underline">About Us</Link></li>
               <li><Link href="/returns" className="hover:text-white hover:underline">Returns &amp; Guarantee</Link></li>
               <li><Link href="/contact" className="hover:text-white hover:underline">Contact Us</Link></li>
+              <li>
+                <Link href="/terms" className="hover:text-white hover:underline">
+                  Terms and Conditions
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -191,7 +196,7 @@ export function Footer() {
             </p>
             <p className="flex flex-wrap gap-x-3 gap-y-1">
               <Link href="/terms" className="hover:text-white underline underline-offset-2">
-                Terms
+                Terms and Conditions
               </Link>
               <Link href="/privacy" className="hover:text-white underline underline-offset-2">
                 Privacy

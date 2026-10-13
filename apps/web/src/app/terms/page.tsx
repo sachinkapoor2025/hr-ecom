@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { USARAKHI_MIN_ORDER_USD } from "@hr-ecom/shared";
+import { trustFacts } from "@/lib/trust";
 import { site } from "@/lib/site";
 import { pageMetadata } from "@/lib/seo";
 
@@ -18,6 +20,13 @@ export default function TermsPage() {
           Welcome to {site.name}.com. By accessing our website or placing an order, you agree to the following Terms
           &amp; Conditions. Please read them carefully before making a purchase.
         </p>
+        <p>
+          {site.name}.com is operated by {trustFacts.operator}. Questions about an order can be sent to{" "}
+          <a href={`mailto:${site.supportEmail}`} className="text-nav underline">
+            {site.supportEmail}
+          </a>{" "}
+          or WhatsApp {site.whatsappDisplay}.
+        </p>
 
         <h2 className="text-xl font-bold text-primary">1. Orders &amp; Delivery</h2>
         <p>
@@ -29,6 +38,13 @@ export default function TermsPage() {
           Customers are responsible for providing a complete and accurate US shipping address and valid contact details
           at checkout. Delivery delays may occur due to unforeseen circumstances, courier issues, or other factors
           beyond our control.
+        </p>
+        <p>
+          Standard USA delivery and the ${USARAKHI_MIN_ORDER_USD} free-shipping minimum are described on our{" "}
+          <Link href="/shipping" className="text-nav underline">
+            Shipping &amp; Delivery
+          </Link>{" "}
+          page. Gifts are fulfilled for delivery inside the United States.
         </p>
 
         <h2 className="text-xl font-bold text-primary">2. Pricing &amp; Payment</h2>
@@ -45,7 +61,15 @@ export default function TermsPage() {
         <h2 className="text-xl font-bold text-primary">3. Cancellations &amp; Order Changes</h2>
         <p>
           For cancellation requests or changes to an existing order, please contact our support team as soon as
-          possible. Requests are subject to order processing status and applicable cancellation policies.
+          possible. Requests are subject to order processing status. Orders can be cancelled before dispatch. Once a
+          parcel has shipped within the USA, a cancellation may not be possible.
+        </p>
+        <p>
+          Damaged, defective, or incorrect items are covered on our{" "}
+          <Link href="/returns" className="text-nav underline">
+            Returns &amp; Satisfaction Guarantee
+          </Link>{" "}
+          page, including the request to contact us within 48 hours of delivery with the order number and photos.
         </p>
 
         <h2 className="text-xl font-bold text-primary">4. Delivery Issues &amp; Customer Support</h2>
@@ -69,7 +93,16 @@ export default function TermsPage() {
           be published on this page.
         </p>
 
-        <h2 className="text-xl font-bold text-primary">6. Contact Us</h2>
+        <h2 className="text-xl font-bold text-primary">6. Privacy</h2>
+        <p>
+          How we handle name, email, phone, shipping address, and payment status is described in our{" "}
+          <Link href="/privacy" className="text-nav underline">
+            Privacy Policy
+          </Link>
+          . Payment partners process card payments. {site.name} does not store full card numbers.
+        </p>
+
+        <h2 className="text-xl font-bold text-primary">7. Contact Us</h2>
         <p>
           For questions regarding these Terms &amp; Conditions, please contact us at{" "}
           <a href={`mailto:${site.supportEmail}`} className="text-nav underline">

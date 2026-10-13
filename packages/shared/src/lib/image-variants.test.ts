@@ -47,6 +47,13 @@ describe("image variant keys", () => {
       productImageVariantUrl("https://images.example.com/hotlink.jpg", "card"),
       "https://images.example.com/hotlink.jpg"
     );
+    assert.equal(
+      productImageVariantUrl(
+        "https://d363ccio3ibu9l.cloudfront.net/uploads/tf-usa/TFWGC2616/TFWGC2616.jpeg",
+        "card"
+      ),
+      "https://d363ccio3ibu9l.cloudfront.net/uploads/tf-usa/TFWGC2616/TFWGC2616.jpeg"
+    );
   });
 
   it("lists all four derivative keys for delete cleanup", () => {

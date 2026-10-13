@@ -13,6 +13,7 @@ import { TrustStrip } from "@/components/TrustStrip";
 import { UsarakhiShareEmotionsBanner } from "@/components/UsarakhiShareEmotionsBanner";
 import { IndiaBuyerBanner } from "@/components/IndiaBuyerBanner";
 import { WhyTrustUsSection } from "@/components/WhyTrustUsSection";
+import { FestivalCustomerReviews } from "@/components/FestivalCustomerReviews";
 import { JsonLd } from "@/components/JsonLd";
 import { site, homeCategoryOrder } from "@/lib/site";
 import { homeSeoContent } from "@/lib/content/home-seo";
@@ -137,6 +138,8 @@ export default async function HomePage() {
       </section>
 
       <WhyTrustUsSection />
+
+      <FestivalCustomerReviews reviews={googleReviews.reviews} />
 
       <GoogleReviews data={googleReviews} />
 

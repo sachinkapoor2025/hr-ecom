@@ -51,16 +51,19 @@ export default function AdminProductsPage() {
 
   const load = useCallback(() => {
     setLoading(true);
-    Promise.all([
-      apiClient<{ products: Product[] }>("/admin/products"),
-      apiClient<{ categories: { slug: string; name: string }[] }>("/categories"),
-    ])
-      .then(([p, c]) => {
-        setProducts(p.products);
-        setCategories(c.categories);
+    apiClient<{ products: Product[] }>("/admin/products")
+      .then((p) => {
+        setProducts(Array.isArray(p.products) ? p.products : []);
       })
-      .catch(() => setProducts([]))
+      .catch((err) => {
+        setProducts([]);
+        setMessage(err instanceof Error ? err.message : "Could not load products");
+      })
       .finally(() => setLoading(false));
+
+    apiClient<{ categories: { slug: string; name: string }[] }>("/categories")
+      .then((c) => setCategories(c.categories ?? []))
+      .catch(() => setCategories([]));
   }, [apiClient]);
 
   useEffect(() => {
@@ -78,8 +81,8 @@ export default function AdminProductsPage() {
     if (!q) return products;
     return products.filter(
       (p) =>
-        p.name.toLowerCase().includes(q) ||
-        p.slug.includes(q) ||
+        (p.name ?? "").toLowerCase().includes(q) ||
+        (p.slug ?? "").includes(q) ||
         p.sku?.toLowerCase().includes(q)
     );
   }, [products, search]);
@@ -578,6 +581,8 @@ export default function AdminProductsPage() {
           />
           {loading ? (
             <p className="text-slate-500">Loading…</p>
+          ) : pageItems.length === 0 ? (
+            <p className="text-sm text-slate-500">No products to show.</p>
           ) : (
             <div className="bg-white border rounded-lg overflow-x-auto">
               <table className="w-full text-sm min-w-[800px]">

@@ -1,3 +1,5 @@
+import { DEFAULT_PRODUCT_CDN } from "./image-url";
+
 /** Storefront / CDN image size standard — process once at upload, never on the hot path. */
 
 export const IMAGE_VARIANT_NAMES = ["thumb", "card", "gallery", "zoom"] as const;
@@ -65,14 +67,35 @@ export function allVariantObjectKeys(originalKey: string): string[] {
   return IMAGE_VARIANT_NAMES.map((name) => variantObjectKey(originalKey, name));
 }
 
+function managedCdnHosts(): Set<string> {
+  const hosts = new Set<string>();
+  const add = (value?: string) => {
+    const trimmed = value?.trim();
+    if (!trimmed) return;
+    try {
+      hosts.add(new URL(trimmed.includes("://") ? trimmed : `https://${trimmed}`).host);
+    } catch {
+      /* ignore malformed CDN config */
+    }
+  };
+  add(DEFAULT_PRODUCT_CDN);
+  add(process.env.NEXT_PUBLIC_CDN_URL);
+  add(process.env.CDN_URL);
+  add(process.env.CLOUDFRONT_DOMAIN);
+  return hosts;
+}
+
+/**
+ * Only the store CDN gets sized WebP siblings. Other CloudFront hosts
+ * (vendor catalogs) do not have those files and must stay on the original URL.
+ */
 function isManagedMediaUrl(url: string): boolean {
-  return (
-    /cloudfront\.net\//i.test(url) ||
-    /\/uploads\//i.test(url) ||
-    /^uploads\//i.test(url) ||
-    /\/products\//i.test(url) ||
-    /\/blog\//i.test(url)
-  );
+  if (/^\/(uploads|products|blog)\//i.test(url) || /^(uploads|products|blog)\//i.test(url)) return true;
+  try {
+    return managedCdnHosts().has(new URL(url).host);
+  } catch {
+    return false;
+  }
 }
 
 /** Rewrite a CDN/original URL to the sized WebP sibling. Unknown hosts are left unchanged. */

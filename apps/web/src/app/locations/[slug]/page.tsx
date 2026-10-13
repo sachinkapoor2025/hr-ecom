@@ -21,9 +21,7 @@ import {
   isSecondaryCity,
   secondaryCityIntro,
 } from "@/lib/content/city-delivery-tiers";
-import { getCatalogProducts, mergeProductsPreferExisting } from "@/lib/catalog-fallback";
-import { shuffleForCity } from "@/lib/city-products";
-import { loadProducts } from "@/lib/product-loader";
+import { loadLocationPageProducts } from "@/lib/product-loader";
 import { breadcrumbJsonLd, faqJsonLd, pageMetadata, serviceAreaJsonLd } from "@/lib/seo";
 import { buildLocationContent } from "@/components/SeoLocationLanding";
 import { site } from "@/lib/site";
@@ -103,15 +101,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function SeoLocationPage({ params }: Props) {
   const { slug } = await params;
 
-  let products: Product[] = [];
+  let cityProducts: Product[] = [];
   try {
-    products = await loadProducts();
+    // Same festive catalog as the shop, so every card has a store CDN image.
+    cityProducts = await loadLocationPageProducts(slug);
   } catch {
-    products = [];
+    cityProducts = [];
   }
-  // Full catalog — same merge as homepage so every location lists every deliverable SKU.
-  products = mergeProductsPreferExisting(products, getCatalogProducts());
-  const cityProducts = shuffleForCity(products, slug);
 
   // --- Express metros: individually maintained CityContentSection ---
   const cityContent = getCityContent(slug);
@@ -237,7 +233,7 @@ export default async function SeoLocationPage({ params }: Props) {
           <HomeProductCard key={p.slug} product={p} />
         ))}
       </div>
-      {products.length === 0 && (
+      {cityProducts.length === 0 && (
         <p className="text-slate-500 mt-4">
           <Link href="/products" className="text-nav hover:underline">
             Browse all Rakhis

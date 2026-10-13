@@ -7,9 +7,7 @@ import { CityContentSection } from "@/components/CityContentSection";
 import { JsonLd } from "@/components/JsonLd";
 import { cityNavHref, site, usCityLinks } from "@/lib/site";
 import { getCityContent } from "@/lib/content/city-pages";
-import { getCatalogProducts, mergeProductsPreferExisting } from "@/lib/catalog-fallback";
-import { shuffleForCity } from "@/lib/city-products";
-import { loadProducts } from "@/lib/product-loader";
+import { loadLocationPageProducts } from "@/lib/product-loader";
 import { breadcrumbJsonLd, faqJsonLd, pageMetadata, serviceAreaJsonLd } from "@/lib/seo";
 import type { Product } from "@hr-ecom/shared";
 
@@ -17,7 +15,7 @@ interface Props {
   params: Promise<{ slug: string }>;
 }
 
-/** Same as homepage / location pages: always load the full live catalog. */
+/** Same as homepage / location pages: load the live festive catalog. */
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
@@ -46,14 +44,12 @@ export default async function CityPage({ params }: Props) {
   const content = getCityContent(slug);
   if (!city || !content) notFound();
 
-  let products: Product[] = [];
+  let cityProducts: Product[] = [];
   try {
-    products = await loadProducts();
+    cityProducts = await loadLocationPageProducts(slug);
   } catch {
-    products = [];
+    cityProducts = [];
   }
-  products = mergeProductsPreferExisting(products, getCatalogProducts());
-  const cityProducts = shuffleForCity(products, slug);
 
   const crumbs = [
     { label: "Home", href: "/" },
@@ -81,7 +77,7 @@ export default async function CityPage({ params }: Props) {
           <HomeProductCard key={p.slug} product={p} />
         ))}
       </div>
-      {products.length === 0 && (
+      {cityProducts.length === 0 && (
         <p className="text-slate-500 mt-4">
           No products yet.{" "}
           <Link href="/products" className="text-nav hover:underline">

@@ -1,10 +1,8 @@
 import type { Metadata } from "next";
 import { CountryRakhiLanding } from "@/components/CountryRakhiLanding";
 import type { ProductSort } from "@/components/ProductSortBar";
-import { getCatalogProducts, mergeProductsPreferExisting } from "@/lib/catalog-fallback";
-import { shuffleForCity } from "@/lib/city-products";
 import { getCountryRakhiPage } from "@/lib/content/country-rakhi-pages";
-import { loadProducts } from "@/lib/product-loader";
+import { loadLocationPageProducts } from "@/lib/product-loader";
 import { canonical, pageMetadata } from "@/lib/seo";
 
 const page = getCountryRakhiPage("uk");
@@ -40,11 +38,7 @@ interface Props {
 
 export default async function RakhiFromUkPage({ searchParams }: Props) {
   const sort = resolveSort((await searchParams).sort);
-  const apiProducts = await loadProducts();
-  const products = shuffleForCity(
-    mergeProductsPreferExisting(apiProducts, getCatalogProducts()),
-    "rakhi-from-uk"
-  );
+  const products = await loadLocationPageProducts("rakhi-from-uk");
 
   return <CountryRakhiLanding page={page} products={products} sort={sort} />;
 }

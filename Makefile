@@ -55,6 +55,7 @@ api-bundle: api-deps
 		--external:@aws-sdk/lib-dynamodb \
 		--external:@aws-sdk/client-s3 \
 		--external:@aws-sdk/s3-request-presigner
+	cp scripts/data/festival-2026.json $(ARTIFACTS_DIR)/festival-2026.json
 
 build-ApiFunction: api-bundle
 
