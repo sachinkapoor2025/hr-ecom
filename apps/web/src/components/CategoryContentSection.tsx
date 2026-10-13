@@ -1,5 +1,6 @@
 import Link from "next/link";
-import type { CategoryRichContent } from "@/lib/content/category-rich-content";
+import { Fragment, type ReactNode } from "react";
+import type { CategoryRichContent, CategoryRichSection } from "@/lib/content/category-rich-content";
 import { categoryPageInlineLinks } from "@/lib/content/page-inline-links";
 import { applyInlineLinks } from "@/lib/inline-links";
 import { whatsappChatUrl } from "@/lib/site";
@@ -9,8 +10,83 @@ interface Props {
   categoryName: string;
 }
 
+function RichText({
+  text,
+  links,
+}: {
+  text: string;
+  links: readonly { phrase: string; href: string }[];
+}): ReactNode {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return (
+    <>
+      {parts.map((part, i) => {
+        if (part.startsWith("**") && part.endsWith("**")) {
+          return (
+            <strong key={i} className="font-semibold">
+              {applyInlineLinks(part.slice(2, -2), links)}
+            </strong>
+          );
+        }
+        return <Fragment key={i}>{applyInlineLinks(part, links)}</Fragment>;
+      })}
+    </>
+  );
+}
+
+function ArticleSection({
+  section,
+  links,
+}: {
+  section: CategoryRichSection;
+  links: readonly { phrase: string; href: string }[];
+}) {
+  return (
+    <section>
+      <h3 className="text-xl font-semibold text-primary mb-3">{section.heading}</h3>
+      {section.paragraphs?.map((p, i) => (
+        <p key={i} className="mb-3">
+          <RichText text={p} links={links} />
+        </p>
+      ))}
+      {section.items && section.items.length > 0 && (
+        <ul className="space-y-2 mb-3">
+          {section.items.map((item) => (
+            <li key={item} className="flex items-start gap-2">
+              <span className="text-nav mt-0.5 shrink-0">•</span>
+              <span>
+                <RichText text={item} links={links} />
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+      {section.steps && section.steps.length > 0 && (
+        <ol className="space-y-3 mb-3 list-decimal list-inside marker:font-semibold marker:text-nav">
+          {section.steps.map((step, i) => (
+            <li key={i} className="pl-1">
+              <RichText text={step} links={links} />
+            </li>
+          ))}
+        </ol>
+      )}
+      {section.closing?.map((p, i) => (
+        <p key={i} className="mb-3">
+          <RichText text={p} links={links} />
+        </p>
+      ))}
+    </section>
+  );
+}
+
 export function CategoryContentSection({ content, categoryName }: Props) {
   const inlineLinks = categoryPageInlineLinks[content.slug] ?? [];
+  const supportHeading = content.support?.heading ?? `Need help choosing ${categoryName}?`;
+  const supportBody =
+    content.support?.body ??
+    "Our team helps sisters pick the perfect rakhi and confirm US delivery addresses.";
+  const whatsappText =
+    content.support?.whatsappText ?? `Hi, I need help with ${categoryName}.`;
 
   return (
     <div className="mt-12 pt-10 border-t border-slate-200">
@@ -20,82 +96,102 @@ export function CategoryContentSection({ content, categoryName }: Props) {
             <h2 className="text-2xl font-bold text-primary mb-4">{content.headline}</h2>
             {content.intro.map((p, i) => (
               <p key={i} className="mb-4">
-                {applyInlineLinks(p, inlineLinks)}
+                <RichText text={p} links={inlineLinks} />
               </p>
             ))}
           </header>
 
-          <section>
-            <h3 className="text-xl font-semibold text-primary mb-3">{content.delivery.heading}</h3>
-            {content.delivery.paragraphs.map((p, i) => (
-              <p key={i} className="mb-3">
-                {p}
-              </p>
-            ))}
-          </section>
+          {content.sections && content.sections.length > 0 ? (
+            content.sections.map((section) => (
+              <ArticleSection key={section.heading} section={section} links={inlineLinks} />
+            ))
+          ) : (
+            <>
+              {content.delivery && (
+                <section>
+                  <h3 className="text-xl font-semibold text-primary mb-3">{content.delivery.heading}</h3>
+                  {content.delivery.paragraphs.map((p, i) => (
+                    <p key={i} className="mb-3">
+                      <RichText text={p} links={inlineLinks} />
+                    </p>
+                  ))}
+                </section>
+              )}
 
-          <section>
-            <h3 className="text-xl font-semibold text-primary mb-3">{content.highlights.heading}</h3>
-            {content.highlights.paragraphs && content.highlights.paragraphs.length > 0 ? (
-              <div className="space-y-3 text-slate-700 leading-relaxed">
-                {content.highlights.paragraphs.map((p, i) => (
-                  <p key={i}>{p}</p>
-                ))}
-              </div>
-            ) : (
-              <ul className="grid sm:grid-cols-2 gap-2 text-sm">
-                {content.highlights.items.map((item) => (
-                  <li key={item} className="flex items-start gap-2">
-                    <span className="text-nav mt-0.5 shrink-0">✓</span>
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
+              {content.highlights && (
+                <section>
+                  <h3 className="text-xl font-semibold text-primary mb-3">{content.highlights.heading}</h3>
+                  {content.highlights.paragraphs && content.highlights.paragraphs.length > 0 ? (
+                    <div className="space-y-3 text-slate-700 leading-relaxed">
+                      {content.highlights.paragraphs.map((p, i) => (
+                        <p key={i}>
+                          <RichText text={p} links={inlineLinks} />
+                        </p>
+                      ))}
+                    </div>
+                  ) : (
+                    <ul className="grid sm:grid-cols-2 gap-2 text-sm">
+                      {content.highlights.items.map((item) => (
+                        <li key={item} className="flex items-start gap-2">
+                          <span className="text-nav mt-0.5 shrink-0">✓</span>
+                          <RichText text={item} links={inlineLinks} />
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </section>
+              )}
 
-          {content.tradition && (
-            <section>
-              <h3 className="text-xl font-semibold text-primary mb-3">{content.tradition.heading}</h3>
-              {content.tradition.paragraphs.map((p, i) => (
-                <p key={i} className="mb-3">
-                  {p}
-                </p>
-              ))}
-            </section>
+              {content.tradition && (
+                <section>
+                  <h3 className="text-xl font-semibold text-primary mb-3">{content.tradition.heading}</h3>
+                  {content.tradition.paragraphs.map((p, i) => (
+                    <p key={i} className="mb-3">
+                      <RichText text={p} links={inlineLinks} />
+                    </p>
+                  ))}
+                </section>
+              )}
+
+              {(content.whyUs || content.howTo) && (
+                <div className="grid sm:grid-cols-2 gap-6">
+                  {content.whyUs && (
+                    <section className="bg-slate-50 rounded-xl p-6 h-full">
+                      <h3 className="text-lg font-semibold text-primary mb-4">{content.whyUs.heading}</h3>
+                      <ul className="space-y-2 text-sm">
+                        {content.whyUs.bullets.map((b) => (
+                          <li key={b} className="flex items-start gap-2">
+                            <span className="text-accent font-bold shrink-0">•</span>
+                            <RichText text={b} links={inlineLinks} />
+                          </li>
+                        ))}
+                      </ul>
+                    </section>
+                  )}
+
+                  {content.howTo && (
+                    <section className="bg-white border border-slate-200 rounded-xl p-6 h-full">
+                      <h3 className="text-lg font-semibold text-primary mb-4">{content.howTo.heading}</h3>
+                      <ol className="space-y-3 text-sm list-decimal list-inside marker:font-semibold marker:text-nav">
+                        {content.howTo.steps.map((step, i) => (
+                          <li key={i} className="pl-1">
+                            <RichText text={step} links={inlineLinks} />
+                          </li>
+                        ))}
+                      </ol>
+                    </section>
+                  )}
+                </div>
+              )}
+            </>
           )}
-
-          <div className="grid sm:grid-cols-2 gap-6">
-            <section className="bg-slate-50 rounded-xl p-6 h-full">
-              <h3 className="text-lg font-semibold text-primary mb-4">{content.whyUs.heading}</h3>
-              <ul className="space-y-2 text-sm">
-                {content.whyUs.bullets.map((b) => (
-                  <li key={b} className="flex items-start gap-2">
-                    <span className="text-accent font-bold shrink-0">•</span>
-                    {b}
-                  </li>
-                ))}
-              </ul>
-            </section>
-
-            <section className="bg-white border border-slate-200 rounded-xl p-6 h-full">
-              <h3 className="text-lg font-semibold text-primary mb-4">{content.howTo.heading}</h3>
-              <ol className="space-y-3 text-sm list-decimal list-inside marker:font-semibold marker:text-nav">
-                {content.howTo.steps.map((step, i) => (
-                  <li key={i} className="pl-1">
-                    {step}
-                  </li>
-                ))}
-              </ol>
-            </section>
-          </div>
         </article>
 
         <aside className="lg:sticky lg:top-24">
           <section className="bg-nav text-white rounded-xl p-6">
-            <h3 className="text-lg font-semibold mb-2">Need help choosing {categoryName}?</h3>
+            <h3 className="text-lg font-semibold mb-2">{supportHeading}</h3>
             <p className="text-sm text-white/90 mb-4">
-              Our team helps sisters pick the perfect rakhi and confirm US delivery addresses.
+              <RichText text={supportBody} links={inlineLinks} />
             </p>
             <div className="flex flex-wrap gap-3 text-sm">
               <Link
@@ -105,7 +201,7 @@ export function CategoryContentSection({ content, categoryName }: Props) {
                 Contact us
               </Link>
               <a
-                href={whatsappChatUrl(`Hi, I need help with ${categoryName}.`)}
+                href={whatsappChatUrl(whatsappText)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="border border-white/60 px-4 py-2 rounded-lg hover:bg-white/10"
@@ -119,27 +215,30 @@ export function CategoryContentSection({ content, categoryName }: Props) {
 
       <div className="grid md:grid-cols-2 gap-6 mt-10">
         <section className="bg-white border border-slate-200 rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-primary mb-4">Explore More Collections</h3>
+          <h3 className="text-lg font-semibold text-primary mb-4">
+            {content.relatedHeading ?? "Explore More Collections"}
+          </h3>
           <ul className="space-y-3 text-sm">
             {content.relatedCategories.map((cat) => (
               <li key={cat.href}>
                 <Link href={cat.href} className="font-medium text-nav hover:underline">
                   {cat.label}
                 </Link>
-                <p className="text-slate-500 mt-0.5">{cat.text}</p>
+                <p className="text-slate-500 mt-0.5">
+                  <RichText text={cat.text} links={inlineLinks} />
+                </p>
               </li>
             ))}
           </ul>
         </section>
 
         <section className="bg-slate-50 border border-slate-200 rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-primary mb-3">Need help choosing?</h3>
+          <h3 className="text-lg font-semibold text-primary mb-3">{supportHeading}</h3>
           <p className="text-sm text-slate-600 leading-relaxed mb-4">
-            Message us on WhatsApp for sizing, delivery timing before Raksha Bandhan, or gift
-            recommendations for {categoryName.toLowerCase()}.
+            <RichText text={supportBody} links={inlineLinks} />
           </p>
           <a
-            href={whatsappChatUrl(`Hi! I need help choosing a ${categoryName} for USA delivery.`)}
+            href={whatsappChatUrl(whatsappText)}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex text-sm font-semibold text-nav hover:underline"
@@ -149,19 +248,23 @@ export function CategoryContentSection({ content, categoryName }: Props) {
         </section>
       </div>
 
-      <section className="mt-10 pt-8 border-t border-slate-200">
-        <h3 className="text-xl font-semibold text-primary mb-6">
-          Frequently Asked Questions — {categoryName}
-        </h3>
-        <div className="grid md:grid-cols-2 gap-6">
-          {content.faqs.map((faq) => (
-            <div key={faq.q} className="bg-white border border-slate-100 rounded-xl p-5">
-              <h4 className="font-semibold text-primary text-sm mb-2">{faq.q}</h4>
-              <p className="text-sm text-slate-600 leading-relaxed">{faq.a}</p>
-            </div>
-          ))}
-        </div>
-      </section>
+      {content.faqs.length > 0 && (
+        <section className="mt-10 pt-8 border-t border-slate-200">
+          <h3 className="text-xl font-semibold text-primary mb-6">
+            {content.faqHeading ?? `Frequently Asked Questions — ${categoryName}`}
+          </h3>
+          <div className="grid md:grid-cols-2 gap-6">
+            {content.faqs.map((faq) => (
+              <div key={faq.q} className="bg-white border border-slate-100 rounded-xl p-5">
+                <h4 className="font-semibold text-primary text-sm mb-2">{faq.q}</h4>
+                <p className="text-sm text-slate-600 leading-relaxed">
+                  <RichText text={faq.a} links={inlineLinks} />
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }

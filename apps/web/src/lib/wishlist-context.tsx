@@ -17,8 +17,16 @@ export type WishlistItem = {
 
 interface WishlistContextValue {
   items: WishlistItem[];
+  /** False until the saved list has been read from this browser. */
+  ready: boolean;
   toggle: (product: Product) => void;
   remove: (slug: string) => void;
+  /**
+   * Drop saved items that are not in the current visible catalog, and refresh
+   * name, image, and price for items that are. Does not add products the
+   * shopper did not save.
+   */
+  retainVisible: (products: readonly Product[]) => void;
   isWishlisted: (slug: string) => boolean;
   count: number;
 }
@@ -34,6 +42,17 @@ function toWishlistItem(product: Product): WishlistItem {
     currency: product.currency,
     compareAtPrice: product.compareAtPrice,
   };
+}
+
+function sameWishlistItem(a: WishlistItem, b: WishlistItem): boolean {
+  return (
+    a.slug === b.slug &&
+    a.name === b.name &&
+    a.image === b.image &&
+    a.price === b.price &&
+    a.currency === b.currency &&
+    a.compareAtPrice === b.compareAtPrice
+  );
 }
 
 function readWishlist(): WishlistItem[] {
@@ -76,8 +95,30 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
     setItems((prev) => prev.filter((i) => i.slug !== slug));
   }, []);
 
+  const retainVisible = useCallback((products: readonly Product[]) => {
+    if (products.length === 0) return;
+    const bySlug = new Map(products.map((product) => [product.slug, product]));
+    setItems((prev) => {
+      let changed = false;
+      const next: WishlistItem[] = [];
+      for (const item of prev) {
+        const product = bySlug.get(item.slug);
+        if (!product) {
+          changed = true;
+          continue;
+        }
+        const fresh = toWishlistItem(product);
+        if (!sameWishlistItem(item, fresh)) changed = true;
+        next.push(fresh);
+      }
+      return changed ? next : prev;
+    });
+  }, []);
+
   return (
-    <WishlistContext.Provider value={{ items, toggle, remove, isWishlisted, count: items.length }}>
+    <WishlistContext.Provider
+      value={{ items, ready, toggle, remove, retainVisible, isWishlisted, count: items.length }}
+    >
       {children}
     </WishlistContext.Provider>
   );

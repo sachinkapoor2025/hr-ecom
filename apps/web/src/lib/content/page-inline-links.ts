@@ -36,6 +36,8 @@ export const categoryPageInlineLinks: Record<string, readonly { phrase: string; 
     { phrase: "Set of 3 Rakhis", href: categoryHref("3-set-rakhi") },
     { phrase: "Set of 4 Rakhis", href: categoryHref("4-set-rakhi") },
   ],
+  "dry-fruit-combos": [{ phrase: "shipping policy", href: "/shipping" }],
+  "sweet-combos": [{ phrase: "shipping policy", href: "/shipping" }],
 };
 
 export const rakshaBandhanInlineLinks = [

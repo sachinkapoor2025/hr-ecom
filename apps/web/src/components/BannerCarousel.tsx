@@ -219,7 +219,7 @@ export function BannerCarousel({
       <div className="relative overflow-hidden bg-white border-b border-slate-100">
         <div className="relative w-full max-w-7xl mx-auto min-w-0 lg:grid lg:grid-cols-[2fr_3fr] lg:gap-6 lg:items-center lg:px-4 lg:py-4">
           <div className="order-1 lg:order-2 relative w-full min-w-0 max-w-full">
-            <div className="relative w-full max-w-full aspect-[5/2] sm:aspect-[1024/420] overflow-hidden bg-slate-900/5">
+            <div className="relative w-full max-w-full aspect-[1024/384] overflow-hidden bg-[#fffaf4]">
               {/* Server LCP image for slide 0 */}
               {lcpImage ? (
                 <div
@@ -302,6 +302,18 @@ export function BannerCarousel({
               ) : null}
 
               <DeliveryHighlight text={banner.description} className="mb-6 max-w-xl mx-auto lg:mx-0" />
+
+              {banner.href ? (
+                <Link
+                  href={banner.href}
+                  className="inline-flex items-center justify-center rounded-full bg-nav text-white font-semibold text-sm px-7 py-3 hover:bg-primary transition shadow-md shadow-nav/25"
+                >
+                  {banner.cta}
+                  <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
+                </Link>
+              ) : null}
 
               <ul className="hidden sm:grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8 max-w-lg mx-auto lg:mx-0">
                 {TRUST_FEATURES.map((f) => (

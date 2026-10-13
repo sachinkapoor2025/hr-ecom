@@ -7,6 +7,7 @@ import { PublishedReviewsLoader } from "@/components/PublishedReviewsLoader";
 import { JsonLd } from "@/components/JsonLd";
 import { trustFacts } from "@/lib/trust";
 import { site, testimonials } from "@/lib/site";
+import { USARAKHI_MIN_ORDER_USD } from "@hr-ecom/shared";
 import { pageMetadata, canonical } from "@/lib/seo";
 
 export const metadata: Metadata = pageMetadata({
@@ -81,6 +82,24 @@ export default async function ReviewsPage() {
       <GoogleReviews data={googleReviews} />
 
       <PublishedReviewsLoader />
+
+      <section className="max-w-3xl mx-auto px-4 pb-4 text-slate-700 leading-relaxed">
+        <h2 className="text-xl font-bold text-primary mb-3">How to read reviews before you order</h2>
+        <p className="mb-4">
+          This page collects feedback on {site.name} rakhi delivery to US addresses. Google reviews appear when they
+          are available, followed by reviews published on the site. The form is for sisters who have already received
+          an order and want to describe that delivery in their own words.
+        </p>
+        <p>
+          Use the comments to judge packaging, communication, and whether the rakhi matched its listing. Product
+          photos, price, and what is included still come from each product page. Delivery timing and the $
+          {USARAKHI_MIN_ORDER_USD} free-shipping minimum are spelled out on the{" "}
+          <Link href="/shipping" className="text-nav font-semibold hover:underline">
+            shipping page
+          </Link>
+          .
+        </p>
+      </section>
 
       <section id="write-review" className="max-w-xl mx-auto px-4 py-12 scroll-mt-24">
         <h2 className="text-xl font-bold text-primary mb-2">Share your experience</h2>

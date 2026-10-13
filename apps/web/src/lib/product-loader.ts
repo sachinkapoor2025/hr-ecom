@@ -1,12 +1,14 @@
 import type { Product } from "@hr-ecom/shared";
-import { isRakhiSeasonPaused, sortAvailableProductsFirst } from "@hr-ecom/shared";
+import { getProductCdnBase, isRakhiSeasonPaused, resolveProductImageUrl, sortAvailableProductsFirst } from "@hr-ecom/shared";
 import { api } from "./api";
+import { homeCategoryOrder } from "./site";
 import {
   getCatalogProduct,
   getCatalogProducts,
   getCatalogProductsByCategory,
   mergeProductsPreferExisting,
 } from "./catalog-fallback";
+import { shuffleForCity } from "./city-products";
 
 /**
  * Prefer last good API price over bundled catalog when the API blips.
@@ -114,9 +116,59 @@ export async function loadFeaturedProducts(limit = 10): Promise<Product[]> {
   return products.slice(0, limit);
 }
 
+function isPurchasableStorefrontProduct(product: Product): boolean {
+  return product.published !== false && !isRakhiSeasonPaused(product) && (product.inventory ?? 0) > 0;
+}
+
+/**
+ * Products currently shown on the shop: festive categories, in stock, and not
+ * paused for the closed Rakhi season.
+ */
+export async function loadVisibleStorefrontProducts(): Promise<Product[]> {
+  const groups = await Promise.all(homeCategoryOrder.map((slug) => loadProductsByCategory(slug)));
+  const bySlug = new Map<string, Product>();
+  for (const group of groups) {
+    for (const product of group) {
+      if (!isPurchasableStorefrontProduct(product) || bySlug.has(product.slug)) continue;
+      bySlug.set(product.slug, product);
+    }
+  }
+  return [...bySlug.values()];
+}
+
 export async function loadRelatedProducts(categorySlug: string, excludeSlug: string): Promise<Product[]> {
   const products = await loadProductsByCategory(categorySlug);
   return products.filter((p) => p.slug !== excludeSlug).slice(0, 5);
+}
+
+/** True when at least one image is on the UsaRakhi CDN (not a third-party host that blocks hotlinking). */
+export function productHasManagedImages(product: { images?: string[] | null }): boolean {
+  let host = "";
+  try {
+    host = new URL(getProductCdnBase()).host;
+  } catch {
+    host = "";
+  }
+  return (product.images ?? []).some((raw) => {
+    const url = resolveProductImageUrl(raw);
+    if (!url) return false;
+    if (url.startsWith("/uploads/") || url.startsWith("/products/") || url.startsWith("/blog/")) return true;
+    try {
+      return Boolean(host) && new URL(url).host === host;
+    } catch {
+      return false;
+    }
+  });
+}
+
+/**
+ * Location landings use the same festive catalog as the shop.
+ * The full product scan also includes vendor SKUs whose image hosts return 403,
+ * which rendered as empty cards on city pages.
+ */
+export async function loadLocationPageProducts(citySlug: string): Promise<Product[]> {
+  const products = await loadVisibleStorefrontProducts();
+  return shuffleForCity(products.filter(productHasManagedImages), citySlug);
 }
 
 /** Prefer catalog slugs at build time — avoids CI/API rate-limit prerender failures. */

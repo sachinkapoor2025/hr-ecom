@@ -11,6 +11,7 @@ import {
   buildIndependenceDayEmailHtml,
   buildRakshaBandhanOrderBy20EmailHtml,
   buildLastMinuteRakhiOrdersEmailHtml,
+  buildDiwaliBhaiDoojEmailHtml,
   FREE_SHIPPING_EMAIL_CONFIG,
   STARTING_PRICE_EMAIL_CONFIG,
   SHOP_MORE_SAVE_MORE_EMAIL_CONFIG,
@@ -18,6 +19,7 @@ import {
   INDEPENDENCE_DAY_EMAIL_CONFIG,
   RAKSHA_BANDHAN_ORDER_BY_20_EMAIL_CONFIG,
   LAST_MINUTE_RAKHI_ORDERS_EMAIL_CONFIG,
+  DIWALI_BHAI_DOOJ_EMAIL_CONFIG,
   type MarketingEmailContent,
 } from "@hr-ecom/shared";
 
@@ -48,6 +50,7 @@ export const RAKHI_HAMPERS_USA_TEMPLATE_ID = RAKHI_HAMPERS_USA_EMAIL_CONFIG.temp
 export const INDEPENDENCE_DAY_TEMPLATE_ID = INDEPENDENCE_DAY_EMAIL_CONFIG.templateId;
 export const RAKSHA_BANDHAN_ORDER_BY_20_TEMPLATE_ID = RAKSHA_BANDHAN_ORDER_BY_20_EMAIL_CONFIG.templateId;
 export const LAST_MINUTE_RAKHI_ORDERS_TEMPLATE_ID = LAST_MINUTE_RAKHI_ORDERS_EMAIL_CONFIG.templateId;
+export const DIWALI_BHAI_DOOJ_TEMPLATE_ID = DIWALI_BHAI_DOOJ_EMAIL_CONFIG.templateId;
 
 /** Previously shipped starters that should be removed from Admin → Templates. */
 export const RETIRED_STARTER_TEMPLATE_IDS: readonly string[] = [];
@@ -115,6 +118,13 @@ export const STARTER_EMAIL_TEMPLATES: StarterEmailTemplateMeta[] = [
     subject: LAST_MINUTE_RAKHI_ORDERS_EMAIL_CONFIG.subject,
     buildHtml: () => buildLastMinuteRakhiOrdersEmailHtml(),
     htmlPath: "/email-templates/last-minute-rakhi-orders.html",
+  },
+  {
+    templateId: DIWALI_BHAI_DOOJ_TEMPLATE_ID,
+    name: DIWALI_BHAI_DOOJ_EMAIL_CONFIG.name,
+    subject: DIWALI_BHAI_DOOJ_EMAIL_CONFIG.subject,
+    buildHtml: () => buildDiwaliBhaiDoojEmailHtml(),
+    htmlPath: "/email-templates/diwali-bhai-dooj-gift-collection-2026.html",
   },
 ];
 

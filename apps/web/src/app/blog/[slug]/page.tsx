@@ -30,6 +30,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: post.title,
     description: post.description,
     path: `/blog/${slug}`,
+    ...(post.keywords ? { keywords: post.keywords } : {}),
     ...(post.image ? { ogImage: post.image } : {}),
   });
 }
@@ -104,7 +105,9 @@ export default async function BlogPostPage({ params }: Props) {
 
         {post.relatedCategory && (
           <div className="mt-10 p-6 bg-slate-50 rounded-xl border min-w-0">
-            <h2 className="font-semibold text-primary mb-2">Shop related Rakhis</h2>
+            <h2 className="font-semibold text-primary mb-2">
+              {/rakhi/i.test(post.relatedCategory) ? "Shop related Rakhis" : "Shop this collection"}
+            </h2>
             <Link href={categoryHref(post.relatedCategory)} className="text-nav font-semibold hover:underline">
               Browse {post.relatedCategory.replace(/-/g, " ")} →
             </Link>

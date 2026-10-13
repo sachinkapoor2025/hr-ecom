@@ -61,6 +61,50 @@ export default async function BlogPage() {
         ))}
       </div>
 
+      <section className="mt-12 pt-10 border-t border-slate-200 max-w-3xl text-slate-700 leading-relaxed">
+        <h2 className="text-xl font-bold text-primary mb-3">What these rakhi guides cover</h2>
+        <p className="mb-4">
+          Each article on this page is a separate guide. Some explain the ritual — what the rakhi thread means, why
+          roli and chawal are used, and what a Lumba or a Bhaiya Bhabhi set is. Others are practical for sisters
+          sending to the United States: ordering from India, chocolate combos, kids designs, hampers, and domestic
+          shipping without a customs stop for your brother.
+        </p>
+        <h3 className="text-lg font-semibold text-primary mb-2">Start with the question you actually have</h3>
+        <ul className="list-disc pl-5 space-y-2 mb-4">
+          <li>
+            <Link href="/blog/send-rakhi-to-usa-from-india" className="text-nav font-semibold hover:underline">
+              Sending from India
+            </Link>{" "}
+            — pay in INR and deliver to a US address.
+          </li>
+          <li>
+            <Link href="/blog/why-roli-chawal-is-used-in-rakhi" className="text-nav font-semibold hover:underline">
+              Roli and chawal
+            </Link>{" "}
+            — the tilak items packed with most rakhis.
+          </li>
+          <li>
+            <Link href="/blog/raksha-bandhan-2026-usa" className="text-nav font-semibold hover:underline">
+              Raksha Bandhan 2026
+            </Link>{" "}
+            — the festival date and how USA orders fit around it.
+          </li>
+          <li>
+            <Link href="/blog/rakhi-usa-domestic-shipping-no-customs" className="text-nav font-semibold hover:underline">
+              Domestic US shipping
+            </Link>{" "}
+            — why the parcel is fulfilled inside America.
+          </li>
+        </ul>
+        <p className="text-sm">
+          Ready to choose a design?{" "}
+          <Link href="/products" className="text-nav font-semibold hover:underline">
+            Browse the shop
+          </Link>
+          .
+        </p>
+      </section>
+
       <BlogShowMoreProducts />
     </div>
   );

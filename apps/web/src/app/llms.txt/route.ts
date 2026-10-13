@@ -2,6 +2,7 @@ import {
   site,
   navItems,
   cityNavHref,
+  cityNavMenuLabel,
   cityLinks,
   faqs,
   isUsCityNavLink,
@@ -11,6 +12,7 @@ import {
 import { categoryHref } from "@/lib/category-urls";
 import { siteUrl } from "@/lib/env";
 import { allCityContent } from "@/lib/content/city-pages";
+import { locationPublicPath } from "@/lib/content/seo-data";
 import { blogPosts } from "@/lib/content/blog-posts";
 import {
   competitiveAdvantages,
@@ -34,14 +36,14 @@ export async function GET() {
   ];
 
   const cities = [
-    ...usCityLinks.map((c) => `- ${c.label}, USA: ${siteUrl}${cityNavHref(c)}`),
+    ...usCityLinks.map((c) => `- ${cityNavMenuLabel(c)}: ${siteUrl}${cityNavHref(c)}`),
     ...cityLinks
       .filter((c) => !isUsCityNavLink(c))
-      .map((c) => `- ${c.menuLabel ?? c.label}: ${siteUrl}${cityNavHref(c)}`),
+      .map((c) => `- ${cityNavMenuLabel(c)}: ${siteUrl}${cityNavHref(c)}`),
   ];
 
   const citySummaries = allCityContent()
-    .map((c) => `- ${c.label}: ${c.metaExtra} → ${siteUrl}/send-rakhi-to-${c.slug}`)
+    .map((c) => `- ${c.label}: ${c.metaExtra} → ${siteUrl}${locationPublicPath(c.slug)}`)
     .join("\n");
 
   const blogList = blogPosts

@@ -494,8 +494,8 @@ export function serviceAreaJsonLd(city: { label: string; slug: string; state?: s
   return {
     "@context": "https://schema.org",
     "@type": "Service",
-    name: `Rakhi Delivery to ${city.label}, USA`,
-    description: `Send Rakhi to ${city.label} with ${site.name}. Premium rakhis delivered in 5–7 business days across the United States.`,
+    name: `Gifts Delivery to ${city.label}, USA`,
+    description: `Send Gifts to ${city.label} with ${site.name}. Premium gifts delivered in 5–7 business days across the United States.`,
     url: canonical(path),
     provider: { "@id": `${siteUrl}/#organization` },
     areaServed: {
@@ -503,7 +503,7 @@ export function serviceAreaJsonLd(city: { label: string; slug: string; state?: s
       name: city.state ? `${city.label}, ${city.state}` : city.label,
       containedInPlace: { "@type": "Country", name: "United States" },
     },
-    serviceType: "Rakhi delivery",
+    serviceType: "Gifts delivery",
     offers: {
       "@type": "Offer",
       priceCurrency: "USD",

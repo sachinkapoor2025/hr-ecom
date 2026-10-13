@@ -211,6 +211,43 @@ export default async function ProductsPage({ searchParams }: Props) {
       ) : (
         <ProductGrid products={products} sort={sort} />
       )}
+
+      {showGrouped ? (
+        <section className="mt-12 pt-10 border-t border-slate-200 max-w-3xl text-slate-700 leading-relaxed">
+          <h2 className="text-xl font-bold text-primary mb-3">How to choose a Diwali or Bhai Dooj hamper</h2>
+          <p className="mb-4">
+            This shop lists ready-to-gift hampers for two festivals. Bhai Dooj combos are boxes for a brother:
+            individual listings pair kaju katli, nuts, chocolates, kumkum, or a pooja set. Diwali combos pair pooja
+            items — a thali, toran, rangoli, or Shubh Labh — with sweets or dry fruits. The name on each card is the
+            contents of that box, not a menu you assemble yourself.
+          </p>
+          <p className="mb-4">
+            Sweet, dry fruit, chocolate, and pooja groups collect the same hampers by what is inside, so one box can
+            appear in more than one group. Open the product page for the included list. Weights and piece counts are
+            only what that listing states. These hampers ship inside the United States. Orange County products on
+            this shop include free shipping, and standard delivery is 5 business days.
+          </p>
+          <h3 className="text-lg font-semibold text-primary mb-2">A practical way to compare boxes</h3>
+          <ul className="list-disc pl-5 space-y-2 mb-4">
+            <li>Start with Bhai Dooj or Diwali if you already know the occasion.</li>
+            <li>Use a food or pooja filter when the occasion is set and the contents are not.</li>
+            <li>Mixed carts with other vendors follow the rules on the shipping page.</li>
+          </ul>
+          <p className="text-sm">
+            <Link href={categoryHref("bhai-dooj")} className="text-nav font-semibold hover:underline">
+              Bhai Dooj combos
+            </Link>
+            {" · "}
+            <Link href={categoryHref("diwali")} className="text-nav font-semibold hover:underline">
+              Diwali combos
+            </Link>
+            {" · "}
+            <Link href="/shipping" className="text-nav font-semibold hover:underline">
+              Shipping
+            </Link>
+          </p>
+        </section>
+      ) : null}
     </div>
   );
 }

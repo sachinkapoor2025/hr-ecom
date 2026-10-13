@@ -28,7 +28,7 @@ const ACCENTS = {
 
 /**
  * Country-specific landing (UK / Canada) — intentionally distinct from US city
- * `/send-rakhi-to-*` pages (no CityContentSection / metro delivery blocks).
+ * `/send-gifts-to-*` pages (no CityContentSection / metro delivery blocks).
  */
 export function CountryRakhiLanding({
   page,

@@ -22,6 +22,7 @@ import { ok, okCached, created, badRequest, notFound, forbidden } from "../lib/r
 import { getAuth } from "../lib/auth";
 import { withResolvedProductImages, resolveProductImageUrl } from "../lib/images";
 import { syncInventoryAlertState } from "../lib/inventory";
+import { collectScanPages } from "../lib/collect-scan-pages";
 import { ensureProductInDb } from "../lib/ensure-product";
 import {
   healAllPausedUsarakhiProducts,
@@ -93,27 +94,31 @@ async function queryProductsByCategory(categorySlug: string): Promise<Product[]>
   return items;
 }
 
+/** Every PRODUCT# / META row. Follows LastEvaluatedKey so a filtered page of reviews cannot hide products. */
+async function scanProductMetaItems(): Promise<Product[]> {
+  return collectScanPages(async (startKey) => {
+    const result = await docClient.send(
+      new ScanCommand({
+        TableName: PRODUCTS_TABLE,
+        FilterExpression: "begins_with(PK, :prefix) AND SK = :sk",
+        ExpressionAttributeValues: { ":prefix": "PRODUCT#", ":sk": "META" },
+        ExclusiveStartKey: startKey,
+      })
+    );
+    return {
+      items: (result.Items ?? []) as Product[],
+      lastKey: result.LastEvaluatedKey as Record<string, unknown> | undefined,
+    };
+  });
+}
+
 async function scanAllProducts(): Promise<Product[]> {
   const nowMs = Date.now();
   if (productListCache && nowMs - productListCache.at < PRODUCT_LIST_CACHE_TTL_MS) {
     return productListCache.items;
   }
 
-  const items: Product[] = [];
-  let ExclusiveStartKey: Record<string, unknown> | undefined;
-  do {
-    const result = await docClient.send(
-      new ScanCommand({
-        TableName: PRODUCTS_TABLE,
-        FilterExpression: "begins_with(PK, :prefix) AND SK = :sk",
-        ExpressionAttributeValues: { ":prefix": "PRODUCT#", ":sk": "META" },
-        ExclusiveStartKey,
-      })
-    );
-    if (result.Items?.length) items.push(...(result.Items as Product[]));
-    ExclusiveStartKey = result.LastEvaluatedKey as Record<string, unknown> | undefined;
-  } while (ExclusiveStartKey);
-
+  const items = await scanProductMetaItems();
   const healed = await healAllPausedUsarakhiProducts(items);
   productListCache = { at: nowMs, items: healed };
   return healed;
@@ -322,17 +327,11 @@ export async function listAdminProducts(event: APIGatewayProxyEventV2) {
   const auth = getAuth(event);
   if (!auth?.isAdmin) return forbidden();
 
-  const result = await docClient.send(
-    new ScanCommand({
-      TableName: PRODUCTS_TABLE,
-      FilterExpression: "begins_with(PK, :prefix) AND SK = :sk",
-      ExpressionAttributeValues: { ":prefix": "PRODUCT#", ":sk": "META" },
-    })
-  );
-
-  const items = ((result.Items ?? []) as Product[]).sort(
-    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-  );
+  const items = (await scanProductMetaItems()).sort((a, b) => {
+    const tb = Date.parse(b.updatedAt ?? "") || 0;
+    const ta = Date.parse(a.updatedAt ?? "") || 0;
+    return tb - ta;
+  });
   return ok({ products: items.map(withResolvedProductImages) });
 }
 

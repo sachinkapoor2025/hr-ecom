@@ -21,9 +21,7 @@ import {
   isSecondaryCity,
   secondaryCityIntro,
 } from "@/lib/content/city-delivery-tiers";
-import { getCatalogProducts, mergeProductsPreferExisting } from "@/lib/catalog-fallback";
-import { shuffleForCity } from "@/lib/city-products";
-import { loadProducts } from "@/lib/product-loader";
+import { loadLocationPageProducts } from "@/lib/product-loader";
 import { breadcrumbJsonLd, faqJsonLd, pageMetadata, serviceAreaJsonLd } from "@/lib/seo";
 import { buildLocationContent } from "@/components/SeoLocationLanding";
 import { site } from "@/lib/site";
@@ -49,12 +47,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const cityContent = getCityContent(slug);
   if (isExpressMetro(slug) && cityContent) {
     return pageMetadata({
-      title: `Send Rakhi to ${cityContent.label} USA | Fast Delivery`,
+      title: `Send Gifts to ${cityContent.label} USA | Fast Delivery`,
       description:
         cityContent.metaExtra ??
-        `Send Rakhi to ${cityContent.label}, USA with ${site.name}. Premium rakhis, standard USA delivery, roli chawal included.`,
+        `Send Gifts to ${cityContent.label}, USA with ${site.name}. Premium gifts, standard USA delivery, roli chawal included.`,
       path,
-      keywords: `send rakhi to ${cityContent.label}, rakhi delivery ${cityContent.label}, UsaRakhi`,
+      keywords: `send gifts to ${cityContent.label}, gifts delivery ${cityContent.label}, UsaRakhi`,
       absoluteTitle: true,
     });
   }
@@ -63,16 +61,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (secondary) {
     const place = `${secondary.name}, ${secondary.state}`;
     return pageMetadata({
-      title: `Send Rakhi to ${place} | 5–7 Day USA Delivery | ${site.name}`,
-      description: `Send rakhi to ${place} with ${site.name}. Domestic USA shipping in 5–7 business days, roli chawal on most orders, Stripe & Razorpay checkout.`,
+      title: `Send Gifts to ${place} | 5–7 Day USA Delivery | ${site.name}`,
+      description: `Send gifts to ${place} with ${site.name}. Domestic USA shipping in 5–7 business days, roli chawal on most orders, Stripe & Razorpay checkout.`,
       path,
-      keywords: `send rakhi to ${secondary.name}, rakhi delivery ${secondary.name}, rakhi ${secondary.state}`,
+      keywords: `send gifts to ${secondary.name}, gifts delivery ${secondary.name}, gifts ${secondary.state}`,
       absoluteTitle: true,
     });
   }
 
   const location = getSeoLocation(slug);
-  if (!location) return { title: "Rakhi Delivery" };
+  if (!location) return { title: "Gifts Delivery" };
 
   const place =
     location.region === "state"
@@ -80,7 +78,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       : location.state
         ? `${location.name}, ${location.state}`
         : location.name;
-  const primary = location.keywords[0] ?? `send rakhi to ${location.name.toLowerCase()}`;
+  const primary = location.keywords[0] ?? `send gifts to ${location.name.toLowerCase()}`;
   const warehouseNote = location.isCaliforniaWarehouse
     ? " Ships from our California warehouse for faster West Coast delivery."
     : location.state
@@ -92,7 +90,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       : `Order online for doorstep delivery in ${place}${location.state ? ` and nearby ${location.state} metros` : ""}.`;
 
   return pageMetadata({
-    title: `Send Rakhi to ${place} | ${primary.charAt(0).toUpperCase() + primary.slice(1)} | ${site.name}`,
+    title: `Send Gifts to ${place} | ${primary.charAt(0).toUpperCase() + primary.slice(1)} | ${site.name}`,
     description: `${primary.charAt(0).toUpperCase() + primary.slice(1)} with ${site.name}.${warehouseNote} ${regionNote} Roli chawal included. Secure Stripe & Razorpay checkout.`,
     path,
     keywords: location.keywords.slice(0, 12).join(", "),
@@ -103,22 +101,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function SeoLocationPage({ params }: Props) {
   const { slug } = await params;
 
-  let products: Product[] = [];
+  let cityProducts: Product[] = [];
   try {
-    products = await loadProducts();
+    // Same festive catalog as the shop, so every card has a store CDN image.
+    cityProducts = await loadLocationPageProducts(slug);
   } catch {
-    products = [];
+    cityProducts = [];
   }
-  // Full catalog — same merge as homepage so every location lists every deliverable SKU.
-  products = mergeProductsPreferExisting(products, getCatalogProducts());
-  const cityProducts = shuffleForCity(products, slug);
 
   // --- Express metros: individually maintained CityContentSection ---
   const cityContent = getCityContent(slug);
   if (isExpressMetro(slug) && cityContent) {
     const crumbs = [
       { label: "Home", href: "/" },
-      { label: `Send Rakhi to ${cityContent.label}` },
+      { label: `Send Gifts to ${cityContent.label}` },
     ];
     return (
       <div className="max-w-7xl mx-auto px-4 py-10">
@@ -133,11 +129,11 @@ export default async function SeoLocationPage({ params }: Props) {
         />
         <Breadcrumbs items={crumbs} />
         <h1 className="text-3xl font-bold text-primary mb-2">
-          Send Rakhi to {cityContent.label}, USA
+          Send Gifts to {cityContent.label}, USA
         </h1>
         <p className="text-slate-600 mb-8 max-w-3xl">
           {cityContent.metaExtra ??
-            `Premium Rakhi delivery to ${cityContent.label}. Domestic USA shipping — order from India, UK, Canada worldwide.`}
+            `Premium gifts delivery to ${cityContent.label}. Domestic USA shipping — order from India, UK, Canada worldwide.`}
         </p>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {cityProducts.map((p) => (
@@ -155,7 +151,7 @@ export default async function SeoLocationPage({ params }: Props) {
     const place = `${secondary.name}, ${secondary.state}`;
     const crumbs = [
       { label: "Home", href: "/" },
-      { label: `Send Rakhi to ${secondary.name}` },
+      { label: `Send Gifts to ${secondary.name}` },
     ];
     return (
       <div className="max-w-7xl mx-auto px-4 py-10">
@@ -170,7 +166,7 @@ export default async function SeoLocationPage({ params }: Props) {
         />
         <Breadcrumbs items={crumbs} />
         <h1 className="text-3xl font-bold text-primary mb-2">
-          Send Rakhi to {place} — Online USA Delivery
+          Send Gifts to {place} — Online USA Delivery
         </h1>
         <p className="text-slate-600 mb-8 max-w-3xl">
           {secondaryCityIntro(secondary.slug, secondary.name, secondary.state)}
@@ -209,7 +205,7 @@ export default async function SeoLocationPage({ params }: Props) {
 
   const crumbs = [
     { label: "Home", href: "/" },
-    { label: `Send Rakhi to ${place}` },
+    { label: `Send Gifts to ${place}` },
   ];
 
   return (
@@ -223,12 +219,12 @@ export default async function SeoLocationPage({ params }: Props) {
       />
       <Breadcrumbs items={crumbs} />
       <h1 className="text-3xl font-bold text-primary mb-2">
-        Send Rakhi to {place} — Online USA Delivery
+        Send Gifts to {place} — Online USA Delivery
       </h1>
       <p className="text-slate-600 mb-8 max-w-3xl">
         {location.keywords[0]
           ? `${location.keywords[0].charAt(0).toUpperCase() + location.keywords[0].slice(1)} with ${site.name}.`
-          : `Premium rakhi delivery to ${place}.`}{" "}
+          : `Premium gifts delivery to ${place}.`}{" "}
         Domestic USA shipping, secure checkout, roli chawal on most rakhis.
       </p>
 
@@ -237,7 +233,7 @@ export default async function SeoLocationPage({ params }: Props) {
           <HomeProductCard key={p.slug} product={p} />
         ))}
       </div>
-      {products.length === 0 && (
+      {cityProducts.length === 0 && (
         <p className="text-slate-500 mt-4">
           <Link href="/products" className="text-nav hover:underline">
             Browse all Rakhis

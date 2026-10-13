@@ -141,7 +141,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
             `${name} — UsaRakhi USA`,
             products.map((p) => ({ name: p.name, path: `/products/${p.slug}` }))
           ),
-          ...(rich ? [faqJsonLd(rich.faqs)] : []),
+          ...(rich && rich.faqs.length > 0 ? [faqJsonLd(rich.faqs)] : []),
         ]}
       />
       <Breadcrumbs items={crumbs} />

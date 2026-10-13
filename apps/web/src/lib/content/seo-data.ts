@@ -44,7 +44,7 @@ export function californiaWarehouseLocations(): SeoLocation[] {
 }
 
 export function locationPublicPath(slug: string): string {
-  return `/send-rakhi-to-${slug}`;
+  return `/send-gifts-to-${slug}`;
 }
 
 export function getSeoBlogEntry(slug: string): SeoBlogEntry | undefined {

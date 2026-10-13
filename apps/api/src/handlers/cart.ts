@@ -128,12 +128,14 @@ export async function addToCart(event: APIGatewayProxyEventV2) {
   const body = JSON.parse(event.body ?? "{}");
   const parsed = addToCartSchema.safeParse(body);
   if (!parsed.success) return badRequest(parsed.error.message);
+  const productSlug = parsed.data.productSlug.trim();
+  if (!productSlug) return badRequest("Product slug required");
 
   const [productResult, cart] = await Promise.all([
     docClient.send(
       new GetCommand({
         TableName: PRODUCTS_TABLE,
-        Key: { PK: productKeys.pk(parsed.data.productSlug), SK: productKeys.sk() },
+        Key: { PK: productKeys.pk(productSlug), SK: productKeys.sk() },
       })
     ),
     getCart(userKey),
@@ -142,13 +144,12 @@ export async function addToCart(event: APIGatewayProxyEventV2) {
   // Storefront may show catalog fallback before DynamoDB import — upsert on first add.
   let productItem = productResult.Item as Record<string, unknown> | undefined;
   if (!productItem) {
-    productItem = (await ensureProductInDb(parsed.data.productSlug)) ?? undefined;
+    productItem = (await ensureProductInDb(productSlug)) ?? undefined;
   } else if (
     productItem.vendorSlug === "orange-county" ||
     productItem.categorySlug === "rakhi-hampers"
   ) {
-    productItem =
-      (await ensureOrangeCountyProductInDb(parsed.data.productSlug)) ?? productItem;
+    productItem = (await ensureOrangeCountyProductInDb(productSlug)) ?? productItem;
   }
   if (!productItem) return badRequest("Product not found");
 
@@ -206,9 +207,7 @@ export async function addToCart(event: APIGatewayProxyEventV2) {
     Boolean(product.couponExcluded) || isFlashComboProduct(product.slug);
 
   const existingIdx = cart.items.findIndex(
-    (i) =>
-      i.productSlug === parsed.data.productSlug &&
-      cartAddonSignature(i.addons) === signature
+    (i) => i.productSlug === productSlug && cartAddonSignature(i.addons) === signature
   );
 
   const vendorSlug =

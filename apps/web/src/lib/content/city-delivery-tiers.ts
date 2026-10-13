@@ -1,5 +1,5 @@
 /**
- * Delivery-tier classification for /send-rakhi-to-{slug} pages.
+ * Delivery-tier classification for /send-gifts-to-{slug} pages.
  * Express metros keep individually maintained copy (city-pages.ts).
  * Secondary cities share one thin template driven by this data file.
  */
@@ -33,7 +33,7 @@ export interface SecondaryCity {
 
 /**
  * Secondary city doorways that previously shared near-identical boilerplate.
- * Public URL stays /send-rakhi-to-{slug}; content uses SecondaryCityLanding.
+ * Public URL stays /send-gifts-to-{slug}; content uses SecondaryCityLanding.
  */
 export const SECONDARY_CITIES: SecondaryCity[] = [
   { slug: "anaheim", name: "Anaheim", state: "California", nearbyMetroSlug: "los-angeles", nearbyMetroLabel: "Los Angeles", searchPotential: "low" },
@@ -77,15 +77,15 @@ function slugVariantIndex(slug: string, modulo: number): number {
 
 /**
  * Rotating intro lines for secondary city doorways — reduces exact-duplicate
- * boilerplate across /send-rakhi-to-{slug} without changing routes.
+ * boilerplate across /send-gifts-to-{slug} without changing routes.
  */
 export function secondaryCityIntro(slug: string, city: string, state: string): string {
   const place = `${city}, ${state}`;
   const variants = [
-    `UsaRakhi delivers rakhi to ${place} in 5–7 business days — order from India, the UK, Canada, or anywhere in the world.`,
-    `Sending rakhi to ${place}? UsaRakhi ships domestically within America in 5–7 business days, no matter where you're ordering from.`,
-    `${place} rakhi delivery in 5–7 business days, direct from our USA fulfillment — order from India, the UK, Canada, or elsewhere.`,
-    `Rakhi for your brother in ${place} arrives in 5–7 business days. We ship domestically within the USA for sisters ordering worldwide.`,
+    `UsaRakhi delivers gifts to ${place} in 5–7 business days — order from India, the UK, Canada, or anywhere in the world.`,
+    `Sending gifts to ${place}? UsaRakhi ships domestically within America in 5–7 business days, no matter where you're ordering from.`,
+    `${place} gifts delivery in 5–7 business days, direct from our USA fulfillment — order from India, the UK, Canada, or elsewhere.`,
+    `Gifts for your brother in ${place} arrive in 5–7 business days. We ship domestically within the USA for sisters ordering worldwide.`,
   ];
   return variants[slugVariantIndex(slug, variants.length)]!;
 }
