@@ -123,37 +123,6 @@ jobs:
       # Catalog import OVERWRITES product records and has wiped admin-uploaded images.
       # Run manually only: Actions → Import UsaRakhi Catalog (workflow_dispatch).
 
-  # Amplify's dev branch calls the dev API. That stack is not updated by the prod
-  # SAM deploy above, so festival products stay missing and add-to-cart returns
-  # "Product not found". Publish the same API bundle to the dev function.
-  deploy-dev-api:
-    if: github.ref == 'refs/heads/dev'
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version-file: ".nvmrc"
-          cache: npm
-      - run: npm ci
-      - run: npm run build -w @hr-ecom/shared
-      - uses: aws-actions/configure-aws-credentials@v6
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
-          aws-region: ${{ env.AWS_REGION }}
-      - uses: aws-actions/setup-sam@v3
-      - name: Deploy the dev API stack
-        working-directory: infrastructure
-        run: |
-          # CloudFormation updates the function. A direct lambda:UpdateFunctionCode
-          # call is not allowed for this deploy user (AWS CLI exit 254).
-          sam build && sam deploy --no-confirm-changeset --no-fail-on-empty-changeset \
-            --config-env default \
-            --parameter-overrides Environment=dev
-
   deploy-web:
     runs-on: ubuntu-latest
     needs: deploy-api
