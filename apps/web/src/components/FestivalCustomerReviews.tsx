@@ -5,20 +5,24 @@ const FESTIVAL_REVIEW = /diwali|bhai\s*dooj/i;
 
 const placeholders = [
   {
-    title: "Diwali gifts",
-    detail: "A genuine note about a Diwali hamper — sweets, dry fruits, or a pooja set — will be published here.",
+    title: "Diwali gift combos",
+    detail:
+      "Placeholder for a note about a Diwali hamper with mithai, dry fruits, chocolates, or a pooja set, delivered to a US address.",
   },
   {
     title: "Bhai Dooj gifts",
-    detail: "A genuine note about a Bhai Dooj box for a brother in the USA will be published here.",
+    detail:
+      "Placeholder for a note about a Bhai Dooj box for a brother in the USA, such as sweets, chocolates, or a dry fruit hamper.",
   },
   {
-    title: "Delivery experience",
-    detail: "A genuine note about USA delivery timing and tracking will be published here.",
+    title: "Festive sweets and chocolates",
+    detail:
+      "Placeholder for a note about kaju katli, laddoo, or a chocolate combo shared at a Diwali or Bhai Dooj celebration.",
   },
   {
-    title: "Packaging and gifting",
-    detail: "A genuine note about how the gift was packed and how it felt to receive will be published here.",
+    title: "Dry fruit hampers",
+    detail:
+      "Placeholder for a note about almonds, cashews, or pistachios packed in a festive gift box and delivered in the USA.",
   },
 ] as const;
 
@@ -41,7 +45,7 @@ function StarRating({ rating }: { rating: number }) {
 }
 
 export function FestivalCustomerReviews({ reviews }: { reviews: GoogleReview[] }) {
-  const festival = reviews.filter((review) => FESTIVAL_REVIEW.test(review.text));
+  const festival = reviews.filter((review) => review.fromGoogle && FESTIVAL_REVIEW.test(review.text));
 
   return (
     <section className="border-t border-slate-100 bg-white py-10 md:py-14" aria-labelledby="festival-reviews-heading">

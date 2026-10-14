@@ -59,8 +59,8 @@ export function ReviewForm() {
       <div className="border border-green-200 bg-green-50 rounded-xl p-6 text-green-900">
         <p className="font-bold text-lg mb-2">Thank you for sharing!</p>
         <p className="text-sm leading-relaxed">
-          Your review is now live on {site.domain}. Thank you for helping other sisters choose with
-          confidence.
+          Your review is now live on {site.domain}. Thank you for helping other families choose a Diwali or
+          Bhai Dooj gift with confidence.
         </p>
         <Link href="/products" className="inline-block mt-4 text-sm font-semibold text-nav hover:underline">
           Continue shopping →
@@ -136,7 +136,7 @@ export function ReviewForm() {
           value={review}
           onChange={(e) => setReview(e.target.value)}
           className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
-          placeholder="How was delivery? Did your brother love the Rakhi? Would you recommend UsaRakhi to other sisters?"
+          placeholder="How was delivery? Did your family enjoy the Diwali hamper or Bhai Dooj gift? Would you recommend UsaRakhi?"
           required
         />
       </div>

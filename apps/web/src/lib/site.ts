@@ -180,28 +180,28 @@ export const testimonials = [
     rating: 5,
     timeAgo: "2 days ago",
     image: cdnUploadUrl("2026/06/Untitled-design-31-1.png"),
-    text: "My brother lives in California and I miss tying Rakhi on his wrist every year. I used UsaRakhi.com to send Rakhi to the USA and it arrived right on time. He was very surprised and happy when he received it.",
+    text: "I sent a Diwali sweet and dry fruit hamper to my family in California. It arrived before the festival, and they called as soon as they opened the kaju katli and nuts.",
   },
   {
     name: "Anjali",
     rating: 5,
     timeAgo: "1 week ago",
     image: cdnUploadUrl("2026/06/review-picture-2.png"),
-    text: "Being away from my brother during Raksha Bandhan is never easy. Thanks to UsaRakhi.com, I could send Rakhi to the USA and make him feel loved. The Rakhi was beautiful and delivered on time.",
+    text: "I ordered a Bhai Dooj chocolate and sweet box for my brother in Texas. The packaging looked festive, delivery was on time, and he loved sharing the chocolates.",
   },
   {
     name: "Pooja",
     rating: 5,
     timeAgo: "2 weeks ago",
     image: cdnUploadUrl("2026/06/puja3.png"),
-    text: "Even though my brother is living in the USA, I never want to miss Raksha Bandhan. UsaRakhi.com helped me send Rakhi to the USA quickly. The Rakhi looked beautiful and made the festival feel complete.",
+    text: "I sent a Diwali pooja set with mithai to my parents in New Jersey. The box was packed carefully, tracking was clear, and it felt like we still celebrated together.",
   },
   {
     name: "Meera",
     rating: 5,
     timeAgo: "3 weeks ago",
     image: cdnUploadUrl("2026/03/coustomer-3-768x1152-1.webp"),
-    text: "Distance can never break the bond between siblings. UsaRakhi.com helped me send Rakhi to my brother in California easily. When he received it, he called me immediately and it felt like we were celebrating together.",
+    text: "UsaRakhi made it simple to send Bhai Dooj gifts to my brother in California. The dry fruits and sweets arrived in time, and he called as soon as the hamper was opened.",
   },
 ] as const;
 
