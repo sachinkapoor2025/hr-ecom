@@ -29,6 +29,8 @@ jobs:
       - run: npm run build
 
   deploy-api:
+    # A dev-only API publish can opt out of the production stack with "[skip prod]".
+    if: ${{ !contains(github.event.head_commit.message, '[skip prod]') }}
     runs-on: ubuntu-latest
     needs: build
     steps:
@@ -122,6 +124,44 @@ jobs:
 
       # Catalog import OVERWRITES product records and has wiped admin-uploaded images.
       # Run manually only: Actions → Import UsaRakhi Catalog (workflow_dispatch).
+
+  # Amplify dev calls https://…/dev (hr-ecom-api-dev). The production SAM deploy
+  # above does not update that function, so festival slugs stay missing and
+  # add-to-cart returns "Product not found". Publish only this function's code.
+  deploy-dev-api:
+    if: github.ref == 'refs/heads/dev'
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: ".nvmrc"
+          cache: npm
+      - run: npm ci
+      - run: npm run build -w @hr-ecom/shared
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ env.AWS_REGION }}
+      - uses: aws-actions/setup-sam@v3
+      - name: Publish API code to hr-ecom-api-dev
+        working-directory: infrastructure
+        run: |
+          sam build ApiFunction
+          (cd .aws-sam/build/ApiFunction && zip -qr "$RUNNER_TEMP/api-dev.zip" .)
+          if ! aws lambda update-function-code \
+            --function-name hr-ecom-api-dev \
+            --zip-file "fileb://$RUNNER_TEMP/api-dev.zip" \
+            > "$RUNNER_TEMP/lambda-update.json" \
+            2> "$RUNNER_TEMP/lambda-update.err"; then
+            err=$(tr '\n' ' ' < "$RUNNER_TEMP/lambda-update.err" | head -c 700)
+            echo "::error::dev lambda update failed: ${err}"
+            exit 1
+          fi
+          aws lambda wait function-updated --function-name hr-ecom-api-dev
 
   deploy-web:
     runs-on: ubuntu-latest
