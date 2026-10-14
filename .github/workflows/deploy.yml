@@ -199,6 +199,46 @@ jobs:
           fi
           echo "Log groups: $groups"
           echo "::warning::Log groups: ${groups}"
+          uris=$(aws apigatewayv2 get-integrations --api-id 0iwn6h2ds8 --query "Items[].IntegrationUri" --output text 2>>"$RUNNER_TEMP/logs.err" || true)
+          func=$(printf '%s\n' $uris | sed -n 's/.*function:\([^/]*\).*/\1/p' | head -n 1)
+          echo "::warning::Dev API function: ${func:-unknown}"
+          if [ -n "$func" ]; then
+            aws lambda get-function-configuration --function-name "$func" \
+              --query "Environment.Variables.{hasPass:MARKETING_SMTP_PASS,host:MARKETING_SMTP_HOST,user:MARKETING_SMTP_USER,transport:MARKETING_TRANSPORT,table:EMAIL_CAMPAIGNS_TABLE}" \
+              --output json > "$RUNNER_TEMP/fn.json" 2>>"$RUNNER_TEMP/logs.err" || true
+            python3 - <<'PY'
+import json, os, pathlib
+raw = pathlib.Path(os.environ["RUNNER_TEMP"] + "/fn.json").read_text(errors="replace")
+try:
+    data = json.loads(raw)
+except Exception:
+    print("config unreadable")
+    raise SystemExit
+pass_val = str(data.get("hasPass") or "")
+print(json.dumps({
+    "host": data.get("host"),
+    "user": data.get("user"),
+    "transport": data.get("transport"),
+    "table": data.get("table"),
+    "passwordSet": bool(pass_val.strip()),
+    "passwordLength": len(pass_val.strip()),
+}))
+PY
+            summary=$(python3 -c "import json,os,pathlib; d=json.loads(pathlib.Path(os.environ['RUNNER_TEMP']+'/fn.json').read_text() or '{}'); p=str(d.get('hasPass') or '').strip(); print('host=%s user=%s transport=%s table=%s passwordSet=%s passwordLength=%s' % (d.get('host'), d.get('user'), d.get('transport'), d.get('table'), bool(p), len(p)))")
+            echo "::warning::Dev function env: ${summary}"
+            aws logs filter-log-events \
+              --log-group-name "/aws/lambda/${func}" \
+              --start-time "$start" \
+              --filter-pattern '"Marketing SMTP"' \
+              --limit 5 \
+              --query "events[].message" \
+              --output text > "$RUNNER_TEMP/dev-events.txt" 2>>"$RUNNER_TEMP/logs.err" || true
+            if [ -s "$RUNNER_TEMP/dev-events.txt" ]; then
+              msg=$(tr '\n' ' ' < "$RUNNER_TEMP/dev-events.txt" | head -c 700)
+              echo "::warning title=dev marketing logs::${msg}"
+              found=1
+            fi
+          fi
           found=0
           for pattern in '"sendTest failed"' '"queue send failed"' '"Marketing SMTP"' '"Failed to load SES"' '"MessageRejected"'; do
             for group in $groups; do
