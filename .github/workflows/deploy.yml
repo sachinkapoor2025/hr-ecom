@@ -176,6 +176,52 @@ jobs:
           fi
           aws lambda wait function-updated --function-name "$func"
 
+  # Read-only: surface the marketing-email error from CloudWatch. Does not change stacks.
+  marketing-email-logs:
+    if: github.ref == 'refs/heads/dev'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Read recent marketing email errors
+        run: |
+          set +e
+          start=$(( ($(date +%s) - 604800) * 1000 ))
+          groups=$(aws logs describe-log-groups --log-group-name-prefix "/aws/lambda/hr-ecom" --query "logGroups[].logGroupName" --output text 2>"$RUNNER_TEMP/logs.err")
+          if [ -z "$groups" ]; then
+            err=$(tr '\n' ' ' < "$RUNNER_TEMP/logs.err" | head -c 500)
+            echo "::error::could not list log groups: ${err}"
+            exit 1
+          fi
+          echo "Log groups: $groups"
+          found=0
+          for group in $groups; do
+            : > "$RUNNER_TEMP/events.txt"
+            aws logs filter-log-events \
+              --log-group-name "$group" \
+              --start-time "$start" \
+              --filter-pattern '"Marketing SMTP"' \
+              --limit 5 \
+              --query "events[].message" \
+              --output text > "$RUNNER_TEMP/events.txt" 2>>"$RUNNER_TEMP/logs.err" || true
+            if [ -s "$RUNNER_TEMP/events.txt" ]; then
+              found=1
+              msg=$(tr '\n' ' ' < "$RUNNER_TEMP/events.txt" | head -c 700)
+              echo "::group::$group"
+              echo "$msg"
+              echo "::warning title=${group}::${msg}"
+              echo "::endgroup::"
+            fi
+          done
+          if [ "$found" -eq 0 ]; then
+            err=$(tr '\n' ' ' < "$RUNNER_TEMP/logs.err" | head -c 400)
+            echo "::warning::No marketing email log lines in the last 7 days. ${err}"
+          fi
+
   deploy-web:
     runs-on: ubuntu-latest
     needs: deploy-api
