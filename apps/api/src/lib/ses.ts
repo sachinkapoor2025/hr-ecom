@@ -198,6 +198,33 @@ export function isMarketingSmtpPasswordAvailable(stored?: Partial<SesSettings>):
   return Boolean(storedMarketingPassword(stored ?? {}) || envMarketingSmtpPass());
 }
 
+/**
+ * Use the Lambda Mailercloud login when Dynamo still has a different SMTP user
+ * (for example a previous brand). A stored password for that other user must not
+ * block MARKETING_SMTP_PASS.
+ */
+export function pickMarketingSmtpAuth(input: {
+  storedUser: string;
+  storedPass: string;
+  envUser: string;
+  envPass: string;
+}): { user: string; pass: string } {
+  const storedUser = input.storedUser.trim();
+  const envUser = input.envUser.trim();
+  const storedPass = input.storedPass.trim();
+  const envPass = input.envPass.trim();
+  const mismatch = Boolean(
+    storedUser && envUser && storedUser.toLowerCase() !== envUser.toLowerCase()
+  );
+  if (mismatch && envPass) {
+    return { user: envUser, pass: envPass };
+  }
+  return {
+    user: storedUser || envUser,
+    pass: storedPass || envPass,
+  };
+}
+
 async function loadStoredSettings(): Promise<Partial<SesSettings>> {
   try {
     const res = await docClient.send(
@@ -287,20 +314,34 @@ async function resolveTransport(): Promise<ResolvedTransport> {
     "smtp") as "smtp" | "ses";
 
   const envSmtp = envMarketingSmtp();
+  const auth = pickMarketingSmtpAuth({
+    storedUser: stored.smtpUser?.trim() || "",
+    storedPass: storedMarketingPassword(stored),
+    envUser: process.env.MARKETING_SMTP_USER?.trim() || "order@usarakhi.com",
+    envPass: envMarketingSmtpPass(),
+  });
+  const storedUserDiffers = Boolean(
+    stored.smtpUser?.trim() &&
+      auth.user &&
+      stored.smtpUser.trim().toLowerCase() !== auth.user.toLowerCase()
+  );
   const host =
+    (storedUserDiffers ? process.env.MARKETING_SMTP_HOST?.trim() : "") ||
     stored.smtpHost?.trim() ||
     process.env.MARKETING_SMTP_HOST?.trim() ||
     "smtp-prod.mailrcld.com";
-  const port = Number(stored.smtpPort ?? process.env.MARKETING_SMTP_PORT ?? 587);
+  const port = Number(
+    (storedUserDiffers ? process.env.MARKETING_SMTP_PORT : undefined) ??
+      stored.smtpPort ??
+      process.env.MARKETING_SMTP_PORT ??
+      587
+  );
   const resolvedPort = Number.isFinite(port) && port > 0 ? port : 587;
   // Never use SMTPS on 587 — that yields TLS "wrong version number" with Mailercloud.
   const secure = resolvedPort === 465;
-  const user =
-    stored.smtpUser?.trim() ||
-    process.env.MARKETING_SMTP_USER?.trim() ||
-    "order@usarakhi.com";
+  const user = auth.user;
   // Prefer admin-stored marketing password; else MARKETING_SMTP_PASS only (never SMTP_PASS).
-  const pass = storedMarketingPassword(stored) || envMarketingSmtpPass();
+  const pass = auth.pass;
 
   // Refuse transactional hosts for marketing — order mail uses smtp.usarakhi.com separately.
   const isTransactionalHost = /^(smtp|mail)\.usarakhi\.com$/i.test(host);

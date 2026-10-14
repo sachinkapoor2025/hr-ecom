@@ -176,76 +176,45 @@ jobs:
           fi
           aws lambda wait function-updated --function-name "$func"
 
-  # Read-only: surface the marketing-email error from CloudWatch. Does not change stacks.
-  marketing-email-logs:
-    if: github.ref == 'refs/heads/dev'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: aws-actions/configure-aws-credentials@v6
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
-          aws-region: ${{ env.AWS_REGION }}
-      - name: Read recent marketing email errors
+      - name: Set Mailercloud credentials on the dev API
+        env:
+          MARKETING_SMTP_PASS: ${{ secrets.MARKETING_SMTP_PASS }}
         run: |
-          set +e
-          start=$(( ($(date +%s) - 604800) * 1000 ))
-          groups=$(aws logs describe-log-groups --log-group-name-prefix "/aws/lambda/hr-ecom" --query "logGroups[].logGroupName" --output text 2>"$RUNNER_TEMP/logs.err")
-          if [ -z "$groups" ]; then
-            err=$(tr '\n' ' ' < "$RUNNER_TEMP/logs.err" | head -c 500)
-            echo "::error::could not list log groups: ${err}"
+          set -euo pipefail
+          uris=$(aws apigatewayv2 get-integrations --api-id 0iwn6h2ds8 --query "Items[].IntegrationUri" --output text)
+          func=$(printf '%s\n' $uris | sed -n 's/.*function:\([^/]*\).*/\1/p' | head -n 1)
+          if [ -z "${MARKETING_SMTP_PASS}" ]; then
+            echo "::error::MARKETING_SMTP_PASS is empty, so marketing email cannot authenticate"
             exit 1
           fi
-          echo "Log groups: $groups"
-          echo "::warning::Log groups: ${groups}"
-          found=0
-          uris=$(aws apigatewayv2 get-integrations --api-id 0iwn6h2ds8 --query "Items[].IntegrationUri" --output text 2>>"$RUNNER_TEMP/logs.err" || true)
-          func=$(printf '%s\n' $uris | sed -n 's/.*function:\([^/]*\).*/\1/p' | head -n 1)
-          echo "::warning::Dev API function: ${func:-unknown}"
-          if [ -n "$func" ]; then
-            aws lambda get-function-configuration --function-name "$func" \
-              --query "Environment.Variables.{hasPass:MARKETING_SMTP_PASS,host:MARKETING_SMTP_HOST,user:MARKETING_SMTP_USER,transport:MARKETING_TRANSPORT,table:EMAIL_CAMPAIGNS_TABLE}" \
-              --output json > "$RUNNER_TEMP/fn.json" 2>>"$RUNNER_TEMP/logs.err" || true
-            summary=$(jq -r '"host=\(.host) user=\(.user) transport=\(.transport) table=\(.table) passwordSet=\(((.hasPass // "") | length) > 0) passwordLength=\((.hasPass // "") | length)"' "$RUNNER_TEMP/fn.json" 2>/dev/null || echo "config unreadable")
-            echo "::warning::Dev function env: ${summary}"
-            for pattern in '"sendTest failed"' '"Marketing SMTP"' '"Task timed out"' '"Test email sent"'; do
-              : > "$RUNNER_TEMP/dev-events.txt"
-              aws logs filter-log-events \
-                --log-group-name "/aws/lambda/${func}" \
-                --start-time "$start" \
-                --filter-pattern "$pattern" \
-                --limit 3 \
-                --query "events[].message" \
-                --output text > "$RUNNER_TEMP/dev-events.txt" 2>>"$RUNNER_TEMP/logs.err" || true
-              if [ -s "$RUNNER_TEMP/dev-events.txt" ]; then
-                found=1
-                msg=$(tr '\n' ' ' < "$RUNNER_TEMP/dev-events.txt" | head -c 650)
-                echo "::warning title=dev ${pattern}::${msg}"
-              fi
-            done
-          fi
-          for pattern in '"sendTest failed"' '"queue send failed"' '"Marketing SMTP"' '"Failed to load SES"' '"MessageRejected"' '"Task timed out"' '"Test email sent"'; do
-            for group in $groups; do
-              : > "$RUNNER_TEMP/events.txt"
-              aws logs filter-log-events \
-                --log-group-name "$group" \
-                --start-time "$start" \
-                --filter-pattern "$pattern" \
-                --limit 3 \
-                --query "events[].message" \
-                --output text > "$RUNNER_TEMP/events.txt" 2>>"$RUNNER_TEMP/logs.err" || true
-              if [ -s "$RUNNER_TEMP/events.txt" ]; then
-                found=1
-                msg=$(tr '\n' ' ' < "$RUNNER_TEMP/events.txt" | head -c 650)
-                echo "::warning title=${group} ${pattern}::${msg}"
-              fi
-            done
+          apply_marketing_env() {
+            target="$1"
+            aws lambda get-function-configuration --function-name "$target" --query Environment --output json > "$RUNNER_TEMP/lambda-env.json"
+            jq --arg pw "$MARKETING_SMTP_PASS" '
+              .Variables //= {}
+              | .Variables.MARKETING_SMTP_PASS = $pw
+              | .Variables.MARKETING_SMTP_HOST = "smtp-prod.mailrcld.com"
+              | .Variables.MARKETING_SMTP_PORT = "587"
+              | .Variables.MARKETING_TRANSPORT = "smtp"
+              | .Variables.MARKETING_SMTP_USER = "order@usarakhi.com"
+              | .Variables.MARKETING_FROM_EMAIL = "email@usarakhi.com"
+            ' "$RUNNER_TEMP/lambda-env.json" > "$RUNNER_TEMP/lambda-env-next.json"
+            aws lambda update-function-configuration \
+              --function-name "$target" \
+              --environment "file://$RUNNER_TEMP/lambda-env-next.json" \
+              > "$RUNNER_TEMP/lambda-env-update.json"
+            aws lambda wait function-updated --function-name "$target"
+            echo "Set Mailercloud SMTP on $target"
+          }
+          apply_marketing_env "$func"
+          for name in $(aws lambda list-functions --query "Functions[?starts_with(FunctionName, 'blossompot') && contains(FunctionName, 'ses-email')].FunctionName" --output text); do
+            apply_marketing_env "$name"
           done
-          if [ "$found" -eq 0 ]; then
-            err=$(tr '\n' ' ' < "$RUNNER_TEMP/logs.err" | head -c 400)
-            echo "::warning::No marketing email log lines in the last 7 days. ${err}"
-          fi
+
+      - name: Send one marketing SMTP probe
+        env:
+          MARKETING_SMTP_PASS: ${{ secrets.MARKETING_SMTP_PASS }}
+        run: node scripts/probe-marketing-smtp.mjs
 
   deploy-web:
     runs-on: ubuntu-latest
