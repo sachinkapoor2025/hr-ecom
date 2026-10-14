@@ -207,9 +207,7 @@ jobs:
             aws lambda get-function-configuration --function-name "$func" \
               --query "Environment.Variables.{hasPass:MARKETING_SMTP_PASS,host:MARKETING_SMTP_HOST,user:MARKETING_SMTP_USER,transport:MARKETING_TRANSPORT,table:EMAIL_CAMPAIGNS_TABLE}" \
               --output json > "$RUNNER_TEMP/fn.json" 2>>"$RUNNER_TEMP/logs.err" || true
-            summary=$(python3 -c 'import json,os,pathlib; p=pathlib.Path(os.environ["RUNNER_TEMP"])/"fn.json"; raw=p.read_text(errors="replace") if p.exists() else "{}";
-d=json.loads(raw or "{}"); pw=str(d.get("hasPass") or "").strip();
-print("host=%s user=%s transport=%s table=%s passwordSet=%s passwordLength=%s" % (d.get("host"), d.get("user"), d.get("transport"), d.get("table"), bool(pw), len(pw)))')
+            summary=$(jq -r '"host=\(.host) user=\(.user) transport=\(.transport) table=\(.table) passwordSet=\(((.hasPass // "") | length) > 0) passwordLength=\((.hasPass // "") | length)"' "$RUNNER_TEMP/fn.json" 2>/dev/null || echo "config unreadable")
             echo "::warning::Dev function env: ${summary}"
             for pattern in '"sendTest failed"' '"Marketing SMTP"' '"Task timed out"' '"Test email sent"'; do
               : > "$RUNNER_TEMP/dev-events.txt"
