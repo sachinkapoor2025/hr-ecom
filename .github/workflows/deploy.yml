@@ -198,24 +198,24 @@ jobs:
             exit 1
           fi
           echo "Log groups: $groups"
+          echo "::warning::Log groups: ${groups}"
           found=0
-          for group in $groups; do
-            : > "$RUNNER_TEMP/events.txt"
-            aws logs filter-log-events \
-              --log-group-name "$group" \
-              --start-time "$start" \
-              --filter-pattern '"Marketing SMTP"' \
-              --limit 5 \
-              --query "events[].message" \
-              --output text > "$RUNNER_TEMP/events.txt" 2>>"$RUNNER_TEMP/logs.err" || true
-            if [ -s "$RUNNER_TEMP/events.txt" ]; then
-              found=1
-              msg=$(tr '\n' ' ' < "$RUNNER_TEMP/events.txt" | head -c 700)
-              echo "::group::$group"
-              echo "$msg"
-              echo "::warning title=${group}::${msg}"
-              echo "::endgroup::"
-            fi
+          for pattern in '"sendTest failed"' '"queue send failed"' '"Marketing SMTP"' '"Failed to load SES"' '"MessageRejected"'; do
+            for group in $groups; do
+              : > "$RUNNER_TEMP/events.txt"
+              aws logs filter-log-events \
+                --log-group-name "$group" \
+                --start-time "$start" \
+                --filter-pattern "$pattern" \
+                --limit 3 \
+                --query "events[].message" \
+                --output text > "$RUNNER_TEMP/events.txt" 2>>"$RUNNER_TEMP/logs.err" || true
+              if [ -s "$RUNNER_TEMP/events.txt" ]; then
+                found=1
+                msg=$(tr '\n' ' ' < "$RUNNER_TEMP/events.txt" | head -c 650)
+                echo "::warning title=${group} ${pattern}::${msg}"
+              fi
+            done
           done
           if [ "$found" -eq 0 ]; then
             err=$(tr '\n' ' ' < "$RUNNER_TEMP/logs.err" | head -c 400)
