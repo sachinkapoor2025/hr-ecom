@@ -147,21 +147,34 @@ jobs:
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: ${{ env.AWS_REGION }}
       - uses: aws-actions/setup-sam@v3
-      - name: Publish API code to hr-ecom-api-dev
+      - name: Publish API code to the dev storefront function
         working-directory: infrastructure
         run: |
           sam build ApiFunction
           (cd .aws-sam/build/ApiFunction && zip -qr "$RUNNER_TEMP/api-dev.zip" .)
+          # The dev site calls API 0iwn6h2ds8. The function name is not hr-ecom-api-dev.
+          uris=$(aws apigatewayv2 get-integrations --api-id 0iwn6h2ds8 --query "Items[].IntegrationUri" --output text 2>"$RUNNER_TEMP/api-lookup.err" || true)
+          if [ -z "$uris" ]; then
+            err=$(tr '\n' ' ' < "$RUNNER_TEMP/api-lookup.err" | head -c 700)
+            echo "::error::could not read dev API integrations: ${err}"
+            exit 1
+          fi
+          func=$(printf '%s\n' $uris | sed -n 's/.*function:\([^/]*\).*/\1/p' | head -n 1)
+          if [ -z "$func" ]; then
+            echo "::error::no Lambda integration on API 0iwn6h2ds8: ${uris}"
+            exit 1
+          fi
+          echo "Updating dev function $func"
           if ! aws lambda update-function-code \
-            --function-name hr-ecom-api-dev \
+            --function-name "$func" \
             --zip-file "fileb://$RUNNER_TEMP/api-dev.zip" \
             > "$RUNNER_TEMP/lambda-update.json" \
             2> "$RUNNER_TEMP/lambda-update.err"; then
             err=$(tr '\n' ' ' < "$RUNNER_TEMP/lambda-update.err" | head -c 700)
-            echo "::error::dev lambda update failed: ${err}"
+            echo "::error::dev lambda update failed for ${func}: ${err}"
             exit 1
           fi
-          aws lambda wait function-updated --function-name hr-ecom-api-dev
+          aws lambda wait function-updated --function-name "$func"
 
   deploy-web:
     runs-on: ubuntu-latest
