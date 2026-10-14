@@ -47,12 +47,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const cityContent = getCityContent(slug);
   if (isExpressMetro(slug) && cityContent) {
     return pageMetadata({
-      title: `Send Gifts to ${cityContent.label} USA | Fast Delivery`,
+      title: `Send Diwali and Bhai Dooj Gifts to ${cityContent.label}, USA | Fast Delivery`,
       description:
         cityContent.metaExtra ??
-        `Send Gifts to ${cityContent.label}, USA with ${site.name}. Premium gifts, standard USA delivery, roli chawal included.`,
+        `Send Diwali gifts and Bhai Dooj gifts to ${cityContent.label}, USA with ${site.name}. Festive gift combos, sweets, chocolates, and dry fruit hampers with standard USA delivery.`,
       path,
-      keywords: `send gifts to ${cityContent.label}, gifts delivery ${cityContent.label}, UsaRakhi`,
+      keywords: `diwali gifts ${cityContent.label}, bhai dooj gifts ${cityContent.label}, sweet combos, dry fruit hampers, UsaRakhi`,
       absoluteTitle: true,
     });
   }
@@ -61,10 +61,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (secondary) {
     const place = `${secondary.name}, ${secondary.state}`;
     return pageMetadata({
-      title: `Send Gifts to ${place} | 5–7 Day USA Delivery | ${site.name}`,
-      description: `Send gifts to ${place} with ${site.name}. Domestic USA shipping in 5–7 business days, roli chawal on most orders, Stripe & Razorpay checkout.`,
+      title: `Send Diwali and Bhai Dooj Gifts to ${place} | 5–7 Day USA Delivery | ${site.name}`,
+      description: `Send Diwali gifts and Bhai Dooj gifts to ${place} with ${site.name}. Domestic USA shipping in 5–7 business days for sweet combos, chocolates, and dry fruit hampers. Stripe and Razorpay checkout.`,
       path,
-      keywords: `send gifts to ${secondary.name}, gifts delivery ${secondary.name}, gifts ${secondary.state}`,
+      keywords: `diwali gifts ${secondary.name}, bhai dooj gifts ${secondary.name}, ${secondary.state}, sweet combos, dry fruit hampers`,
       absoluteTitle: true,
     });
   }
@@ -78,7 +78,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       : location.state
         ? `${location.name}, ${location.state}`
         : location.name;
-  const primary = location.keywords[0] ?? `send gifts to ${location.name.toLowerCase()}`;
   const warehouseNote = location.isCaliforniaWarehouse
     ? " Ships from our California warehouse for faster West Coast delivery."
     : location.state
@@ -86,12 +85,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       : " Domestic USA shipping nationwide — no customs delays.";
   const regionNote =
     location.region === "state"
-      ? `Browse designer Single Rakhi, combos, and hampers for addresses across ${location.name}.`
+      ? `Browse Diwali gift combos, sweet boxes, chocolate combos, and dry fruit hampers for addresses across ${location.name}.`
       : `Order online for doorstep delivery in ${place}${location.state ? ` and nearby ${location.state} metros` : ""}.`;
 
   return pageMetadata({
-    title: `Send Gifts to ${place} | ${primary.charAt(0).toUpperCase() + primary.slice(1)} | ${site.name}`,
-    description: `${primary.charAt(0).toUpperCase() + primary.slice(1)} with ${site.name}.${warehouseNote} ${regionNote} Roli chawal included. Secure Stripe & Razorpay checkout.`,
+    title: `Send Diwali and Bhai Dooj Gifts to ${place} | ${site.name}`,
+    description: `Send Diwali gifts and Bhai Dooj gifts to ${place} with ${site.name}.${warehouseNote} ${regionNote} Secure Stripe and Razorpay checkout.`,
     path,
     keywords: location.keywords.slice(0, 12).join(", "),
     absoluteTitle: true,
@@ -129,11 +128,11 @@ export default async function SeoLocationPage({ params }: Props) {
         />
         <Breadcrumbs items={crumbs} />
         <h1 className="text-3xl font-bold text-primary mb-2">
-          Send Gifts to {cityContent.label}, USA
+          Send Diwali and Bhai Dooj Gifts to {cityContent.label}, USA
         </h1>
         <p className="text-slate-600 mb-8 max-w-3xl">
           {cityContent.metaExtra ??
-            `Premium gifts delivery to ${cityContent.label}. Domestic USA shipping — order from India, UK, Canada worldwide.`}
+            `Diwali gift combos and Bhai Dooj gifts for ${cityContent.label}. Domestic USA shipping for sweets, chocolates, and dry fruit hampers.`}
         </p>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {cityProducts.map((p) => (
@@ -166,7 +165,7 @@ export default async function SeoLocationPage({ params }: Props) {
         />
         <Breadcrumbs items={crumbs} />
         <h1 className="text-3xl font-bold text-primary mb-2">
-          Send Gifts to {place} — Online USA Delivery
+          Send Diwali and Bhai Dooj Gifts to {place}
         </h1>
         <p className="text-slate-600 mb-8 max-w-3xl">
           {secondaryCityIntro(secondary.slug, secondary.name, secondary.state)}
@@ -219,13 +218,11 @@ export default async function SeoLocationPage({ params }: Props) {
       />
       <Breadcrumbs items={crumbs} />
       <h1 className="text-3xl font-bold text-primary mb-2">
-        Send Gifts to {place} — Online USA Delivery
+        Send Diwali and Bhai Dooj Gifts to {place}
       </h1>
       <p className="text-slate-600 mb-8 max-w-3xl">
-        {location.keywords[0]
-          ? `${location.keywords[0].charAt(0).toUpperCase() + location.keywords[0].slice(1)} with ${site.name}.`
-          : `Premium gifts delivery to ${place}.`}{" "}
-        Domestic USA shipping, secure checkout, roli chawal on most rakhis.
+        Send Diwali gift combos, Bhai Dooj gifts, sweets, chocolates, and dry fruit hampers to {place}{" "}
+        with {site.name}. Domestic USA shipping and secure checkout.
       </p>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
@@ -236,7 +233,7 @@ export default async function SeoLocationPage({ params }: Props) {
       {cityProducts.length === 0 && (
         <p className="text-slate-500 mt-4">
           <Link href="/products" className="text-nav hover:underline">
-            Browse all Rakhis
+            Browse Diwali and Bhai Dooj gifts
           </Link>
         </p>
       )}

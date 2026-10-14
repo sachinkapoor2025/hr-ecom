@@ -44,13 +44,14 @@ export function CityContentSection({ content }: Props) {
 
           <section>
             <h3 className="text-xl font-semibold text-primary mb-3">
-              Raksha Bandhan in {content.label}
+              Diwali and Bhai Dooj in {content.label}
             </h3>
             <p className="mb-3">
-              Raksha Bandhan honors the bond between siblings. When you cannot tie rakhi in person, a
-              thoughtfully chosen rakhi delivered to {content.label} carries the same love and blessings.
-              {site.name} includes roli and chawal with most rakhis so your brother can complete the
-              traditional tilak ceremony at home.
+              Diwali fills the home with light, sweets, and time together. Bhai Dooj, a couple of days
+              later, honors the bond between brothers and sisters. When you cannot celebrate in person, a
+              Diwali gift combo or a Bhai Dooj hamper delivered to {content.label} still puts mithai,
+              chocolates, or dry fruits on the table. {site.name} ships these festive gifts within the
+              United States so your family can open them in time for the celebrations.
             </p>
           </section>
         </article>
@@ -81,7 +82,7 @@ export function CityContentSection({ content }: Props) {
           </section>
 
           <section className="bg-white border border-slate-200 rounded-xl p-6">
-            <h3 className="text-lg font-semibold text-primary mb-4">Shop by Category</h3>
+            <h3 className="text-lg font-semibold text-primary mb-4">Shop Diwali and Bhai Dooj gifts</h3>
             <ul className="space-y-3 text-sm">
               {content.relatedCategories.map((cat) => (
                 <li key={cat.href}>
@@ -97,8 +98,8 @@ export function CityContentSection({ content }: Props) {
           <section className="bg-nav text-white rounded-xl p-6">
             <h3 className="text-lg font-semibold mb-2">Need help with your {content.label} order?</h3>
             <p className="text-sm text-white/90 mb-4">
-              Our team assists sisters ordering from India and worldwide. Ask about delivery timing,
-              address format, or rakhi selection.
+              Our team helps families ordering from India and worldwide. Ask about delivery timing,
+              address format, or which Diwali or Bhai Dooj gift to choose.
             </p>
             <div className="flex flex-wrap gap-3 text-sm">
               <Link
@@ -108,7 +109,7 @@ export function CityContentSection({ content }: Props) {
                 Contact us
               </Link>
               <a
-                href={whatsappChatUrl(`Hi, I want to send rakhi to ${content.label}.`)}
+                href={whatsappChatUrl(`Hi, I want to send Diwali or Bhai Dooj gifts to ${content.label}.`)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="border border-white/60 px-4 py-2 rounded-lg hover:bg-white/10"
@@ -123,7 +124,7 @@ export function CityContentSection({ content }: Props) {
       {/* Full-width FAQ — uses both columns visually */}
       <section className="mt-10 pt-8 border-t border-slate-200">
         <h3 className="text-xl font-semibold text-primary mb-6">
-          Frequently Asked Questions — Rakhi Delivery to {content.label}
+          Frequently Asked Questions — Diwali and Bhai Dooj Gifts to {content.label}
         </h3>
         <div className="grid md:grid-cols-2 gap-6">
           {content.faqs.map((faq) => (

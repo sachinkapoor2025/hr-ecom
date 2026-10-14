@@ -11,15 +11,15 @@ export function buildSecondaryCityFaqs(city: SecondaryCity) {
   return [
     {
       q: `Can I send gifts to ${place} from India?`,
-      a: `Yes. Enter the ${place} delivery address at checkout on UsaRakhi.com. We ship domestically within the USA so your brother avoids international customs.`,
+      a: `Yes. Enter the ${place} delivery address at checkout on UsaRakhi.com. We ship domestically within the USA, so your family avoids international customs.`,
     },
     {
-      q: `How long does gifts delivery take to ${place}?`,
+      q: `How long does Diwali gift delivery take to ${place}?`,
       a: `Most orders to ${place} arrive in 5–7 business days after dispatch. For faster windows to major metros, see our ${city.nearbyMetroLabel} delivery page.`,
     },
     {
-      q: `When should I order for Raksha Bandhan 2026?`,
-      a: "Raksha Bandhan 2026 is August 28, 2026. Order today for standard USA delivery to major US cities to avoid the last-minute rush and ensure your Rakhi reaches the USA on time.",
+      q: `When should I order Diwali and Bhai Dooj gifts for ${city.name}?`,
+      a: "Diwali 2026 is November 8, and Bhai Dooj is November 10. Order early enough for standard USA delivery so sweets, chocolates, and dry fruit hampers arrive before the celebrations.",
     },
   ] as const;
 }
@@ -32,22 +32,21 @@ export function SecondaryCityLanding({ city }: { city: SecondaryCity }) {
     <div className="mt-12 pt-10 border-t border-slate-200 max-w-3xl space-y-8 text-slate-700 leading-relaxed">
       <section>
         <h2 className="text-2xl font-bold text-primary mb-4">
-          Send Gifts to {place} — USA domestic delivery
+          Send Diwali and Bhai Dooj Gifts to {place}
         </h2>
         <p className="mb-4">
-          {secondaryCityIntro(city.slug, city.name, city.state)} Sisters in India, the UK, Canada, and
-          worldwide order online; we fulfill from our US operations so your brother avoids
-          international customs delays.
+          {secondaryCityIntro(city.slug, city.name, city.state)} Families in India, the UK, Canada, and
+          worldwide order online. We fulfill from our US operations, so the gift avoids international
+          customs delays.
         </p>
         <p>
-          Shop single rakhis, combos with chocolates, kids rakhis, Bhaiya Bhabhi sets, and Lumba
-          rakhis. Most orders include complimentary roli and chawal. Checkout with Stripe (USD) or
-          Razorpay (INR).
+          Shop Diwali gift combos, Bhai Dooj gifts, sweet boxes, chocolate assortments, and dry fruit
+          hampers. Check out with Stripe (USD) or Razorpay (INR).
         </p>
       </section>
 
       <section>
-        <h3 className="text-lg font-semibold text-primary mb-3">Delivery to {city.name}</h3>
+        <h3 className="text-lg font-semibold text-primary mb-3">Diwali and Bhai Dooj delivery to {city.name}</h3>
         <p className="mb-3">
           Standard delivery to {place} is 5–7 business days after dispatch. Nearby major-metro coverage
           is listed on our{" "}
@@ -62,16 +61,16 @@ export function SecondaryCityLanding({ city }: { city: SecondaryCity }) {
       </section>
 
       <section>
-        <h3 className="text-lg font-semibold text-primary mb-3">Shop by category</h3>
+        <h3 className="text-lg font-semibold text-primary mb-3">Shop Diwali and Bhai Dooj gifts</h3>
         <ul className="grid sm:grid-cols-2 gap-2 text-sm">
           {(
             [
-              ["single-rakhi", "Single Rakhi"],
-              ["rakhi-combo", "Rakhi Combo"],
-              ["rakhi-hampers", "Rakhi Hamper"],
-              ["kids-rakhi", "Kids Rakhi"],
-              ["bhaiya-bhabhi-rakhi", "Bhaiya Bhabhi"],
-              ["lumba-rakhi", "Lumba Rakhi"],
+              ["diwali", "Diwali Gift Combos"],
+              ["bhai-dooj", "Bhai Dooj Gifts"],
+              ["sweet-combos", "Sweet Combos"],
+              ["chocolate-combos", "Chocolate Combos"],
+              ["dry-fruit-combos", "Dry Fruit Hampers"],
+              ["pooja-sets", "Pooja Sets"],
             ] as const
           ).map(([slug, label]) => (
             <li key={slug}>
@@ -84,7 +83,7 @@ export function SecondaryCityLanding({ city }: { city: SecondaryCity }) {
       </section>
 
       <section>
-        <h3 className="text-lg font-semibold text-primary mb-4">FAQ — {city.name}</h3>
+        <h3 className="text-lg font-semibold text-primary mb-4">FAQ — Diwali gifts to {city.name}</h3>
         <div className="space-y-4">
           {faqs.map((f) => (
             <div key={f.q}>

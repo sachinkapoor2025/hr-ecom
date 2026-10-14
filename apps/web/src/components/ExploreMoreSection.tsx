@@ -15,7 +15,7 @@ export function ExploreMoreSection() {
         Explore More
       </h2>
       <p className="text-sm text-slate-600 mb-6 max-w-3xl">
-        Browse Rakhi by city, type, recipient, price, and popular collections — fast links to help you find the right gift for USA delivery.
+        Browse Diwali gifts and Bhai Dooj gifts by city — festive gift combos, sweets, chocolates, and dry fruit hampers for USA delivery.
       </p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8">

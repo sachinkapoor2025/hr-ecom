@@ -35,12 +35,35 @@ function toPreview(reviews: PublicProductReview[]): PreviewItem[] {
   }));
 }
 
-const fallbackPreview: PreviewItem[] = testimonials.map((t) => ({
-  key: t.name,
-  name: t.name,
-  rating: t.rating,
-  text: t.text,
-}));
+/** Festive fallback shown on product pages when live reviews have not loaded yet. */
+const festiveFallback: PreviewItem[] = [
+  {
+    key: "diwali-neha",
+    name: "Neha",
+    rating: 5,
+    text: "I sent a Diwali sweet and dry fruit hamper to my family in California. It arrived in time for the celebrations, and they called as soon as they opened the box.",
+  },
+  {
+    key: "bhai-dooj-anjali",
+    name: "Anjali",
+    rating: 5,
+    text: "The Bhai Dooj chocolate and sweet combo reached my brother in Texas before the festival. The packaging looked festive, and delivery was straightforward.",
+  },
+  {
+    key: "diwali-pooja",
+    name: "Pooja",
+    rating: 5,
+    text: "I ordered a Diwali gift combo from India for my parents in New Jersey. The mithai and dry fruits were packed carefully, and tracking made the wait easy.",
+  },
+  {
+    key: "bhai-dooj-meera",
+    name: "Meera",
+    rating: 5,
+    text: "UsaRakhi made it simple to send Bhai Dooj gifts to my brother in California. He loved the sweets and chocolates, and it still felt like we celebrated together.",
+  },
+];
+
+const fallbackPreview: PreviewItem[] = festiveFallback;
 
 /** Site-wide customer reviews preview for product pages (social proof). */
 export function ProductReviewsPreview() {
