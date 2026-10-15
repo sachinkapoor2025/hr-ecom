@@ -205,10 +205,19 @@ export const testimonials = [
   },
 ] as const;
 
+export type PublicTestimonial = {
+  name: string;
+  rating: number;
+  timeAgo: string;
+  image: string;
+  text: string;
+};
+
 /** Original Rakhi stories stay in source. They are omitted from the shop through 10 November. */
-export function publicTestimonials() {
-  if (!isRakhiContentHidden()) return testimonials;
-  return testimonials.filter((review) => !textMentionsRakhi(review.text));
+export function publicTestimonials(): PublicTestimonial[] {
+  const reviews: PublicTestimonial[] = [...testimonials];
+  if (!isRakhiContentHidden()) return reviews;
+  return reviews.filter((review) => !textMentionsRakhi(review.text));
 }
 
 export const FESTIVE_SITE_DESCRIPTION =
