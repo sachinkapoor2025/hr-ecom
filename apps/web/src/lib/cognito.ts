@@ -60,6 +60,11 @@ function rejectInvalidEmail(email: string): Promise<never> | null {
   return Promise.reject(new Error(EMAIL_ADDRESS_MESSAGE));
 }
 
+/** Cognito usernames for this pool are email addresses. Keep login and reset on the same value. */
+function cognitoUsername(email: string): string {
+  return email.trim().toLowerCase();
+}
+
 export function login(email: string, password: string): Promise<AuthUser> {
   const invalid = rejectInvalidEmail(email);
   if (invalid) return invalid;
@@ -92,8 +97,9 @@ export function login(email: string, password: string): Promise<AuthUser> {
   }
 
   return new Promise((resolve, reject) => {
-    const user = new CognitoUser({ Username: email, Pool: userPool });
-    const details = new AuthenticationDetails({ Username: email, Password: password });
+    const username = cognitoUsername(email);
+    const user = new CognitoUser({ Username: username, Pool: userPool });
+    const details = new AuthenticationDetails({ Username: username, Password: password });
 
     user.authenticateUser(details, {
       onSuccess: (session) => {
@@ -102,7 +108,7 @@ export function login(email: string, password: string): Promise<AuthUser> {
         const groups = payload["cognito:groups"];
         const isSuperAdmin = cognitoHasGroup(groups, "super-admin");
         const authUser: AuthUser = {
-          email,
+          email: username,
           name: payload.name as string | undefined,
           token,
           isSuperAdmin,
@@ -133,13 +139,14 @@ export function register(
     return Promise.reject(new Error("Auth not configured."));
   }
 
+  const username = cognitoUsername(email);
   const attrs: CognitoUserAttribute[] = [
-    new CognitoUserAttribute({ Name: "email", Value: email }),
+    new CognitoUserAttribute({ Name: "email", Value: username }),
   ];
   if (name) attrs.push(new CognitoUserAttribute({ Name: "name", Value: name }));
 
   return new Promise((resolve, reject) => {
-    userPool.signUp(email, password, attrs, [], (err, result) => {
+    userPool.signUp(username, password, attrs, [], (err, result) => {
       if (err) reject(err);
       else {
         const delivery = result?.codeDeliveryDetails;
@@ -178,6 +185,34 @@ export function isUnconfirmedError(err: unknown): boolean {
   );
 }
 
+function authErrorMessage(err: unknown): string {
+  if (err instanceof Error && err.message) return err.message;
+  if (err && typeof err === "object" && "message" in err) {
+    const message = (err as { message?: unknown }).message;
+    if (typeof message === "string") return message;
+  }
+  return "";
+}
+
+/**
+ * Forgot-password on an account that never confirmed its email.
+ * Cognito: InvalidParameterException "no registered/verified email".
+ */
+export function isEmailUnverifiedError(err: unknown): boolean {
+  if (getAuthErrorCode(err) !== "InvalidParameterException") return false;
+  return /verified email|not verified|no registered\/verified/i.test(authErrorMessage(err));
+}
+
+/** Sign-in for an unconfirmed user is often reported as a bad password. */
+export function isIncorrectPasswordError(err: unknown): boolean {
+  if (getAuthErrorCode(err) !== "NotAuthorizedException") return false;
+  return /incorrect username or password/i.test(authErrorMessage(err));
+}
+
+export function isAlreadyConfirmedError(err: unknown): boolean {
+  return /already confirmed/i.test(authErrorMessage(err));
+}
+
 function getAuthErrorCode(err: unknown): string | undefined {
   if (!err || typeof err !== "object") return undefined;
   return (err as { code?: string; name?: string }).code ?? (err as { name?: string }).name;
@@ -206,8 +241,8 @@ export function formatAuthError(err: unknown): string {
   if (code === "UserNotFoundException") {
     return "If an account exists for that email, a reset code has been sent.";
   }
-  if (code === "InvalidParameterException") {
-    return "Check that your email is verified and try again. Unverified accounts must confirm email first.";
+  if (isEmailUnverifiedError(err)) {
+    return "This email is not verified yet. Enter the verification code we send you, then sign in with your password.";
   }
   if (err instanceof Error && err.message) return err.message;
   return "Authentication failed";
@@ -220,7 +255,7 @@ export function confirmSignUp(email: string, code: string): Promise<void> {
   if (!userPool) return Promise.reject(new Error("Auth not configured."));
 
   return new Promise((resolve, reject) => {
-    const user = new CognitoUser({ Username: email, Pool: userPool });
+    const user = new CognitoUser({ Username: cognitoUsername(email), Pool: userPool });
     user.confirmRegistration(code.trim(), true, (err) => {
       if (err) reject(err);
       else resolve();
@@ -235,7 +270,7 @@ export function resendConfirmationCode(email: string): Promise<void> {
   if (!userPool) return Promise.reject(new Error("Auth not configured."));
 
   return new Promise((resolve, reject) => {
-    const user = new CognitoUser({ Username: email, Pool: userPool });
+    const user = new CognitoUser({ Username: cognitoUsername(email), Pool: userPool });
     user.resendConfirmationCode((err) => {
       if (err) reject(err);
       else resolve();
@@ -258,7 +293,7 @@ export function forgotPassword(email: string): Promise<ForgotPasswordDelivery> {
   if (!userPool) return Promise.reject(new Error("Auth not configured."));
 
   return new Promise((resolve, reject) => {
-    const user = new CognitoUser({ Username: email.trim().toLowerCase(), Pool: userPool });
+    const user = new CognitoUser({ Username: cognitoUsername(email), Pool: userPool });
     user.forgotPassword({
       onSuccess: () => resolve({}),
       onFailure: (err) => reject(err),
@@ -284,7 +319,7 @@ export function confirmForgotPassword(
   if (!userPool) return Promise.reject(new Error("Auth not configured."));
 
   return new Promise((resolve, reject) => {
-    const user = new CognitoUser({ Username: email.trim().toLowerCase(), Pool: userPool });
+    const user = new CognitoUser({ Username: cognitoUsername(email), Pool: userPool });
     user.confirmPassword(code.trim(), newPassword, {
       onSuccess: () => resolve(),
       onFailure: (err) => reject(err),
