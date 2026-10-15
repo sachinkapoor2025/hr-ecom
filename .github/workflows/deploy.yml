@@ -211,11 +211,6 @@ jobs:
             apply_marketing_env "$name"
           done
 
-      - name: Send one marketing SMTP probe
-        env:
-          MARKETING_SMTP_PASS: ${{ secrets.MARKETING_SMTP_PASS }}
-        run: node scripts/probe-marketing-smtp.mjs
-
   deploy-web:
     runs-on: ubuntu-latest
     needs: deploy-api
