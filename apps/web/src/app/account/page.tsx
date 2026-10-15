@@ -121,25 +121,39 @@ function AccountLoginForm() {
         );
       }
     } catch (err) {
-      if (mode === "login" && (isUnconfirmedError(err) || isIncorrectPasswordError(err))) {
+      if (mode === "login" && isUnconfirmedError(err)) {
         try {
           await resendConfirmationCode(email);
           openEmailVerification(
-            "Your email is not verified yet, so sign-in is blocked even with the right password. We sent a verification code. Enter it below and we will sign you in."
+            "Your email is not verified yet. We sent a code from no-reply@verificationemail.com with the subject “Verify your UsaRakhi account”. Check inbox and spam, enter it below, and we will sign you in."
           );
           return;
         } catch (resendErr) {
           if (!isAlreadyConfirmedError(resendErr)) {
-            setError(formatAuthError(isUnconfirmedError(err) ? err : resendErr));
+            setError(formatAuthError(resendErr));
             return;
           }
         }
         setError(formatAuthError(err));
+      } else if (mode === "login" && isIncorrectPasswordError(err)) {
+        try {
+          await resendConfirmationCode(email);
+        } catch (resendErr) {
+          if (isAlreadyConfirmedError(resendErr)) {
+            setError("Incorrect email or password.");
+            return;
+          }
+          setError(formatAuthError(resendErr));
+          return;
+        }
+        setError(
+          "This site did not accept that email and password. www.usarakhi.com and this dev site keep separate accounts, so a live-site password is not stored here and Gmail will not have a code for it. Choose Register to create an account on this site. If you already registered here, check spam for no-reply@verificationemail.com, then use Have a verification code."
+        );
       } else if (mode === "forgot" && isEmailUnverifiedError(err)) {
         try {
           await resendConfirmationCode(email);
           openEmailVerification(
-            "This account is not verified yet, so a password reset cannot be sent. We sent a verification code instead. Enter it below, then sign in with your current password."
+            "This account is not verified yet, so a password reset cannot be sent. We sent a verification code from no-reply@verificationemail.com instead. Check inbox and spam, enter it below, then sign in with your current password."
           );
         } catch (resendErr) {
           setError(formatAuthError(resendErr));
