@@ -146,8 +146,8 @@ function AccountLoginForm() {
           setError(formatAuthError(resendErr));
           return;
         }
-        setError(
-          "This site did not accept that email and password. www.usarakhi.com and this dev site keep separate accounts, so a live-site password is not stored here and Gmail will not have a code for it. Choose Register to create an account on this site. If you already registered here, check spam for no-reply@verificationemail.com, then use Have a verification code."
+        openEmailVerification(
+          "Your email is not verified yet, so sign-in is blocked even with the right password. We sent a code from no-reply@verificationemail.com with the subject “Verify your UsaRakhi account”. Check inbox and spam, enter it below, and we will sign you in."
         );
       } else if (mode === "forgot" && isEmailUnverifiedError(err)) {
         try {

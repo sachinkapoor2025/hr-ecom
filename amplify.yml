@@ -17,28 +17,36 @@ applications:
               STACK_NAME=${STACK_NAME:-hr-ecom-prod}
               ENV_FILE="apps/web/.env.production"
               if [ ! -d "apps/web" ]; then ENV_FILE=".env.production"; fi
+              # Live and dev share the production user pool, so one email and password signs in on both.
+              # These ids are already public in the storefront bundle. CloudFormation overrides them when the build can read hr-ecom-prod.
+              PROD_POOL="us-east-1_TXu5ecEgd"
+              PROD_CLIENT="1vjk8p4d81d0oi34it8t1i4a9m"
               if command -v aws >/dev/null 2>&1; then
                 output() {
                   aws cloudformation describe-stacks \
-                    --stack-name "$STACK_NAME" \
-                    --query "Stacks[0].Outputs[?OutputKey=='$1'].OutputValue | [0]" \
-                    --output text 2>/dev/null
+                    --stack-name "$1" \
+                    --query "Stacks[0].Outputs[?OutputKey=='$2'].OutputValue | [0]" \
+                    --output text 2>/dev/null || true
                 }
-                USER_POOL_ID=$(output UserPoolId || true)
-                USER_POOL_CLIENT_ID=$(output UserPoolClientId || true)
-                API_URL=$(output ApiUrl || true)
-                CLOUDFRONT_DOMAIN=$(output CloudFrontDomain || true)
-                if [ -n "$USER_POOL_ID" ] && [ "$USER_POOL_ID" != "None" ] && [ -n "$USER_POOL_CLIENT_ID" ] && [ "$USER_POOL_CLIENT_ID" != "None" ]; then
-                  {
-                    echo "NEXT_PUBLIC_COGNITO_USER_POOL_ID=$USER_POOL_ID"
-                    echo "NEXT_PUBLIC_COGNITO_CLIENT_ID=$USER_POOL_CLIENT_ID"
-                    echo "NEXT_PUBLIC_COGNITO_REGION=${AWS_REGION:-us-east-1}"
-                    if [ -n "$API_URL" ] && [ "$API_URL" != "None" ]; then echo "NEXT_PUBLIC_API_URL=$API_URL"; fi
-                    if [ -n "$CLOUDFRONT_DOMAIN" ] && [ "$CLOUDFRONT_DOMAIN" != "None" ]; then echo "NEXT_PUBLIC_CDN_URL=https://$CLOUDFRONT_DOMAIN"; fi
-                  } >> "$ENV_FILE"
-                fi
+                LOOKUP_POOL=$(output hr-ecom-prod UserPoolId)
+                LOOKUP_CLIENT=$(output hr-ecom-prod UserPoolClientId)
+                if [ -n "$LOOKUP_POOL" ] && [ "$LOOKUP_POOL" != "None" ]; then PROD_POOL="$LOOKUP_POOL"; fi
+                if [ -n "$LOOKUP_CLIENT" ] && [ "$LOOKUP_CLIENT" != "None" ]; then PROD_CLIENT="$LOOKUP_CLIENT"; fi
+                API_URL=$(output "$STACK_NAME" ApiUrl)
+                CLOUDFRONT_DOMAIN=$(output "$STACK_NAME" CloudFrontDomain)
+                {
+                  echo "NEXT_PUBLIC_COGNITO_USER_POOL_ID=$PROD_POOL"
+                  echo "NEXT_PUBLIC_COGNITO_CLIENT_ID=$PROD_CLIENT"
+                  echo "NEXT_PUBLIC_COGNITO_REGION=${AWS_REGION:-us-east-1}"
+                  if [ -n "$API_URL" ] && [ "$API_URL" != "None" ]; then echo "NEXT_PUBLIC_API_URL=$API_URL"; fi
+                  if [ -n "$CLOUDFRONT_DOMAIN" ] && [ "$CLOUDFRONT_DOMAIN" != "None" ]; then echo "NEXT_PUBLIC_CDN_URL=https://$CLOUDFRONT_DOMAIN"; fi
+                } >> "$ENV_FILE"
               fi
-            - npm run build -w @hr-ecom/web
+              # Amplify branch env vars are already set and would otherwise keep the separate dev pool.
+              export NEXT_PUBLIC_COGNITO_USER_POOL_ID="$PROD_POOL"
+              export NEXT_PUBLIC_COGNITO_CLIENT_ID="$PROD_CLIENT"
+              export NEXT_PUBLIC_COGNITO_REGION="${AWS_REGION:-us-east-1}"
+              npm run build -w @hr-ecom/web
       artifacts:
         baseDirectory: apps/web/.next
         files:
