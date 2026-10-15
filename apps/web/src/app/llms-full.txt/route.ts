@@ -1,9 +1,9 @@
 import { api } from "@/lib/api";
-import { site, navItems, faqs, rakhiSetsMenu } from "@/lib/site";
+import { publicSiteDescription, site, navItems, faqs, rakhiSetsMenu } from "@/lib/site";
 import { siteUrl } from "@/lib/env";
 import { getCatalogProducts } from "@/lib/catalog-fallback";
 import { stripHtml } from "@/lib/html-text";
-import type { Product } from "@hr-ecom/shared";
+import { isRakhiContentHidden, isRakhiSeasonPaused, sanitizePublicProductCopy, type Product } from "@hr-ecom/shared";
 
 /**
  * llms-full.txt — detailed product catalog for AI assistants (GEO).
@@ -22,7 +22,42 @@ export async function GET() {
   for (const p of getCatalogProducts()) {
     if (!bySlug.has(p.slug)) bySlug.set(p.slug, p);
   }
-  products = [...bySlug.values()];
+  products = [...bySlug.values()]
+    .filter((product) => !isRakhiSeasonPaused(product))
+    .map((product) => sanitizePublicProductCopy(product));
+
+  if (isRakhiContentHidden()) {
+    const festiveCategories = navItems
+      .filter((n): n is typeof n & { category: string } => "category" in n)
+      .map((n) => `- ${n.label}: ${siteUrl}${n.href}`)
+      .join("\n");
+    const festiveProducts = products
+      .map((p) => {
+        const desc = stripHtml(p.description).replace(/\s+/g, " ").slice(0, 220);
+        return `- **${p.name}** | ${p.currency} ${p.price} | ${siteUrl}/products/${p.slug}\n  ${desc}`;
+      })
+      .join("\n\n");
+    const body = `# ${site.name} — Diwali and Bhai Dooj catalog
+
+> ${publicSiteDescription()}
+
+## Categories
+${festiveCategories}
+
+## Products
+${festiveProducts}
+
+## Contact
+Email: ${site.supportEmail} | WhatsApp: ${site.whatsappDisplay}
+`;
+    return new Response(body, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Cache-Control": "public, max-age=3600",
+        "X-Robots-Tag": "all",
+      },
+    });
+  }
 
   const categories = [
     ...rakhiSetsMenu.items.map((n) => `- ${n.label}: ${siteUrl}${n.href}`),

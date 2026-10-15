@@ -1,23 +1,32 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { faqs, site } from "@/lib/site";
+import { isRakhiContentHidden } from "@hr-ecom/shared";
+import { publicFaqs, site } from "@/lib/site";
 import { JsonLd } from "@/components/JsonLd";
 import { faqJsonLd, pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = pageMetadata({
-  title: "FAQ — Send Rakhi to USA",
-  description:
-    "Frequently asked questions about sending Rakhi to USA: delivery time, ordering from India, chocolates, Bhaiya Bhabhi sets, and Raksha Bandhan shipping.",
-  path: "/faq",
-});
+export function generateMetadata(): Metadata {
+  const hidden = isRakhiContentHidden();
+  return pageMetadata({
+    title: hidden ? "FAQ — Diwali and Bhai Dooj Gifts USA" : "FAQ — Send Rakhi to USA",
+    description: hidden
+      ? "Frequently asked questions about Diwali and Bhai Dooj gift delivery in the USA, shipping time, and ordering from India."
+      : "Frequently asked questions about sending Rakhi to USA: delivery time, ordering from India, chocolates, Bhaiya Bhabhi sets, and Raksha Bandhan shipping.",
+    path: "/faq",
+  });
+}
 
 export default function FaqPage() {
+  const faqs = publicFaqs();
+  const hidden = isRakhiContentHidden();
   return (
     <div className="max-w-3xl mx-auto px-4 py-12">
       <JsonLd data={faqJsonLd(faqs)} />
       <h1 className="text-3xl font-bold text-primary mb-2">Frequently Asked Questions</h1>
       <p className="text-slate-600 mb-8">
-        Everything you need to know about sending Rakhi to USA with {site.name}.
+        {hidden
+          ? `Answers about Diwali and Bhai Dooj gift delivery in the USA with ${site.name}.`
+          : `Everything you need to know about sending Rakhi to USA with ${site.name}.`}
       </p>
       <div className="space-y-4">
         {faqs.map((f) => (
@@ -32,15 +41,27 @@ export default function FaqPage() {
       </div>
       <p className="mt-10 text-sm text-slate-500">
         More guides:{" "}
-        <Link href="/send-rakhi-from-india" className="text-nav hover:underline">
-          Send Rakhi from India
-        </Link>
+        {hidden ? (
+          <Link href="/diwali-to-usa" className="text-nav hover:underline">
+            Diwali gifts
+          </Link>
+        ) : (
+          <Link href="/send-rakhi-from-india" className="text-nav hover:underline">
+            Send Rakhi from India
+          </Link>
+        )}
         {" · "}
         <Link href="/blog" className="text-nav hover:underline">Blog</Link>
         {" · "}
         <Link href="/shipping" className="text-nav hover:underline">Shipping</Link>
         {" · "}
-        <Link href="/raksha-bandhan" className="text-nav hover:underline">Raksha Bandhan 2026</Link>
+        {hidden ? (
+          <Link href="/bhai-dooj-to-usa" className="text-nav hover:underline">
+            Bhai Dooj gifts
+          </Link>
+        ) : (
+          <Link href="/raksha-bandhan" className="text-nav hover:underline">Raksha Bandhan 2026</Link>
+        )}
       </p>
     </div>
   );

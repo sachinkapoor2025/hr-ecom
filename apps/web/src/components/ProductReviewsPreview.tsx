@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { testimonials } from "@/lib/site";
+import { isRakhiContentHidden, textMentionsRakhi } from "@hr-ecom/shared";
+import { publicTestimonials, testimonials } from "@/lib/site";
 import { api } from "@/lib/api";
 import type { PublicProductReview } from "@hr-ecom/shared";
 
@@ -35,47 +36,29 @@ function toPreview(reviews: PublicProductReview[]): PreviewItem[] {
   }));
 }
 
-/** Festive fallback shown on product pages when live reviews have not loaded yet. */
-const festiveFallback: PreviewItem[] = [
-  {
-    key: "diwali-neha",
-    name: "Neha",
-    rating: 5,
-    text: "I sent a Diwali sweet and dry fruit hamper to my family in California. It arrived in time for the celebrations, and they called as soon as they opened the box.",
-  },
-  {
-    key: "bhai-dooj-anjali",
-    name: "Anjali",
-    rating: 5,
-    text: "The Bhai Dooj chocolate and sweet combo reached my brother in Texas before the festival. The packaging looked festive, and delivery was straightforward.",
-  },
-  {
-    key: "diwali-pooja",
-    name: "Pooja",
-    rating: 5,
-    text: "I ordered a Diwali gift combo from India for my parents in New Jersey. The mithai and dry fruits were packed carefully, and tracking made the wait easy.",
-  },
-  {
-    key: "bhai-dooj-meera",
-    name: "Meera",
-    rating: 5,
-    text: "UsaRakhi made it simple to send Bhai Dooj gifts to my brother in California. He loved the sweets and chocolates, and it still felt like we celebrated together.",
-  },
-];
-
-const fallbackPreview: PreviewItem[] = festiveFallback;
+function historicalPreview(): PreviewItem[] {
+  return publicTestimonials().map((review) => ({
+    key: review.name,
+    name: review.name,
+    rating: review.rating,
+    text: review.text,
+  }));
+}
 
 /** Site-wide customer reviews preview for product pages (social proof). */
 export function ProductReviewsPreview() {
-  const [items, setItems] = useState<PreviewItem[]>(fallbackPreview);
-  const [count, setCount] = useState<number>(testimonials.length);
+  const [items, setItems] = useState<PreviewItem[]>(() => historicalPreview());
+  const [count, setCount] = useState<number>(publicTestimonials().length || testimonials.length);
 
   useEffect(() => {
     let cancelled = false;
     api<{ reviews: PublicProductReview[] }>("/reviews", { revalidate: false })
       .then((d) => {
         if (cancelled) return;
-        const live = d.reviews ?? [];
+        const live = (d.reviews ?? []).filter((review) => {
+          if (!isRakhiContentHidden()) return true;
+          return !textMentionsRakhi(`${review.title ?? ""} ${review.body ?? ""}`);
+        });
         if (!live.length) return;
         setItems(toPreview(live));
         setCount(live.length);
@@ -90,6 +73,16 @@ export function ProductReviewsPreview() {
 
   const avg = items.reduce((s, t) => s + t.rating, 0) / (items.length || 1);
   const preview = items.slice(0, 2);
+
+  if (!preview.length) {
+    return (
+      <p className="text-xs text-slate-500">
+        <Link href="/reviews" className="text-nav font-semibold hover:underline">
+          Write a review after delivery →
+        </Link>
+      </p>
+    );
+  }
 
   return (
     <div className="space-y-4">

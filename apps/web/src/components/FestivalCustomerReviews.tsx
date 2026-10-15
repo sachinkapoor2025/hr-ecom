@@ -1,30 +1,8 @@
 import Link from "next/link";
+import { isRakhiContentHidden, textMentionsRakhi } from "@hr-ecom/shared";
 import type { GoogleReview } from "@/lib/google-reviews";
 
 const FESTIVAL_REVIEW = /diwali|bhai\s*dooj/i;
-
-const placeholders = [
-  {
-    title: "Diwali gift combos",
-    detail:
-      "Placeholder for a note about a Diwali hamper with mithai, dry fruits, chocolates, or a pooja set, delivered to a US address.",
-  },
-  {
-    title: "Bhai Dooj gifts",
-    detail:
-      "Placeholder for a note about a Bhai Dooj box for a brother in the USA, such as sweets, chocolates, or a dry fruit hamper.",
-  },
-  {
-    title: "Festive sweets and chocolates",
-    detail:
-      "Placeholder for a note about kaju katli, laddoo, or a chocolate combo shared at a Diwali or Bhai Dooj celebration.",
-  },
-  {
-    title: "Dry fruit hampers",
-    detail:
-      "Placeholder for a note about almonds, cashews, or pistachios packed in a festive gift box and delivered in the USA.",
-  },
-] as const;
 
 function StarRating({ rating }: { rating: number }) {
   return (
@@ -32,7 +10,7 @@ function StarRating({ rating }: { rating: number }) {
       {Array.from({ length: 5 }, (_, i) => (
         <svg
           key={i}
-          className={`h-4 w-4 ${i < rating ? "text-amber-400" : "text-slate-200"}`}
+          className={`w-4 h-4 ${i < rating ? "text-gold" : "text-slate-200"}`}
           viewBox="0 0 20 20"
           fill="currentColor"
           aria-hidden
@@ -44,64 +22,77 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
+function CustomerBadge() {
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
+      <svg className="w-3 h-3" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
+        <path
+          fillRule="evenodd"
+          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
+          clipRule="evenodd"
+        />
+      </svg>
+      UsaRakhi customer
+    </span>
+  );
+}
+
+function visibleFestivalReviews(reviews: GoogleReview[]): GoogleReview[] {
+  return reviews.filter((review) => {
+    if (!review.text?.trim()) return false;
+    if (isRakhiContentHidden() && textMentionsRakhi(review.text)) return false;
+    return FESTIVAL_REVIEW.test(review.text);
+  });
+}
+
+/** Same portrait cards as the original customer stories. No placeholder quotes. */
 export function FestivalCustomerReviews({ reviews }: { reviews: GoogleReview[] }) {
-  const festival = reviews.filter((review) => review.fromGoogle && FESTIVAL_REVIEW.test(review.text));
+  const festival = visibleFestivalReviews(reviews);
+  if (!festival.length) return null;
 
   return (
-    <section className="border-t border-slate-100 bg-white py-10 md:py-14" aria-labelledby="festival-reviews-heading">
-      <div className="mx-auto max-w-7xl px-4">
-        <div className="mb-5 flex items-end justify-between gap-3">
+    <section className="bg-white border-t border-slate-100 py-12 md:py-16" aria-labelledby="festival-reviews-heading">
+      <div className="max-w-7xl mx-auto px-4">
+        <div className="mb-8 flex items-end justify-between gap-3">
           <div className="min-w-0">
-            <h2 id="festival-reviews-heading" className="text-xl font-bold text-slate-900 md:text-2xl">
+            <h2 id="festival-reviews-heading" className="text-2xl md:text-3xl font-bold text-primary">
               Diwali &amp; Bhai Dooj customer reviews
             </h2>
-            <p className="mt-1 max-w-2xl text-sm text-slate-500">
-              {festival.length > 0
-                ? "Feedback from customers that mentions Diwali or Bhai Dooj gifts."
-                : "Festival-specific reviews are not available yet. The cards below are labelled placeholders, not customer testimonials."}
+            <p className="mt-3 text-slate-600 text-sm md:text-base max-w-2xl leading-relaxed">
+              Stories from customers who mentioned a Diwali or Bhai Dooj gift.{" "}
+              <Link href="/reviews" className="text-nav font-semibold hover:underline">
+                Share your review →
+              </Link>
             </p>
           </div>
-          <Link
-            href="/reviews"
-            className="shrink-0 rounded-md bg-primary px-3.5 py-1.5 text-sm font-semibold text-white hover:opacity-90"
-          >
-            All reviews
-          </Link>
         </div>
 
-        {festival.length > 0 ? (
-          <div className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:grid-cols-2 md:gap-5 md:overflow-visible md:px-0 lg:grid-cols-3">
-            {festival.map((review) => (
-              <article
-                key={review.id}
-                className="flex w-[min(100%,20.5rem)] shrink-0 snap-start flex-col rounded-2xl border border-slate-200 bg-[#f7f8fa] p-4 shadow-sm md:w-full"
-              >
-                <p className="text-xs font-semibold uppercase tracking-wide text-nav">Customer review</p>
-                <p className="mt-2 font-semibold text-slate-900">{review.authorName}</p>
-                {review.dateLabel ? <p className="text-sm text-slate-400">{review.dateLabel}</p> : null}
-                <div className="mt-2">
-                  <StarRating rating={review.rating} />
-                </div>
-                {review.text ? <p className="mt-3 text-sm leading-relaxed text-slate-700">{review.text}</p> : null}
-              </article>
-            ))}
-          </div>
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {placeholders.map((item) => (
-              <article
-                key={item.title}
-                className="flex flex-col rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4"
-              >
-                <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">
-                  Placeholder — not a customer review
-                </p>
-                <h3 className="mt-2 font-semibold text-primary">{item.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-600">{item.detail}</p>
-              </article>
-            ))}
-          </div>
-        )}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-6">
+          {festival.map((review) => (
+            <article key={review.id} className="flex flex-col">
+              <div className="relative w-full max-w-[220px] aspect-[2/3] rounded-[999px] overflow-hidden bg-slate-100 mb-5 mx-auto sm:mx-0">
+                {review.profilePhotoUrl ? (
+                  <img
+                    src={review.profilePhotoUrl}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-primary text-3xl font-bold text-white">
+                    {(review.authorName.trim().charAt(0) || "?").toUpperCase()}
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-2">
+                <h3 className="text-lg font-bold text-slate-800">{review.authorName}</h3>
+                <CustomerBadge />
+                {review.dateLabel ? <span className="text-xs text-slate-400">{review.dateLabel}</span> : null}
+              </div>
+              <StarRating rating={review.rating} />
+              <p className="mt-3 text-sm text-slate-600 leading-relaxed">{review.text}</p>
+            </article>
+          ))}
+        </div>
       </div>
     </section>
   );

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { testimonials } from "@/lib/site";
+import { publicTestimonials } from "@/lib/site";
 import { resolveImageUrl } from "@/lib/images";
 
 function StarRating({ rating }: { rating: number }) {
@@ -40,6 +40,9 @@ type CustomerReviewsProps = {
 };
 
 export function CustomerReviews({ showIntro = true }: CustomerReviewsProps) {
+  const reviews = publicTestimonials();
+  if (!reviews.length) return null;
+
   return (
     <section className="bg-white border-t border-slate-100 py-12 md:py-16">
       <div className="max-w-7xl mx-auto px-4">
@@ -58,7 +61,7 @@ export function CustomerReviews({ showIntro = true }: CustomerReviewsProps) {
         {!showIntro && <div className="mb-8" />}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-6">
-          {testimonials.map((review) => (
+          {reviews.map((review) => (
             <article key={review.name} className="flex flex-col">
               <div className="relative w-full max-w-[220px] aspect-[2/3] rounded-[999px] overflow-hidden bg-slate-100 mb-5 mx-auto sm:mx-0">
                 <Image

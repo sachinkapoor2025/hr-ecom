@@ -1,5 +1,11 @@
 import type { Product } from "@hr-ecom/shared";
-import { getProductCdnBase, isRakhiSeasonPaused, resolveProductImageUrl, sortAvailableProductsFirst } from "@hr-ecom/shared";
+import {
+  getProductCdnBase,
+  isRakhiSeasonPaused,
+  resolveProductImageUrl,
+  sanitizePublicProductCopy,
+  sortAvailableProductsFirst,
+} from "@hr-ecom/shared";
 import { api } from "./api";
 import { homeCategoryOrder } from "./site";
 import {
@@ -22,8 +28,9 @@ const productMemoryCache = new Map<string, { product: Product; at: number }>();
 const FRESH_PRODUCT_FETCH = { revalidate: false as const };
 
 function rememberProduct(product: Product): Product {
-  productMemoryCache.set(product.slug, { product, at: Date.now() });
-  return product;
+  const visible = sanitizePublicProductCopy(product);
+  productMemoryCache.set(visible.slug, { product: visible, at: Date.now() });
+  return visible;
 }
 
 function rememberProducts(products: Product[]): Product[] {
@@ -64,10 +71,14 @@ export async function loadProduct(slug: string): Promise<Product | null> {
 
     const catalog = getCatalogProduct(slug);
     if (catalog && (allowCatalogFallback(catalog) || isProductMissingError(err))) {
-      return catalog;
+      if (isRakhiSeasonPaused(catalog)) return null;
+      return sanitizePublicProductCopy(catalog);
     }
 
-    if (process.env.NODE_ENV !== "production") return catalog ?? null;
+    if (process.env.NODE_ENV !== "production") {
+      if (!catalog || isRakhiSeasonPaused(catalog)) return null;
+      return sanitizePublicProductCopy(catalog);
+    }
     return null;
   }
 }
@@ -88,10 +99,12 @@ export async function loadProducts(params?: {
       data.products.filter((product) => !isRakhiSeasonPaused(product) && (product.inventory ?? 0) > 0)
     );
   } catch {
-    if (params?.category) {
-      return getCatalogProductsByCategory(params.category);
-    }
-    return getCatalogProducts();
+    const catalog = params?.category
+      ? getCatalogProductsByCategory(params.category)
+      : getCatalogProducts();
+    return catalog
+      .filter((product) => !isRakhiSeasonPaused(product))
+      .map((product) => sanitizePublicProductCopy(product));
   }
 }
 
@@ -108,6 +121,8 @@ export async function loadProductsByCategory(categorySlug: string): Promise<Prod
   }
   return sortAvailableProductsFirst(
     mergeProductsPreferExisting(products, getCatalogProductsByCategory(categorySlug))
+      .filter((product) => !isRakhiSeasonPaused(product))
+      .map((product) => sanitizePublicProductCopy(product))
   );
 }
 

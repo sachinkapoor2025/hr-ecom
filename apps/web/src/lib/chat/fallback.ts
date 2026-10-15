@@ -1,4 +1,5 @@
-import { site, navItems, faqs, rakhiSetsMenu } from "@/lib/site";
+import { isRakhiContentHidden } from "@hr-ecom/shared";
+import { site, navItems, publicFaqs, faqs, rakhiSetsMenu } from "@/lib/site";
 import { categoryHref } from "@/lib/category-urls";
 import { siteUrl } from "@/lib/env";
 
@@ -40,6 +41,28 @@ function greetingReply(): string {
   return `Welcome to UsaRakhi! I can help you find the perfect Rakhi, explain USA delivery, or answer questions about shipping and payment.\n\nPopular picks:\n- [Single Rakhi](${siteUrl}${categoryHref("single-rakhi")})\n- [Rakhi Combo with chocolates](${siteUrl}${categoryHref("rakhi-combo")})\n- [Kids Rakhi](${siteUrl}${categoryHref("kids-rakhi")})\n\nWhat would you like to know?`;
 }
 
+function festiveFallback(userMessage: string): string {
+  const q = userMessage.trim().toLowerCase();
+  if (!q || /hi|hello|hey|help/.test(q)) {
+    return `Welcome to UsaRakhi. I can help with Diwali gifts, Bhai Dooj gifts, USA delivery, and payment.\n\nShop:\n- [Diwali gifts](${siteUrl}${categoryHref("diwali")})\n- [Bhai Dooj gifts](${siteUrl}${categoryHref("bhai-dooj")})\n- [All products](${siteUrl}/products)`;
+  }
+  if (/deliver|shipping|how long|arriv|business day/.test(q)) {
+    return `Standard USA delivery is 5 business days, with free shipping on a $15 minimum cart. Orange County products ship free.\n\nMore details: [Shipping & Delivery](${siteUrl}/shipping)`;
+  }
+  if (/diwali|bhai|festival|gift|sweet|chocolate|pooja|product|sell|what/.test(q)) {
+    return `We are shipping Diwali and Bhai Dooj gift hampers: sweets, dry fruits, chocolates, and pooja sets.\n\n- [Diwali gifts](${siteUrl}${categoryHref("diwali")})\n- [Bhai Dooj gifts](${siteUrl}${categoryHref("bhai-dooj")})`;
+  }
+  if (/india|uk|canada|upi|inr|pay|stripe|razorpay/.test(q)) {
+    return `You can order from India or anywhere else. Pay in INR with Razorpay or in USD with Stripe, and enter a US delivery address.\n\n[Shop gifts](${siteUrl}/products)`;
+  }
+  const faq = publicFaqs().find((item) => {
+    const words = item.q.toLowerCase().split(/\W+/).filter((w) => w.length > 3);
+    return words.filter((w) => q.includes(w)).length >= 2;
+  });
+  if (faq) return faq.a;
+  return `I can help with Diwali and Bhai Dooj gifts, shipping, and orders.\n\n[All products](${siteUrl}/products) · WhatsApp: ${site.whatsappDisplay}`;
+}
+
 function findFaqMatch(query: string): string | null {
   const q = query.toLowerCase();
   for (const faq of faqs) {
@@ -52,6 +75,7 @@ function findFaqMatch(query: string): string | null {
 
 /** Rule-based replies when OPENAI_API_KEY is not configured. */
 export function fallbackChatReply(userMessage: string): string {
+  if (isRakhiContentHidden()) return festiveFallback(userMessage);
   const q = userMessage.trim().toLowerCase();
 
   if (!q) return greetingReply();

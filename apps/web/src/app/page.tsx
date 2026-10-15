@@ -77,7 +77,11 @@ export default async function HomePage() {
 
   return (
     <div>
-      <JsonLd data={[faqJsonLd(homeSeoContent.faqs), howToSendRakhiJsonLd()]} />
+      <JsonLd
+        data={[faqJsonLd(homeSeoContent.faqs), howToSendRakhiJsonLd()].filter(
+          (item): item is NonNullable<typeof item> => item != null
+        )}
+      />
       <HomeHero banners={getHomeBanners()} />
       <UsarakhiShareEmotionsBanner />
       <CategoryShopIcons />

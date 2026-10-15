@@ -1,5 +1,6 @@
 import {
   addressFingerprint,
+  DEFAULT_SENDER_MESSAGE,
   cartLineUnitTotal,
   isValidShippingPhone,
   quoteAddressShipmentShipping,
@@ -24,7 +25,7 @@ export type DeliveryUnit = {
   address: ShippingAddress;
 };
 
-/** Expand cart lines into one delivery unit per quantity (each Rakhi can ship separately). */
+/** Expand cart lines into one delivery unit per quantity (each gift can ship separately). */
 export function expandCartToDeliveryUnits(
   items: CartItem[],
   previous: DeliveryUnit[] = []
@@ -61,9 +62,7 @@ function withSender(
     ...address,
     country: "US",
     senderName: (primary.senderName ?? "").trim() || "Sender",
-    senderMessage:
-      (primary.senderMessage ?? "").trim() ||
-      "Happy Raksha Bandhan! Please accept this bundle of love.",
+    senderMessage: (primary.senderMessage ?? "").trim() || DEFAULT_SENDER_MESSAGE,
   };
 }
 

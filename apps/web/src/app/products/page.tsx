@@ -69,8 +69,8 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   const params = await searchParams;
   if (params.search) {
     return pageMetadata({
-      title: `Search: ${params.search} — Rakhi USA`,
-      description: `Search results for "${params.search}" — premium Rakhis with USA delivery from UsaRakhi.`,
+      title: `Search: ${params.search} — Festive gifts USA`,
+      description: `Search results for "${params.search}" — Diwali and Bhai Dooj gifts with USA delivery from UsaRakhi.`,
       path: `/products?search=${encodeURIComponent(params.search)}`,
     });
   }
@@ -115,7 +115,7 @@ export default async function ProductsPage({ searchParams }: Props) {
       api<{ categories: Category[] }>("/categories", { revalidate: false }),
     ]);
     products = liveProducts;
-    categories = categoriesData.categories;
+    categories = categoriesData.categories ?? [];
   } catch {
     products = [];
     categories = [];

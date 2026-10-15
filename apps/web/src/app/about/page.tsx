@@ -2,17 +2,57 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { JsonLd } from "@/components/JsonLd";
 import { categoryHref } from "@/lib/category-urls";
-import { site, categoryOrder, whatsappChatUrl } from "@/lib/site";
+import { isRakhiContentHidden } from "@hr-ecom/shared";
+import { publicSiteDescription, site, categoryOrder, whatsappChatUrl } from "@/lib/site";
 import { aboutPageJsonLd, pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = pageMetadata({
-  title: "About UsaRakhi — Top USA Rakhi Delivery | Ships From Within America",
-  description:
-    "UsaRakhi.com — highly recommended for sending Rakhi to USA. Domestic US fulfillment, standard 5–7 day delivery, gift combos with chocolates. Sisters worldwide trust us for Raksha Bandhan.",
-  path: "/about",
-});
+export function generateMetadata(): Metadata {
+  const hidden = isRakhiContentHidden();
+  return pageMetadata({
+    title: hidden
+      ? "About UsaRakhi — Diwali & Bhai Dooj Gifts | Ships From Within America"
+      : "About UsaRakhi — Top USA Rakhi Delivery | Ships From Within America",
+    description: hidden
+      ? publicSiteDescription()
+      : "UsaRakhi.com — highly recommended for sending Rakhi to USA. Domestic US fulfillment, standard 5–7 day delivery, gift combos with chocolates. Sisters worldwide trust us for Raksha Bandhan.",
+    path: "/about",
+  });
+}
 
 export default function AboutPage() {
+  if (isRakhiContentHidden()) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-12">
+        <h1 className="text-3xl font-bold text-primary mb-6">About {site.name}</h1>
+        <div className="space-y-6 text-slate-700 leading-relaxed">
+          <p>
+            <strong>{site.name}</strong> ({site.domain}) sends Diwali and Bhai Dooj gift hampers to addresses across
+            the United States. Sweets, dry fruits, chocolates, and pooja sets ship from within America.
+          </p>
+          <p>
+            Order from India, the UK, Canada, or anywhere else. Pay in INR or USD, enter a US delivery address, and
+            we ship domestically. Standard USA delivery is 5 business days, with free shipping on a $15 minimum cart.
+            Orange County products ship free.
+          </p>
+          <h2 className="text-xl font-bold text-primary pt-4">What you can send</h2>
+          <ul className="list-disc list-inside space-y-2">
+            <li>Diwali gift combos and pooja sets</li>
+            <li>Bhai Dooj gift boxes</li>
+            <li>Sweet, dry fruit, and chocolate hampers</li>
+            <li>Secure payments via Razorpay and Stripe</li>
+          </ul>
+          <p>
+            {site.name} is operated by <strong>Divit Global Ventures (DGV)</strong> with a California fulfillment
+            team. Questions: WhatsApp {site.whatsappDisplay}, email {site.supportEmail}, or the{" "}
+            <Link href="/contact" className="text-nav hover:underline">
+              contact page
+            </Link>
+            .
+          </p>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="max-w-3xl mx-auto px-4 py-12">
       <JsonLd data={aboutPageJsonLd()} />

@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { api } from "@/lib/api";
-import type { Product } from "@hr-ecom/shared";
+import { isRakhiContentHidden, isRakhiSeasonPaused, textMentionsRakhi, type Product } from "@hr-ecom/shared";
 import { siteUrl } from "@/lib/env";
 import { categoryHref } from "@/lib/category-urls";
 import { getCatalogProducts } from "@/lib/catalog-fallback";
@@ -92,14 +92,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     apiProducts = [];
   }
 
-  const productRoutes = mergeProducts(apiProducts).map((p) => ({
+  const productRoutes = mergeProducts(apiProducts)
+    .filter((p) => !isRakhiSeasonPaused(p))
+    .map((p) => ({
     url: `${siteUrl}/products/${p.slug}`,
     lastModified: new Date(p.updatedAt ?? now),
     changeFrequency: "weekly" as const,
     priority: p.categorySlug === "rakhi-hampers" ? 0.85 : 0.8,
   }));
 
-  return [
+  const routes = [
     ...staticRoutes,
     ...categoryRoutes,
     ...locationRoutes,
@@ -107,4 +109,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...collectionRoutes,
     ...productRoutes,
   ];
+  if (!isRakhiContentHidden()) return routes;
+  return routes.filter((route) => {
+    try {
+      return !textMentionsRakhi(new URL(route.url).pathname.replace(/[-_/]+/g, " "));
+    } catch {
+      return true;
+    }
+  });
 }

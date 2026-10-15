@@ -1,4 +1,4 @@
-import type { PublicProductReview } from "@hr-ecom/shared";
+import { isRakhiContentHidden, textMentionsRakhi, type PublicProductReview } from "@hr-ecom/shared";
 
 function StarRating({ rating }: { rating: number }) {
   return (
@@ -32,13 +32,17 @@ function formatReviewWhen(iso?: string): string {
 }
 
 export function SiteReviewsList({ reviews }: { reviews: PublicProductReview[] }) {
-  if (!reviews.length) return null;
+  const visible = reviews.filter((review) => {
+    if (!isRakhiContentHidden()) return true;
+    return !textMentionsRakhi(`${review.title ?? ""} ${review.body ?? ""}`);
+  });
+  if (!visible.length) return null;
 
   return (
     <section className="max-w-3xl mx-auto px-4 pb-4">
       <h2 className="text-xl font-bold text-primary mb-4">Reviews from UsaRakhi customers</h2>
       <ul className="space-y-4">
-        {reviews.map((review) => (
+        {visible.map((review) => (
           <li
             key={review.reviewId}
             className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"

@@ -1,4 +1,4 @@
-import { cdnUploadUrl } from "@hr-ecom/shared";
+import { cdnUploadUrl, isRakhiContentHidden, textMentionsRakhi } from "@hr-ecom/shared";
 import { categoryHref } from "./category-urls";
 import { HOME_BANNER_DELIVERY_NOTE } from "./prices-dropped-copy";
 
@@ -180,30 +180,43 @@ export const testimonials = [
     rating: 5,
     timeAgo: "2 days ago",
     image: cdnUploadUrl("2026/06/Untitled-design-31-1.png"),
-    text: "I sent a Diwali sweet and dry fruit hamper to my family in California. It arrived before the festival, and they called as soon as they opened the kaju katli and nuts.",
+    text: "My brother lives in California and I miss tying Rakhi on his wrist every year. I used UsaRakhi.com to send Rakhi to the USA and it arrived right on time. He was very surprised and happy when he received it.",
   },
   {
     name: "Anjali",
     rating: 5,
     timeAgo: "1 week ago",
     image: cdnUploadUrl("2026/06/review-picture-2.png"),
-    text: "I ordered a Bhai Dooj chocolate and sweet box for my brother in Texas. The packaging looked festive, delivery was on time, and he loved sharing the chocolates.",
+    text: "Being away from my brother during Raksha Bandhan is never easy. Thanks to UsaRakhi.com, I could send Rakhi to the USA and make him feel loved. The Rakhi was beautiful and delivered on time.",
   },
   {
     name: "Pooja",
     rating: 5,
     timeAgo: "2 weeks ago",
     image: cdnUploadUrl("2026/06/puja3.png"),
-    text: "I sent a Diwali pooja set with mithai to my parents in New Jersey. The box was packed carefully, tracking was clear, and it felt like we still celebrated together.",
+    text: "Even though my brother is living in the USA, I never want to miss Raksha Bandhan. UsaRakhi.com helped me send Rakhi to the USA quickly. The Rakhi looked beautiful and made the festival feel complete.",
   },
   {
     name: "Meera",
     rating: 5,
     timeAgo: "3 weeks ago",
     image: cdnUploadUrl("2026/03/coustomer-3-768x1152-1.webp"),
-    text: "UsaRakhi made it simple to send Bhai Dooj gifts to my brother in California. The dry fruits and sweets arrived in time, and he called as soon as the hamper was opened.",
+    text: "Distance can never break the bond between siblings. UsaRakhi.com helped me send Rakhi to my brother in California easily. When he received it, he called me immediately and it felt like we were celebrating together.",
   },
 ] as const;
+
+/** Original Rakhi stories stay in source. They are omitted from the shop through 10 November. */
+export function publicTestimonials() {
+  if (!isRakhiContentHidden()) return testimonials;
+  return testimonials.filter((review) => !textMentionsRakhi(review.text));
+}
+
+export const FESTIVE_SITE_DESCRIPTION =
+  "UsaRakhi.com — Diwali and Bhai Dooj gift hampers delivered across the USA. Sweets, dry fruits, chocolates, and pooja sets shipped domestically within the United States.";
+
+export function publicSiteDescription(): string {
+  return isRakhiContentHidden() ? FESTIVE_SITE_DESCRIPTION : site.description;
+}
 
 export const faqs = [
   {
@@ -255,3 +268,30 @@ export const faqs = [
     a: "Stripe (USD — Visa, Mastercard, Amex) and Razorpay (INR — UPI, cards, netbanking) for secure online checkout.",
   },
 ] as const;
+
+export const festivalFaqs = [
+  {
+    q: "What can I send for Diwali and Bhai Dooj in the USA?",
+    a: "UsaRakhi lists Diwali gift combos, Bhai Dooj gift boxes, sweet hampers, dry fruit boxes, chocolate combos, and pooja sets. Each product page lists what is packed inside.",
+  },
+  {
+    q: "How long does USA delivery take?",
+    a: "Standard USA delivery is 5 business days to all 50 US states, with free shipping on a $15 minimum cart value. Orange County products ship free. Mixed carts are calculated separately.",
+  },
+  {
+    q: "Can I order from India for a US address?",
+    a: "Yes. Pay in INR with Razorpay, including UPI, or in USD with Stripe. Enter the US delivery address at checkout. The gift ships from within the United States.",
+  },
+  {
+    q: "Who can receive a festive gift?",
+    a: "You can send Diwali and Bhai Dooj gifts to a brother, sister, parent, friend, or any other recipient at a US address. Sender and recipient names are entered at checkout.",
+  },
+  {
+    q: "What payment methods do you accept?",
+    a: "Stripe (USD — Visa, Mastercard, Amex) and Razorpay (INR — UPI, cards, netbanking) for secure online checkout.",
+  },
+] as const;
+
+export function publicFaqs() {
+  return isRakhiContentHidden() ? festivalFaqs : faqs;
+}

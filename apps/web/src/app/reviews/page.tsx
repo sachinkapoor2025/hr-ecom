@@ -5,7 +5,7 @@ import { getGoogleReviews } from "@/lib/google-reviews";
 import { ReviewForm } from "@/components/ReviewForm";
 import { PublishedReviewsLoader } from "@/components/PublishedReviewsLoader";
 import { JsonLd } from "@/components/JsonLd";
-import { site, testimonials } from "@/lib/site";
+import { publicTestimonials, site, testimonials } from "@/lib/site";
 import { USARAKHI_MIN_ORDER_USD } from "@hr-ecom/shared";
 import { pageMetadata, canonical } from "@/lib/seo";
 
@@ -42,8 +42,10 @@ export default async function ReviewsPage() {
   const googleReviews = await getGoogleReviews();
   const avg =
     googleReviews.rating ??
-    testimonials.reduce((s, t) => s + t.rating, 0) / testimonials.length;
-  const count = googleReviews.totalCount ?? testimonials.length;
+    (publicTestimonials().length
+      ? publicTestimonials().reduce((s, t) => s + t.rating, 0) / publicTestimonials().length
+      : testimonials.reduce((s, t) => s + t.rating, 0) / testimonials.length);
+  const count = googleReviews.totalCount ?? (publicTestimonials().length || testimonials.length);
 
   return (
     <div>

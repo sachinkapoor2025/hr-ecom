@@ -14,6 +14,8 @@ import {
   resolveProductImagesForUpsert,
   withForcedOutOfStockInventory,
   prepareStorefrontProducts,
+  isRakhiSeasonPaused,
+  sanitizePublicProductCopy,
   withUsarakhiStockShortageNote,
   type Product,
 } from "@hr-ecom/shared";
@@ -38,7 +40,8 @@ function forStorefront(product: Product): Product {
       withCompetitiveStorefrontPricing(withResolvedProductImages(product))
     )
   );
-  return { ...stripVendorPrivateFields(forced), allowsAddons } as Product;
+  const storefront = { ...stripVendorPrivateFields(forced), allowsAddons } as Product;
+  return sanitizePublicProductCopy(storefront);
 }
 
 function isKidsComboProduct(product: Product): boolean {
@@ -239,6 +242,7 @@ export async function getProduct(event: APIGatewayProxyEventV2) {
   if (healed !== item) invalidateProductListCache(healed.categorySlug);
   const product = withForcedOutOfStockInventory(healed);
   if (product.published === false) return notFound("Product not found");
+  if (isRakhiSeasonPaused(product)) return notFound("Product not found");
   // Sold-out SKUs stay reachable for SEO but cannot be ordered (inventory forced to 0).
   productGetCache.set(slug, { at: nowMs, product });
   return okCached({ product: forStorefront(product) }, 10);

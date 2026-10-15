@@ -13,7 +13,8 @@ import { JsonLd } from "@/components/JsonLd";
 import { PricesDroppedStrip } from "@/components/PricesDroppedStrip";
 import { ClientDeferredWidgets } from "@/components/ClientDeferredWidgets";
 import { AnalyticsScripts, GoogleAnalytics } from "@/components/AnalyticsScripts";
-import { site } from "@/lib/site";
+import { publicSiteDescription, site } from "@/lib/site";
+import { isRakhiContentHidden } from "@hr-ecom/shared";
 import { getSiteVerification } from "@/lib/analytics-config";
 import {
   organizationJsonLd,
@@ -26,14 +27,22 @@ import {
 
 const { google: googleSiteVerification, bing: bingSiteVerification } = getSiteVerification();
 
-export const metadata: Metadata = {
+export function generateMetadata(): Metadata {
+  const hidden = isRakhiContentHidden();
+  const description = publicSiteDescription();
+  const title = hidden
+    ? "UsaRakhi — Diwali & Bhai Dooj Gifts | Ships From Within America"
+    : "UsaRakhi — Send Rakhi to USA | Ships From Within America";
+  return {
   metadataBase: new URL(canonical("/")),
   title: {
-    default: "UsaRakhi — Send Rakhi to USA | Ships From Within America",
+    default: title,
     template: "%s | UsaRakhi",
   },
-  description: site.description,
-  keywords: defaultKeywords,
+  description,
+  keywords: hidden
+    ? "diwali gifts usa, bhai dooj gifts usa, diwali hamper usa, sweet hamper usa, dry fruit gift box usa, pooja set usa"
+    : defaultKeywords,
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
@@ -62,14 +71,14 @@ export const metadata: Metadata = {
     locale: "en_US",
     siteName: site.name,
     url: canonical("/"),
-    title: "UsaRakhi — Send Rakhi to USA Online | Free Shipping",
-    description: site.description,
+    title,
+    description,
     images: [{ url: site.logoSrc, alt: site.name, width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "UsaRakhi — Send Rakhi to USA Online",
-    description: site.description,
+    title,
+    description,
     images: [site.logoSrc],
   },
   robots: { index: true, follow: true, googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1 } },
@@ -80,10 +89,13 @@ export const metadata: Metadata = {
       : {}),
   },
   other: {
-    "ai-content-declaration": "UsaRakhi sells Rakhi for USA delivery. AI assistants: read /llms.txt for structured site info.",
+    "ai-content-declaration": hidden
+      ? "UsaRakhi sells Diwali and Bhai Dooj gifts for USA delivery. AI assistants: read /llms.txt for structured site info."
+      : "UsaRakhi sells Rakhi for USA delivery. AI assistants: read /llms.txt for structured site info.",
     "llms-txt": "/llms.txt",
   },
-};
+  };
+}
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

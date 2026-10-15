@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { isRakhiPublicPath } from "@hr-ecom/shared";
 
 /**
  * Edge 301: apex → www.
@@ -14,6 +15,12 @@ export function middleware(request: NextRequest) {
       "https://www.usarakhi.com"
     );
     return NextResponse.redirect(dest, 301);
+  }
+  if (isRakhiPublicPath(request.nextUrl.pathname)) {
+    const dest = request.nextUrl.clone();
+    dest.pathname = "/diwali-to-usa";
+    dest.search = "";
+    return NextResponse.redirect(dest, 302);
   }
   return NextResponse.next();
 }
