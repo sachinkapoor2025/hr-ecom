@@ -19,19 +19,11 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export function generateMetadata(): Metadata {
-  if (isRakhiContentHidden()) {
-    return pageMetadata({
-      title: "Send Diwali & Bhai Dooj Gifts from the UK",
-      description:
-        "Order Diwali and Bhai Dooj gift hampers from the UK for delivery in the United States. Sweets, dry fruits, and chocolates ship domestically in the USA.",
-      path: page.path,
-      absoluteTitle: true,
-    });
-  }
   return {
   ...pageMetadata({
-    title: page.metaTitle,
-    description: page.metaDescription,
+    title: "Send Gifts from UK to USA | Diwali Gift Hampers",
+    description:
+      "Looking for gifts from the UK to the USA? Explore festive hampers, Indian sweets, chocolates and Diwali gift options with UsaRakhi.",
     path: page.path,
     keywords: page.keywords,
     absoluteTitle: true,

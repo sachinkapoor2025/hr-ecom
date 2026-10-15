@@ -28,10 +28,11 @@ import { faqJsonLd, howToSendRakhiJsonLd, pageMetadata } from "@/lib/seo";
 import { FLASH_COMBO_SALE_SLUG, isFlashComboSaleActive, type Product } from "@hr-ecom/shared";
 
 export const metadata: Metadata = pageMetadata({
-  title: "Diwali & Bhai Dooj Gifts USA | Festive Hampers | UsaRakhi",
+  title: "Diwali & Bhai Dooj Gifts to USA | UsaRakhi",
   description:
-    "Shop Diwali and Bhai Dooj gift hampers with USA delivery — sweets, dry fruits, chocolates, and pooja sets shipped domestically.",
+    "Send Diwali and Bhai Dooj gifts to the USA with UsaRakhi. Shop Indian sweets, chocolates, dry fruits, festive hampers and puja gifts online.",
   path: "/",
+  absoluteTitle: true,
   keywords:
     "diwali gifts usa, bhai dooj gifts usa, diwali hamper usa, bhai dooj hamper, send diwali gifts to usa, pooja set usa, kaju katli gift box usa",
 });

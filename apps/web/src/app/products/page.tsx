@@ -83,10 +83,11 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
     });
   }
   return pageMetadata({
-    title: "Shop Diwali & Bhai Dooj Gifts — USA Delivery",
+    title: "Indian Gifts to USA | Diwali & Bhai Dooj Gifts",
     description:
-      "Browse Diwali and Bhai Dooj gift hampers — sweets, dry fruits, chocolates, and pooja sets with domestic USA shipping.",
+      "Explore gifts at UsaRakhi, including Indian sweets, chocolates, dry fruit combos and festive hampers. Find Diwali and Bhai Dooj gifts for loved ones in the USA.",
     path: "/products",
+    absoluteTitle: true,
   });
 }
 

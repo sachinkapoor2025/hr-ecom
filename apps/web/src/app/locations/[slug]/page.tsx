@@ -39,9 +39,87 @@ export function generateStaticParams() {
   return allSeoLocationSlugs().map((slug) => ({ slug }));
 }
 
+/** Exact titles and descriptions for the specified gift-location pages. */
+const specifiedLocationSeo: Record<string, { title: string; description: string }> = {
+  "fairfax-virginia": {
+    title: "Send Gifts to Fairfax, Virginia | UsaRakhi",
+    description:
+      "Send gifts to Fairfax, Virginia, with UsaRakhi. Explore Indian sweets, chocolates, dry fruit combos and Diwali and Bhai Dooj gifts for family.",
+  },
+  atlanta: {
+    title: "Send Gifts to Atlanta, Georgia | UsaRakhi",
+    description:
+      "Send gifts to Atlanta, Georgia, with UsaRakhi. Discover Indian sweets, chocolate combos and festive hampers for Diwali, Bhai Dooj and special occasions.",
+  },
+  austin: {
+    title: "Send Gifts to Austin, Texas | UsaRakhi",
+    description:
+      "Send gifts to Austin, Texas, with UsaRakhi. Shop Indian sweets, dry fruit gifts, chocolates and festive combos for Diwali and Bhai Dooj.",
+  },
+  dallas: {
+    title: "Send Gifts to Dallas, Texas | UsaRakhi",
+    description:
+      "Send gifts to Dallas, Texas, with UsaRakhi. Explore traditional Indian sweets, dry fruit hampers and chocolate gifts for Diwali and Bhai Dooj.",
+  },
+  houston: {
+    title: "Send Gifts to Houston, Texas | UsaRakhi",
+    description:
+      "Send gifts to Houston, Texas, with UsaRakhi. Find Indian sweets, chocolates and festive gift combos for Diwali, Bhai Dooj and family celebrations.",
+  },
+  chicago: {
+    title: "Send Gifts to Chicago, Illinois | UsaRakhi",
+    description:
+      "Send gifts to Chicago, Illinois, with UsaRakhi. Discover Indian mithai, dry fruit combos, chocolates and festive hampers for Diwali and Bhai Dooj.",
+  },
+  "san-francisco": {
+    title: "Send Gifts to San Francisco, CA | UsaRakhi",
+    description:
+      "Send gifts to San Francisco with UsaRakhi. Shop Indian sweets, chocolates, dry fruits and festive gift hampers for Diwali, Bhai Dooj and loved ones.",
+  },
+  "los-angeles": {
+    title: "Send Gifts to Los Angeles, CA | UsaRakhi",
+    description:
+      "Send gifts to Los Angeles with UsaRakhi. Explore Indian sweets, chocolate combos and dry fruit hampers for Diwali, Bhai Dooj and special occasions.",
+  },
+  "new-jersey": {
+    title: "Send Gifts to New Jersey, USA | UsaRakhi",
+    description:
+      "Send gifts to New Jersey with UsaRakhi. Find Indian sweets, chocolates, dry fruit combos and festive hampers for Diwali and Bhai Dooj.",
+  },
+  california: {
+    title: "Send Gifts to California, USA | UsaRakhi",
+    description:
+      "Send gifts across California with UsaRakhi. Explore Indian sweets, dry fruit combos, chocolates and festive hampers for Diwali and Bhai Dooj.",
+  },
+  "new-york": {
+    title: "Send Gifts to New York, USA | UsaRakhi",
+    description:
+      "Send gifts to New York with UsaRakhi. Shop Indian sweets, chocolate combos, dry fruit gifts and festive hampers for Diwali and Bhai Dooj.",
+  },
+  texas: {
+    title: "Send Gifts to Texas, USA | UsaRakhi",
+    description:
+      "Send gifts across Texas with UsaRakhi. Discover Indian sweets, chocolates, dry fruit combos and Diwali and Bhai Dooj gift hampers.",
+  },
+  florida: {
+    title: "Send Gifts to Florida, USA | UsaRakhi",
+    description:
+      "Send gifts to Florida with UsaRakhi. Explore Indian sweets, chocolates, dry fruit combos and festive hampers for Diwali, Bhai Dooj and family.",
+  },
+};
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const path = locationPublicPath(slug);
+  const specified = specifiedLocationSeo[slug];
+  if (specified) {
+    return pageMetadata({
+      title: specified.title,
+      description: specified.description,
+      path,
+      absoluteTitle: true,
+    });
+  }
 
   // Express metros: prefer individually maintained city-pages copy for title/description.
   const cityContent = getCityContent(slug);

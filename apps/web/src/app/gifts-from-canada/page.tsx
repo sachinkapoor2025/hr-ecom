@@ -19,19 +19,11 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export function generateMetadata(): Metadata {
-  if (isRakhiContentHidden()) {
-    return pageMetadata({
-      title: "Send Diwali & Bhai Dooj Gifts from Canada",
-      description:
-        "Order Diwali and Bhai Dooj gift hampers from Canada for delivery in the United States. Sweets, dry fruits, and chocolates ship domestically in the USA.",
-      path: page.path,
-      absoluteTitle: true,
-    });
-  }
   return {
     ...pageMetadata({
-      title: page.metaTitle,
-      description: page.metaDescription,
+      title: "Send Gifts from Canada to USA | UsaRakhi",
+      description:
+        "Explore gift options from Canada to the USA with UsaRakhi. Discover Indian sweets, chocolates and festive hampers for Diwali and Bhai Dooj.",
       path: page.path,
       keywords: page.keywords,
       absoluteTitle: true,
