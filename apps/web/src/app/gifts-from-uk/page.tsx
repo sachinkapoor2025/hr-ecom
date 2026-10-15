@@ -5,7 +5,7 @@ import { CountryRakhiLanding } from "@/components/CountryRakhiLanding";
 import type { ProductSort } from "@/components/ProductSortBar";
 import { getCountryGiftPage } from "@/lib/content/country-gift-pages";
 import { getCountryRakhiPage } from "@/lib/content/country-rakhi-pages";
-import { loadLocationPageProducts } from "@/lib/product-loader";
+import { loadLocationPageProducts, loadVisibleStorefrontProducts } from "@/lib/product-loader";
 import { canonical, pageMetadata } from "@/lib/seo";
 
 const page = getCountryRakhiPage("uk");
@@ -47,8 +47,13 @@ export default async function RakhiFromUkPage({ searchParams }: Props) {
   let products: Awaited<ReturnType<typeof loadLocationPageProducts>> = [];
   try {
     products = await loadLocationPageProducts("rakhi-from-uk");
+    if (products.length === 0) products = await loadVisibleStorefrontProducts();
   } catch {
-    products = [];
+    try {
+      products = await loadVisibleStorefrontProducts();
+    } catch {
+      products = [];
+    }
   }
 
   if (isRakhiContentHidden()) {
