@@ -8,6 +8,7 @@ import {
   DAILY_DEAL_SEGMENTS,
   DAILY_DEAL_WHEEL_LABELS,
   WELCOME_COUPON_HOURS,
+  isValidEmailAddress,
   pickDailyDealDiscount,
 } from "@hr-ecom/shared";
 import { site } from "@/lib/site";
@@ -54,9 +55,6 @@ const SEGMENT_COLORS = [
   "#e11d48",
 ];
 
-function isValidEmail(value: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
-}
 
 function isValidPhone(value: string): boolean {
   const digits = value.replace(/\D/g, "");
@@ -156,7 +154,7 @@ export function ExitIntentPopup() {
       setError("Enter a valid mobile number to spin for today’s discount.");
       return;
     }
-    if (trimmedEmail && !isValidEmail(trimmedEmail)) {
+    if (trimmedEmail && !isValidEmailAddress(trimmedEmail)) {
       setError("Enter a valid email, or leave it blank.");
       return;
     }

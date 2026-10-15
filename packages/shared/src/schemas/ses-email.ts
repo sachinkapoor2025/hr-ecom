@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { emailAddressSchema } from "../lib/email-address";
 import {
   buildPremiumMarketingEmailHtml,
   DEFAULT_PREMIUM_MARKETING_EMAIL_CONTENT,
@@ -38,7 +39,7 @@ export const DEFAULT_SENDER_MESSAGE_FOOTER = {
 } as const;
 
 export const sesRecipientSchema = z.object({
-  email: z.string().email(),
+  email: emailAddressSchema,
   name: z.string().max(120).optional(),
   company: z.string().max(120).optional(),
   city: z.string().max(80).optional(),
@@ -197,7 +198,7 @@ export const sesSettingsSchema = z.object({
 });
 
 export const suppressEmailSchema = z.object({
-  email: z.string().email(),
+  email: emailAddressSchema,
   reason: z.enum(["manual", "hard_bounce", "complaint", "unsubscribe"]).default("manual"),
 });
 
@@ -237,7 +238,7 @@ export type SesRecipientActivity = {
 
 export const sendTestEmailSchema = z.object({
   campaignId: z.string().min(1),
-  to: z.string().email(),
+  to: emailAddressSchema,
 });
 
 export type SesRecipient = z.infer<typeof sesRecipientSchema>;

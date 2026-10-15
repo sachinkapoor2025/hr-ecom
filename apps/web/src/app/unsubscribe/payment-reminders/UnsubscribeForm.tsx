@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { EMAIL_ADDRESS_MESSAGE, isValidEmailAddress } from "@hr-ecom/shared";
 import { api } from "@/lib/api";
 
 export function PendingPaymentUnsubscribeForm({ initialEmail = "" }: { initialEmail?: string }) {
@@ -11,6 +12,10 @@ export function PendingPaymentUnsubscribeForm({ initialEmail = "" }: { initialEm
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isValidEmailAddress(email)) {
+      setError(EMAIL_ADDRESS_MESSAGE);
+      return;
+    }
     setLoading(true);
     setError("");
     try {

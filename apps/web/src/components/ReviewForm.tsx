@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { EMAIL_ADDRESS_MESSAGE, isValidEmailAddress } from "@hr-ecom/shared";
 import { site, whatsappChatUrl } from "@/lib/site";
 import { useSessionId } from "@/lib/session";
 import { api } from "@/lib/api";
@@ -27,6 +28,9 @@ export function ReviewForm() {
     try {
       const sid = sessionId;
       if (!sid) throw new Error("Session not ready — please refresh and try again.");
+      if (!isValidEmailAddress(email)) {
+        throw new Error(EMAIL_ADDRESS_MESSAGE);
+      }
       if (review.trim().length < 20) {
         throw new Error("Please write at least a few sentences about your experience.");
       }

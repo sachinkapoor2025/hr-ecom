@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { cartItemSchema } from "./cart";
+import { emailAddressSchema } from "../lib/email-address";
 import { ORDER_STATUS } from "../constants";
 import { checkoutAttributionSchema, orderAttributionSchema } from "./attribution";
 import { reviewNotificationLogEntrySchema } from "./review-request";
@@ -41,6 +42,7 @@ export const DEFAULT_SENDER_MESSAGE =
   "Wishing you and your family a very Happy Diwali and a wonderful Bhai Dooj! May this festive season bring happiness, prosperity, love, and countless beautiful memories. Sending you warm wishes and festive gifts from the heart.";
 
 export const checkoutShippingAddressSchema = shippingAddressSchema.extend({
+  email: emailAddressSchema,
   senderName: z
     .string()
     .trim()

@@ -6,7 +6,7 @@ import {
   AuthenticationDetails,
   CognitoUserAttribute,
 } from "amazon-cognito-identity-js";
-import { cognitoHasGroup } from "@hr-ecom/shared";
+import { cognitoHasGroup, EMAIL_ADDRESS_MESSAGE, isValidEmailAddress } from "@hr-ecom/shared";
 
 const poolId = process.env.NEXT_PUBLIC_COGNITO_USER_POOL_ID;
 const clientId = process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID;
@@ -55,7 +55,15 @@ export function storeAuth(user: AuthUser | null) {
   else localStorage.removeItem(STORAGE_KEY);
 }
 
+function rejectInvalidEmail(email: string): Promise<never> | null {
+  if (isValidEmailAddress(email)) return null;
+  return Promise.reject(new Error(EMAIL_ADDRESS_MESSAGE));
+}
+
 export function login(email: string, password: string): Promise<AuthUser> {
+  const invalid = rejectInvalidEmail(email);
+  if (invalid) return invalid;
+
   if (!userPool && devAuth) {
     const isSuperAdmin = email.toLowerCase().includes("superadmin");
     const isAdmin = isSuperAdmin || email.toLowerCase().includes("admin");
@@ -114,6 +122,9 @@ export function register(
   password: string,
   name?: string
 ): Promise<RegisterResult> {
+  const invalid = rejectInvalidEmail(email);
+  if (invalid) return invalid;
+
   if (!userPool && devAuth) {
     return Promise.resolve({ userConfirmed: true });
   }
@@ -203,6 +214,8 @@ export function formatAuthError(err: unknown): string {
 }
 
 export function confirmSignUp(email: string, code: string): Promise<void> {
+  const invalid = rejectInvalidEmail(email);
+  if (invalid) return invalid;
   if (!userPool && devAuth) return Promise.resolve();
   if (!userPool) return Promise.reject(new Error("Auth not configured."));
 
@@ -216,6 +229,8 @@ export function confirmSignUp(email: string, code: string): Promise<void> {
 }
 
 export function resendConfirmationCode(email: string): Promise<void> {
+  const invalid = rejectInvalidEmail(email);
+  if (invalid) return invalid;
   if (!userPool && devAuth) return Promise.resolve();
   if (!userPool) return Promise.reject(new Error("Auth not configured."));
 
@@ -235,6 +250,8 @@ export type ForgotPasswordDelivery = {
 
 /** Step 1: ask Cognito to email a password-reset code. */
 export function forgotPassword(email: string): Promise<ForgotPasswordDelivery> {
+  const invalid = rejectInvalidEmail(email);
+  if (invalid) return invalid;
   if (!userPool && devAuth) {
     return Promise.resolve({ deliveryMedium: "EMAIL", destination: email });
   }
@@ -261,6 +278,8 @@ export function confirmForgotPassword(
   code: string,
   newPassword: string
 ): Promise<void> {
+  const invalid = rejectInvalidEmail(email);
+  if (invalid) return invalid;
   if (!userPool && devAuth) return Promise.resolve();
   if (!userPool) return Promise.reject(new Error("Auth not configured."));
 

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { emailAddressSchema } from "../lib/email-address";
 
 export const REMINDER_EMAIL_STATUSES = ["show", "deleted"] as const;
 export type ReminderEmailStatus = (typeof REMINDER_EMAIL_STATUSES)[number];
@@ -33,7 +34,7 @@ export const reminderEmailSchema = z.object({
 export type ReminderEmail = z.infer<typeof reminderEmailSchema>;
 
 export const sendReminderEmailsSchema = z.object({
-  emails: z.array(z.string().email()).min(1).max(500),
+  emails: z.array(emailAddressSchema).min(1).max(500),
   subject: z.string().min(1).max(200).optional(),
 });
 

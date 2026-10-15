@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { emailAddressSchema } from "../lib/email-address";
 
 /** Reserved slug for site-wide customer reviews (not a catalog product). */
 export const SITE_REVIEW_SLUG = "_site";
@@ -120,7 +121,7 @@ export type CreateProductReviewInput = z.infer<typeof createProductReviewSchema>
 /** Public customer submit — always published immediately. */
 export const submitCustomerReviewSchema = z.object({
   authorName: z.string().trim().min(1).max(120),
-  email: z.string().trim().email().max(254),
+  email: emailAddressSchema,
   rating: z.coerce.number().int().min(1).max(5),
   body: z.string().trim().min(20).max(4000),
   city: optionalTrimmed,

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { EMAIL_ADDRESS_MESSAGE, isValidEmailAddress } from "@hr-ecom/shared";
 import { useApiClient } from "@/lib/auth-context";
 
 type UnsubItem = {
@@ -45,8 +46,8 @@ export function UnsubscribeEmailPanel() {
   const add = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = email.trim();
-    if (!trimmed.includes("@")) {
-      setError("Enter a valid email address.");
+    if (!isValidEmailAddress(trimmed)) {
+      setError(EMAIL_ADDRESS_MESSAGE);
       return;
     }
     setSaving(true);

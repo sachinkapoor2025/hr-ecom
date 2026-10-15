@@ -2,15 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
+import { EMAIL_ADDRESS_MESSAGE, isValidEmailAddress } from "@hr-ecom/shared";
 import { api } from "@/lib/api";
 import { getOrCreateSessionId } from "@/lib/session";
 
 const DISMISS_KEY = "usarakhi_stay_updated_dismissed";
 const SUBSCRIBED_KEY = "usarakhi_stay_updated_subscribed";
-
-function isValidEmail(value: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
-}
 
 /**
  * Compact “Stay Updated” control for the festival banner (not the sticky header).
@@ -83,8 +80,8 @@ export function StayUpdatedPrompt() {
   const subscribe = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = email.trim();
-    if (!isValidEmail(trimmed)) {
-      setError("Enter a valid email address.");
+    if (!isValidEmailAddress(trimmed)) {
+      setError(EMAIL_ADDRESS_MESSAGE);
       return;
     }
     setSaving(true);

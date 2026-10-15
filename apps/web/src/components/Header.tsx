@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, type ReactNode } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useCart } from "@/lib/cart-context";
@@ -204,6 +204,7 @@ export function Header() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const activeCategory = searchParams.get("category");
+  const headerRef = useRef<HTMLElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [citiesOpen, setCitiesOpen] = useState(false);
   const [rakhiSetsOpen, setRakhiSetsOpen] = useState(false);
@@ -240,8 +241,23 @@ export function Header() {
     };
   }, [menuOpen]);
 
+  useLayoutEffect(() => {
+    const header = headerRef.current;
+    if (!header) return;
+    const apply = () => {
+      document.documentElement.style.setProperty("--site-header-height", `${header.offsetHeight}px`);
+    };
+    apply();
+    const observer = new ResizeObserver(apply);
+    observer.observe(header);
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <header className="border-b border-slate-200 bg-white sticky top-0 z-50 shadow-sm overflow-visible">
+    <header
+      ref={headerRef}
+      className="border-b border-slate-200 bg-white sticky top-0 z-50 shadow-sm overflow-visible"
+    >
       {/* Mobile top bar */}
       <div className="md:hidden max-w-7xl mx-auto px-3 py-3 flex items-center gap-2">
         <button

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { emailAddressSchema } from "../lib/email-address";
 import { shippingAddressSchema } from "./order";
 
 export const accountAddressSchema = shippingAddressSchema.extend({
@@ -22,6 +23,7 @@ export const accountProfileUpdateSchema = z.object({
 });
 
 export const accountAddressInputSchema = shippingAddressSchema.extend({
+  email: emailAddressSchema,
   label: z.string().max(80).optional(),
   isDefault: z.boolean().optional(),
 });

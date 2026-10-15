@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { EMAIL_ADDRESS_MESSAGE, isValidEmailAddress } from "@hr-ecom/shared";
 import { useApiClient } from "@/lib/auth-context";
 
 export default function SuppressionPage() {
@@ -8,6 +9,7 @@ export default function SuppressionPage() {
   const [items, setItems] = useState<{ email: string; reason: string; createdAt: string }[]>([]);
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
   const load = useCallback(async () => {
     const res = await api<{ items: typeof items }>("/ses-email/suppression");
@@ -19,6 +21,12 @@ export default function SuppressionPage() {
   }, [load]);
 
   const add = async () => {
+    if (!isValidEmailAddress(email)) {
+      setError(EMAIL_ADDRESS_MESSAGE);
+      setMessage("");
+      return;
+    }
+    setError("");
     await api("/ses-email/suppression", {
       method: "POST",
       body: JSON.stringify({ email, reason: "manual" }),
@@ -53,6 +61,7 @@ export default function SuppressionPage() {
           Suppress
         </button>
       </div>
+      {error && <p className="text-red-600 text-sm">{error}</p>}
       {message && <p className="text-green-600 text-sm">{message}</p>}
       <ul className="rounded-xl border bg-white divide-y text-sm">
         {items.map((i) => (
