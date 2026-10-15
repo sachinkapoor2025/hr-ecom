@@ -64,25 +64,25 @@ export const categoryPageSeo: Record<
     h1: "Send Rakhi Hamper to USA",
   },
   "bhai-dooj": {
-    title: "Send Bhai Dooj Gifts to the USA | USA Rakhi",
+    title: "Send Bhai Dooj Gifts to the USA | UsaRakhi",
     description:
       "Send Bhai Dooj gifts to your brother in the USA — Indian sweets, dry fruits, chocolates, and pooja hampers. Domestic delivery in about 5 business days.",
     h1: "Send Bhai Dooj Gifts to the USA",
   },
   diwali: {
-    title: "Send Diwali Gifts to the USA | USA Rakhi",
+    title: "Send Diwali Gifts to the USA | UsaRakhi",
     description:
       "Send Diwali gifts to the USA. Festive hampers with Indian sweets, dry fruits, pooja sets, torans, and rangoli. Domestic delivery in about 5 business days.",
     h1: "Send Diwali Gifts to the USA",
   },
   "sweet-combos": {
-    title: "Send Sweet Hampers and Gifts to the USA | USA Rakhi",
+    title: "Send Sweet Hampers and Gifts to the USA | UsaRakhi",
     description:
       "Send sweet hampers to the USA. Indian gift boxes with kaju katli, besan laddoo, and festive combinations for Diwali and Bhai Dooj.",
     h1: "Send Sweet Hampers and Gifts to the USA",
   },
   "dry-fruit-combos": {
-    title: "Dry Fruit Gift Hampers Delivered Across the USA | USA Rakhi",
+    title: "Dry Fruit Gift Hampers Delivered Across the USA | UsaRakhi",
     description:
       "Send dry fruit gift hampers to the USA. Almonds, pistachios, cashews, and mixed nuts for Diwali, Bhai Dooj, and other special occasions.",
     h1: "Dry Fruit Gift Hampers Delivered Across the USA",

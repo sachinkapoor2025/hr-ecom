@@ -1,3 +1,4 @@
+import { isRakhiContentHidden } from "@hr-ecom/shared";
 import {
   site,
   navItems,
@@ -28,6 +29,32 @@ import {
  * Spec: https://llmstxt.org/
  */
 export async function GET() {
+  if (isRakhiContentHidden()) {
+    const body = `# UsaRakhi
+
+> Diwali and Bhai Dooj gift hampers delivered across the USA. Sweets, dry fruits, chocolates, and pooja sets ship from within the United States.
+
+## Shop
+- Diwali gifts: ${siteUrl}/diwali-to-usa
+- Bhai Dooj gifts: ${siteUrl}/bhai-dooj-to-usa
+- All products: ${siteUrl}/products
+
+## Delivery
+Standard USA delivery is 5 business days. Free shipping applies on a $15 minimum cart. Orange County products ship free.
+
+## Contact
+- Email: ${site.supportEmail}
+- WhatsApp: ${site.whatsappDisplay}
+- Website: ${siteUrl}
+`;
+    return new Response(body, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Cache-Control": "public, max-age=3600",
+        "X-Robots-Tag": "all",
+      },
+    });
+  }
   const categories = [
     ...rakhiSetsMenu.items.map((n) => `- ${n.label}: ${siteUrl}${n.href}`),
     ...navItems

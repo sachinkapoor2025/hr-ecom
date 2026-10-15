@@ -3,34 +3,45 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { ChatMessage } from "@hr-ecom/shared";
+import { isRakhiContentHidden, type ChatMessage } from "@hr-ecom/shared";
 import { site, whatsappChatUrl } from "@/lib/site";
 import { getOrCreateSessionId } from "@/lib/session";
 import { api } from "@/lib/api";
 
 const STORAGE_KEY = "usarakhi_chat_messages";
 
-const QUICK_PROMPTS = [
+const RAKHI_QUICK_PROMPTS = [
   "What Rakhi types do you sell?",
   "How long is USA delivery?",
   "When is Raksha Bandhan 2026?",
   "Can I order from India?",
 ] as const;
 
-const WELCOME: ChatMessage = {
-  role: "assistant",
-  content: `Hi! I'm the UsaRakhi Assistant. I can help you choose the perfect Rakhi, explain USA delivery, shipping times, and payment options.\n\nWhat would you like to know?`,
-};
+const FESTIVE_QUICK_PROMPTS = [
+  "What Diwali gifts do you sell?",
+  "How long is USA delivery?",
+  "Do you have Bhai Dooj gift boxes?",
+  "Can I order from India?",
+] as const;
+
+function welcomeMessage(): ChatMessage {
+  return {
+    role: "assistant",
+    content: isRakhiContentHidden()
+      ? "Hi! I'm the UsaRakhi Assistant. I can help you choose a Diwali or Bhai Dooj gift, explain USA delivery, shipping times, and payment options.\n\nWhat would you like to know?"
+      : "Hi! I'm the UsaRakhi Assistant. I can help you choose the perfect Rakhi, explain USA delivery, shipping times, and payment options.\n\nWhat would you like to know?",
+  };
+}
 
 function loadStoredMessages(): ChatMessage[] {
-  if (typeof window === "undefined") return [WELCOME];
+  if (typeof window === "undefined") return [welcomeMessage()];
   try {
     const raw = sessionStorage.getItem(STORAGE_KEY);
-    if (!raw) return [WELCOME];
+    if (!raw) return [welcomeMessage()];
     const parsed = JSON.parse(raw) as ChatMessage[];
-    return parsed.length ? parsed : [WELCOME];
+    return parsed.length ? parsed : [welcomeMessage()];
   } catch {
-    return [WELCOME];
+    return [welcomeMessage()];
   }
 }
 
@@ -81,7 +92,8 @@ function ChatIcon({ className = "w-6 h-6" }: { className?: string }) {
 export function ChatWidget() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>([WELCOME]);
+  const [messages, setMessages] = useState<ChatMessage[]>(() => [welcomeMessage()]);
+  const quickPrompts = isRakhiContentHidden() ? FESTIVE_QUICK_PROMPTS : RAKHI_QUICK_PROMPTS;
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -170,7 +182,7 @@ export function ChatWidget() {
   };
 
   const clearChat = () => {
-    setMessages([WELCOME]);
+    setMessages([welcomeMessage()]);
     setError(null);
     sessionStorage.removeItem(STORAGE_KEY);
   };
@@ -255,7 +267,7 @@ export function ChatWidget() {
           {/* Quick prompts — show when only welcome message */}
           {messages.length <= 1 && !loading && (
             <div className="px-3 pb-2 flex flex-wrap gap-1.5 border-t border-white/5 pt-2">
-              {QUICK_PROMPTS.map((q) => (
+              {quickPrompts.map((q) => (
                 <button
                   key={q}
                   type="button"
@@ -287,7 +299,11 @@ export function ChatWidget() {
                     void sendMessage(input);
                   }
                 }}
-                placeholder="Ask about Rakhi, shipping, payment…"
+                placeholder={
+                  isRakhiContentHidden()
+                    ? "Ask about Diwali gifts, Bhai Dooj, or shipping…"
+                    : "Ask about Rakhi, shipping, payment…"
+                }
                 rows={1}
                 maxLength={500}
                 disabled={loading}

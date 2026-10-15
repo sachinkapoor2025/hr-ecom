@@ -6,7 +6,6 @@ import { CategoryShopIcons } from "@/components/CategoryShopIcons";
 import { GoogleReviews } from "@/components/GoogleReviews";
 import { getGoogleReviews } from "@/lib/google-reviews";
 import { HomeProductCard } from "@/components/HomeProductCard";
-import { FastSellingSection } from "@/components/FastSellingSection";
 import { FlashSaleSection } from "@/components/FlashSaleSection";
 import { HomeSeoSection } from "@/components/HomeSeoSection";
 import { TrustStrip } from "@/components/TrustStrip";
@@ -78,15 +77,17 @@ export default async function HomePage() {
 
   return (
     <div>
-      <JsonLd data={[faqJsonLd(homeSeoContent.faqs), howToSendRakhiJsonLd()]} />
+      <JsonLd
+        data={[faqJsonLd(homeSeoContent.faqs), howToSendRakhiJsonLd()].filter(
+          (item): item is NonNullable<typeof item> => item != null
+        )}
+      />
       <HomeHero banners={getHomeBanners()} />
       <UsarakhiShareEmotionsBanner />
       <CategoryShopIcons />
       <FlashSaleSection product={flashCombo} />
       <TrustStrip />
       <IndiaBuyerBanner />
-
-      <FastSellingSection products={products} />
 
       {productsByCategory.map((section) =>
         section.products.length > 0 ? (

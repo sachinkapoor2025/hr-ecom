@@ -8,6 +8,7 @@ import { BlogCoverImage } from "@/components/BlogCoverImage";
 import { BlogFaqSection } from "@/components/BlogFaqSection";
 import { JsonLd } from "@/components/JsonLd";
 import { loadBlogPostWithImage } from "@/lib/blog-images";
+import { isRakhiContentHidden, textMentionsRakhi } from "@hr-ecom/shared";
 import { listAllBlogPosts } from "@/lib/content/blog-posts";
 import { articleJsonLd, breadcrumbJsonLd, faqJsonLd, pageMetadata } from "@/lib/seo";
 
@@ -26,6 +27,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const post = await loadBlogPostWithImage(slug);
   if (!post) return { title: "Article" };
+  if (
+    isRakhiContentHidden() &&
+    textMentionsRakhi(`${slug} ${post.title} ${post.description} ${post.excerpt}`)
+  ) {
+    return { title: "Article", robots: { index: false, follow: false } };
+  }
   return pageMetadata({
     title: post.title,
     description: post.description,
@@ -39,6 +46,13 @@ export default async function BlogPostPage({ params }: Props) {
   const { slug } = await params;
   const post = await loadBlogPostWithImage(slug);
   if (!post) notFound();
+  if (
+    isRakhiContentHidden() &&
+    textMentionsRakhi(`${slug} ${post.title} ${post.description} ${post.excerpt}`)
+  ) {
+    notFound();
+  }
+  const hidden = isRakhiContentHidden();
 
   const crumbs = [
     { label: "Home", href: "/" },
@@ -120,9 +134,15 @@ export default async function BlogPostPage({ params }: Props) {
           <Link href="/" className="text-nav hover:underline">
             Shop UsaRakhi home →
           </Link>
-          <Link href="/raksha-bandhan" className="text-nav hover:underline">
-            Raksha Bandhan 2026 guide →
-          </Link>
+          {hidden ? (
+            <Link href="/diwali-to-usa" className="text-nav hover:underline">
+              Shop Diwali gifts →
+            </Link>
+          ) : (
+            <Link href="/raksha-bandhan" className="text-nav hover:underline">
+              Raksha Bandhan 2026 guide →
+            </Link>
+          )}
           <Link href="/blog" className="text-nav hover:underline">
             ← All articles
           </Link>

@@ -1,3 +1,4 @@
+import { isRakhiContentHidden, textMentionsRakhi } from "@hr-ecom/shared";
 import { testimonials } from "@/lib/site";
 
 export type GoogleReview = {
@@ -32,18 +33,27 @@ function formatReviewDate(unixSeconds?: number, relative?: string): string {
   return relative?.trim() || "";
 }
 
+function keepPublicReview(text: string): boolean {
+  if (!isRakhiContentHidden()) return true;
+  return !textMentionsRakhi(text);
+}
+
 function fallbackReviews(): GoogleReviewsPayload {
-  return {
-    source: "fallback",
-    mapsUrl: process.env.NEXT_PUBLIC_GOOGLE_MAPS_URL?.trim() || undefined,
-    reviews: testimonials.map((t, i) => ({
+  const reviews = testimonials
+    .filter((t) => keepPublicReview(t.text))
+    .map((t, i) => ({
       id: `site-${i}-${t.name}`,
       authorName: t.name,
       rating: t.rating,
       text: t.text,
       dateLabel: t.timeAgo,
+      profilePhotoUrl: t.image,
       fromGoogle: false,
-    })),
+    }));
+  return {
+    source: "fallback",
+    mapsUrl: process.env.NEXT_PUBLIC_GOOGLE_MAPS_URL?.trim() || undefined,
+    reviews,
   };
 }
 
@@ -103,6 +113,7 @@ export async function getGoogleReviews(): Promise<GoogleReviewsPayload> {
 
     const reviews = (data.result.reviews ?? [])
       .filter((r) => (r.text?.trim() || r.author_name) && (r.rating ?? 0) >= 1)
+      .filter((r) => keepPublicReview(r.text ?? ""))
       .map((r, i) => ({
         id: `google-${r.time ?? i}-${r.author_name ?? "anon"}`,
         authorName: r.author_name?.trim() || "Google user",

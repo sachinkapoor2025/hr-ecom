@@ -1,3 +1,4 @@
+import { isRakhiContentHidden } from "@hr-ecom/shared";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -19,7 +20,9 @@ function ShowMoreGrid({ products }: { products: BlogShowMoreProduct[] }) {
           Show More
         </h2>
         <p className="mt-1 text-sm text-slate-600">
-          Explore Rakhis from Single, Bhaiya Bhabhi, Kids, Lumba, Sets, and Hampers.
+          {isRakhiContentHidden()
+            ? "Explore Diwali and Bhai Dooj hampers — sweets, dry fruits, chocolates, and pooja sets."
+            : "Explore Rakhis from Single, Bhaiya Bhabhi, Kids, Lumba, Sets, and Hampers."}
         </p>
       </div>
 

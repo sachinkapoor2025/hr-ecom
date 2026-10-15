@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { testimonials } from "@/lib/site";
+import { isRakhiContentHidden, textMentionsRakhi } from "@hr-ecom/shared";
+import { publicTestimonials, testimonials } from "@/lib/site";
 import { api } from "@/lib/api";
 import type { PublicProductReview } from "@hr-ecom/shared";
 
@@ -35,24 +36,29 @@ function toPreview(reviews: PublicProductReview[]): PreviewItem[] {
   }));
 }
 
-const fallbackPreview: PreviewItem[] = testimonials.map((t) => ({
-  key: t.name,
-  name: t.name,
-  rating: t.rating,
-  text: t.text,
-}));
+function historicalPreview(): PreviewItem[] {
+  return publicTestimonials().map((review) => ({
+    key: review.name,
+    name: review.name,
+    rating: review.rating,
+    text: review.text,
+  }));
+}
 
 /** Site-wide customer reviews preview for product pages (social proof). */
 export function ProductReviewsPreview() {
-  const [items, setItems] = useState<PreviewItem[]>(fallbackPreview);
-  const [count, setCount] = useState<number>(testimonials.length);
+  const [items, setItems] = useState<PreviewItem[]>(() => historicalPreview());
+  const [count, setCount] = useState<number>(publicTestimonials().length || testimonials.length);
 
   useEffect(() => {
     let cancelled = false;
     api<{ reviews: PublicProductReview[] }>("/reviews", { revalidate: false })
       .then((d) => {
         if (cancelled) return;
-        const live = d.reviews ?? [];
+        const live = (d.reviews ?? []).filter((review) => {
+          if (!isRakhiContentHidden()) return true;
+          return !textMentionsRakhi(`${review.title ?? ""} ${review.body ?? ""}`);
+        });
         if (!live.length) return;
         setItems(toPreview(live));
         setCount(live.length);
@@ -67,6 +73,16 @@ export function ProductReviewsPreview() {
 
   const avg = items.reduce((s, t) => s + t.rating, 0) / (items.length || 1);
   const preview = items.slice(0, 2);
+
+  if (!preview.length) {
+    return (
+      <p className="text-xs text-slate-500">
+        <Link href="/reviews" className="text-nav font-semibold hover:underline">
+          Write a review after delivery →
+        </Link>
+      </p>
+    );
+  }
 
   return (
     <div className="space-y-4">

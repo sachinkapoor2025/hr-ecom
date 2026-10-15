@@ -144,7 +144,7 @@ export function ShippingAddressForm({
       <div>
         <h2 className="text-lg font-bold text-slate-900">Shipping Address</h2>
         <p className="text-sm text-slate-600 mt-1">
-          Enter the US delivery address for your brother or recipient. We ship domestically within all 50 states.
+          Enter the US delivery address for your recipient. We ship domestically within all 50 states.
         </p>
       </div>
 
@@ -216,16 +216,16 @@ export function ShippingAddressForm({
         )}
 
         <LeadCaptureInput
-            label="Sender name (your name)"
+            label="Sender Name"
             value={value.senderName ?? ""}
             onChange={(e) => update("senderName", e.target.value)}
-            placeholder="So your brother knows who sent this Rakhi"
+            placeholder="Enter your name"
             required
             autoComplete="nickname"
           />
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">
-              Message for your brother
+              Your Festive Message
             </label>
             <textarea
               value={value.senderMessage ?? ""}
@@ -233,7 +233,7 @@ export function ShippingAddressForm({
               required
               rows={4}
               maxLength={500}
-              placeholder="Write a Raksha Bandhan note — it will appear on the shipping label"
+              placeholder="Write a festive note — it will appear on the shipping label"
               className="w-full border border-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent text-sm leading-relaxed"
             />
             <p className="text-xs text-slate-500 mt-1">
@@ -241,10 +241,10 @@ export function ShippingAddressForm({
             </p>
           </div>
           <LeadCaptureInput
-            label="Recipient name"
+            label="Recipient Name"
             value={value.name}
             onChange={(e) => update("name", e.target.value)}
-            placeholder="Brother's full name"
+            placeholder="Enter recipient's full name"
             required
             autoComplete="name"
           />

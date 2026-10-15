@@ -1,17 +1,47 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { isRakhiContentHidden } from "@hr-ecom/shared";
 import { site } from "@/lib/site";
 import { siteUrl } from "@/lib/env";
 import { pageMetadata } from "@/lib/seo";
 import { SiteLogoLink } from "@/components/SiteLogo";
 
-export const metadata: Metadata = pageMetadata({
-  title: "Press Kit & Media",
-  description: `Media resources, brand story, and contact information for journalists covering ${site.name} and Rakhi delivery to the USA.`,
-  path: "/press",
-});
+export function generateMetadata(): Metadata {
+  return pageMetadata({
+    title: "Press Kit & Media",
+    description: isRakhiContentHidden()
+      ? `Media resources, brand story, and contact information for journalists covering ${site.name} and festive gift delivery in the USA.`
+      : `Media resources, brand story, and contact information for journalists covering ${site.name} and Rakhi delivery to the USA.`,
+    path: "/press",
+  });
+}
 
 export default function PressPage() {
+  if (isRakhiContentHidden()) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-12">
+        <h1 className="text-3xl font-bold text-primary mb-6">Press Kit</h1>
+        <div className="space-y-8 text-slate-700 leading-relaxed">
+          <p>
+            {site.name} ({siteUrl}) sends Diwali and Bhai Dooj gift hampers across the United States. The store is
+            operated by Divit Global Ventures. Orders ship from within America in 5 business days.
+          </p>
+          <ul className="list-disc pl-5 space-y-2 text-sm">
+            <li>Diwali combos, Bhai Dooj gifts, sweets, dry fruits, chocolates, and pooja sets</li>
+            <li>USA domestic shipping to all 50 states</li>
+            <li>Payments: Stripe (USD) and Razorpay (INR)</li>
+            <li>Fulfillment: San Jose, CA area — US domestic delivery</li>
+          </ul>
+          <p>
+            Media contact:{" "}
+            <a href={`mailto:${site.supportEmail}`} className="text-nav underline">
+              {site.supportEmail}
+            </a>
+          </p>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="max-w-3xl mx-auto px-4 py-12">
       <h1 className="text-3xl font-bold text-primary mb-6">Press Kit</h1>

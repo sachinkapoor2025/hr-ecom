@@ -29,12 +29,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const content = getCityContent(slug);
   if (!city) return { title: "City" };
   return pageMetadata({
-    title: `Send Gifts to ${city.label} USA | Fast Delivery`,
+    title: `Send Diwali and Bhai Dooj Gifts to ${city.label}, USA | Fast Delivery`,
     description:
       content?.metaExtra ??
-      `Send Gifts to ${city.label}, USA with ${site.name}. Premium gifts, 5–7 day delivery, roli chawal included. Order from India worldwide.`,
+      `Send Diwali gifts and Bhai Dooj gifts to ${city.label}, USA with ${site.name}. Sweet combos, chocolates, and dry fruit hampers with 5–7 day delivery.`,
     path: `/send-gifts-to-${slug}`,
-    keywords: `send gifts to ${city.label}, gifts delivery ${city.label}, gifts USA ${city.label}, UsaRakhi`,
+    keywords: `diwali gifts ${city.label}, bhai dooj gifts ${city.label}, sweet combos, dry fruit hampers, UsaRakhi`,
   });
 }
 
@@ -66,10 +66,13 @@ export default async function CityPage({ params }: Props) {
         ]}
       />
       <Breadcrumbs items={crumbs} />
-      <h1 className="text-3xl font-bold text-primary mb-2">Send Gifts to {city.label}, USA</h1>
+      <h1 className="text-3xl font-bold text-primary mb-2">
+        Send Diwali and Bhai Dooj Gifts to {city.label}, USA
+      </h1>
       <p className="text-slate-600 mb-8 max-w-3xl">
-        Premium gifts delivery to {city.label} in 5–7 business days. Order from India, UK, Canada, or
-        anywhere — we ship domestically within America.
+        Diwali gift combos, Bhai Dooj gifts, sweets, chocolates, and dry fruit hampers for {city.label}.
+        Order from India, the UK, Canada, or anywhere. We ship domestically within America in 5–7
+        business days.
       </p>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
@@ -81,7 +84,7 @@ export default async function CityPage({ params }: Props) {
         <p className="text-slate-500 mt-4">
           No products yet.{" "}
           <Link href="/products" className="text-nav hover:underline">
-            Browse all Rakhis
+            Browse Diwali and Bhai Dooj gifts
           </Link>
         </p>
       )}
@@ -89,7 +92,7 @@ export default async function CityPage({ params }: Props) {
       <CityContentSection content={content} />
 
       <section className="mt-12 p-6 bg-slate-50 rounded-xl text-sm text-slate-600">
-        <h2 className="font-semibold text-primary mb-2">Also deliver Gifts to</h2>
+        <h2 className="font-semibold text-primary mb-2">Also deliver Diwali gifts to</h2>
         <div className="flex flex-wrap gap-x-4 gap-y-2">
           {usCityLinks
             .filter((c) => c.slug !== slug)

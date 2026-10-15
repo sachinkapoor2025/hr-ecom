@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { isRakhiContentHidden } from "@hr-ecom/shared";
 import { site } from "@/lib/site";
 import { pageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = pageMetadata({
   title: "Returns & Satisfaction Guarantee",
-  description: `UsaRakhi returns, replacements, and satisfaction guarantee for Rakhi orders delivered in the USA.`,
+  description: isRakhiContentHidden()
+    ? `UsaRakhi returns, replacements, and satisfaction guarantee for festive gifts delivered in the USA.`
+    : `UsaRakhi returns, replacements, and satisfaction guarantee for Rakhi orders delivered in the USA.`,
   path: "/returns",
 });
 
@@ -15,8 +18,8 @@ export default function ReturnsPage() {
       <h1 className="text-3xl font-bold text-primary mb-6">Returns &amp; Satisfaction Guarantee</h1>
       <div className="space-y-6 text-slate-700 leading-relaxed text-sm sm:text-base">
         <p>
-          At {site.name}, we want every Raksha Bandhan delivery to feel special. If something goes wrong with your
-          order, we will make it right.
+          At {site.name}, we want every {isRakhiContentHidden() ? "festive" : "Raksha Bandhan"} delivery to feel
+          special. If something goes wrong with your order, we will make it right.
         </p>
         <h2 className="text-xl font-bold text-primary">Damaged or incorrect items</h2>
         <p>
@@ -25,7 +28,8 @@ export default function ReturnsPage() {
         </p>
         <h2 className="text-xl font-bold text-primary">Delivery issues</h2>
         <p>
-          If your Rakhi has not arrived within the estimated 5–7 business day window, reach out on WhatsApp{" "}
+          If your {isRakhiContentHidden() ? "gift" : "Rakhi"} has not arrived within the estimated 5–7 business day
+          window, reach out on WhatsApp{" "}
           {site.whatsappDisplay} or email {site.supportEmail}. We will track your shipment and resolve the issue
           promptly.
         </p>

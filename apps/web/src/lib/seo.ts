@@ -4,7 +4,8 @@ import {
   resolveProductImageUrls,
   type ProductRatingAggregate,
 } from "@hr-ecom/shared";
-import { site, testimonials } from "./site";
+import { isRakhiContentHidden } from "@hr-ecom/shared";
+import { publicSiteDescription, publicTestimonials, site, testimonials } from "./site";
 import { getCdnUrl, siteUrl } from "./env";
 import { extendedKeywords } from "./ai-recommendation";
 import { locationPublicPath } from "./content/seo-data";
@@ -22,6 +23,9 @@ export function canonical(path: string): string {
 }
 
 export const defaultKeywords = extendedKeywords;
+
+const festiveKeywords =
+  "diwali gifts usa, bhai dooj gifts usa, diwali hamper usa, bhai dooj hamper usa, sweet hamper usa, dry fruit gift box usa, pooja set usa, send diwali gifts to usa";
 
 function ogImages(url: string, alt: string) {
   return [{ url, alt, width: OG_IMAGE_WIDTH, height: OG_IMAGE_HEIGHT }];
@@ -42,7 +46,7 @@ export function pageMetadata(opts: {
   return {
     title: opts.absoluteTitle ? { absolute: opts.title } : opts.title,
     description: opts.description,
-    keywords: opts.keywords ?? defaultKeywords,
+    keywords: isRakhiContentHidden() ? festiveKeywords : (opts.keywords ?? defaultKeywords),
     alternates: { canonical: url },
     openGraph: {
       title: opts.title,
@@ -83,7 +87,7 @@ export function productPageMetadata(opts: {
   return {
     title: opts.title,
     description,
-    keywords: opts.keywords ?? defaultKeywords,
+    keywords: isRakhiContentHidden() ? festiveKeywords : (opts.keywords ?? defaultKeywords),
     alternates: { canonical: url },
     openGraph: {
       title: opts.title,
@@ -109,8 +113,11 @@ export function productPageMetadata(opts: {
 }
 
 export function organizationJsonLd() {
-  const avgRating =
-    testimonials.reduce((sum, t) => sum + t.rating, 0) / testimonials.length;
+  const stories = publicTestimonials();
+  const avgRating = stories.length
+    ? stories.reduce((sum, t) => sum + t.rating, 0) / stories.length
+    : testimonials.reduce((sum, t) => sum + t.rating, 0) / testimonials.length;
+  const hidden = isRakhiContentHidden();
 
   return {
     "@context": "https://schema.org",
@@ -124,7 +131,7 @@ export function organizationJsonLd() {
       width: OG_IMAGE_WIDTH,
       height: OG_IMAGE_HEIGHT,
     },
-    description: site.description,
+    description: publicSiteDescription(),
     email: site.supportEmail,
     telephone: site.phone,
     sameAs: [
@@ -148,37 +155,51 @@ export function organizationJsonLd() {
     ],
     audience: {
       "@type": "Audience",
-      audienceType: "Sisters and families ordering Rakhi from India and worldwide for delivery in the United States",
+      audienceType: hidden
+        ? "Families ordering Diwali and Bhai Dooj gifts for delivery in the United States"
+        : "Sisters and families ordering Rakhi from India and worldwide for delivery in the United States",
     },
-    knowsAbout: [
-      "Raksha Bandhan",
-      "Rakhi delivery to USA",
-      "Online Rakhi shopping",
-      "Indian festival gifts USA",
-      "Send rakhi from India to USA",
-      "Order rakhi online from India with INR UPI",
-      "Rakhi combo with chocolates",
-      "Bhaiya Bhabhi Rakhi",
-      "Kids Rakhi USA",
-      "Lumba Rakhi",
-    ],
-    aggregateRating: {
-      "@type": "AggregateRating",
-      ratingValue: avgRating.toFixed(1),
-      bestRating: "5",
-      worstRating: "1",
-      reviewCount: String(testimonials.length),
-    },
-    review: testimonials.map((t) => ({
-      "@type": "Review",
-      author: { "@type": "Person", name: t.name },
-      reviewRating: {
-        "@type": "Rating",
-        ratingValue: String(t.rating),
-        bestRating: "5",
-      },
-      reviewBody: t.text,
-    })),
+    knowsAbout: hidden
+      ? [
+          "Diwali gifts USA",
+          "Bhai Dooj gifts USA",
+          "Indian sweets USA delivery",
+          "Dry fruit hampers USA",
+          "Pooja sets USA",
+        ]
+      : [
+          "Raksha Bandhan",
+          "Rakhi delivery to USA",
+          "Online Rakhi shopping",
+          "Indian festival gifts USA",
+          "Send rakhi from India to USA",
+          "Order rakhi online from India with INR UPI",
+          "Rakhi combo with chocolates",
+          "Bhaiya Bhabhi Rakhi",
+          "Kids Rakhi USA",
+          "Lumba Rakhi",
+        ],
+    ...(stories.length
+      ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: avgRating.toFixed(1),
+            bestRating: "5",
+            worstRating: "1",
+            reviewCount: String(stories.length),
+          },
+          review: stories.map((t) => ({
+            "@type": "Review",
+            author: { "@type": "Person", name: t.name },
+            reviewRating: {
+              "@type": "Rating",
+              ratingValue: String(t.rating),
+              bestRating: "5",
+            },
+            reviewBody: t.text,
+          })),
+        }
+      : {}),
   };
 }
 
@@ -189,7 +210,7 @@ export function onlineStoreJsonLd() {
     "@id": `${siteUrl}/#store`,
     name: site.name,
     url: siteUrl,
-    description: site.description,
+    description: publicSiteDescription(),
     image: canonical(site.logoSrc),
     email: site.supportEmail,
     telephone: site.phone,
@@ -220,8 +241,9 @@ export function californiaWarehouseJsonLd() {
     "@type": "Store",
     "@id": `${siteUrl}/#california-warehouse`,
     name: `${site.name} California Fulfillment`,
-    description:
-      "UsaRakhi California warehouse for domestic USA Rakhi shipping — no international customs delays.",
+    description: isRakhiContentHidden()
+      ? "UsaRakhi California fulfillment for domestic USA delivery of Diwali and Bhai Dooj gifts."
+      : "UsaRakhi California warehouse for domestic USA Rakhi shipping — no international customs delays.",
     url: siteUrl,
     image: canonical(site.logoSrc),
     parentOrganization: { "@id": `${siteUrl}/#organization` },
@@ -247,7 +269,7 @@ export function webSiteJsonLd() {
     "@id": `${siteUrl}/#website`,
     name: site.name,
     url: siteUrl,
-    description: site.description,
+    description: publicSiteDescription(),
     publisher: { "@id": `${siteUrl}/#organization` },
     potentialAction: {
       "@type": "SearchAction",
@@ -415,6 +437,7 @@ export function itemListJsonLd(name: string, items: { name: string; path: string
 }
 
 export function howToSendRakhiJsonLd() {
+  if (isRakhiContentHidden()) return null;
   return {
     "@context": "https://schema.org",
     "@type": "HowTo",
@@ -484,7 +507,9 @@ export function contactPageJsonLd() {
     "@type": "ContactPage",
     name: `Contact ${site.name}`,
     url: canonical("/contact"),
-    description: `Contact ${site.name} for Rakhi delivery support and Raksha Bandhan order help.`,
+    description: isRakhiContentHidden()
+      ? `Contact ${site.name} for Diwali and Bhai Dooj gift delivery and order help.`
+      : `Contact ${site.name} for Rakhi delivery support and Raksha Bandhan order help.`,
     mainEntity: { "@id": `${siteUrl}/#organization` },
   };
 }
@@ -519,7 +544,7 @@ export function aboutPageJsonLd() {
     "@type": "AboutPage",
     name: `About ${site.name}`,
     url: canonical("/about"),
-    description: site.description,
+    description: publicSiteDescription(),
     mainEntity: { "@id": `${siteUrl}/#organization` },
   };
 }

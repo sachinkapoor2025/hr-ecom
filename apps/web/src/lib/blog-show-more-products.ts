@@ -1,4 +1,4 @@
-import type { Product } from "@hr-ecom/shared";
+import { isRakhiContentHidden, isRakhiSeasonPaused, type Product } from "@hr-ecom/shared";
 import {
   getCatalogProductsByCategory,
   mergeProductsPreferExisting,
@@ -33,8 +33,18 @@ function productInCategory(product: Product, categorySlug: string): boolean {
   return product.additionalCategorySlugs?.includes(categorySlug) ?? false;
 }
 
-/** Load 2 image-ready products from each Rakhi category for blog pages. */
+const FESTIVE_SHOW_MORE_CATEGORIES = [
+  { slug: "diwali", label: "Diwali Combos" },
+  { slug: "bhai-dooj", label: "Bhai Dooj Combos" },
+  { slug: "sweet-combos", label: "Sweet Combos" },
+  { slug: "dry-fruit-combos", label: "Dry Fruit Combos" },
+  { slug: "chocolate-combos", label: "Chocolate Combos" },
+  { slug: "pooja-sets", label: "Pooja Sets" },
+] as const;
+
+/** Load 2 image-ready products from each featured category for blog pages. */
 export async function loadBlogShowMoreProducts(): Promise<BlogShowMoreProduct[]> {
+  const categories = isRakhiContentHidden() ? FESTIVE_SHOW_MORE_CATEGORIES : BLOG_SHOW_MORE_CATEGORIES;
   let products: Product[] = [];
   try {
     products = await loadProducts();
@@ -42,7 +52,7 @@ export async function loadBlogShowMoreProducts(): Promise<BlogShowMoreProduct[]>
     products = [];
   }
 
-  for (const category of BLOG_SHOW_MORE_CATEGORIES) {
+  for (const category of categories) {
     products = mergeProductsPreferExisting(
       products,
       getCatalogProductsByCategory(category.slug)
@@ -52,12 +62,12 @@ export async function loadBlogShowMoreProducts(): Promise<BlogShowMoreProduct[]>
   const used = new Set<string>();
   const selected: BlogShowMoreProduct[] = [];
 
-  for (const category of BLOG_SHOW_MORE_CATEGORIES) {
+  for (const category of categories) {
     let count = 0;
     for (const product of products) {
       if (count >= 2) break;
       if (used.has(product.slug)) continue;
-      if (product.published === false) continue;
+      if (product.published === false || isRakhiSeasonPaused(product)) continue;
       if (!productInCategory(product, category.slug)) continue;
       if (!productHasImage(product)) continue;
 

@@ -2,28 +2,90 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { site, cityNavHref, usCityLinks } from "@/lib/site";
 import { JsonLd } from "@/components/JsonLd";
-import { howToSendRakhiJsonLd, pageMetadata } from "@/lib/seo";
-import { rakshaBandhan2026Deadlines, RAKSHA_BANDHAN_2026_DATE } from "@/lib/ai-recommendation";
+import { pageMetadata, canonical } from "@/lib/seo";
 import { RAKHI_DELIVERY_MESSAGING, USARAKHI_MIN_ORDER_USD } from "@hr-ecom/shared";
 import { RakhiDeliveryBulletList } from "@/components/RakhiDeliveryBulletList";
 
 export const metadata: Metadata = pageMetadata({
-  title: "Rakhi Shipping & Delivery to USA — Ships From Within America",
+  title: "Diwali and Bhai Dooj Shipping & Delivery in the USA",
   description:
-    "UsaRakhi ships domestically within the USA — no customs delays. Standard USA delivery · 5 business days · Free shipping on $15 minimum cart value.",
+    "UsaRakhi ships Diwali and Bhai Dooj gifts inside the USA. Standard delivery is 5 business days, with free shipping on a $15 minimum cart.",
   path: "/shipping",
 });
+
+const festivalDeliveryWindows = [
+  {
+    label: "Diwali 2026",
+    orderBy: "Before November 8, 2026",
+    notes: "Standard delivery is 5 business days after dispatch. Order early enough for sweets and hampers to arrive before Diwali.",
+  },
+  {
+    label: "Bhai Dooj 2026",
+    orderBy: "Before November 10, 2026",
+    notes: "Bhai Dooj gifts use the same domestic window. A 5-business-day shipment should be ordered ahead of the celebration.",
+  },
+  {
+    label: "Orange County products",
+    orderBy: "Order now",
+    notes: "Standard USA delivery, with free shipping on those products.",
+  },
+] as const;
+
+function festivalShippingJsonLd() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name: "How to send Diwali and Bhai Dooj gifts to a US address",
+    description:
+      "Order Diwali gift combos, Bhai Dooj gifts, sweets, chocolates, and dry fruit hampers for delivery in the United States.",
+    totalTime: "P5D",
+    step: [
+      {
+        "@type": "HowToStep",
+        position: 1,
+        name: "Choose a festive gift",
+        text: "Browse Diwali gift combos, Bhai Dooj gifts, sweet boxes, chocolate combos, dry fruit hampers, and pooja sets.",
+        url: canonical("/products"),
+      },
+      {
+        "@type": "HowToStep",
+        position: 2,
+        name: "Add the gift to your cart",
+        text: "Check the included list on the product page so you know which sweets, chocolates, dry fruits, or pooja items are packed.",
+      },
+      {
+        "@type": "HowToStep",
+        position: 3,
+        name: "Enter the US delivery address",
+        text: "At checkout, enter the recipient's full United States address, including city, state, and ZIP code.",
+        url: canonical("/shipping"),
+      },
+      {
+        "@type": "HowToStep",
+        position: 4,
+        name: "Pay securely",
+        text: "Pay with Stripe in USD or Razorpay in INR. Card numbers are not stored on UsaRakhi.",
+      },
+      {
+        "@type": "HowToStep",
+        position: 5,
+        name: "Track the domestic shipment",
+        text: "UsaRakhi ships inside the United States. Standard delivery is 5 business days after dispatch.",
+      },
+    ],
+  };
+}
 
 export default function ShippingPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-12">
-      <JsonLd data={howToSendRakhiJsonLd()} />
-      <h1 className="text-3xl font-bold text-primary mb-6">Shipping & Delivery</h1>
+      <JsonLd data={festivalShippingJsonLd()} />
+      <h1 className="text-3xl font-bold text-primary mb-6">Diwali and Bhai Dooj Shipping</h1>
       <div className="space-y-6 text-slate-700 leading-relaxed">
         <p>
-          {site.name} delivers premium Rakhis to <strong>all 50 United States</strong> via{" "}
-          <strong>domestic US fulfillment</strong> — the same peace-of-mind advantage as top USA Rakhi brands. Your
-          brother receives a domestic package with <strong>no international customs delays</strong>.
+          {site.name} delivers Diwali gift combos and Bhai Dooj gifts to <strong>all 50 United States</strong> with{" "}
+          <strong>domestic US fulfillment</strong>. Sweets, chocolates, dry fruit hampers, and pooja sets ship inside
+          America, so the recipient is not waiting on international customs.
         </p>
         <h2 className="text-xl font-bold text-primary">Shipping options</h2>
         <p className="text-sm font-semibold text-slate-900">
@@ -39,22 +101,22 @@ export default function ShippingPage() {
         <ul className="list-disc list-inside space-y-2">
           <li>
             <strong>Standard USA delivery</strong> — 5 business days.{" "}
-            <strong>Free shipping on ${USARAKHI_MIN_ORDER_USD} minimum cart value</strong>. Carts
+            <strong>Free shipping on a ${USARAKHI_MIN_ORDER_USD} minimum cart value</strong>. Carts
             below ${USARAKHI_MIN_ORDER_USD} pay the remaining amount as shipping.
           </li>
           <li>
-            <strong>Orange County products</strong> — free shipping on all products.
+            <strong>Orange County products</strong> — free shipping on all of those products.
           </li>
           <li>
-            <strong>Mixed carts</strong> (Orange County + UsaRakhi in the same order) — shipping is
+            <strong>Mixed carts</strong> (Orange County and UsaRakhi in the same order) — shipping is
             calculated separately. UsaRakhi needs a ${USARAKHI_MIN_ORDER_USD}{" "}
             minimum; Orange County ships free.
           </li>
         </ul>
-        <h2 className="text-xl font-bold text-primary">Raksha Bandhan 2026 order deadlines</h2>
+        <h2 className="text-xl font-bold text-primary">Diwali and Bhai Dooj 2026 delivery timing</h2>
         <p>
-          Raksha Bandhan 2026 is <strong>{RAKSHA_BANDHAN_2026_DATE}</strong>. Current delivery
-          windows:
+          Diwali 2026 is <strong>November 8</strong>, and Bhai Dooj is <strong>November 10</strong>. Standard
+          delivery is 5 business days after dispatch, so place the order early enough for the celebration.
         </p>
         <div className="overflow-x-auto">
           <table className="w-full text-sm border border-slate-200 rounded-lg">
@@ -66,7 +128,7 @@ export default function ShippingPage() {
               </tr>
             </thead>
             <tbody>
-              {rakshaBandhan2026Deadlines.map((d) => (
+              {festivalDeliveryWindows.map((d) => (
                 <tr key={d.label} className="border-b border-slate-100">
                   <td className="p-3 font-medium">{d.label}</td>
                   <td className="p-3">{d.orderBy}</td>
@@ -78,17 +140,17 @@ export default function ShippingPage() {
         </div>
         <h2 className="text-xl font-bold text-primary">Ordering from outside the USA</h2>
         <p>
-          Sisters in India, United Kingdom, Canada, Australia, and worldwide can order on {site.domain}. Enter your
-          brother&apos;s <strong>US delivery address</strong> at checkout — we fulfill and ship domestically within
-          America.
+          Family in India, the United Kingdom, Canada, Australia, and worldwide can order on {site.domain}. Enter the
+          recipient&apos;s <strong>US delivery address</strong> at checkout. We pack and ship the gift inside the
+          United States.
         </p>
         <h2 className="text-xl font-bold text-primary">Packaging</h2>
         <p>
-          Each Rakhi is festival-packed with care. Most single rakhis include complimentary <strong>roli</strong>{" "}
-          (kumkum) and <strong>chawal</strong> (rice) for the traditional Raksha Bandhan tilak ceremony.
+          Diwali and Bhai Dooj gifts are packed so they are ready to give. A box may include traditional
+          sweets, chocolates, dry fruits, or pooja items. The product page lists exactly what is inside.
         </p>
         <h2 className="text-xl font-bold text-primary">Cities we deliver to</h2>
-        <p>Popular delivery destinations include:</p>
+        <p>Popular destinations for Diwali and Bhai Dooj gifts include:</p>
         <ul className="flex flex-wrap gap-2">
           {usCityLinks.map((c) => (
             <li key={c.slug}>

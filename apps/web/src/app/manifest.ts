@@ -1,11 +1,14 @@
 import type { MetadataRoute } from "next";
-import { site } from "@/lib/site";
+import { isRakhiContentHidden } from "@hr-ecom/shared";
+import { publicSiteDescription, site } from "@/lib/site";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: `${site.name} — Send Rakhi to USA Online`,
+    name: isRakhiContentHidden()
+      ? `${site.name} — Diwali & Bhai Dooj Gifts`
+      : `${site.name} — Send Rakhi to USA Online`,
     short_name: site.name,
-    description: site.description,
+    description: publicSiteDescription(),
     start_url: "/",
     display: "standalone",
     background_color: "#ffffff",

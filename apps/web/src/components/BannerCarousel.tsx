@@ -1,5 +1,6 @@
 "use client";
 
+import { isRakhiContentHidden } from "@hr-ecom/shared";
 import { useState, useEffect, useCallback, type ReactNode } from "react";
 import Link from "next/link";
 import Image from "next/image";
@@ -24,6 +25,11 @@ export interface HomeBanner {
    * that must stay fully visible (no top/bottom crop).
    */
   imageFit?: "cover" | "contain";
+}
+
+function trustFeatureLabel(label: string): string {
+  if (label === "Premium Rakhis" && isRakhiContentHidden()) return "Festive hampers";
+  return label;
 }
 
 const TRUST_FEATURES = [
@@ -324,7 +330,7 @@ export function BannerCarousel({
                       </svg>
                     </span>
                     <span className="text-[11px] font-semibold text-primary/90 leading-tight text-center lg:text-left">
-                      {f.label}
+                      {trustFeatureLabel(f.label)}
                     </span>
                   </li>
                 ))}
@@ -341,7 +347,7 @@ export function BannerCarousel({
                   {f.icon}
                 </svg>
               </span>
-              <span className="text-[9px] font-semibold text-primary/80 text-center leading-tight">{f.label}</span>
+              <span className="text-[9px] font-semibold text-primary/80 text-center leading-tight">{trustFeatureLabel(f.label)}</span>
             </li>
           ))}
         </ul>

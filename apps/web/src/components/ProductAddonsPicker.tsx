@@ -132,7 +132,7 @@ function RakhiAddonStrip({
     <div>
       <div className="mb-3">
         <div className="flex flex-wrap items-end justify-between gap-2">
-          <p className="text-sm sm:text-base font-bold text-primary">Extra rakhis — mix any 1 to 5</p>
+          <p className="text-sm sm:text-base font-bold text-primary">Festive extras — mix any 1 to 5</p>
           {rakhiPieces > 0 ? (
             <p className="text-sm font-bold text-nav tabular-nums">
               {rakhiPieces} extra · {format(mixTotal, "USD")}
@@ -303,8 +303,8 @@ export function ProductAddonsPicker({
       <div className="mb-4">
         <p className="text-lg sm:text-xl font-extrabold text-primary tracking-tight">Add extras</p>
         <p className="text-sm sm:text-[15px] text-slate-700 mt-1.5 leading-relaxed">
-          Mix extra designer rakhis at bundle prices, add chocolates, or add a small pack of dry
-          fruits while supplies last. Rakhi product pages stay at the regular price.
+          Add chocolates or a small pack of dry fruits to a Diwali or Bhai Dooj gift while supplies
+          last. You can also mix extra festive pieces at bundle prices. The product price stays the same.
         </p>
       </div>
       <div className="space-y-4">

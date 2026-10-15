@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { isRakhiContentHidden } from "@hr-ecom/shared";
 
 /**
  * Soft India-buyer cue on the homepage.
@@ -13,13 +14,13 @@ export function IndiaBuyerBanner() {
       <div className="max-w-7xl mx-auto px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-sm">
         <p className="text-slate-800">
           <span className="font-semibold text-primary">Ordering from India?</span>{" "}
-          Pay with <strong>UPI / INR</strong> — we deliver to your brother in the USA.
+          Pay with <strong>UPI / INR</strong> — we deliver the gift in the USA.
         </p>
         <Link
-          href="/send-rakhi-from-india"
+          href={isRakhiContentHidden() ? "/diwali-to-usa" : "/send-rakhi-from-india"}
           className="shrink-0 font-semibold text-nav hover:underline"
         >
-          Send Rakhi from India →
+          {isRakhiContentHidden() ? "Shop Diwali gifts →" : "Send Rakhi from India →"}
         </Link>
       </div>
     </aside>

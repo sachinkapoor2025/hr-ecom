@@ -272,7 +272,7 @@ export const festivalBlogPosts: BlogPost[] = [
       {
         heading: "What “for your brother” means in this catalog",
         paragraphs: [
-          "These are not rakhi threads. The Bhai Dooj range is food and, where listed, a tilak dibbi and a card. Chocolate options include Ferrero Rocher, M&M’s, and Skittles in named boxes. Dry fruit options include almonds with pistachios, mixed dry fruits at 266 g or 131 g, cashews beside kaju katli, and a pistachio box.",
+          "The Bhai Dooj range is food and, where listed, a tilak dibbi and a card. Chocolate options include Ferrero Rocher, M&M’s, and Skittles in named boxes. Dry fruit options include almonds with pistachios, mixed dry fruits at 266 g or 131 g, cashews beside kaju katli, and a pistachio box.",
           "Read the included list. A box called “kaju katli and Ferrero” contains 200 g of kaju katli and 3 Ferrero Rocher pieces plus the card. It does not also contain kumkum unless the title says so.",
         ],
       },
@@ -364,7 +364,7 @@ export const festivalBlogPosts: BlogPost[] = [
         heading: "What the card is for",
         paragraphs: [
           "The card with kalawa is listed as part of the gift, not as a handwritten note from you. You can still tell him, in your own message, which box is on the way. The site does not offer custom printing on these festival combos unless a product page says it does. These pages do not.",
-          "Kalawa in the box is a thread for the day. It is not a rakhi from the earlier season, and the shop is not presenting these SKUs as rakhi sets.",
+          "Kalawa in the box is a thread for the day. These gift boxes are sweets, nuts, or chocolates with a card, not a separate thread-set category.",
         ],
       },
       {

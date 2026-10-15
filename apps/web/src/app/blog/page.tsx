@@ -3,26 +3,40 @@ import Link from "next/link";
 import { BlogCoverImage } from "@/components/BlogCoverImage";
 import { BlogShowMoreProducts } from "@/components/BlogShowMoreProducts";
 import { loadBlogPostsWithImages } from "@/lib/blog-images";
+import { isRakhiContentHidden, textMentionsRakhi } from "@hr-ecom/shared";
 import { pageMetadata } from "@/lib/seo";
 
 /** Keep blog list fresh when admin updates hero images. */
 export const revalidate = 60;
 
-export const metadata: Metadata = pageMetadata({
-  title: "Rakhi Blog — Guides, Tips & Raksha Bandhan USA",
-  description:
-    "Raksha Bandhan guides: send Rakhi to USA from India, best Rakhi combos, Bhaiya Bhabhi sets, and 2026 festival tips from UsaRakhi.",
-  path: "/blog",
-});
+export function generateMetadata(): Metadata {
+  const hidden = isRakhiContentHidden();
+  return pageMetadata({
+    title: hidden
+      ? "Diwali & Bhai Dooj Guides — Festive Gifts USA"
+      : "Rakhi Blog — Guides, Tips & Raksha Bandhan USA",
+    description: hidden
+      ? "Guides for sending Diwali and Bhai Dooj gifts in the USA: hampers, sweets, dry fruits, and domestic delivery."
+      : "Raksha Bandhan guides: send Rakhi to USA from India, best Rakhi combos, Bhaiya Bhabhi sets, and 2026 festival tips from UsaRakhi.",
+    path: "/blog",
+  });
+}
 
 export default async function BlogPage() {
-  const posts = await loadBlogPostsWithImages();
+  const hidden = isRakhiContentHidden();
+  const posts = (await loadBlogPostsWithImages()).filter((post) => {
+    if (!hidden) return true;
+    return !textMentionsRakhi(`${post.slug} ${post.title} ${post.excerpt} ${post.description ?? ""}`);
+  });
   return (
     <div className="max-w-5xl mx-auto px-4 py-12 overflow-x-hidden">
-      <h1 className="text-3xl font-bold text-primary mb-2">Rakhi Guides & Blog</h1>
+      <h1 className="text-3xl font-bold text-primary mb-2">
+        {hidden ? "Diwali & Bhai Dooj guides" : "Rakhi Guides & Blog"}
+      </h1>
       <p className="text-slate-600 mb-8">
-        Expert guides on sending Rakhi to USA, Raksha Bandhan traditions, and choosing the perfect Rakhi for your
-        brother.
+        {hidden
+          ? "Guides for Diwali and Bhai Dooj gifts delivered in the United States — sweets, dry fruits, chocolates, and pooja sets."
+          : "Expert guides on sending Rakhi to USA, Raksha Bandhan traditions, and choosing the perfect Rakhi for your brother."}
       </p>
       <div className="grid gap-6 sm:grid-cols-2">
         {posts.map((post) => (
@@ -61,6 +75,22 @@ export default async function BlogPage() {
         ))}
       </div>
 
+      {hidden ? (
+        <section className="mt-12 pt-10 border-t border-slate-200 max-w-3xl text-slate-700 leading-relaxed">
+          <h2 className="text-xl font-bold text-primary mb-3">Festive gift guides</h2>
+          <p className="mb-4">
+            These articles explain Diwali and Bhai Dooj gifts that ship to a US address: sweets, dry fruits,
+            chocolates, pooja sets, and how domestic delivery works.
+          </p>
+          <p className="text-sm">
+            Ready to choose a hamper?{" "}
+            <Link href="/products" className="text-nav font-semibold hover:underline">
+              Browse the shop
+            </Link>
+            .
+          </p>
+        </section>
+      ) : (
       <section className="mt-12 pt-10 border-t border-slate-200 max-w-3xl text-slate-700 leading-relaxed">
         <h2 className="text-xl font-bold text-primary mb-3">What these rakhi guides cover</h2>
         <p className="mb-4">
@@ -104,6 +134,7 @@ export default async function BlogPage() {
           .
         </p>
       </section>
+      )}
 
       <BlogShowMoreProducts />
     </div>

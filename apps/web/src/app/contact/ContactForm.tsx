@@ -1,5 +1,6 @@
 "use client";
 
+import { isRakhiContentHidden } from "@hr-ecom/shared";
 import { useState } from "react";
 import Link from "next/link";
 import { site, whatsappChatUrl } from "@/lib/site";
@@ -64,8 +65,9 @@ export function ContactForm() {
     <div className="max-w-3xl mx-auto px-4 py-12">
       <h1 className="text-3xl font-bold text-primary mb-6">Contact Us</h1>
       <p className="text-slate-600 mb-8">
-        Have questions about your Rakhi order or delivery to the USA? Our team is here to help you before, during, and
-        after Raksha Bandhan.
+        {isRakhiContentHidden()
+          ? "Have a question about a Diwali or Bhai Dooj gift, or about delivery in the USA? Our team can help before and after your order."
+          : "Have questions about your Rakhi order or delivery to the USA? Our team is here to help you before, during, and after Raksha Bandhan."}
       </p>
       <div className="grid md:grid-cols-3 gap-6 mb-10">
         <div className="border border-slate-200 rounded-xl p-6">

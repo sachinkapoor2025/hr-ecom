@@ -1,4 +1,5 @@
 import { RAKHI_SEASON_PAUSED_TAG, VENDOR_ORANGE_COUNTY } from "../constants";
+import { isRakhiContentHidden, isRakhiPrimaryProduct, stripRakhiSentences } from "./rakhi-visibility";
 
 /**
  * Temporary: pause all UsaRakhi catalog SKUs (force inventory 0 on storefront).
@@ -68,9 +69,38 @@ export function isStorefrontSoldOut(product: { inventory?: number | null }): boo
   return (product.inventory ?? 0) <= 0;
 }
 
-/** Closed Rakhi-season SKUs. Hidden from the shop; kept for admin and past orders. */
-export function isRakhiSeasonPaused(product: { tags?: string[] | null }): boolean {
-  return (product.tags ?? []).includes(RAKHI_SEASON_PAUSED_TAG);
+/**
+ * Hidden from the public shop through 10 November 2026.
+ * Tagged and Rakhi-primary products stay in the database and return on 11 November.
+ */
+export function isRakhiSeasonPaused(product: {
+  tags?: string[] | null;
+  slug?: string | null;
+  name?: string | null;
+  categorySlug?: string | null;
+  additionalCategorySlugs?: string[] | null;
+}): boolean {
+  if (!isRakhiContentHidden()) return false;
+  if ((product.tags ?? []).includes(RAKHI_SEASON_PAUSED_TAG)) return true;
+  return isRakhiPrimaryProduct(product);
+}
+
+export function sanitizePublicProductCopy<
+  T extends {
+    description?: string | null;
+    seoDescription?: string | null;
+    tags?: string[] | null;
+  },
+>(product: T): T {
+  if (!isRakhiContentHidden()) return product;
+  const description = product.description ? stripRakhiSentences(product.description) : product.description;
+  const seoDescription = product.seoDescription
+    ? stripRakhiSentences(product.seoDescription)
+    : product.seoDescription;
+  const tags = (product.tags ?? []).filter(
+    (tag) => tag === RAKHI_SEASON_PAUSED_TAG || !/\brakhis?\b|\braksha\s*bandhan\b/i.test(tag.replace(/-/g, " "))
+  );
+  return { ...product, description, seoDescription, tags };
 }
 
 /** Clamp inventory to 0 for force-OOS SKUs and paused UsaRakhi products. */
@@ -111,15 +141,20 @@ export function sortAvailableProductsFirst<T extends { inventory?: number | null
 export function prepareStorefrontProducts<
   T extends {
     slug?: string;
+    name?: string | null;
     inventory?: number;
     published?: boolean;
     vendorSlug?: string | null;
     images?: string[] | null;
+    categorySlug?: string | null;
+    additionalCategorySlugs?: string[] | null;
+    tags?: string[] | null;
   },
 >(products: T[]): T[] {
   const prepared = products
     .map(withForcedOutOfStockInventory)
-    .filter((p) => p.published !== false);
+    .filter((p) => p.published !== false)
+    .filter((p) => !isRakhiSeasonPaused(p));
   return sortAvailableProductsFirst(prepared);
 }
 
@@ -129,10 +164,14 @@ export function prepareStorefrontProducts<
 export function filterInStockStorefrontProducts<
   T extends {
     slug?: string;
+    name?: string | null;
     inventory?: number;
     published?: boolean;
     vendorSlug?: string | null;
     images?: string[] | null;
+    categorySlug?: string | null;
+    additionalCategorySlugs?: string[] | null;
+    tags?: string[] | null;
   },
 >(products: T[]): T[] {
   return prepareStorefrontProducts(products);

@@ -23,6 +23,8 @@ import {
   catalogReviewToAdmin,
   legacyLeadToAdminReview,
   reviewStatusFromPublished,
+  isRakhiContentHidden,
+  textMentionsRakhi,
   type AdminReview,
   type AdminReviewOrderItem,
   type LegacyReviewLead,
@@ -258,7 +260,10 @@ export async function listPublishedReviews(_event: APIGatewayProxyEventV2) {
     queryLegacyReviewLeads(),
   ]);
   const catalog = mergeCatalogReviews(gsiReviews, siteReviews);
-  const reviews = mergePublishedStorefrontReviews(catalog, leads);
+  const reviews = mergePublishedStorefrontReviews(catalog, leads).filter((review) => {
+    if (!isRakhiContentHidden()) return true;
+    return !textMentionsRakhi(`${review.title ?? ""} ${review.body ?? ""}`);
+  });
 
   return ok({ reviews }, { "Cache-Control": "no-store" });
 }

@@ -19,9 +19,9 @@ export function FastSellingBanner({ unitsSold }: { unitsSold: number }) {
         🔥
       </span>
       <div>
-        <p className="font-bold text-orange-900 text-sm">Fast Selling — {unitsSold}+ sisters chose this!</p>
+        <p className="font-bold text-orange-900 text-sm">Fast Selling — {unitsSold}+ families chose this!</p>
         <p className="text-xs text-orange-800/90 mt-0.5 leading-relaxed">
-          This Rakhi is trending on UsaRakhi. {FAST_SELLING_THRESHOLD}+ sold — order soon while stock lasts.
+          This festive gift is trending on UsaRakhi. {FAST_SELLING_THRESHOLD}+ sold — order soon while stock lasts.
         </p>
       </div>
     </div>

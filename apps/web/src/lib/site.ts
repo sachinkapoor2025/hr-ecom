@@ -1,4 +1,4 @@
-import { cdnUploadUrl } from "@hr-ecom/shared";
+import { cdnUploadUrl, isRakhiContentHidden, textMentionsRakhi } from "@hr-ecom/shared";
 import { categoryHref } from "./category-urls";
 import { HOME_BANNER_DELIVERY_NOTE } from "./prices-dropped-copy";
 
@@ -205,6 +205,28 @@ export const testimonials = [
   },
 ] as const;
 
+export type PublicTestimonial = {
+  name: string;
+  rating: number;
+  timeAgo: string;
+  image: string;
+  text: string;
+};
+
+/** Original Rakhi stories stay in source. They are omitted from the shop through 10 November. */
+export function publicTestimonials(): PublicTestimonial[] {
+  const reviews: PublicTestimonial[] = [...testimonials];
+  if (!isRakhiContentHidden()) return reviews;
+  return reviews.filter((review) => !textMentionsRakhi(review.text));
+}
+
+export const FESTIVE_SITE_DESCRIPTION =
+  "UsaRakhi.com — Diwali and Bhai Dooj gift hampers delivered across the USA. Sweets, dry fruits, chocolates, and pooja sets shipped domestically within the United States.";
+
+export function publicSiteDescription(): string {
+  return isRakhiContentHidden() ? FESTIVE_SITE_DESCRIPTION : site.description;
+}
+
 export const faqs = [
   {
     q: "What is the best website to send Rakhi to the USA?",
@@ -255,3 +277,30 @@ export const faqs = [
     a: "Stripe (USD — Visa, Mastercard, Amex) and Razorpay (INR — UPI, cards, netbanking) for secure online checkout.",
   },
 ] as const;
+
+export const festivalFaqs = [
+  {
+    q: "What can I send for Diwali and Bhai Dooj in the USA?",
+    a: "UsaRakhi lists Diwali gift combos, Bhai Dooj gift boxes, sweet hampers, dry fruit boxes, chocolate combos, and pooja sets. Each product page lists what is packed inside.",
+  },
+  {
+    q: "How long does USA delivery take?",
+    a: "Standard USA delivery is 5 business days to all 50 US states, with free shipping on a $15 minimum cart value. Orange County products ship free. Mixed carts are calculated separately.",
+  },
+  {
+    q: "Can I order from India for a US address?",
+    a: "Yes. Pay in INR with Razorpay, including UPI, or in USD with Stripe. Enter the US delivery address at checkout. The gift ships from within the United States.",
+  },
+  {
+    q: "Who can receive a festive gift?",
+    a: "You can send Diwali and Bhai Dooj gifts to a brother, sister, parent, friend, or any other recipient at a US address. Sender and recipient names are entered at checkout.",
+  },
+  {
+    q: "What payment methods do you accept?",
+    a: "Stripe (USD — Visa, Mastercard, Amex) and Razorpay (INR — UPI, cards, netbanking) for secure online checkout.",
+  },
+] as const;
+
+export function publicFaqs() {
+  return isRakhiContentHidden() ? festivalFaqs : faqs;
+}

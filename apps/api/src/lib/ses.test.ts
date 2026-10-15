@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { formatSesError, formatSesFromAddress, SesSendError } from "./ses";
+import { formatSesError, formatSesFromAddress, pickMarketingSmtpAuth, SesSendError } from "./ses";
 
 describe("formatSesFromAddress", () => {
   it("formats a simple display name", () => {
@@ -48,5 +48,31 @@ describe("formatSesError", () => {
   it("passes through SesSendError", () => {
     const original = new SesSendError("already formatted", { code: "X" });
     assert.equal(formatSesError(original), original);
+  });
+});
+
+describe("pickMarketingSmtpAuth", () => {
+  it("uses the env login when Dynamo still has a different SMTP user", () => {
+    assert.deepEqual(
+      pickMarketingSmtpAuth({
+        storedUser: "order@blossompot.com",
+        storedPass: "old-password",
+        envUser: "order@usarakhi.com",
+        envPass: "mailercloud-password",
+      }),
+      { user: "order@usarakhi.com", pass: "mailercloud-password" }
+    );
+  });
+
+  it("keeps an admin-saved password when the SMTP user matches", () => {
+    assert.deepEqual(
+      pickMarketingSmtpAuth({
+        storedUser: "order@usarakhi.com",
+        storedPass: "admin-password",
+        envUser: "order@usarakhi.com",
+        envPass: "env-password",
+      }),
+      { user: "order@usarakhi.com", pass: "admin-password" }
+    );
   });
 });

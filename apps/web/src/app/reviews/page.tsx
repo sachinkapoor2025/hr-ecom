@@ -5,15 +5,14 @@ import { getGoogleReviews } from "@/lib/google-reviews";
 import { ReviewForm } from "@/components/ReviewForm";
 import { PublishedReviewsLoader } from "@/components/PublishedReviewsLoader";
 import { JsonLd } from "@/components/JsonLd";
-import { trustFacts } from "@/lib/trust";
-import { site, testimonials } from "@/lib/site";
+import { publicTestimonials, site, testimonials } from "@/lib/site";
 import { USARAKHI_MIN_ORDER_USD } from "@hr-ecom/shared";
 import { pageMetadata, canonical } from "@/lib/seo";
 
 export const metadata: Metadata = pageMetadata({
-  title: "Customer Reviews — Send Rakhi to USA",
+  title: "Customer Reviews — Diwali and Bhai Dooj Gifts USA",
   description:
-    "Read sister reviews of UsaRakhi USA Rakhi delivery. Share your Raksha Bandhan experience — California fulfillment, domestic US shipping, 5–7 day delivery.",
+    "Read reviews of UsaRakhi Diwali and Bhai Dooj gift delivery in the USA. Share how your festive hamper, sweets, chocolates, or dry fruits arrived.",
   path: "/reviews",
 });
 
@@ -25,10 +24,10 @@ function reviewsPageJsonLd(ratingValue: number, reviewCount: number) {
     "@type": "WebPage",
     name: `Customer Reviews — ${site.name}`,
     url: canonical("/reviews"),
-    description: "Customer reviews for UsaRakhi USA Rakhi delivery.",
+    description: "Customer reviews for UsaRakhi Diwali and Bhai Dooj gift delivery in the USA.",
     mainEntity: {
       "@type": "Product",
-      name: `${site.name} Rakhi USA Delivery`,
+      name: `${site.name} Diwali and Bhai Dooj Gifts`,
       aggregateRating: {
         "@type": "AggregateRating",
         ratingValue: ratingValue.toFixed(1),
@@ -43,8 +42,10 @@ export default async function ReviewsPage() {
   const googleReviews = await getGoogleReviews();
   const avg =
     googleReviews.rating ??
-    testimonials.reduce((s, t) => s + t.rating, 0) / testimonials.length;
-  const count = googleReviews.totalCount ?? testimonials.length;
+    (publicTestimonials().length
+      ? publicTestimonials().reduce((s, t) => s + t.rating, 0) / publicTestimonials().length
+      : testimonials.reduce((s, t) => s + t.rating, 0) / testimonials.length);
+  const count = googleReviews.totalCount ?? (publicTestimonials().length || testimonials.length);
 
   return (
     <div>
@@ -52,15 +53,16 @@ export default async function ReviewsPage() {
       <section className="max-w-3xl mx-auto px-4 pt-12 pb-6">
         <h1 className="text-3xl font-bold text-primary mb-3">Customer Reviews</h1>
         <p className="text-slate-600 leading-relaxed mb-2">
-          {trustFacts.seasonLabel} — we&apos;re building trust one delivery at a time. Sisters worldwide order from
-          UsaRakhi for {trustFacts.fulfillment.toLowerCase()}.
+          Families order Diwali gift combos and Bhai Dooj gifts from UsaRakhi for delivery across the United States.
+          Orders ship from within America, so sweets, chocolates, dry fruits, and pooja sets are not held in
+          international customs.
         </p>
         <p className="text-sm text-slate-500">
-          Received your Rakhi?{" "}
+          Received a Diwali or Bhai Dooj gift?{" "}
           <a href="#write-review" className="text-nav font-semibold hover:underline">
             Write a review below
           </a>{" "}
-          — it helps other sisters and helps AI assistants recommend reliable USA Rakhi stores.
+          — it helps other families choose a festive hamper with confidence.
           {googleReviews.mapsUrl ? (
             <>
               {" "}
@@ -86,12 +88,12 @@ export default async function ReviewsPage() {
       <section className="max-w-3xl mx-auto px-4 pb-4 text-slate-700 leading-relaxed">
         <h2 className="text-xl font-bold text-primary mb-3">How to read reviews before you order</h2>
         <p className="mb-4">
-          This page collects feedback on {site.name} rakhi delivery to US addresses. Google reviews appear when they
-          are available, followed by reviews published on the site. The form is for sisters who have already received
-          an order and want to describe that delivery in their own words.
+          This page collects feedback on {site.name} Diwali and Bhai Dooj gift delivery to US addresses. Google
+          reviews appear when they are available, followed by reviews published on the site. The form is for customers
+          who have already received an order and want to describe that delivery in their own words.
         </p>
         <p>
-          Use the comments to judge packaging, communication, and whether the rakhi matched its listing. Product
+          Use the comments to judge packaging, communication, and whether the hamper matched its listing. Product
           photos, price, and what is included still come from each product page. Delivery timing and the $
           {USARAKHI_MIN_ORDER_USD} free-shipping minimum are spelled out on the{" "}
           <Link href="/shipping" className="text-nav font-semibold hover:underline">

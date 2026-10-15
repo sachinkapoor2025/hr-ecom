@@ -127,6 +127,7 @@ type GoogleReviewsProps = {
 };
 
 export function GoogleReviews({ data, hideHeader = false }: GoogleReviewsProps) {
+  if (!data.reviews.length) return null;
   const viewAllHref = data.mapsUrl || "/reviews";
   const viewAllExternal = Boolean(data.mapsUrl);
 
