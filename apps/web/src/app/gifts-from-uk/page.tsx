@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { isRakhiContentHidden } from "@hr-ecom/shared";
+import { CountryGiftLanding } from "@/components/CountryGiftLanding";
 import { CountryRakhiLanding } from "@/components/CountryRakhiLanding";
 import type { ProductSort } from "@/components/ProductSortBar";
+import { getCountryGiftPage } from "@/lib/content/country-gift-pages";
 import { getCountryRakhiPage } from "@/lib/content/country-rakhi-pages";
 import { loadLocationPageProducts } from "@/lib/product-loader";
 import { canonical, pageMetadata } from "@/lib/seo";
@@ -42,27 +43,17 @@ interface Props {
 }
 
 export default async function RakhiFromUkPage({ searchParams }: Props) {
-  if (isRakhiContentHidden()) {
-    return (
-      <div className="max-w-3xl mx-auto px-4 py-12">
-        <h1 className="text-3xl font-bold text-primary mb-4">Gifts from the UK</h1>
-        <p className="text-slate-600 leading-relaxed mb-6">
-          Order Diwali and Bhai Dooj gift hampers from the UK. Pay online and we deliver to a US address from within
-          the United States.
-        </p>
-        <div className="flex flex-wrap gap-3">
-          <Link href="/diwali-to-usa" className="rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white">
-            Shop Diwali gifts
-          </Link>
-          <Link href="/bhai-dooj-to-usa" className="rounded-full border px-4 py-2 text-sm font-semibold">
-            Shop Bhai Dooj gifts
-          </Link>
-        </div>
-      </div>
-    );
-  }
   const sort = resolveSort((await searchParams).sort);
-  const products = await loadLocationPageProducts("rakhi-from-uk");
+  let products: Awaited<ReturnType<typeof loadLocationPageProducts>> = [];
+  try {
+    products = await loadLocationPageProducts("rakhi-from-uk");
+  } catch {
+    products = [];
+  }
+
+  if (isRakhiContentHidden()) {
+    return <CountryGiftLanding page={getCountryGiftPage("uk")} products={products} />;
+  }
 
   return <CountryRakhiLanding page={page} products={products} sort={sort} />;
 }
