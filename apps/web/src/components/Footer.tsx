@@ -204,12 +204,6 @@ export function Footer() {
               <Link href="/press" className="hover:text-white underline underline-offset-2">
                 Press
               </Link>
-              <Link href="/llms.txt" className="hover:text-white underline underline-offset-2">
-                LLMs.txt
-              </Link>
-              <Link href="/humans.txt" className="hover:text-white underline underline-offset-2">
-                Humans.txt
-              </Link>
             </p>
           </div>
         </div>

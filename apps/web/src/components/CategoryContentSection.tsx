@@ -187,7 +187,7 @@ export function CategoryContentSection({ content, categoryName }: Props) {
           )}
         </article>
 
-        <aside className="lg:sticky lg:top-24">
+        <aside className="lg:sticky lg:top-[calc(var(--site-header-height,10.5rem)+1rem)] lg:z-10">
           <section className="bg-nav text-white rounded-xl p-6">
             <h3 className="text-lg font-semibold mb-2">{supportHeading}</h3>
             <p className="text-sm text-white/90 mb-4">

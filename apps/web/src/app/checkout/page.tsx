@@ -38,6 +38,8 @@ import {
 import { fetchAccount, createAccountAddress } from "@/lib/account";
 import {
   ORDER_STATUS,
+  EMAIL_ADDRESS_MESSAGE,
+  isValidEmailAddress,
   isValidShippingPhone,
   DEFAULT_SENDER_MESSAGE,
   cartLineUnitTotal,
@@ -625,6 +627,9 @@ function CheckoutPageInner() {
       }
       if (senderMessage.length < 10) {
         throw new Error("Please write a short festive message (it will appear on the shipping label).");
+      }
+      if (!isValidEmailAddress(address.email)) {
+        throw new Error(EMAIL_ADDRESS_MESSAGE);
       }
       if (!isValidShippingPhone(phone)) {
         throw new Error(

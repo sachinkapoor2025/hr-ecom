@@ -3,6 +3,8 @@ import type { APIGatewayProxyEventV2 } from "aws-lambda";
 import { v4 as uuidv4 } from "uuid";
 import {
   checkoutSchema,
+  EMAIL_ADDRESS_MESSAGE,
+  isValidEmailAddress,
   leadCaptureSchema,
   updateLeadSchema,
   orderStatusUpdateSchema,
@@ -95,8 +97,8 @@ function buildOrderItem(order: Order, userKey: string): StoredOrder {
 
 function normalizeEmail(email?: string): string | undefined {
   const trimmed = email?.trim();
-  if (!trimmed || !trimmed.includes("@")) return undefined;
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed) ? trimmed : undefined;
+  if (!trimmed || !isValidEmailAddress(trimmed)) return undefined;
+  return trimmed;
 }
 
 export async function captureLead(event: APIGatewayProxyEventV2) {
@@ -108,6 +110,9 @@ export async function captureLead(event: APIGatewayProxyEventV2) {
   const timestamp = now();
   const sessionId = parsed.data.sessionId;
   const email = normalizeEmail(parsed.data.email);
+  if (parsed.data.source === "contact" && !email) {
+    return badRequest(EMAIL_ADDRESS_MESSAGE);
+  }
 
   let welcomeCoupon:
     | {
@@ -155,16 +160,17 @@ export async function captureLead(event: APIGatewayProxyEventV2) {
         },
       };
     } else if (!email) {
-      return badRequest("Enter a valid email address.");
+      return badRequest(EMAIL_ADDRESS_MESSAGE);
     }
   }
 
   // lead event (co-located under the session)
+  const { email: _submittedEmail, ...leadWithoutEmail } = leadPayload;
   await docClient.send(
     new PutCommand({
       TableName: CUSTOMERS_TABLE,
       Item: {
-        ...leadPayload,
+        ...leadWithoutEmail,
         ...(email ? { email } : {}),
         leadId: uuidv4(),
         PK: customerKeys.pk(sessionId),

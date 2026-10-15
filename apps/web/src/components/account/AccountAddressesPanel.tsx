@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { AccountAddress } from "@hr-ecom/shared";
+import { EMAIL_ADDRESS_MESSAGE, isValidEmailAddress, type AccountAddress } from "@hr-ecom/shared";
 import { AddressFormFields } from "./AddressFormFields";
 import { LeadCaptureInput } from "@/components/LeadCaptureInput";
 import { emptyShippingAddress, formatAddressLine } from "@/lib/shipping-address";
@@ -88,6 +88,11 @@ export function AccountAddressesPanel({
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isValidEmailAddress(form.email)) {
+      setError(EMAIL_ADDRESS_MESSAGE);
+      setMessage("");
+      return;
+    }
     setLoading(true);
     setError("");
     setMessage("");

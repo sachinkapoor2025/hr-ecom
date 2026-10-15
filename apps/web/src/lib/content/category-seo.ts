@@ -64,39 +64,39 @@ export const categoryPageSeo: Record<
     h1: "Send Rakhi Hamper to USA",
   },
   "bhai-dooj": {
-    title: "Send Bhai Dooj Gifts to the USA | UsaRakhi",
+    title: "Bhai Dooj Gifts to USA | Diwali Gift Combos",
     description:
-      "Send Bhai Dooj gifts to your brother in the USA — Indian sweets, dry fruits, chocolates, and pooja hampers. Domestic delivery in about 5 business days.",
+      "Send Bhai Dooj gifts to the USA with UsaRakhi. Explore Indian sweets, chocolates, dry fruit combos and festive hampers for your brother.",
     h1: "Send Bhai Dooj Gifts to the USA",
   },
   diwali: {
-    title: "Send Diwali Gifts to the USA | UsaRakhi",
+    title: "Diwali Gifts to USA | Bhai Dooj Hampers & Sweets",
     description:
-      "Send Diwali gifts to the USA. Festive hampers with Indian sweets, dry fruits, pooja sets, torans, and rangoli. Domestic delivery in about 5 business days.",
+      "Send Diwali gifts to the USA with UsaRakhi. Shop festive hampers, Indian sweets, chocolates, dry fruits and Bhai Dooj gift combos for loved ones.",
     h1: "Send Diwali Gifts to the USA",
   },
   "sweet-combos": {
-    title: "Send Sweet Hampers and Gifts to the USA | UsaRakhi",
+    title: "Indian Sweet Combos to USA | Diwali & Bhai Dooj",
     description:
-      "Send sweet hampers to the USA. Indian gift boxes with kaju katli, besan laddoo, and festive combinations for Diwali and Bhai Dooj.",
+      "Send Indian sweet combos to the USA with UsaRakhi. Explore traditional mithai, festive sweet boxes and delicious gifts for Diwali and Bhai Dooj.",
     h1: "Send Sweet Hampers and Gifts to the USA",
   },
   "dry-fruit-combos": {
-    title: "Dry Fruit Gift Hampers Delivered Across the USA | UsaRakhi",
+    title: "Dry Fruit Gifts to USA | Diwali & Bhai Dooj",
     description:
-      "Send dry fruit gift hampers to the USA. Almonds, pistachios, cashews, and mixed nuts for Diwali, Bhai Dooj, and other special occasions.",
+      "Send dry fruit gift combos to the USA with UsaRakhi. Discover assorted nuts and festive hampers for Diwali, Bhai Dooj and family celebrations.",
     h1: "Dry Fruit Gift Hampers Delivered Across the USA",
   },
   "chocolate-combos": {
-    title: "Chocolate Combos USA | Festive Chocolate Gift Boxes",
+    title: "Chocolate Combos to USA | Diwali & Bhai Dooj Gifts",
     description:
-      "Browse Diwali and Bhai Dooj boxes that include Ferrero Rocher, M&M's, or Skittles. The chocolate in the box is the one named on the product.",
+      "Send chocolate gift combos to the USA with UsaRakhi. Explore delicious chocolate assortments and festive gifts for Diwali, Bhai Dooj and loved ones.",
     h1: "Chocolate Combos for USA Delivery",
   },
   "pooja-sets": {
-    title: "Pooja Sets USA | Diwali & Bhai Dooj Puja Hampers",
+    title: "Pooja Sets to USA | Diwali Puja Gifts Online",
     description:
-      "Shop pooja hampers for USA delivery — thali sets, kumkum, toran, rangoli, and Shubh Labh, packed with the sweets or nuts named on each product.",
+      "Send pooja sets to the USA with UsaRakhi. Explore traditional puja essentials and festive gifts for Diwali celebrations and religious occasions.",
     h1: "Pooja Sets for USA Delivery",
   },
 };

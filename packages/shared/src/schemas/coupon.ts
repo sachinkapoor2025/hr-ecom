@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { calendarDayKeyAmericaNy } from "../lib/early-bird";
+import { EMAIL_ADDRESS_MESSAGE, isValidEmailAddress } from "../lib/email-address";
 
 /** Early Bird promo helpers (schedule-delivery lives in `lib/schedule-delivery`). */
 export {
@@ -138,7 +139,7 @@ export const createAdminCouponSchema = z
   .superRefine((v, ctx) => {
     const email = v.email?.trim() ?? "";
     const phoneDigits = (v.phone ?? "").replace(/\D/g, "");
-    const hasEmail = Boolean(email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
+    const hasEmail = Boolean(email && isValidEmailAddress(email));
     const hasPhone = phoneDigits.length >= 7 && phoneDigits.length <= 12;
     if (!hasEmail && !hasPhone) {
       ctx.addIssue({
@@ -150,7 +151,7 @@ export const createAdminCouponSchema = z
     if (email && !hasEmail) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Enter a valid email address",
+        message: EMAIL_ADDRESS_MESSAGE,
         path: ["email"],
       });
     }

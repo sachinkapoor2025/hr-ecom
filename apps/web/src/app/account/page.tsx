@@ -4,7 +4,10 @@ import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import {
+  isAlreadyConfirmedError,
   isDevAuthEnabled,
+  isEmailUnverifiedError,
+  isIncorrectPasswordError,
   isUnconfirmedError,
   formatAuthError,
 } from "@/lib/cognito";
@@ -39,6 +42,13 @@ function AccountLoginForm() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
+
+  const openEmailVerification = (notice: string) => {
+    setMode("confirm");
+    setConfirmCode("");
+    setError("");
+    setMessage(notice);
+  };
 
   const finishLogin = async () => {
     const authUser = await login(email, password);
@@ -112,10 +122,42 @@ function AccountLoginForm() {
       }
     } catch (err) {
       if (mode === "login" && isUnconfirmedError(err)) {
-        setMode("confirm");
-        setConfirmCode("");
-        setMessage(formatAuthError(err));
-        setError("");
+        try {
+          await resendConfirmationCode(email);
+          openEmailVerification(
+            "Your email is not verified yet. We sent a code from no-reply@verificationemail.com with the subject “Verify your UsaRakhi account”. Check inbox and spam, enter it below, and we will sign you in."
+          );
+          return;
+        } catch (resendErr) {
+          if (!isAlreadyConfirmedError(resendErr)) {
+            setError(formatAuthError(resendErr));
+            return;
+          }
+        }
+        setError(formatAuthError(err));
+      } else if (mode === "login" && isIncorrectPasswordError(err)) {
+        try {
+          await resendConfirmationCode(email);
+        } catch (resendErr) {
+          if (isAlreadyConfirmedError(resendErr)) {
+            setError("Incorrect email or password.");
+            return;
+          }
+          setError(formatAuthError(resendErr));
+          return;
+        }
+        openEmailVerification(
+          "Your email is not verified yet, so sign-in is blocked even with the right password. We sent a code from no-reply@verificationemail.com with the subject “Verify your UsaRakhi account”. Check inbox and spam, enter it below, and we will sign you in."
+        );
+      } else if (mode === "forgot" && isEmailUnverifiedError(err)) {
+        try {
+          await resendConfirmationCode(email);
+          openEmailVerification(
+            "This account is not verified yet, so a password reset cannot be sent. We sent a verification code from no-reply@verificationemail.com instead. Check inbox and spam, enter it below, then sign in with your current password."
+          );
+        } catch (resendErr) {
+          setError(formatAuthError(resendErr));
+        }
       } else if (mode === "forgot") {
         // With PreventUserExistenceErrors, Cognito may still error; show a neutral success path
         const code =

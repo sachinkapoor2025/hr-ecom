@@ -1,6 +1,6 @@
 "use client";
 
-import { isRakhiContentHidden } from "@hr-ecom/shared";
+import { EMAIL_ADDRESS_MESSAGE, isRakhiContentHidden, isValidEmailAddress } from "@hr-ecom/shared";
 import { useState } from "react";
 import Link from "next/link";
 import { site, whatsappChatUrl } from "@/lib/site";
@@ -29,6 +29,9 @@ export function ContactForm() {
       const sid = sessionId;
       if (!sid) throw new Error("Session not ready");
       const phone = buildPhoneValue(countryIso, phoneLocal);
+      if (!isValidEmailAddress(email)) {
+        throw new Error(EMAIL_ADDRESS_MESSAGE);
+      }
       if (phoneLocal.replace(/\D/g, "").length < 6) {
         throw new Error("Please enter a valid phone number");
       }

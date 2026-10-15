@@ -1,7 +1,8 @@
 import { z } from "zod";
+import { emailAddressSchema } from "../lib/email-address";
 
 export const pendingPaymentUnsubscribeSchema = z.object({
-  email: z.string().trim().email("Enter a valid email address"),
+  email: emailAddressSchema,
 });
 
 export type PendingPaymentUnsubscribeInput = z.infer<typeof pendingPaymentUnsubscribeSchema>;

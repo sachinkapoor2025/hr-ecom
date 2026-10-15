@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { useApiClient } from "@/lib/auth-context";
 import { ensureStarterEmailTemplates } from "@/lib/ensure-starter-email-templates";
-import { SES_TIMEZONES, type SesCampaign, type SesTemplate } from "@hr-ecom/shared";
+import { EMAIL_ADDRESS_MESSAGE, isValidEmailAddress, SES_TIMEZONES, type SesCampaign, type SesTemplate } from "@hr-ecom/shared";
 
 const DEFAULT_HTML =
   `<h1>Hello {{name}}</h1><p>A note from UsaRakhi for {{company}}.</p><p><a href="https://www.usarakhi.com/products">Shop Rakhi</a></p>`;
@@ -155,8 +155,8 @@ function ComposeInner() {
   };
 
   const sendTest = async () => {
-    if (!testTo.trim()) {
-      setError("Enter a test email address.");
+    if (!isValidEmailAddress(testTo)) {
+      setError(EMAIL_ADDRESS_MESSAGE);
       return;
     }
     if (!name.trim() || !subject.trim() || !htmlBody.trim()) {

@@ -2,6 +2,8 @@ import {
   addressFingerprint,
   DEFAULT_SENDER_MESSAGE,
   cartLineUnitTotal,
+  EMAIL_ADDRESS_MESSAGE,
+  isValidEmailAddress,
   isValidShippingPhone,
   quoteAddressShipmentShipping,
   shippingVendorKey,
@@ -74,7 +76,7 @@ export function validateDeliveryUnits(
     if (unit.useSameAddress) continue;
     const a = unit.address;
     if (!a.name.trim()) return `Enter a recipient name for ${unit.name}`;
-    if (!a.email.trim()) return `Enter an email for ${unit.name}`;
+    if (!isValidEmailAddress(a.email)) return `${EMAIL_ADDRESS_MESSAGE} (${unit.name})`;
     if (!isValidShippingPhone(a.phone ?? "")) {
       return `Enter a valid phone for ${unit.name}`;
     }
