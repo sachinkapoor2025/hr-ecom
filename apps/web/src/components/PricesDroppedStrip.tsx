@@ -34,7 +34,7 @@ export function PricesDroppedStrip({ variant = "banner" }: { variant?: Variant }
             Place your order now
           </Link>
         </p>
-        <div className="absolute right-0 top-1/2 -translate-y-1/2 hidden sm:block">
+        <div className="absolute inset-y-0 right-0 hidden items-center sm:flex">
           <StayUpdatedPrompt />
         </div>
       </div>

@@ -155,7 +155,7 @@ export default async function HomePage() {
             read our full FAQ page
           </Link>
         </p>
-        <div className="grid md:grid-cols-2 gap-4">
+        <div className="grid items-start md:grid-cols-2 gap-4">
           {homeSeoContent.faqs.map((f) => (
             <details key={f.q} className="border border-slate-200 rounded-xl p-5 bg-white">
               <summary className="font-semibold text-primary cursor-pointer text-sm">{f.q}</summary>
