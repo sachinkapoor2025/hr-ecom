@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { categoryHref } from "@/lib/category-urls";
 import type { SecondaryCity } from "@/lib/content/city-delivery-tiers";
 import { secondaryCityIntro } from "@/lib/content/city-delivery-tiers";
 import { locationPublicPath } from "@/lib/content/seo-data";
+import { locationEditorialLinks } from "@/lib/contextual-links";
+import { applyInlineLinks, createInlineLinkBudget } from "@/lib/inline-links";
 import { site, whatsappChatUrl } from "@/lib/site";
 
 /** Shared thin template for secondary /send-gifts-to-{city} doorways (5–7 day standard). */
@@ -27,6 +28,17 @@ export function buildSecondaryCityFaqs(city: SecondaryCity) {
 export function SecondaryCityLanding({ city }: { city: SecondaryCity }) {
   const place = `${city.name}, ${city.state}`;
   const faqs = buildSecondaryCityFaqs(city);
+  const intro = `${secondaryCityIntro(city.slug, city.name, city.state)} Families in India, the UK, Canada, and worldwide order online. We fulfill from our US operations, so the gift avoids international customs delays.`;
+  const shopLine =
+    "Shop Diwali gift combos, Bhai Dooj gifts, sweet boxes, chocolate assortments, and dry fruit hampers. Check out with Stripe (USD) or Razorpay (INR).";
+  const articleText = [intro, shopLine, ...faqs.map((faq) => faq.a)].join("\n");
+  const editorial = locationEditorialLinks(city.slug, articleText, {
+    nearby: {
+      phrase: `${city.nearbyMetroLabel} gifts delivery`,
+      href: locationPublicPath(city.nearbyMetroSlug),
+    },
+  });
+  const budget = createInlineLinkBudget(editorial.topical.length);
 
   return (
     <div className="mt-12 pt-10 border-t border-slate-200 max-w-3xl space-y-8 text-slate-700 leading-relaxed">
@@ -34,15 +46,8 @@ export function SecondaryCityLanding({ city }: { city: SecondaryCity }) {
         <h2 className="text-2xl font-bold text-primary mb-4">
           Send Diwali and Bhai Dooj Gifts to {place}
         </h2>
-        <p className="mb-4">
-          {secondaryCityIntro(city.slug, city.name, city.state)} Families in India, the UK, Canada, and
-          worldwide order online. We fulfill from our US operations, so the gift avoids international
-          customs delays.
-        </p>
-        <p>
-          Shop Diwali gift combos, Bhai Dooj gifts, sweet boxes, chocolate assortments, and dry fruit
-          hampers. Check out with Stripe (USD) or Razorpay (INR).
-        </p>
+        <p className="mb-4">{applyInlineLinks(intro, editorial.topical, budget)}</p>
+        <p>{applyInlineLinks(shopLine, editorial.topical, budget)}</p>
       </section>
 
       <section>
@@ -50,13 +55,24 @@ export function SecondaryCityLanding({ city }: { city: SecondaryCity }) {
         <p className="mb-3">
           Standard delivery to {place} is 5–7 business days after dispatch. Nearby major-metro coverage
           is listed on our{" "}
-          <Link
-            href={locationPublicPath(city.nearbyMetroSlug)}
-            className="text-nav font-medium hover:underline"
-          >
-            {city.nearbyMetroLabel} gifts delivery
-          </Link>{" "}
+          {editorial.nearby ? (
+            <Link href={editorial.nearby.href} className="text-nav font-medium hover:underline">
+              {editorial.nearby.phrase}
+            </Link>
+          ) : (
+            <span>{city.nearbyMetroLabel} gifts delivery</span>
+          )}{" "}
           page.
+          {editorial.cycle ? (
+            <>
+              {" "}
+              Also see{" "}
+              <Link href={editorial.cycle.href} className="text-nav font-medium hover:underline">
+                {editorial.cycle.phrase}
+              </Link>
+              .
+            </>
+          ) : null}
         </p>
       </section>
 
@@ -74,9 +90,7 @@ export function SecondaryCityLanding({ city }: { city: SecondaryCity }) {
             ] as const
           ).map(([slug, label]) => (
             <li key={slug}>
-              <Link href={categoryHref(slug)} className="text-nav font-medium hover:underline">
-                {label}
-              </Link>
+              <span className="text-primary font-medium">{label}</span>
             </li>
           ))}
         </ul>
@@ -88,7 +102,7 @@ export function SecondaryCityLanding({ city }: { city: SecondaryCity }) {
           {faqs.map((f) => (
             <div key={f.q}>
               <h4 className="font-semibold text-primary text-sm mb-1">{f.q}</h4>
-              <p className="text-sm text-slate-600">{f.a}</p>
+              <p className="text-sm text-slate-600">{applyInlineLinks(f.a, editorial.topical, budget)}</p>
             </div>
           ))}
         </div>

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { isRakhiContentHidden, textMentionsRakhi } from "@hr-ecom/shared";
 import type { GoogleReview } from "@/lib/google-reviews";
 
@@ -59,10 +58,7 @@ export function FestivalCustomerReviews({ reviews }: { reviews: GoogleReview[] }
               Diwali &amp; Bhai Dooj customer reviews
             </h2>
             <p className="mt-3 text-slate-600 text-sm md:text-base max-w-2xl leading-relaxed">
-              Stories from customers who mentioned a Diwali or Bhai Dooj gift.{" "}
-              <Link href="/reviews" className="text-nav font-semibold hover:underline">
-                Share your review →
-              </Link>
+              Stories from customers who mentioned a Diwali or Bhai Dooj gift.
             </p>
           </div>
         </div>

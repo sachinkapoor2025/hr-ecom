@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { deliveryClaims } from "@/lib/ai-recommendation";
 import { categoryHref } from "@/lib/category-urls";
+import { applyInlineLinks } from "@/lib/inline-links";
 import { site, whatsappChatUrl } from "@/lib/site";
 import { TrustBadges } from "@/components/TrustBadges";
 
@@ -10,7 +10,6 @@ const highlights = [
     title: "Order Diwali and Bhai Dooj gifts online",
     detail:
       "Choose a ready-to-gift hamper, enter a US address, and check out on the site. Diwali combos and Bhai Dooj combos are listed separately so the box matches the occasion.",
-    href: categoryHref("diwali"),
   },
   {
     icon: "🇺🇸",
@@ -22,7 +21,6 @@ const highlights = [
     title: "Gift selection you can read before you buy",
     detail:
       "Hampers list what is inside: sweets, dry fruits, chocolates, pooja sets, and Bhai Dooj cards where the product includes them.",
-    href: categoryHref("bhai-dooj"),
   },
   {
     icon: "🔒",
@@ -53,9 +51,13 @@ export function WhyTrustUsSection() {
             Why families trust UsaRakhi for Diwali and Bhai Dooj delivery in the USA
           </h2>
           <p className="text-slate-600 text-sm md:text-base leading-relaxed">
-            Send Diwali gifts and Bhai Dooj gifts to people you love in the United States. {site.name} lists festive
-            hampers you can order online, with domestic shipping, secure checkout, and support if you need help with
-            the address or the order.
+            {applyInlineLinks(
+              `Send Diwali gifts and Bhai Dooj gifts to people you love in the United States. ${site.name} lists festive hampers you can order online, with domestic shipping, secure checkout, and support if you need help with the address or the order.`,
+              [
+                { phrase: "Diwali gifts", href: categoryHref("diwali") },
+                { phrase: "Bhai Dooj gifts", href: categoryHref("bhai-dooj") },
+              ]
+            )}
           </p>
         </div>
 
@@ -70,9 +72,8 @@ export function WhyTrustUsSection() {
                 <p className="text-sm text-slate-600 leading-relaxed">{item.detail}</p>
               </>
             );
-            if ("href" in item && item.href) {
-              const external = "external" in item && item.external;
-              return external ? (
+            if ("href" in item && item.href && "external" in item && item.external) {
+              return (
                 <a
                   key={item.title}
                   href={item.href}
@@ -82,14 +83,6 @@ export function WhyTrustUsSection() {
                 >
                   {inner}
                 </a>
-              ) : (
-                <Link
-                  key={item.title}
-                  href={item.href}
-                  className="rounded-xl border border-slate-200 bg-slate-50/50 p-5 hover:border-nav hover:shadow-sm transition"
-                >
-                  {inner}
-                </Link>
               );
             }
             return (

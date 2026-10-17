@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { isRakhiContentHidden } from "@hr-ecom/shared";
+import { applyInlineLinks, createInlineLinkBudget } from "@/lib/inline-links";
 import { site } from "@/lib/site";
 import { pageMetadata } from "@/lib/seo";
 
@@ -13,6 +14,7 @@ export const metadata: Metadata = pageMetadata({
 });
 
 export default function ReturnsPage() {
+  const budget = createInlineLinkBudget(1);
   return (
     <div className="max-w-3xl mx-auto px-4 py-12">
       <h1 className="text-3xl font-bold text-primary mb-6">Returns &amp; Satisfaction Guarantee</h1>
@@ -28,10 +30,11 @@ export default function ReturnsPage() {
         </p>
         <h2 className="text-xl font-bold text-primary">Delivery issues</h2>
         <p>
-          If your {isRakhiContentHidden() ? "gift" : "Rakhi"} has not arrived within the estimated 5–7 business day
-          window, reach out on WhatsApp{" "}
-          {site.whatsappDisplay} or email {site.supportEmail}. We will track your shipment and resolve the issue
-          promptly.
+          {applyInlineLinks(
+            `If your ${isRakhiContentHidden() ? "gift" : "Rakhi"} has not arrived within the estimated 5–7 business day window, reach out on WhatsApp ${site.whatsappDisplay} or email ${site.supportEmail}. We will track your shipment and resolve the issue promptly.`,
+            [{ phrase: "5–7 business day", href: "/shipping" }],
+            budget
+          )}
         </p>
         <h2 className="text-xl font-bold text-primary">Cancellations</h2>
         <p>

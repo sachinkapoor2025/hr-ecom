@@ -15,11 +15,7 @@ export function PricesDroppedStrip({ variant = "banner" }: { variant?: Variant }
   if (variant === "inline") {
     return (
       <p className="text-sm text-slate-700">
-        Diwali and Bhai Dooj gifts, shipped across the USA.{" "}
-        <Link href="/products" className="font-semibold text-nav hover:underline">
-          Shop festive hampers
-        </Link>
-        .
+        Diwali and Bhai Dooj gifts, shipped across the USA.
       </p>
     );
   }

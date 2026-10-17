@@ -54,14 +54,6 @@ export default function FaqPage() {
         <Link href="/blog" className="text-nav hover:underline">Blog</Link>
         {" · "}
         <Link href="/shipping" className="text-nav hover:underline">Shipping</Link>
-        {" · "}
-        {hidden ? (
-          <Link href="/bhai-dooj-to-usa" className="text-nav hover:underline">
-            Bhai Dooj gifts
-          </Link>
-        ) : (
-          <Link href="/raksha-bandhan" className="text-nav hover:underline">Raksha Bandhan 2026</Link>
-        )}
       </p>
     </div>
   );

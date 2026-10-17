@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { isRakhiContentHidden } from "@hr-ecom/shared";
+import { applyInlineLinks } from "@/lib/inline-links";
 import { site } from "@/lib/site";
 import { siteUrl } from "@/lib/env";
 import { pageMetadata } from "@/lib/seo";
@@ -23,8 +24,14 @@ export default function PressPage() {
         <h1 className="text-3xl font-bold text-primary mb-6">Press Kit</h1>
         <div className="space-y-8 text-slate-700 leading-relaxed">
           <p>
-            {site.name} ({siteUrl}) sends Diwali and Bhai Dooj gift hampers across the United States. The store is
-            operated by Divit Global Ventures. Orders ship from within America in 5 business days.
+            {applyInlineLinks(
+              `${site.name} (${siteUrl}) sends Diwali and Bhai Dooj gift hampers across the United States. The store is operated by Divit Global Ventures. Orders ship from within America in 5 business days.`,
+              [
+                { phrase: "Diwali", href: "/diwali-to-usa" },
+                { phrase: "Bhai Dooj", href: "/bhai-dooj-to-usa" },
+                { phrase: "5 business days", href: "/shipping" },
+              ]
+            )}
           </p>
           <ul className="list-disc pl-5 space-y-2 text-sm">
             <li>Diwali combos, Bhai Dooj gifts, sweets, dry fruits, chocolates, and pooja sets</li>
@@ -101,10 +108,6 @@ export default function PressPage() {
             {" · "}
             <Link href="/llms-full.txt" className="text-nav underline">
               llms-full.txt
-            </Link>
-            {" · "}
-            <Link href="/humans.txt" className="text-nav underline">
-              humans.txt
             </Link>
           </p>
         </section>

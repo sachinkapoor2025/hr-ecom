@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { JsonLd } from "@/components/JsonLd";
-import { categoryHref } from "@/lib/category-urls";
+import { applyInlineLinks } from "@/lib/inline-links";
 import { isRakhiContentHidden } from "@hr-ecom/shared";
-import { publicSiteDescription, site, categoryOrder, whatsappChatUrl } from "@/lib/site";
+import { publicSiteDescription, site } from "@/lib/site";
 import { aboutPageJsonLd, pageMetadata } from "@/lib/seo";
 
 export function generateMetadata(): Metadata {
@@ -42,12 +41,14 @@ export default function AboutPage() {
             <li>Secure payments via Razorpay and Stripe</li>
           </ul>
           <p>
-            {site.name} is operated by <strong>Divit Global Ventures (DGV)</strong> with a California fulfillment
-            team. Questions: WhatsApp {site.whatsappDisplay}, email {site.supportEmail}, or the{" "}
-            <Link href="/contact" className="text-nav hover:underline">
-              contact page
-            </Link>
-            .
+            {applyInlineLinks(
+              `${site.name} is operated by Divit Global Ventures (DGV) with a California fulfillment team. Questions: WhatsApp ${site.whatsappDisplay}, email ${site.supportEmail}, or the contact page. Read customer reviews from recent deliveries, or use the Press kit for media requests.`,
+              [
+                { phrase: "contact page", href: "/contact" },
+                { phrase: "customer reviews", href: "/reviews" },
+                { phrase: "Press kit", href: "/press" },
+              ]
+            )}
           </p>
         </div>
       </div>
@@ -97,33 +98,15 @@ export default function AboutPage() {
           orders.
         </p>
         <p>
-          Questions? Reach us on{" "}
-          <a
-            href={whatsappChatUrl()}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-nav hover:underline"
-          >
-            WhatsApp ({site.whatsappDisplay})
-          </a>
-          , email{" "}
-          <a href={`mailto:${site.supportEmail}`} className="text-nav hover:underline">
-            {site.supportEmail}
-          </a>
-          ,           or visit our <Link href="/contact" className="text-nav hover:underline">contact page</Link>.
-          Media inquiries: <Link href="/press" className="text-nav hover:underline">Press kit</Link>.
+          {applyInlineLinks(
+            `Questions? Reach us on WhatsApp (${site.whatsappDisplay}), email ${site.supportEmail}, or visit our contact page. Media inquiries: Press kit. Recent orders are described in customer reviews.`,
+            [
+              { phrase: "contact page", href: "/contact" },
+              { phrase: "Press kit", href: "/press" },
+              { phrase: "customer reviews", href: "/reviews" },
+            ]
+          )}
         </p>
-      </div>
-      <div className="mt-10 flex flex-wrap gap-3">
-        {categoryOrder.map((slug) => (
-          <Link
-            key={slug}
-            href={categoryHref(slug)}
-            className="px-4 py-2 rounded-full border border-slate-200 text-sm hover:border-nav capitalize"
-          >
-            {slug.replace(/-/g, " ")}
-          </Link>
-        ))}
       </div>
     </div>
   );

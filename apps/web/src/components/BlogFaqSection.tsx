@@ -1,7 +1,17 @@
 import type { BlogFaqItem } from "@/lib/content/blog-posts";
+import type { ContextualLink } from "@/lib/contextual-links";
+import { applyInlineLinks, type InlineLinkBudget } from "@/lib/inline-links";
 
 /** Accordion FAQs — same pattern as the site FAQ page, for consistent blog layout. */
-export function BlogFaqSection({ faqs }: { faqs: BlogFaqItem[] }) {
+export function BlogFaqSection({
+  faqs,
+  links = [],
+  budget,
+}: {
+  faqs: BlogFaqItem[];
+  links?: readonly ContextualLink[];
+  budget?: InlineLinkBudget;
+}) {
   if (!faqs.length) return null;
   return (
     <section className="mt-10 min-w-0">
@@ -15,7 +25,9 @@ export function BlogFaqSection({ faqs }: { faqs: BlogFaqItem[] }) {
                 +
               </span>
             </summary>
-            <p className="text-slate-600 mt-3 leading-relaxed break-words">{faq.a}</p>
+            <p className="text-slate-600 mt-3 leading-relaxed break-words">
+              {budget ? applyInlineLinks(faq.a, links, budget) : faq.a}
+            </p>
           </details>
         ))}
       </div>

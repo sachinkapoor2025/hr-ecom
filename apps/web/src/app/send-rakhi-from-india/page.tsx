@@ -166,27 +166,6 @@ export default function SendRakhiFromIndiaPage() {
         </ol>
       </section>
 
-      <section className="max-w-4xl mx-auto px-4 py-10">
-        <h2 className="text-xl font-bold text-primary mb-4 text-center">Popular picks to send from India</h2>
-        <div className="flex flex-wrap justify-center gap-3 text-sm">
-          <Link href={categoryHref("single-rakhi")} className="rounded-full border px-4 py-2 hover:border-nav">
-            Single Rakhi
-          </Link>
-          <Link href={categoryHref("rakhi-combo")} className="rounded-full border px-4 py-2 hover:border-nav">
-            Rakhi + Chocolates
-          </Link>
-          <Link href={categoryHref("rakhi-hampers")} className="rounded-full border px-4 py-2 hover:border-nav">
-            Rakhi Hampers
-          </Link>
-          <Link href={categoryHref("bhaiya-bhabhi-rakhi")} className="rounded-full border px-4 py-2 hover:border-nav">
-            Bhaiya Bhabhi
-          </Link>
-          <Link href="/raksha-bandhan" className="rounded-full border px-4 py-2 hover:border-nav">
-            Raksha Bandhan 2026
-          </Link>
-        </div>
-      </section>
-
       <section className="max-w-3xl mx-auto px-4 py-10">
         <h2 className="text-2xl font-bold text-primary mb-6 text-center">FAQs for India orders</h2>
         <div className="space-y-3">

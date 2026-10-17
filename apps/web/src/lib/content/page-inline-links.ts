@@ -41,5 +41,5 @@ export const categoryPageInlineLinks: Record<string, readonly { phrase: string; 
 };
 
 export const rakshaBandhanInlineLinks = [
-  { phrase: "sending a Rakhi to USA", href: "/shop" },
+  { phrase: "sending a Rakhi to USA", href: "/products" },
 ] as const;

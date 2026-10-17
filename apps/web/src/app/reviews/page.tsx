@@ -114,10 +114,6 @@ export default async function ReviewsPage() {
           About our California team
         </Link>
         {" · "}
-        <Link href="/shipping" className="text-nav hover:underline">
-          Shipping & delivery
-        </Link>
-        {" · "}
         <Link href="/faq" className="text-nav hover:underline">
           FAQ
         </Link>
