@@ -21,7 +21,7 @@ function anchorKey(value: string): string {
 
 /**
  * Link the first unused occurrence of each phrase.
- * A shared budget keeps a page to 3 unique anchors and 3 destinations.
+ * A shared budget keeps a page between 3 and 5 unique anchors and destinations.
  */
 export function applyInlineLinks(
   text: string,

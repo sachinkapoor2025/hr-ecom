@@ -158,12 +158,28 @@ export function SeoLocationLanding({ location }: Props) {
         </div>
       </section>
 
-      {editorial.cycle ? (
+      {editorial.cycle || editorial.extras.length > 0 ? (
         <section className="mt-10 p-6 bg-slate-50 rounded-xl text-sm">
           <h2 className="font-semibold text-primary mb-3">Also deliver Diwali gifts nearby</h2>
-          <Link href={editorial.cycle.href} className="text-nav hover:underline">
-            {editorial.cycle.phrase}
-          </Link>
+          {editorial.cycle ? (
+            <Link href={editorial.cycle.href} className="text-nav hover:underline">
+              {editorial.cycle.phrase}
+            </Link>
+          ) : null}
+          {editorial.extras.length > 0 ? (
+            <p className={editorial.cycle ? "mt-3" : undefined}>
+              Also see{" "}
+              {editorial.extras.map((link, index) => (
+                <span key={link.href}>
+                  {index > 0 ? (index === editorial.extras.length - 1 ? " and " : ", ") : null}
+                  <Link href={link.href} className="text-nav hover:underline">
+                    {link.phrase}
+                  </Link>
+                </span>
+              ))}
+              .
+            </p>
+          ) : null}
         </section>
       ) : null}
     </div>

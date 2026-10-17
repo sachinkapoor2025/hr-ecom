@@ -102,10 +102,10 @@ export function CategoryContentSection({ content, categoryName }: Props) {
     content.support?.body ?? "",
   ].join("\n");
   const inlineLinks = categoryInlineLinks(content.slug, articleText);
-  const budget = createInlineLinkBudget(2);
+  const budget = createInlineLinkBudget(4);
   const usedHrefs = new Set(inlineLinks.map((link) => normalizeHref(link.href)));
   const usedAnchors = new Set(inlineLinks.map((link) => link.phrase.toLowerCase()));
-  const sidebarRoom = Math.max(0, 2 - inlineLinks.length);
+  const sidebarRoom = Math.max(0, 4 - inlineLinks.length);
   const sidebarHrefs = new Set<string>();
   for (const cat of content.relatedCategories) {
     if (sidebarHrefs.size >= sidebarRoom) break;

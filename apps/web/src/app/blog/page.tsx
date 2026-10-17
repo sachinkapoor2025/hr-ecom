@@ -85,6 +85,8 @@ export default async function BlogPage() {
               [
                 { phrase: "Diwali", href: "/diwali-to-usa" },
                 { phrase: "Bhai Dooj", href: "/bhai-dooj-to-usa" },
+                { phrase: "dry fruits", href: "/dry-fruit-combos-to-usa" },
+                { phrase: "pooja sets", href: "/pooja-sets-to-usa" },
               ]
             )}
           </p>

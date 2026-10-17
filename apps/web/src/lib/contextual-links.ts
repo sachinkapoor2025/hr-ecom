@@ -2,8 +2,9 @@ import { isRakhiContentHidden, isRakhiPublicPath } from "@hr-ecom/shared";
 import { categoryHref } from "@/lib/category-urls";
 import { allSeoLocationSlugs, getSeoLocation, locationPublicPath, seoLocations } from "@/lib/content/seo-data";
 
-/** Contextual keyword links inside page copy. Navigation, footer, and product grids are separate. */
-export const MAX_CONTEXTUAL_LINKS = 3;
+/** In-content links on a public page. Menus, the site footer, and product grids are separate. */
+export const MIN_CONTEXTUAL_LINKS = 3;
+export const MAX_CONTEXTUAL_LINKS = 5;
 
 export type ContextualLink = {
   /** Exact words to link, as they appear in the copy. */
@@ -189,6 +190,14 @@ export function countryPreference(slug: string): string[] {
   return [];
 }
 
+const LOCATION_FILL_LINKS: ContextualLink[] = [
+  { phrase: "Sweet combos", href: categoryHref("sweet-combos") },
+  { phrase: "Chocolate combos", href: categoryHref("chocolate-combos") },
+  { phrase: "Dry fruit hampers", href: categoryHref("dry-fruit-combos") },
+  { phrase: "Pooja sets", href: categoryHref("pooja-sets") },
+  { phrase: "Shipping", href: "/shipping" },
+];
+
 export function locationEditorialLinks(
   slug: string,
   text: string,
@@ -198,7 +207,12 @@ export function locationEditorialLinks(
     extraReserved?: number;
     blockedHrefs?: readonly string[];
   }
-): { topical: ContextualLink[]; cycle: ContextualLink | null; nearby: ContextualLink | null } {
+): {
+  topical: ContextualLink[];
+  cycle: ContextualLink | null;
+  nearby: ContextualLink | null;
+  extras: ContextualLink[];
+} {
   const cycle = nextLocationLink(slug);
   const nearby = options?.nearby ?? null;
   const nearbyCounts = Boolean(nearby && cycle && normalizeHref(nearby.href) !== normalizeHref(cycle.href));
@@ -213,24 +227,49 @@ export function locationEditorialLinks(
     blockedHrefs: blocked,
     preferHrefs: countryPreference(slug),
   });
-  return { topical, cycle, nearby: nearbyCounts ? nearby : null };
+  const used = new Set(
+    [...topical, ...(cycle ? [cycle] : []), ...(nearbyCounts && nearby ? [nearby] : [])].map((link) =>
+      normalizeHref(link.href)
+    )
+  );
+  const extras: ContextualLink[] = [];
+  let total = topical.length + reserved;
+  for (const candidate of LOCATION_FILL_LINKS) {
+    if (total >= MIN_CONTEXTUAL_LINKS || total >= MAX_CONTEXTUAL_LINKS) break;
+    const path = normalizeHref(candidate.href);
+    if (used.has(path) || path === normalizeHref(locationPublicPath(slug))) continue;
+    extras.push(candidate);
+    used.add(path);
+    total += 1;
+  }
+  return { topical, cycle, nearby: nearbyCounts ? nearby : null, extras };
 }
 
 export function productExploreLinks(productSlug: string, categorySlug?: string | null): ContextualLink[] {
   const keys = Object.keys(EXPLORE_LABELS).filter((slug) => slug !== categorySlug);
   if (keys.length < 2) return [];
   const hash = hashString(productSlug);
-  const first = keys[hash % keys.length]!;
-  const second = keys[(hash + 2) % keys.length]!;
+  const picked: string[] = [];
+  for (let i = 0; i < keys.length && picked.length < 4; i++) {
+    const key = keys[(hash + i) % keys.length]!;
+    if (!picked.includes(key)) picked.push(key);
+  }
   const locations = allSeoLocationSlugs();
   const location = getSeoLocation(locations[hash % locations.length]!);
-  if (!location || first === second) return [];
-  return [
-    { phrase: EXPLORE_LABELS[first]!, href: categoryHref(first) },
-    { phrase: EXPLORE_LABELS[second]!, href: categoryHref(second) },
-    { phrase: `Diwali gifts to ${location.name}`, href: locationPublicPath(location.slug) },
-  ];
+  const links = picked.map((key) => ({ phrase: EXPLORE_LABELS[key]!, href: categoryHref(key) }));
+  if (location) {
+    links.push({ phrase: `Diwali gifts to ${location.name}`, href: locationPublicPath(location.slug) });
+  }
+  return links.slice(0, MAX_CONTEXTUAL_LINKS);
 }
+
+const BLOG_FALLBACK_LINKS: ContextualLink[] = [
+  { phrase: "Diwali gifts", href: categoryHref("diwali") },
+  { phrase: "Bhai Dooj gifts", href: categoryHref("bhai-dooj") },
+  { phrase: "shipping policy", href: "/shipping" },
+  { phrase: "gift shop", href: "/products" },
+  { phrase: "FAQ", href: "/faq" },
+];
 
 export function blogInlineLinks(slug: string, text: string): ContextualLink[] {
   return pickTopicalLinks(text, {
@@ -240,10 +279,29 @@ export function blogInlineLinks(slug: string, text: string): ContextualLink[] {
   });
 }
 
+/** Extra links shown only when the article body matched fewer than the minimum. */
+export function blogFallbackLinks(slug: string, inline: readonly ContextualLink[]): ContextualLink[] {
+  if (inline.length >= MIN_CONTEXTUAL_LINKS) return [];
+  const usedHrefs = new Set(inline.map((link) => normalizeHref(link.href)));
+  const usedAnchors = new Set(inline.map((link) => link.phrase.toLowerCase()));
+  const extra: ContextualLink[] = [];
+  for (const candidate of BLOG_FALLBACK_LINKS) {
+    if (inline.length + extra.length >= MIN_CONTEXTUAL_LINKS) break;
+    const path = normalizeHref(candidate.href);
+    const anchor = candidate.phrase.toLowerCase();
+    if (usedHrefs.has(path) || usedAnchors.has(anchor) || path === `/blog/${slug}`) continue;
+    if (isRakhiContentHidden() && isRakhiPublicPath(path)) continue;
+    extra.push(candidate);
+    usedHrefs.add(path);
+    usedAnchors.add(anchor);
+  }
+  return extra;
+}
+
 export function categoryInlineLinks(slug: string, text: string): ContextualLink[] {
   return pickTopicalLinks(text, {
     selfHref: categoryHref(slug),
-    max: 2,
+    max: MAX_CONTEXTUAL_LINKS - 1,
     salt: hashString(slug),
     blockedHrefs: ["/contact"],
   });

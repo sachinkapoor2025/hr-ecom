@@ -2,7 +2,7 @@ import Link from "next/link";
 import { productExploreLinks } from "@/lib/contextual-links";
 
 /**
- * Three contextual links for a product page: two related collections and one delivery city.
+ * Contextual links for a product page: related collections and one delivery city.
  */
 export function ExploreMoreSection({
   productSlug,

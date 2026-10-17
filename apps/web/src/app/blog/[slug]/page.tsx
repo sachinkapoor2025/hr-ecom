@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { BlogShowMoreProducts } from "@/components/BlogShowMoreProducts";
 import { BlogCoverImage } from "@/components/BlogCoverImage";
 import { BlogFaqSection } from "@/components/BlogFaqSection";
 import { applyInlineLinks, createInlineLinkBudget } from "@/lib/inline-links";
-import { blogInlineLinks } from "@/lib/contextual-links";
+import { blogFallbackLinks, blogInlineLinks } from "@/lib/contextual-links";
 import { JsonLd } from "@/components/JsonLd";
 import { loadBlogPostWithImage } from "@/lib/blog-images";
 import { isRakhiContentHidden, textMentionsRakhi } from "@hr-ecom/shared";
@@ -59,7 +60,8 @@ export default async function BlogPostPage({ params }: Props) {
     ...(post.faqs ?? []).map((faq) => faq.a),
   ].join("\n");
   const inlineLinks = blogInlineLinks(slug, blogText);
-  const linkBudget = createInlineLinkBudget(3);
+  const extraLinks = blogFallbackLinks(slug, inlineLinks);
+  const linkBudget = createInlineLinkBudget(5);
 
   const crumbs = [
     { label: "Home", href: "/" },
@@ -127,6 +129,21 @@ export default async function BlogPostPage({ params }: Props) {
         {post.faqs && post.faqs.length > 0 && (
           <BlogFaqSection faqs={post.faqs} links={inlineLinks} budget={linkBudget} />
         )}
+
+        {extraLinks.length > 0 ? (
+          <p className="mt-8 text-sm text-slate-600">
+            Related reading:{" "}
+            {extraLinks.map((link, index) => (
+              <span key={link.href}>
+                {index > 0 ? " · " : null}
+                <Link href={link.href} className="text-nav font-semibold hover:underline">
+                  {link.phrase}
+                </Link>
+              </span>
+            ))}
+            .
+          </p>
+        ) : null}
       </article>
 
       <div className="max-w-5xl mx-auto px-4 pb-12">

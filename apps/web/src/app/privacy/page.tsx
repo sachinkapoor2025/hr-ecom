@@ -11,7 +11,7 @@ export const metadata: Metadata = pageMetadata({
 });
 
 export default function PrivacyPage() {
-  const budget = createInlineLinkBudget(2);
+  const budget = createInlineLinkBudget(4);
   return (
     <div className="max-w-3xl mx-auto px-4 py-12">
       <h1 className="text-3xl font-bold text-primary mb-6">Privacy Policy</h1>
@@ -24,7 +24,11 @@ export default function PrivacyPage() {
         <p>
           {applyInlineLinks(
             "When you shop or contact us, we may collect your name, email, phone number, shipping address, order details, and payment status from our payment partners (Stripe or Razorpay). We do not store full card numbers.",
-            [{ phrase: "contact us", href: "/contact" }],
+            [
+              { phrase: "shop", href: "/products" },
+              { phrase: "contact us", href: "/contact" },
+              { phrase: "shipping address", href: "/shipping" },
+            ],
             budget
           )}
         </p>

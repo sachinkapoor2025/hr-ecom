@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { JsonLd } from "@/components/JsonLd";
-import { applyInlineLinks } from "@/lib/inline-links";
+import { applyInlineLinks, createInlineLinkBudget } from "@/lib/inline-links";
 import { isRakhiContentHidden } from "@hr-ecom/shared";
 import { publicSiteDescription, site } from "@/lib/site";
 import { aboutPageJsonLd, pageMetadata } from "@/lib/seo";
@@ -20,6 +20,14 @@ export function generateMetadata(): Metadata {
 
 export default function AboutPage() {
   if (isRakhiContentHidden()) {
+    const budget = createInlineLinkBudget(5);
+    const links = [
+      { phrase: "5 business days", href: "/shipping" },
+      { phrase: "Diwali gift combos", href: "/diwali-to-usa" },
+      { phrase: "contact page", href: "/contact" },
+      { phrase: "customer reviews", href: "/reviews" },
+      { phrase: "Press kit", href: "/press" },
+    ];
     return (
       <div className="max-w-3xl mx-auto px-4 py-12">
         <h1 className="text-3xl font-bold text-primary mb-6">About {site.name}</h1>
@@ -29,13 +37,15 @@ export default function AboutPage() {
             the United States. Sweets, dry fruits, chocolates, and pooja sets ship from within America.
           </p>
           <p>
-            Order from India, the UK, Canada, or anywhere else. Pay in INR or USD, enter a US delivery address, and
-            we ship domestically. Standard USA delivery is 5 business days, with free shipping on a $15 minimum cart.
-            Orange County products ship free.
+            {applyInlineLinks(
+              "Order from India, the UK, Canada, or anywhere else. Pay in INR or USD, enter a US delivery address, and we ship domestically. Standard USA delivery is 5 business days, with free shipping on a $15 minimum cart. Orange County products ship free.",
+              links,
+              budget
+            )}
           </p>
           <h2 className="text-xl font-bold text-primary pt-4">What you can send</h2>
           <ul className="list-disc list-inside space-y-2">
-            <li>Diwali gift combos and pooja sets</li>
+            <li>{applyInlineLinks("Diwali gift combos and pooja sets", links, budget)}</li>
             <li>Bhai Dooj gift boxes</li>
             <li>Sweet, dry fruit, and chocolate hampers</li>
             <li>Secure payments via Razorpay and Stripe</li>
@@ -43,11 +53,8 @@ export default function AboutPage() {
           <p>
             {applyInlineLinks(
               `${site.name} is operated by Divit Global Ventures (DGV) with a California fulfillment team. Questions: WhatsApp ${site.whatsappDisplay}, email ${site.supportEmail}, or the contact page. Read customer reviews from recent deliveries, or use the Press kit for media requests.`,
-              [
-                { phrase: "contact page", href: "/contact" },
-                { phrase: "customer reviews", href: "/reviews" },
-                { phrase: "Press kit", href: "/press" },
-              ]
+              links,
+              budget
             )}
           </p>
         </div>

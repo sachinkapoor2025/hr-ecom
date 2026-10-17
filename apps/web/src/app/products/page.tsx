@@ -243,8 +243,16 @@ export default async function ProductsPage({ searchParams }: Props) {
               Diwali combos
             </Link>
             {" · "}
+            <Link href={categoryHref("sweet-combos")} className="text-nav font-semibold hover:underline">
+              Sweet combos
+            </Link>
+            {" · "}
             <Link href="/shipping" className="text-nav font-semibold hover:underline">
               Shipping
+            </Link>
+            {" · "}
+            <Link href="/faq" className="text-nav font-semibold hover:underline">
+              FAQ
             </Link>
           </p>
         </section>

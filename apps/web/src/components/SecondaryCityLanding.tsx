@@ -73,6 +73,21 @@ export function SecondaryCityLanding({ city }: { city: SecondaryCity }) {
               .
             </>
           ) : null}
+          {editorial.extras.length > 0 ? (
+            <>
+              {" "}
+              Related:{" "}
+              {editorial.extras.map((link, index) => (
+                <span key={link.href}>
+                  {index > 0 ? (index === editorial.extras.length - 1 ? " and " : ", ") : null}
+                  <Link href={link.href} className="text-nav font-medium hover:underline">
+                    {link.phrase}
+                  </Link>
+                </span>
+              ))}
+              .
+            </>
+          ) : null}
         </p>
       </section>
 

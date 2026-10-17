@@ -78,7 +78,7 @@ function festivalShippingJsonLd() {
 }
 
 export default function ShippingPage() {
-  const budget = createInlineLinkBudget(1);
+  const budget = createInlineLinkBudget(3);
   return (
     <div className="max-w-3xl mx-auto px-4 py-12">
       <JsonLd data={festivalShippingJsonLd()} />
@@ -87,7 +87,11 @@ export default function ShippingPage() {
         <p>
           {applyInlineLinks(
             `${site.name} delivers Diwali gift combos and Bhai Dooj gifts to all 50 United States with domestic US fulfillment. Sweets, chocolates, dry fruit hampers, and pooja sets ship inside America, so the recipient is not waiting on international customs.`,
-            [{ phrase: "Diwali gift combos", href: "/diwali-to-usa" }],
+            [
+              { phrase: "Diwali gift combos", href: "/diwali-to-usa" },
+              { phrase: "Bhai Dooj gifts", href: "/bhai-dooj-to-usa" },
+              { phrase: "dry fruit hampers", href: "/dry-fruit-combos-to-usa" },
+            ],
             budget
           )}
         </p>

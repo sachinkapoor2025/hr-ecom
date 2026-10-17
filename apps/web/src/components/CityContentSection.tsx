@@ -59,13 +59,32 @@ export function CityContentSection({ content }: Props) {
               Diwali and Bhai Dooj in {content.label}
             </h3>
             <p className="mb-3">{applyInlineLinks(festivalNote, editorial.topical, budget)}</p>
-            {editorial.cycle ? (
+            {editorial.cycle || editorial.extras.length > 0 ? (
               <p>
-                Also deliver nearby:{" "}
-                <Link href={editorial.cycle.href} className="text-nav hover:underline">
-                  {editorial.cycle.phrase}
-                </Link>
-                .
+                {editorial.cycle ? (
+                  <>
+                    Also deliver nearby:{" "}
+                    <Link href={editorial.cycle.href} className="text-nav hover:underline">
+                      {editorial.cycle.phrase}
+                    </Link>
+                    .
+                  </>
+                ) : null}
+                {editorial.extras.length > 0 ? (
+                  <>
+                    {editorial.cycle ? " " : null}
+                    Also see{" "}
+                    {editorial.extras.map((link, index) => (
+                      <span key={link.href}>
+                        {index > 0 ? (index === editorial.extras.length - 1 ? " and " : ", ") : null}
+                        <Link href={link.href} className="text-nav hover:underline">
+                          {link.phrase}
+                        </Link>
+                      </span>
+                    ))}
+                    .
+                  </>
+                ) : null}
               </p>
             ) : null}
           </section>

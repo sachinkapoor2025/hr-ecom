@@ -9,8 +9,8 @@ import { site, whatsappChatUrl } from "@/lib/site";
 import { faqJsonLd, itemListJsonLd } from "@/lib/seo";
 
 const COUNTRY_CATEGORY_HREFS: Record<CountryGiftPage["id"], readonly string[]> = {
-  uk: ["/chocolate-combos-to-usa"],
-  canada: ["/sweet-combos-to-usa", "/dry-fruit-combos-to-usa"],
+  uk: ["/chocolate-combos-to-usa", "/dry-fruit-combos-to-usa", "/diwali-to-usa"],
+  canada: ["/sweet-combos-to-usa", "/dry-fruit-combos-to-usa", "/chocolate-combos-to-usa", "/diwali-to-usa"],
 };
 
 const UK_FAQ_LINKS = [{ phrase: "Pooja sets", href: "/pooja-sets-to-usa" }];

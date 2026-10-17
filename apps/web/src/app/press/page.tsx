@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { isRakhiContentHidden } from "@hr-ecom/shared";
-import { applyInlineLinks } from "@/lib/inline-links";
+import { applyInlineLinks, createInlineLinkBudget } from "@/lib/inline-links";
 import { site } from "@/lib/site";
 import { siteUrl } from "@/lib/env";
 import { pageMetadata } from "@/lib/seo";
@@ -19,6 +19,14 @@ export function generateMetadata(): Metadata {
 
 export default function PressPage() {
   if (isRakhiContentHidden()) {
+    const budget = createInlineLinkBudget(5);
+    const links = [
+      { phrase: "Diwali", href: "/diwali-to-usa" },
+      { phrase: "Bhai Dooj", href: "/bhai-dooj-to-usa" },
+      { phrase: "5 business days", href: "/shipping" },
+      { phrase: "pooja sets", href: "/pooja-sets-to-usa" },
+      { phrase: "chocolates", href: "/chocolate-combos-to-usa" },
+    ];
     return (
       <div className="max-w-3xl mx-auto px-4 py-12">
         <h1 className="text-3xl font-bold text-primary mb-6">Press Kit</h1>
@@ -26,15 +34,18 @@ export default function PressPage() {
           <p>
             {applyInlineLinks(
               `${site.name} (${siteUrl}) sends Diwali and Bhai Dooj gift hampers across the United States. The store is operated by Divit Global Ventures. Orders ship from within America in 5 business days.`,
-              [
-                { phrase: "Diwali", href: "/diwali-to-usa" },
-                { phrase: "Bhai Dooj", href: "/bhai-dooj-to-usa" },
-                { phrase: "5 business days", href: "/shipping" },
-              ]
+              links,
+              budget
             )}
           </p>
           <ul className="list-disc pl-5 space-y-2 text-sm">
-            <li>Diwali combos, Bhai Dooj gifts, sweets, dry fruits, chocolates, and pooja sets</li>
+            <li>
+              {applyInlineLinks(
+                "Diwali combos, Bhai Dooj gifts, sweets, dry fruits, chocolates, and pooja sets",
+                links,
+                budget
+              )}
+            </li>
             <li>USA domestic shipping to all 50 states</li>
             <li>Payments: Stripe (USD) and Razorpay (INR)</li>
             <li>Fulfillment: San Jose, CA area — US domestic delivery</li>

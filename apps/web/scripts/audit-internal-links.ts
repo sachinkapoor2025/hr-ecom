@@ -1,5 +1,5 @@
 /**
- * Checks contextual internal links: at most 3 per page, unique anchors,
+ * Checks contextual internal links: 3 to 5 per page, unique anchors,
  * unique destinations, no self-links, no redirecting URLs, and coverage of
  * important public pages.
  *
@@ -16,6 +16,7 @@ import { homeCategoryOrder } from "../src/lib/site";
 import { buildSecondaryCityFaqs } from "../src/components/SecondaryCityLanding";
 import { buildLocationContent } from "../src/components/SeoLocationLanding";
 import {
+  blogFallbackLinks,
   blogInlineLinks,
   categoryInlineLinks,
   locationEditorialLinks,
@@ -57,26 +58,36 @@ function cityText(slug: string): string {
 
 const pages: PageLinks[] = [
   add("home", "/", [
+    { anchor: "Shop Sweet Combos", href: categoryHref("sweet-combos") },
+    { anchor: "Shop Dry Fruit Hampers", href: categoryHref("dry-fruit-combos") },
     { anchor: "Diwali gifts", href: categoryHref("diwali") },
     { anchor: "Bhai Dooj gifts", href: categoryHref("bhai-dooj") },
     { anchor: "read our full FAQ page", href: "/faq" },
   ]),
   add("about", "/about", [
+    { anchor: "5 business days", href: "/shipping" },
+    { anchor: "Diwali gift combos", href: "/diwali-to-usa" },
     { anchor: "contact page", href: "/contact" },
     { anchor: "customer reviews", href: "/reviews" },
     { anchor: "Press kit", href: "/press" },
   ]),
   add("faq", "/faq", [
     { anchor: "Diwali gifts", href: "/diwali-to-usa" },
+    { anchor: "Bhai Dooj gifts", href: "/bhai-dooj-to-usa" },
+    { anchor: "Sweet combos", href: "/sweet-combos-to-usa" },
     { anchor: "Blog", href: "/blog" },
     { anchor: "Shipping", href: "/shipping" },
   ]),
   add("shipping", "/shipping", [
     { anchor: "Diwali gift combos", href: "/diwali-to-usa" },
+    { anchor: "Bhai Dooj gifts", href: "/bhai-dooj-to-usa" },
+    { anchor: "dry fruit hampers", href: "/dry-fruit-combos-to-usa" },
     { anchor: "Contact us", href: "/contact" },
     { anchor: "FAQ", href: "/faq" },
   ]),
   add("contact", "/contact", [
+    { anchor: "Diwali hamper", href: "/diwali-to-usa" },
+    { anchor: "Bhai Dooj box", href: "/bhai-dooj-to-usa" },
     { anchor: "shipping", href: "/shipping" },
     { anchor: "returns", href: "/returns" },
     { anchor: "FAQ", href: "/faq" },
@@ -87,6 +98,8 @@ const pages: PageLinks[] = [
     { anchor: "← Back to home", href: "/" },
   ]),
   add("reviews", "/reviews", [
+    { anchor: "Diwali", href: "/diwali-to-usa" },
+    { anchor: "Bhai Dooj", href: "/bhai-dooj-to-usa" },
     { anchor: "shipping page", href: "/shipping" },
     { anchor: "About our California team", href: "/about" },
     { anchor: "FAQ", href: "/faq" },
@@ -95,13 +108,19 @@ const pages: PageLinks[] = [
     { anchor: "Diwali", href: "/diwali-to-usa" },
     { anchor: "Bhai Dooj", href: "/bhai-dooj-to-usa" },
     { anchor: "5 business days", href: "/shipping" },
+    { anchor: "chocolates", href: "/chocolate-combos-to-usa" },
+    { anchor: "pooja sets", href: "/pooja-sets-to-usa" },
   ]),
   add("privacy", "/privacy", [
+    { anchor: "shop", href: "/products" },
     { anchor: "contact us", href: "/contact" },
+    { anchor: "shipping address", href: "/shipping" },
     { anchor: "legal obligations", href: "/terms" },
     { anchor: "← Back to home", href: "/" },
   ]),
   add("terms", "/terms", [
+    { anchor: "Diwali", href: "/diwali-to-usa" },
+    { anchor: "Bhai Dooj", href: "/bhai-dooj-to-usa" },
     { anchor: "Shipping & Delivery", href: "/shipping" },
     { anchor: "Returns & Satisfaction Guarantee", href: "/returns" },
     { anchor: "Privacy Policy", href: "/privacy" },
@@ -109,21 +128,29 @@ const pages: PageLinks[] = [
   add("products", "/products", [
     { anchor: "Bhai Dooj combos", href: categoryHref("bhai-dooj") },
     { anchor: "Diwali combos", href: categoryHref("diwali") },
+    { anchor: "Sweet combos", href: categoryHref("sweet-combos") },
     { anchor: "Shipping", href: "/shipping" },
+    { anchor: "FAQ", href: "/faq" },
   ]),
   add("blog-index", "/blog", [
     { anchor: "Diwali", href: "/diwali-to-usa" },
     { anchor: "Bhai Dooj", href: "/bhai-dooj-to-usa" },
+    { anchor: "dry fruits", href: "/dry-fruit-combos-to-usa" },
+    { anchor: "pooja sets", href: "/pooja-sets-to-usa" },
     { anchor: "Browse the shop", href: "/products" },
   ]),
   add("gifts-uk", "/gifts-from-uk", [
     { anchor: "Chocolate combos", href: "/chocolate-combos-to-usa" },
+    { anchor: "Dry fruit combos", href: "/dry-fruit-combos-to-usa" },
+    { anchor: "Diwali hampers", href: "/diwali-to-usa" },
     { anchor: "Pooja sets", href: "/pooja-sets-to-usa" },
     { anchor: "Contact us", href: "/contact" },
   ]),
   add("gifts-canada", "/gifts-from-canada", [
     { anchor: "Indian sweet combos", href: "/sweet-combos-to-usa" },
     { anchor: "Dry fruit combos", href: "/dry-fruit-combos-to-usa" },
+    { anchor: "Chocolate combos", href: "/chocolate-combos-to-usa" },
+    { anchor: "Diwali hampers", href: "/diwali-to-usa" },
     { anchor: "Contact us", href: "/contact" },
   ]),
 ];
@@ -132,11 +159,15 @@ for (const slug of homeCategoryOrder) {
   const inline = categoryInlineLinks(slug, categoryText(slug));
   const content = getCategoryRichContent(slug);
   const used = new Set(inline.map((link) => normalizeHref(link.href)));
+  const usedAnchors = new Set(inline.map((link) => link.phrase.toLowerCase()));
   const sidebar: ContextualLink[] = [];
   for (const cat of content?.relatedCategories ?? []) {
-    if (inline.length + sidebar.length >= 2) break;
-    if (used.has(normalizeHref(cat.href))) continue;
-    used.add(normalizeHref(cat.href));
+    if (inline.length + sidebar.length >= 4) break;
+    const href = normalizeHref(cat.href);
+    const anchor = cat.label.toLowerCase();
+    if (used.has(href) || usedAnchors.has(anchor) || href === "/contact") continue;
+    used.add(href);
+    usedAnchors.add(anchor);
     sidebar.push({ phrase: cat.label, href: cat.href });
   }
   pages.push(
@@ -160,6 +191,7 @@ for (const slug of allSeoLocationSlugs()) {
       add(`location:${slug}`, locationPublicPath(slug), [
         ...editorial.topical.map((link) => ({ anchor: link.phrase, href: link.href })),
         ...(editorial.cycle ? [{ anchor: editorial.cycle.phrase, href: editorial.cycle.href }] : []),
+        ...editorial.extras.map((link) => ({ anchor: link.phrase, href: link.href })),
         { anchor: "Contact us", href: "/contact" },
       ])
     );
@@ -184,6 +216,7 @@ for (const slug of allSeoLocationSlugs()) {
         ...editorial.topical.map((link) => ({ anchor: link.phrase, href: link.href })),
         ...(editorial.nearby ? [{ anchor: editorial.nearby.phrase, href: editorial.nearby.href }] : []),
         ...(editorial.cycle ? [{ anchor: editorial.cycle.phrase, href: editorial.cycle.href }] : []),
+        ...editorial.extras.map((link) => ({ anchor: link.phrase, href: link.href })),
       ])
     );
     continue;
@@ -195,6 +228,7 @@ for (const slug of allSeoLocationSlugs()) {
     add(`location:${slug}`, locationPublicPath(slug), [
       ...editorial.topical.map((link) => ({ anchor: link.phrase, href: link.href })),
       ...(editorial.cycle ? [{ anchor: editorial.cycle.phrase, href: editorial.cycle.href }] : []),
+      ...editorial.extras.map((link) => ({ anchor: link.phrase, href: link.href })),
     ])
   );
 }
@@ -212,11 +246,12 @@ for (const post of visibleBlogs) {
     ...(post.faqs ?? []).map((faq) => faq.a),
   ].join("\n");
   const links = blogInlineLinks(post.slug, text);
+  const extra = blogFallbackLinks(post.slug, links);
   pages.push(
     add(
       `blog:${post.slug}`,
       `/blog/${post.slug}`,
-      links.map((link) => ({ anchor: link.phrase, href: link.href }))
+      [...links, ...extra].map((link) => ({ anchor: link.phrase, href: link.href }))
     )
   );
 }
@@ -224,8 +259,8 @@ for (const post of visibleBlogs) {
 const REDIRECTS = [/^\/shop$/, /^\/categories\//, /^\/cities\//, /^\/send-rakhi-to/, /^\/rakhi-from-uk$/, /^\/rakhi-from-canada$/, /^\/product\//];
 
 for (const page of pages) {
-  if (page.links.length === 0) problems.push(`${page.id} has no contextual links`);
-  if (page.links.length > 3) problems.push(`${page.id} has ${page.links.length} contextual links`);
+  if (page.links.length < 3) problems.push(`${page.id} has ${page.links.length} contextual links`);
+  if (page.links.length > 5) problems.push(`${page.id} has ${page.links.length} contextual links`);
   const anchors = new Set<string>();
   const hrefs = new Set<string>();
   for (const link of page.links) {
@@ -263,7 +298,7 @@ for (const [slug, category] of sampleProducts) {
       links.map((link) => ({ anchor: link.phrase, href: link.href }))
     )
   );
-  if (links.length !== 3) problems.push(`product ${slug} explore links = ${links.length}`);
+  if (links.length < 3 || links.length > 5) problems.push(`product ${slug} explore links = ${links.length}`);
 }
 
 const inbound = new Map<string, number>();
