@@ -13,7 +13,7 @@ export function HomeHero({ banners }: { banners: readonly HomeBanner[] }) {
   if (!first) return null;
 
   const imageClass =
-    first.imageFit === "cover" ? "object-cover object-center" : "object-contain object-center";
+    first.imageFit === "contain" ? "object-contain object-center" : "object-cover object-center";
 
   const image = (
     <Image
@@ -21,7 +21,7 @@ export function HomeHero({ banners }: { banners: readonly HomeBanner[] }) {
       alt={first.alt}
       fill
       className={imageClass}
-      sizes="(max-width: 1023px) 100vw, 768px"
+      sizes="100vw"
       priority
       fetchPriority="high"
     />

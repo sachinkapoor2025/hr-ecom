@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -31,15 +32,14 @@ const SPIN_MS = 4200;
  */
 export const SPIN_WHEEL_ENABLED = true;
 
-/** Home, cart, and product detail only — not listing, shipping, blog, etc. */
+/** Storefront pages. Hidden on admin, checkout, and email preview. */
 export function isSpinWheelPath(pathname: string): boolean {
   if (!SPIN_WHEEL_ENABLED) return false;
   const path = pathname.replace(/\/+$/, "") || "/";
-  if (path === "/") return true;
-  if (path === "/cart") return true;
-  if (!path.startsWith("/products/")) return false;
-  const slug = path.slice("/products/".length);
-  return slug.length > 0 && !slug.includes("/");
+  if (path.startsWith("/admin") || path.startsWith("/ses-email") || path.startsWith("/checkout")) {
+    return false;
+  }
+  return true;
 }
 
 const SEGMENTS = [...DAILY_DEAL_SEGMENTS];
@@ -97,6 +97,7 @@ export function ExitIntentPopup() {
   const [animateSpin, setAnimateSpin] = useState(false);
   const [wonPercent, setWonPercent] = useState<number | null>(null);
   const [burstKey, setBurstKey] = useState(0);
+  const [mounted, setMounted] = useState(false);
 
   const wheelGradient = useMemo(() => {
     const slice = 100 / SEGMENTS.length;
@@ -105,6 +106,10 @@ export function ExitIntentPopup() {
       return `${color} ${i * slice}% ${(i + 1) * slice}%`;
     });
     return `conic-gradient(from -${180 / SEGMENTS.length}deg, ${stops.join(", ")})`;
+  }, []);
+
+  useEffect(() => {
+    setMounted(true);
   }, []);
 
   useEffect(() => {
@@ -253,45 +258,47 @@ export function ExitIntentPopup() {
     })();
   };
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
   if (!isSpinWheelPath(pathname) && phase === "idle") return null;
 
   const showWheel = phase === "idle" || phase === "spinning" || phase === "celebrating";
   const celebrating = phase === "celebrating";
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-slate-900/65 backdrop-blur-[2px]"
+      className="fixed inset-0 z-[200] overflow-y-auto bg-slate-900/65"
       role="dialog"
       aria-label="Discount of the Day"
     >
-      <div className="relative w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/5">
+      <div className="flex min-h-full items-center justify-center p-3 sm:p-4">
+      <div className="relative my-auto w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/5">
         <ConfettiBurst active={celebrating} burstKey={burstKey} />
 
-        <div className="relative h-36 sm:h-40 overflow-hidden">
-          <Image
-            src="/banners/banner-diwali-bhai-dooj.jpg"
-            alt="Diwali and Bhai Dooj gifts"
-            fill
-            className="object-cover object-[82%_center]"
-            sizes="512px"
-            priority
-          />
-          <div className="absolute inset-0 bg-primary/45" />
-          <button
-            type="button"
-            onClick={close}
-            className="absolute top-3 right-3 z-10 rounded-full p-1.5 text-white/90 hover:bg-white/15"
-            aria-label="Close"
-          >
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M18 6L6 18M6 6l12 12" />
-            </svg>
-          </button>
-          <div className="absolute inset-x-0 bottom-0 bg-primary px-5 pb-4 pt-3 text-white">
+        <div className="relative bg-primary text-white">
+          <div className="relative h-16 overflow-hidden">
+            <Image
+              src="/banners/banner-diwali-bhai-dooj.jpg"
+              alt="Diwali and Bhai Dooj gifts"
+              fill
+              className="object-cover object-[82%_center]"
+              sizes="480px"
+            />
+            <div className="absolute inset-0 bg-primary/55" />
+            <button
+              type="button"
+              onClick={close}
+              className="absolute top-2 right-2 z-10 rounded-full p-1.5 text-white/90 hover:bg-white/15"
+              aria-label="Close"
+            >
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div className="px-5 pb-3 pt-2">
             <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-amber-200">Diwali & Bhai Dooj · Today only</p>
-            <h2 className="text-2xl font-bold leading-tight mt-0.5">Discount of the Day</h2>
-            <p className="text-xs sm:text-sm text-white/90 mt-1">
+            <h2 className="text-xl font-bold leading-tight mt-0.5">Discount of the Day</h2>
+            <p className="text-xs text-white/90 mt-1">
               Spin for a Diwali and Bhai Dooj discount · 1 spin / mobile / day · valid {WELCOME_COUPON_HOURS}h
             </p>
           </div>
@@ -354,7 +361,7 @@ export function ExitIntentPopup() {
             </div>
           ) : showWheel ? (
             <>
-              <div className="relative mx-auto mb-4 w-[260px] h-[260px] sm:w-[300px] sm:h-[300px]">
+              <div className="relative mx-auto mb-4 h-[220px] w-[220px] sm:h-[260px] sm:w-[260px]">
                 <div
                   className="absolute -inset-1 rounded-full opacity-90"
                   style={{
@@ -474,6 +481,8 @@ export function ExitIntentPopup() {
           ) : null}
         </div>
       </div>
-    </div>
+      </div>
+    </div>,
+    document.body
   );
 }
