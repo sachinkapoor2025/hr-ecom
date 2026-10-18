@@ -268,16 +268,16 @@ export function ExitIntentPopup() {
       <div className="relative w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/5">
         <ConfettiBurst active={celebrating} burstKey={burstKey} />
 
-        <div className="relative h-28 sm:h-32 overflow-hidden">
+        <div className="relative h-36 sm:h-40 overflow-hidden">
           <Image
-            src="/banners/banner-2-connecting-hearts.png"
-            alt="Premium Rakhi for USA delivery"
+            src="/banners/banner-diwali-bhai-dooj.jpg"
+            alt="Diwali and Bhai Dooj gifts"
             fill
-            className="object-cover object-center"
+            className="object-cover object-[82%_center]"
             sizes="512px"
             priority
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-primary via-primary/75 to-primary/40" />
+          <div className="absolute inset-0 bg-primary/45" />
           <button
             type="button"
             onClick={close}
@@ -288,11 +288,11 @@ export function ExitIntentPopup() {
               <path d="M18 6L6 18M6 6l12 12" />
             </svg>
           </button>
-          <div className="absolute inset-x-0 bottom-0 px-5 pb-4 text-white">
-            <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-amber-200">Rakhi offer · Today only</p>
+          <div className="absolute inset-x-0 bottom-0 bg-primary px-5 pb-4 pt-3 text-white">
+            <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-amber-200">Diwali & Bhai Dooj · Today only</p>
             <h2 className="text-2xl font-bold leading-tight mt-0.5">Discount of the Day</h2>
             <p className="text-xs sm:text-sm text-white/90 mt-1">
-              Spin for a mystery Rakhi discount · 1 spin / mobile / day · valid {WELCOME_COUPON_HOURS}h
+              Spin for a Diwali and Bhai Dooj discount · 1 spin / mobile / day · valid {WELCOME_COUPON_HOURS}h
             </p>
           </div>
         </div>
@@ -324,7 +324,7 @@ export function ExitIntentPopup() {
               <p className="text-sm text-slate-600 mb-3">
                 {coupon.reused
                   ? "Here’s your active Discount of the Day code:"
-                  : `Your Rakhi discount is valid for ${WELCOME_COUPON_HOURS} hour — use it at checkout:`}
+                  : `Your Diwali and Bhai Dooj discount is valid for ${WELCOME_COUPON_HOURS} hour — use it at checkout:`}
               </p>
               <div className="rounded-xl border-2 border-dashed border-nav bg-gradient-to-b from-slate-50 to-amber-50/40 px-4 py-3 mb-3">
                 <div className="flex items-center justify-center gap-2">
@@ -349,7 +349,7 @@ export function ExitIntentPopup() {
                 onClick={close}
                 className="inline-block rounded-lg bg-accent text-white font-semibold text-sm px-5 py-2.5 hover:opacity-90 shadow-sm"
               >
-                Shop Rakhi with my discount
+                Shop Diwali & Bhai Dooj gifts
               </Link>
             </div>
           ) : showWheel ? (

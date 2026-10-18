@@ -21,8 +21,7 @@ export interface HomeBanner {
   imageCaption?: string;
   /**
    * How the slide image fills the hero frame.
-   * Default `cover` matches existing banners; use `contain` for taller art
-   * that must stay fully visible (no top/bottom crop).
+   * Default `contain` shows the full artwork. Use `cover` only when cropping is intended.
    */
   imageFit?: "cover" | "contain";
 }
@@ -88,9 +87,9 @@ function Eyebrow({ text }: { text: string }) {
 }
 
 function bannerImageClass(banner: HomeBanner): string {
-  return banner.imageFit === "contain"
-    ? "object-contain object-center"
-    : "object-cover object-center";
+  return banner.imageFit === "cover"
+    ? "object-cover object-center"
+    : "object-contain object-center";
 }
 
 function deliveryParts(text: string): string[] {
@@ -201,9 +200,9 @@ export function BannerCarousel({
       aria-label="Featured promotions"
     >
       <div className="relative overflow-hidden bg-white border-b border-slate-100">
-        <div className="relative w-full max-w-7xl mx-auto min-w-0 lg:grid lg:grid-cols-[2fr_3fr] lg:gap-6 lg:items-stretch lg:px-4">
-          <div className="order-1 lg:order-2 relative w-full min-w-0 max-w-full lg:min-h-0 lg:self-stretch">
-            <div className="relative w-full max-w-full aspect-[1024/384] overflow-hidden bg-[#fffaf4] lg:absolute lg:inset-0 lg:aspect-auto lg:h-full">
+        <div className="relative w-full max-w-7xl mx-auto min-w-0 lg:grid lg:grid-cols-[2fr_3fr] lg:gap-6 lg:items-center lg:px-4 lg:py-4">
+          <div className="order-1 lg:order-2 relative w-full min-w-0 max-w-full">
+            <div className="relative w-full max-w-full aspect-[1024/384] overflow-hidden bg-[#fffaf4]">
               {/* Server LCP image for slide 0 */}
               {lcpImage ? (
                 <div
@@ -264,7 +263,7 @@ export function BannerCarousel({
             </div>
           </div>
 
-          <div className="order-2 lg:order-1 text-center lg:text-left z-10 min-w-0 px-4 py-6 sm:py-8 lg:py-4 lg:pl-2 lg:pr-4">
+          <div className="order-2 lg:order-1 text-center lg:text-left z-10 min-w-0 px-4 py-6 sm:py-8 lg:py-0 lg:pl-2 lg:pr-4">
             <div key={banner.src}>
               <Eyebrow text={banner.eyebrow} />
 

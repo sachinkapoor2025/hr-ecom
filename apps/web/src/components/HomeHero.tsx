@@ -13,7 +13,7 @@ export function HomeHero({ banners }: { banners: readonly HomeBanner[] }) {
   if (!first) return null;
 
   const imageClass =
-    first.imageFit === "contain" ? "object-contain object-center" : "object-cover object-center";
+    first.imageFit === "cover" ? "object-cover object-center" : "object-contain object-center";
 
   const image = (
     <Image
