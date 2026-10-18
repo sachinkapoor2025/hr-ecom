@@ -270,41 +270,29 @@ export function ExitIntentPopup() {
       role="dialog"
       aria-label="Discount of the Day"
     >
-      <div className="flex min-h-full items-center justify-center p-3 sm:p-4">
-      <div className="relative my-auto w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/5">
+      <div className="flex min-h-full items-start justify-center px-3 pb-4 pt-8 sm:px-4 sm:pt-10">
+      <div className="relative my-auto w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/5">
         <ConfettiBurst active={celebrating} burstKey={burstKey} />
 
-        <div className="relative bg-primary text-white">
-          <div className="relative h-16 overflow-hidden">
-            <Image
-              src="/banners/banner-diwali-bhai-dooj.jpg"
-              alt="Diwali and Bhai Dooj gifts"
-              fill
-              className="object-cover object-[82%_center]"
-              sizes="480px"
-            />
-            <div className="absolute inset-0 bg-primary/55" />
-            <button
-              type="button"
-              onClick={close}
-              className="absolute top-2 right-2 z-10 rounded-full p-1.5 text-white/90 hover:bg-white/15"
-              aria-label="Close"
-            >
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M18 6L6 18M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-          <div className="px-5 pb-3 pt-2">
-            <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-amber-200">Diwali & Bhai Dooj · Today only</p>
-            <h2 className="text-xl font-bold leading-tight mt-0.5">Discount of the Day</h2>
-            <p className="text-xs text-white/90 mt-1">
-              Spin for a Diwali and Bhai Dooj discount · 1 spin / mobile / day · valid {WELCOME_COUPON_HOURS}h
-            </p>
-          </div>
+        <div className="relative bg-primary px-5 pb-4 pt-5 pr-14 text-white">
+          <button
+            type="button"
+            onClick={close}
+            className="absolute right-3 top-8 z-10 rounded-full p-1.5 text-white/90 hover:bg-white/15"
+            aria-label="Close"
+          >
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
+          <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-amber-200">Diwali & Bhai Dooj · Today only</p>
+          <h2 className="text-xl font-bold leading-tight mt-0.5">Discount of the Day</h2>
+          <p className="text-xs text-white/90 mt-1">
+            Spin for a Diwali and Bhai Dooj discount · 1 spin / mobile / day · valid {WELCOME_COUPON_HOURS}h
+          </p>
         </div>
 
-        <div className="relative px-5 py-5">
+        <div className="relative px-5 py-4">
           {phase === "blocked" ? (
             <div className="text-center py-2">
               <p className="text-lg font-bold text-primary mb-2">You already spun today</p>
