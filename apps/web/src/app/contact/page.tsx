@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { applyInlineLinks } from "@/lib/inline-links";
 import { isRakhiContentHidden } from "@hr-ecom/shared";
 import { site } from "@/lib/site";
 import { pageMetadata, contactPageJsonLd } from "@/lib/seo";
@@ -38,7 +39,13 @@ export default function ContactPage() {
           <li>Damaged or incorrect items — contact us within 48 hours of delivery and include photos</li>
           <li>
             {hidden
-              ? "Choosing a Diwali hamper, a Bhai Dooj box, sweets, dry fruits, or a pooja set"
+              ? applyInlineLinks(
+                  "Choosing a Diwali hamper, a Bhai Dooj box, sweets, dry fruits, or a pooja set",
+                  [
+                    { phrase: "Diwali hamper", href: "/diwali-to-usa" },
+                    { phrase: "Bhai Dooj box", href: "/bhai-dooj-to-usa" },
+                  ]
+                )
               : "Choosing between a single rakhi, a combo, a hamper, or a Bhaiya Bhabhi set"}
           </li>
         </ul>

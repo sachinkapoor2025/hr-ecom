@@ -1,11 +1,8 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { categoryHref } from "@/lib/category-urls";
 import { site, categoryOrder } from "@/lib/site";
 import { homeCityLinks } from "@/lib/content/home-seo";
-import { rakshaBandhanInlineLinks } from "@/lib/content/page-inline-links";
-import { applyInlineLinks } from "@/lib/inline-links";
 import {
   rakshaBandhanShowcase,
   rakshaBandhanSteps,
@@ -151,7 +148,7 @@ export default function RakshaBandhanPage() {
         <h2 className="text-2xl font-bold text-primary mb-6">{content.tradition.heading}</h2>
         <div className="space-y-4 text-slate-700 leading-relaxed">
           {content.tradition.paragraphs.map((para, i) => (
-            <p key={i}>{applyInlineLinks(para, rakshaBandhanInlineLinks)}</p>
+            <p key={i}>{para}</p>
           ))}
         </div>
       </section>
@@ -193,13 +190,12 @@ export default function RakshaBandhanPage() {
         <p className="text-slate-700 leading-relaxed mb-6">{content.cities.text}</p>
         <div className="flex flex-wrap gap-2">
           {homeCityLinks.map((c) => (
-            <Link
+            <span
               key={c.slug}
-              href={c.href}
-              className="px-3 py-1.5 rounded-full border border-slate-200 text-sm text-primary hover:border-nav hover:text-nav"
+              className="px-3 py-1.5 rounded-full border border-slate-200 text-sm text-primary"
             >
               Send rakhi to {c.label}
-            </Link>
+            </span>
           ))}
         </div>
       </section>
@@ -209,23 +205,15 @@ export default function RakshaBandhanPage() {
         <h2 className="text-2xl font-bold text-primary mb-6 text-center">Shop Rakhi by Category</h2>
         <div className="grid sm:grid-cols-2 gap-3 mb-8">
           {categoryOrder.map((slug) => (
-            <Link
+            <div
               key={slug}
-              href={categoryHref(slug)}
-              className="p-5 border rounded-xl hover:border-nav hover:shadow-md transition capitalize font-medium text-primary flex items-center justify-between group"
+              className="p-5 border rounded-xl capitalize font-medium text-primary"
             >
               {slug.replace(/-/g, " ")}
-              <span className="text-nav group-hover:translate-x-1 transition-transform">→</span>
-            </Link>
+            </div>
           ))}
         </div>
         <div className="flex flex-wrap justify-center gap-4 text-sm">
-          <Link href="/blog/send-rakhi-to-usa-from-india" className="text-nav font-semibold hover:underline">
-            Send Rakhi from India guide →
-          </Link>
-          <Link href="/blog/best-rakhi-combo-with-chocolates" className="text-nav font-semibold hover:underline">
-            Best Rakhi combos →
-          </Link>
           <Link href="/shipping" className="text-nav font-semibold hover:underline">
             Shipping & delivery →
           </Link>
@@ -234,10 +222,7 @@ export default function RakshaBandhanPage() {
 
       {/* FAQ */}
       <section className="max-w-3xl mx-auto px-4 py-12 border-t border-slate-100">
-        <h2 className="text-2xl font-bold text-primary text-center mb-2">Raksha Bandhan 2026 — FAQ</h2>
-        <p className="text-center text-sm text-slate-500 mb-8">
-          <Link href="/faq" className="text-nav hover:underline">View all FAQs</Link>
-        </p>
+        <h2 className="text-2xl font-bold text-primary text-center mb-8">Raksha Bandhan 2026 — FAQ</h2>
         <div className="space-y-3">
           {rakshaBandhanFaqs.map((f) => (
             <details key={f.q} className="border border-slate-200 rounded-lg p-5 bg-white">
@@ -251,12 +236,9 @@ export default function RakshaBandhanPage() {
       {/* CTA */}
       <section className="bg-primary text-white py-14 text-center px-4">
         <h2 className="text-2xl md:text-3xl font-bold mb-4">Ready for Raksha Bandhan 2026?</h2>
-        <p className="text-white/85 max-w-xl mx-auto mb-8 leading-relaxed">
+        <p className="text-white/85 max-w-xl mx-auto leading-relaxed">
           Send Rakhi to your brother in the USA today. 126+ premium designs, 5–7 day delivery, roli chawal included.
         </p>
-        <Link href="/products" className="inline-block px-8 py-3 bg-accent text-white font-semibold rounded-lg hover:opacity-90">
-          Shop Rakhis Now
-        </Link>
       </section>
     </div>
   );

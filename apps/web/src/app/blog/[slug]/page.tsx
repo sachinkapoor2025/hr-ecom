@@ -3,9 +3,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { BlogShowMoreProducts } from "@/components/BlogShowMoreProducts";
-import { categoryHref } from "@/lib/category-urls";
 import { BlogCoverImage } from "@/components/BlogCoverImage";
 import { BlogFaqSection } from "@/components/BlogFaqSection";
+import { applyInlineLinks, createInlineLinkBudget } from "@/lib/inline-links";
+import { blogFallbackLinks, blogInlineLinks } from "@/lib/contextual-links";
 import { JsonLd } from "@/components/JsonLd";
 import { loadBlogPostWithImage } from "@/lib/blog-images";
 import { isRakhiContentHidden, textMentionsRakhi } from "@hr-ecom/shared";
@@ -52,7 +53,15 @@ export default async function BlogPostPage({ params }: Props) {
   ) {
     notFound();
   }
-  const hidden = isRakhiContentHidden();
+  const blogText = [
+    post.excerpt,
+    ...post.sections.flatMap((section) => section.paragraphs),
+    ...(post.closing?.paragraphs ?? []),
+    ...(post.faqs ?? []).map((faq) => faq.a),
+  ].join("\n");
+  const inlineLinks = blogInlineLinks(slug, blogText);
+  const extraLinks = blogFallbackLinks(slug, inlineLinks);
+  const linkBudget = createInlineLinkBudget(5);
 
   const crumbs = [
     { label: "Home", href: "/" },
@@ -99,7 +108,7 @@ export default async function BlogPostPage({ params }: Props) {
               )}
               {section.paragraphs.map((p, j) => (
                 <p key={j} className="text-slate-700 leading-relaxed mb-4 break-words [overflow-wrap:anywhere]">
-                  {p}
+                  {applyInlineLinks(p, inlineLinks, linkBudget)}
                 </p>
               ))}
             </section>
@@ -111,42 +120,30 @@ export default async function BlogPostPage({ params }: Props) {
             <h2 className="text-xl font-bold text-primary mb-3 break-words">{post.closing.heading}</h2>
             {post.closing.paragraphs.map((p) => (
               <p key={p} className="text-slate-700 leading-relaxed mb-4 break-words [overflow-wrap:anywhere]">
-                {p}
+                {applyInlineLinks(p, inlineLinks, linkBudget)}
               </p>
             ))}
           </section>
         )}
 
-        {post.relatedCategory && (
-          <div className="mt-10 p-6 bg-slate-50 rounded-xl border min-w-0">
-            <h2 className="font-semibold text-primary mb-2">
-              {/rakhi/i.test(post.relatedCategory) ? "Shop related Rakhis" : "Shop this collection"}
-            </h2>
-            <Link href={categoryHref(post.relatedCategory)} className="text-nav font-semibold hover:underline">
-              Browse {post.relatedCategory.replace(/-/g, " ")} →
-            </Link>
-          </div>
+        {post.faqs && post.faqs.length > 0 && (
+          <BlogFaqSection faqs={post.faqs} links={inlineLinks} budget={linkBudget} />
         )}
 
-        {post.faqs && post.faqs.length > 0 && <BlogFaqSection faqs={post.faqs} />}
-
-        <div className="mt-8 pt-6 border-t flex flex-wrap gap-4 text-sm">
-          <Link href="/" className="text-nav hover:underline">
-            Shop UsaRakhi home →
-          </Link>
-          {hidden ? (
-            <Link href="/diwali-to-usa" className="text-nav hover:underline">
-              Shop Diwali gifts →
-            </Link>
-          ) : (
-            <Link href="/raksha-bandhan" className="text-nav hover:underline">
-              Raksha Bandhan 2026 guide →
-            </Link>
-          )}
-          <Link href="/blog" className="text-nav hover:underline">
-            ← All articles
-          </Link>
-        </div>
+        {extraLinks.length > 0 ? (
+          <p className="mt-8 text-sm text-slate-600">
+            Related reading:{" "}
+            {extraLinks.map((link, index) => (
+              <span key={link.href}>
+                {index > 0 ? " · " : null}
+                <Link href={link.href} className="text-nav font-semibold hover:underline">
+                  {link.phrase}
+                </Link>
+              </span>
+            ))}
+            .
+          </p>
+        ) : null}
       </article>
 
       <div className="max-w-5xl mx-auto px-4 pb-12">

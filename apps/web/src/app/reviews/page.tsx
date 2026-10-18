@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { applyInlineLinks } from "@/lib/inline-links";
 import { GoogleReviews } from "@/components/GoogleReviews";
 import { getGoogleReviews } from "@/lib/google-reviews";
 import { ReviewForm } from "@/components/ReviewForm";
@@ -88,9 +89,13 @@ export default async function ReviewsPage() {
       <section className="max-w-3xl mx-auto px-4 pb-4 text-slate-700 leading-relaxed">
         <h2 className="text-xl font-bold text-primary mb-3">How to read reviews before you order</h2>
         <p className="mb-4">
-          This page collects feedback on {site.name} Diwali and Bhai Dooj gift delivery to US addresses. Google
-          reviews appear when they are available, followed by reviews published on the site. The form is for customers
-          who have already received an order and want to describe that delivery in their own words.
+          {applyInlineLinks(
+            `This page collects feedback on ${site.name} Diwali and Bhai Dooj gift delivery to US addresses. Google reviews appear when they are available, followed by reviews published on the site. The form is for customers who have already received an order and want to describe that delivery in their own words.`,
+            [
+              { phrase: "Diwali", href: "/diwali-to-usa" },
+              { phrase: "Bhai Dooj", href: "/bhai-dooj-to-usa" },
+            ]
+          )}
         </p>
         <p>
           Use the comments to judge packaging, communication, and whether the hamper matched its listing. Product
@@ -112,10 +117,6 @@ export default async function ReviewsPage() {
       <section className="max-w-3xl mx-auto px-4 pb-12 text-center text-sm text-slate-500">
         <Link href="/about" className="text-nav hover:underline">
           About our California team
-        </Link>
-        {" · "}
-        <Link href="/shipping" className="text-nav hover:underline">
-          Shipping & delivery
         </Link>
         {" · "}
         <Link href="/faq" className="text-nav hover:underline">

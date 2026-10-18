@@ -1,5 +1,7 @@
 import Link from "next/link";
 import type { CityPageContent } from "@/lib/content/city-pages";
+import { locationEditorialLinks } from "@/lib/contextual-links";
+import { applyInlineLinks, createInlineLinkBudget } from "@/lib/inline-links";
 import { site, whatsappChatUrl } from "@/lib/site";
 
 interface Props {
@@ -7,6 +9,16 @@ interface Props {
 }
 
 export function CityContentSection({ content }: Props) {
+  const festivalNote = `Diwali fills the home with light, sweets, and time together. Bhai Dooj, a couple of days later, honors the bond between brothers and sisters. When you cannot celebrate in person, a Diwali gift combo or a Bhai Dooj hamper delivered to ${content.label} still puts mithai, chocolates, or dry fruits on the table. ${site.name} ships these festive gifts within the United States so your family can open them in time for the celebrations.`;
+  const articleText = [...content.intro, ...content.delivery.paragraphs, festivalNote, ...content.faqs.map((faq) => faq.a)].join(
+    "\n"
+  );
+  const editorial = locationEditorialLinks(content.slug, articleText, {
+    extraReserved: 1,
+    blockedHrefs: ["/contact"],
+  });
+  const budget = createInlineLinkBudget(editorial.topical.length);
+
   return (
     <div className="mt-12 pt-10 border-t border-slate-200">
       <div className="grid lg:grid-cols-2 gap-10 xl:gap-14">
@@ -16,7 +28,7 @@ export function CityContentSection({ content }: Props) {
             <h2 className="text-2xl font-bold text-primary mb-4">{content.headline}</h2>
             {content.intro.map((p, i) => (
               <p key={i} className="mb-4">
-                {p}
+                {applyInlineLinks(p, editorial.topical, budget)}
               </p>
             ))}
           </header>
@@ -25,7 +37,7 @@ export function CityContentSection({ content }: Props) {
             <h3 className="text-xl font-semibold text-primary mb-3">{content.delivery.heading}</h3>
             {content.delivery.paragraphs.map((p, i) => (
               <p key={i} className="mb-3">
-                {p}
+                {applyInlineLinks(p, editorial.topical, budget)}
               </p>
             ))}
           </section>
@@ -46,13 +58,35 @@ export function CityContentSection({ content }: Props) {
             <h3 className="text-xl font-semibold text-primary mb-3">
               Diwali and Bhai Dooj in {content.label}
             </h3>
-            <p className="mb-3">
-              Diwali fills the home with light, sweets, and time together. Bhai Dooj, a couple of days
-              later, honors the bond between brothers and sisters. When you cannot celebrate in person, a
-              Diwali gift combo or a Bhai Dooj hamper delivered to {content.label} still puts mithai,
-              chocolates, or dry fruits on the table. {site.name} ships these festive gifts within the
-              United States so your family can open them in time for the celebrations.
-            </p>
+            <p className="mb-3">{applyInlineLinks(festivalNote, editorial.topical, budget)}</p>
+            {editorial.cycle || editorial.extras.length > 0 ? (
+              <p>
+                {editorial.cycle ? (
+                  <>
+                    Also deliver nearby:{" "}
+                    <Link href={editorial.cycle.href} className="text-nav hover:underline">
+                      {editorial.cycle.phrase}
+                    </Link>
+                    .
+                  </>
+                ) : null}
+                {editorial.extras.length > 0 ? (
+                  <>
+                    {editorial.cycle ? " " : null}
+                    Also see{" "}
+                    {editorial.extras.map((link, index) => (
+                      <span key={link.href}>
+                        {index > 0 ? (index === editorial.extras.length - 1 ? " and " : ", ") : null}
+                        <Link href={link.href} className="text-nav hover:underline">
+                          {link.phrase}
+                        </Link>
+                      </span>
+                    ))}
+                    .
+                  </>
+                ) : null}
+              </p>
+            ) : null}
           </section>
         </article>
 
@@ -86,9 +120,7 @@ export function CityContentSection({ content }: Props) {
             <ul className="space-y-3 text-sm">
               {content.relatedCategories.map((cat) => (
                 <li key={cat.href}>
-                  <Link href={cat.href} className="font-medium text-nav hover:underline">
-                    {cat.label}
-                  </Link>
+                  <span className="font-medium text-primary">{cat.label}</span>
                   <p className="text-slate-500 mt-0.5">{cat.text}</p>
                 </li>
               ))}
@@ -130,7 +162,9 @@ export function CityContentSection({ content }: Props) {
           {content.faqs.map((faq) => (
             <div key={faq.q} className="bg-white border border-slate-100 rounded-xl p-5">
               <h4 className="font-semibold text-primary text-sm mb-2">{faq.q}</h4>
-              <p className="text-sm text-slate-600 leading-relaxed">{faq.a}</p>
+              <p className="text-sm text-slate-600 leading-relaxed">
+                {applyInlineLinks(faq.a, editorial.topical, budget)}
+              </p>
             </div>
           ))}
         </div>

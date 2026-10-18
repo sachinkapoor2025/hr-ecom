@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { site, cityNavHref, usCityLinks } from "@/lib/site";
+import { applyInlineLinks, createInlineLinkBudget } from "@/lib/inline-links";
+import { site, usCityLinks } from "@/lib/site";
 import { JsonLd } from "@/components/JsonLd";
 import { pageMetadata, canonical } from "@/lib/seo";
 import { RAKHI_DELIVERY_MESSAGING, USARAKHI_MIN_ORDER_USD } from "@hr-ecom/shared";
@@ -77,15 +78,22 @@ function festivalShippingJsonLd() {
 }
 
 export default function ShippingPage() {
+  const budget = createInlineLinkBudget(3);
   return (
     <div className="max-w-3xl mx-auto px-4 py-12">
       <JsonLd data={festivalShippingJsonLd()} />
       <h1 className="text-3xl font-bold text-primary mb-6">Diwali and Bhai Dooj Shipping</h1>
       <div className="space-y-6 text-slate-700 leading-relaxed">
         <p>
-          {site.name} delivers Diwali gift combos and Bhai Dooj gifts to <strong>all 50 United States</strong> with{" "}
-          <strong>domestic US fulfillment</strong>. Sweets, chocolates, dry fruit hampers, and pooja sets ship inside
-          America, so the recipient is not waiting on international customs.
+          {applyInlineLinks(
+            `${site.name} delivers Diwali gift combos and Bhai Dooj gifts to all 50 United States with domestic US fulfillment. Sweets, chocolates, dry fruit hampers, and pooja sets ship inside America, so the recipient is not waiting on international customs.`,
+            [
+              { phrase: "Diwali gift combos", href: "/diwali-to-usa" },
+              { phrase: "Bhai Dooj gifts", href: "/bhai-dooj-to-usa" },
+              { phrase: "dry fruit hampers", href: "/dry-fruit-combos-to-usa" },
+            ],
+            budget
+          )}
         </p>
         <h2 className="text-xl font-bold text-primary">Shipping options</h2>
         <p className="text-sm font-semibold text-slate-900">
@@ -153,10 +161,8 @@ export default function ShippingPage() {
         <p>Popular destinations for Diwali and Bhai Dooj gifts include:</p>
         <ul className="flex flex-wrap gap-2">
           {usCityLinks.map((c) => (
-            <li key={c.slug}>
-              <Link href={cityNavHref(c)} className="text-nav hover:underline text-sm">
-                {c.label}
-              </Link>
+            <li key={c.slug} className="text-sm text-slate-700">
+              {c.label}
             </li>
           ))}
         </ul>

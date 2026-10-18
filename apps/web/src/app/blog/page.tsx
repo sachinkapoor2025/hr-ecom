@@ -4,6 +4,7 @@ import { BlogCoverImage } from "@/components/BlogCoverImage";
 import { BlogShowMoreProducts } from "@/components/BlogShowMoreProducts";
 import { loadBlogPostsWithImages } from "@/lib/blog-images";
 import { isRakhiContentHidden, textMentionsRakhi } from "@hr-ecom/shared";
+import { applyInlineLinks } from "@/lib/inline-links";
 import { pageMetadata } from "@/lib/seo";
 
 /** Keep blog list fresh when admin updates hero images. */
@@ -79,8 +80,15 @@ export default async function BlogPage() {
         <section className="mt-12 pt-10 border-t border-slate-200 max-w-3xl text-slate-700 leading-relaxed">
           <h2 className="text-xl font-bold text-primary mb-3">Festive gift guides</h2>
           <p className="mb-4">
-            These articles explain Diwali and Bhai Dooj gifts that ship to a US address: sweets, dry fruits,
-            chocolates, pooja sets, and how domestic delivery works.
+            {applyInlineLinks(
+              "These articles explain Diwali and Bhai Dooj gifts that ship to a US address: sweets, dry fruits, chocolates, and pooja sets, and how domestic delivery works.",
+              [
+                { phrase: "Diwali", href: "/diwali-to-usa" },
+                { phrase: "Bhai Dooj", href: "/bhai-dooj-to-usa" },
+                { phrase: "dry fruits", href: "/dry-fruit-combos-to-usa" },
+                { phrase: "pooja sets", href: "/pooja-sets-to-usa" },
+              ]
+            )}
           </p>
           <p className="text-sm">
             Ready to choose a hamper?{" "}
@@ -107,18 +115,8 @@ export default async function BlogPage() {
             </Link>{" "}
             — pay in INR and deliver to a US address.
           </li>
-          <li>
-            <Link href="/blog/why-roli-chawal-is-used-in-rakhi" className="text-nav font-semibold hover:underline">
-              Roli and chawal
-            </Link>{" "}
-            — the tilak items packed with most rakhis.
-          </li>
-          <li>
-            <Link href="/blog/raksha-bandhan-2026-usa" className="text-nav font-semibold hover:underline">
-              Raksha Bandhan 2026
-            </Link>{" "}
-            — the festival date and how USA orders fit around it.
-          </li>
+          <li>Roli and chawal — the tilak items packed with most rakhis.</li>
+          <li>Raksha Bandhan 2026 — the festival date and how USA orders fit around it.</li>
           <li>
             <Link href="/blog/rakhi-usa-domestic-shipping-no-customs" className="text-nav font-semibold hover:underline">
               Domestic US shipping

@@ -127,14 +127,14 @@ export default async function HomePage() {
           happiness closer.
         </p>
         <div className="flex flex-wrap justify-center gap-x-3 gap-y-2 text-sm">
-          <Link href={categoryHref("bhai-dooj")} className="text-nav font-bold hover:underline">
-            Shop Bhai Dooj Gifts →
+          <Link href={categoryHref("sweet-combos")} className="text-nav font-bold hover:underline">
+            Shop Sweet Combos →
           </Link>
           <span className="text-slate-300" aria-hidden>
             |
           </span>
-          <Link href={categoryHref("diwali")} className="text-nav font-bold hover:underline">
-            Shop Diwali Gifts →
+          <Link href={categoryHref("dry-fruit-combos")} className="text-nav font-bold hover:underline">
+            Shop Dry Fruit Hampers →
           </Link>
         </div>
       </section>
@@ -155,7 +155,7 @@ export default async function HomePage() {
             read our full FAQ page
           </Link>
         </p>
-        <div className="grid md:grid-cols-2 gap-4">
+        <div className="grid items-start md:grid-cols-2 gap-4">
           {homeSeoContent.faqs.map((f) => (
             <details key={f.q} className="border border-slate-200 rounded-xl p-5 bg-white">
               <summary className="font-semibold text-primary cursor-pointer text-sm">{f.q}</summary>

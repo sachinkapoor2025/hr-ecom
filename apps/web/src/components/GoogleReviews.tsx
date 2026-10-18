@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import type { GoogleReview, GoogleReviewsPayload } from "@/lib/google-reviews";
 
 const PREVIEW_CHARS = 140;
@@ -128,8 +127,7 @@ type GoogleReviewsProps = {
 
 export function GoogleReviews({ data, hideHeader = false }: GoogleReviewsProps) {
   if (!data.reviews.length) return null;
-  const viewAllHref = data.mapsUrl || "/reviews";
-  const viewAllExternal = Boolean(data.mapsUrl);
+  const viewAllHref = data.mapsUrl;
 
   return (
     <section className="border-t border-slate-100 bg-[#f7f8fa] py-10 md:py-14">
@@ -144,7 +142,7 @@ export function GoogleReviews({ data, hideHeader = false }: GoogleReviewsProps) 
                 </p>
               ) : null}
             </div>
-            {viewAllExternal ? (
+            {viewAllHref ? (
               <a
                 href={viewAllHref}
                 target="_blank"
@@ -153,14 +151,7 @@ export function GoogleReviews({ data, hideHeader = false }: GoogleReviewsProps) 
               >
                 View All
               </a>
-            ) : (
-              <Link
-                href={viewAllHref}
-                className="shrink-0 rounded-md bg-primary px-3.5 py-1.5 text-sm font-semibold text-white hover:opacity-90"
-              >
-                View All
-              </Link>
-            )}
+            ) : null}
           </div>
         ) : null}
 

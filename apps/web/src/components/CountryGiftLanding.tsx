@@ -4,8 +4,16 @@ import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { HomeProductCard } from "@/components/HomeProductCard";
 import { JsonLd } from "@/components/JsonLd";
 import type { CountryGiftPage } from "@/lib/content/country-gift-pages";
+import { applyInlineLinks, createInlineLinkBudget } from "@/lib/inline-links";
 import { site, whatsappChatUrl } from "@/lib/site";
 import { faqJsonLd, itemListJsonLd } from "@/lib/seo";
+
+const COUNTRY_CATEGORY_HREFS: Record<CountryGiftPage["id"], readonly string[]> = {
+  uk: ["/chocolate-combos-to-usa", "/dry-fruit-combos-to-usa", "/diwali-to-usa"],
+  canada: ["/sweet-combos-to-usa", "/dry-fruit-combos-to-usa", "/chocolate-combos-to-usa", "/diwali-to-usa"],
+};
+
+const UK_FAQ_LINKS = [{ phrase: "Pooja sets", href: "/pooja-sets-to-usa" }];
 
 /** Products first, then country-specific gift copy. Same card grid as US location pages. */
 export function CountryGiftLanding({
@@ -15,6 +23,8 @@ export function CountryGiftLanding({
   page: CountryGiftPage;
   products: Product[];
 }) {
+  const categories = page.categories.filter((cat) => COUNTRY_CATEGORY_HREFS[page.id].includes(cat.href));
+  const faqBudget = createInlineLinkBudget(page.id === "uk" ? 1 : 0);
   const crumbs = [
     { label: "Home", href: "/" },
     { label: page.menuLabel },
@@ -87,7 +97,7 @@ export function CountryGiftLanding({
             <section className="bg-white border border-slate-200 rounded-xl p-6">
               <h3 className="text-lg font-semibold text-primary mb-4">Shop by gift type</h3>
               <ul className="space-y-3 text-sm">
-                {page.categories.map((cat) => (
+                {categories.map((cat) => (
                   <li key={cat.href}>
                     <Link href={cat.href} className="font-medium text-nav hover:underline">
                       {cat.label}
@@ -129,7 +139,9 @@ export function CountryGiftLanding({
             {page.faqs.map((faq) => (
               <div key={faq.q} className="bg-white border border-slate-100 rounded-xl p-5">
                 <h3 className="font-semibold text-primary text-sm mb-2">{faq.q}</h3>
-                <p className="text-sm text-slate-600 leading-relaxed">{faq.a}</p>
+                <p className="text-sm text-slate-600 leading-relaxed">
+                  {page.id === "uk" ? applyInlineLinks(faq.a, UK_FAQ_LINKS, faqBudget) : faq.a}
+                </p>
               </div>
             ))}
           </div>

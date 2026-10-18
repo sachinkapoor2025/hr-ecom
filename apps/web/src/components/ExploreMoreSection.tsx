@@ -1,54 +1,36 @@
 import Link from "next/link";
-import { EXPLORE_MORE_GROUPS } from "@/lib/explore-more-links";
+import { productExploreLinks } from "@/lib/contextual-links";
 
 /**
- * FNP-style multi-column Explore More links for product pages.
- * Crawlable semantic nav — strengthens internal linking for cities, types, and collections.
+ * Contextual links for a product page: related collections and one delivery city.
  */
-export function ExploreMoreSection() {
+export function ExploreMoreSection({
+  productSlug,
+  categorySlug,
+}: {
+  productSlug: string;
+  categorySlug?: string | null;
+}) {
+  const links = productExploreLinks(productSlug, categorySlug);
+
   return (
-    <nav
-      className="mt-10 pt-8 border-t border-slate-200"
-      aria-labelledby="explore-more-heading"
-    >
+    <nav className="mt-10 pt-8 border-t border-slate-200" aria-labelledby="explore-more-heading">
       <h2 id="explore-more-heading" className="text-lg sm:text-xl font-bold text-primary mb-2">
         Explore More
       </h2>
-      <p className="text-sm text-slate-600 mb-6 max-w-3xl">
-        Browse Diwali gifts and Bhai Dooj gifts by city — festive gift combos, sweets, chocolates, and dry fruit hampers for USA delivery.
+      <p className="text-sm text-slate-600 mb-4 max-w-3xl">
+        Browse Diwali gifts and Bhai Dooj gifts by city — festive gift combos, sweets, chocolates, and dry fruit
+        hampers for USA delivery.
       </p>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8">
-        {EXPLORE_MORE_GROUPS.map((group) => (
-          <section key={group.heading} aria-labelledby={`explore-${slugify(group.heading)}`}>
-            <h3
-              id={`explore-${slugify(group.heading)}`}
-              className="text-sm font-bold uppercase tracking-wide text-primary mb-3"
-            >
-              {group.heading}
-            </h3>
-            <ul className="space-y-2">
-              {group.links.map((link) => (
-                <li key={`${group.heading}-${link.href}-${link.label}`}>
-                  <Link
-                    href={link.href}
-                    className="text-sm text-slate-700 hover:text-nav hover:underline underline-offset-2 transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </section>
+      <ul className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-x-6">
+        {links.map((link) => (
+          <li key={link.href}>
+            <Link href={link.href} className="text-sm text-nav hover:underline underline-offset-2">
+              {link.phrase}
+            </Link>
+          </li>
         ))}
-      </div>
+      </ul>
     </nav>
   );
-}
-
-function slugify(value: string): string {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
 }

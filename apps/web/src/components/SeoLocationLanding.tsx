@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { categoryHref } from "@/lib/category-urls";
 import type { SeoLocation } from "@/lib/content/seo-data";
-import { locationPublicPath } from "@/lib/content/seo-data";
+import { locationEditorialLinks } from "@/lib/contextual-links";
+import { applyInlineLinks, createInlineLinkBudget } from "@/lib/inline-links";
 import { site, whatsappChatUrl } from "@/lib/site";
 
 const sharedCategories = [
@@ -65,12 +65,18 @@ export function buildLocationContent(location: SeoLocation) {
 
 interface Props {
   location: SeoLocation;
-  related: SeoLocation[];
 }
 
-export function SeoLocationLanding({ location, related }: Props) {
+export function SeoLocationLanding({ location }: Props) {
   const content = buildLocationContent(location);
   const place = displayName(location);
+  const articleText = [
+    ...content.intro,
+    ...content.delivery.paragraphs,
+    ...content.faqs.map((faq) => faq.a),
+  ].join("\n");
+  const editorial = locationEditorialLinks(location.slug, articleText);
+  const budget = createInlineLinkBudget(editorial.topical.length);
 
   return (
     <div className="mt-12 pt-10 border-t border-slate-200">
@@ -87,7 +93,7 @@ export function SeoLocationLanding({ location, related }: Props) {
             <h2 className="text-2xl font-bold text-primary mb-4">{content.headline}</h2>
             {content.intro.map((p, i) => (
               <p key={i} className="mb-4">
-                {p}
+                {applyInlineLinks(p, editorial.topical, budget)}
               </p>
             ))}
           </header>
@@ -96,7 +102,7 @@ export function SeoLocationLanding({ location, related }: Props) {
             <h3 className="text-xl font-semibold text-primary mb-3">{content.delivery.heading}</h3>
             {content.delivery.paragraphs.map((p, i) => (
               <p key={i} className="mb-3">
-                {p}
+                {applyInlineLinks(p, editorial.topical, budget)}
               </p>
             ))}
           </section>
@@ -119,9 +125,7 @@ export function SeoLocationLanding({ location, related }: Props) {
             <ul className="space-y-3 text-sm">
               {sharedCategories.map((cat) => (
                 <li key={cat.slug}>
-                  <Link href={categoryHref(cat.slug)} className="font-medium text-nav hover:underline">
-                    {cat.label}
-                  </Link>
+                  <span className="font-medium text-primary">{cat.label}</span>
                   <p className="text-slate-500 mt-0.5">{cat.text}</p>
                 </li>
               ))}
@@ -132,9 +136,6 @@ export function SeoLocationLanding({ location, related }: Props) {
             <h3 className="text-lg font-semibold mb-2">Order Diwali Gifts to {place}</h3>
             <p className="text-sm text-white/90 mb-4">Need help with address or delivery timing? We respond on WhatsApp and email.</p>
             <div className="flex flex-wrap gap-3 text-sm">
-              <Link href="/" className="bg-white text-nav px-4 py-2 rounded-lg font-medium hover:bg-slate-100">
-                Shop UsaRakhi home
-              </Link>
               <a href={whatsappChatUrl(`Hi, I want to send gifts to ${place}.`)} target="_blank" rel="noopener noreferrer" className="border border-white/60 px-4 py-2 rounded-lg hover:bg-white/10">
                 WhatsApp
               </a>
@@ -149,24 +150,38 @@ export function SeoLocationLanding({ location, related }: Props) {
           {content.faqs.map((faq) => (
             <div key={faq.q} className="bg-white border border-slate-100 rounded-xl p-5">
               <h4 className="font-semibold text-primary text-sm mb-2">{faq.q}</h4>
-              <p className="text-sm text-slate-600 leading-relaxed">{faq.a}</p>
+              <p className="text-sm text-slate-600 leading-relaxed">
+                {applyInlineLinks(faq.a, editorial.topical, budget)}
+              </p>
             </div>
           ))}
         </div>
       </section>
 
-      {related.length > 0 && (
+      {editorial.cycle || editorial.extras.length > 0 ? (
         <section className="mt-10 p-6 bg-slate-50 rounded-xl text-sm">
           <h2 className="font-semibold text-primary mb-3">Also deliver Diwali gifts nearby</h2>
-          <div className="flex flex-wrap gap-x-4 gap-y-2">
-            {related.map((loc) => (
-              <Link key={loc.slug} href={locationPublicPath(loc.slug)} className="text-nav hover:underline">
-                Diwali gifts to {displayName(loc)}
-              </Link>
-            ))}
-          </div>
+          {editorial.cycle ? (
+            <Link href={editorial.cycle.href} className="text-nav hover:underline">
+              {editorial.cycle.phrase}
+            </Link>
+          ) : null}
+          {editorial.extras.length > 0 ? (
+            <p className={editorial.cycle ? "mt-3" : undefined}>
+              Also see{" "}
+              {editorial.extras.map((link, index) => (
+                <span key={link.href}>
+                  {index > 0 ? (index === editorial.extras.length - 1 ? " and " : ", ") : null}
+                  <Link href={link.href} className="text-nav hover:underline">
+                    {link.phrase}
+                  </Link>
+                </span>
+              ))}
+              .
+            </p>
+          ) : null}
         </section>
-      )}
+      ) : null}
     </div>
   );
 }

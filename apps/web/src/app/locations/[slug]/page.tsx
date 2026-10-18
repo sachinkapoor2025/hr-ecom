@@ -9,16 +9,13 @@ import { SecondaryCityLanding, buildSecondaryCityFaqs } from "@/components/Secon
 import { JsonLd } from "@/components/JsonLd";
 import {
   allSeoLocationSlugs,
-  californiaWarehouseLocations,
   getSeoLocation,
   locationPublicPath,
-  seoLocations,
 } from "@/lib/content/seo-data";
 import { getCityContent } from "@/lib/content/city-pages";
 import {
   getSecondaryCity,
   isExpressMetro,
-  isSecondaryCity,
   secondaryCityIntro,
 } from "@/lib/content/city-delivery-tiers";
 import { loadLocationPageProducts } from "@/lib/product-loader";
@@ -270,15 +267,6 @@ export default async function SeoLocationPage({ params }: Props) {
         : location.name;
 
   const content = buildLocationContent(location);
-  const related = location.isCaliforniaWarehouse
-    ? californiaWarehouseLocations()
-        .filter((l) => l.slug !== slug && !isSecondaryCity(l.slug))
-        .slice(0, 8)
-    : location.state
-      ? seoLocations
-          .filter((l) => l.state === location.state && l.slug !== slug && !isSecondaryCity(l.slug))
-          .slice(0, 8)
-      : [];
 
   const crumbs = [
     { label: "Home", href: "/" },
@@ -316,7 +304,7 @@ export default async function SeoLocationPage({ params }: Props) {
         </p>
       )}
 
-      <SeoLocationLanding location={location} related={related} />
+      <SeoLocationLanding location={location} />
     </div>
   );
 }

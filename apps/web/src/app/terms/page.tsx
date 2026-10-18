@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { applyInlineLinks } from "@/lib/inline-links";
 import { USARAKHI_MIN_ORDER_USD } from "@hr-ecom/shared";
 import { trustFacts } from "@/lib/trust";
 import { site } from "@/lib/site";
@@ -30,9 +31,13 @@ export default function TermsPage() {
 
         <h2 className="text-xl font-bold text-primary">1. Orders &amp; Delivery</h2>
         <p>
-          UsaRakhi delivers Diwali and Bhai Dooj gift combos to addresses within the United States. Estimated delivery
-          time is typically <strong>5–7 business days</strong>, depending on the delivery location and other
-          circumstances.
+          {applyInlineLinks(
+            "UsaRakhi delivers Diwali and Bhai Dooj gift combos to addresses within the United States. Estimated delivery time is typically 5–7 business days, depending on the delivery location and other circumstances.",
+            [
+              { phrase: "Diwali", href: "/diwali-to-usa" },
+              { phrase: "Bhai Dooj", href: "/bhai-dooj-to-usa" },
+            ]
+          )}
         </p>
         <p>
           Customers are responsible for providing a complete and accurate US shipping address and valid contact details
@@ -112,11 +117,6 @@ export default function TermsPage() {
         </p>
 
         <p className="text-slate-500 text-sm">Last updated: October 2026</p>
-        <p>
-          <Link href="/" className="text-nav font-semibold hover:underline">
-            ← Back to home
-          </Link>
-        </p>
       </div>
     </div>
   );
