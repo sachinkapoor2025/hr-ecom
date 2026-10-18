@@ -61,8 +61,8 @@ export function PricesDroppedStrip({ variant = "banner" }: { variant?: Variant }
 
   return (
     <div className="bg-gradient-to-r from-primary to-nav text-white px-3 sm:px-4 py-2.5 text-sm">
-      <div className="relative max-w-7xl mx-auto flex items-center justify-center gap-3 min-h-[1.75rem]">
-        <p className="min-w-0 text-center text-[12px] sm:text-sm leading-snug px-2 sm:px-24">
+      <div className="relative max-w-7xl mx-auto flex flex-col items-center justify-center gap-0.5 min-h-[1.75rem] px-2 sm:px-28">
+        <p className="text-center text-[12px] sm:text-sm leading-snug">
           <span className="font-bold">{PRICES_DROPPED_STRIP}</span>
           {countdown ? (
             <>
@@ -70,11 +70,13 @@ export function PricesDroppedStrip({ variant = "banner" }: { variant?: Variant }
               <span>{countdown}</span>
             </>
           ) : null}
-          {" · "}
-          <Link href="/products" className="underline underline-offset-2 hover:text-white/90">
-            Place your order now
-          </Link>
         </p>
+        <Link
+          href="/products"
+          className="whitespace-nowrap text-[12px] sm:text-sm underline underline-offset-2 hover:text-white/90"
+        >
+          Place your order now
+        </Link>
         <div className="absolute inset-y-0 right-0 hidden items-center sm:flex">
           <StayUpdatedPrompt />
         </div>
