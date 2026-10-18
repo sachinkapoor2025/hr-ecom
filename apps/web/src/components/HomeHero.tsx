@@ -28,7 +28,7 @@ export function HomeHero({ banners }: { banners: readonly HomeBanner[] }) {
   );
 
   const lcpImage = first.href ? (
-    <Link href={first.href} className="block h-full w-full">
+    <Link href={first.href} className="relative block h-full w-full">
       {image}
     </Link>
   ) : (

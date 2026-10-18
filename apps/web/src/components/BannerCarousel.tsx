@@ -136,28 +136,6 @@ function DeliveryHighlight({
   );
 }
 
-/** Bottom bar — single line like before, enlarged + bold. */
-function DeliveryPill({ text }: { text: string }) {
-  const parts = deliveryParts(text);
-  return (
-    <div className="flex flex-wrap items-center justify-center gap-2 rounded-full border border-blue-100 bg-gradient-to-r from-blue-100/80 via-sky-50 to-blue-100/80 px-4 py-3 text-center sm:px-6 min-w-0">
-      <svg className="h-4 w-4 shrink-0 text-accent sm:h-5 sm:w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
-        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-      </svg>
-      <p className="min-w-0 break-words text-[13px] font-extrabold leading-snug text-primary sm:text-base md:text-[1.05rem]">
-        {parts.map((part, i) => (
-          <span key={part}>
-            {i > 0 ? <span className="mx-1.5 font-bold text-primary/50">·</span> : null}
-            <span className={i === 0 ? "text-accent" : i === parts.length - 1 ? "text-nav" : "text-primary"}>
-              {part}
-            </span>
-          </span>
-        ))}
-      </p>
-    </div>
-  );
-}
-
 function SlideImage({
   banner,
   priority,
@@ -179,7 +157,7 @@ function SlideImage({
   );
   if (banner.href) {
     return (
-      <Link href={banner.href} className="block h-full w-full" tabIndex={priority ? 0 : -1}>
+      <Link href={banner.href} className="relative block h-full w-full" tabIndex={priority ? 0 : -1}>
         {img}
       </Link>
     );
@@ -223,9 +201,9 @@ export function BannerCarousel({
       aria-label="Featured promotions"
     >
       <div className="relative overflow-hidden bg-white border-b border-slate-100">
-        <div className="relative w-full max-w-7xl mx-auto min-w-0 lg:grid lg:grid-cols-[2fr_3fr] lg:gap-6 lg:items-center lg:px-4 lg:py-4">
-          <div className="order-1 lg:order-2 relative w-full min-w-0 max-w-full">
-            <div className="relative w-full max-w-full aspect-[1024/384] overflow-hidden bg-[#fffaf4]">
+        <div className="relative w-full max-w-7xl mx-auto min-w-0 lg:grid lg:grid-cols-[2fr_3fr] lg:gap-6 lg:items-stretch lg:px-4">
+          <div className="order-1 lg:order-2 relative w-full min-w-0 max-w-full lg:min-h-0 lg:self-stretch">
+            <div className="relative w-full max-w-full aspect-[1024/384] overflow-hidden bg-[#fffaf4] lg:absolute lg:inset-0 lg:aspect-auto lg:h-full">
               {/* Server LCP image for slide 0 */}
               {lcpImage ? (
                 <div
@@ -286,7 +264,7 @@ export function BannerCarousel({
             </div>
           </div>
 
-          <div className="order-2 lg:order-1 text-center lg:text-left z-10 min-w-0 px-4 py-6 sm:py-8 lg:py-0 lg:pl-2 lg:pr-4">
+          <div className="order-2 lg:order-1 text-center lg:text-left z-10 min-w-0 px-4 py-6 sm:py-8 lg:py-4 lg:pl-2 lg:pr-4">
             <div key={banner.src}>
               <Eyebrow text={banner.eyebrow} />
 
@@ -352,9 +330,6 @@ export function BannerCarousel({
           ))}
         </ul>
 
-        <div className="px-4 sm:px-6 pb-4 sm:pb-5 max-w-7xl mx-auto">
-          <DeliveryPill text={banner.pill} />
-        </div>
       </div>
 
       {banners.length > 1 && (

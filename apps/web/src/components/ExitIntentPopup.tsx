@@ -22,14 +22,14 @@ import { PhoneInput, buildPhoneValue } from "@/components/PhoneInput";
 
 const STORAGE_KEY = "usarakhi_daily_deal_shown";
 const ELAPSED_KEY = "usarakhi_daily_deal_elapsed";
-const SHOW_AFTER_MS = 30_000;
+const SHOW_AFTER_MS = 10_000;
 const SPIN_MS = 4200;
 
 /**
- * Hold switch — set true to show Discount of the Day / spin wheel again.
- * Currently off: wheel is not shown to storefront users.
+ * Discount of the Day / welcome spin wheel.
+ * Shown once per browser session, 10 seconds after a visitor opens an eligible page.
  */
-export const SPIN_WHEEL_ENABLED = false;
+export const SPIN_WHEEL_ENABLED = true;
 
 /** Home, cart, and product detail only — not listing, shipping, blog, etc. */
 export function isSpinWheelPath(pathname: string): boolean {
