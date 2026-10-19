@@ -1,7 +1,7 @@
 "use client";
 
 import { isRakhiContentHidden } from "@hr-ecom/shared";
-import { useState, useEffect, useCallback, type ReactNode } from "react";
+import { useState, useEffect, useCallback, useRef, type ReactNode } from "react";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -21,8 +21,7 @@ export interface HomeBanner {
   imageCaption?: string;
   /**
    * How the slide image fills the hero frame.
-   * Default `cover` matches existing banners; use `contain` for taller art
-   * that must stay fully visible (no top/bottom crop).
+   * Default `cover` fills the frame. Use `contain` when the whole artwork must stay visible.
    */
   imageFit?: "cover" | "contain";
 }
@@ -77,9 +76,9 @@ const TRUST_FEATURES = [
 
 function Eyebrow({ text }: { text: string }) {
   return (
-    <div className="flex items-center justify-center lg:justify-start gap-3 mb-4">
+    <div className="flex items-center justify-center gap-3 mb-4">
       <span className="h-px w-8 sm:w-12 bg-gradient-to-r from-transparent to-nav/60" aria-hidden />
-      <p className="text-[10px] sm:text-xs font-bold tracking-[0.2em] text-primary/80 uppercase text-center lg:text-left">
+      <p className="text-[10px] sm:text-xs font-bold tracking-[0.2em] text-primary/80 uppercase text-center">
         {text}
       </p>
       <span className="h-px w-8 sm:w-12 bg-gradient-to-l from-transparent to-nav/60" aria-hidden />
@@ -136,28 +135,6 @@ function DeliveryHighlight({
   );
 }
 
-/** Bottom bar — single line like before, enlarged + bold. */
-function DeliveryPill({ text }: { text: string }) {
-  const parts = deliveryParts(text);
-  return (
-    <div className="flex flex-wrap items-center justify-center gap-2 rounded-full border border-blue-100 bg-gradient-to-r from-blue-100/80 via-sky-50 to-blue-100/80 px-4 py-3 text-center sm:px-6 min-w-0">
-      <svg className="h-4 w-4 shrink-0 text-accent sm:h-5 sm:w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
-        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-      </svg>
-      <p className="min-w-0 break-words text-[13px] font-extrabold leading-snug text-primary sm:text-base md:text-[1.05rem]">
-        {parts.map((part, i) => (
-          <span key={part}>
-            {i > 0 ? <span className="mx-1.5 font-bold text-primary/50">·</span> : null}
-            <span className={i === 0 ? "text-accent" : i === parts.length - 1 ? "text-nav" : "text-primary"}>
-              {part}
-            </span>
-          </span>
-        ))}
-      </p>
-    </div>
-  );
-}
-
 function SlideImage({
   banner,
   priority,
@@ -171,7 +148,7 @@ function SlideImage({
       alt={banner.alt}
       fill
       className={bannerImageClass(banner)}
-      sizes="(max-width: 1023px) 100vw, 768px"
+      sizes="100vw"
       priority={priority}
       fetchPriority={priority ? "high" : "auto"}
       loading={priority ? "eager" : "lazy"}
@@ -179,7 +156,7 @@ function SlideImage({
   );
   if (banner.href) {
     return (
-      <Link href={banner.href} className="block h-full w-full" tabIndex={priority ? 0 : -1}>
+      <Link href={banner.href} className="relative block h-full w-full" tabIndex={priority ? 0 : -1}>
         {img}
       </Link>
     );
@@ -197,6 +174,7 @@ export function BannerCarousel({
 }) {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
+  const swipe = useRef<{ x: number; y: number; swiped: boolean } | null>(null);
 
   const goTo = useCallback(
     (next: number) => {
@@ -223,9 +201,36 @@ export function BannerCarousel({
       aria-label="Featured promotions"
     >
       <div className="relative overflow-hidden bg-white border-b border-slate-100">
-        <div className="relative w-full max-w-7xl mx-auto min-w-0 lg:grid lg:grid-cols-[2fr_3fr] lg:gap-6 lg:items-center lg:px-4 lg:py-4">
-          <div className="order-1 lg:order-2 relative w-full min-w-0 max-w-full">
-            <div className="relative w-full max-w-full aspect-[1024/384] overflow-hidden bg-[#fffaf4]">
+        <div className="relative w-full">
+          <div className="relative w-full">
+            <div
+              className="relative w-full aspect-[1024/384] touch-pan-y overflow-hidden rounded-xl bg-[#fffaf4]"
+              onTouchStart={(event) => {
+                if (banners.length <= 1) return;
+                const point = event.changedTouches[0];
+                if (!point) return;
+                swipe.current = { x: point.clientX, y: point.clientY, swiped: false };
+                setPaused(true);
+              }}
+              onTouchEnd={(event) => {
+                const start = swipe.current;
+                setPaused(false);
+                if (!start || banners.length <= 1) return;
+                const point = event.changedTouches[0];
+                if (!point) return;
+                const dx = point.clientX - start.x;
+                const dy = point.clientY - start.y;
+                if (Math.abs(dx) < 48 || Math.abs(dx) <= Math.abs(dy)) return;
+                start.swiped = true;
+                goTo(dx < 0 ? index + 1 : index - 1);
+              }}
+              onClickCapture={(event) => {
+                if (!swipe.current?.swiped) return;
+                event.preventDefault();
+                event.stopPropagation();
+                swipe.current.swiped = false;
+              }}
+            >
               {/* Server LCP image for slide 0 */}
               {lcpImage ? (
                 <div
@@ -286,7 +291,7 @@ export function BannerCarousel({
             </div>
           </div>
 
-          <div className="order-2 lg:order-1 text-center lg:text-left z-10 min-w-0 px-4 py-6 sm:py-8 lg:py-0 lg:pl-2 lg:pr-4">
+          <div className="text-center z-10 min-w-0 max-w-3xl mx-auto px-4 py-6 sm:py-8">
             <div key={banner.src}>
               <Eyebrow text={banner.eyebrow} />
 
@@ -307,7 +312,7 @@ export function BannerCarousel({
                 </p>
               ) : null}
 
-              <DeliveryHighlight text={banner.description} className="mb-6 max-w-xl mx-auto lg:mx-0" />
+              <DeliveryHighlight text={banner.description} className="mb-6 max-w-xl mx-auto text-left" />
 
               {banner.href ? (
                 <Link
@@ -321,15 +326,15 @@ export function BannerCarousel({
                 </Link>
               ) : null}
 
-              <ul className="hidden sm:grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8 max-w-lg mx-auto lg:mx-0">
+              <ul className="hidden sm:grid grid-cols-4 gap-4 mt-8 max-w-lg mx-auto">
                 {TRUST_FEATURES.map((f) => (
-                  <li key={f.label} className="flex flex-col items-center lg:items-start gap-2">
+                  <li key={f.label} className="flex flex-col items-center gap-2">
                     <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white border border-blue-100 text-nav shadow-sm">
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.75}>
                         {f.icon}
                       </svg>
                     </span>
-                    <span className="text-[11px] font-semibold text-primary/90 leading-tight text-center lg:text-left">
+                    <span className="text-[11px] font-semibold text-primary/90 leading-tight text-center">
                       {trustFeatureLabel(f.label)}
                     </span>
                   </li>
@@ -352,9 +357,6 @@ export function BannerCarousel({
           ))}
         </ul>
 
-        <div className="px-4 sm:px-6 pb-4 sm:pb-5 max-w-7xl mx-auto">
-          <DeliveryPill text={banner.pill} />
-        </div>
       </div>
 
       {banners.length > 1 && (
