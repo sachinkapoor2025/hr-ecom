@@ -1,7 +1,7 @@
 "use client";
 
 import { isRakhiContentHidden } from "@hr-ecom/shared";
-import { useState, useEffect, useCallback, type ReactNode } from "react";
+import { useState, useEffect, useCallback, useRef, type ReactNode } from "react";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -174,6 +174,7 @@ export function BannerCarousel({
 }) {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
+  const swipe = useRef<{ x: number; y: number; swiped: boolean } | null>(null);
 
   const goTo = useCallback(
     (next: number) => {
@@ -202,7 +203,34 @@ export function BannerCarousel({
       <div className="relative overflow-hidden bg-white border-b border-slate-100">
         <div className="relative w-full">
           <div className="relative w-full">
-            <div className="relative w-full aspect-[1024/384] overflow-hidden bg-[#fffaf4]">
+            <div
+              className="relative w-full aspect-[1024/384] touch-pan-y overflow-hidden rounded-xl bg-[#fffaf4]"
+              onTouchStart={(event) => {
+                if (banners.length <= 1) return;
+                const point = event.changedTouches[0];
+                if (!point) return;
+                swipe.current = { x: point.clientX, y: point.clientY, swiped: false };
+                setPaused(true);
+              }}
+              onTouchEnd={(event) => {
+                const start = swipe.current;
+                setPaused(false);
+                if (!start || banners.length <= 1) return;
+                const point = event.changedTouches[0];
+                if (!point) return;
+                const dx = point.clientX - start.x;
+                const dy = point.clientY - start.y;
+                if (Math.abs(dx) < 48 || Math.abs(dx) <= Math.abs(dy)) return;
+                start.swiped = true;
+                goTo(dx < 0 ? index + 1 : index - 1);
+              }}
+              onClickCapture={(event) => {
+                if (!swipe.current?.swiped) return;
+                event.preventDefault();
+                event.stopPropagation();
+                swipe.current.swiped = false;
+              }}
+            >
               {/* Server LCP image for slide 0 */}
               {lcpImage ? (
                 <div
