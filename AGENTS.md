@@ -57,8 +57,19 @@ This repository is an **AI-first e-commerce platform**. Developers add features 
 ```bash
 npm install
 npm run dev          # Next.js on :3000
-npm run dev:api      # SAM local API on :3001
+npm run dev:api      # local API on :3001 (in-memory DB; see below)
 ```
+
+## Cursor Cloud specific instructions
+
+- Node.js 22 (`engines` and `.nvmrc`). From the repo root: `npm ci`, then `npm run build -w @hr-ecom/shared`. Web and API import `@hr-ecom/shared` from `packages/shared/dist`.
+- Copy `apps/api/.env.example` to `apps/api/.env` and `apps/web/.env.example` to `apps/web/.env.local`. The API example sets `USE_MEMORY_DB=true`, so Docker and DynamoDB Local are optional.
+- Start the API with the repo root as the working directory so seeding finds `scripts/data/usarakhi-catalog.json`:
+  `npx tsx watch --env-file=apps/api/.env apps/api/src/local.ts`
+  `npm run dev:api` runs inside `apps/api` and does not see that catalog file.
+- Web, bound for local browsers: `npm run dev -w @hr-ecom/web -- --hostname 0.0.0.0 --port 3000`
+- Local admin: open `/account`, sign in as `admin@shop.com` with any password of 8+ characters (`NEXT_PUBLIC_DEV_AUTH=true`), then open `/admin`.
+- Through 10 November 2026, Rakhi-primary products are omitted from `GET /products`. The homepage still lists Diwali and Bhai Dooj gifts from the catalog fallback, and those products can be added to the cart.
 
 ## Deploy
 
