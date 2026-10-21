@@ -178,6 +178,9 @@ When admin (or Orange County vendor tracking) changes order status (accepted, pr
 | GET | `/admin/orders/{orderId}/route` | Admin: detailed Order Route journey timeline. UI: `/admin/orders/{orderId}/route` (from Analytics → Order routes) |
 | PATCH | `/admin/orders/{orderId}` | Admin: update status + tracking; emails customer + order@usarakhi on each status step; schedules review email 1 day after delivered |
 | GET | `/admin/analytics/sales` | Admin: day/week/month payments received (excludes refunds); day windows start at **12:00 AM IST** (`Asia/Kolkata`) |
+| GET | `/admin/gst/settings` | Super admin: supplier GSTIN, address, and LUT printed on sales invoices. UI: `/admin/gst-invoices` |
+| PUT | `/admin/gst/settings` | Super admin: save supplier GST details (`CONFIG#GST`) |
+| GET | `/admin/gst/sales-invoices` | Super admin: GST sales invoices for paid orders only (refunded, cancelled, and unpaid omitted). Query `from`, `to` (IST dates), `provider=all\|stripe\|razorpay`, optional `usdInrRate`. Includes export invoice fields (EXPWOP / LUT, place of supply 96) and cost working: UsaRakhi rakhi $1.50, add-on $1.49, Orange County `vendorCost`, USPS $6.49 plain / $8.39 with chocolates per UsaRakhi package |
 | GET | `/admin/analytics/product-sales` | Admin: Product Sales Intelligence summary (KPIs, rankings, alerts, opportunities, category/vendor, co-purchase). Query `?preset=` (`today`…`this_year`/`custom`) + optional `from`/`to`. UI: `/admin/product-sales` |
 | GET | `/admin/analytics/product-sales/products` | Admin: paginated product performance rows (`q`, filters, `sort`, `dir`, `page`) |
 | GET | `/admin/analytics/product-sales/products/{slug}` | Admin: product detail + trend (`granularity=daily\|weekly\|monthly`) + recommendations. UI: `/admin/product-sales/{slug}` |
