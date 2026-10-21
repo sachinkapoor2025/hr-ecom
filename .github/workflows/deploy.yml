@@ -27,6 +27,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
+      - name: Reject cross-project Lambda targets
+        run: node --test scripts/ci/hr-ecom-lambda-target.test.mjs
 
   deploy-api:
     # A dev-only API publish can opt out of the production stack with "[skip prod]".
@@ -125,9 +127,9 @@ jobs:
       # Catalog import OVERWRITES product records and has wiped admin-uploaded images.
       # Run manually only: Actions → Import UsaRakhi Catalog (workflow_dispatch).
 
-  # Amplify dev calls https://…/dev (hr-ecom-api-dev). The production SAM deploy
-  # above does not update that function, so festival slugs stay missing and
-  # add-to-cart returns "Product not found". Publish only this function's code.
+  # Publish only the DEV function named by infrastructure/template.yaml
+  # (hr-ecom-api-${Environment} when Environment=dev). Do not resolve a function
+  # from another project's API Gateway.
   deploy-dev-api:
     if: github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
@@ -147,48 +149,40 @@ jobs:
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: ${{ env.AWS_REGION }}
       - uses: aws-actions/setup-sam@v3
-      - name: Publish API code to the dev storefront function
+      - name: Publish API code to hr-ecom-api-dev
         working-directory: infrastructure
-        run: |
-          sam build ApiFunction
-          (cd .aws-sam/build/ApiFunction && zip -qr "$RUNNER_TEMP/api-dev.zip" .)
-          # The dev site calls API 0iwn6h2ds8. The function name is not hr-ecom-api-dev.
-          uris=$(aws apigatewayv2 get-integrations --api-id 0iwn6h2ds8 --query "Items[].IntegrationUri" --output text 2>"$RUNNER_TEMP/api-lookup.err" || true)
-          if [ -z "$uris" ]; then
-            err=$(tr '\n' ' ' < "$RUNNER_TEMP/api-lookup.err" | head -c 700)
-            echo "::error::could not read dev API integrations: ${err}"
-            exit 1
-          fi
-          func=$(printf '%s\n' $uris | sed -n 's/.*function:\([^/]*\).*/\1/p' | head -n 1)
-          if [ -z "$func" ]; then
-            echo "::error::no Lambda integration on API 0iwn6h2ds8: ${uris}"
-            exit 1
-          fi
-          echo "Updating dev function $func"
-          if ! aws lambda update-function-code \
-            --function-name "$func" \
-            --zip-file "fileb://$RUNNER_TEMP/api-dev.zip" \
-            > "$RUNNER_TEMP/lambda-update.json" \
-            2> "$RUNNER_TEMP/lambda-update.err"; then
-            err=$(tr '\n' ' ' < "$RUNNER_TEMP/lambda-update.err" | head -c 700)
-            echo "::error::dev lambda update failed for ${func}: ${err}"
-            exit 1
-          fi
-          aws lambda wait function-updated --function-name "$func"
-
-      - name: Set Mailercloud credentials on the dev API
         env:
-          MARKETING_SMTP_PASS: ${{ secrets.MARKETING_SMTP_PASS }}
+          DEV_API_FUNCTION: hr-ecom-api-dev
         run: |
           set -euo pipefail
-          uris=$(aws apigatewayv2 get-integrations --api-id 0iwn6h2ds8 --query "Items[].IntegrationUri" --output text)
-          func=$(printf '%s\n' $uris | sed -n 's/.*function:\([^/]*\).*/\1/p' | head -n 1)
+          node "$GITHUB_WORKSPACE/scripts/ci/hr-ecom-lambda-target.mjs" "$DEV_API_FUNCTION"
+          if ! aws lambda get-function --function-name "$DEV_API_FUNCTION" --query "Configuration.FunctionName" --output text > "$RUNNER_TEMP/dev-function-name.txt"; then
+            echo "::error::Refusing to publish. ${DEV_API_FUNCTION} was not found. This job does not select another function."
+            exit 1
+          fi
+          sam build ApiFunction
+          (cd .aws-sam/build/ApiFunction && zip -qr "$RUNNER_TEMP/api-dev.zip" .)
+          aws lambda update-function-code \
+            --function-name "$DEV_API_FUNCTION" \
+            --zip-file "fileb://$RUNNER_TEMP/api-dev.zip" \
+            > "$RUNNER_TEMP/lambda-update.json"
+          aws lambda wait function-updated --function-name "$DEV_API_FUNCTION"
+
+      - name: Set Mailercloud credentials on hr-ecom DEV functions
+        env:
+          MARKETING_SMTP_PASS: ${{ secrets.MARKETING_SMTP_PASS }}
+          DEV_API_FUNCTION: hr-ecom-api-dev
+          DEV_SES_FUNCTION: hr-ecom-ses-email-dev
+        run: |
+          set -euo pipefail
+          node "$GITHUB_WORKSPACE/scripts/ci/hr-ecom-lambda-target.mjs" "$DEV_API_FUNCTION" "$DEV_SES_FUNCTION"
           if [ -z "${MARKETING_SMTP_PASS}" ]; then
             echo "::error::MARKETING_SMTP_PASS is empty, so marketing email cannot authenticate"
             exit 1
           fi
           apply_marketing_env() {
             target="$1"
+            node "$GITHUB_WORKSPACE/scripts/ci/hr-ecom-lambda-target.mjs" "$target"
             aws lambda get-function-configuration --function-name "$target" --query Environment --output json > "$RUNNER_TEMP/lambda-env.json"
             jq --arg pw "$MARKETING_SMTP_PASS" '
               .Variables //= {}
@@ -206,10 +200,8 @@ jobs:
             aws lambda wait function-updated --function-name "$target"
             echo "Set Mailercloud SMTP on $target"
           }
-          apply_marketing_env "$func"
-          for name in $(aws lambda list-functions --query "Functions[?starts_with(FunctionName, 'blossompot') && contains(FunctionName, 'ses-email')].FunctionName" --output text); do
-            apply_marketing_env "$name"
-          done
+          apply_marketing_env "$DEV_API_FUNCTION"
+          apply_marketing_env "$DEV_SES_FUNCTION"
 
   deploy-web:
     runs-on: ubuntu-latest
