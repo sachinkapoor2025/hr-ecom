@@ -1,6 +1,12 @@
 /** Production API — fallback when Amplify build env vars are missing */
 export const PROD_API_URL = "https://foqu2ap4qi.execute-api.us-east-1.amazonaws.com/prod";
 
+/**
+ * Gateway id that does not serve this store. An old Amplify env var still
+ * points the dev site there, so new UsaRakhi routes return "Route not found".
+ */
+const FOREIGN_API_HOST = "0iwn6h2ds8.execute-api.us-east-1.amazonaws.com";
+
 /** Amplify default URL for the branch being built (dev vs main). */
 export function getAmplifyBranchUrl(): string | undefined {
   const branch = process.env.AWS_BRANCH?.trim();
@@ -25,7 +31,7 @@ function readEnv(name: string, fallback: string): string {
 
 export function getApiUrl(): string {
   const fromEnv = process.env.NEXT_PUBLIC_API_URL?.trim();
-  if (fromEnv) return normalizeApiUrl(fromEnv);
+  if (fromEnv && !fromEnv.includes(FOREIGN_API_HOST)) return normalizeApiUrl(fromEnv);
   if (process.env.NODE_ENV === "production") return PROD_API_URL;
   return "http://localhost:3001";
 }
