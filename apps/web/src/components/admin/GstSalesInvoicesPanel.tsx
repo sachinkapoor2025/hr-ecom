@@ -3,15 +3,14 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   gstDatePresets,
-  gstSalesLineRows,
-  gstSalesRegisterRows,
   type GstProviderFilter,
   type GstSalesReport,
   type GstSupplierSettings,
 } from "@hr-ecom/shared";
-import { downloadCsv, formatMoney, paginate } from "@/lib/admin-utils";
+import { formatMoney, paginate } from "@/lib/admin-utils";
 import { useApiClient, useAuth } from "@/lib/auth-context";
 import { gstInvoicesPrintHtml } from "@/lib/gst-invoice-print";
+import { downloadGstReportExcel, downloadGstReportPdf } from "@/lib/gst-report-download";
 
 const PAGE_SIZE = 20;
 
@@ -147,18 +146,18 @@ export function GstSalesInvoicesPanel() {
           <button
             type="button"
             disabled={!report}
-            onClick={() => report && downloadCsv(`usarakhi-gst-sales-register-${report.from}-to-${report.to}.csv`, gstSalesRegisterRows(report))}
+            onClick={() => report && void downloadGstReportExcel({ ...report, supplier: supplier ?? report.supplier })}
             className="text-sm px-3 py-2 rounded-lg bg-nav text-white disabled:opacity-50"
           >
-            Download sales register
+            Download Excel
           </button>
           <button
             type="button"
             disabled={!report}
-            onClick={() => report && downloadCsv(`usarakhi-gst-invoice-lines-${report.from}-to-${report.to}.csv`, gstSalesLineRows(report))}
-            className="text-sm px-3 py-2 rounded-lg border border-slate-300 hover:bg-slate-50 disabled:opacity-50"
+            onClick={() => report && void downloadGstReportPdf({ ...report, supplier: supplier ?? report.supplier })}
+            className="text-sm px-3 py-2 rounded-lg bg-nav text-white disabled:opacity-50"
           >
-            Download line items
+            Download PDF
           </button>
           <button
             type="button"
@@ -315,17 +314,33 @@ export function GstSalesInvoicesPanel() {
       {report && !loading && (
         <>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-            <Summary label="Invoices" value={String(report.summary.invoiceCount)} hint={`${report.summary.stripeCount} Stripe · ${report.summary.razorpayCount} Razorpay`} />
-            <Summary label="Invoice value" value={moneyPair(report.summary.invoiceValueUsd, report.summary.invoiceValueInr)} hint={`Taxable ₹${report.summary.taxableValueInr.toLocaleString("en-IN")}`} />
-            <Summary label="IGST charged" value={formatMoney(report.summary.igstInr, "INR")} hint="Zero on export invoices under LUT" />
             <Summary
-              label="Cost / profit"
-              value={`${formatMoney(report.summary.totalCostUsd, "USD")} cost`}
+              label="Total sales"
+              value={moneyPair(report.summary.invoiceValueUsd, report.summary.invoiceValueInr)}
+              hint={`${report.summary.invoiceCount} invoices · ${report.summary.stripeCount} Stripe · ${report.summary.razorpayCount} Razorpay`}
+            />
+            <Summary
+              label="Total expense"
+              value={formatMoney(report.summary.totalCostUsd, "USD")}
+              hint="Purchase, USPS, and gateway fees"
+            />
+            <Summary
+              label="Total profit"
+              value={
+                report.summary.grossProfitUsd == null
+                  ? "—"
+                  : formatMoney(report.summary.grossProfitUsd, "USD")
+              }
               hint={
                 report.summary.grossProfitUsd == null
                   ? `${report.summary.missingPurchaseCostInvoices} invoices missing a purchase price`
-                  : `${formatMoney(report.summary.grossProfitUsd, "USD")} gross profit`
+                  : "Sales minus expense"
               }
+            />
+            <Summary
+              label="IGST charged"
+              value={formatMoney(report.summary.igstInr, "INR")}
+              hint={`Taxable ₹${report.summary.taxableValueInr.toLocaleString("en-IN")} · zero on LUT exports`}
             />
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4 text-sm">

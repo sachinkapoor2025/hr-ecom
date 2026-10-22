@@ -154,10 +154,30 @@ export function gstInvoicesPrintHtml(report: GstSalesReport): string {
     .sign { text-align: right; font-size: 13px; margin-top: 28px; }
     .cost { margin-top: 18px; background: #f8fafc; border: 1px solid #e2e8f0; padding: 10px 12px; }
     .cost ul { margin: 8px 0 0; padding-left: 18px; font-size: 12px; }
+    .cover { page-break-after: always; margin-bottom: 24px; }
+    .cover h1 { margin: 4px 0 12px; font-size: 22px; }
   </style>
 </head>
 <body>
-  <p style="font-size:12px;color:#64748b">Paid orders only. Refunded, cancelled, and unpaid orders are not included. Payment filter: ${esc(report.provider)}. ${esc(report.costPolicy.note)}</p>
+  <section class="cover">
+    <p class="kicker">UsaRakhi GST sales report</p>
+    <h1>${esc(formatGstDate(report.from))} to ${esc(formatGstDate(report.to))}</h1>
+    <table>
+      <thead>
+        <tr><th>Total sales (USD)</th><th>Total sales (INR)</th><th>Total expense (USD)</th><th>Total profit (USD)</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>$${report.summary.invoiceValueUsd.toFixed(2)}</td>
+          <td>₹${report.summary.invoiceValueInr.toLocaleString("en-IN")}</td>
+          <td>$${report.summary.totalCostUsd.toFixed(2)}</td>
+          <td>${report.summary.grossProfitUsd == null ? "Purchase price missing" : `$${report.summary.grossProfitUsd.toFixed(2)}`}</td>
+        </tr>
+      </tbody>
+    </table>
+    <p style="font-size:12px;color:#64748b">Expense is rakhi, add-ons, Orange County purchase, USPS, and gateway fees. ${report.summary.invoiceCount} paid invoices. Payment filter: ${esc(report.provider)}.</p>
+  </section>
+  <p style="font-size:12px;color:#64748b">Paid orders only. Refunded, cancelled, and unpaid orders are not included. ${esc(report.costPolicy.note)}</p>
   ${body || "<p>No paid invoices in this period.</p>"}
 </body>
 </html>`;

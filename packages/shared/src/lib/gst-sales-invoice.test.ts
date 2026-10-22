@@ -17,6 +17,7 @@ import {
   buildGstSalesReport,
   gstInvoiceNumber,
   gstSalesRegisterRows,
+  gstSalesSummaryRows,
   type GstOrderInput,
 } from "./gst-sales-invoice";
 
@@ -281,6 +282,12 @@ describe("GST sales invoices", () => {
     assert.equal(csv[2]?.[0], "Invoice number");
     assert.equal(csv[3]?.[0], "US10002");
     assert.equal(csv[3]?.[1], "01/08/2026");
+
+    const summary = gstSalesSummaryRows(report);
+    assert.equal(summary.find((row) => row[0] === "Total sales (USD)")?.[1], report.summary.invoiceValueUsd.toFixed(2));
+    assert.equal(summary.find((row) => row[0] === "Total expense (USD)")?.[1], report.summary.totalCostUsd.toFixed(2));
+    assert.equal(summary.find((row) => row[0] === "Total profit (USD)")?.[1], report.summary.grossProfitUsd?.toFixed(2));
+    assert.equal(summary.find((row) => row[0] === "Invoices")?.[1], "1");
   });
 
   it("uses $9.79 USPS for express or 2-day UsaRakhi packages, including chocolate", () => {

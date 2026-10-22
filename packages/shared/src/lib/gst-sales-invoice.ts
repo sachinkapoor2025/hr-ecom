@@ -990,6 +990,32 @@ function csvCell(value: string | number | null | undefined): string {
   return value == null ? "" : String(value);
 }
 
+/** Totals block for the on-screen report and for Excel and PDF downloads. */
+export function gstSalesSummaryRows(report: GstSalesReport): string[][] {
+  const summary = report.summary;
+  const profit =
+    summary.grossProfitUsd == null ? "Purchase price missing" : summary.grossProfitUsd.toFixed(2);
+  return [
+    ["UsaRakhi GST sales report", `${formatGstDate(report.from)} to ${formatGstDate(report.to)}`],
+    ["Payment", report.provider],
+    ["USD-INR rate", String(report.usdInrRate)],
+    ["Invoices", String(summary.invoiceCount)],
+    [],
+    ["Total sales (USD)", summary.invoiceValueUsd.toFixed(2)],
+    ["Total sales (INR)", String(summary.invoiceValueInr)],
+    ["Total expense (USD)", summary.totalCostUsd.toFixed(2)],
+    ["Total profit (USD)", profit],
+    [],
+    ["Expense breakdown (USD)", ""],
+    ["Rakhi purchase", summary.rakhiPurchaseUsd.toFixed(2)],
+    ["Add-on purchase", summary.addonPurchaseUsd.toFixed(2)],
+    ["Orange County purchase", summary.orangeCountyPurchaseUsd.toFixed(2)],
+    ["USPS", summary.uspsUsd.toFixed(2)],
+    ["Gateway fees", summary.gatewayFeeUsd.toFixed(2)],
+    ["Total expense", summary.totalCostUsd.toFixed(2)],
+  ];
+}
+
 export function gstSalesRegisterRows(report: GstSalesReport): string[][] {
   const supplier = report.supplier;
   const header = [
