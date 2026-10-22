@@ -88,7 +88,10 @@ describe("GST sales invoices", () => {
     assert.equal(invoice.rakhiPurchaseUsd, USARAKHI_RAKHI_PURCHASE_USD);
     assert.equal(invoice.addonPurchaseUsd, 0);
     assert.equal(invoice.uspsUsd, USPS_SINGLE_RAKHI_USD);
-    assert.equal(invoice.totalCostUsd, 1.5 + 6.49);
+    assert.equal(invoice.gatewayFeeRate, 0.0367);
+    assert.equal(invoice.gatewayFee, 0.55);
+    assert.equal(invoice.gatewayFeeUsd, 0.55);
+    assert.equal(invoice.totalCostUsd, 8.54);
     assert.equal(invoice.invoiceDate, "2026-08-01");
     assert.equal(invoice.financialYear, "2026-27");
   });
@@ -220,6 +223,9 @@ describe("GST sales invoices", () => {
     assert.equal(invoice.invoiceValueUsd, 10);
     assert.equal(invoice.invoiceValueInr, 960);
     assert.equal(invoice.supplyType, "EXPWOP");
+    assert.equal(invoice.gatewayFeeRate, 0.0219);
+    assert.equal(invoice.gatewayFee, 21.02);
+    assert.equal(invoice.gatewayFeeUsd, 0.22);
   });
 
   it("keeps paid orders only and filters Stripe vs Razorpay", () => {
@@ -310,7 +316,7 @@ describe("GST sales invoices", () => {
       { usdInrRate: rate, paidAt: "2026-08-05T04:00:00.000Z" }
     );
     assert.equal(twoDay.uspsUsd, 9.79);
-    assert.equal(twoDay.totalCostUsd, 1.5 + 9.79);
+    assert.equal(twoDay.totalCostUsd, 1.5 + 9.79 + 0.55);
   });
 
   it("adds $11 USPS on an expedited Orange County package and keeps the product purchase", () => {
@@ -339,7 +345,7 @@ describe("GST sales invoices", () => {
     assert.equal(invoice.orangeCountyPurchaseUsd, 22.4);
     assert.equal(invoice.rakhiPurchaseUsd, 1.5);
     assert.equal(invoice.uspsUsd, USPS_EXPEDITED_ORANGE_COUNTY_USD + USPS_EXPEDITED_USARAKHI_USD);
-    assert.equal(invoice.totalCostUsd, 22.4 + 1.5 + 11 + 9.79);
+    assert.equal(invoice.totalCostUsd, 22.4 + 1.5 + 11 + 9.79 + 2.31);
     assert.match(invoice.uspsBasis, /Orange County other delivery \$11\.00/);
     assert.match(invoice.uspsBasis, /UsaRakhi other delivery \$9\.79/);
   });
@@ -394,7 +400,7 @@ describe("GST sales invoices", () => {
     );
     assert.equal(other.orangeCountyPurchaseUsd, 11.2);
     assert.equal(other.uspsUsd, USPS_EXPEDITED_ORANGE_COUNTY_USD);
-    assert.equal(other.totalCostUsd, 11.2 + 11);
+    assert.equal(other.totalCostUsd, 11.2 + 11 + 0.88);
   });
 
   it("uses specific purchase prices for kaju katli, chocolate packs, and weighed nut packs", () => {

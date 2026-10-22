@@ -333,6 +333,7 @@ export function GstSalesInvoicesPanel() {
             <CostChip label="Add-on purchase" value={formatMoney(report.summary.addonPurchaseUsd, "USD")} />
             <CostChip label="Orange County purchase" value={formatMoney(report.summary.orangeCountyPurchaseUsd, "USD")} />
             <CostChip label="USPS" value={formatMoney(report.summary.uspsUsd, "USD")} />
+            <CostChip label="Gateway" value={formatMoney(report.summary.gatewayFeeUsd, "USD")} />
           </div>
           <p className="text-xs text-slate-500 mb-3">
             Left out of this view: {report.summary.excluded.refunded} refunded, {report.summary.excluded.cancelled} cancelled, {report.summary.excluded.pendingPayment} unpaid
@@ -397,6 +398,9 @@ export function GstSalesInvoicesPanel() {
                             <p className="text-xs text-slate-600 mb-2">{invoice.shipTo}</p>
                             <p className="text-xs text-slate-600 mb-2">{invoice.declaration}</p>
                             <p className="text-xs text-slate-600 mb-2">USPS: {invoice.uspsBasis} ({formatMoney(invoice.uspsUsd, "USD")})</p>
+                            <p className="text-xs text-slate-600 mb-2">
+                              Gateway {(invoice.gatewayFeeRate * 100).toFixed(2)}% of {formatMoney(invoice.invoiceValue, invoice.currency)} = {formatMoney(invoice.gatewayFee, invoice.currency)} ({formatMoney(invoice.gatewayFeeUsd, "USD")})
+                            </p>
                             <table className="w-full text-xs">
                               <thead>
                                 <tr className="text-slate-500">

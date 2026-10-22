@@ -100,7 +100,7 @@ function invoiceHtml(invoice: GstSalesInvoice, report: GstSalesReport): string {
       <h2>Cost working for the CA — not part of the tax invoice value</h2>
       <table>
         <thead>
-          <tr><th>Rakhi purchase</th><th>Add-on purchase</th><th>Orange County purchase</th><th>USPS</th><th>USPS basis</th><th>Total cost</th><th>Gross profit</th></tr>
+          <tr><th>Rakhi purchase</th><th>Add-on purchase</th><th>Orange County purchase</th><th>USPS</th><th>USPS basis</th><th>Gateway</th><th>Total cost</th><th>Gross profit</th></tr>
         </thead>
         <tbody>
           <tr>
@@ -109,6 +109,7 @@ function invoiceHtml(invoice: GstSalesInvoice, report: GstSalesReport): string {
             <td>$${invoice.orangeCountyPurchaseUsd.toFixed(2)}</td>
             <td>$${invoice.uspsUsd.toFixed(2)}</td>
             <td>${esc(invoice.uspsBasis)}</td>
+            <td>${(invoice.gatewayFeeRate * 100).toFixed(2)}% · ${money(invoice.gatewayFee, invoice.currency)} ($${invoice.gatewayFeeUsd.toFixed(2)})</td>
             <td>$${invoice.totalCostUsd.toFixed(2)}</td>
             <td>${invoice.grossProfitUsd == null ? "Purchase price missing" : `$${invoice.grossProfitUsd.toFixed(2)}`}</td>
           </tr>

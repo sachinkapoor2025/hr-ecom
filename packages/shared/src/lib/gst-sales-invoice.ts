@@ -33,6 +33,10 @@ export const USPS_RAKHI_WITH_CHOCOLATE_USD = 8.39;
 export const USPS_EXPEDITED_USARAKHI_USD = 9.79;
 /** Extra USPS added once per Orange County package on express or 2-day shipping. */
 export const USPS_EXPEDITED_ORANGE_COUNTY_USD = 11;
+/** Payment gateway expense when the customer was charged in INR. */
+export const GATEWAY_FEE_RATE_INR = 0.0219;
+/** Payment gateway expense when the customer was charged in USD. */
+export const GATEWAY_FEE_RATE_USD = 0.0367;
 
 /** Imitation jewellery — rakhi. */
 export const GST_HSN_RAKHI = "71179090";
@@ -181,6 +185,11 @@ export type GstSalesInvoice = {
   orangeCountyPurchaseUsd: number;
   uspsUsd: number;
   uspsBasis: string;
+  /** Share of the charged amount kept by the payment gateway. */
+  gatewayFeeRate: number;
+  /** Gateway expense in the currency the customer was charged. */
+  gatewayFee: number;
+  gatewayFeeUsd: number;
   totalCostUsd: number;
   missingPurchaseCost: boolean;
   grossProfitUsd: number | null;
@@ -208,6 +217,8 @@ export type GstSalesReport = {
     uspsRakhiWithChocolateUsd: number;
     uspsExpeditedUsarakhiUsd: number;
     uspsExpeditedOrangeCountyUsd: number;
+    gatewayFeeRateInr: number;
+    gatewayFeeRateUsd: number;
     note: string;
   };
   summary: {
@@ -220,6 +231,7 @@ export type GstSalesReport = {
     addonPurchaseUsd: number;
     orangeCountyPurchaseUsd: number;
     uspsUsd: number;
+    gatewayFeeUsd: number;
     totalCostUsd: number;
     grossProfitUsd: number | null;
     missingPurchaseCostInvoices: number;
@@ -236,10 +248,22 @@ export type GstSalesReport = {
 };
 
 const COST_POLICY_NOTE =
-  "UsaRakhi rakhi purchase is $1.50 each. Kaju katli is $11.99. A Ferrero Rocher pack is $3. A Lindt chocolate pack is $4. Small packs of badam and kaju stay $1.49, and other add-ons stay $1.49 until a specific price is set. A 100 g pack of kaju, badam, or pista is $3.99, and a 200 g pack is $7.99. When a rakhi also includes one of these, that cost is added to the $1.50 rakhi. Orange County purchase is the stored vendor cost. Standard delivery USPS is once per UsaRakhi package: $6.49 when the package has no chocolates, $8.39 when the product or an add-on includes chocolates. Dry-fruit add-ons stay on the $6.49 package. Orange County standard delivery has no USPS charge. Any other delivery method — express, 3-day, 2-day, Priority, or another service — uses $9.79 once per UsaRakhi package and adds $11.00 once per Orange County package on top of the product purchase price. Refunded, cancelled, and unpaid orders are omitted.";
+  "UsaRakhi rakhi purchase is $1.50 each. Kaju katli is $11.99. A Ferrero Rocher pack is $3. A Lindt chocolate pack is $4. Small packs of badam and kaju stay $1.49, and other add-ons stay $1.49 until a specific price is set. A 100 g pack of kaju, badam, or pista is $3.99, and a 200 g pack is $7.99. When a rakhi also includes one of these, that cost is added to the $1.50 rakhi. Orange County purchase is the stored vendor cost. Standard delivery USPS is once per UsaRakhi package: $6.49 when the package has no chocolates, $8.39 when the product or an add-on includes chocolates. Dry-fruit add-ons stay on the $6.49 package. Orange County standard delivery has no USPS charge. Any other delivery method — express, 3-day, 2-day, Priority, or another service — uses $9.79 once per UsaRakhi package and adds $11.00 once per Orange County package on top of the product purchase price. The payment gateway expense is 2.19% of the amount charged in INR and 3.67% of the amount charged in USD. Refunded, cancelled, and unpaid orders are omitted.";
 
 function round2(n: number): number {
   return Math.round((n + Number.EPSILON) * 100) / 100;
+}
+
+/** Gateway expense on the amount collected. INR charges use 2.19%. USD charges use 3.67%. */
+export function gatewayChargeExpense(
+  chargedAmount: number,
+  currency: ShopCurrency,
+  usdInrRate: number
+): { rate: number; fee: number; feeUsd: number } {
+  const rate = currency === "INR" ? GATEWAY_FEE_RATE_INR : GATEWAY_FEE_RATE_USD;
+  const fee = round2(Math.max(0, chargedAmount) * rate);
+  const feeUsd = round2(convertCurrencyAmount(fee, currency, "USD", usdInrRate));
+  return { rate, fee, feeUsd };
 }
 
 function money(n: number, currency: ShopCurrency): number {
@@ -772,8 +796,13 @@ export function buildGstSalesInvoice(
 
   const shipmentCosts = shipmentCostsForOrder(order);
   const uspsUsd = round2(shipmentCosts.reduce((sum, cost) => sum + cost.uspsUsd, 0));
+  const gateway = gatewayChargeExpense(invoiceValue, currency, options.usdInrRate);
   const totalCostUsd = round2(
-    draft.rakhiPurchaseUsd + draft.addonPurchaseUsd + draft.orangeCountyPurchaseUsd + uspsUsd
+    draft.rakhiPurchaseUsd +
+      draft.addonPurchaseUsd +
+      draft.orangeCountyPurchaseUsd +
+      uspsUsd +
+      gateway.feeUsd
   );
   const invoiceValueUsd = round2(convertCurrencyAmount(invoiceValue, currency, "USD", options.usdInrRate));
   const invoiceValueInr = roundForCurrency(
@@ -832,6 +861,9 @@ export function buildGstSalesInvoice(
     orangeCountyPurchaseUsd: draft.orangeCountyPurchaseUsd,
     uspsUsd,
     uspsBasis: uspsBasisLabel(shipmentCosts),
+    gatewayFeeRate: gateway.rate,
+    gatewayFee: gateway.fee,
+    gatewayFeeUsd: gateway.feeUsd,
     totalCostUsd,
     missingPurchaseCost: draft.missingPurchaseCost,
     grossProfitUsd: draft.missingPurchaseCost ? null : round2(invoiceValueUsd - totalCostUsd),
@@ -925,6 +957,8 @@ export function buildGstSalesReport(input: {
       uspsRakhiWithChocolateUsd: USPS_RAKHI_WITH_CHOCOLATE_USD,
       uspsExpeditedUsarakhiUsd: USPS_EXPEDITED_USARAKHI_USD,
       uspsExpeditedOrangeCountyUsd: USPS_EXPEDITED_ORANGE_COUNTY_USD,
+      gatewayFeeRateInr: GATEWAY_FEE_RATE_INR,
+      gatewayFeeRateUsd: GATEWAY_FEE_RATE_USD,
       note: COST_POLICY_NOTE,
     },
     summary: {
@@ -940,6 +974,7 @@ export function buildGstSalesReport(input: {
       addonPurchaseUsd: sum((invoice) => invoice.addonPurchaseUsd),
       orangeCountyPurchaseUsd: sum((invoice) => invoice.orangeCountyPurchaseUsd),
       uspsUsd: sum((invoice) => invoice.uspsUsd),
+      gatewayFeeUsd: sum((invoice) => invoice.gatewayFeeUsd),
       totalCostUsd: sum((invoice) => invoice.totalCostUsd),
       grossProfitUsd: profitKnown ? sum((invoice) => invoice.grossProfitUsd ?? 0) : null,
       missingPurchaseCostInvoices: missing,
@@ -1003,6 +1038,9 @@ export function gstSalesRegisterRows(report: GstSalesReport): string[][] {
     "Orange County purchase USD",
     "USPS USD",
     "USPS basis",
+    "Gateway rate",
+    "Gateway fee",
+    "Gateway fee USD",
     "Total cost USD",
     "Gross profit USD",
     "Order status",
@@ -1049,6 +1087,9 @@ export function gstSalesRegisterRows(report: GstSalesReport): string[][] {
     invoice.orangeCountyPurchaseUsd.toFixed(2),
     invoice.uspsUsd.toFixed(2),
     invoice.uspsBasis,
+    `${(invoice.gatewayFeeRate * 100).toFixed(2)}%`,
+    invoice.gatewayFee.toFixed(2),
+    invoice.gatewayFeeUsd.toFixed(2),
     invoice.totalCostUsd.toFixed(2),
     invoice.grossProfitUsd == null ? "" : invoice.grossProfitUsd.toFixed(2),
     invoice.status,
