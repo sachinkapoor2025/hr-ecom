@@ -6,7 +6,8 @@ import {
   GST_HSN_CHOCOLATE,
   GST_HSN_DRY_FRUIT,
   GST_HSN_RAKHI,
-  USARAKHI_ADDON_PURCHASE_USD,
+  USARAKHI_KAJU_KATLI_PURCHASE_USD,
+  USARAKHI_LINDT_PACK_PURCHASE_USD,
   USARAKHI_RAKHI_PURCHASE_USD,
   USPS_EXPEDITED_ORANGE_COUNTY_USD,
   USPS_EXPEDITED_USARAKHI_USD,
@@ -110,7 +111,7 @@ describe("GST sales invoices", () => {
     );
 
     assert.equal(invoice.rakhiPurchaseUsd, USARAKHI_RAKHI_PURCHASE_USD * 2);
-    assert.equal(invoice.addonPurchaseUsd, USARAKHI_ADDON_PURCHASE_USD * 2);
+    assert.equal(invoice.addonPurchaseUsd, 4 * 2);
     assert.equal(invoice.uspsUsd, USPS_RAKHI_WITH_CHOCOLATE_USD);
     assert.equal(invoice.lines[1]?.hsnSac, GST_HSN_CHOCOLATE);
     assert.equal(invoice.lines[1]?.quantity, 2);
@@ -296,7 +297,7 @@ describe("GST sales invoices", () => {
       { usdInrRate: rate, paidAt: "2026-08-05T04:00:00.000Z" }
     );
     assert.equal(express.uspsUsd, USPS_EXPEDITED_USARAKHI_USD);
-    assert.equal(express.addonPurchaseUsd, USARAKHI_ADDON_PURCHASE_USD);
+    assert.equal(express.addonPurchaseUsd, 4);
     assert.equal(express.uspsBasis, "UsaRakhi other delivery $9.79");
 
     const twoDay = buildGstSalesInvoice(
@@ -394,6 +395,58 @@ describe("GST sales invoices", () => {
     assert.equal(other.orangeCountyPurchaseUsd, 11.2);
     assert.equal(other.uspsUsd, USPS_EXPEDITED_ORANGE_COUNTY_USD);
     assert.equal(other.totalCostUsd, 11.2 + 11);
+  });
+
+  it("uses specific purchase prices for kaju katli, chocolate packs, and weighed nut packs", () => {
+    const katli = buildGstSalesInvoice(
+      order({
+        orderId: "12121212-1212-1212-1212-121212121212",
+        items: [{ productSlug: "kaju-katli-200g", name: "Kaju Katli 200 g", price: 24, quantity: 1 }],
+      }),
+      { usdInrRate: rate, paidAt: "2026-08-07T04:00:00.000Z" }
+    );
+    assert.equal(katli.rakhiPurchaseUsd, USARAKHI_KAJU_KATLI_PURCHASE_USD);
+
+    const withPacks = buildGstSalesInvoice(
+      order({
+        orderId: "13131313-1313-1313-1313-131313131313",
+        items: [
+          {
+            productSlug: "pearl-designer-rakhi-with-lindor-chocolates",
+            name: "Pearl Designer Rakhi with Lindor Chocolates",
+            price: 19.99,
+            quantity: 1,
+            addons: [
+              { id: "ferrero-3pc", name: "Ferrero Rocher (3 pcs)", price: 6.5, quantity: 1 },
+              { id: "badam-small-pack", name: "Small pack of almonds (badam)", price: 9.99, quantity: 1 },
+              { id: "kaju-small-pack", name: "Small pack of cashews", price: 9.99, quantity: 1 },
+              { id: "kaju-100g", name: "100 g cashews", price: 9.99, quantity: 1 },
+              { id: "badam-200g", name: "200 g almonds", price: 14.99, quantity: 1 },
+              { id: "pista-200g", name: "200 g pistachios", price: 14.99, quantity: 1 },
+            ],
+          },
+        ],
+      }),
+      { usdInrRate: rate, paidAt: "2026-08-07T04:00:00.000Z" }
+    );
+    assert.equal(withPacks.rakhiPurchaseUsd, USARAKHI_RAKHI_PURCHASE_USD + USARAKHI_LINDT_PACK_PURCHASE_USD);
+    assert.equal(withPacks.addonPurchaseUsd, 25.95);
+
+    const nuts = buildGstSalesInvoice(
+      order({
+        orderId: "14141414-1414-1414-1414-141414141414",
+        items: [
+          {
+            productSlug: "100g-kaju-200g-badam-200g-pista",
+            name: "100 g kaju, 200 g badam and 200 g pista",
+            price: 30,
+            quantity: 2,
+          },
+        ],
+      }),
+      { usdInrRate: rate, paidAt: "2026-08-07T04:00:00.000Z" }
+    );
+    assert.equal(nuts.rakhiPurchaseUsd, 39.94);
   });
 
   it("uses a short invoice number when the order has no human number", () => {

@@ -13,8 +13,18 @@ import { isRevenueOrder } from "./sales-report";
 
 /** Wholesale cost of one UsaRakhi rakhi (the product itself). */
 export const USARAKHI_RAKHI_PURCHASE_USD = 1.5;
-/** Wholesale cost of one UsaRakhi add-on unit (chocolate, dry fruit, or extra rakhi). */
+/** Default wholesale cost of one UsaRakhi add-on. Small badam and kaju packs use this price. */
 export const USARAKHI_ADDON_PURCHASE_USD = 1.49;
+/** Kaju katli included on a UsaRakhi product, or sold as that product. */
+export const USARAKHI_KAJU_KATLI_PURCHASE_USD = 11.99;
+/** Ferrero Rocher pack. */
+export const USARAKHI_FERRERO_PACK_PURCHASE_USD = 3;
+/** Lindt / Lindor chocolate pack. */
+export const USARAKHI_LINDT_PACK_PURCHASE_USD = 4;
+/** 100 g pack of kaju, badam, or pista. */
+export const USARAKHI_NUT_100G_PURCHASE_USD = 3.99;
+/** 200 g pack of kaju, badam, or pista. */
+export const USARAKHI_NUT_200G_PURCHASE_USD = 7.99;
 /** USPS for a standard UsaRakhi package that does not include chocolates. */
 export const USPS_SINGLE_RAKHI_USD = 6.49;
 /** USPS for a standard UsaRakhi package that includes chocolates. */
@@ -189,6 +199,11 @@ export type GstSalesReport = {
   costPolicy: {
     usarakhiRakhiPurchaseUsd: number;
     usarakhiAddonPurchaseUsd: number;
+    kajuKatliPurchaseUsd: number;
+    ferreroPackPurchaseUsd: number;
+    lindtPackPurchaseUsd: number;
+    nut100gPurchaseUsd: number;
+    nut200gPurchaseUsd: number;
     uspsSingleRakhiUsd: number;
     uspsRakhiWithChocolateUsd: number;
     uspsExpeditedUsarakhiUsd: number;
@@ -221,7 +236,7 @@ export type GstSalesReport = {
 };
 
 const COST_POLICY_NOTE =
-  "UsaRakhi rakhi purchase is $1.50 each. Every add-on unit is $1.49 until a product-specific purchase price is set. Orange County purchase is the stored vendor cost. Standard delivery USPS is once per UsaRakhi package: $6.49 when the package has no chocolates, $8.39 when the product or an add-on includes chocolates. Dry-fruit add-ons stay on the $6.49 package. Orange County standard delivery has no USPS charge. Any other delivery method — express, 3-day, 2-day, Priority, or another service — uses $9.79 once per UsaRakhi package and adds $11.00 once per Orange County package on top of the product purchase price. Refunded, cancelled, and unpaid orders are omitted.";
+  "UsaRakhi rakhi purchase is $1.50 each. Kaju katli is $11.99. A Ferrero Rocher pack is $3. A Lindt chocolate pack is $4. Small packs of badam and kaju stay $1.49, and other add-ons stay $1.49 until a specific price is set. A 100 g pack of kaju, badam, or pista is $3.99, and a 200 g pack is $7.99. When a rakhi also includes one of these, that cost is added to the $1.50 rakhi. Orange County purchase is the stored vendor cost. Standard delivery USPS is once per UsaRakhi package: $6.49 when the package has no chocolates, $8.39 when the product or an add-on includes chocolates. Dry-fruit add-ons stay on the $6.49 package. Orange County standard delivery has no USPS charge. Any other delivery method — express, 3-day, 2-day, Priority, or another service — uses $9.79 once per UsaRakhi package and adds $11.00 once per Orange County package on top of the product purchase price. Refunded, cancelled, and unpaid orders are omitted.";
 
 function round2(n: number): number {
   return Math.round((n + Number.EPSILON) * 100) / 100;
@@ -478,6 +493,92 @@ type DraftLine = Omit<GstInvoiceLine, "lineNo" | "discount" | "taxableValue" | "
   gross: number;
 };
 
+const NUT_WORD = "kaju|cashews?|badam|almonds?|pista|pistachios?";
+
+function nutKind(word: string): "kaju" | "badam" | "pista" {
+  if (/kaju|cashew/.test(word)) return "kaju";
+  if (/badam|almond/.test(word)) return "badam";
+  return "pista";
+}
+
+/** 100 g and 200 g kaju, badam, and pista packs. Kaju katli is not a nut pack. */
+export function nutPackCounts(raw: string): { g100: number; g200: number } {
+  const withoutKatli = raw.replace(
+    /(?:\d+\s*(?:g|gm|grm|grams?)\s*)?kaju[\s-]*katli(?:\s*\d+\s*(?:g|gm|grm|grams?))?/gi,
+    " "
+  );
+  const text = withoutKatli
+    .toLowerCase()
+    .replace(/(\d+)\s*(?:gm|grm|grams?|g)\b/g, "$1 g")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ");
+  const re = new RegExp(`(?:(100|200) g (${NUT_WORD})|(${NUT_WORD}) (100|200) g)`, "g");
+  const seen = new Set<string>();
+  let g100 = 0;
+  let g200 = 0;
+  for (const match of text.matchAll(re)) {
+    const weight = match[1] || match[4] || "";
+    const nut = (match[2] || match[3] || "").toLowerCase();
+    const key = `${weight}:${nutKind(nut)}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    if (weight === "100") g100 += 1;
+    if (weight === "200") g200 += 1;
+  }
+  return { g100, g200 };
+}
+
+/**
+ * Purchase cost of one UsaRakhi unit from its name and slug.
+ * A plain rakhi stays $1.50. Named sweets, chocolate packs, and weighed nut packs
+ * use their own cost, and a rakhi that includes them keeps the $1.50 as well.
+ */
+export function usarakhiUnitPurchase(name: string, slug = ""): { usd: number; note: string } {
+  const text = `${name} ${slug}`.toLowerCase();
+  const parts: string[] = [];
+  let extra = 0;
+  if (/kaju[\s-]*katli/.test(text)) {
+    extra += USARAKHI_KAJU_KATLI_PURCHASE_USD;
+    parts.push(`Kaju katli $${USARAKHI_KAJU_KATLI_PURCHASE_USD.toFixed(2)}`);
+  }
+  if (/ferrero|rocher/.test(text)) {
+    extra += USARAKHI_FERRERO_PACK_PURCHASE_USD;
+    parts.push(`Ferrero Rocher pack $${USARAKHI_FERRERO_PACK_PURCHASE_USD.toFixed(2)}`);
+  }
+  if (/lindt|lindor/.test(text)) {
+    extra += USARAKHI_LINDT_PACK_PURCHASE_USD;
+    parts.push(`Lindt chocolate pack $${USARAKHI_LINDT_PACK_PURCHASE_USD.toFixed(2)}`);
+  }
+  const nuts = nutPackCounts(text);
+  if (nuts.g100) {
+    extra += USARAKHI_NUT_100G_PURCHASE_USD * nuts.g100;
+    parts.push(`100 g nuts $${USARAKHI_NUT_100G_PURCHASE_USD.toFixed(2)} × ${nuts.g100}`);
+  }
+  if (nuts.g200) {
+    extra += USARAKHI_NUT_200G_PURCHASE_USD * nuts.g200;
+    parts.push(`200 g nuts $${USARAKHI_NUT_200G_PURCHASE_USD.toFixed(2)} × ${nuts.g200}`);
+  }
+  const rakhi = /\brakhis?\b/.test(text);
+  if (!parts.length || rakhi) {
+    parts.unshift(`UsaRakhi rakhi $${USARAKHI_RAKHI_PURCHASE_USD.toFixed(2)}`);
+    return { usd: round2(USARAKHI_RAKHI_PURCHASE_USD + extra), note: parts.join(" + ") };
+  }
+  return { usd: round2(extra), note: parts.join(" + ") };
+}
+
+/** Add-on purchase. Small badam and kaju packs, extra rakhis, and mixed chocolates stay $1.49. */
+export function usarakhiAddonUnitPurchaseUsd(addon: { id: string; name: string }): number {
+  const text = `${addon.id} ${addon.name}`.toLowerCase();
+  if (/kaju[\s-]*katli/.test(text)) return USARAKHI_KAJU_KATLI_PURCHASE_USD;
+  if (/ferrero|rocher/.test(text)) return USARAKHI_FERRERO_PACK_PURCHASE_USD;
+  if (/lindt|lindor/.test(text)) return USARAKHI_LINDT_PACK_PURCHASE_USD;
+  const nuts = nutPackCounts(text);
+  if (nuts.g100 || nuts.g200) {
+    return round2(nuts.g100 * USARAKHI_NUT_100G_PURCHASE_USD + nuts.g200 * USARAKHI_NUT_200G_PURCHASE_USD);
+  }
+  return USARAKHI_ADDON_PURCHASE_USD;
+}
+
 function purchaseForProduct(item: GstOrderItemInput): { usd: number | null; note: string; vendor: "UsaRakhi" | "Orange County" } {
   const qty = item.quantity;
   if (isOrangeCountyLine(item)) {
@@ -490,9 +591,10 @@ function purchaseForProduct(item: GstOrderItemInput): { usd: number | null; note
     }
     return { usd: null, note: "Orange County purchase price missing on this line", vendor: "Orange County" };
   }
+  const unit = usarakhiUnitPurchase(item.name, item.productSlug);
   return {
-    usd: round2(USARAKHI_RAKHI_PURCHASE_USD * qty),
-    note: `UsaRakhi rakhi $${USARAKHI_RAKHI_PURCHASE_USD.toFixed(2)} × ${qty}`,
+    usd: round2(unit.usd * qty),
+    note: `(${unit.note}) × ${qty}`,
     vendor: "UsaRakhi",
   };
 }
@@ -527,7 +629,8 @@ function draftLines(order: GstOrderInput): { lines: DraftLine[]; rakhiPurchaseUs
 
     for (const addon of item.addons ?? []) {
       const addonQty = addon.quantity * item.quantity;
-      const addonCost = round2(USARAKHI_ADDON_PURCHASE_USD * addonQty);
+      const addonUnit = usarakhiAddonUnitPurchaseUsd(addon);
+      const addonCost = round2(addonUnit * addonQty);
       if (!isOrangeCountyLine(item)) addonPurchaseUsd += addonCost;
       const addonGross = money(addon.price * addon.quantity * item.quantity, order.currency);
       lines.push({
@@ -543,7 +646,7 @@ function draftLines(order: GstOrderInput): { lines: DraftLine[]; rakhiPurchaseUs
         purchaseUsd: isOrangeCountyLine(item) ? 0 : addonCost,
         costNote: isOrangeCountyLine(item)
           ? "Add-on on an Orange County line"
-          : `UsaRakhi add-on $${USARAKHI_ADDON_PURCHASE_USD.toFixed(2)} × ${addonQty}`,
+          : `UsaRakhi add-on $${addonUnit.toFixed(2)} × ${addonQty}`,
       });
     }
   }
@@ -813,6 +916,11 @@ export function buildGstSalesReport(input: {
     costPolicy: {
       usarakhiRakhiPurchaseUsd: USARAKHI_RAKHI_PURCHASE_USD,
       usarakhiAddonPurchaseUsd: USARAKHI_ADDON_PURCHASE_USD,
+      kajuKatliPurchaseUsd: USARAKHI_KAJU_KATLI_PURCHASE_USD,
+      ferreroPackPurchaseUsd: USARAKHI_FERRERO_PACK_PURCHASE_USD,
+      lindtPackPurchaseUsd: USARAKHI_LINDT_PACK_PURCHASE_USD,
+      nut100gPurchaseUsd: USARAKHI_NUT_100G_PURCHASE_USD,
+      nut200gPurchaseUsd: USARAKHI_NUT_200G_PURCHASE_USD,
       uspsSingleRakhiUsd: USPS_SINGLE_RAKHI_USD,
       uspsRakhiWithChocolateUsd: USPS_RAKHI_WITH_CHOCOLATE_USD,
       uspsExpeditedUsarakhiUsd: USPS_EXPEDITED_USARAKHI_USD,
