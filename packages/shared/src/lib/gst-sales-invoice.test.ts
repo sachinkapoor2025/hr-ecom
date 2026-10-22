@@ -297,7 +297,7 @@ describe("GST sales invoices", () => {
     );
     assert.equal(express.uspsUsd, USPS_EXPEDITED_USARAKHI_USD);
     assert.equal(express.addonPurchaseUsd, USARAKHI_ADDON_PURCHASE_USD);
-    assert.equal(express.uspsBasis, "UsaRakhi express/2-day $9.79");
+    assert.equal(express.uspsBasis, "UsaRakhi other delivery $9.79");
 
     const twoDay = buildGstSalesInvoice(
       order({
@@ -339,21 +339,61 @@ describe("GST sales invoices", () => {
     assert.equal(invoice.rakhiPurchaseUsd, 1.5);
     assert.equal(invoice.uspsUsd, USPS_EXPEDITED_ORANGE_COUNTY_USD + USPS_EXPEDITED_USARAKHI_USD);
     assert.equal(invoice.totalCostUsd, 22.4 + 1.5 + 11 + 9.79);
-    assert.match(invoice.uspsBasis, /Orange County express\/2-day \$11\.00/);
-    assert.match(invoice.uspsBasis, /UsaRakhi express\/2-day \$9\.79/);
+    assert.match(invoice.uspsBasis, /Orange County other delivery \$11\.00/);
+    assert.match(invoice.uspsBasis, /UsaRakhi other delivery \$9\.79/);
   });
 
-  it("does not treat Priority Mail as express postage", () => {
-    const invoice = buildGstSalesInvoice(
+  it("keeps standard and Ground Advantage on the regular USPS rates", () => {
+    const standard = buildGstSalesInvoice(
       order({
         orderId: "cdcdcdcd-cdcd-cdcd-cdcd-cdcdcdcdcdcd",
         shippingOption: "standard",
-        shippingServiceName: "USPS Ground Advantage",
+        shippingServiceName: "Standard shipping",
+        shippingServiceCode: "STANDARD",
         items: [{ productSlug: "om-single-rakhi", name: "Om Single Rakhi", price: 14.99, quantity: 1 }],
       }),
       { usdInrRate: rate, paidAt: "2026-08-06T04:00:00.000Z" }
     );
-    assert.equal(invoice.uspsUsd, USPS_SINGLE_RAKHI_USD);
+    assert.equal(standard.uspsUsd, USPS_SINGLE_RAKHI_USD);
+
+    const ground = buildGstSalesInvoice(
+      order({
+        orderId: "dededede-dede-dede-dede-dededededede",
+        shippingOption: "standard",
+        shippingServiceName: "USPS Ground Advantage",
+        shippingServiceCode: "USPS_GROUND_ADVANTAGE",
+        items: [{ productSlug: "om-single-rakhi", name: "Om Single Rakhi", price: 14.99, quantity: 1 }],
+      }),
+      { usdInrRate: rate, paidAt: "2026-08-06T04:00:00.000Z" }
+    );
+    assert.equal(ground.uspsUsd, USPS_SINGLE_RAKHI_USD);
+  });
+
+  it("uses the higher postage for Priority Mail and any other non-standard service", () => {
+    const priority = buildGstSalesInvoice(
+      order({
+        orderId: "efefefef-efef-efef-efef-efefefefefef",
+        shippingServiceName: "USPS Priority Mail",
+        shippingServiceCode: "PRIORITY_MAIL",
+        items: [{ productSlug: "om-single-rakhi", name: "Om Single Rakhi", price: 14.99, quantity: 1 }],
+      }),
+      { usdInrRate: rate, paidAt: "2026-08-06T04:00:00.000Z" }
+    );
+    assert.equal(priority.uspsUsd, USPS_EXPEDITED_USARAKHI_USD);
+
+    const other = buildGstSalesInvoice(
+      order({
+        orderId: "fefefefe-fefe-fefe-fefe-fefefefefefe",
+        shippingOption: "overnight",
+        items: [
+          { productSlug: "pearl-rakhi", name: "Pearl Designer Rakhi", price: 24, quantity: 1, vendorSlug: "orange-county", vendorCost: 11.2 },
+        ],
+      }),
+      { usdInrRate: rate, paidAt: "2026-08-06T04:00:00.000Z" }
+    );
+    assert.equal(other.orangeCountyPurchaseUsd, 11.2);
+    assert.equal(other.uspsUsd, USPS_EXPEDITED_ORANGE_COUNTY_USD);
+    assert.equal(other.totalCostUsd, 11.2 + 11);
   });
 
   it("uses a short invoice number when the order has no human number", () => {

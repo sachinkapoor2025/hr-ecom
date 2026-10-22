@@ -221,7 +221,7 @@ export type GstSalesReport = {
 };
 
 const COST_POLICY_NOTE =
-  "UsaRakhi rakhi purchase is $1.50 each. Every add-on unit is $1.49 until a product-specific purchase price is set. Orange County purchase is the stored vendor cost. Standard USPS is once per UsaRakhi package: $6.49 when the package has no chocolates, $8.39 when the product or an add-on includes chocolates. Dry-fruit add-ons stay on the $6.49 package. Orange County standard shipping has no USPS charge. Express (3-day) or 2-day shipping changes postage to $9.79 once per UsaRakhi package and adds $11.00 once per Orange County package on top of the product purchase price. Refunded, cancelled, and unpaid orders are omitted.";
+  "UsaRakhi rakhi purchase is $1.50 each. Every add-on unit is $1.49 until a product-specific purchase price is set. Orange County purchase is the stored vendor cost. Standard delivery USPS is once per UsaRakhi package: $6.49 when the package has no chocolates, $8.39 when the product or an add-on includes chocolates. Dry-fruit add-ons stay on the $6.49 package. Orange County standard delivery has no USPS charge. Any other delivery method — express, 3-day, 2-day, Priority, or another service — uses $9.79 once per UsaRakhi package and adds $11.00 once per Orange County package on top of the product purchase price. Refunded, cancelled, and unpaid orders are omitted.";
 
 function round2(n: number): number {
   return Math.round((n + Number.EPSILON) * 100) / 100;
@@ -373,15 +373,43 @@ function uspsForPackage(type: GstPackageType): number {
   return 0;
 }
 
-/** Express (3-day) or 2-day. Standard Ground / Priority names stay standard. */
+const STANDARD_OPTION = /^(standard|normal|ground|ground_advantage)$/;
+
+/** USPS classes that are the everyday standard label, not a faster service. */
+const STANDARD_SERVICE_CODES = new Set([
+  "STANDARD",
+  "USPS_GROUND_ADVANTAGE",
+  "GROUND_ADVANTAGE",
+]);
+
+function isStandardServiceName(name: string): boolean {
+  const normalized = name.trim().toLowerCase();
+  if (!normalized) return false;
+  if (/\b(express|overnight|priority)\b/.test(normalized)) return false;
+  if (/\b[23][-\s]?day\b/.test(normalized)) return false;
+  return /\b(standard|normal|ground)\b/.test(normalized);
+}
+
+/**
+ * Standard / normal delivery keeps the $6.49 and $8.39 rates.
+ * Express, 3-day, 2-day, Priority, and any other recorded method use the higher postage.
+ * A blank method is standard: that is the delivery used when no other speed was stored.
+ */
 export function isExpeditedShippingMethod(method: GstShippingMethodInput | null | undefined): boolean {
-  const option = (method?.shippingOption ?? "").trim().toLowerCase().replace(/[\s-]+/g, "_");
-  if (option === "three_day" || option === "two_day" || option === "express" || option === "2_day") return true;
-  const code = (method?.shippingServiceCode ?? "").trim().toUpperCase();
-  if (code === "EXPEDITED_3_DAY" || code === "EXPEDITED_2_DAY") return true;
-  const name = (method?.shippingServiceName ?? "").toLowerCase();
-  if (/\b2[-\s]?day\b/.test(name) || /\b3[-\s]?day\b/.test(name) || /\bexpress\b/.test(name)) return true;
-  return false;
+  if (!method) return false;
+  const option = (method.shippingOption ?? "").trim().toLowerCase().replace(/[\s-]+/g, "_");
+  const code = (method.shippingServiceCode ?? "").trim().toUpperCase();
+  const name = (method.shippingServiceName ?? "").trim();
+  const codeIsStandard = !code || STANDARD_SERVICE_CODES.has(code);
+  const nameIsStandard = !name || isStandardServiceName(name);
+
+  if (option) {
+    if (!STANDARD_OPTION.test(option)) return true;
+    return !(codeIsStandard && nameIsStandard);
+  }
+
+  if (!code && !name) return false;
+  return !(codeIsStandard && nameIsStandard);
 }
 
 function postageForItems(items: GstOrderItemInput[], expedited: boolean): Pick<
@@ -433,13 +461,13 @@ function uspsBasisLabel(costs: GstShipmentCost[]): string {
     .map((cost) => {
       const parts: string[] = [];
       if (cost.usarakhiUspsUsd > 0) {
-        if (cost.expedited) parts.push(`UsaRakhi express/2-day ${moneyLabel(cost.usarakhiUspsUsd)}`);
+        if (cost.expedited) parts.push(`UsaRakhi other delivery ${moneyLabel(cost.usarakhiUspsUsd)}`);
         else if (cost.packageType === "rakhi-with-chocolate") {
           parts.push(`Rakhi with chocolates ${moneyLabel(cost.usarakhiUspsUsd)}`);
         } else parts.push(`Single rakhi ${moneyLabel(cost.usarakhiUspsUsd)}`);
       }
       if (cost.orangeCountyUspsUsd > 0) {
-        parts.push(`Orange County express/2-day ${moneyLabel(cost.orangeCountyUspsUsd)}`);
+        parts.push(`Orange County other delivery ${moneyLabel(cost.orangeCountyUspsUsd)}`);
       }
       return parts.join(" + ");
     })
