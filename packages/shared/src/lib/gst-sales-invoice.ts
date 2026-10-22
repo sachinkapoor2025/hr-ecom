@@ -15,10 +15,14 @@ import { isRevenueOrder } from "./sales-report";
 export const USARAKHI_RAKHI_PURCHASE_USD = 1.5;
 /** Wholesale cost of one UsaRakhi add-on unit (chocolate, dry fruit, or extra rakhi). */
 export const USARAKHI_ADDON_PURCHASE_USD = 1.49;
-/** USPS for a UsaRakhi package that does not include chocolates. */
+/** USPS for a standard UsaRakhi package that does not include chocolates. */
 export const USPS_SINGLE_RAKHI_USD = 6.49;
-/** USPS for a UsaRakhi package that includes chocolates. */
+/** USPS for a standard UsaRakhi package that includes chocolates. */
 export const USPS_RAKHI_WITH_CHOCOLATE_USD = 8.39;
+/** USPS for a UsaRakhi package when the customer chose express (3-day) or 2-day shipping. */
+export const USPS_EXPEDITED_USARAKHI_USD = 9.79;
+/** Extra USPS added once per Orange County package on express or 2-day shipping. */
+export const USPS_EXPEDITED_ORANGE_COUNTY_USD = 11;
 
 /** Imitation jewellery — rakhi. */
 export const GST_HSN_RAKHI = "71179090";
@@ -52,14 +56,25 @@ export type GstOrderItemInput = {
   addons?: Array<{ id: string; name: string; price: number; quantity: number }> | null;
 };
 
-export type GstOrderInput = {
+export type GstShippingMethodInput = {
+  shippingOption?: string | null;
+  shippingServiceName?: string | null;
+  shippingServiceCode?: string | null;
+};
+
+export type GstShipmentInput = GstShippingMethodInput & {
+  shipmentId: string;
+  items: GstOrderItemInput[];
+};
+
+export type GstOrderInput = GstShippingMethodInput & {
   orderId: string;
   orderNumber?: string | null;
   createdAt: string;
   status: string;
   statusHistory?: Array<{ status: string; at: string }> | null;
   items: GstOrderItemInput[];
-  shipments?: Array<{ shipmentId: string; items: GstOrderItemInput[] }> | null;
+  shipments?: GstShipmentInput[] | null;
   subtotal: number;
   discount?: number | null;
   shipping?: number | null;
@@ -106,6 +121,9 @@ export type GstInvoiceLine = {
 export type GstShipmentCost = {
   shipmentId: string;
   packageType: GstPackageType;
+  expedited: boolean;
+  usarakhiUspsUsd: number;
+  orangeCountyUspsUsd: number;
   uspsUsd: number;
 };
 
@@ -173,6 +191,8 @@ export type GstSalesReport = {
     usarakhiAddonPurchaseUsd: number;
     uspsSingleRakhiUsd: number;
     uspsRakhiWithChocolateUsd: number;
+    uspsExpeditedUsarakhiUsd: number;
+    uspsExpeditedOrangeCountyUsd: number;
     note: string;
   };
   summary: {
@@ -201,7 +221,7 @@ export type GstSalesReport = {
 };
 
 const COST_POLICY_NOTE =
-  "UsaRakhi rakhi purchase is $1.50 each. Every add-on unit is $1.49. Orange County purchase is the stored vendor cost. USPS is once per UsaRakhi package: $6.49 when the package has no chocolates, $8.39 when the product or an add-on includes chocolates. Dry-fruit add-ons use the $6.49 package. Refunded, cancelled, and unpaid orders are omitted.";
+  "UsaRakhi rakhi purchase is $1.50 each. Every add-on unit is $1.49 until a product-specific purchase price is set. Orange County purchase is the stored vendor cost. Standard USPS is once per UsaRakhi package: $6.49 when the package has no chocolates, $8.39 when the product or an add-on includes chocolates. Dry-fruit add-ons stay on the $6.49 package. Orange County standard shipping has no USPS charge. Express (3-day) or 2-day shipping changes postage to $9.79 once per UsaRakhi package and adds $11.00 once per Orange County package on top of the product purchase price. Refunded, cancelled, and unpaid orders are omitted.";
 
 function round2(n: number): number {
   return Math.round((n + Number.EPSILON) * 100) / 100;
@@ -353,34 +373,75 @@ function uspsForPackage(type: GstPackageType): number {
   return 0;
 }
 
-export function shipmentCostsForOrder(order: Pick<GstOrderInput, "items" | "shipments">): GstShipmentCost[] {
+/** Express (3-day) or 2-day. Standard Ground / Priority names stay standard. */
+export function isExpeditedShippingMethod(method: GstShippingMethodInput | null | undefined): boolean {
+  const option = (method?.shippingOption ?? "").trim().toLowerCase().replace(/[\s-]+/g, "_");
+  if (option === "three_day" || option === "two_day" || option === "express" || option === "2_day") return true;
+  const code = (method?.shippingServiceCode ?? "").trim().toUpperCase();
+  if (code === "EXPEDITED_3_DAY" || code === "EXPEDITED_2_DAY") return true;
+  const name = (method?.shippingServiceName ?? "").toLowerCase();
+  if (/\b2[-\s]?day\b/.test(name) || /\b3[-\s]?day\b/.test(name) || /\bexpress\b/.test(name)) return true;
+  return false;
+}
+
+function postageForItems(items: GstOrderItemInput[], expedited: boolean): Pick<
+  GstShipmentCost,
+  "packageType" | "usarakhiUspsUsd" | "orangeCountyUspsUsd" | "uspsUsd"
+> {
+  const packageType = packageTypeForItems(items);
+  const hasUsarakhi = items.some((item) => !isOrangeCountyLine(item));
+  const hasOrangeCounty = items.some((item) => isOrangeCountyLine(item));
+  const usarakhiUspsUsd = expedited
+    ? hasUsarakhi ? USPS_EXPEDITED_USARAKHI_USD : 0
+    : uspsForPackage(packageType);
+  const orangeCountyUspsUsd = expedited && hasOrangeCounty ? USPS_EXPEDITED_ORANGE_COUNTY_USD : 0;
+  return {
+    packageType,
+    usarakhiUspsUsd,
+    orangeCountyUspsUsd,
+    uspsUsd: round2(usarakhiUspsUsd + orangeCountyUspsUsd),
+  };
+}
+
+export function shipmentCostsForOrder(
+  order: Pick<GstOrderInput, "items" | "shipments" | "shippingOption" | "shippingServiceName" | "shippingServiceCode">
+): GstShipmentCost[] {
+  const orderExpedited = isExpeditedShippingMethod(order);
   const groups =
     order.shipments && order.shipments.length > 0
-      ? order.shipments.map((shipment) => ({
-          shipmentId: shipment.shipmentId,
-          items: shipment.items,
-        }))
+      ? order.shipments
       : [{ shipmentId: "primary", items: order.items }];
 
   return groups.map((group) => {
-    const packageType = packageTypeForItems(group.items);
+    const expedited = orderExpedited || isExpeditedShippingMethod(group);
     return {
       shipmentId: group.shipmentId,
-      packageType,
-      uspsUsd: uspsForPackage(packageType),
+      expedited,
+      ...postageForItems(group.items, expedited),
     };
   });
 }
 
+function moneyLabel(amount: number): string {
+  return `$${amount.toFixed(2)}`;
+}
+
 function uspsBasisLabel(costs: GstShipmentCost[]): string {
   const billed = costs.filter((cost) => cost.uspsUsd > 0);
-  if (!billed.length) return "No UsaRakhi package";
+  if (!billed.length) return "No postage on this order";
   return billed
     .map((cost) => {
-      if (cost.packageType === "rakhi-with-chocolate") {
-        return `Rakhi with chocolates $${USPS_RAKHI_WITH_CHOCOLATE_USD.toFixed(2)}`;
+      const parts: string[] = [];
+      if (cost.usarakhiUspsUsd > 0) {
+        if (cost.expedited) parts.push(`UsaRakhi express/2-day ${moneyLabel(cost.usarakhiUspsUsd)}`);
+        else if (cost.packageType === "rakhi-with-chocolate") {
+          parts.push(`Rakhi with chocolates ${moneyLabel(cost.usarakhiUspsUsd)}`);
+        } else parts.push(`Single rakhi ${moneyLabel(cost.usarakhiUspsUsd)}`);
       }
-      return `Single rakhi $${USPS_SINGLE_RAKHI_USD.toFixed(2)}`;
+      if (cost.orangeCountyUspsUsd > 0) {
+        parts.push(`Orange County express/2-day ${moneyLabel(cost.orangeCountyUspsUsd)}`);
+      }
+      return parts.join(" + ");
     })
     .join("; ");
 }
@@ -726,6 +787,8 @@ export function buildGstSalesReport(input: {
       usarakhiAddonPurchaseUsd: USARAKHI_ADDON_PURCHASE_USD,
       uspsSingleRakhiUsd: USPS_SINGLE_RAKHI_USD,
       uspsRakhiWithChocolateUsd: USPS_RAKHI_WITH_CHOCOLATE_USD,
+      uspsExpeditedUsarakhiUsd: USPS_EXPEDITED_USARAKHI_USD,
+      uspsExpeditedOrangeCountyUsd: USPS_EXPEDITED_ORANGE_COUNTY_USD,
       note: COST_POLICY_NOTE,
     },
     summary: {

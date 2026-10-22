@@ -8,6 +8,8 @@ import {
   GST_HSN_RAKHI,
   USARAKHI_ADDON_PURCHASE_USD,
   USARAKHI_RAKHI_PURCHASE_USD,
+  USPS_EXPEDITED_ORANGE_COUNTY_USD,
+  USPS_EXPEDITED_USARAKHI_USD,
   USPS_RAKHI_WITH_CHOCOLATE_USD,
   USPS_SINGLE_RAKHI_USD,
   buildGstSalesInvoice,
@@ -51,6 +53,9 @@ function order(partial: Partial<GstOrderInput> & Pick<GstOrderInput, "orderId" |
     paymentIntentId: partial.paymentIntentId,
     razorpayOrderId: partial.razorpayOrderId,
     razorpayPaymentId: partial.razorpayPaymentId,
+    shippingOption: partial.shippingOption,
+    shippingServiceName: partial.shippingServiceName,
+    shippingServiceCode: partial.shippingServiceCode,
     shippingAddress: partial.shippingAddress ?? address(),
     orderId: partial.orderId,
     items: partial.items,
@@ -269,6 +274,86 @@ describe("GST sales invoices", () => {
     assert.equal(csv[2]?.[0], "Invoice number");
     assert.equal(csv[3]?.[0], "US10002");
     assert.equal(csv[3]?.[1], "01/08/2026");
+  });
+
+  it("uses $9.79 USPS for express or 2-day UsaRakhi packages, including chocolate", () => {
+    const express = buildGstSalesInvoice(
+      order({
+        orderId: "88888888-8888-8888-8888-888888888888",
+        shippingOption: "three_day",
+        shippingServiceName: "3-Day Express Delivery",
+        shippingServiceCode: "EXPEDITED_3_DAY",
+        items: [
+          {
+            productSlug: "om-single-rakhi",
+            name: "Om Single Rakhi",
+            price: 14.99,
+            quantity: 1,
+            addons: [{ id: "lindt-5pc", name: "Lindor chocolates (3 pcs)", price: 10.5, quantity: 1 }],
+          },
+        ],
+      }),
+      { usdInrRate: rate, paidAt: "2026-08-05T04:00:00.000Z" }
+    );
+    assert.equal(express.uspsUsd, USPS_EXPEDITED_USARAKHI_USD);
+    assert.equal(express.addonPurchaseUsd, USARAKHI_ADDON_PURCHASE_USD);
+    assert.equal(express.uspsBasis, "UsaRakhi express/2-day $9.79");
+
+    const twoDay = buildGstSalesInvoice(
+      order({
+        orderId: "99999999-9999-9999-9999-999999999999",
+        shippingServiceName: "2-Day Delivery",
+        shippingServiceCode: "EXPEDITED_2_DAY",
+        items: [{ productSlug: "om-single-rakhi", name: "Om Single Rakhi", price: 14.99, quantity: 1 }],
+      }),
+      { usdInrRate: rate, paidAt: "2026-08-05T04:00:00.000Z" }
+    );
+    assert.equal(twoDay.uspsUsd, 9.79);
+    assert.equal(twoDay.totalCostUsd, 1.5 + 9.79);
+  });
+
+  it("adds $11 USPS on an expedited Orange County package and keeps the product purchase", () => {
+    const invoice = buildGstSalesInvoice(
+      order({
+        orderId: "abababab-abab-abab-abab-abababababab",
+        shippingOption: "two_day",
+        items: [
+          { productSlug: "pearl-rakhi", name: "Pearl Designer Rakhi", price: 24, quantity: 2, vendorSlug: "orange-county", vendorCost: 11.2 },
+          { productSlug: "om-single-rakhi", name: "Om Single Rakhi", price: 14.99, quantity: 1, vendorSlug: "usarakhi" },
+        ],
+        shipments: [
+          {
+            shipmentId: "oc",
+            items: [{ productSlug: "pearl-rakhi", name: "Pearl Designer Rakhi", price: 24, quantity: 2, vendorSlug: "orange-county", vendorCost: 11.2 }],
+          },
+          {
+            shipmentId: "us",
+            items: [{ productSlug: "om-single-rakhi", name: "Om Single Rakhi", price: 14.99, quantity: 1, vendorSlug: "usarakhi" }],
+          },
+        ],
+      }),
+      { usdInrRate: rate, paidAt: "2026-08-06T04:00:00.000Z" }
+    );
+
+    assert.equal(invoice.orangeCountyPurchaseUsd, 22.4);
+    assert.equal(invoice.rakhiPurchaseUsd, 1.5);
+    assert.equal(invoice.uspsUsd, USPS_EXPEDITED_ORANGE_COUNTY_USD + USPS_EXPEDITED_USARAKHI_USD);
+    assert.equal(invoice.totalCostUsd, 22.4 + 1.5 + 11 + 9.79);
+    assert.match(invoice.uspsBasis, /Orange County express\/2-day \$11\.00/);
+    assert.match(invoice.uspsBasis, /UsaRakhi express\/2-day \$9\.79/);
+  });
+
+  it("does not treat Priority Mail as express postage", () => {
+    const invoice = buildGstSalesInvoice(
+      order({
+        orderId: "cdcdcdcd-cdcd-cdcd-cdcd-cdcdcdcdcdcd",
+        shippingOption: "standard",
+        shippingServiceName: "USPS Ground Advantage",
+        items: [{ productSlug: "om-single-rakhi", name: "Om Single Rakhi", price: 14.99, quantity: 1 }],
+      }),
+      { usdInrRate: rate, paidAt: "2026-08-06T04:00:00.000Z" }
+    );
+    assert.equal(invoice.uspsUsd, USPS_SINGLE_RAKHI_USD);
   });
 
   it("uses a short invoice number when the order has no human number", () => {
