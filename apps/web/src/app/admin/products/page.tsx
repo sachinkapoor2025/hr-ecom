@@ -12,6 +12,7 @@ import {
   productHasShippingDims,
 } from "@hr-ecom/shared";
 import { formatMoney, paginate, downloadCsv } from "@/lib/admin-utils";
+import { applyDevTestPrice } from "@/lib/dev-test-price";
 import { TableControls } from "@/components/admin/TableControls";
 import { compressProductImage } from "@/lib/compress-product-image";
 
@@ -659,12 +660,20 @@ export default function AdminProductsPage() {
                       <td className="py-3 px-4 text-xs">{p.sku ?? "—"}</td>
                       <td className="py-3 px-4">{p.categorySlug}</td>
                       <td className="py-3 px-4">
-                        {formatMoney(p.price, p.currency)}
-                        {p.compareAtPrice && (
-                          <div className="text-xs text-slate-400 line-through">
-                            {formatMoney(p.compareAtPrice, p.currency)}
-                          </div>
-                        )}
+                        {(() => {
+                          const shown = applyDevTestPrice(p);
+                          const testPrice = shown.price !== p.price || shown.currency !== p.currency;
+                          return (
+                            <>
+                              {formatMoney(shown.price, shown.currency ?? p.currency)}
+                              {p.compareAtPrice && !testPrice && (
+                                <div className="text-xs text-slate-400 line-through">
+                                  {formatMoney(p.compareAtPrice, p.currency)}
+                                </div>
+                              )}
+                            </>
+                          );
+                        })()}
                       </td>
                       <td className="py-3 px-4">
                         <form

@@ -52,6 +52,11 @@ applications:
               elif printf '%s' "${NEXT_PUBLIC_API_URL:-}" | grep -q '0iwn6h2ds8'; then
                 export NEXT_PUBLIC_API_URL="https://foqu2ap4qi.execute-api.us-east-1.amazonaws.com/prod"
               fi
+              # Dev storefront only: show the admin test price without rewriting the live catalog row.
+              if [ "${AWS_BRANCH}" = "dev" ]; then
+                echo "NEXT_PUBLIC_DEV_TEST_PRICE=1" >> "$ENV_FILE"
+                export NEXT_PUBLIC_DEV_TEST_PRICE=1
+              fi
               npm run build -w @hr-ecom/web
       artifacts:
         baseDirectory: apps/web/.next
