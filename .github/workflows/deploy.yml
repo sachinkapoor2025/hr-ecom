@@ -47,7 +47,7 @@ jobs:
       - run: npm ci
       - run: npm run build
       - name: Reject cross-project Lambda targets
-        run: node --test scripts/ci/hr-ecom-lambda-target.test.mjs
+        run: node --test scripts/ci/hr-ecom-lambda-target.test.mjs scripts/ci/hr-ecom-prod-changeset-review.test.mjs
 
   deploy-api:
     # Stage A creates one production change set from a manual dispatch on refs/heads/main.
@@ -285,7 +285,7 @@ jobs:
             echo "::error::Change-set ARN does not match the production SAM pattern."
             exit 1
           fi
-          QUERY='{ChangeSetId:ChangeSetId,StackId:StackId,Status:Status,ExecutionStatus:ExecutionStatus,NextToken:NextToken,Changes:Changes[].ResourceChange.{Action:Action,LogicalResourceId:LogicalResourceId,ResourceType:ResourceType,Replacement:Replacement}}'
+          QUERY='{ChangeSetId:ChangeSetId,StackId:StackId,Status:Status,ExecutionStatus:ExecutionStatus,NextToken:NextToken,Changes:Changes[].ResourceChange.{Action:Action,LogicalResourceId:LogicalResourceId,ResourceType:ResourceType,Replacement:Replacement,Details:Details[].{Attribute:Target.Attribute,Name:Target.Name,RequiresRecreation:Target.RequiresRecreation,ChangeSource:ChangeSource,CausingEntity:CausingEntity,Evaluation:Evaluation}}}'
           case "$QUERY" in
             *Parameter*) echo "::error::Change-set query is not limited to the approved fields."; exit 1 ;;
           esac
@@ -317,83 +317,11 @@ jobs:
             fi
           done
           printf '%s' "$page_count" > "$RUNNER_TEMP/changeset-pages/page-count"
-          PAGE_DIR="$RUNNER_TEMP/changeset-pages" PAGE_COUNT_FILE="$RUNNER_TEMP/changeset-pages/page-count" node <<'NODE'
-          const fs = require("fs");
-          const allowed = new Set(["ApiFunction", "VendorApiFunction", "ReviewEmailsCronFunction", "SesEmailCronFunction", "BounceSyncFunction", "ImageOptimizeFunction"]);
-          const expectedArn = process.env.CHANGE_SET_ARN;
-          const expectedStack = "arn:aws:cloudformation:us-east-1:796174527529:stack/hr-ecom-prod/2a108a70-6fef-11f1-b9cd-0ecd986e35d1";
-          const pageCount = Number(fs.readFileSync(process.env.PAGE_COUNT_FILE, "utf8"));
-          if (!Number.isInteger(pageCount) || pageCount < 1) {
-            console.error("::error::No change-set pages were collected.");
-            process.exit(1);
-          }
-          const changes = [];
-          for (let i = 1; i <= pageCount; i += 1) {
-            const page = JSON.parse(fs.readFileSync(`${process.env.PAGE_DIR}/page-${i}.json`, "utf8"));
-            const keys = Object.keys(page).sort().join(",");
-            if (keys !== "ChangeSetId,Changes,ExecutionStatus,NextToken,StackId,Status") {
-              console.error("::error::describe-change-set returned an unexpected field set.");
-              process.exit(1);
-            }
-            if (page.ChangeSetId !== expectedArn || page.StackId !== expectedStack || page.Status !== "CREATE_COMPLETE" || page.ExecutionStatus !== "AVAILABLE") {
-              console.error("::error::Change set identity or status is not acceptable.");
-              process.exit(1);
-            }
-            if (!Array.isArray(page.Changes)) {
-              console.error("::error::Change set page did not contain a resource-change list.");
-              process.exit(1);
-            }
-            if (i < pageCount && (typeof page.NextToken !== "string" || page.NextToken === "")) {
-              console.error("::error::Change-set pagination stopped before the final page.");
-              process.exit(1);
-            }
-            if (i === pageCount && page.NextToken) {
-              console.error("::error::The final change-set page still has NextToken.");
-              process.exit(1);
-            }
-            for (const change of page.Changes) changes.push(change);
-          }
-          const rejected = changes.filter((change) => {
-            const fields = Object.keys(change).sort().join(",");
-            return !(fields === "Action,LogicalResourceId,Replacement,ResourceType"
-              && change.Action === "Modify"
-              && change.ResourceType === "AWS::Lambda::Function"
-              && allowed.has(change.LogicalResourceId)
-              && String(change.Replacement).toLowerCase() === "false");
-          });
-          if (process.env.WRITE_SUMMARY === "1") {
-            const stageA = process.env.SUMMARY_KIND === "stage-a";
-            const lines = [
-              stageA ? "### Stage A change set" : "### Reviewed production change set",
-              "",
-              stageA
-                ? "This change-set ARN is unapproved for execution outside Stage B."
-                : "This review does not execute the change set. Environment approval is still required.",
-              "",
-              "Executing this change set permanently associates `arn:aws:iam::796174527529:role/hr-ecom-prod-cloudformation-exec` with `hr-ecom-prod`. That association cannot be removed.",
-              "",
-              `- change_set_arn=\`${expectedArn}\``,
-              "- execution_approval=unapproved-outside-stage-b",
-              `- StackId: \`${expectedStack}\``,
-              "- Status: CREATE_COMPLETE",
-              "- ExecutionStatus: AVAILABLE",
-              `- Pages: ${pageCount}`,
-              `- review_result=${changes.length && rejected.length === 0 ? "allowlist-passed" : "rejected"}`,
-              "",
-              "| Action | Logical ID | Resource type | Replacement |",
-              "| --- | --- | --- | --- |",
-              ...changes.map((change) => `| ${change.Action || ""} | ${change.LogicalResourceId || ""} | ${change.ResourceType || ""} | ${change.Replacement ?? ""} |`),
-              "",
-            ];
-            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${lines.join("\n")}\n`);
-          }
-          if (changes.length === 0 || rejected.length !== 0) {
-            console.error(`::error::Rejected resource change ${rejected[0] && rejected[0].LogicalResourceId || "none"}.`);
-            process.exit(1);
-          }
-          fs.appendFileSync(process.env.GITHUB_OUTPUT, `change_set_arn=${expectedArn}\n`);
-          NODE
-          rm -f "$RUNNER_TEMP"/changeset-pages/page-*.json "$RUNNER_TEMP/changeset-pages/page-count" "$RUNNER_TEMP/changeset-pages/seen-tokens"
+          trap 'rm -f "$RUNNER_TEMP"/changeset-pages/page-*.json "$RUNNER_TEMP/changeset-pages/page-count" "$RUNNER_TEMP/changeset-pages/seen-tokens" "$RUNNER_TEMP/changeset-pages/stack-template.json" "$RUNNER_TEMP/changeset-pages/change-template.json"' EXIT
+          aws cloudformation get-template --stack-name hr-ecom-prod --template-stage Processed --output json > "$RUNNER_TEMP/changeset-pages/stack-template.json"
+          aws cloudformation get-template --stack-name hr-ecom-prod --change-set-name "$CHANGE_SET_ARN" --template-stage Processed --output json > "$RUNNER_TEMP/changeset-pages/change-template.json"
+          node "$GITHUB_WORKSPACE/scripts/ci/hr-ecom-prod-changeset-review.mjs" "$RUNNER_TEMP/changeset-pages"
+          rm -f "$RUNNER_TEMP"/changeset-pages/page-*.json "$RUNNER_TEMP/changeset-pages/page-count" "$RUNNER_TEMP/changeset-pages/seen-tokens" "$RUNNER_TEMP/changeset-pages/stack-template.json" "$RUNNER_TEMP/changeset-pages/change-template.json"
 
       # Do not re-run scripts/set-usarakhi-plain-rakhi-prices.ts here — that $3/$5/$7
       # job overwrites the live $1.99 / $2.50 / $2.99 / $4.99 catalog. Use
@@ -500,6 +428,7 @@ jobs:
     outputs:
       change_set_arn: ${{ steps.validate.outputs.change_set_arn }}
     steps:
+      - uses: actions/checkout@v6
       - uses: aws-actions/configure-aws-credentials@v6
         with:
           aws-access-key-id: ${{ secrets.AWS_PROD_ACCESS_KEY_ID }}
@@ -537,7 +466,7 @@ jobs:
             echo "::error::Change-set ARN does not match the production SAM pattern."
             exit 1
           fi
-          QUERY='{ChangeSetId:ChangeSetId,StackId:StackId,Status:Status,ExecutionStatus:ExecutionStatus,NextToken:NextToken,Changes:Changes[].ResourceChange.{Action:Action,LogicalResourceId:LogicalResourceId,ResourceType:ResourceType,Replacement:Replacement}}'
+          QUERY='{ChangeSetId:ChangeSetId,StackId:StackId,Status:Status,ExecutionStatus:ExecutionStatus,NextToken:NextToken,Changes:Changes[].ResourceChange.{Action:Action,LogicalResourceId:LogicalResourceId,ResourceType:ResourceType,Replacement:Replacement,Details:Details[].{Attribute:Target.Attribute,Name:Target.Name,RequiresRecreation:Target.RequiresRecreation,ChangeSource:ChangeSource,CausingEntity:CausingEntity,Evaluation:Evaluation}}}'
           case "$QUERY" in
             *Parameter*) echo "::error::Change-set query is not limited to the approved fields."; exit 1 ;;
           esac
@@ -569,83 +498,11 @@ jobs:
             fi
           done
           printf '%s' "$page_count" > "$RUNNER_TEMP/changeset-pages/page-count"
-          PAGE_DIR="$RUNNER_TEMP/changeset-pages" PAGE_COUNT_FILE="$RUNNER_TEMP/changeset-pages/page-count" node <<'NODE'
-          const fs = require("fs");
-          const allowed = new Set(["ApiFunction", "VendorApiFunction", "ReviewEmailsCronFunction", "SesEmailCronFunction", "BounceSyncFunction", "ImageOptimizeFunction"]);
-          const expectedArn = process.env.CHANGE_SET_ARN;
-          const expectedStack = "arn:aws:cloudformation:us-east-1:796174527529:stack/hr-ecom-prod/2a108a70-6fef-11f1-b9cd-0ecd986e35d1";
-          const pageCount = Number(fs.readFileSync(process.env.PAGE_COUNT_FILE, "utf8"));
-          if (!Number.isInteger(pageCount) || pageCount < 1) {
-            console.error("::error::No change-set pages were collected.");
-            process.exit(1);
-          }
-          const changes = [];
-          for (let i = 1; i <= pageCount; i += 1) {
-            const page = JSON.parse(fs.readFileSync(`${process.env.PAGE_DIR}/page-${i}.json`, "utf8"));
-            const keys = Object.keys(page).sort().join(",");
-            if (keys !== "ChangeSetId,Changes,ExecutionStatus,NextToken,StackId,Status") {
-              console.error("::error::describe-change-set returned an unexpected field set.");
-              process.exit(1);
-            }
-            if (page.ChangeSetId !== expectedArn || page.StackId !== expectedStack || page.Status !== "CREATE_COMPLETE" || page.ExecutionStatus !== "AVAILABLE") {
-              console.error("::error::Change set identity or status is not acceptable.");
-              process.exit(1);
-            }
-            if (!Array.isArray(page.Changes)) {
-              console.error("::error::Change set page did not contain a resource-change list.");
-              process.exit(1);
-            }
-            if (i < pageCount && (typeof page.NextToken !== "string" || page.NextToken === "")) {
-              console.error("::error::Change-set pagination stopped before the final page.");
-              process.exit(1);
-            }
-            if (i === pageCount && page.NextToken) {
-              console.error("::error::The final change-set page still has NextToken.");
-              process.exit(1);
-            }
-            for (const change of page.Changes) changes.push(change);
-          }
-          const rejected = changes.filter((change) => {
-            const fields = Object.keys(change).sort().join(",");
-            return !(fields === "Action,LogicalResourceId,Replacement,ResourceType"
-              && change.Action === "Modify"
-              && change.ResourceType === "AWS::Lambda::Function"
-              && allowed.has(change.LogicalResourceId)
-              && String(change.Replacement).toLowerCase() === "false");
-          });
-          if (process.env.WRITE_SUMMARY === "1") {
-            const stageA = process.env.SUMMARY_KIND === "stage-a";
-            const lines = [
-              stageA ? "### Stage A change set" : "### Reviewed production change set",
-              "",
-              stageA
-                ? "This change-set ARN is unapproved for execution outside Stage B."
-                : "This review does not execute the change set. Environment approval is still required.",
-              "",
-              "Executing this change set permanently associates `arn:aws:iam::796174527529:role/hr-ecom-prod-cloudformation-exec` with `hr-ecom-prod`. That association cannot be removed.",
-              "",
-              `- change_set_arn=\`${expectedArn}\``,
-              "- execution_approval=unapproved-outside-stage-b",
-              `- StackId: \`${expectedStack}\``,
-              "- Status: CREATE_COMPLETE",
-              "- ExecutionStatus: AVAILABLE",
-              `- Pages: ${pageCount}`,
-              `- review_result=${changes.length && rejected.length === 0 ? "allowlist-passed" : "rejected"}`,
-              "",
-              "| Action | Logical ID | Resource type | Replacement |",
-              "| --- | --- | --- | --- |",
-              ...changes.map((change) => `| ${change.Action || ""} | ${change.LogicalResourceId || ""} | ${change.ResourceType || ""} | ${change.Replacement ?? ""} |`),
-              "",
-            ];
-            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${lines.join("\n")}\n`);
-          }
-          if (changes.length === 0 || rejected.length !== 0) {
-            console.error(`::error::Rejected resource change ${rejected[0] && rejected[0].LogicalResourceId || "none"}.`);
-            process.exit(1);
-          }
-          fs.appendFileSync(process.env.GITHUB_OUTPUT, `change_set_arn=${expectedArn}\n`);
-          NODE
-          rm -f "$RUNNER_TEMP"/changeset-pages/page-*.json "$RUNNER_TEMP/changeset-pages/page-count" "$RUNNER_TEMP/changeset-pages/seen-tokens"
+          trap 'rm -f "$RUNNER_TEMP"/changeset-pages/page-*.json "$RUNNER_TEMP/changeset-pages/page-count" "$RUNNER_TEMP/changeset-pages/seen-tokens" "$RUNNER_TEMP/changeset-pages/stack-template.json" "$RUNNER_TEMP/changeset-pages/change-template.json"' EXIT
+          aws cloudformation get-template --stack-name hr-ecom-prod --template-stage Processed --output json > "$RUNNER_TEMP/changeset-pages/stack-template.json"
+          aws cloudformation get-template --stack-name hr-ecom-prod --change-set-name "$CHANGE_SET_ARN" --template-stage Processed --output json > "$RUNNER_TEMP/changeset-pages/change-template.json"
+          node "$GITHUB_WORKSPACE/scripts/ci/hr-ecom-prod-changeset-review.mjs" "$RUNNER_TEMP/changeset-pages"
+          rm -f "$RUNNER_TEMP"/changeset-pages/page-*.json "$RUNNER_TEMP/changeset-pages/page-count" "$RUNNER_TEMP/changeset-pages/seen-tokens" "$RUNNER_TEMP/changeset-pages/stack-template.json" "$RUNNER_TEMP/changeset-pages/change-template.json"
 
   execute-prod-changeset:
     if: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.event.inputs.stage == 'execute-change-set' && github.event.inputs.confirm == 'execute-reviewed-change-set' }}
@@ -683,6 +540,7 @@ jobs:
             echo "::error::Environment hr-ecom-prod-changeset has no required reviewer."
             exit "$status"
           fi
+      - uses: actions/checkout@v6
       - uses: aws-actions/configure-aws-credentials@v6
         with:
           aws-access-key-id: ${{ secrets.AWS_PROD_ACCESS_KEY_ID }}
@@ -725,7 +583,7 @@ jobs:
             echo "::error::Change-set ARN does not match the production SAM pattern."
             exit 1
           fi
-          QUERY='{ChangeSetId:ChangeSetId,StackId:StackId,Status:Status,ExecutionStatus:ExecutionStatus,NextToken:NextToken,Changes:Changes[].ResourceChange.{Action:Action,LogicalResourceId:LogicalResourceId,ResourceType:ResourceType,Replacement:Replacement}}'
+          QUERY='{ChangeSetId:ChangeSetId,StackId:StackId,Status:Status,ExecutionStatus:ExecutionStatus,NextToken:NextToken,Changes:Changes[].ResourceChange.{Action:Action,LogicalResourceId:LogicalResourceId,ResourceType:ResourceType,Replacement:Replacement,Details:Details[].{Attribute:Target.Attribute,Name:Target.Name,RequiresRecreation:Target.RequiresRecreation,ChangeSource:ChangeSource,CausingEntity:CausingEntity,Evaluation:Evaluation}}}'
           case "$QUERY" in
             *Parameter*) echo "::error::Change-set query is not limited to the approved fields."; exit 1 ;;
           esac
@@ -757,83 +615,11 @@ jobs:
             fi
           done
           printf '%s' "$page_count" > "$RUNNER_TEMP/changeset-pages/page-count"
-          PAGE_DIR="$RUNNER_TEMP/changeset-pages" PAGE_COUNT_FILE="$RUNNER_TEMP/changeset-pages/page-count" node <<'NODE'
-          const fs = require("fs");
-          const allowed = new Set(["ApiFunction", "VendorApiFunction", "ReviewEmailsCronFunction", "SesEmailCronFunction", "BounceSyncFunction", "ImageOptimizeFunction"]);
-          const expectedArn = process.env.CHANGE_SET_ARN;
-          const expectedStack = "arn:aws:cloudformation:us-east-1:796174527529:stack/hr-ecom-prod/2a108a70-6fef-11f1-b9cd-0ecd986e35d1";
-          const pageCount = Number(fs.readFileSync(process.env.PAGE_COUNT_FILE, "utf8"));
-          if (!Number.isInteger(pageCount) || pageCount < 1) {
-            console.error("::error::No change-set pages were collected.");
-            process.exit(1);
-          }
-          const changes = [];
-          for (let i = 1; i <= pageCount; i += 1) {
-            const page = JSON.parse(fs.readFileSync(`${process.env.PAGE_DIR}/page-${i}.json`, "utf8"));
-            const keys = Object.keys(page).sort().join(",");
-            if (keys !== "ChangeSetId,Changes,ExecutionStatus,NextToken,StackId,Status") {
-              console.error("::error::describe-change-set returned an unexpected field set.");
-              process.exit(1);
-            }
-            if (page.ChangeSetId !== expectedArn || page.StackId !== expectedStack || page.Status !== "CREATE_COMPLETE" || page.ExecutionStatus !== "AVAILABLE") {
-              console.error("::error::Change set identity or status is not acceptable.");
-              process.exit(1);
-            }
-            if (!Array.isArray(page.Changes)) {
-              console.error("::error::Change set page did not contain a resource-change list.");
-              process.exit(1);
-            }
-            if (i < pageCount && (typeof page.NextToken !== "string" || page.NextToken === "")) {
-              console.error("::error::Change-set pagination stopped before the final page.");
-              process.exit(1);
-            }
-            if (i === pageCount && page.NextToken) {
-              console.error("::error::The final change-set page still has NextToken.");
-              process.exit(1);
-            }
-            for (const change of page.Changes) changes.push(change);
-          }
-          const rejected = changes.filter((change) => {
-            const fields = Object.keys(change).sort().join(",");
-            return !(fields === "Action,LogicalResourceId,Replacement,ResourceType"
-              && change.Action === "Modify"
-              && change.ResourceType === "AWS::Lambda::Function"
-              && allowed.has(change.LogicalResourceId)
-              && String(change.Replacement).toLowerCase() === "false");
-          });
-          if (process.env.WRITE_SUMMARY === "1") {
-            const stageA = process.env.SUMMARY_KIND === "stage-a";
-            const lines = [
-              stageA ? "### Stage A change set" : "### Reviewed production change set",
-              "",
-              stageA
-                ? "This change-set ARN is unapproved for execution outside Stage B."
-                : "This review does not execute the change set. Environment approval is still required.",
-              "",
-              "Executing this change set permanently associates `arn:aws:iam::796174527529:role/hr-ecom-prod-cloudformation-exec` with `hr-ecom-prod`. That association cannot be removed.",
-              "",
-              `- change_set_arn=\`${expectedArn}\``,
-              "- execution_approval=unapproved-outside-stage-b",
-              `- StackId: \`${expectedStack}\``,
-              "- Status: CREATE_COMPLETE",
-              "- ExecutionStatus: AVAILABLE",
-              `- Pages: ${pageCount}`,
-              `- review_result=${changes.length && rejected.length === 0 ? "allowlist-passed" : "rejected"}`,
-              "",
-              "| Action | Logical ID | Resource type | Replacement |",
-              "| --- | --- | --- | --- |",
-              ...changes.map((change) => `| ${change.Action || ""} | ${change.LogicalResourceId || ""} | ${change.ResourceType || ""} | ${change.Replacement ?? ""} |`),
-              "",
-            ];
-            fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${lines.join("\n")}\n`);
-          }
-          if (changes.length === 0 || rejected.length !== 0) {
-            console.error(`::error::Rejected resource change ${rejected[0] && rejected[0].LogicalResourceId || "none"}.`);
-            process.exit(1);
-          }
-          fs.appendFileSync(process.env.GITHUB_OUTPUT, `change_set_arn=${expectedArn}\n`);
-          NODE
-          rm -f "$RUNNER_TEMP"/changeset-pages/page-*.json "$RUNNER_TEMP/changeset-pages/page-count" "$RUNNER_TEMP/changeset-pages/seen-tokens"
+          trap 'rm -f "$RUNNER_TEMP"/changeset-pages/page-*.json "$RUNNER_TEMP/changeset-pages/page-count" "$RUNNER_TEMP/changeset-pages/seen-tokens" "$RUNNER_TEMP/changeset-pages/stack-template.json" "$RUNNER_TEMP/changeset-pages/change-template.json"' EXIT
+          aws cloudformation get-template --stack-name hr-ecom-prod --template-stage Processed --output json > "$RUNNER_TEMP/changeset-pages/stack-template.json"
+          aws cloudformation get-template --stack-name hr-ecom-prod --change-set-name "$CHANGE_SET_ARN" --template-stage Processed --output json > "$RUNNER_TEMP/changeset-pages/change-template.json"
+          node "$GITHUB_WORKSPACE/scripts/ci/hr-ecom-prod-changeset-review.mjs" "$RUNNER_TEMP/changeset-pages"
+          rm -f "$RUNNER_TEMP"/changeset-pages/page-*.json "$RUNNER_TEMP/changeset-pages/page-count" "$RUNNER_TEMP/changeset-pages/seen-tokens" "$RUNNER_TEMP/changeset-pages/stack-template.json" "$RUNNER_TEMP/changeset-pages/change-template.json"
 
           if [ "${GITHUB_REF:-}" != "refs/heads/main" ]; then
             echo "::error::Production change-set execution is allowed only from refs/heads/main."
