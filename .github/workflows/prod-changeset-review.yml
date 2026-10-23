@@ -1,0 +1,72 @@
+name: Validate production change-set review
+
+# Read-only pull-request check. It does not deploy, call AWS, or read deployment secrets.
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - .github/workflows/deploy.yml
+      - .github/workflows/prod-changeset-review.yml
+      - scripts/ci/hr-ecom-lambda-target.mjs
+      - scripts/ci/hr-ecom-lambda-target.test.mjs
+      - scripts/ci/hr-ecom-prod-changeset-review.mjs
+      - scripts/ci/hr-ecom-prod-changeset-review.test.mjs
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: ".nvmrc"
+      - name: Run change-set review tests
+        run: node --test scripts/ci/hr-ecom-lambda-target.test.mjs scripts/ci/hr-ecom-prod-changeset-review.test.mjs
+      - name: Validate workflow YAML
+        run: |
+          set -euo pipefail
+          npm install --ignore-scripts --prefix "$RUNNER_TEMP/yaml-check" js-yaml@4.2.0
+          node <<'NODE'
+          const fs = require("fs");
+          const yaml = require(process.env.RUNNER_TEMP + "/yaml-check/node_modules/js-yaml");
+          const expectedPaths = [
+            ".github/workflows/deploy.yml",
+            ".github/workflows/prod-changeset-review.yml",
+            "scripts/ci/hr-ecom-lambda-target.mjs",
+            "scripts/ci/hr-ecom-lambda-target.test.mjs",
+            "scripts/ci/hr-ecom-prod-changeset-review.mjs",
+            "scripts/ci/hr-ecom-prod-changeset-review.test.mjs",
+          ];
+          function loadWorkflow(file) {
+            const document = yaml.load(fs.readFileSync(file, "utf8"), { schema: yaml.CORE_SCHEMA });
+            if (!document || typeof document !== "object" || Array.isArray(document)) {
+              throw new Error(file + " did not parse as a mapping");
+            }
+            if (!document.jobs || typeof document.jobs !== "object" || Array.isArray(document.jobs)) {
+              throw new Error(file + " has no jobs mapping");
+            }
+            if (!Object.prototype.hasOwnProperty.call(document, "on") || document.on === true || typeof document.on !== "object" || Array.isArray(document.on)) {
+              throw new Error(file + " on section is not a mapping");
+            }
+            return document;
+          }
+          loadWorkflow(".github/workflows/deploy.yml");
+          const review = loadWorkflow(".github/workflows/prod-changeset-review.yml");
+          const pullRequest = review.on.pull_request;
+          if (!pullRequest || typeof pullRequest !== "object" || Array.isArray(pullRequest)) {
+            throw new Error("pull_request trigger is missing");
+          }
+          if (!Array.isArray(pullRequest.branches) || pullRequest.branches.length !== 1 || pullRequest.branches[0] !== "main") {
+            throw new Error("pull_request must target main");
+          }
+          if (!Array.isArray(pullRequest.paths) || pullRequest.paths.length !== expectedPaths.length || expectedPaths.some((item, index) => pullRequest.paths[index] !== item)) {
+            throw new Error("pull_request path filters do not match the review files");
+          }
+          if (!review.jobs.validate || typeof review.jobs.validate !== "object") {
+            throw new Error("validate job is missing");
+          }
+          NODE
