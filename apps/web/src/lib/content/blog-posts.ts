@@ -1,6 +1,7 @@
 import { allSeoBlogSlugs, seoBlogPostToBlogPost } from "./seo-blog";
 import { applyHandwrittenEndMatter } from "./blog-end-matter";
 import { documentBlogPosts } from "./document-blogs";
+import { sheetBlogPosts } from "./sheet-blogs";
 import { festivalBlogPosts } from "./festival-blogs";
 
 export interface BlogFaqItem {
@@ -1199,7 +1200,12 @@ export const blogPosts: BlogPost[] = [
   },
 ];
 
-const handwrittenBlogPosts: BlogPost[] = [...documentBlogPosts, ...festivalBlogPosts, ...blogPosts];
+const handwrittenBlogPosts: BlogPost[] = [
+  ...sheetBlogPosts,
+  ...documentBlogPosts,
+  ...festivalBlogPosts,
+  ...blogPosts,
+];
 
 export function getBlogPost(slug: string): BlogPost | undefined {
   const hand = handwrittenBlogPosts.find((p) => p.slug === slug);
