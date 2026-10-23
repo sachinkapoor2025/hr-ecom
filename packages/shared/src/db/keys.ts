@@ -113,6 +113,8 @@ export const configKeys = {
   productSalesIntel: { pk: "CONFIG#PRODUCT_SALES_INTEL", sk: "META" as const },
   /** Post-delivery review request (email + WhatsApp) settings. */
   reviewRequest: { pk: "CONFIG#REVIEW_REQUEST", sk: "META" as const },
+  /** GST supplier details printed on sales invoices. */
+  gst: { pk: "CONFIG#GST", sk: "META" as const },
 };
 
 /** Tracks admin S3 uploads → product slug for recovery if DB is reset. */

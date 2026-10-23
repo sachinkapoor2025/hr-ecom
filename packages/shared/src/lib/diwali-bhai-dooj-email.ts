@@ -51,8 +51,8 @@ export const DIWALI_BHAI_DOOJ_EMAIL_CONFIG = {
     {
       name: "Bhai Dooj Kaju Katli & Kumkum Gift Box",
       description: "Kaju katli, kumkum, and a Bhai Dooj card.",
-      priceLabel: "$47.81",
-      compareAtLabel: "$56.25",
+      priceLabel: "₹99",
+      compareAtLabel: "",
       imageUrl: "https://d301af4ndyn9qx.cloudfront.net/uploads/orange-county/TFUSBD2601/TFUSBD2601_1.jpg",
       href: `${SITE}/products/bhai-dooj-kaju-katli-and-kumkum-gift-box`,
       buttonText: "View Product",
@@ -157,8 +157,11 @@ function productCard(product: FestivalEmailProduct): string {
                           </div>
                           <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:17px;color:#6b5e4e;padding-bottom:8px;">${escapeHtml(product.description)}</div>
                           <div style="padding-bottom:10px;">
-                            <span style="font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:20px;font-weight:bold;color:${RED};">${escapeHtml(product.priceLabel)}</span>
-                            <span style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px;color:#9a8b78;text-decoration:line-through;padding-left:6px;">${escapeHtml(product.compareAtLabel)}</span>
+                            <span style="font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:20px;font-weight:bold;color:${RED};">${escapeHtml(product.priceLabel)}</span>${
+                              product.compareAtLabel
+                                ? `<span style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px;color:#9a8b78;text-decoration:line-through;padding-left:6px;">${escapeHtml(product.compareAtLabel)}</span>`
+                                : ""
+                            }
                           </div>
                           <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;margin:0 auto;">
                             <tr>

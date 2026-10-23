@@ -66,6 +66,7 @@ const navItems: NavItem[] = [
       { href: "/admin/expense-settlement?tab=expense", label: "Expense" },
       { href: "/admin/expense-settlement?tab=settlement", label: "Settlement", superOnly: true },
       { href: "/admin/expense-settlement?tab=reconciliation", label: "Reconciliation", superOnly: true },
+      { href: "/admin/gst-invoices", label: "GST sales invoices", superOnly: true },
     ],
   },
   { type: "link", href: "/admin/load-test", label: "Load Test", exact: false },
@@ -174,6 +175,13 @@ function NavButtons({
         ) {
           next[item.id] = true;
         }
+        if (
+          item.type === "group" &&
+          item.id === "expense-settlement" &&
+          pathname.startsWith("/admin/gst-invoices")
+        ) {
+          next[item.id] = true;
+        }
         if (variant === "mobile" && item.type === "group") {
           next[item.id] = true;
         }
@@ -215,7 +223,8 @@ function NavButtons({
 
         const groupActive =
           pathActive(pathname, item.href) ||
-          (item.id === "analytics" && pathname.startsWith("/admin/product-sales"));
+          (item.id === "analytics" && pathname.startsWith("/admin/product-sales")) ||
+          (item.id === "expense-settlement" && pathname.startsWith("/admin/gst-invoices"));
         const children =
           item.id === "vendor" && !showSuper
             ? item.children.filter((c) => !c.href.includes("tab=expense"))

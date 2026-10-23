@@ -15,6 +15,7 @@ import {
   mergeProductsPreferExisting,
 } from "./catalog-fallback";
 import { shuffleForCity } from "./city-products";
+import { applyDevTestPrice } from "./dev-test-price";
 
 /**
  * Prefer last good API price over bundled catalog when the API blips.
@@ -28,7 +29,7 @@ const productMemoryCache = new Map<string, { product: Product; at: number }>();
 const FRESH_PRODUCT_FETCH = { revalidate: false as const };
 
 function rememberProduct(product: Product): Product {
-  const visible = sanitizePublicProductCopy(product);
+  const visible = sanitizePublicProductCopy(applyDevTestPrice(product));
   productMemoryCache.set(visible.slug, { product: visible, at: Date.now() });
   return visible;
 }
@@ -72,12 +73,12 @@ export async function loadProduct(slug: string): Promise<Product | null> {
     const catalog = getCatalogProduct(slug);
     if (catalog && (allowCatalogFallback(catalog) || isProductMissingError(err))) {
       if (isRakhiSeasonPaused(catalog)) return null;
-      return sanitizePublicProductCopy(catalog);
+      return sanitizePublicProductCopy(applyDevTestPrice(catalog));
     }
 
     if (process.env.NODE_ENV !== "production") {
       if (!catalog || isRakhiSeasonPaused(catalog)) return null;
-      return sanitizePublicProductCopy(catalog);
+      return sanitizePublicProductCopy(applyDevTestPrice(catalog));
     }
     return null;
   }
@@ -104,7 +105,7 @@ export async function loadProducts(params?: {
       : getCatalogProducts();
     return catalog
       .filter((product) => !isRakhiSeasonPaused(product))
-      .map((product) => sanitizePublicProductCopy(product));
+      .map((product) => sanitizePublicProductCopy(applyDevTestPrice(product)));
   }
 }
 
@@ -122,7 +123,7 @@ export async function loadProductsByCategory(categorySlug: string): Promise<Prod
   return sortAvailableProductsFirst(
     mergeProductsPreferExisting(products, getCatalogProductsByCategory(categorySlug))
       .filter((product) => !isRakhiSeasonPaused(product))
-      .map((product) => sanitizePublicProductCopy(product))
+      .map((product) => sanitizePublicProductCopy(applyDevTestPrice(product)))
   );
 }
 

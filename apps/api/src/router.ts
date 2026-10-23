@@ -10,6 +10,7 @@ import * as uploads from "./handlers/uploads";
 import * as events from "./handlers/events";
 import * as analytics from "./handlers/analytics";
 import * as salesReport from "./handlers/sales-report";
+import * as gstSales from "./handlers/gst-sales";
 import * as productSalesIntel from "./handlers/product-sales-intelligence";
 import * as trackingSync from "./handlers/tracking-sync";
 import * as adminCarts from "./handlers/admin-carts";
@@ -231,6 +232,9 @@ const routes: Route[] = [
   { method: "PATCH", pattern: /^\/admin\/leads$/, handler: orders.updateLead },
   { method: "GET", pattern: /^\/admin\/analytics\/overview$/, handler: analytics.getAnalyticsOverview },
   { method: "GET", pattern: /^\/admin\/analytics\/sales$/, handler: salesReport.getSalesReport },
+  { method: "GET", pattern: /^\/admin\/gst\/settings$/, handler: gstSales.getGstSupplierSettings },
+  { method: "PUT", pattern: /^\/admin\/gst\/settings$/, handler: gstSales.updateGstSupplierSettings },
+  { method: "GET", pattern: /^\/admin\/gst\/sales-invoices$/, handler: gstSales.getGstSalesInvoices },
   {
     method: "GET",
     pattern: /^\/admin\/analytics\/product-sales$/,
