@@ -46,9 +46,8 @@ jobs:
 
       - uses: aws-actions/configure-aws-credentials@v6
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-access-key-id: ${{ secrets.AWS_PROD_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_PROD_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
       - uses: aws-actions/setup-sam@v3
@@ -97,6 +96,7 @@ jobs:
           fi
           [ -n "${RAZORPAY_WEBHOOK_SECRET:-}" ] && EXTRA="$EXTRA RazorpayWebhookSecret=${RAZORPAY_WEBHOOK_SECRET}"
           sam build && sam deploy --no-confirm-changeset --no-fail-on-empty-changeset --config-env prod \
+            --role-arn arn:aws:iam::796174527529:role/hr-ecom-prod-cloudformation-exec \
             --parameter-overrides "\
           Environment=prod \
           RazorpayKeyId=${RAZORPAY_KEY_ID} \
