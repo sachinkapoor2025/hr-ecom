@@ -64,9 +64,16 @@ describe("deploy workflow", () => {
     assert.equal(configStep.includes("for name in"), false);
   });
 
-  it("still deploys the hr-ecom production stack with SAM", () => {
-    const prodJob = workflow.slice(workflow.indexOf("deploy-api:"), workflow.indexOf("deploy-dev-api:"));
-    assert.match(prodJob, /sam deploy --no-confirm-changeset --no-fail-on-empty-changeset --config-env prod/);
-    assert.equal(prodJob.includes("update-function-code"), false);
+  it("creates the production change set in Stage A and executes it separately", () => {
+    const stageA = workflow.slice(workflow.indexOf("  deploy-api:"), workflow.indexOf("  deploy-dev-api:"));
+    const execution = workflow.slice(workflow.indexOf("  execute-prod-changeset:"));
+    assert.match(stageA, /sam deploy --no-execute-changeset --config-env prod/);
+    assert.equal(stageA.includes("--no-confirm-changeset"), false);
+    assert.equal(stageA.includes("aws cloudformation execute-change-set"), false);
+    assert.equal(stageA.includes("update-function-code"), false);
+    assert.match(
+      execution,
+      /aws cloudformation execute-change-set --stack-name hr-ecom-prod --change-set-name "\$CHANGE_SET_ARN"/
+    );
   });
 });
