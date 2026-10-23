@@ -115,6 +115,73 @@ jobs:
             local kind="$3"
             if grep -Eq "AccessDenied|not authorized|UnauthorizedOperation" "$file"; then
               echo "::error::${kind} was not authorized (exit ${status})."
+              local line="" raw="" code="" operation="" action="" resource=""
+              local chosen_code="" chosen_operation="" chosen_action="" chosen_resource=""
+              local signature="" next="" structured=0 conflict=0
+              while IFS= read -r line || [ -n "$line" ]; do
+                line="${line%$'\r'}"
+                printf '%s\n' "$line" | grep -Eq "AccessDenied|not authorized|UnauthorizedOperation" || continue
+                raw="$(printf '%s\n' "$line" | grep -oE 'An error occurred \([A-Za-z0-9]+\)' | sort -u || true)"
+                if [[ "$raw" == *$'\n'* ]]; then
+                  conflict=1
+                  break
+                fi
+                code="${raw#An error occurred (}"
+                code="${code%)}"
+                raw="$(printf '%s\n' "$line" | grep -oE 'when calling the [A-Za-z0-9]+ operation' | sort -u || true)"
+                if [[ "$raw" == *$'\n'* ]]; then
+                  conflict=1
+                  break
+                fi
+                operation="${raw#when calling the }"
+                operation="${operation% operation}"
+                raw="$(printf '%s\n' "$line" | grep -oE 'perform: [a-z0-9]+:[A-Za-z0-9]+' | sort -u || true)"
+                if [[ "$raw" == *$'\n'* ]]; then
+                  conflict=1
+                  break
+                fi
+                action="${raw#perform: }"
+                raw="$(printf '%s\n' "$line" | grep -oE 'on resource: "?arn:aws:(cloudformation:[a-z0-9-]*:[0-9]{12}:(stack|changeSet)/[A-Za-z0-9./-]+|iam::[0-9]{12}:role/[A-Za-z0-9+=,.@_-]+|s3:::[a-z0-9.-]+|kms:[a-z0-9-]*:[0-9]{12}:key/[A-Fa-f0-9-]+|lambda:[a-z0-9-]*:[0-9]{12}:function:[A-Za-z0-9_-]+)' | sort -u || true)"
+                if [[ "$raw" == *$'\n'* ]]; then
+                  conflict=1
+                  break
+                fi
+                resource="${raw#on resource: }"
+                resource="${resource#\"}"
+                resource="${resource%\"}"
+                resource="${resource%/}"
+                if [ -z "$code" ] && [ -z "$operation" ] && [ -z "$action" ] && [ -z "$resource" ]; then
+                  continue
+                fi
+                next="${code}"$'\x1f'"${operation}"$'\x1f'"${action}"$'\x1f'"${resource}"
+                if [ "$structured" -eq 0 ]; then
+                  signature="$next"
+                  chosen_code="$code"
+                  chosen_operation="$operation"
+                  chosen_action="$action"
+                  chosen_resource="$resource"
+                  structured=1
+                elif [ "$next" != "$signature" ]; then
+                  conflict=1
+                  break
+                fi
+              done < "$file"
+              if [ "$conflict" -ne 0 ] || [ "$structured" -eq 0 ]; then
+                chosen_code=""
+                chosen_operation=""
+                chosen_action=""
+                chosen_resource=""
+              fi
+              emit_auth_field() {
+                case "$2" in
+                  ""|*[!A-Za-z0-9:/_.+=,@-]*) echo "::error::$1=unavailable" ;;
+                  *) echo "::error::$1=$2" ;;
+                esac
+              }
+              emit_auth_field sam_auth_code "$chosen_code"
+              emit_auth_field sam_auth_operation "$chosen_operation"
+              emit_auth_field sam_auth_action "$chosen_action"
+              emit_auth_field sam_auth_resource "$chosen_resource"
             elif grep -Eq "Template format error|ValidationError|Unable to upload artifact|Build Failed" "$file"; then
               echo "::error::${kind} failed validation or packaging (exit ${status})."
             else
