@@ -17,6 +17,7 @@ type WelcomeCouponRow = {
   sessionId?: string;
   usedAt?: string;
   orderId?: string;
+  source?: string;
 };
 
 export function WelcomeLeadsPanel() {
@@ -109,7 +110,7 @@ export function WelcomeLeadsPanel() {
         <div>
           <h2 className="text-lg font-semibold text-primary">Welcome Leads</h2>
           <p className="text-sm text-slate-600 mt-1">
-            Spin-the-wheel signups (mystery 6–10% off, 1-hour validity, one spin per mobile per day).
+            Spin-the-wheel signups and coupons you generate. New coupons stay in this list with older signups.
           </p>
         </div>
         <button
@@ -203,6 +204,7 @@ export function WelcomeLeadsPanel() {
               <th className="px-4 py-3">Mobile</th>
               <th className="px-4 py-3">Email</th>
               <th className="px-4 py-3">Coupon</th>
+              <th className="px-4 py-3">Source</th>
               <th className="px-4 py-3">Created</th>
               <th className="px-4 py-3">Expires</th>
               <th className="px-4 py-3">Status</th>
@@ -212,13 +214,13 @@ export function WelcomeLeadsPanel() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-slate-500">
+                <td colSpan={8} className="px-4 py-8 text-center text-slate-500">
                   Loading…
                 </td>
               </tr>
             ) : paged.items.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-slate-500">
+                <td colSpan={8} className="px-4 py-8 text-center text-slate-500">
                   No welcome signups yet.
                 </td>
               </tr>
@@ -249,6 +251,9 @@ export function WelcomeLeadsPanel() {
                       )}
                     </td>
                     <td className="px-4 py-3 font-mono font-semibold">{r.code}</td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      {r.source === "admin" ? "Generated" : "Spin"}
+                    </td>
                     <td className="px-4 py-3 whitespace-nowrap">{formatCouponExpiry(r.createdAt)}</td>
                     <td className="px-4 py-3 whitespace-nowrap">{formatCouponExpiry(r.expiresAt)}</td>
                     <td className={`px-4 py-3 font-medium ${status.className}`}>{status.text}</td>

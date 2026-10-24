@@ -1,4 +1,4 @@
-import { GetCommand, PutCommand, ScanCommand, TransactWriteCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import { GetCommand, PutCommand, QueryCommand, ScanCommand, TransactWriteCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import type { APIGatewayProxyEventV2 } from "aws-lambda";
 import { randomBytes } from "crypto";
 import {
@@ -18,7 +18,8 @@ import {
   type StoreCoupon,
   type DailyDealPercent,
 } from "@hr-ecom/shared";
-import { collectScanPages } from "../lib/collect-scan-pages";
+import { collectQueryPages, collectScanPages } from "../lib/collect-scan-pages";
+import { mergeListedCoupons } from "../lib/coupon-list";
 import { docClient, CONFIG_TABLE, now } from "../lib/db";
 import { ok, badRequest, forbidden, unauthorized, serverError } from "../lib/response";
 import { requireAdmin } from "../lib/auth";
@@ -27,6 +28,14 @@ import {
   abandonedCouponWhatsAppMessage,
   sendWhatsAppMessage,
 } from "../lib/whatsapp";
+
+function couponFeedItem(coupon: StoreCoupon & { phone?: string; dayKey?: string }) {
+  return {
+    ...coupon,
+    PK: couponKeys.feedPk(coupon.source),
+    SK: couponKeys.feedSk(coupon.createdAt, coupon.code),
+  };
+}
 
 function generateCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -229,6 +238,7 @@ export async function issueWelcomeCoupon(input: {
     source: "welcome",
     dayKey,
   };
+  const couponFeed = couponFeedItem(coupon);
 
   const phoneIndex = {
     PK: couponKeys.welcomePhonePk(phone),
@@ -271,6 +281,14 @@ export async function issueWelcomeCoupon(input: {
         },
       },
     ];
+
+    transactItems.push({
+      Put: {
+        TableName: CONFIG_TABLE,
+        Item: couponFeed,
+        ConditionExpression: "attribute_not_exists(SK)",
+      },
+    });
 
     if (email) {
       transactItems.push({
@@ -360,7 +378,26 @@ export async function issueAbandonedCartCoupon(input: {
     source: "abandoned",
   };
 
-  await docClient.send(new PutCommand({ TableName: CONFIG_TABLE, Item: coupon }));
+  await docClient.send(
+    new TransactWriteCommand({
+      TransactItems: [
+        {
+          Put: {
+            TableName: CONFIG_TABLE,
+            Item: coupon,
+            ConditionExpression: "attribute_not_exists(PK)",
+          },
+        },
+        {
+          Put: {
+            TableName: CONFIG_TABLE,
+            Item: couponFeedItem(coupon),
+            ConditionExpression: "attribute_not_exists(SK)",
+          },
+        },
+      ],
+    })
+  );
   await docClient.send(
     new PutCommand({
       TableName: CONFIG_TABLE,
@@ -382,6 +419,16 @@ export async function markCouponUsed(code: string, orderId: string): Promise<voi
   const normalizedCode = code.trim().toUpperCase();
   const timestamp = now();
 
+  const existing = await docClient
+    .send(
+      new GetCommand({
+        TableName: CONFIG_TABLE,
+        Key: { PK: couponKeys.pk(normalizedCode), SK: couponKeys.sk() },
+        ConsistentRead: true,
+      })
+    )
+    .catch(() => undefined);
+
   await docClient.send(
     new UpdateCommand({
       TableName: CONFIG_TABLE,
@@ -396,6 +443,29 @@ export async function markCouponUsed(code: string, orderId: string): Promise<voi
   ).catch(() => {
     /* already used or missing — non-blocking */
   });
+
+  const createdAt = existing?.Item?.createdAt;
+  const source = existing?.Item?.source;
+  if (typeof createdAt === "string" && (source === "welcome" || source === "admin" || source === "abandoned")) {
+    await docClient
+      .send(
+        new UpdateCommand({
+          TableName: CONFIG_TABLE,
+          Key: {
+            PK: couponKeys.feedPk(source),
+            SK: couponKeys.feedSk(createdAt, normalizedCode),
+          },
+          UpdateExpression: "SET usedAt = :usedAt, orderId = :orderId",
+          ExpressionAttributeValues: {
+            ":usedAt": timestamp,
+            ":orderId": orderId,
+          },
+        })
+      )
+      .catch(() => {
+        /* feed row is optional for coupons created before the list index existed */
+      });
+  }
 }
 
 export function applyPercentDiscount(subtotal: number, percent: number): number {
@@ -416,18 +486,25 @@ export async function validateCouponHandler(event: APIGatewayProxyEventV2) {
   return ok(result);
 }
 
-async function scanCouponsBySource(source: "welcome" | "admin"): Promise<Record<string, unknown>[]> {
+async function scanCouponsBySources(
+  sources: Array<"welcome" | "admin" | "abandoned">
+): Promise<Record<string, unknown>[]> {
+  const values: Record<string, string> = {
+    ":prefix": "COUPON#",
+    ":sk": "META",
+  };
+  const sourceChecks = sources.map((source, index) => {
+    const key = `:src${index}`;
+    values[key] = source;
+    return `#src = ${key}`;
+  });
   return collectScanPages(async (startKey) => {
     const result = await docClient.send(
       new ScanCommand({
         TableName: CONFIG_TABLE,
-        FilterExpression: "begins_with(PK, :prefix) AND SK = :sk AND #src = :src",
+        FilterExpression: `begins_with(PK, :prefix) AND SK = :sk AND (${sourceChecks.join(" OR ")})`,
         ExpressionAttributeNames: { "#src": "source" },
-        ExpressionAttributeValues: {
-          ":prefix": "COUPON#",
-          ":sk": "META",
-          ":src": source,
-        },
+        ExpressionAttributeValues: values,
         ExclusiveStartKey: startKey,
       })
     );
@@ -438,11 +515,45 @@ async function scanCouponsBySource(source: "welcome" | "admin"): Promise<Record<
   });
 }
 
+/** Strongly consistent feed read so a coupon written in this request is listed immediately. */
+async function queryCouponFeed(source: "welcome" | "admin" | "abandoned") {
+  return collectQueryPages(async (startKey) => {
+    const result = await docClient.send(
+      new QueryCommand({
+        TableName: CONFIG_TABLE,
+        KeyConditionExpression: "PK = :pk",
+        ExpressionAttributeValues: { ":pk": couponKeys.feedPk(source) },
+        ExclusiveStartKey: startKey,
+        ConsistentRead: true,
+        ScanIndexForward: false,
+      })
+    );
+    return {
+      items: (result.Items ?? []) as StoreCoupon[],
+      lastKey: result.LastEvaluatedKey as Record<string, unknown> | undefined,
+    };
+  });
+}
+
+function sortCouponsNewestFirst<T extends { createdAt: string }>(coupons: T[]): T[] {
+  return coupons.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+}
+
 export async function listWelcomeCoupons(event: APIGatewayProxyEventV2) {
   if (!requireAdmin(event)) return forbidden();
 
-  const coupons = ((await scanCouponsBySource("welcome")) as WelcomeCoupon[]).sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  const [scanned, welcomeFeed, adminFeed] = await Promise.all([
+    scanCouponsBySources(["welcome", "admin"]),
+    queryCouponFeed("welcome"),
+    queryCouponFeed("admin"),
+  ]);
+
+  const coupons = sortCouponsNewestFirst(
+    mergeListedCoupons<StoreCoupon>([
+      welcomeFeed as StoreCoupon[],
+      adminFeed as StoreCoupon[],
+      scanned as StoreCoupon[],
+    ])
   );
 
   return ok({ coupons });
@@ -501,10 +612,23 @@ export async function createAdminAbandonedCoupon(event: APIGatewayProxyEventV2) 
 
   try {
     await docClient.send(
-      new PutCommand({
-        TableName: CONFIG_TABLE,
-        Item: coupon,
-        ConditionExpression: "attribute_not_exists(PK)",
+      new TransactWriteCommand({
+        TransactItems: [
+          {
+            Put: {
+              TableName: CONFIG_TABLE,
+              Item: coupon,
+              ConditionExpression: "attribute_not_exists(PK)",
+            },
+          },
+          {
+            Put: {
+              TableName: CONFIG_TABLE,
+              Item: couponFeedItem(coupon),
+              ConditionExpression: "attribute_not_exists(SK)",
+            },
+          },
+        ],
       })
     );
   } catch (err) {
@@ -583,8 +707,12 @@ export async function createAdminAbandonedCoupon(event: APIGatewayProxyEventV2) 
 export async function listAdminCoupons(event: APIGatewayProxyEventV2) {
   if (!requireAdmin(event)) return forbidden();
 
-  const coupons = ((await scanCouponsBySource("admin")) as StoreCoupon[]).sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  const [scanned, feed] = await Promise.all([
+    scanCouponsBySources(["admin"]),
+    queryCouponFeed("admin"),
+  ]);
+  const coupons = sortCouponsNewestFirst(
+    mergeListedCoupons<StoreCoupon>([feed as StoreCoupon[], scanned as StoreCoupon[]])
   );
 
   return ok({ coupons });
