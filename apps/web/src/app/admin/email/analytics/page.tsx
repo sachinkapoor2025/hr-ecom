@@ -188,7 +188,7 @@ export default function AnalyticsPage() {
                   setCursor(undefined);
                 }}
               >
-                <option value="">Recent campaigns</option>
+                <option value="">All campaigns</option>
                 {campaigns.map((c) => (
                   <option key={c.campaignId} value={c.campaignId}>
                     {c.name}

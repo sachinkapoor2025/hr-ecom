@@ -18,6 +18,7 @@ import {
   type StoreCoupon,
   type DailyDealPercent,
 } from "@hr-ecom/shared";
+import { collectScanPages } from "../lib/collect-scan-pages";
 import { docClient, CONFIG_TABLE, now } from "../lib/db";
 import { ok, badRequest, forbidden, unauthorized, serverError } from "../lib/response";
 import { requireAdmin } from "../lib/auth";
@@ -415,23 +416,32 @@ export async function validateCouponHandler(event: APIGatewayProxyEventV2) {
   return ok(result);
 }
 
+async function scanCouponsBySource(source: "welcome" | "admin"): Promise<Record<string, unknown>[]> {
+  return collectScanPages(async (startKey) => {
+    const result = await docClient.send(
+      new ScanCommand({
+        TableName: CONFIG_TABLE,
+        FilterExpression: "begins_with(PK, :prefix) AND SK = :sk AND #src = :src",
+        ExpressionAttributeNames: { "#src": "source" },
+        ExpressionAttributeValues: {
+          ":prefix": "COUPON#",
+          ":sk": "META",
+          ":src": source,
+        },
+        ExclusiveStartKey: startKey,
+      })
+    );
+    return {
+      items: (result.Items ?? []) as Record<string, unknown>[],
+      lastKey: result.LastEvaluatedKey as Record<string, unknown> | undefined,
+    };
+  });
+}
+
 export async function listWelcomeCoupons(event: APIGatewayProxyEventV2) {
   if (!requireAdmin(event)) return forbidden();
 
-  const result = await docClient.send(
-    new ScanCommand({
-      TableName: CONFIG_TABLE,
-      FilterExpression: "begins_with(PK, :prefix) AND SK = :sk AND #src = :src",
-      ExpressionAttributeNames: { "#src": "source" },
-      ExpressionAttributeValues: {
-        ":prefix": "COUPON#",
-        ":sk": "META",
-        ":src": "welcome",
-      },
-    })
-  );
-
-  const coupons = ((result.Items ?? []) as WelcomeCoupon[]).sort(
+  const coupons = ((await scanCouponsBySource("welcome")) as WelcomeCoupon[]).sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
 
@@ -573,20 +583,7 @@ export async function createAdminAbandonedCoupon(event: APIGatewayProxyEventV2) 
 export async function listAdminCoupons(event: APIGatewayProxyEventV2) {
   if (!requireAdmin(event)) return forbidden();
 
-  const result = await docClient.send(
-    new ScanCommand({
-      TableName: CONFIG_TABLE,
-      FilterExpression: "begins_with(PK, :prefix) AND SK = :sk AND #src = :src",
-      ExpressionAttributeNames: { "#src": "source" },
-      ExpressionAttributeValues: {
-        ":prefix": "COUPON#",
-        ":sk": "META",
-        ":src": "admin",
-      },
-    })
-  );
-
-  const coupons = ((result.Items ?? []) as StoreCoupon[]).sort(
+  const coupons = ((await scanCouponsBySource("admin")) as StoreCoupon[]).sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
 

@@ -18,8 +18,10 @@ import {
   CONFIG_TABLE,
   EVENTS_TABLE,
 } from "../lib/db";
+import { collectScanPages } from "../lib/collect-scan-pages";
 import { ok, badRequest, forbidden } from "../lib/response";
 import { requireAdmin } from "../lib/auth";
+import { resolveOrderByIdOrNumber } from "../lib/order-numbers";
 
 /**
  * Unified customer profile by email (Section 2).
@@ -109,7 +111,7 @@ export async function adminSearch(event: APIGatewayProxyEventV2) {
   const phoneKey = normalizePhone(q);
   const emailKey = normalizeEmail(q);
 
-  const [ordersRes, leadsRes, cartsRes] = await Promise.all([
+  const [ordersRes, leadsRes, cartsRes, directOrder] = await Promise.all([
     docClient.send(
       new QueryCommand({
         TableName: ORDERS_TABLE,
@@ -140,13 +142,21 @@ export async function adminSearch(event: APIGatewayProxyEventV2) {
         Limit: 100,
       })
     ),
+    resolveOrderByIdOrNumber(event.queryStringParameters?.q ?? "").catch(() => undefined),
   ]);
 
-  const orders = ((ordersRes.Items ?? []) as Order[])
+  const orderItems = (ordersRes.Items ?? []) as Order[];
+  if (directOrder && !orderItems.some((o) => o.orderId === directOrder.orderId)) {
+    orderItems.unshift(directOrder);
+  }
+
+  const orders = orderItems
     .filter((o) => {
       const addr = o.shippingAddress;
       return (
+        o.orderId === directOrder?.orderId ||
         o.orderId.toLowerCase().includes(q) ||
+        (o.orderNumber ?? "").toLowerCase().includes(q) ||
         addr?.name?.toLowerCase().includes(q) ||
         addr?.email?.toLowerCase().includes(q) ||
         (phoneKey && normalizePhone(addr?.phone) === phoneKey) ||
@@ -262,17 +272,26 @@ async function fetchOrdersByEmail(email: string): Promise<Order[]> {
 }
 
 async function fetchLeadsByEmail(email: string) {
-  const res = await docClient.send(
-    new QueryCommand({
-      TableName: CUSTOMERS_TABLE,
-      IndexName: "GSI1",
-      KeyConditionExpression: "GSI1PK = :pk",
-      ExpressionAttributeValues: { ":pk": customerKeys.gsi1pk() },
-      ScanIndexForward: false,
-      Limit: 400,
-    })
-  );
-  return ((res.Items ?? []) as Record<string, unknown>[])
+  const items: Record<string, unknown>[] = [];
+  let lastKey: Record<string, unknown> | undefined;
+  let pages = 0;
+  do {
+    const res = await docClient.send(
+      new QueryCommand({
+        TableName: CUSTOMERS_TABLE,
+        IndexName: "GSI1",
+        KeyConditionExpression: "GSI1PK = :pk",
+        ExpressionAttributeValues: { ":pk": customerKeys.gsi1pk() },
+        ScanIndexForward: false,
+        ExclusiveStartKey: lastKey,
+        Limit: 400,
+      })
+    );
+    items.push(...((res.Items ?? []) as Record<string, unknown>[]));
+    lastKey = res.LastEvaluatedKey as Record<string, unknown> | undefined;
+    pages += 1;
+  } while (lastKey && pages < 15);
+  return items
     .filter((l) => normalizeEmail(l.email as string) === email)
     .map((l) => ({
       leadId: l.leadId as string | undefined,
@@ -290,16 +309,28 @@ async function fetchLeadsByEmail(email: string) {
 }
 
 async function fetchCartsByEmail(email: string) {
-  const res = await docClient.send(
-    new QueryCommand({
-      TableName: CARTS_TABLE,
-      IndexName: "GSI1",
-      KeyConditionExpression: "GSI1PK = :pk",
-      ExpressionAttributeValues: { ":pk": cartKeys.gsi1pk() },
-      ScanIndexForward: false,
-      Limit: 200,
-    })
-  );
+  const candidates: Record<string, unknown>[] = [];
+  let lastKey: Record<string, unknown> | undefined;
+  let pages = 0;
+  do {
+    const res = await docClient.send(
+      new QueryCommand({
+        TableName: CARTS_TABLE,
+        IndexName: "GSI1",
+        KeyConditionExpression: "GSI1PK = :pk",
+        ExpressionAttributeValues: { ":pk": cartKeys.gsi1pk() },
+        ScanIndexForward: false,
+        ExclusiveStartKey: lastKey,
+        Limit: 200,
+      })
+    );
+    for (const item of (res.Items ?? []) as Record<string, unknown>[]) {
+      if (Number(item.itemCount ?? 0) <= 0 && !item.convertedOrderId) continue;
+      candidates.push(item);
+    }
+    lastKey = res.LastEvaluatedKey as Record<string, unknown> | undefined;
+    pages += 1;
+  } while (lastKey && pages < 20 && candidates.length < 250);
 
   const out: {
     sessionId: string;
@@ -316,8 +347,7 @@ async function fetchCartsByEmail(email: string) {
     converted: boolean;
   }[] = [];
 
-  for (const c of (res.Items ?? []) as Record<string, unknown>[]) {
-    if (Number(c.itemCount ?? 0) <= 0 && !c.convertedOrderId) continue;
+  for (const c of candidates) {
     const sid = (c.sessionId as string) ?? (c.userKey as string);
     if (!sid) continue;
     const profile = await docClient.send(
@@ -347,20 +377,27 @@ async function fetchCartsByEmail(email: string) {
 }
 
 async function fetchWelcomeCouponsByEmail(email: string) {
-  const res = await docClient.send(
-    new ScanCommand({
-      TableName: CONFIG_TABLE,
-      FilterExpression: "begins_with(PK, :prefix) AND SK = :sk AND #src = :src AND email = :email",
-      ExpressionAttributeNames: { "#src": "source" },
-      ExpressionAttributeValues: {
-        ":prefix": "COUPON#",
-        ":sk": "META",
-        ":src": "welcome",
-        ":email": email,
-      },
-    })
-  );
-  return ((res.Items ?? []) as Record<string, unknown>[]).map((c) => ({
+  const items = await collectScanPages(async (startKey) => {
+    const res = await docClient.send(
+      new ScanCommand({
+        TableName: CONFIG_TABLE,
+        FilterExpression: "begins_with(PK, :prefix) AND SK = :sk AND #src = :src AND email = :email",
+        ExpressionAttributeNames: { "#src": "source" },
+        ExpressionAttributeValues: {
+          ":prefix": "COUPON#",
+          ":sk": "META",
+          ":src": "welcome",
+          ":email": email,
+        },
+        ExclusiveStartKey: startKey,
+      })
+    );
+    return {
+      items: (res.Items ?? []) as Record<string, unknown>[],
+      lastKey: res.LastEvaluatedKey as Record<string, unknown> | undefined,
+    };
+  });
+  return items.map((c) => ({
     code: c.code as string,
     email: c.email as string,
     discountPercent: c.discountPercent as number,
@@ -383,6 +420,19 @@ async function fetchSessionSummary(sessionId: string) {
     })
   );
   const events = (eventsRes.Items ?? []) as Record<string, unknown>[];
+  let newest = events.length ? events[events.length - 1] : undefined;
+  if (eventsRes.LastEvaluatedKey) {
+    const latestRes = await docClient.send(
+      new QueryCommand({
+        TableName: EVENTS_TABLE,
+        KeyConditionExpression: "PK = :pk",
+        ExpressionAttributeValues: { ":pk": eventKeys.pk(sessionId) },
+        ScanIndexForward: false,
+        Limit: 1,
+      })
+    );
+    newest = (latestRes.Items?.[0] as Record<string, unknown> | undefined) ?? newest;
+  }
   if (events.length === 0) {
     const profile = await docClient.send(
       new GetCommand({
@@ -401,13 +451,13 @@ async function fetchSessionSummary(sessionId: string) {
     };
   }
   const first = events[0];
-  const last = events[events.length - 1];
+  const last = newest ?? events[events.length - 1];
   return {
     sessionId,
-    firstSeen: (first.createdAt as string) ?? (first.at as string) ?? "",
-    lastSeen: (last.createdAt as string) ?? (last.at as string) ?? "",
+    firstSeen: (first?.createdAt as string) ?? (first?.at as string) ?? "",
+    lastSeen: (last?.createdAt as string) ?? (last?.at as string) ?? "",
     eventCount: events.length,
-    landingPage: first.path as string | undefined,
-    exitPage: last.path as string | undefined,
+    landingPage: first?.path as string | undefined,
+    exitPage: last?.path as string | undefined,
   };
 }

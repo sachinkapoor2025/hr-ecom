@@ -31,6 +31,7 @@ import {
   type SesRecipientActivity,
   type MarketingEmailContentInput,
 } from "@hr-ecom/shared";
+import { collectQueryPages, interleaveByKey } from "../lib/collect-scan-pages";
 import { docClient, now, dayBucket } from "../lib/db";
 import { ok, created, badRequest, notFound, forbidden, unauthorized, serverError, badGateway } from "../lib/response";
 import { requireAdmin, getAuth } from "../lib/auth";
@@ -323,17 +324,23 @@ export async function getDashboard(event: APIGatewayProxyEventV2) {
 }
 
 async function listCampaignItems(): Promise<SesCampaign[]> {
-  const res = await docClient.send(
-    new QueryCommand({
-      TableName: TABLE,
-      IndexName: "GSI1",
-      KeyConditionExpression: "GSI1PK = :pk",
-      ExpressionAttributeValues: { ":pk": sesEmailKeys.entityCampaignPk() },
-      ScanIndexForward: false,
-      Limit: 200,
-    })
-  );
-  return (res.Items ?? []) as SesCampaign[];
+  return collectQueryPages(async (startKey) => {
+    const res = await docClient.send(
+      new QueryCommand({
+        TableName: TABLE,
+        IndexName: "GSI1",
+        KeyConditionExpression: "GSI1PK = :pk",
+        ExpressionAttributeValues: { ":pk": sesEmailKeys.entityCampaignPk() },
+        ScanIndexForward: false,
+        ExclusiveStartKey: startKey,
+        Limit: 200,
+      })
+    );
+    return {
+      items: (res.Items ?? []) as SesCampaign[],
+      lastKey: res.LastEvaluatedKey as Record<string, unknown> | undefined,
+    };
+  });
 }
 
 export async function listCampaigns(event: APIGatewayProxyEventV2) {
@@ -741,18 +748,25 @@ function toTemplateResponse(item: Record<string, unknown>): SesTemplate {
 
 export async function listTemplates(event: APIGatewayProxyEventV2) {
   if (!requireAdmin(event)) return unauthorized("Admin access required");
-  const res = await docClient.send(
-    new QueryCommand({
-      TableName: TABLE,
-      IndexName: "GSI1",
-      KeyConditionExpression: "GSI1PK = :pk",
-      ExpressionAttributeValues: { ":pk": sesEmailKeys.entityTemplatePk() },
-      ScanIndexForward: false,
-      Limit: 100,
-    })
-  );
+  const items = await collectQueryPages(async (startKey) => {
+    const res = await docClient.send(
+      new QueryCommand({
+        TableName: TABLE,
+        IndexName: "GSI1",
+        KeyConditionExpression: "GSI1PK = :pk",
+        ExpressionAttributeValues: { ":pk": sesEmailKeys.entityTemplatePk() },
+        ScanIndexForward: false,
+        ExclusiveStartKey: startKey,
+        Limit: 100,
+      })
+    );
+    return {
+      items: (res.Items ?? []) as Record<string, unknown>[],
+      lastKey: res.LastEvaluatedKey as Record<string, unknown> | undefined,
+    };
+  });
   return ok({
-    templates: (res.Items ?? []).map((item) => toTemplateResponse(item as Record<string, unknown>)),
+    templates: items.map((item) => toTemplateResponse(item)),
   });
 }
 
@@ -944,17 +958,24 @@ export async function updateSettings(event: APIGatewayProxyEventV2) {
 
 export async function listSuppression(event: APIGatewayProxyEventV2) {
   if (!requireAdmin(event)) return unauthorized("Admin access required");
-  const res = await docClient.send(
-    new QueryCommand({
-      TableName: TABLE,
-      IndexName: "GSI1",
-      KeyConditionExpression: "GSI1PK = :pk",
-      ExpressionAttributeValues: { ":pk": sesEmailKeys.entitySuppressPk() },
-      ScanIndexForward: false,
-      Limit: 500,
-    })
-  );
-  return ok({ items: res.Items ?? [] });
+  const items = await collectQueryPages(async (startKey) => {
+    const res = await docClient.send(
+      new QueryCommand({
+        TableName: TABLE,
+        IndexName: "GSI1",
+        KeyConditionExpression: "GSI1PK = :pk",
+        ExpressionAttributeValues: { ":pk": sesEmailKeys.entitySuppressPk() },
+        ScanIndexForward: false,
+        ExclusiveStartKey: startKey,
+        Limit: 500,
+      })
+    );
+    return {
+      items: res.Items ?? [],
+      lastKey: res.LastEvaluatedKey as Record<string, unknown> | undefined,
+    };
+  }, 20);
+  return ok({ items });
 }
 
 export async function addSuppression(event: APIGatewayProxyEventV2) {
@@ -996,7 +1017,45 @@ export async function removeSuppression(event: APIGatewayProxyEventV2) {
 
 export async function listQueue(event: APIGatewayProxyEventV2) {
   if (!requireAdmin(event)) return unauthorized("Admin access required");
-  const res = await docClient.send(
+  const campaigns = await listCampaignItems();
+  const active = campaigns.filter((c) =>
+    ["preparing", "sending", "paused", "scheduled"].includes(c.status)
+  );
+
+  // Pending index sort key is campaignId#email, so a single Limit page is an
+  // alphabetical slice and can omit an entire new campaign. Read each active
+  // campaign's own queue, then interleave so every campaign appears in the sample.
+  const grouped: { email: string; campaignId: string; status?: string }[] = [];
+  const seen = new Set<string>();
+  const pushPending = (row: { email: string; campaignId: string; status?: string }) => {
+    const key = `${row.campaignId}#${row.email}`;
+    if (!row.email || seen.has(key)) return;
+    seen.add(key);
+    grouped.push(row);
+  };
+
+  for (const campaign of active) {
+    const page = await docClient.send(
+      new QueryCommand({
+        TableName: TABLE,
+        KeyConditionExpression: "PK = :pk AND begins_with(SK, :sk)",
+        ExpressionAttributeValues: {
+          ":pk": sesEmailKeys.campaignPk(campaign.campaignId),
+          ":sk": "QUEUE#",
+        },
+        Limit: 40,
+      })
+    );
+    for (const item of page.Items ?? []) {
+      pushPending({
+        email: String(item.email ?? ""),
+        campaignId: campaign.campaignId,
+        status: item.status ? String(item.status) : undefined,
+      });
+    }
+  }
+
+  const indexPage = await docClient.send(
     new QueryCommand({
       TableName: TABLE,
       IndexName: "GSI1",
@@ -1005,11 +1064,16 @@ export async function listQueue(event: APIGatewayProxyEventV2) {
       Limit: 200,
     })
   );
-  const campaigns = await listCampaignItems();
-  const active = campaigns.filter((c) =>
-    ["preparing", "sending", "paused", "scheduled"].includes(c.status)
-  );
-  return ok({ pending: res.Items ?? [], activeCampaigns: active });
+  for (const item of indexPage.Items ?? []) {
+    pushPending({
+      email: String(item.email ?? ""),
+      campaignId: String(item.campaignId ?? ""),
+      status: item.status ? String(item.status) : undefined,
+    });
+  }
+
+  const pending = interleaveByKey(grouped, (row) => row.campaignId, 200);
+  return ok({ pending, activeCampaigns: active });
 }
 
 export async function getAnalytics(event: APIGatewayProxyEventV2) {
@@ -1029,14 +1093,18 @@ export async function getAnalytics(event: APIGatewayProxyEventV2) {
     },
     { queued: 0, sent: 0, delivered: 0, failed: 0, bounced: 0, complaints: 0, opens: 0, clicks: 0 }
   );
-  const byDay = campaigns.slice(0, 30).map((c) => ({
-    name: c.name,
-    sent: c.sentCount,
-    opens: c.openCount,
-    clicks: c.clickCount,
-    failed: c.failedCount,
-  }));
-  return ok({ totals, byCampaign: byDay, campaigns: campaigns.slice(0, 50) });
+  const byDay = campaigns
+    .filter(
+      (c) => c.sentCount || c.openCount || c.clickCount || c.failedCount || c.queuedCount
+    )
+    .map((c) => ({
+      name: c.name,
+      sent: c.sentCount,
+      opens: c.openCount,
+      clicks: c.clickCount,
+      failed: c.failedCount,
+    }));
+  return ok({ totals, byCampaign: byDay, campaigns });
 }
 
 async function loadRecentOrderEmails(maxOrders = 1500): Promise<Map<string, string>> {
@@ -1101,58 +1169,85 @@ export async function listAnalyticsRecipients(event: APIGatewayProxyEventV2) {
   const nameById = new Map(campaigns.map((c) => [c.campaignId, c.name]));
   const orderEmails = await loadRecentOrderEmails();
 
-  const campaignIds = campaignId
-    ? [campaignId]
-    : campaigns.slice(0, 25).map((c) => c.campaignId);
+  const campaignIds = campaignId ? [campaignId] : campaigns.map((c) => c.campaignId);
 
   const rows: SesRecipientActivity[] = [];
   let nextCursor: string | undefined;
+  let pagesRead = 0;
 
   for (const id of campaignIds) {
-    if (rows.length >= limit) break;
-    const page = await docClient.send(
-      new QueryCommand({
-        TableName: TABLE,
-        KeyConditionExpression: "PK = :pk AND begins_with(SK, :sk)",
-        ExpressionAttributeValues: {
-          ":pk": sesEmailKeys.campaignPk(id),
-          ":sk": "RECIPIENT#",
-        },
-        ExclusiveStartKey: campaignId ? exclusiveStartKey : undefined,
-        Limit: limit - rows.length + 10,
-      })
-    );
+    if (rows.length >= limit || pagesRead >= 40) break;
+    let startKey = campaignId ? exclusiveStartKey : undefined;
+    let addedForCampaign = 0;
+    const perCampaignCap = campaignId ? limit : 10;
+    do {
+      const page = await docClient.send(
+        new QueryCommand({
+          TableName: TABLE,
+          KeyConditionExpression: "PK = :pk AND begins_with(SK, :sk)",
+          ExpressionAttributeValues: {
+            ":pk": sesEmailKeys.campaignPk(id),
+            ":sk": "RECIPIENT#",
+          },
+          ExclusiveStartKey: startKey,
+          Limit: 100,
+        })
+      );
+      pagesRead += 1;
+      const pageItems = page.Items ?? [];
+      let resumeAfter: Record<string, unknown> | undefined;
+      const addedBeforePage = addedForCampaign;
 
-    for (const item of page.Items ?? []) {
-      const email = String(item.email ?? "").toLowerCase();
-      if (!email) continue;
-      const status = String(item.status ?? "ready");
-      if (statusFilter && status !== statusFilter) continue;
-      const clickedAt = item.clickedAt ? String(item.clickedAt) : undefined;
-      const orderId = orderEmails.get(email);
-      rows.push({
-        email,
-        name: item.name ? String(item.name) : undefined,
-        campaignId: id,
-        campaignName: nameById.get(id),
-        status,
-        sentAt: item.sentAt ? String(item.sentAt) : undefined,
-        deliveredAt: item.deliveredAt ? String(item.deliveredAt) : undefined,
-        openedAt: item.openedAt ? String(item.openedAt) : undefined,
-        clickedAt,
-        bouncedAt: item.bouncedAt ? String(item.bouncedAt) : undefined,
-        failedAt: item.failedAt ? String(item.failedAt) : undefined,
-        lastError: item.lastError ? String(item.lastError) : undefined,
-        visitedSite: Boolean(clickedAt),
-        placedOrder: Boolean(orderId),
-        orderId,
-      });
-      if (rows.length >= limit) break;
-    }
+      for (const item of pageItems) {
+        if (item.PK && item.SK) resumeAfter = { PK: item.PK, SK: item.SK };
+        const email = String(item.email ?? "").toLowerCase();
+        if (!email) continue;
+        const status = String(item.status ?? "ready");
+        if (statusFilter && status !== statusFilter) continue;
+        const clickedAt = item.clickedAt ? String(item.clickedAt) : undefined;
+        const orderId = orderEmails.get(email);
+        rows.push({
+          email,
+          name: item.name ? String(item.name) : undefined,
+          campaignId: id,
+          campaignName: nameById.get(id),
+          status,
+          sentAt: item.sentAt ? String(item.sentAt) : undefined,
+          deliveredAt: item.deliveredAt ? String(item.deliveredAt) : undefined,
+          openedAt: item.openedAt ? String(item.openedAt) : undefined,
+          clickedAt,
+          bouncedAt: item.bouncedAt ? String(item.bouncedAt) : undefined,
+          failedAt: item.failedAt ? String(item.failedAt) : undefined,
+          lastError: item.lastError ? String(item.lastError) : undefined,
+          visitedSite: Boolean(clickedAt),
+          placedOrder: Boolean(orderId),
+          orderId,
+        });
+        addedForCampaign += 1;
+        if (rows.length >= limit || addedForCampaign >= perCampaignCap) break;
+      }
 
-    if (campaignId && page.LastEvaluatedKey) {
-      nextCursor = Buffer.from(JSON.stringify(page.LastEvaluatedKey), "utf8").toString("base64url");
-    }
+      const lastOnPage = pageItems[pageItems.length - 1];
+      const stoppedMidPage = Boolean(
+        (rows.length >= limit || addedForCampaign >= perCampaignCap) &&
+          resumeAfter &&
+          lastOnPage &&
+          resumeAfter.SK !== lastOnPage.SK
+      );
+      startKey = (stoppedMidPage ? resumeAfter : page.LastEvaluatedKey) as
+        | Record<string, unknown>
+        | undefined;
+      if (campaignId && (rows.length >= limit || addedForCampaign >= perCampaignCap) && startKey) {
+        nextCursor = Buffer.from(JSON.stringify(startKey), "utf8").toString("base64url");
+      }
+      // A status filter can miss every address on the first alphabetical page.
+      // Keep reading that campaign until a match shows up, then move on.
+      const keepLooking =
+        !campaignId && addedForCampaign === 0 && addedBeforePage === 0 && Boolean(startKey);
+      if (!keepLooking && !campaignId) break;
+    } while (startKey && rows.length < limit && addedForCampaign < perCampaignCap && pagesRead < 40);
+
+    if (campaignId) break;
   }
 
   return ok({
@@ -1664,16 +1759,23 @@ export async function processSesEmailJobs() {
   }
 
   // Mark completed when queue empty
-  const sending = await docClient.send(
-    new QueryCommand({
-      TableName: TABLE,
-      IndexName: "GSI2",
-      KeyConditionExpression: "GSI2PK = :pk",
-      ExpressionAttributeValues: { ":pk": sesEmailKeys.statusPk("sending") },
-      Limit: 50,
-    })
-  );
-  for (const item of sending.Items ?? []) {
+  const sendingItems = await collectQueryPages(async (startKey) => {
+    const sending = await docClient.send(
+      new QueryCommand({
+        TableName: TABLE,
+        IndexName: "GSI2",
+        KeyConditionExpression: "GSI2PK = :pk",
+        ExpressionAttributeValues: { ":pk": sesEmailKeys.statusPk("sending") },
+        ExclusiveStartKey: startKey,
+        Limit: 50,
+      })
+    );
+    return {
+      items: (sending.Items ?? []) as SesCampaign[],
+      lastKey: sending.LastEvaluatedKey as Record<string, unknown> | undefined,
+    };
+  }, 20);
+  for (const item of sendingItems) {
     const campaign = item as SesCampaign;
     const q = await docClient.send(
       new QueryCommand({
