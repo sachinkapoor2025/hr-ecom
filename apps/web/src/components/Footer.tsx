@@ -63,43 +63,32 @@ function FooterFloralCorner({ className }: { className: string }) {
   );
 }
 
-/** Diya, marigolds, gift box, and petals along the bottom edge. */
-function FooterFestiveDecor() {
+/** Corner art only. Sits beside the bottom row so it does not cover copy. */
+function FooterCornerArt({ side, className = "" }: { side: "left" | "right"; className?: string }) {
+  const isLeft = side === "left";
   return (
-    <div className="pointer-events-none relative h-28 overflow-hidden sm:h-40 lg:h-44" aria-hidden>
-      <img
-        src="/footer/diya-left.png"
-        alt=""
-        className="absolute bottom-0 left-0 h-24 w-auto sm:h-36 lg:h-40"
-      />
-      <img
-        src="/footer/gift-right.png"
-        alt=""
-        className="absolute bottom-0 right-16 h-28 w-auto sm:right-20 sm:h-40 lg:h-44"
-      />
-      <span className="absolute bottom-3 left-[38%] h-2 w-3.5 -rotate-12 rounded-full bg-[#f3a0ad]" />
-      <span className="absolute bottom-6 left-[46%] h-1.5 w-3 rotate-[24deg] rounded-full bg-[#f6b15a] opacity-80" />
-      <span className="absolute bottom-2 left-[54%] h-2 w-3 rotate-[40deg] rounded-full bg-[#e98b98]" />
-      <span className="absolute bottom-5 right-[34%] hidden h-2 w-3 -rotate-6 rounded-full bg-[#f3a0ad] sm:block" />
-    </div>
+    <img
+      src={isLeft ? "/footer/diya-left.png" : "/footer/gift-right.png"}
+      alt=""
+      className={`pointer-events-none w-auto shrink-0 ${
+        isLeft ? "h-16 max-w-[42%] lg:h-20" : "h-[4.5rem] max-w-[46%] lg:mr-14 lg:h-24"
+      } ${className}`}
+    />
   );
 }
 
 export function Footer() {
   return (
     <footer
-      className="relative mt-auto overflow-hidden border-t border-[#f0d4cc] text-primary"
-      style={{
-        background:
-          "radial-gradient(560px 260px at 0% 0%, rgba(255,150,150,0.35), transparent 70%), radial-gradient(560px 260px at 100% 0%, rgba(255,150,150,0.3), transparent 70%), linear-gradient(180deg, #ffe8e3 0%, #ffd5cc 100%)",
-      }}
+      className="relative mt-auto overflow-hidden border-t border-[#e6dcc8] text-primary"
+      style={{ background: "linear-gradient(180deg, #fbf8f3 0%, #f6f1e8 100%)" }}
     >
-      <FooterFloralCorner className="pointer-events-none absolute -left-2 top-0 z-0 h-28 w-44 text-[#d98996] opacity-80 sm:h-36 sm:w-56" />
-      <FooterFloralCorner className="pointer-events-none absolute -right-2 top-0 z-0 h-28 w-44 -scale-x-100 text-[#d98996] opacity-80 sm:h-36 sm:w-56" />
-      <div className="relative z-10 max-w-7xl mx-auto px-4 py-10 sm:py-12">
-        <div className="grid grid-cols-2 lg:grid-cols-12 gap-x-6 gap-y-8 sm:gap-x-8 sm:gap-y-10 text-sm">
+      <FooterFloralCorner className="pointer-events-none absolute -left-2 top-0 z-0 h-20 w-32 text-[#c4a094] opacity-50 sm:h-24 sm:w-40" />
+      <FooterFloralCorner className="pointer-events-none absolute -right-2 top-0 z-0 h-20 w-32 -scale-x-100 text-[#c4a094] opacity-50 sm:h-24 sm:w-40" />
+      <div className="relative z-10 max-w-7xl mx-auto px-4 pt-8 pb-2 sm:pt-9">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-6 text-sm lg:grid-cols-12 lg:gap-0 lg:divide-x lg:divide-[#e4d8c8]">
           {/* Brand + contact — full width on mobile, one column on desktop */}
-          <div className="col-span-2 lg:col-span-3">
+          <div className="col-span-2 lg:col-span-3 lg:pr-6">
             <SiteLogoLink size="desktop" className="mb-5" />
             <p className="text-slate-600 leading-relaxed mb-4 max-w-xs">
               Diwali and Bhai Dooj gift hampers delivered across the United States.
@@ -159,7 +148,7 @@ export function Footer() {
           </div>
 
           {/* Shop */}
-          <div className="min-w-0 lg:col-span-2">
+          <div className="min-w-0 lg:col-span-2 lg:px-6">
             <p className="font-semibold text-primary mb-3 sm:mb-4">Shop</p>
             <ul className="space-y-2 text-slate-600">
               {SHOW_RAKHI_SEASON_FOOTER_LINKS &&
@@ -188,7 +177,7 @@ export function Footer() {
           </div>
 
           {/* Help */}
-          <div className="min-w-0 lg:col-span-2">
+          <div className="min-w-0 lg:col-span-2 lg:px-6">
             <p className="font-semibold text-primary mb-3 sm:mb-4">Help &amp; Info</p>
             <ul className="space-y-2 text-slate-600">
               {SHOW_RAKHI_SEASON_FOOTER_LINKS && (
@@ -221,7 +210,7 @@ export function Footer() {
           </div>
 
           {/* Cities — 3 columns so footer height stays balanced */}
-          <div className="col-span-2 lg:col-span-5 min-w-0">
+          <div className="col-span-2 lg:col-span-5 min-w-0 lg:pl-6">
             <p className="font-semibold text-primary mb-3 sm:mb-4">Deliver to</p>
             <ul className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2 text-slate-600">
               {usCityLinks.map((c) => (
@@ -235,54 +224,57 @@ export function Footer() {
           </div>
         </div>
 
-        {/* Payments row */}
-        <div className="mt-10 pt-8 border-t border-[#f0d4cc] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <p className="text-xs uppercase tracking-wide text-slate-500 mb-2">Accepted payments</p>
-            <PaymentMethodIcons />
+        {/* Payments, company line, and copyright — one compact band */}
+        <div className="mt-6 border-t border-[#e6dcc8] pt-4 flex flex-col gap-3 text-xs text-slate-500 lg:flex-row lg:items-end lg:gap-4">
+          <FooterCornerArt side="left" className="hidden lg:block" />
+          <div className="min-w-0 flex-1 space-y-2 lg:py-1">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-slate-500 mb-2">Accepted payments</p>
+                <PaymentMethodIcons />
+              </div>
+              <p className="text-xs text-slate-500 max-w-md lg:text-right">
+                Secure checkout with encrypted payment processing. Prices shown in USD or INR at checkout.
+              </p>
+            </div>
+            <p>
+              Operated by {trustFacts.operator}.{" "}
+              <Link href="/about" className="text-slate-700 hover:text-primary underline underline-offset-2">
+                About our team
+              </Link>
+              {" · "}
+              <Link href="/reviews" className="text-slate-700 hover:text-primary underline underline-offset-2">
+                Share your review
+              </Link>
+              {" · "}
+              <Link href="/returns" className="text-slate-700 hover:text-primary underline underline-offset-2">
+                Satisfaction guarantee
+              </Link>
+            </p>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <p>
+                © {new Date().getFullYear()} {site.name}.com. All rights reserved. Celebrating sibling love across
+                every mile.
+              </p>
+              <p className="flex flex-wrap gap-x-3 gap-y-1">
+                <Link href="/terms" className="hover:text-primary underline underline-offset-2">
+                  Terms and Conditions
+                </Link>
+                <Link href="/privacy" className="hover:text-primary underline underline-offset-2">
+                  Privacy
+                </Link>
+                <Link href="/press" className="hover:text-primary underline underline-offset-2">
+                  Press
+                </Link>
+              </p>
+            </div>
           </div>
-          <p className="text-xs text-slate-500 max-w-md">
-            Secure checkout with encrypted payment processing. Prices shown in USD or INR at checkout.
-          </p>
+          <FooterCornerArt side="right" className="hidden lg:block" />
         </div>
       </div>
-
-      {/* Bottom bar */}
-      <div className="relative z-10 border-t border-[#f0d4cc]">
-        <div className="max-w-7xl mx-auto py-5 pl-4 pr-16 sm:pr-20 flex flex-col gap-3 text-xs text-slate-500">
-          <p className="text-center sm:text-left">
-            Operated by {trustFacts.operator}.{" "}
-            <Link href="/about" className="text-slate-700 hover:text-primary underline underline-offset-2">
-              About our team
-            </Link>
-            {" · "}
-            <Link href="/reviews" className="text-slate-700 hover:text-primary underline underline-offset-2">
-              Share your review
-            </Link>
-            {" · "}
-            <Link href="/returns" className="text-slate-700 hover:text-primary underline underline-offset-2">
-              Satisfaction guarantee
-            </Link>
-          </p>
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <p>
-              © {new Date().getFullYear()} {site.name}.com. All rights reserved. Celebrating sibling love across
-              every mile.
-            </p>
-            <p className="flex flex-wrap gap-x-3 gap-y-1">
-              <Link href="/terms" className="hover:text-primary underline underline-offset-2">
-                Terms and Conditions
-              </Link>
-              <Link href="/privacy" className="hover:text-primary underline underline-offset-2">
-                Privacy
-              </Link>
-              <Link href="/press" className="hover:text-primary underline underline-offset-2">
-                Press
-              </Link>
-            </p>
-          </div>
-        </div>
-        <FooterFestiveDecor />
+      <div className="relative z-0 flex items-end justify-between pl-2 pr-20 lg:hidden" aria-hidden>
+        <FooterCornerArt side="left" />
+        <FooterCornerArt side="right" />
       </div>
     </footer>
   );
