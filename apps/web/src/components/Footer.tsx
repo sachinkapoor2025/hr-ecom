@@ -18,79 +18,84 @@ function shopRakhiFooterLabel(label: string): string {
   return /to\s+usa$/i.test(label.trim()) ? label : `${label} to USA`;
 }
 
-/** Soft corner ornaments for the cream footer. Decorative only — no links or copy. */
+/** Faint corner line florals. Decorative only — no links or copy. */
+function FooterFloralCorner({ className }: { className: string }) {
+  return (
+    <svg className={className} viewBox="0 0 220 150" fill="none" aria-hidden>
+      <path
+        d="M18 28c18 8 28 22 30 40M28 36c14 2 26 12 32 28"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M46 18c8 14 8 28 2 42"
+        stroke="currentColor"
+        strokeWidth="1.1"
+        strokeLinecap="round"
+      />
+      <circle cx="34" cy="22" r="7" stroke="currentColor" strokeWidth="1.1" />
+      <circle cx="34" cy="22" r="2.2" fill="currentColor" />
+      <path
+        d="M62 14c10 6 16 16 16 28"
+        stroke="currentColor"
+        strokeWidth="1.1"
+        strokeLinecap="round"
+      />
+      <circle cx="78" cy="16" r="6" stroke="currentColor" strokeWidth="1.1" />
+      <path
+        d="M8 58c16 4 28 16 34 32"
+        stroke="currentColor"
+        strokeWidth="1.1"
+        strokeLinecap="round"
+      />
+      <ellipse cx="14" cy="70" rx="8" ry="4" transform="rotate(-35 14 70)" stroke="currentColor" strokeWidth="1" />
+      <ellipse cx="70" cy="48" rx="9" ry="4.5" transform="rotate(28 70 48)" stroke="currentColor" strokeWidth="1" />
+      <path
+        d="M88 40c12 10 16 24 12 40"
+        stroke="currentColor"
+        strokeWidth="1"
+        strokeLinecap="round"
+        opacity="0.8"
+      />
+      <circle cx="104" cy="36" r="5.5" stroke="currentColor" strokeWidth="1" />
+    </svg>
+  );
+}
+
+/** Diya, marigolds, gift box, and petals along the bottom edge. */
 function FooterFestiveDecor() {
   return (
-    <div className="pointer-events-none relative h-24 overflow-hidden sm:h-28" aria-hidden>
-      <svg
-        className="absolute bottom-1 left-0 h-[4.5rem] w-28 sm:h-24 sm:w-44 md:w-56"
-        viewBox="0 0 230 132"
-        fill="none"
-      >
-        <ellipse cx="70" cy="112" rx="68" ry="10" fill="#E7C99A" opacity="0.45" />
-        <ellipse cx="24" cy="34" rx="9" ry="5" fill="#E8A598" transform="rotate(-28 24 34)" />
-        <ellipse cx="48" cy="18" rx="7" ry="4" fill="#F2C14E" transform="rotate(18 48 18)" />
-        <ellipse cx="16" cy="58" rx="6" ry="3.5" fill="#F0B07A" transform="rotate(-55 16 58)" />
-        <ellipse cx="78" cy="36" rx="5.5" ry="3" fill="#E7A0B4" transform="rotate(42 78 36)" opacity="0.9" />
-        <ellipse cx="40" cy="104" rx="16" ry="5.5" fill="#6B8F5A" transform="rotate(-32 40 104)" />
-        <ellipse cx="28" cy="108" rx="11" ry="4" fill="#7D9A62" transform="rotate(18 28 108)" />
-        <g transform="translate(62,88)">
-          <ellipse rx="20" ry="8" fill="#F0A03A" />
-          <ellipse rx="20" ry="8" fill="#E8922A" transform="rotate(45)" />
-          <ellipse rx="20" ry="8" fill="#F0A03A" transform="rotate(90)" />
-          <ellipse rx="20" ry="8" fill="#E8922A" transform="rotate(135)" />
-          <circle r="7.5" fill="#C45C16" />
-          <circle r="3" fill="#F8D48A" />
-        </g>
-        <path
-          d="M108 96c8-24 28-36 52-36s44 12 52 36c-16 10-34 15-52 15s-36-5-52-15z"
-          fill="#C4784A"
-        />
-        <path
-          d="M122 93c6-15 20-23 38-23s32 8 38 23c-12 6-25 9-38 9s-26-3-38-9z"
-          fill="#E8A56B"
-        />
-        <ellipse cx="160" cy="90" rx="20" ry="5.5" fill="#F6D7A8" opacity="0.8" />
-        <rect x="158.2" y="58" width="3.4" height="14" rx="1.2" fill="#6B3A22" />
-        <path d="M160 30c9 11 11 22 0 34-11-12-9-23 0-34z" fill="#F6C445" />
-        <path d="M160 42c4.5 5.5 5.5 11 0 17-5.5-6-4.5-11.5 0-17z" fill="#F08A2A" />
-        <path d="M160 48c2 2.5 2.4 5 0 8-2.4-3-2-5.5 0-8z" fill="#FFF6D0" />
-      </svg>
-      <svg
-        className="absolute bottom-1 right-20 h-[4.5rem] w-28 sm:right-16 sm:h-24 sm:w-44 md:w-56"
-        viewBox="0 0 230 132"
-        fill="none"
-      >
-        <ellipse cx="160" cy="112" rx="68" ry="10" fill="#E7C99A" opacity="0.4" />
-        <ellipse cx="196" cy="30" rx="9" ry="5" fill="#F2C14E" transform="rotate(24 196 30)" />
-        <ellipse cx="214" cy="52" rx="7" ry="4" fill="#E8A598" transform="rotate(-36 214 52)" />
-        <ellipse cx="174" cy="18" rx="6" ry="3.5" fill="#E7A0B4" transform="rotate(48 174 18)" />
-        <ellipse cx="48" cy="102" rx="14" ry="5" fill="#6B8F5A" transform="rotate(28 48 102)" />
-        <g transform="translate(62,90)">
-          <ellipse rx="16" ry="6.5" fill="#F0A03A" />
-          <ellipse rx="16" ry="6.5" fill="#E8922A" transform="rotate(45)" />
-          <ellipse rx="16" ry="6.5" fill="#F0A03A" transform="rotate(90)" />
-          <ellipse rx="16" ry="6.5" fill="#E8922A" transform="rotate(135)" />
-          <circle r="6" fill="#C45C16" />
-          <circle r="2.4" fill="#F8D48A" />
-        </g>
-        <g transform="translate(108,34)">
-          <rect x="2" y="28" width="78" height="50" rx="5" fill="#F6E3B4" stroke="#E0B15A" strokeWidth="1.4" />
-          <path d="M0 28h82l-6-14H8L0 28z" fill="#E8C98A" />
-          <rect x="35" y="14" width="11" height="64" fill="#9B3D4A" />
-          <rect x="2" y="48" width="78" height="9" fill="#9B3D4A" />
-          <path d="M40.5 16c-10-16-26-8-16 4 5 4 12 2 16-4z" fill="#B84A58" />
-          <path d="M40.5 16c10-16 26-8 16 4-5 4-12 2-16-4z" fill="#9B3D4A" />
-          <circle cx="40.5" cy="18" r="4.5" fill="#E0B15A" />
-        </g>
-      </svg>
+    <div className="pointer-events-none relative h-28 overflow-hidden sm:h-40 lg:h-44" aria-hidden>
+      <img
+        src="/footer/diya-left.png"
+        alt=""
+        className="absolute bottom-0 left-0 h-24 w-auto sm:h-36 lg:h-40"
+      />
+      <img
+        src="/footer/gift-right.png"
+        alt=""
+        className="absolute bottom-0 right-16 h-28 w-auto sm:right-20 sm:h-40 lg:h-44"
+      />
+      <span className="absolute bottom-3 left-[38%] h-2 w-3.5 -rotate-12 rounded-full bg-[#f3a0ad]" />
+      <span className="absolute bottom-6 left-[46%] h-1.5 w-3 rotate-[24deg] rounded-full bg-[#f6b15a] opacity-80" />
+      <span className="absolute bottom-2 left-[54%] h-2 w-3 rotate-[40deg] rounded-full bg-[#e98b98]" />
+      <span className="absolute bottom-5 right-[34%] hidden h-2 w-3 -rotate-6 rounded-full bg-[#f3a0ad] sm:block" />
     </div>
   );
 }
 
 export function Footer() {
   return (
-    <footer className="relative mt-auto overflow-hidden border-t border-[#E6D7C3] bg-[#FBF6EE] text-primary">
+    <footer
+      className="relative mt-auto overflow-hidden border-t border-[#f0d4cc] text-primary"
+      style={{
+        background:
+          "radial-gradient(560px 260px at 0% 0%, rgba(255,150,150,0.35), transparent 70%), radial-gradient(560px 260px at 100% 0%, rgba(255,150,150,0.3), transparent 70%), linear-gradient(180deg, #ffe8e3 0%, #ffd5cc 100%)",
+      }}
+    >
+      <FooterFloralCorner className="pointer-events-none absolute -left-2 top-0 z-0 h-28 w-44 text-[#d98996] opacity-80 sm:h-36 sm:w-56" />
+      <FooterFloralCorner className="pointer-events-none absolute -right-2 top-0 z-0 h-28 w-44 -scale-x-100 text-[#d98996] opacity-80 sm:h-36 sm:w-56" />
       <div className="relative z-10 max-w-7xl mx-auto px-4 py-10 sm:py-12">
         <div className="grid grid-cols-2 lg:grid-cols-12 gap-x-6 gap-y-8 sm:gap-x-8 sm:gap-y-10 text-sm">
           {/* Brand + contact — full width on mobile, one column on desktop */}
@@ -231,7 +236,7 @@ export function Footer() {
         </div>
 
         {/* Payments row */}
-        <div className="mt-10 pt-8 border-t border-[#E6D7C3] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="mt-10 pt-8 border-t border-[#f0d4cc] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-wide text-slate-500 mb-2">Accepted payments</p>
             <PaymentMethodIcons />
@@ -243,7 +248,7 @@ export function Footer() {
       </div>
 
       {/* Bottom bar */}
-      <div className="border-t border-[#E6D7C3] bg-[#F4EBDD]">
+      <div className="relative z-10 border-t border-[#f0d4cc]">
         <div className="max-w-7xl mx-auto py-5 pl-4 pr-16 sm:pr-20 flex flex-col gap-3 text-xs text-slate-500">
           <p className="text-center sm:text-left">
             Operated by {trustFacts.operator}.{" "}
