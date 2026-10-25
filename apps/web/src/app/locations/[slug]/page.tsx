@@ -205,7 +205,7 @@ export default async function SeoLocationPage({ params }: Props) {
         <h1 className="text-3xl font-bold text-primary mb-2">
           Send Diwali and Bhai Dooj Gifts to {cityContent.label}, USA
         </h1>
-        <p className="text-slate-600 mb-8 max-w-3xl">
+        <p className="text-slate-600 mb-8">
           {cityContent.metaExtra ??
             `Diwali gift combos and Bhai Dooj gifts for ${cityContent.label}. Domestic USA shipping for sweets, chocolates, and dry fruit hampers.`}
         </p>
@@ -242,7 +242,7 @@ export default async function SeoLocationPage({ params }: Props) {
         <h1 className="text-3xl font-bold text-primary mb-2">
           Send Diwali and Bhai Dooj Gifts to {place}
         </h1>
-        <p className="text-slate-600 mb-8 max-w-3xl">
+        <p className="text-slate-600 mb-8">
           {secondaryCityIntro(secondary.slug, secondary.name, secondary.state)}
         </p>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
@@ -286,7 +286,7 @@ export default async function SeoLocationPage({ params }: Props) {
       <h1 className="text-3xl font-bold text-primary mb-2">
         Send Diwali and Bhai Dooj Gifts to {place}
       </h1>
-      <p className="text-slate-600 mb-8 max-w-3xl">
+      <p className="text-slate-600 mb-8">
         Send Diwali gift combos, Bhai Dooj gifts, sweets, chocolates, and dry fruit hampers to {place}{" "}
         with {site.name}. Domestic USA shipping and secure checkout.
       </p>

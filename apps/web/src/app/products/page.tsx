@@ -149,7 +149,7 @@ export default async function ProductsPage({ searchParams }: Props) {
       : "Shop festive gifts";
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-10">
+    <div className="max-w-7xl mx-auto px-4 py-10">
       {search ? <SearchTracker query={search} resultCount={products.length} /> : null}
       <Breadcrumbs
         items={[
@@ -161,7 +161,7 @@ export default async function ProductsPage({ searchParams }: Props) {
         <h1 className="text-3xl font-bold text-primary">{h1}</h1>
       </div>
       {!search && !category && (
-        <p className="text-slate-600 mb-8 max-w-2xl">
+        <p className="text-slate-600 mb-8">
           Diwali and Bhai Dooj gift hampers — sweets, dry fruits, chocolates, and pooja sets, shipped within
           the United States.
         </p>
@@ -214,7 +214,7 @@ export default async function ProductsPage({ searchParams }: Props) {
       )}
 
       {showGrouped ? (
-        <section className="mt-12 pt-10 border-t border-slate-200 max-w-3xl text-slate-700 leading-relaxed">
+        <section className="mt-12 pt-10 border-t border-slate-200 text-slate-700 leading-relaxed">
           <h2 className="text-xl font-bold text-primary mb-3">How to choose a Diwali or Bhai Dooj hamper</h2>
           <p className="mb-4">
             This shop lists ready-to-gift hampers for two festivals. Bhai Dooj combos are boxes for a brother:

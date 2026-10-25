@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { categoryHref } from "@/lib/category-urls";
+import { applyInlineLinks, createInlineLinkBudget } from "@/lib/inline-links";
 import { HomeHero } from "@/components/HomeHero";
 import { CategoryShopIcons } from "@/components/CategoryShopIcons";
 import { GoogleReviews } from "@/components/GoogleReviews";
@@ -70,6 +71,12 @@ export default async function HomePage() {
     products: pickHomeCategoryProducts(products, slug),
   }));
   const googleReviews = await getGoogleReviews();
+  const faqLinkBudget = createInlineLinkBudget(3);
+  const faqLinks = [
+    { phrase: "traditional pooja gift sets", href: categoryHref("pooja-sets") },
+    { phrase: "Bhai Dooj gift collection", href: categoryHref("bhai-dooj") },
+    { phrase: "shipping policy", href: "/shipping" },
+  ];
   const flashCombo = isFlashComboSaleActive()
     ? products.find((p) => p.slug === FLASH_COMBO_SALE_SLUG && p.published !== false) ??
       getCatalogProduct(FLASH_COMBO_SALE_SLUG) ??
@@ -115,18 +122,23 @@ export default async function HomePage() {
         </p>
       )}
 
-      <section className="max-w-4xl mx-auto px-4 py-10 text-center">
+      <section className="max-w-7xl mx-auto px-4 py-10 text-left">
         <h1 className="text-2xl md:text-3xl font-bold text-primary mb-4">
           Diwali &amp; Bhai Dooj Gifts Delivered Across the USA
         </h1>
         <p className="text-slate-600 leading-relaxed mb-4">
           Celebrate the joy of Indian festivals with thoughtful{" "}
-          <strong>Diwali and Bhai Dooj gifts delivered across the USA</strong>. {site.name} offers festive gift
-          hampers, traditional sweets, dry fruits, chocolates, and delicious sweet combos to make every celebration
-          special. Surprise your brother, family, and friends in America with meaningful gifts that bring festive
-          happiness closer.
+          <strong>Diwali and Bhai Dooj gifts delivered across the USA</strong>.{" "}
+          {applyInlineLinks(
+            `${site.name} offers festive gift hampers, traditional sweets, dry fruits, chocolates, and delicious sweet combos to make every celebration special. Surprise your brother, family, and friends in America with meaningful gifts that bring festive happiness closer.`,
+            [
+              { phrase: "festive gift hampers", href: "/products" },
+              { phrase: "chocolates", href: categoryHref("chocolate-combos") },
+            ],
+            createInlineLinkBudget(2)
+          )}
         </p>
-        <div className="flex flex-wrap justify-center gap-x-3 gap-y-2 text-sm">
+        <div className="flex flex-wrap justify-start gap-x-3 gap-y-2 text-sm">
           <Link href={categoryHref("sweet-combos")} className="text-nav font-bold hover:underline">
             Shop Sweet Combos →
           </Link>
@@ -148,8 +160,8 @@ export default async function HomePage() {
       <HomeSeoSection />
 
       <section className="max-w-7xl mx-auto px-4 py-12">
-        <h2 className="text-2xl font-bold text-primary text-center mb-2">Frequently Asked Questions</h2>
-        <p className="text-center text-sm text-slate-500 mb-6">
+        <h2 className="text-2xl font-bold text-primary mb-2">Frequently Asked Questions</h2>
+        <p className="text-sm text-slate-500 mb-6">
           Quick answers below — or{" "}
           <Link href="/faq" className="text-nav hover:underline">
             read our full FAQ page
@@ -159,7 +171,9 @@ export default async function HomePage() {
           {homeSeoContent.faqs.map((f) => (
             <details key={f.q} className="border border-slate-200 rounded-xl p-5 bg-white">
               <summary className="font-semibold text-primary cursor-pointer text-sm">{f.q}</summary>
-              <p className="text-slate-600 text-sm mt-2 leading-relaxed">{f.a}</p>
+              <p className="text-slate-600 text-sm mt-2 leading-relaxed">
+                {applyInlineLinks(f.a, faqLinks, faqLinkBudget)}
+              </p>
             </details>
           ))}
         </div>

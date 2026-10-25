@@ -125,9 +125,9 @@ export default function SendRakhiFromIndiaPage() {
         </div>
       </section>
 
-      <section className="max-w-4xl mx-auto px-4 py-12">
-        <h2 className="text-2xl font-bold text-primary mb-3 text-center">Why Indian sisters choose UsaRakhi</h2>
-        <p className="text-center text-slate-600 mb-8 max-w-2xl mx-auto">
+      <section className="max-w-7xl mx-auto px-4 py-12">
+        <h2 className="text-2xl font-bold text-primary mb-3">Why Indian sisters choose UsaRakhi</h2>
+        <p className="text-slate-600 mb-8">
           Destination stays USA — you order from India. We handle US domestic fulfillment so your
           brother gets festival-ready packaging on time.
         </p>
@@ -147,9 +147,9 @@ export default function SendRakhiFromIndiaPage() {
         </ul>
       </section>
 
-      <section className="max-w-4xl mx-auto px-4 py-8">
-        <h2 className="text-2xl font-bold text-primary mb-6 text-center">How to order from India</h2>
-        <ol className="space-y-4 max-w-xl mx-auto">
+      <section className="max-w-7xl mx-auto px-4 py-8">
+        <h2 className="text-2xl font-bold text-primary mb-6">How to order from India</h2>
+        <ol className="space-y-4">
           {[
             "Browse Single Rakhi, Combos, or Hampers and add to cart.",
             "Enter your brother’s complete USA shipping address.",
@@ -166,8 +166,8 @@ export default function SendRakhiFromIndiaPage() {
         </ol>
       </section>
 
-      <section className="max-w-3xl mx-auto px-4 py-10">
-        <h2 className="text-2xl font-bold text-primary mb-6 text-center">FAQs for India orders</h2>
+      <section className="max-w-7xl mx-auto px-4 py-10">
+        <h2 className="text-2xl font-bold text-primary mb-6">FAQs for India orders</h2>
         <div className="space-y-3">
           {faqs.map((f) => (
             <details key={f.q} className="border border-slate-200 rounded-xl p-4 bg-white">
@@ -176,7 +176,7 @@ export default function SendRakhiFromIndiaPage() {
             </details>
           ))}
         </div>
-        <p className="text-center text-sm text-slate-500 mt-8">
+        <p className="text-sm text-slate-500 mt-8">
           Prefer a longer guide?{" "}
           <Link href="/blog/send-rakhi-to-usa-from-india" className="text-nav font-semibold hover:underline">
             Read the full from-India blog →

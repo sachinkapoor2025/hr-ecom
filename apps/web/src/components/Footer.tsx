@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { site, navItems, cityLinks, cityNavHref, rakhiSetsMenu, whatsappChatUrl } from "@/lib/site";
+import { site, navItems, usCityLinks, cityNavHref, rakhiSetsMenu, whatsappChatUrl } from "@/lib/site";
 import { PaymentMethodIcons } from "@/components/PaymentMethodIcons";
 import { SiteLogoLink } from "@/components/SiteLogo";
 import { trustFacts } from "@/lib/trust";
@@ -224,7 +224,7 @@ export function Footer() {
           <div className="col-span-2 lg:col-span-5 min-w-0">
             <p className="font-semibold text-primary mb-3 sm:mb-4">Deliver to</p>
             <ul className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2 text-slate-600">
-              {cityLinks.map((c) => (
+              {usCityLinks.map((c) => (
                 <li key={c.slug}>
                   <Link href={cityNavHref(c)} className="hover:text-primary hover:underline">
                     {c.label}

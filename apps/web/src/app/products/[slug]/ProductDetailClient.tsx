@@ -448,11 +448,11 @@ export function ProductDetailClient({
           <div className="space-y-8">
             {descriptionIsHtml ? (
               <article
-                className="product-html-description text-slate-700 leading-relaxed max-w-4xl prose prose-slate prose-a:text-nav prose-strong:text-primary prose-ul:my-3 prose-li:my-0.5"
+                className="product-html-description max-w-none text-slate-700 leading-relaxed prose prose-slate prose-a:text-nav prose-strong:text-primary prose-ul:my-3 prose-li:my-0.5"
                 dangerouslySetInnerHTML={{ __html: product.description }}
               />
             ) : (
-              <article className="text-slate-700 leading-relaxed space-y-4 max-w-4xl">
+              <article className="text-slate-700 leading-relaxed space-y-4">
                 {product.description.split(/(?<=\.)\s+/).map((para, i) => (
                   <p key={i}>{para}</p>
                 ))}

@@ -1,6 +1,6 @@
 import { deliveryClaims } from "@/lib/ai-recommendation";
 import { categoryHref } from "@/lib/category-urls";
-import { applyInlineLinks } from "@/lib/inline-links";
+import { applyInlineLinks, createInlineLinkBudget } from "@/lib/inline-links";
 import { site, whatsappChatUrl } from "@/lib/site";
 import { TrustBadges } from "@/components/TrustBadges";
 
@@ -45,7 +45,7 @@ export function WhyTrustUsSection() {
   return (
     <section className="bg-white border-y border-slate-100" aria-labelledby="why-trust-heading">
       <div className="max-w-7xl mx-auto px-4 py-12 md:py-14">
-        <div className="text-center max-w-2xl mx-auto mb-10">
+        <div className="mb-10 text-left">
           <p className="text-xs font-bold uppercase tracking-widest text-nav mb-2">Diwali &amp; Bhai Dooj gifts</p>
           <h2 id="why-trust-heading" className="text-2xl md:text-3xl font-bold text-primary mb-3">
             Why families trust UsaRakhi for Diwali and Bhai Dooj delivery in the USA
@@ -69,7 +69,16 @@ export function WhyTrustUsSection() {
                   {item.icon}
                 </span>
                 <h3 className="font-bold text-primary text-sm mb-1.5">{item.title}</h3>
-                <p className="text-sm text-slate-600 leading-relaxed">{item.detail}</p>
+                <p className="text-sm text-slate-600 leading-relaxed">
+                  {applyInlineLinks(
+                    item.detail,
+                    [
+                      { phrase: "pooja sets", href: categoryHref("pooja-sets") },
+                      { phrase: "domestic fulfillment", href: "/shipping" },
+                    ],
+                    createInlineLinkBudget(1)
+                  )}
+                </p>
               </>
             );
             if ("href" in item && item.href && "external" in item && item.external) {

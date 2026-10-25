@@ -29,7 +29,7 @@ export default function AboutPage() {
       { phrase: "Press kit", href: "/press" },
     ];
     return (
-      <div className="max-w-3xl mx-auto px-4 py-12">
+      <div className="max-w-7xl mx-auto px-4 py-12">
         <h1 className="text-3xl font-bold text-primary mb-6">About {site.name}</h1>
         <div className="space-y-6 text-slate-700 leading-relaxed">
           <p>
@@ -62,7 +62,7 @@ export default function AboutPage() {
     );
   }
   return (
-    <div className="max-w-3xl mx-auto px-4 py-12">
+    <div className="max-w-7xl mx-auto px-4 py-12">
       <JsonLd data={aboutPageJsonLd()} />
       <h1 className="text-3xl font-bold text-primary mb-6">About {site.name}</h1>
       <div className="space-y-6 text-slate-700 leading-relaxed">

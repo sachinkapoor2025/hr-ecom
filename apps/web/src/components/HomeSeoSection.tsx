@@ -1,25 +1,38 @@
+import { categoryHref } from "@/lib/category-urls";
 import { homeSeoContent } from "@/lib/content/home-seo";
+import { locationPublicPath } from "@/lib/content/seo-data";
+import { applyInlineLinks, createInlineLinkBudget, type InlineLinkBudget } from "@/lib/inline-links";
 
 const BOLD_PHRASE = "Diwali gift combos and sweet combos";
 
-function paragraphWithBold(text: string) {
+const HOME_SEO_LINKS = [
+  { phrase: "Bhai Dooj gift hampers", href: categoryHref("bhai-dooj") },
+  { phrase: "traditional Indian mithai", href: categoryHref("sweet-combos") },
+  { phrase: "chocolate treats", href: categoryHref("chocolate-combos") },
+  { phrase: "dry fruit gift boxes", href: categoryHref("dry-fruit-combos") },
+  { phrase: "Diwali gift hampers", href: categoryHref("diwali") },
+  { phrase: "New York", href: locationPublicPath("new-york") },
+] as const;
+
+function RichParagraph({ text, budget }: { text: string; budget: InlineLinkBudget }) {
   const index = text.indexOf(BOLD_PHRASE);
-  if (index < 0) return text;
+  if (index < 0) return <p>{applyInlineLinks(text, HOME_SEO_LINKS, budget)}</p>;
   return (
-    <>
-      {text.slice(0, index)}
+    <p>
+      {applyInlineLinks(text.slice(0, index), HOME_SEO_LINKS, budget)}
       <strong>{BOLD_PHRASE}</strong>
-      {text.slice(index + BOLD_PHRASE.length)}
-    </>
+      {applyInlineLinks(text.slice(index + BOLD_PHRASE.length), HOME_SEO_LINKS, budget)}
+    </p>
   );
 }
 
 export function HomeSeoSection() {
   const { sections, whyChoose } = homeSeoContent;
+  const budget = createInlineLinkBudget(6);
 
   return (
     <section className="bg-slate-50 border-y border-slate-200" aria-labelledby="home-seo-heading">
-      <div className="max-w-4xl mx-auto px-4 py-12 sm:py-16 space-y-8 text-slate-700 leading-relaxed">
+      <div className="max-w-7xl mx-auto px-4 py-12 sm:py-16 space-y-8 text-slate-700 leading-relaxed">
         {sections.map((section, index) => (
           <article key={`${section.heading}-${index}`}>
             <h2
@@ -30,7 +43,7 @@ export function HomeSeoSection() {
             </h2>
             <div className="space-y-3">
               {section.paragraphs.map((para) => (
-                <p key={para.slice(0, 64)}>{paragraphWithBold(para)}</p>
+                <RichParagraph key={para.slice(0, 64)} text={para} budget={budget} />
               ))}
             </div>
           </article>
@@ -41,7 +54,7 @@ export function HomeSeoSection() {
           <ul className="space-y-2 list-disc pl-5">
             {whyChoose.bullets.map((item) => (
               <li key={`${item.label}-${item.text.slice(0, 24)}`}>
-                <strong>{item.label}</strong> {item.text}
+                <strong>{item.label}</strong> {applyInlineLinks(item.text, HOME_SEO_LINKS, budget)}
               </li>
             ))}
           </ul>

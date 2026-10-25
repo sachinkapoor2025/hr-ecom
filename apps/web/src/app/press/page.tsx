@@ -28,7 +28,7 @@ export default function PressPage() {
       { phrase: "chocolates", href: "/chocolate-combos-to-usa" },
     ];
     return (
-      <div className="max-w-3xl mx-auto px-4 py-12">
+      <div className="max-w-7xl mx-auto px-4 py-12">
         <h1 className="text-3xl font-bold text-primary mb-6">Press Kit</h1>
         <div className="space-y-8 text-slate-700 leading-relaxed">
           <p>
@@ -61,7 +61,7 @@ export default function PressPage() {
     );
   }
   return (
-    <div className="max-w-3xl mx-auto px-4 py-12">
+    <div className="max-w-7xl mx-auto px-4 py-12">
       <h1 className="text-3xl font-bold text-primary mb-6">Press Kit</h1>
       <div className="space-y-8 text-slate-700 leading-relaxed">
         <div>

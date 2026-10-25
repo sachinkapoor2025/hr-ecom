@@ -30,7 +30,7 @@ export default async function BlogPage() {
     return !textMentionsRakhi(`${post.slug} ${post.title} ${post.excerpt} ${post.description ?? ""}`);
   });
   return (
-    <div className="max-w-5xl mx-auto px-4 py-12 overflow-x-hidden">
+    <div className="max-w-7xl mx-auto px-4 py-12 overflow-x-hidden">
       <h1 className="text-3xl font-bold text-primary mb-2">
         {hidden ? "Diwali & Bhai Dooj guides" : "Rakhi Guides & Blog"}
       </h1>
@@ -77,7 +77,7 @@ export default async function BlogPage() {
       </div>
 
       {hidden ? (
-        <section className="mt-12 pt-10 border-t border-slate-200 max-w-3xl text-slate-700 leading-relaxed">
+        <section className="mt-12 pt-10 border-t border-slate-200 text-slate-700 leading-relaxed">
           <h2 className="text-xl font-bold text-primary mb-3">Festive gift guides</h2>
           <p className="mb-4">
             {applyInlineLinks(
@@ -99,7 +99,7 @@ export default async function BlogPage() {
           </p>
         </section>
       ) : (
-      <section className="mt-12 pt-10 border-t border-slate-200 max-w-3xl text-slate-700 leading-relaxed">
+      <section className="mt-12 pt-10 border-t border-slate-200 text-slate-700 leading-relaxed">
         <h2 className="text-xl font-bold text-primary mb-3">What these rakhi guides cover</h2>
         <p className="mb-4">
           Each article on this page is a separate guide. Some explain the ritual — what the rakhi thread means, why
