@@ -203,7 +203,7 @@ export function BannerCarousel({
       <div className="max-w-7xl mx-auto px-4 pt-3 pb-5 sm:pt-4 sm:pb-6 lg:pt-4 lg:pb-7">
         <div className="grid items-start gap-5 sm:gap-6 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)] lg:items-stretch lg:gap-8">
             <div
-              className="relative h-auto w-full aspect-[1024/384] touch-pan-y overflow-hidden rounded-2xl border border-slate-100 bg-[#fffaf4] shadow-sm lg:aspect-auto lg:h-full"
+              className="relative h-auto w-full aspect-[1024/639] touch-pan-y overflow-hidden rounded-2xl border border-slate-100 bg-[#fffaf4] shadow-sm lg:aspect-auto lg:h-full"
               onTouchStart={(event) => {
                 if (banners.length <= 1) return;
                 const point = event.changedTouches[0];
