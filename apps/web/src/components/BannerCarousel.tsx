@@ -200,10 +200,10 @@ export function BannerCarousel({
       onMouseLeave={() => setPaused(false)}
       aria-label="Featured promotions"
     >
-      <div className="max-w-7xl mx-auto px-4 py-6 sm:py-8 lg:py-10">
-        <div className="grid items-center gap-6 lg:grid-cols-2 lg:gap-10">
+      <div className="max-w-7xl mx-auto px-4 pt-3 pb-5 sm:pt-4 sm:pb-6 lg:pt-4 lg:pb-7">
+        <div className="grid items-start gap-5 sm:gap-6 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)] lg:gap-8">
             <div
-              className="relative w-full aspect-[1024/384] max-h-[420px] touch-pan-y overflow-hidden rounded-2xl border border-slate-100 bg-[#fffaf4] shadow-sm"
+              className="relative w-full aspect-[1024/384] max-h-[480px] touch-pan-y overflow-hidden rounded-2xl border border-slate-100 bg-[#fffaf4] shadow-sm"
               onTouchStart={(event) => {
                 if (banners.length <= 1) return;
                 const point = event.changedTouches[0];
