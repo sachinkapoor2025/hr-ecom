@@ -299,6 +299,14 @@ export const festivalFaqs = [
     q: "What payment methods do you accept?",
     a: "Stripe (USD — Visa, Mastercard, Amex) and Razorpay (INR — UPI, cards, netbanking) for secure online checkout.",
   },
+  {
+    q: "When should I order for Diwali and Bhai Dooj 2026?",
+    a: "Diwali 2026 is 8 November and Bhai Dooj is 10 November. Standard USA delivery is 5 business days after dispatch, so order early enough for the gift to arrive before the celebration. Suggested order-by dates are on the shipping page.",
+  },
+  {
+    q: "How do I know what is packed in a hamper?",
+    a: "The product name and the included list on that product page are the contents. Sweets, nuts, chocolate, or pooja items are not added unless that listing includes them.",
+  },
 ] as const;
 
 export function publicFaqs() {

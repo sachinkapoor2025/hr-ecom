@@ -1,6 +1,7 @@
 import Link from "next/link";
+import { categoryHref } from "@/lib/category-urls";
 import type { SecondaryCity } from "@/lib/content/city-delivery-tiers";
-import { secondaryCityIntro } from "@/lib/content/city-delivery-tiers";
+import { secondaryCityGiftNote } from "@/lib/content/city-delivery-tiers";
 import { locationPublicPath } from "@/lib/content/seo-data";
 import { locationEditorialLinks } from "@/lib/contextual-links";
 import { applyInlineLinks, createInlineLinkBudget } from "@/lib/inline-links";
@@ -28,7 +29,7 @@ export function buildSecondaryCityFaqs(city: SecondaryCity) {
 export function SecondaryCityLanding({ city }: { city: SecondaryCity }) {
   const place = `${city.name}, ${city.state}`;
   const faqs = buildSecondaryCityFaqs(city);
-  const intro = `${secondaryCityIntro(city.slug, city.name, city.state)} Families in India, the UK, Canada, and worldwide order online. We fulfill from our US operations, so the gift avoids international customs delays.`;
+  const intro = `${secondaryCityGiftNote(city.slug, city.name, city.state)} Families in India, the UK, Canada, and worldwide order online. We fulfill from our US operations, so the gift avoids international customs delays.`;
   const shopLine =
     "Shop Diwali gift combos, Bhai Dooj gifts, sweet boxes, chocolate assortments, and dry fruit hampers. Check out with Stripe (USD) or Razorpay (INR).";
   const articleText = [intro, shopLine, ...faqs.map((faq) => faq.a)].join("\n");
@@ -105,7 +106,9 @@ export function SecondaryCityLanding({ city }: { city: SecondaryCity }) {
             ] as const
           ).map(([slug, label]) => (
             <li key={slug}>
-              <span className="text-primary font-medium">{label}</span>
+              <Link href={categoryHref(slug)} className="text-nav font-semibold hover:underline">
+                {label}
+              </Link>
             </li>
           ))}
         </ul>

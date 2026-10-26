@@ -20,7 +20,7 @@ import { LeadCaptureInput } from "@/components/LeadCaptureInput";
 import { ExploreMoreSection } from "@/components/ExploreMoreSection";
 import { HomeProductCard } from "@/components/HomeProductCard";
 import { useCart } from "@/lib/cart-context";
-import { productPageFaqs } from "@/lib/content/product-faqs";
+import { faqsForProduct } from "@/lib/content/product-faqs";
 import { testimonials } from "@/lib/site";
 import {
   LOW_STOCK_THRESHOLD,
@@ -134,6 +134,7 @@ export function ProductDetailClient({
   const [productUrl, setProductUrl] = useState("");
   const [galleryImages, setGalleryImages] = useState(product.images ?? []);
   const [addons, setAddons] = useState<ProductAddonSelection[]>([]);
+  const productFaqs = faqsForProduct(product.categorySlug);
 
   useEffect(() => {
     setGalleryImages(product.images ?? []);
@@ -533,7 +534,7 @@ export function ProductDetailClient({
           <ProductReviewsPreview />
         ) : (
           <dl className="space-y-5 max-w-2xl">
-            {productPageFaqs.map((f) => (
+            {productFaqs.map((f) => (
               <div key={f.q}>
                 <dt className="font-semibold text-slate-900">{f.q}</dt>
                 <dd className="text-slate-600 mt-2 leading-relaxed">{f.a}</dd>
@@ -562,7 +563,7 @@ export function ProductDetailClient({
       <section className="mt-10 pt-8 border-t border-slate-200">
         <h2 className="text-lg font-bold text-primary mb-4">Common questions</h2>
         <dl className="space-y-4 max-w-2xl">
-          {productPageFaqs.map((f) => (
+          {productFaqs.map((f) => (
             <div key={f.q}>
               <dt className="font-semibold text-slate-800 text-sm">{f.q}</dt>
               <dd className="text-sm text-slate-600 mt-1 leading-relaxed">{f.a}</dd>

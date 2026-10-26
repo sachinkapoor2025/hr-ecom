@@ -34,11 +34,30 @@ export default async function BlogPage() {
       <h1 className="text-3xl font-bold text-primary mb-2">
         {hidden ? "Diwali & Bhai Dooj guides" : "Rakhi Guides & Blog"}
       </h1>
-      <p className="text-slate-600 mb-8">
+      <p className={`text-slate-600 max-w-3xl ${hidden ? "mb-4" : "mb-8"}`}>
         {hidden
           ? "Guides for Diwali and Bhai Dooj gifts delivered in the United States — sweets, dry fruits, chocolates, and pooja sets."
           : "Expert guides on sending Rakhi to USA, Raksha Bandhan traditions, and choosing the perfect Rakhi for your brother."}
       </p>
+      {hidden ? (
+        <ul className="mb-8 space-y-2 text-sm text-slate-700">
+          <li>
+            <Link href="/blog/send-diwali-gifts-to-usa" className="text-nav font-semibold hover:underline">
+              Send Diwali gifts to the USA
+            </Link>
+          </li>
+          <li>
+            <Link href="/blog/bhai-dooj-gifts-for-a-brother-in-the-usa" className="text-nav font-semibold hover:underline">
+              Bhai Dooj gifts for a brother
+            </Link>
+          </li>
+          <li>
+            <Link href="/blog/when-to-order-bhai-dooj-gifts-for-usa-delivery" className="text-nav font-semibold hover:underline">
+              When to order for USA delivery
+            </Link>
+          </li>
+        </ul>
+      ) : null}
       <div className="grid gap-6 sm:grid-cols-2">
         {posts.map((post) => (
           <article

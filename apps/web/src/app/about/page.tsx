@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { JsonLd } from "@/components/JsonLd";
 import { applyInlineLinks, createInlineLinkBudget } from "@/lib/inline-links";
 import { isRakhiContentHidden } from "@hr-ecom/shared";
@@ -50,6 +51,28 @@ export default function AboutPage() {
             <li>Sweet, dry fruit, and chocolate hampers</li>
             <li>Secure payments via Razorpay and Stripe</li>
           </ul>
+          <h2 className="text-xl font-bold text-primary pt-4">How an order works</h2>
+          <p>
+            Choose a finished hamper. The product name and the included list are what gets packed — UsaRakhi does
+            not assemble a custom box. At checkout, enter the recipient&apos;s full United States address, including
+            city, state, and ZIP. Pay in INR with Razorpay or in USD with Stripe. Card numbers are not stored on
+            this site.
+          </p>
+          <h2 className="text-xl font-bold text-primary pt-4">Shipping and support</h2>
+          <p>
+            Gifts ship from within the United States, so they are not held in international customs. Standard delivery
+            is 5 business days. Carts of $15 or more qualify for free shipping, and Orange County products ship free.
+            Details are on the{" "}
+            <Link href="/shipping" className="text-nav font-semibold hover:underline">
+              shipping page
+            </Link>
+            . If a box arrives damaged or is not what you ordered, write within 48 hours with the order number and
+            photos. The{" "}
+            <Link href="/returns" className="text-nav font-semibold hover:underline">
+              returns page
+            </Link>{" "}
+            explains that process.
+          </p>
           <p>
             {applyInlineLinks(
               `${site.name} is operated by Divit Global Ventures (DGV) with a California fulfillment team. Questions: WhatsApp ${site.whatsappDisplay}, email ${site.supportEmail}, or the contact page. Read customer reviews from recent deliveries, or use the Press kit for media requests.`,

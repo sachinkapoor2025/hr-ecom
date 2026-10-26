@@ -1,5 +1,6 @@
 import { categoryHref } from "@/lib/category-urls";
-import { homeSeoContent } from "@/lib/content/home-seo";
+import Link from "next/link";
+import { homeCityLinks, homeSeoContent } from "@/lib/content/home-seo";
 import { locationPublicPath } from "@/lib/content/seo-data";
 import { applyInlineLinks, createInlineLinkBudget, type InlineLinkBudget } from "@/lib/inline-links";
 
@@ -12,6 +13,7 @@ const HOME_SEO_LINKS = [
   { phrase: "dry fruit gift boxes", href: categoryHref("dry-fruit-combos") },
   { phrase: "Diwali gift hampers", href: categoryHref("diwali") },
   { phrase: "New York", href: locationPublicPath("new-york") },
+  { phrase: "shipping page", href: "/shipping" },
 ] as const;
 
 function RichParagraph({ text, budget }: { text: string; budget: InlineLinkBudget }) {
@@ -51,10 +53,30 @@ export function HomeSeoSection() {
 
         <article>
           <h2 className="text-xl md:text-2xl font-bold text-primary mb-3">{whyChoose.heading}</h2>
+          <p className="mb-3">{applyInlineLinks(whyChoose.lead, HOME_SEO_LINKS, budget)}</p>
           <ul className="space-y-2 list-disc pl-5">
             {whyChoose.bullets.map((item) => (
               <li key={`${item.label}-${item.text.slice(0, 24)}`}>
                 <strong>{item.label}</strong> {applyInlineLinks(item.text, HOME_SEO_LINKS, budget)}
+              </li>
+            ))}
+          </ul>
+        </article>
+
+        <article>
+          <h2 className="text-xl md:text-2xl font-bold text-primary mb-3">
+            Festive gift delivery in major US cities
+          </h2>
+          <p className="mb-3">
+            The same domestic shipping window applies across the United States. These city pages describe delivery
+            for a specific place and link back to the same Diwali and Bhai Dooj hampers.
+          </p>
+          <ul className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
+            {homeCityLinks.map((city) => (
+              <li key={city.slug}>
+                <Link href={city.href} className="text-nav font-semibold hover:underline">
+                  {city.label}
+                </Link>
               </li>
             ))}
           </ul>

@@ -6,8 +6,7 @@ export const homeSeoContent = {
     {
       heading: "Bhai Dooj Gifts for Your Brother in the USA",
       paragraphs: [
-        "Celebrate the beautiful bond between brothers and sisters with special Bhai Dooj gifts. Explore gift hampers featuring sweets, chocolates, dry fruits, and festive treats to express your love, even when you live miles apart. Send Bhai Dooj gifts to your brother in the USA and make the occasion memorable.",
-        "Celebrate the beautiful and everlasting bond between brothers and sisters with thoughtful Bhai Dooj gifts for your brother in the USA. Bhai Dooj is a special Indian festival that celebrates sibling love, happiness, and togetherness. Even if your brother lives miles away, you can make the occasion memorable by sending him a thoughtful festive gift that reminds him of home and family traditions.",
+        "Bhai Dooj celebrates the bond between brothers and sisters. If your brother lives in the United States, a gift box can still carry that greeting: traditional sweets, chocolates, dry fruits, or a small pooja piece, packed as the product page describes. The listing name is the contents of that box.",
         "Explore a variety of Bhai Dooj gift hampers featuring traditional Indian sweets, delicious chocolates, premium dry fruits, and festive treats. Whether your brother enjoys classic Indian mithai, sweet delicacies, or a combination of his favourite snacks, a carefully selected gift can make him feel special on this auspicious occasion.",
         "If you are looking for meaningful Bhai Dooj gifts delivered in the USA, UsaRakhi makes it convenient to explore festive gift options online. Choose a suitable gift for your brother, celebrate your cherished memories, and express your love across the miles. Make this Bhai Dooj more memorable with a thoughtful surprise that brings a little taste of Indian festivities to his celebrations.",
       ],
@@ -15,8 +14,7 @@ export const homeSeoContent = {
     {
       heading: "Diwali Gift Combos & Sweet Combos in the USA",
       paragraphs: [
-        "Make Diwali celebrations sweeter with delightful Diwali gift combos and sweet combos. Discover traditional Indian mithai, chocolate treats, dry fruits, and festive gift combinations perfect for family and friends. Whether you're sending Diwali sweets to loved ones or choosing a festive hamper, UsaRakhi helps you share the joy of Diwali across America.",
-        "Make the festival of lights even more special with delightful Diwali gift combos and sweet combos in the USA. Diwali is a time for sharing happiness, exchanging gifts, enjoying traditional delicacies, and creating beautiful memories with family and friends. A festive gift hamper filled with delicious treats is a wonderful way to celebrate the occasion, whether you are sending gifts to relatives, friends, or loved ones living far away.",
+        "Diwali gift combos and sweet combos are for sharing the festival of lights with family and friends in the USA. A hamper can hold traditional mithai, chocolate treats, dry fruits, or a pooja item together with food. You choose a finished box, not a custom assortment.",
         "Discover a selection of Diwali gift combinations featuring traditional Indian mithai, chocolate treats, dry fruits, and other festive favourites. From sweet boxes for celebrating traditional customs to assorted gift hampers for sharing with loved ones, there are options for different preferences and gifting occasions.",
         "Looking for Diwali sweets in the USA or a thoughtful festive present? Explore sweet combos that bring together the joy of Indian flavours and the spirit of celebration. Dry fruit gift boxes and assorted festive hampers are also thoughtful choices for family gatherings, corporate gifting, and Diwali surprises.",
         "With UsaRakhi, you can browse Diwali gift options online and choose suitable festive treats for the people who matter most. Celebrate the festival of lights by sharing sweetness, warmth, and happiness with loved ones across America.",
@@ -25,8 +23,7 @@ export const homeSeoContent = {
     {
       heading: "Send Diwali Gifts to Family & Friends Across America",
       paragraphs: [
-        "Brighten your loved ones' celebrations with Diwali gift hampers filled with festive treats and thoughtful surprises. From traditional sweets to delicious sweet combos and dry fruit gifts, find options for sharing happiness with family and friends throughout the United States.",
-        "Distance should never stop you from celebrating special occasions with the people you love. With thoughtful Diwali gifts for family and friends in the USA, you can share the happiness of the festival of lights, even when you cannot celebrate together in person.",
+        "Distance does not have to pause the festival. Diwali gifts for family and friends in the USA can be sweets, a dry fruit box, or a hamper, delivered to the address you enter at checkout.",
         "Whether your family lives in New York, California, Texas, Florida, New Jersey, or another part of the United States, a festive gift is a meaningful way to remind them that they are always in your thoughts. Choose from traditional Indian sweets, delicious chocolate assortments, dry fruit gift boxes, and festive gift hampers to make their Diwali celebrations more joyful.",
         "Diwali gifts are suitable for parents, siblings, relatives, friends, colleagues, and other special people in your life. Traditional sweet combos are ideal for sharing festive flavours, while dry fruit hampers offer a thoughtful gifting option for those who enjoy nuts and wholesome treats. You can also explore assorted gift combinations to find something appropriate for different recipients and occasions.",
         "If you are searching for Diwali gift delivery across the USA, UsaRakhi offers a convenient online shopping experience to help you explore festive gifting options. Select a gift that matches your loved ones' preferences and celebrate the spirit of Diwali with meaningful surprises, delicious treats, and heartfelt wishes.",
@@ -43,9 +40,11 @@ export const homeSeoContent = {
       ],
     },
     {
-      heading: "Why Choose UsaRakhi for Diwali & Bhai Dooj Gifts?",
+      heading: "How to choose a Diwali or Bhai Dooj hamper",
       paragraphs: [
-        "Finding a thoughtful festive gift becomes easier when you can explore different options in one place. UsaRakhi helps you discover gift ideas for celebrating Diwali and Bhai Dooj with family and friends across the United States.",
+        "Start with the occasion. Bhai Dooj boxes are gifts for a brother and may include kaju katli, nuts, chocolate, kumkum, or a pooja piece. Diwali combos pair a pooja or decor item — a thali, toran, rangoli, or Shubh Labh — with sweets or dry fruits.",
+        "If the occasion is already set and you care more about the food, use the sweet, dry fruit, chocolate, or pooja collection. One box can appear in more than one collection because it is grouped by what is inside. The product page is the included list. Weights and piece counts are only what that listing states.",
+        "Enter the recipient’s full United States address, including city, state, and ZIP. Standard delivery is 5 business days. Diwali 2026 is 8 November and Bhai Dooj is 10 November, so order early enough for that window. Shipping rules, including the $15 free-shipping minimum and free shipping on Orange County products, are on the shipping page.",
       ],
     },
     {
@@ -59,11 +58,8 @@ export const homeSeoContent = {
   ],
   whyChoose: {
     heading: "Why Choose UsaRakhi for Diwali & Bhai Dooj Gifts?",
+    lead: "UsaRakhi is a place to compare finished festive hampers for family in the United States. Orders ship from within America, so the gift is not an international parcel waiting in customs. Pay in USD with Stripe or in INR with Razorpay, including UPI.",
     bullets: [
-      { label: "Festive Gift Hampers:", text: "Explore gift options for Diwali and Bhai Dooj." },
-      { label: "Sweet Combos:", text: "Discover delicious sweets and festive treats for your loved ones." },
-      { label: "Convenient Online Ordering:", text: "Shop for festival gifts from anywhere." },
-      { label: "US Delivery:", text: "Send festive surprises to family and friends across the United States." },
       {
         label: "Festive Gift Hampers:",
         text: "Explore gift options suitable for Diwali celebrations, Bhai Dooj, and other special festive occasions.",
@@ -126,6 +122,14 @@ export const homeSeoContent = {
     {
       q: "How can I order Bhai Dooj gifts online?",
       a: "Visit the UsaRakhi Bhai Dooj collection, select your preferred gift, add it to your cart, and follow the checkout instructions to enter the recipient's delivery details.",
+    },
+    {
+      q: "When should I order for Diwali and Bhai Dooj 2026?",
+      a: "Diwali 2026 is 8 November and Bhai Dooj is 10 November. Standard USA delivery is 5 business days after dispatch, so place the order early enough for the gift to arrive before the celebration. The shipping page lists the suggested order-by dates.",
+    },
+    {
+      q: "How do I know what is inside a hamper?",
+      a: "The product name and the included list on that product page are the contents. UsaRakhi does not add sweets, nuts, chocolate, or pooja items that are not listed for that box.",
     },
   ],
   topCities: [

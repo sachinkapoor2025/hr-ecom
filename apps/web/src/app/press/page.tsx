@@ -50,11 +50,33 @@ export default function PressPage() {
             <li>Payments: Stripe (USD) and Razorpay (INR)</li>
             <li>Fulfillment: San Jose, CA area — US domestic delivery</li>
           </ul>
+          <h2 className="text-xl font-bold text-primary">What journalists can say</h2>
+          <p>
+            {site.name} sells finished Diwali and Bhai Dooj hampers for delivery inside the United States. Shoppers
+            can order from India, the UK, Canada, or elsewhere and pay in INR or USD. The gift is packed as the
+            product page describes — sweets, dry fruits, chocolates, or a pooja item — and ships domestically.
+          </p>
+          <ul className="list-disc pl-5 space-y-2 text-sm">
+            <li>Operator: Divit Global Ventures (DGV)</li>
+            <li>Fulfillment: within the United States, including a California team</li>
+            <li>Standard delivery: 5 business days</li>
+            <li>Payments: Stripe (USD) and Razorpay (INR). Card numbers are not stored on the site.</li>
+            <li>Site: {siteUrl}</li>
+          </ul>
           <p>
             Media contact:{" "}
             <a href={`mailto:${site.supportEmail}`} className="text-nav underline">
               {site.supportEmail}
             </a>
+            . For delivery terms, see the{" "}
+            <Link href="/shipping" className="text-nav font-semibold hover:underline">
+              shipping page
+            </Link>
+            . For brand background, see{" "}
+            <Link href="/about" className="text-nav font-semibold hover:underline">
+              About {site.name}
+            </Link>
+            .
           </p>
         </div>
       </div>

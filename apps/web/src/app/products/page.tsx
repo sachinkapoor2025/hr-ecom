@@ -161,10 +161,18 @@ export default async function ProductsPage({ searchParams }: Props) {
         <h1 className="text-3xl font-bold text-primary">{h1}</h1>
       </div>
       {!search && !category && (
-        <p className="text-slate-600 mb-8">
-          Diwali and Bhai Dooj gift hampers — sweets, dry fruits, chocolates, and pooja sets, shipped within
-          the United States.
-        </p>
+        <>
+          <p className="text-slate-600 mb-4">
+            Diwali and Bhai Dooj gift hampers — sweets, dry fruits, chocolates, and pooja sets, shipped within
+            the United States.
+          </p>
+          <p className="text-slate-600 mb-8 max-w-3xl">
+            Each card is a finished box. The name is the contents. Bhai Dooj combos are gifts for a brother. Diwali
+            combos pair a pooja or decor item with food. Sweet, dry fruit, chocolate, and pooja groups collect the
+            same hampers by what is inside, so one box can appear more than once. Open the product page for the
+            included list before you add it to the cart.
+          </p>
+        </>
       )}
 
       {!search && (

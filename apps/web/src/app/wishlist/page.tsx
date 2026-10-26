@@ -5,6 +5,8 @@ import { loadVisibleStorefrontProducts } from "@/lib/product-loader";
 
 export const metadata: Metadata = {
   title: "Wish List",
+  description: "Save Diwali and Bhai Dooj gifts on UsaRakhi and come back to them before checkout.",
+  robots: { index: false, follow: true },
 };
 
 export const dynamic = "force-dynamic";
