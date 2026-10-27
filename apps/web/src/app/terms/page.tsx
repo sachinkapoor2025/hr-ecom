@@ -55,7 +55,7 @@ export default function TermsPage() {
         <h2 className="text-xl font-bold text-primary">2. Pricing &amp; Payment</h2>
         <p>Product prices are displayed in the applicable currency, USD or INR, as shown at checkout.</p>
         <p>
-          Payments are processed securely through Stripe for USD transactions or Razorpay for INR transactions. UsaRakhi
+          Payments are processed securely through Razorpay for both USD and INR. UsaRakhi
           does not store customers’ card details on its servers.
         </p>
         <p>

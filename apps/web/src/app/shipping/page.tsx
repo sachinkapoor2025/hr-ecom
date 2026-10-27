@@ -65,7 +65,7 @@ function festivalShippingJsonLd() {
         "@type": "HowToStep",
         position: 4,
         name: "Pay securely",
-        text: "Pay with Stripe in USD or Razorpay in INR. Card numbers are not stored on UsaRakhi.",
+        text: "Pay with Razorpay in USD or INR. Card numbers are not stored on UsaRakhi.",
       },
       {
         "@type": "HowToStep",

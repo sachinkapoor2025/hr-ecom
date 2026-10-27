@@ -31,7 +31,7 @@ export const festivalBlogPosts: BlogPost[] = [
       {
         heading: "What you actually need at checkout",
         paragraphs: [
-          "The recipient’s full street address, apartment or unit number, city, state, and ZIP code. A phone number helps the carrier. Your own email is how order updates reach you. Prices can be paid in USD through Stripe or in INR through Razorpay, and card numbers are not stored on UsaRakhi.",
+          "The recipient’s full street address, apartment or unit number, city, state, and ZIP code. A phone number helps the carrier. Your own email is how order updates reach you. Prices can be paid in USD or INR through Razorpay, and card numbers are not stored on UsaRakhi.",
           "If you are ordering from India, the UK, or Canada, the checkout still uses a US delivery address. The parcel itself is fulfilled in the United States.",
         ],
       },
@@ -53,7 +53,7 @@ export const festivalBlogPosts: BlogPost[] = [
     faqs: [
       {
         q: "Can I send Diwali gifts to the USA from India?",
-        a: "Yes. Place the order on UsaRakhi, pay in INR through Razorpay or in USD through Stripe, and enter the US shipping address. The hamper ships domestically inside the United States.",
+        a: "Yes. Place the order on UsaRakhi, pay in INR or USD through Razorpay, and enter the US shipping address. The hamper ships domestically inside the United States.",
       },
       {
         q: "Do Diwali hampers clear US customs?",
@@ -96,7 +96,7 @@ export const festivalBlogPosts: BlogPost[] = [
         heading: "One order, one US address",
         paragraphs: [
           "Each order ships to the address you enter. If parents and a brother live in different cities, those are two checkouts. Write the apartment number; US carriers return parcels that stop at a lobby with no unit.",
-          "You can switch the site between USD and INR while browsing. The amount due is confirmed at checkout through Stripe or Razorpay.",
+          "You can switch the site between USD and INR while browsing. The amount due is confirmed at checkout through Razorpay.",
         ],
       },
     ],
@@ -220,7 +220,7 @@ export const festivalBlogPosts: BlogPost[] = [
       {
         paragraphs: [
           "Ordering from India does not mean the parcel starts in India. On UsaRakhi you browse the Diwali combos, pay in INR through Razorpay if that is the currency you choose, and type the American address where the hamper should arrive. Fulfillment stays inside the US, which is the same model the site uses so brothers and parents are not waiting on customs.",
-          "USD checkout uses Stripe. You can look at prices in either currency on the site before you pay. The charge is the total shown at checkout, including shipping if the cart is under the $15 free-shipping minimum.",
+          "USD and INR checkout both use Razorpay. You can look at prices in either currency on the site before you pay. The charge is the total shown at checkout, including shipping if the cart is under the $15 free-shipping minimum.",
         ],
       },
       {
@@ -370,7 +370,7 @@ export const festivalBlogPosts: BlogPost[] = [
       {
         heading: "Shipping the dibbi and the sweets together",
         paragraphs: [
-          "They are packed in one carton and shipped domestically in the USA. You do not assemble the kumkum and the katli yourself. Keep the address precise, pay by Stripe or Razorpay, and allow the published delivery window. Damaged tins or a missing listed item fall under the returns page: contact within 48 hours with photos and the order number.",
+          "They are packed in one carton and shipped domestically in the USA. You do not assemble the kumkum and the katli yourself. Keep the address precise, pay with Razorpay, and allow the published delivery window. Damaged tins or a missing listed item fall under the returns page: contact within 48 hours with photos and the order number.",
         ],
       },
     ],
@@ -415,7 +415,7 @@ export const festivalBlogPosts: BlogPost[] = [
       {
         heading: "Checkout and delivery",
         paragraphs: [
-          "Same path as the rest of the shop: US address, Stripe or Razorpay, domestic shipping, typically 5–7 business days, free shipping on a $15 minimum. Keep the order confirmation. If the box arrives short a listed pack, write to support within 48 hours with a photo, as the returns page requires for incorrect items.",
+          "Same path as the rest of the shop: US address, Razorpay, domestic shipping, typically 5–7 business days, free shipping on a $15 minimum. Keep the order confirmation. If the box arrives short a listed pack, write to support within 48 hours with a photo, as the returns page requires for incorrect items.",
         ],
       },
     ],

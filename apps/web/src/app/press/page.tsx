@@ -47,7 +47,7 @@ export default function PressPage() {
               )}
             </li>
             <li>USA domestic shipping to all 50 states</li>
-            <li>Payments: Stripe (USD) and Razorpay (INR)</li>
+            <li>Payments: Razorpay for USD and INR</li>
             <li>Fulfillment: San Jose, CA area — US domestic delivery</li>
           </ul>
           <h2 className="text-xl font-bold text-primary">What journalists can say</h2>
@@ -60,7 +60,7 @@ export default function PressPage() {
             <li>Operator: Divit Global Ventures (DGV)</li>
             <li>Fulfillment: within the United States, including a California team</li>
             <li>Standard delivery: 5 business days</li>
-            <li>Payments: Stripe (USD) and Razorpay (INR). Card numbers are not stored on the site.</li>
+            <li>Payments: Razorpay for USD and INR. Card numbers are not stored on the site.</li>
             <li>Site: {siteUrl}</li>
           </ul>
           <p>
@@ -106,7 +106,7 @@ export default function PressPage() {
             <li>126+ Rakhi designs across Single, Combo, Kids, Bhaiya Bhabhi, and Lumba categories</li>
             <li>USA domestic shipping to all 50 states in 5–7 business days</li>
             <li>Raksha Bandhan 2026: August 28, 2026</li>
-            <li>Payments: Stripe (USD) and Razorpay (INR)</li>
+            <li>Payments: Razorpay for USD and INR</li>
             <li>Fulfillment: San Jose, CA area — US domestic delivery</li>
           </ul>
         </section>

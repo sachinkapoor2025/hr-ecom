@@ -121,7 +121,7 @@ export const rakshaBandhanContent = {
       "Same-day dispatch on most orders before daily cut-off",
       "126+ premium Rakhi designs: designer, traditional, Kids, Bhaiya Bhabhi, Lumba",
       "Gift combos with Ferrero Rocher, Lindt, Hershey's chocolates, sweets, and roli chawal",
-      "Secure checkout: Stripe (USD) and Razorpay (INR — UPI, cards, netbanking)",
+      "Secure checkout: Razorpay for USD and INR (UPI, cards, netbanking)",
       "Free shipping on selected orders",
       "Trusted by sisters sending Rakhi from India, UK, Canada, and Australia",
     ],

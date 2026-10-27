@@ -34,7 +34,7 @@ function orderFromIndiaReply(): string {
 }
 
 function paymentReply(): string {
-  return `We accept secure online checkout via:\n- Stripe (USD)\n- Razorpay (INR)\n\nPrices are shown in USD or INR at checkout. We never store card details.\n\nQuestions about a specific order? WhatsApp us at ${site.whatsappDisplay} or email ${site.supportEmail}.`;
+  return `We accept secure online checkout via Razorpay for both USD and INR (cards, UPI, and netbanking).\n\nPrices are shown in USD or INR at checkout. We never store card details.\n\nQuestions about a specific order? WhatsApp us at ${site.whatsappDisplay} or email ${site.supportEmail}.`;
 }
 
 function greetingReply(): string {
@@ -53,7 +53,7 @@ function festiveFallback(userMessage: string): string {
     return `We are shipping Diwali and Bhai Dooj gift hampers: sweets, dry fruits, chocolates, and pooja sets.\n\n- [Diwali gifts](${siteUrl}${categoryHref("diwali")})\n- [Bhai Dooj gifts](${siteUrl}${categoryHref("bhai-dooj")})`;
   }
   if (/india|uk|canada|upi|inr|pay|stripe|razorpay/.test(q)) {
-    return `You can order from India or anywhere else. Pay in INR with Razorpay or in USD with Stripe, and enter a US delivery address.\n\n[Shop gifts](${siteUrl}/products)`;
+    return `You can order from India or anywhere else. Pay in INR or USD with Razorpay, and enter a US delivery address.\n\n[Shop gifts](${siteUrl}/products)`;
   }
   const faq = publicFaqs().find((item) => {
     const words = item.q.toLowerCase().split(/\W+/).filter((w) => w.length > 3);

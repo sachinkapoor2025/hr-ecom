@@ -14,7 +14,7 @@ const faqs = [
   },
   {
     q: "How do I pay from India?",
-    a: "At checkout choose INR. Razorpay supports UPI, Indian cards, and netbanking. USD/Stripe is also available if you prefer.",
+    a: "At checkout choose INR or USD. Razorpay supports UPI, cards, and netbanking in both currencies.",
   },
   {
     q: "How long does delivery take in the USA?",

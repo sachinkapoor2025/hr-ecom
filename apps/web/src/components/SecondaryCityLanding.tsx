@@ -31,7 +31,7 @@ export function SecondaryCityLanding({ city }: { city: SecondaryCity }) {
   const faqs = buildSecondaryCityFaqs(city);
   const intro = `${secondaryCityGiftNote(city.slug, city.name, city.state)} Families in India, the UK, Canada, and worldwide order online. We fulfill from our US operations, so the gift avoids international customs delays.`;
   const shopLine =
-    "Shop Diwali gift combos, Bhai Dooj gifts, sweet boxes, chocolate assortments, and dry fruit hampers. Check out with Stripe (USD) or Razorpay (INR).";
+    "Shop Diwali gift combos, Bhai Dooj gifts, sweet boxes, chocolate assortments, and dry fruit hampers. Check out with Razorpay in USD or INR.";
   const articleText = [intro, shopLine, ...faqs.map((faq) => faq.a)].join("\n");
   const editorial = locationEditorialLinks(city.slug, articleText, {
     nearby: {

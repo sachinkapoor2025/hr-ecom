@@ -84,7 +84,7 @@ function stateContent(
         "Domestic USA shipping, so gifts skip international customs",
         "Diwali gift combos, sweet boxes, and dry fruit hampers",
         "Bhai Dooj gifts with chocolates and festive treats",
-        "Pay in USD (Stripe) or INR (Razorpay) from anywhere",
+        "Pay in USD or INR with Razorpay from anywhere",
         "WhatsApp and email support for order help",
         "Trusted by families sending festival gifts from India to the USA",
       ],
@@ -94,7 +94,7 @@ function stateContent(
       steps: [
         "Browse the gifts above, or shop Diwali combos, Bhai Dooj gifts, sweets, chocolates, and dry fruit hampers.",
         "Add your choice to the cart and enter the full US address in " + label + " at checkout.",
-        "Pay securely with Stripe (USD) or Razorpay (INR).",
+        "Pay securely with Razorpay in USD or INR.",
         "We pack and ship within the USA. Delivery usually takes 5–7 business days.",
         "Your family opens a festive hamper in time for Diwali or Bhai Dooj.",
       ],
@@ -275,7 +275,7 @@ const cityPages: CityPageContent[] = [
       steps: [
         "Choose a Diwali combo, Bhai Dooj gift, sweet box, or dry fruit hamper.",
         "Enter the Bay Area US address at checkout.",
-        "Pay with Stripe or Razorpay.",
+        "Pay with Razorpay in USD or INR.",
         "We ship domestically within the USA.",
         "Delivery takes 5–7 business days.",
       ],

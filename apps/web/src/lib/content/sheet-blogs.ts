@@ -1972,7 +1972,7 @@ export const sheetBlogPosts: BlogPost[] = [
       {
         "heading": "Step 4: Complete the Online Payment",
         "paragraphs": [
-          "Check which payment methods are available to you. UsaRakhi lists payment options that include INR payments through Razorpay and USD payments through Stripe, allowing customers ordering from India to explore the checkout options available to them.",
+          "Check which payment methods are available to you. UsaRakhi accepts INR and USD payments through Razorpay, so customers ordering from India can check out in the currency shown on the site.",
           "Review the final amount, including any applicable shipping charges, before confirming your purchase."
         ]
       },
@@ -1987,7 +1987,7 @@ export const sheetBlogPosts: BlogPost[] = [
         "heading": "Can You Pay in INR When Sending Bhai Dooj Gifts to the USA?",
         "paragraphs": [
           "Yes, some online gifting websites support payments in Indian rupees for orders delivered to the United States. This can make the process easier for customers shopping from India.",
-          "UsaRakhi lists INR payment through Razorpay as an available option alongside USD payment through Stripe. Check the options displayed at checkout, as payment availability and final charges may depend on the transaction.",
+          "UsaRakhi accepts INR and USD payments through Razorpay. Check the total displayed at checkout, as final charges may depend on the transaction.",
           "Before completing your purchase, verify the final amount and save your order confirmation for reference."
         ]
       },
@@ -7998,7 +7998,7 @@ export const sheetBlogPosts: BlogPost[] = [
           "Indian-Inspired Gift Collections: Explore traditional sweets, chocolates, dry fruits, pooja sets, and festival-related gifts.",
           "Convenient Online Ordering: Browse available products from India and place your order online.",
           "Domestic US Fulfilment: Eligible gifts are shipped within the United States, helping avoid the need to post an individual gift parcel internationally.",
-          "Payment Options: UsaRakhi supports payment options including Razorpay for INR payments and Stripe for USD payments, subject to availability at checkout.",
+          "Payment Options: UsaRakhi accepts Razorpay for both INR and USD payments at checkout.",
           "Gifts for Different Occasions: Find options for Diwali, Bhai Dooj, Raksha Bandhan, birthdays, and other celebrations, depending on the products available.",
           "Always review the applicable delivery terms, payment options, and product information before confirming your order."
         ]
@@ -8132,7 +8132,7 @@ export const sheetBlogPosts: BlogPost[] = [
           "Convenient Online Ordering: Browse available gifts and place an order online from India.",
           "Traditional Indian Gifts: Explore sweets, dry fruits, chocolates, pooja accessories, and festive combinations.",
           "Domestic USA Fulfilment: Eligible products are shipped within the United States, helping avoid the need to send an individual parcel through international shipping from India.",
-          "Payment Options: Available checkout options include Razorpay for INR payments and Stripe for USD payments, subject to the options shown during checkout.",
+          "Payment Options: Checkout uses Razorpay for INR and USD payments.",
           "Gifts for Different Occasions: Discover suitable products for Diwali, Bhai Dooj, birthdays, anniversaries, and other celebrations.",
           "Review the product information, delivery terms, and payment details before confirming your order."
         ]

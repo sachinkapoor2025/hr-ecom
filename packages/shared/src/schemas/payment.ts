@@ -27,7 +27,7 @@ export const defaultPaymentConfig: PaymentConfig = {
   },
 };
 
-/** Apply the temporary Stripe kill switch on top of stored / default payment config. */
+/** Force the public payment config to follow the Razorpay-only checkout switch. */
 export function withStripePaymentsGate(config: PaymentConfig): PaymentConfig {
   return {
     ...config,

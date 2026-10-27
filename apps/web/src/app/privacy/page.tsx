@@ -23,7 +23,7 @@ export default function PrivacyPage() {
         <h2 className="text-xl font-bold text-primary">Information we collect</h2>
         <p>
           {applyInlineLinks(
-            "When you shop or contact us, we may collect your name, email, phone number, shipping address, order details, and payment status from our payment partners (Stripe or Razorpay). We do not store full card numbers.",
+            "When you shop or contact us, we may collect your name, email, phone number, shipping address, order details, and payment status from our payment partner (Razorpay). We do not store full card numbers.",
             [
               { phrase: "shop", href: "/products" },
               { phrase: "contact us", href: "/contact" },
@@ -42,7 +42,7 @@ export default function PrivacyPage() {
         <h2 className="text-xl font-bold text-primary">Orders</h2>
         <p>
           A delivery address is used to ship the Diwali or Bhai Dooj gift and to send order updates. Payment status
-          comes from Stripe or Razorpay. Full card numbers are not stored on {site.domain}.
+          comes from Razorpay. Full card numbers are not stored on {site.domain}.
         </p>
         <h2 className="text-xl font-bold text-primary">Analytics</h2>
         <p>

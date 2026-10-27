@@ -209,7 +209,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
               </li>
               <li className="flex gap-2">
                 <span className="text-nav shrink-0">✓</span>
-                Secure checkout with Razorpay and Stripe
+                Secure checkout with Razorpay
               </li>
             </ul>
           </section>

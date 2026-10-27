@@ -190,7 +190,7 @@ export function OrderConfirmation({ order, paid }: OrderConfirmationProps) {
             </div>
             {order.paymentProvider && paid && (
               <p className="text-xs text-slate-400 pt-1 capitalize">
-                Paid via {order.paymentProvider === "stripe" ? "Stripe (USD)" : "Razorpay (INR)"}
+                Paid via {order.paymentProvider === "stripe" ? "Stripe" : "Razorpay"} ({order.currency})
               </p>
             )}
           </div>

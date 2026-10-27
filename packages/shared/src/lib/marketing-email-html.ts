@@ -113,7 +113,7 @@ export const DEFAULT_PREMIUM_MARKETING_EMAIL_CONTENT: MarketingEmailContent = {
     { icon: "🇺🇸", title: "Ships From USA", description: "Domestic fulfillment — no customs delays." },
     { icon: "🎁", title: "Free Shipping Above $7", description: "Fast checkout savings on every order." },
     { icon: "🚚", title: "5–7 Day USA Delivery", description: "Reliable shipping to all 50 states." },
-    { icon: "🔒", title: "Secure Stripe & Razorpay", description: "Pay safely in USD or INR." },
+    { icon: "🔒", title: "Secure Razorpay checkout", description: "Pay safely in USD or INR." },
     { icon: "📍", title: "California Fulfillment", description: "Packed by our dedicated US team." },
     { icon: "💬", title: "WhatsApp Support", description: "Real humans before & after delivery." },
     { icon: "📦", title: "Order Tracking", description: "Know when your gift is on the way." },

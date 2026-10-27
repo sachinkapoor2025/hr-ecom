@@ -25,7 +25,7 @@ const highlights = [
   {
     icon: "🔒",
     title: "Secure checkout",
-    detail: "Pay in USD with Stripe or in INR with Razorpay. Card numbers are not stored on UsaRakhi.",
+    detail: "Pay in USD or INR with Razorpay. Card numbers are not stored on UsaRakhi.",
   },
   {
     icon: "💬",

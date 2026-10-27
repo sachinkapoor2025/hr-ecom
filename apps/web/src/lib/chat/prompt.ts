@@ -51,7 +51,7 @@ Date: August 28, 2026. Standard USA delivery · 5 business days · Free shipping
 ## Delivery & payment
 - USA delivery: Standard USA delivery · 5 business days · Free shipping on $15 minimum cart value
 - Order from anywhere; recipient address must be in the USA
-- Payment: Stripe (USD) and Razorpay (INR)
+- Payment: Razorpay for USD and INR (cards, UPI, netbanking)
 - Most single rakhis include complimentary roli & chawal
 - Mixed UsaRakhi + Orange County carts: UsaRakhi $15 free-shipping minimum; Orange County always free
 

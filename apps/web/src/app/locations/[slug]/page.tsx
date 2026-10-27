@@ -137,7 +137,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const place = `${secondary.name}, ${secondary.state}`;
     return pageMetadata({
       title: `Send Diwali and Bhai Dooj Gifts to ${place} | 5–7 Day USA Delivery | ${site.name}`,
-      description: `Send Diwali gifts and Bhai Dooj gifts to ${place} with ${site.name}. Domestic USA shipping in 5–7 business days for sweet combos, chocolates, and dry fruit hampers. Stripe and Razorpay checkout.`,
+      description: `Send Diwali gifts and Bhai Dooj gifts to ${place} with ${site.name}. Domestic USA shipping in 5–7 business days for sweet combos, chocolates, and dry fruit hampers. Razorpay checkout.`,
       path,
       keywords: `diwali gifts ${secondary.name}, bhai dooj gifts ${secondary.name}, ${secondary.state}, sweet combos, dry fruit hampers`,
       absoluteTitle: true,
@@ -165,7 +165,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   return pageMetadata({
     title: `Send Diwali and Bhai Dooj Gifts to ${place} | ${site.name}`,
-    description: `Send Diwali gifts and Bhai Dooj gifts to ${place} with ${site.name}.${warehouseNote} ${regionNote} Secure Stripe and Razorpay checkout.`,
+    description: `Send Diwali gifts and Bhai Dooj gifts to ${place} with ${site.name}.${warehouseNote} ${regionNote} Secure Razorpay checkout.`,
     path,
     keywords: location.keywords.slice(0, 12).join(", "),
     absoluteTitle: true,

@@ -49,13 +49,13 @@ export default function AboutPage() {
             <li>{applyInlineLinks("Diwali gift combos and pooja sets", links, budget)}</li>
             <li>Bhai Dooj gift boxes</li>
             <li>Sweet, dry fruit, and chocolate hampers</li>
-            <li>Secure payments via Razorpay and Stripe</li>
+            <li>Secure payments via Razorpay for USD and INR</li>
           </ul>
           <h2 className="text-xl font-bold text-primary pt-4">How an order works</h2>
           <p>
             Choose a finished hamper. The product name and the included list are what gets packed — UsaRakhi does
             not assemble a custom box. At checkout, enter the recipient&apos;s full United States address, including
-            city, state, and ZIP. Pay in INR with Razorpay or in USD with Stripe. Card numbers are not stored on
+            city, state, and ZIP. Pay in INR or USD with Razorpay. Card numbers are not stored on
             this site.
           </p>
           <h2 className="text-xl font-bold text-primary pt-4">Shipping and support</h2>
@@ -111,7 +111,7 @@ export default function AboutPage() {
           <li>Single Rakhi, Rakhi Combos, Kids Rakhi, Bhaiya Bhabhi sets, and Lumba Rakhi</li>
           <li>Complimentary roli and chawal with most rakhis</li>
           <li>Rakhi with chocolates — Ferrero Rocher, Lindt, Hershey&apos;s combos</li>
-          <li>Secure payments via Razorpay and Stripe</li>
+          <li>Secure payments via Razorpay for USD and INR</li>
         </ul>
         <h2 className="text-xl font-bold text-primary pt-4">Who we are</h2>
         <p>

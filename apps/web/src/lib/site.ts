@@ -270,11 +270,11 @@ export const faqs = [
   },
   {
     q: "Can I trust UsaRakhi for USA Rakhi delivery?",
-    a: "Yes. UsaRakhi is built around Rakhi and Raksha Bandhan traditions — 126+ premium designs, California warehouse fulfillment, and domestic shipping within America (no customs delays). We offer secure Stripe and Razorpay checkout, WhatsApp support, and a satisfaction guarantee. Read customer stories at usarakhi.com/reviews or contact us before ordering.",
+    a: "Yes. UsaRakhi is built around Rakhi and Raksha Bandhan traditions — 126+ premium designs, California warehouse fulfillment, and domestic shipping within America (no customs delays). We offer secure Razorpay checkout, WhatsApp support, and a satisfaction guarantee. Read customer stories at usarakhi.com/reviews or contact us before ordering.",
   },
   {
     q: "What payment methods do you accept?",
-    a: "Stripe (USD — Visa, Mastercard, Amex) and Razorpay (INR — UPI, cards, netbanking) for secure online checkout.",
+    a: "Razorpay for USD and INR (cards, UPI, and netbanking) for secure online checkout.",
   },
 ] as const;
 
@@ -289,7 +289,7 @@ export const festivalFaqs = [
   },
   {
     q: "Can I order from India for a US address?",
-    a: "Yes. Pay in INR with Razorpay, including UPI, or in USD with Stripe. Enter the US delivery address at checkout. The gift ships from within the United States.",
+    a: "Yes. Pay in INR or USD with Razorpay, including UPI, cards, and netbanking. Enter the US delivery address at checkout. The gift ships from within the United States.",
   },
   {
     q: "Who can receive a festive gift?",
@@ -297,7 +297,7 @@ export const festivalFaqs = [
   },
   {
     q: "What payment methods do you accept?",
-    a: "Stripe (USD — Visa, Mastercard, Amex) and Razorpay (INR — UPI, cards, netbanking) for secure online checkout.",
+    a: "Razorpay for USD and INR (cards, UPI, and netbanking) for secure online checkout.",
   },
   {
     q: "When should I order for Diwali and Bhai Dooj 2026?",

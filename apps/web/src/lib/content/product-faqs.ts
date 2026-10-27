@@ -14,7 +14,7 @@ export const productPageFaqs = [
   },
   {
     q: "What payment methods do you accept?",
-    a: "We accept Stripe (USD) and Razorpay (INR). All payments are encrypted, and we never store card details.",
+    a: "We accept Razorpay for both USD and INR, including cards, UPI, and netbanking. All payments are encrypted, and we never store card details.",
   },
   {
     q: "What if my gift arrives damaged?",

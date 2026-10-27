@@ -58,7 +58,7 @@ export const homeSeoContent = {
   ],
   whyChoose: {
     heading: "Why Choose UsaRakhi for Diwali & Bhai Dooj Gifts?",
-    lead: "UsaRakhi is a place to compare finished festive hampers for family in the United States. Orders ship from within America, so the gift is not an international parcel waiting in customs. Pay in USD with Stripe or in INR with Razorpay, including UPI.",
+    lead: "UsaRakhi is a place to compare finished festive hampers for family in the United States. Orders ship from within America, so the gift is not an international parcel waiting in customs. Pay in USD or INR with Razorpay, including UPI.",
     bullets: [
       {
         label: "Festive Gift Hampers:",
