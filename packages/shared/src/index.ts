@@ -33,6 +33,7 @@ export * from "./lib/ledger-display";
 export * from "./schemas/load-test";
 export * from "./lib/currency-display";
 export * from "./lib/competitive-pricing";
+export * from "./lib/dev-test-price";
 export * from "./lib/vendor-pricing";
 export * from "./lib/image-url";
 export * from "./lib/image-variants";
