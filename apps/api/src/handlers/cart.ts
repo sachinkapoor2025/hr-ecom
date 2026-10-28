@@ -6,9 +6,6 @@ import {
   cartKeys,
   productKeys,
   applyCompetitivePriceReduction,
-  DEV_TEST_PRICE_SLUG,
-  devStorefrontTestPriceActive,
-  withDevTestStorefrontPrice,
   cartAddonSignature,
   cartLineUnitTotal,
   getProductAddon,
@@ -40,6 +37,9 @@ import { ensureProductInDb } from "../lib/ensure-product";
 /** Stale carts auto-expire after this many days (TTL). */
 const CART_TTL_DAYS = 30;
 
+/** Refresh this hamper from the catalog so checkout uses the current selling price. */
+const CATALOG_PRICE_SLUG = "bhai-dooj-kaju-katli-and-kumkum-gift-box";
+
 function ensureLineIds(items: CartItem[]): CartItem[] {
   return items.map((item) =>
     item.lineId ? item : { ...item, lineId: uuidv4() }
@@ -66,29 +66,16 @@ function sellingUnitPrice(product: PricedProduct): number {
     : applyCompetitivePriceReduction(product.price, product.currency);
 }
 
-/**
- * The dev site shows ₹99 for one hamper without rewriting the shared catalog row.
- * Apply that price only on the cart payload used for display and payment.
- */
-function presentCartItems(event: APIGatewayProxyEventV2, items: CartItem[]): CartItem[] {
-  const active = devStorefrontTestPriceActive({
-    origin: event.headers?.origin || event.headers?.referer,
-    envFlag: process.env.DEV_TEST_PRICE,
-  });
-  if (!active) return items;
-  return items.map((item) => withDevTestStorefrontPrice(item));
-}
-
-/** Replace a stale line for the reduced hamper with the current catalog selling price. */
-async function syncReducedProductPrice(items: CartItem[]): Promise<{ items: CartItem[]; changed: boolean }> {
-  if (!items.some((item) => item.productSlug === DEV_TEST_PRICE_SLUG)) {
+/** Replace a stale line with the current catalog selling price. */
+async function syncCatalogPrice(items: CartItem[]): Promise<{ items: CartItem[]; changed: boolean }> {
+  if (!items.some((item) => item.productSlug === CATALOG_PRICE_SLUG)) {
     return { items, changed: false };
   }
 
   const result = await docClient.send(
     new GetCommand({
       TableName: PRODUCTS_TABLE,
-      Key: { PK: productKeys.pk(DEV_TEST_PRICE_SLUG), SK: productKeys.sk() },
+      Key: { PK: productKeys.pk(CATALOG_PRICE_SLUG), SK: productKeys.sk() },
     })
   );
   const product = result.Item as PricedProduct | undefined;
@@ -96,10 +83,10 @@ async function syncReducedProductPrice(items: CartItem[]): Promise<{ items: Cart
     return { items, changed: false };
   }
 
-  const price = sellingUnitPrice({ ...product, slug: DEV_TEST_PRICE_SLUG });
+  const price = sellingUnitPrice({ ...product, slug: CATALOG_PRICE_SLUG });
   let changed = false;
   const next = items.map((item) => {
-    if (item.productSlug !== DEV_TEST_PRICE_SLUG) return item;
+    if (item.productSlug !== CATALOG_PRICE_SLUG) return item;
     if (item.price === price && item.currency === product.currency) return item;
     changed = true;
     return { ...item, price, currency: product.currency };
@@ -175,9 +162,8 @@ export async function getCartHandler(event: APIGatewayProxyEventV2) {
     image: item.image ? resolveProductImageUrl(item.image) : item.image,
   }));
   const healed = ensureVendorSlugs(items);
-  const synced = await syncReducedProductPrice(healed);
-  // Persist backfilled lineIds / vendorSlug and a catalog price drop.
-  // The dev ₹99 overlay is applied only on the response so the shared cart row stays at the live price.
+  const synced = await syncCatalogPrice(healed);
+  // Persist backfilled lineIds / vendorSlug and the current catalog price.
   const needsPersist =
     synced.changed ||
     (raw.items ?? []).some((i) => !i.lineId) ||
@@ -187,7 +173,7 @@ export async function getCartHandler(event: APIGatewayProxyEventV2) {
   }
   return ok({
     cart: {
-      items: presentCartItems(event, synced.items),
+      items: synced.items,
       updatedAt: raw.updatedAt ?? now(),
     },
   });

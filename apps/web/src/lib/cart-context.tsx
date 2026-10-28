@@ -6,8 +6,6 @@ import { getOrCreateSessionId, useSessionId } from "./session";
 import { useAuth } from "./auth-context";
 import { trackCartAdd, trackCartRemove } from "./track";
 import { cartAddonSignature, type Cart, type ProductAddonSelection } from "@hr-ecom/shared";
-import { applyDevTestPrice } from "./dev-test-price";
-
 interface CartContextValue {
   cart: Cart | null;
   loading: boolean;
@@ -32,7 +30,7 @@ const CartContext = createContext<CartContextValue | null>(null);
 
 function normalizeCart(raw: Cart & { PK?: string; SK?: string }): Cart {
   return {
-    items: (raw.items ?? []).map((item) => applyDevTestPrice(item)),
+    items: raw.items ?? [],
     updatedAt: raw.updatedAt ?? new Date().toISOString(),
   };
 }
