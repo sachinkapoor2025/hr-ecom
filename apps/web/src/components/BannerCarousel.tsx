@@ -76,7 +76,7 @@ const TRUST_FEATURES = [
 
 function Eyebrow({ text }: { text: string }) {
   return (
-    <div className="flex items-center justify-center gap-3 mb-4">
+    <div className="flex items-center justify-start gap-3 mb-4">
       <span className="h-px w-8 sm:w-12 bg-gradient-to-r from-transparent to-nav/60" aria-hidden />
       <p className="text-[10px] sm:text-xs font-bold tracking-[0.2em] text-primary/80 uppercase text-center">
         {text}
@@ -148,7 +148,7 @@ function SlideImage({
       alt={banner.alt}
       fill
       className={bannerImageClass(banner)}
-      sizes="100vw"
+      sizes="(min-width: 1024px) 560px, 100vw"
       priority={priority}
       fetchPriority={priority ? "high" : "auto"}
       loading={priority ? "eager" : "lazy"}
@@ -195,16 +195,15 @@ export function BannerCarousel({
 
   return (
     <section
-      className="w-full max-w-full overflow-x-hidden"
+      className="w-full max-w-full overflow-x-hidden bg-white border-b border-slate-100"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       aria-label="Featured promotions"
     >
-      <div className="relative overflow-hidden bg-white border-b border-slate-100">
-        <div className="relative w-full">
-          <div className="relative w-full">
+      <div className="max-w-7xl mx-auto px-4 pt-3 pb-5 sm:pt-4 sm:pb-6 lg:pt-4 lg:pb-7">
+        <div className="grid items-start gap-5 sm:gap-6 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)] lg:items-stretch lg:gap-8">
             <div
-              className="relative w-full aspect-[1024/384] touch-pan-y overflow-hidden rounded-xl bg-[#fffaf4]"
+              className="relative h-auto w-full aspect-[1024/639] touch-pan-y overflow-hidden rounded-2xl border border-slate-100 bg-[#fffaf4] shadow-sm lg:aspect-auto lg:h-full"
               onTouchStart={(event) => {
                 if (banners.length <= 1) return;
                 const point = event.changedTouches[0];
@@ -289,9 +288,8 @@ export function BannerCarousel({
 
               <DeliveryCaption text={banner.imageCaption} />
             </div>
-          </div>
 
-          <div className="text-center z-10 min-w-0 max-w-3xl mx-auto px-4 py-6 sm:py-8">
+          <div className="min-w-0 text-left lg:pr-14">
             <div key={banner.src}>
               <Eyebrow text={banner.eyebrow} />
 
@@ -312,7 +310,7 @@ export function BannerCarousel({
                 </p>
               ) : null}
 
-              <DeliveryHighlight text={banner.description} className="mb-6 max-w-xl mx-auto text-left" />
+              <DeliveryHighlight text={banner.description} className="mb-6" />
 
               {banner.href ? (
                 <Link
@@ -326,7 +324,7 @@ export function BannerCarousel({
                 </Link>
               ) : null}
 
-              <ul className="hidden sm:grid grid-cols-4 gap-4 mt-8 max-w-lg mx-auto">
+              <ul className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-8">
                 {TRUST_FEATURES.map((f) => (
                   <li key={f.label} className="flex flex-col items-center gap-2">
                     <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white border border-blue-100 text-nav shadow-sm">
@@ -344,38 +342,24 @@ export function BannerCarousel({
           </div>
         </div>
 
-        <ul className="sm:hidden grid grid-cols-4 gap-2 px-4 pb-4">
-          {TRUST_FEATURES.map((f) => (
-            <li key={f.label} className="flex flex-col items-center gap-1.5">
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white border border-blue-100 text-nav">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.75}>
-                  {f.icon}
-                </svg>
-              </span>
-              <span className="text-[9px] font-semibold text-primary/80 text-center leading-tight">{trustFeatureLabel(f.label)}</span>
-            </li>
-          ))}
-        </ul>
-
+        {banners.length > 1 && (
+          <div className="flex justify-center items-center gap-2 pt-5" role="tablist" aria-label="Banner slides">
+            {banners.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                role="tab"
+                aria-selected={i === index}
+                aria-label={`Slide ${i + 1}`}
+                onClick={() => goTo(i)}
+                className={`h-2 rounded-full transition-all duration-300 ${
+                  i === index ? "w-8 bg-nav" : "w-2 bg-slate-300 hover:bg-slate-400"
+                }`}
+              />
+            ))}
+          </div>
+        )}
       </div>
-
-      {banners.length > 1 && (
-        <div className="flex justify-center items-center gap-2 py-3 bg-white" role="tablist" aria-label="Banner slides">
-          {banners.map((_, i) => (
-            <button
-              key={i}
-              type="button"
-              role="tab"
-              aria-selected={i === index}
-              aria-label={`Slide ${i + 1}`}
-              onClick={() => goTo(i)}
-              className={`h-2 rounded-full transition-all duration-300 ${
-                i === index ? "w-8 bg-nav" : "w-2 bg-slate-300 hover:bg-slate-400"
-              }`}
-            />
-          ))}
-        </div>
-      )}
     </section>
   );
 }

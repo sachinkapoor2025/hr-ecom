@@ -104,8 +104,8 @@ export function CountryRakhiLanding({
         </div>
       </section>
 
-      <section className="max-w-5xl mx-auto px-4 py-10 md:py-12">
-        <h2 className="text-2xl font-bold text-primary mb-3 text-center">Why shop this collection</h2>
+      <section className="max-w-7xl mx-auto px-4 py-10 md:py-12">
+        <h2 className="text-2xl font-bold text-primary mb-3">Why shop this collection</h2>
         <ul className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 text-sm text-slate-700 mt-6">
           {page.highlights.map((item) => (
             <li
@@ -119,9 +119,9 @@ export function CountryRakhiLanding({
         </ul>
       </section>
 
-      <section className="max-w-5xl mx-auto px-4 py-6">
-        <h2 className="text-2xl font-bold text-primary mb-6 text-center">{page.howToHeading}</h2>
-        <ol className="space-y-4 max-w-2xl mx-auto">
+      <section className="max-w-7xl mx-auto px-4 py-6">
+        <h2 className="text-2xl font-bold text-primary mb-6">{page.howToHeading}</h2>
+        <ol className="space-y-4">
           {page.howToSteps.map((step, i) => (
             <li key={step} className="flex gap-3 text-slate-700">
               <span
@@ -138,7 +138,7 @@ export function CountryRakhiLanding({
 
       {/* Added SEO guide content — does not replace existing intro / how-to / FAQs */}
       {page.addedGuideSections.length > 0 && (
-        <section className="max-w-3xl mx-auto px-4 py-10 md:py-12 space-y-10">
+        <section className="max-w-7xl mx-auto px-4 py-10 md:py-12 space-y-10">
           {page.addedGuideSections.map((block) => (
             <div key={block.heading} className="min-w-0">
               <h2 className="text-2xl font-bold text-primary mb-3 break-words">{block.heading}</h2>
@@ -224,8 +224,8 @@ export function CountryRakhiLanding({
         </div>
       </section>
 
-      <section className="max-w-3xl mx-auto px-4 py-10 pb-16">
-        <h2 className="text-2xl font-bold text-primary mb-6 text-center">FAQs</h2>
+      <section className="max-w-7xl mx-auto px-4 py-10 pb-16">
+        <h2 className="text-2xl font-bold text-primary mb-6">FAQs</h2>
         <div className="space-y-3">
           {page.faqs.map((f) => (
             <details key={f.q} className="border border-slate-200 rounded-xl p-4 bg-white">

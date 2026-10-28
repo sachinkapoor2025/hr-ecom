@@ -28,7 +28,7 @@ export default function PressPage() {
       { phrase: "chocolates", href: "/chocolate-combos-to-usa" },
     ];
     return (
-      <div className="max-w-3xl mx-auto px-4 py-12">
+      <div className="max-w-7xl mx-auto px-4 py-12">
         <h1 className="text-3xl font-bold text-primary mb-6">Press Kit</h1>
         <div className="space-y-8 text-slate-700 leading-relaxed">
           <p>
@@ -47,21 +47,43 @@ export default function PressPage() {
               )}
             </li>
             <li>USA domestic shipping to all 50 states</li>
-            <li>Payments: Stripe (USD) and Razorpay (INR)</li>
+            <li>Payments: Razorpay for USD and INR</li>
             <li>Fulfillment: San Jose, CA area — US domestic delivery</li>
+          </ul>
+          <h2 className="text-xl font-bold text-primary">What journalists can say</h2>
+          <p>
+            {site.name} sells finished Diwali and Bhai Dooj hampers for delivery inside the United States. Shoppers
+            can order from India, the UK, Canada, or elsewhere and pay in INR or USD. The gift is packed as the
+            product page describes — sweets, dry fruits, chocolates, or a pooja item — and ships domestically.
+          </p>
+          <ul className="list-disc pl-5 space-y-2 text-sm">
+            <li>Operator: Divit Global Ventures (DGV)</li>
+            <li>Fulfillment: within the United States, including a California team</li>
+            <li>Standard delivery: 5 business days</li>
+            <li>Payments: Razorpay for USD and INR. Card numbers are not stored on the site.</li>
+            <li>Site: {siteUrl}</li>
           </ul>
           <p>
             Media contact:{" "}
             <a href={`mailto:${site.supportEmail}`} className="text-nav underline">
               {site.supportEmail}
             </a>
+            . For delivery terms, see the{" "}
+            <Link href="/shipping" className="text-nav font-semibold hover:underline">
+              shipping page
+            </Link>
+            . For brand background, see{" "}
+            <Link href="/about" className="text-nav font-semibold hover:underline">
+              About {site.name}
+            </Link>
+            .
           </p>
         </div>
       </div>
     );
   }
   return (
-    <div className="max-w-3xl mx-auto px-4 py-12">
+    <div className="max-w-7xl mx-auto px-4 py-12">
       <h1 className="text-3xl font-bold text-primary mb-6">Press Kit</h1>
       <div className="space-y-8 text-slate-700 leading-relaxed">
         <div>
@@ -84,7 +106,7 @@ export default function PressPage() {
             <li>126+ Rakhi designs across Single, Combo, Kids, Bhaiya Bhabhi, and Lumba categories</li>
             <li>USA domestic shipping to all 50 states in 5–7 business days</li>
             <li>Raksha Bandhan 2026: August 28, 2026</li>
-            <li>Payments: Stripe (USD) and Razorpay (INR)</li>
+            <li>Payments: Razorpay for USD and INR</li>
             <li>Fulfillment: San Jose, CA area — US domestic delivery</li>
           </ul>
         </section>

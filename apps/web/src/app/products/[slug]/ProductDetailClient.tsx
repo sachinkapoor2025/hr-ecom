@@ -20,7 +20,7 @@ import { LeadCaptureInput } from "@/components/LeadCaptureInput";
 import { ExploreMoreSection } from "@/components/ExploreMoreSection";
 import { HomeProductCard } from "@/components/HomeProductCard";
 import { useCart } from "@/lib/cart-context";
-import { productPageFaqs } from "@/lib/content/product-faqs";
+import { faqsForProduct } from "@/lib/content/product-faqs";
 import { testimonials } from "@/lib/site";
 import {
   LOW_STOCK_THRESHOLD,
@@ -134,6 +134,7 @@ export function ProductDetailClient({
   const [productUrl, setProductUrl] = useState("");
   const [galleryImages, setGalleryImages] = useState(product.images ?? []);
   const [addons, setAddons] = useState<ProductAddonSelection[]>([]);
+  const productFaqs = faqsForProduct(product.categorySlug);
 
   useEffect(() => {
     setGalleryImages(product.images ?? []);
@@ -448,11 +449,11 @@ export function ProductDetailClient({
           <div className="space-y-8">
             {descriptionIsHtml ? (
               <article
-                className="product-html-description text-slate-700 leading-relaxed max-w-4xl prose prose-slate prose-a:text-nav prose-strong:text-primary prose-ul:my-3 prose-li:my-0.5"
+                className="product-html-description max-w-none text-slate-700 leading-relaxed prose prose-slate prose-a:text-nav prose-strong:text-primary prose-ul:my-3 prose-li:my-0.5"
                 dangerouslySetInnerHTML={{ __html: product.description }}
               />
             ) : (
-              <article className="text-slate-700 leading-relaxed space-y-4 max-w-4xl">
+              <article className="text-slate-700 leading-relaxed space-y-4">
                 {product.description.split(/(?<=\.)\s+/).map((para, i) => (
                   <p key={i}>{para}</p>
                 ))}
@@ -533,7 +534,7 @@ export function ProductDetailClient({
           <ProductReviewsPreview />
         ) : (
           <dl className="space-y-5 max-w-2xl">
-            {productPageFaqs.map((f) => (
+            {productFaqs.map((f) => (
               <div key={f.q}>
                 <dt className="font-semibold text-slate-900">{f.q}</dt>
                 <dd className="text-slate-600 mt-2 leading-relaxed">{f.a}</dd>
@@ -562,7 +563,7 @@ export function ProductDetailClient({
       <section className="mt-10 pt-8 border-t border-slate-200">
         <h2 className="text-lg font-bold text-primary mb-4">Common questions</h2>
         <dl className="space-y-4 max-w-2xl">
-          {productPageFaqs.map((f) => (
+          {productFaqs.map((f) => (
             <div key={f.q}>
               <dt className="font-semibold text-slate-800 text-sm">{f.q}</dt>
               <dd className="text-sm text-slate-600 mt-1 leading-relaxed">{f.a}</dd>

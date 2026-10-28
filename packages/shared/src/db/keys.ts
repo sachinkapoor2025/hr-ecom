@@ -133,6 +133,13 @@ export const couponKeys = {
   welcomePhoneSk: () => "ACTIVE" as const,
   abandonedEmailPk: (email: string) => `ABANDONED#${email.trim().toLowerCase()}`,
   abandonedEmailSk: () => "ACTIVE" as const,
+  /**
+   * Admin list feed. Base-table query (strongly consistent) so a coupon
+   * generated a moment ago is visible without waiting for a table scan.
+   */
+  feedPk: (source: "welcome" | "admin" | "abandoned") => `COUPONFEED#${source}` as const,
+  feedSk: (createdAt: string, code: string) =>
+    `${createdAt}#${code.trim().toUpperCase()}`,
 };
 
 /** Business expenses (config table). */

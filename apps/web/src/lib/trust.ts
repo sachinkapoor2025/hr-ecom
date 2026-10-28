@@ -9,7 +9,7 @@ export const trustFacts = {
     "California-based US fulfillment team — orders ship domestically within America (no customs delays for your brother)",
   support: "WhatsApp & email support before, during, and after delivery",
   catalog: "126+ premium Rakhi designs across five categories",
-  payments: "Secure checkout via Stripe (USD) and Razorpay (INR)",
+  payments: "Secure checkout via Razorpay (USD and INR)",
   guarantee: "Satisfaction guarantee — see our returns policy",
 } as const;
 
@@ -51,6 +51,6 @@ export const trustStripItems = [
   "Ships from within the USA",
   "5–7 day delivery · all 50 states",
   "Order from India · pay INR/UPI",
-  "Secure Stripe & Razorpay checkout",
+  "Secure Razorpay checkout",
   "WhatsApp +91 support",
 ] as const;

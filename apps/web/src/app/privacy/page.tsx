@@ -6,14 +6,14 @@ import { pageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = pageMetadata({
   title: "Privacy Policy",
-  description: `How ${site.name} collects, uses, and protects your information when you shop for Rakhi USA delivery.`,
+  description: `How ${site.name} collects, uses, and protects your information when you shop for Diwali and Bhai Dooj gifts delivered in the USA.`,
   path: "/privacy",
 });
 
 export default function PrivacyPage() {
   const budget = createInlineLinkBudget(4);
   return (
-    <div className="max-w-3xl mx-auto px-4 py-12">
+    <div className="max-w-7xl mx-auto px-4 py-12">
       <h1 className="text-3xl font-bold text-primary mb-6">Privacy Policy</h1>
       <div className="space-y-6 text-slate-700 leading-relaxed text-sm sm:text-base">
         <p>
@@ -23,7 +23,7 @@ export default function PrivacyPage() {
         <h2 className="text-xl font-bold text-primary">Information we collect</h2>
         <p>
           {applyInlineLinks(
-            "When you shop or contact us, we may collect your name, email, phone number, shipping address, order details, and payment status from our payment partners (Stripe or Razorpay). We do not store full card numbers.",
+            "When you shop or contact us, we may collect your name, email, phone number, shipping address, order details, and payment status from our payment partner (Razorpay). We do not store full card numbers.",
             [
               { phrase: "shop", href: "/products" },
               { phrase: "contact us", href: "/contact" },
@@ -39,6 +39,16 @@ export default function PrivacyPage() {
           <li>Improve our website and customer experience</li>
           <li>{applyInlineLinks("Comply with legal obligations", [{ phrase: "legal obligations", href: "/terms" }], budget)}</li>
         </ul>
+        <h2 className="text-xl font-bold text-primary">Orders</h2>
+        <p>
+          A delivery address is used to ship the Diwali or Bhai Dooj gift and to send order updates. Payment status
+          comes from Razorpay. Full card numbers are not stored on {site.domain}.
+        </p>
+        <h2 className="text-xl font-bold text-primary">Analytics</h2>
+        <p>
+          The site measures which pages are visited so we can see what shoppers use. That measurement does not
+          include card numbers.
+        </p>
         <h2 className="text-xl font-bold text-primary">Sharing</h2>
         <p>
           We share data only with service providers needed to fulfill orders (payment processors, shipping partners)

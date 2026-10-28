@@ -69,7 +69,7 @@ export default async function CityPage({ params }: Props) {
       <h1 className="text-3xl font-bold text-primary mb-2">
         Send Diwali and Bhai Dooj Gifts to {city.label}, USA
       </h1>
-      <p className="text-slate-600 mb-8 max-w-3xl">
+      <p className="text-slate-600 mb-8">
         Diwali gift combos, Bhai Dooj gifts, sweets, chocolates, and dry fruit hampers for {city.label}.
         Order from India, the UK, Canada, or anywhere. We ship domestically within America in 5–7
         business days.

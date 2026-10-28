@@ -220,7 +220,7 @@ export function onlineStoreJsonLd() {
     ],
     priceRange: "$$",
     currenciesAccepted: "USD, INR",
-    paymentAccepted: "Credit Card, Debit Card, UPI, Razorpay, Stripe",
+    paymentAccepted: "Credit Card, Debit Card, UPI, Razorpay",
     shippingDetails: {
       "@type": "OfferShippingDetails",
       shippingDestination: { "@type": "DefinedRegion", addressCountry: "US" },
@@ -470,7 +470,7 @@ export function howToSendRakhiJsonLd() {
         "@type": "HowToStep",
         position: 4,
         name: "Pay securely",
-        text: "Complete payment with Razorpay (INR) or Stripe (USD).",
+        text: "Complete payment with Razorpay in USD or INR.",
       },
       {
         "@type": "HowToStep",

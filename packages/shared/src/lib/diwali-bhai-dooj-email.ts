@@ -51,8 +51,8 @@ export const DIWALI_BHAI_DOOJ_EMAIL_CONFIG = {
     {
       name: "Bhai Dooj Kaju Katli & Kumkum Gift Box",
       description: "Kaju katli, kumkum, and a Bhai Dooj card.",
-      priceLabel: "₹99",
-      compareAtLabel: "",
+      priceLabel: "$38.25",
+      compareAtLabel: "$45.00",
       imageUrl: "https://d301af4ndyn9qx.cloudfront.net/uploads/orange-county/TFUSBD2601/TFUSBD2601_1.jpg",
       href: `${SITE}/products/bhai-dooj-kaju-katli-and-kumkum-gift-box`,
       buttonText: "View Product",

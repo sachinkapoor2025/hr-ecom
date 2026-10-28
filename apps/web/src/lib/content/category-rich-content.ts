@@ -121,7 +121,7 @@ export const categoryRichContent: Record<string, CategoryRichContent> = {
       steps: [
         "Choose a single rakhi from the collection above.",
         "Add to cart and enter your brother's full US shipping address.",
-        "Pay with Stripe (USD) or Razorpay (INR).",
+        "Pay with Razorpay in USD or INR.",
         "We pack with roli chawal and ship within the USA.",
         "Your brother receives his rakhi in 5–7 business days.",
       ],
@@ -243,7 +243,7 @@ export const categoryRichContent: Record<string, CategoryRichContent> = {
         "Domestic USA shipping from sisters worldwide",
         "Designer Lumba styles updated every season",
         "Roli chawal on eligible listings",
-        "Secure Stripe and Razorpay checkout",
+        "Secure Razorpay checkout",
         "WhatsApp and email order support",
       ],
     },
@@ -368,7 +368,7 @@ export const categoryRichContent: Record<string, CategoryRichContent> = {
       steps: [
         "Select a combo from the product grid above.",
         "Add to cart and enter the US shipping address.",
-        "Pay with Stripe (USD) or Razorpay (INR).",
+        "Pay with Razorpay in USD or INR.",
         "We pack the rakhi and chocolates together.",
         "Delivery in 5–7 business days to any US state.",
       ],
@@ -433,7 +433,7 @@ export const categoryRichContent: Record<string, CategoryRichContent> = {
       steps: [
         "Choose a two-piece set from the collection above.",
         "Add to cart and enter your brother's full US shipping address.",
-        "Pay with Stripe (USD) or Razorpay (INR).",
+        "Pay with Razorpay in USD or INR.",
         "We gift-pack both rakhis and ship within America.",
         "Your brothers receive the set in 5–7 business days.",
       ],
@@ -503,7 +503,7 @@ export const categoryRichContent: Record<string, CategoryRichContent> = {
         "Pick a three-piece set from the product grid above.",
         "Confirm all three rakhis in the photos and description.",
         "Enter the US delivery address at checkout.",
-        "Pay with Stripe (USD) or Razorpay (INR).",
+        "Pay with Razorpay in USD or INR.",
         "We pack and ship within America for 5–7 day delivery.",
       ],
     },
@@ -562,7 +562,7 @@ export const categoryRichContent: Record<string, CategoryRichContent> = {
         "Best value for multi-brother celebrations",
         "Domestic USA shipping from sisters worldwide",
         "Premium festive packaging",
-        "Secure Stripe and Razorpay checkout",
+        "Secure Razorpay checkout",
         "WhatsApp and email support",
       ],
     },
@@ -625,7 +625,7 @@ export const categoryRichContent: Record<string, CategoryRichContent> = {
         "Bundle price while standalone pages keep regular prices",
         "Roli and chawal included",
         "Domestic USA shipping",
-        "Secure Stripe and Razorpay checkout",
+        "Secure Razorpay checkout",
         "WhatsApp and email support",
       ],
     },
@@ -699,7 +699,7 @@ export const categoryRichContent: Record<string, CategoryRichContent> = {
       steps: [
         "Choose a hamper from the grid above and review what's included.",
         "Add to cart and enter your brother's full US address.",
-        "Pay securely with Stripe (USD) or Razorpay (INR).",
+        "Pay securely with Razorpay in USD or INR.",
         "We pack the rakhi, sweets, and dry fruits together.",
         "Delivery typically in 5–7 business days across America.",
       ],
@@ -744,8 +744,28 @@ export const categoryRichContent: Record<string, CategoryRichContent> = {
           "Looking for the perfect **Bhai Dooj gift for your brother in the USA**? Explore traditional Indian sweets, premium dry fruits, chocolates, and festive gift combinations. Our **Bhai Dooj gifts delivered in the USA** help you celebrate this special Indian festival with family, even when you live far apart.",
         ],
       },
+      {
+        heading: "What a Bhai Dooj box includes",
+        paragraphs: [
+          "Each card is a finished gift, not a menu you assemble. A pistachio box is pistachios. A kaju katli and kumkum box includes those items. A puja thali is packed only when the product name says so. Read the included list on the product page before you add it to the cart.",
+          "Bhai Dooj 2026 is 10 November. Standard delivery inside the United States is 5 business days, so order early enough for that window. The shipping page has the suggested order-by date and the free-shipping rules.",
+        ],
+      },
     ],
-    faqs: [],
+    faqs: [
+      {
+        q: "Does every Bhai Dooj gift include kumkum?",
+        a: "No. Kumkum, a puja thali, or another pooja item is included only when that product names it. A nut box or a chocolate box does not automatically include a tilak set.",
+      },
+      {
+        q: "Can I send a Bhai Dooj gift to any US state?",
+        a: "Yes. Enter the full United States address at checkout, including city, state, and ZIP. UsaRakhi ships inside the USA, with standard delivery in 5 business days.",
+      },
+      {
+        q: "When should I order for Bhai Dooj 2026?",
+        a: "Bhai Dooj 2026 is 10 November. Because standard delivery is 5 business days after dispatch, place the order early enough for the box to arrive before the celebration.",
+      },
+    ],
     support: {
       heading: "Need help choosing a Bhai Dooj gift?",
       body: "Contact our team for help choosing a Bhai Dooj gift box and confirming US delivery information.",
@@ -776,8 +796,28 @@ export const categoryRichContent: Record<string, CategoryRichContent> = {
           "Choose from **Diwali pooja gift sets**, **Indian sweet gift boxes**, and **dry fruit gift hampers** to celebrate Diwali with your loved ones. Each hamper contains the items specified on its product page, so check the included-items list before placing your order.",
         ],
       },
+      {
+        heading: "How to pick a Diwali hamper",
+        paragraphs: [
+          "Start with the item that matters for the celebration. A metal pooja set, puja thali, toran, rangoli, or Shubh Labh is a decor or puja gift. A sweet or dry fruit box is a food gift. Some listings combine both, and the product name says which.",
+          "Diwali 2026 is 8 November. Standard USA delivery is 5 business days. Order before that window if you want the hamper on the table for the festival. These gifts suit parents, siblings, friends, and colleagues at a US address — not only a brother.",
+        ],
+      },
     ],
-    faqs: [],
+    faqs: [
+      {
+        q: "Does every Diwali hamper include a pooja thali?",
+        a: "No. A thali, metal pooja set, toran, rangoli, or Shubh Labh is included only when the product name says so. Other Diwali listings are sweet or dry fruit boxes.",
+      },
+      {
+        q: "Can I send Diwali gifts to parents or friends?",
+        a: "Yes. Use any United States delivery address. The recipient does not have to be a brother.",
+      },
+      {
+        q: "When should I order for Diwali 2026?",
+        a: "Diwali 2026 is 8 November. Standard delivery is 5 business days after dispatch, so order early enough for the hamper to arrive before the festival.",
+      },
+    ],
     support: {
       heading: "Need help choosing a Diwali gift?",
       body: "Contact our team for help choosing a Diwali gift hamper and confirming US delivery information.",
@@ -830,8 +870,27 @@ export const categoryRichContent: Record<string, CategoryRichContent> = {
           "Complete your order and check the applicable delivery details.",
         ],
       },
+      {
+        heading: "What these sweet boxes are",
+        paragraphs: [
+          "A sweet combo is a fixed box. You cannot swap kaju katli for laddoo on the same listing. If the title names kaju katli, that is the mithai. If it names besan laddoo, that is the mithai. Some boxes also include a toran, rangoli, nuts, or a pooja piece — only when the product says so.",
+        ],
+      },
     ],
-    faqs: [],
+    faqs: [
+      {
+        q: "Can I choose the sweets in a combo?",
+        a: "No. Each sweet combo is packed as listed. Open the product page for the included items before you order.",
+      },
+      {
+        q: "Do all sweet combos include kaju katli and besan laddoo?",
+        a: "No. Some boxes feature kaju katli and others feature besan laddoo. The product name tells you which mithai is inside.",
+      },
+      {
+        q: "Are sweet combos only for Diwali?",
+        a: "They are grouped here because they contain mithai. The same boxes can also be Bhai Dooj or Diwali gifts when those festivals are named on the product.",
+      },
+    ],
     support: {
       heading: "Need Help Choosing a Sweet Gift Hamper?",
       body: "Find thoughtful **Indian sweet gifts to send to the USA** for Diwali, Bhai Dooj, and other special occasions. Contact our team on WhatsApp for help selecting a hamper and confirming delivery information.",

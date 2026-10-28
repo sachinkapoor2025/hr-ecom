@@ -69,7 +69,7 @@ export default function RakshaBandhanPage() {
       </section>
 
       {/* SEO intro */}
-      <section className="max-w-4xl mx-auto px-4 py-12">
+      <section className="max-w-7xl mx-auto px-4 py-12">
         <div className="space-y-4 text-slate-700 leading-relaxed">
           {content.intro.map((para, i) => (
             <p key={i}>{para}</p>
@@ -79,10 +79,10 @@ export default function RakshaBandhanPage() {
 
       {/* Showcase grid */}
       <section className="max-w-7xl mx-auto px-4 py-10 border-t border-slate-100">
-        <h2 className="text-2xl md:text-3xl font-bold text-primary text-center mb-2">
+        <h2 className="text-2xl md:text-3xl font-bold text-primary mb-2">
           Premium Rakhis for Raksha Bandhan 2026
         </h2>
-        <p className="text-center text-slate-600 mb-10 max-w-2xl mx-auto">
+        <p className="text-slate-600 mb-10">
           Single rakhis, chocolate combos, kids designs, and Bhaiya Bhabhi sets — all delivered across the USA.
         </p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -100,7 +100,7 @@ export default function RakshaBandhanPage() {
 
       {/* Why UsaRakhi */}
       <section className="bg-slate-50 border-y border-slate-200 py-12">
-        <div className="max-w-4xl mx-auto px-4">
+        <div className="max-w-7xl mx-auto px-4">
           <h2 className="text-2xl font-bold text-primary mb-6">{content.whyUsaRakhi.heading}</h2>
           <ul className="grid sm:grid-cols-2 gap-3">
             {content.whyUsaRakhi.points.map((point) => (
@@ -116,10 +116,10 @@ export default function RakshaBandhanPage() {
       {/* Brother & sister stories */}
       <section className="py-14">
         <div className="max-w-7xl mx-auto px-4">
-          <h2 className="text-2xl md:text-3xl font-bold text-primary text-center mb-2">
+          <h2 className="text-2xl md:text-3xl font-bold text-primary mb-2">
             Real Stories — Brothers & Sisters Across Miles
           </h2>
-          <p className="text-center text-slate-600 mb-10 max-w-2xl mx-auto">
+          <p className="text-slate-600 mb-10">
             Sisters worldwide trust {site.name} to keep the Raksha Bandhan tradition alive when oceans lie between
             them and their brothers.
           </p>
@@ -144,7 +144,7 @@ export default function RakshaBandhanPage() {
       </section>
 
       {/* Traditions */}
-      <section className="max-w-4xl mx-auto px-4 py-12">
+      <section className="max-w-7xl mx-auto px-4 py-12">
         <h2 className="text-2xl font-bold text-primary mb-6">{content.tradition.heading}</h2>
         <div className="space-y-4 text-slate-700 leading-relaxed">
           {content.tradition.paragraphs.map((para, i) => (
@@ -154,8 +154,8 @@ export default function RakshaBandhanPage() {
       </section>
 
       {/* How to celebrate */}
-      <section className="max-w-5xl mx-4 lg:mx-auto px-4 py-12 bg-slate-50 rounded-2xl">
-        <h2 className="text-2xl font-bold text-primary text-center mb-10">
+      <section className="max-w-7xl mx-auto px-4 py-12 bg-slate-50 rounded-2xl">
+        <h2 className="text-2xl font-bold text-primary mb-10">
           How to Send Rakhi to USA — 4 Simple Steps
         </h2>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -172,7 +172,7 @@ export default function RakshaBandhanPage() {
       </section>
 
       {/* Order timeline */}
-      <section className="max-w-4xl mx-auto px-4 py-12">
+      <section className="max-w-7xl mx-auto px-4 py-12">
         <h2 className="text-2xl font-bold text-primary mb-6">{content.orderGuide.heading}</h2>
         <ul className="space-y-3">
           {content.orderGuide.paragraphs.map((item) => (
@@ -201,8 +201,8 @@ export default function RakshaBandhanPage() {
       </section>
 
       {/* Shop categories */}
-      <section className="max-w-5xl mx-auto px-4 py-12">
-        <h2 className="text-2xl font-bold text-primary mb-6 text-center">Shop Rakhi by Category</h2>
+      <section className="max-w-7xl mx-auto px-4 py-12">
+        <h2 className="text-2xl font-bold text-primary mb-6">Shop Rakhi by Category</h2>
         <div className="grid sm:grid-cols-2 gap-3 mb-8">
           {categoryOrder.map((slug) => (
             <div
@@ -221,8 +221,8 @@ export default function RakshaBandhanPage() {
       </section>
 
       {/* FAQ */}
-      <section className="max-w-3xl mx-auto px-4 py-12 border-t border-slate-100">
-        <h2 className="text-2xl font-bold text-primary text-center mb-8">Raksha Bandhan 2026 — FAQ</h2>
+      <section className="max-w-7xl mx-auto px-4 py-12 border-t border-slate-100">
+        <h2 className="text-2xl font-bold text-primary mb-8">Raksha Bandhan 2026 — FAQ</h2>
         <div className="space-y-3">
           {rakshaBandhanFaqs.map((f) => (
             <details key={f.q} className="border border-slate-200 rounded-lg p-5 bg-white">

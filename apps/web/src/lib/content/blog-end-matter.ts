@@ -267,7 +267,7 @@ export const handwrittenBlogEndMatter: Record<
     faqs: [
       {
         q: "Can I pay in rupees if the rakhi is going to a US address?",
-        a: "Yes. UsaRakhi checkout supports Razorpay in INR (UPI, cards, netbanking) and Stripe in USD. You order from India; delivery is to his American address.",
+        a: "Yes. UsaRakhi checkout uses Razorpay for INR and USD (UPI, cards, netbanking). You order from India; delivery is to his American address.",
       },
       {
         q: "If I order from India, does the parcel fly from India?",
@@ -464,7 +464,7 @@ export const handwrittenBlogEndMatter: Record<
       },
       {
         q: "Do I need USD to order if I live in India?",
-        a: "No. Razorpay accepts INR (UPI, cards, netbanking). Stripe is there for USD cards. Use whichever is easier.",
+        a: "Razorpay accepts both INR and USD (UPI, cards, and netbanking). Use the currency shown at checkout.",
       },
       {
         q: "What delivery window should a trustworthy site publish?",

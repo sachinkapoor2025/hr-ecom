@@ -137,7 +137,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const place = `${secondary.name}, ${secondary.state}`;
     return pageMetadata({
       title: `Send Diwali and Bhai Dooj Gifts to ${place} | 5–7 Day USA Delivery | ${site.name}`,
-      description: `Send Diwali gifts and Bhai Dooj gifts to ${place} with ${site.name}. Domestic USA shipping in 5–7 business days for sweet combos, chocolates, and dry fruit hampers. Stripe and Razorpay checkout.`,
+      description: `Send Diwali gifts and Bhai Dooj gifts to ${place} with ${site.name}. Domestic USA shipping in 5–7 business days for sweet combos, chocolates, and dry fruit hampers. Razorpay checkout.`,
       path,
       keywords: `diwali gifts ${secondary.name}, bhai dooj gifts ${secondary.name}, ${secondary.state}, sweet combos, dry fruit hampers`,
       absoluteTitle: true,
@@ -165,7 +165,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   return pageMetadata({
     title: `Send Diwali and Bhai Dooj Gifts to ${place} | ${site.name}`,
-    description: `Send Diwali gifts and Bhai Dooj gifts to ${place} with ${site.name}.${warehouseNote} ${regionNote} Secure Stripe and Razorpay checkout.`,
+    description: `Send Diwali gifts and Bhai Dooj gifts to ${place} with ${site.name}.${warehouseNote} ${regionNote} Secure Razorpay checkout.`,
     path,
     keywords: location.keywords.slice(0, 12).join(", "),
     absoluteTitle: true,
@@ -205,7 +205,7 @@ export default async function SeoLocationPage({ params }: Props) {
         <h1 className="text-3xl font-bold text-primary mb-2">
           Send Diwali and Bhai Dooj Gifts to {cityContent.label}, USA
         </h1>
-        <p className="text-slate-600 mb-8 max-w-3xl">
+        <p className="text-slate-600 mb-8">
           {cityContent.metaExtra ??
             `Diwali gift combos and Bhai Dooj gifts for ${cityContent.label}. Domestic USA shipping for sweets, chocolates, and dry fruit hampers.`}
         </p>
@@ -242,7 +242,7 @@ export default async function SeoLocationPage({ params }: Props) {
         <h1 className="text-3xl font-bold text-primary mb-2">
           Send Diwali and Bhai Dooj Gifts to {place}
         </h1>
-        <p className="text-slate-600 mb-8 max-w-3xl">
+        <p className="text-slate-600 mb-8">
           {secondaryCityIntro(secondary.slug, secondary.name, secondary.state)}
         </p>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
@@ -286,7 +286,7 @@ export default async function SeoLocationPage({ params }: Props) {
       <h1 className="text-3xl font-bold text-primary mb-2">
         Send Diwali and Bhai Dooj Gifts to {place}
       </h1>
-      <p className="text-slate-600 mb-8 max-w-3xl">
+      <p className="text-slate-600 mb-8">
         Send Diwali gift combos, Bhai Dooj gifts, sweets, chocolates, and dry fruit hampers to {place}{" "}
         with {site.name}. Domestic USA shipping and secure checkout.
       </p>

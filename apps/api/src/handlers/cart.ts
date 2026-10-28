@@ -37,10 +37,61 @@ import { ensureProductInDb } from "../lib/ensure-product";
 /** Stale carts auto-expire after this many days (TTL). */
 const CART_TTL_DAYS = 30;
 
+/** Refresh this hamper from the catalog so checkout uses the current selling price. */
+const CATALOG_PRICE_SLUG = "bhai-dooj-kaju-katli-and-kumkum-gift-box";
+
 function ensureLineIds(items: CartItem[]): CartItem[] {
   return items.map((item) =>
     item.lineId ? item : { ...item, lineId: uuidv4() }
   );
+}
+
+type PricedProduct = {
+  slug: string;
+  price: number;
+  currency: "USD" | "INR";
+  vendorSlug?: string;
+  categorySlug?: string;
+};
+
+/** Same unit price add-to-cart stores, so a later price edit replaces a stale cart snapshot. */
+function sellingUnitPrice(product: PricedProduct): number {
+  const skipCompetitive =
+    Boolean(product.vendorSlug) ||
+    product.categorySlug === "rakhi-hampers" ||
+    productUsesFixedStorefrontPrice(product);
+  if (isFlashComboProduct(product.slug)) return flashComboUnitPriceUsd();
+  return skipCompetitive
+    ? product.price
+    : applyCompetitivePriceReduction(product.price, product.currency);
+}
+
+/** Replace a stale line with the current catalog selling price. */
+async function syncCatalogPrice(items: CartItem[]): Promise<{ items: CartItem[]; changed: boolean }> {
+  if (!items.some((item) => item.productSlug === CATALOG_PRICE_SLUG)) {
+    return { items, changed: false };
+  }
+
+  const result = await docClient.send(
+    new GetCommand({
+      TableName: PRODUCTS_TABLE,
+      Key: { PK: productKeys.pk(CATALOG_PRICE_SLUG), SK: productKeys.sk() },
+    })
+  );
+  const product = result.Item as PricedProduct | undefined;
+  if (!product || typeof product.price !== "number" || !product.currency) {
+    return { items, changed: false };
+  }
+
+  const price = sellingUnitPrice({ ...product, slug: CATALOG_PRICE_SLUG });
+  let changed = false;
+  const next = items.map((item) => {
+    if (item.productSlug !== CATALOG_PRICE_SLUG) return item;
+    if (item.price === price && item.currency === product.currency) return item;
+    changed = true;
+    return { ...item, price, currency: product.currency };
+  });
+  return { items: next, changed };
 }
 
 /** Backfill missing Orange County vendorSlug so $15 min never mixes OC + UsaRakhi. */
@@ -111,14 +162,21 @@ export async function getCartHandler(event: APIGatewayProxyEventV2) {
     image: item.image ? resolveProductImageUrl(item.image) : item.image,
   }));
   const healed = ensureVendorSlugs(items);
-  // Persist backfilled lineIds / vendorSlug so shipping rules stay correct.
+  const synced = await syncCatalogPrice(healed);
+  // Persist backfilled lineIds / vendorSlug and the current catalog price.
   const needsPersist =
+    synced.changed ||
     (raw.items ?? []).some((i) => !i.lineId) ||
     healed.some((item, idx) => item.vendorSlug !== (raw.items ?? [])[idx]?.vendorSlug);
   if (needsPersist) {
-    await saveCart(userKey, { ...raw, items: healed }, getSessionId(event));
+    await saveCart(userKey, { ...raw, items: synced.items }, getSessionId(event));
   }
-  return ok({ cart: { items: healed, updatedAt: raw.updatedAt ?? now() } });
+  return ok({
+    cart: {
+      items: synced.items,
+      updatedAt: raw.updatedAt ?? now(),
+    },
+  });
 }
 
 export async function addToCart(event: APIGatewayProxyEventV2) {
@@ -194,15 +252,7 @@ export async function addToCart(event: APIGatewayProxyEventV2) {
   const signature = cartAddonSignature(addons);
 
   // Vendor / hamper / flash fixed-price deals — do not stack competitive cuts.
-  const skipCompetitive =
-    Boolean(product.vendorSlug) ||
-    product.categorySlug === "rakhi-hampers" ||
-    productUsesFixedStorefrontPrice(product);
-  const unitPrice = isFlashComboProduct(product.slug)
-    ? flashComboUnitPriceUsd()
-    : skipCompetitive
-      ? product.price
-      : applyCompetitivePriceReduction(product.price, product.currency);
+  const unitPrice = sellingUnitPrice(product);
   const couponExcluded =
     Boolean(product.couponExcluded) || isFlashComboProduct(product.slug);
 

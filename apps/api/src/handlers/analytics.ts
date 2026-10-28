@@ -25,6 +25,7 @@ import {
   type LiveVisitor,
   type LiveVisitorsResponse,
 } from "@hr-ecom/shared";
+import { collectQueryPages } from "../lib/collect-scan-pages";
 import { docClient, EVENTS_TABLE, CUSTOMERS_TABLE, CARTS_TABLE, ORDERS_TABLE, dayBucket, now } from "../lib/db";
 import { ok, forbidden, badRequest } from "../lib/response";
 import { requireAdmin } from "../lib/auth";
@@ -114,14 +115,20 @@ function businessDayFallback(): string {
 }
 
 async function getRollup(day: string): Promise<RollupItem[]> {
-  const res = await docClient.send(
-    new QueryCommand({
-      TableName: EVENTS_TABLE,
-      KeyConditionExpression: "PK = :pk",
-      ExpressionAttributeValues: { ":pk": eventKeys.rollupPk(day) },
-    })
-  );
-  return (res.Items ?? []) as RollupItem[];
+  return collectQueryPages(async (startKey) => {
+    const res = await docClient.send(
+      new QueryCommand({
+        TableName: EVENTS_TABLE,
+        KeyConditionExpression: "PK = :pk",
+        ExpressionAttributeValues: { ":pk": eventKeys.rollupPk(day) },
+        ExclusiveStartKey: startKey,
+      })
+    );
+    return {
+      items: (res.Items ?? []) as RollupItem[],
+      lastKey: res.LastEvaluatedKey as Record<string, unknown> | undefined,
+    };
+  });
 }
 
 /** Fields needed to rebuild SessionSummary — avoid pulling full event payloads. */
@@ -848,14 +855,7 @@ export async function getSessionTimeline(event: APIGatewayProxyEventV2) {
   const sessionId = event.pathParameters?.sessionId;
   if (!sessionId) return badRequest("Session id required");
 
-  const eventsRes = await docClient.send(
-    new QueryCommand({
-      TableName: EVENTS_TABLE,
-      KeyConditionExpression: "PK = :pk",
-      ExpressionAttributeValues: { ":pk": eventKeys.pk(sessionId) },
-      ScanIndexForward: true,
-    })
-  );
+  const events = await loadSessionTimelineEvents(sessionId);
 
   const identityRes = await docClient.send(
     new QueryCommand({
@@ -873,8 +873,55 @@ export async function getSessionTimeline(event: APIGatewayProxyEventV2) {
     sessionId,
     profile: profile ?? null,
     leads,
-    events: eventsRes.Items ?? [],
+    events,
   });
+}
+
+/**
+ * Session timelines are stored oldest-first. One Query page is at most 1MB, so a
+ * long session used to drop every later event. Read forward pages, and if the
+ * session continues, merge the newest rows so recent activity stays visible
+ * next to the earlier events.
+ */
+async function loadSessionTimelineEvents(sessionId: string): Promise<Record<string, unknown>[]> {
+  const events: Record<string, unknown>[] = [];
+  let startKey: Record<string, unknown> | undefined;
+  let pages = 0;
+  do {
+    const res = await docClient.send(
+      new QueryCommand({
+        TableName: EVENTS_TABLE,
+        KeyConditionExpression: "PK = :pk",
+        ExpressionAttributeValues: { ":pk": eventKeys.pk(sessionId) },
+        ScanIndexForward: true,
+        ExclusiveStartKey: startKey,
+      })
+    );
+    events.push(...((res.Items ?? []) as Record<string, unknown>[]));
+    startKey = res.LastEvaluatedKey as Record<string, unknown> | undefined;
+    pages += 1;
+  } while (startKey && pages < 3);
+
+  if (!startKey) return events;
+
+  const latest = await docClient.send(
+    new QueryCommand({
+      TableName: EVENTS_TABLE,
+      KeyConditionExpression: "PK = :pk",
+      ExpressionAttributeValues: { ":pk": eventKeys.pk(sessionId) },
+      ScanIndexForward: false,
+      Limit: 200,
+    })
+  );
+  const seen = new Set(events.map((item) => String(item.SK ?? item.eventId ?? "")));
+  for (const item of (latest.Items ?? []) as Record<string, unknown>[]) {
+    const key = String(item.SK ?? item.eventId ?? "");
+    if (seen.has(key)) continue;
+    seen.add(key);
+    events.push(item);
+  }
+  events.sort((a, b) => String(a.SK ?? a.createdAt ?? "").localeCompare(String(b.SK ?? b.createdAt ?? "")));
+  return events;
 }
 
 function trafficSourceLabel(referrer?: string): string {

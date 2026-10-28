@@ -58,7 +58,7 @@ export const countryRakhiPages: Record<CountryRakhiPageId, CountryRakhiPage> = {
       "Dedicated Gifts from UK landing with curated catalog picks",
       "Send Gifts to UK gift ideas — threads, combos & hampers",
       "Gifts Delivery to UK messaging with clear shop CTAs",
-      "Pay securely in USD (Stripe) or INR / UPI (Razorpay)",
+      "Pay securely in USD or INR / UPI with Razorpay",
       "Roli & chawal included on most rakhis for the tilak ritual",
       "WhatsApp support if you need help choosing a gift",
     ],
@@ -87,7 +87,7 @@ export const countryRakhiPages: Record<CountryRakhiPageId, CountryRakhiPage> = {
       },
       {
         q: "Do products show UK or India pricing?",
-        a: "Product cards use the site currency toggle (USD / INR). At checkout you can pay with Stripe (USD) or Razorpay (INR / UPI).",
+        a: "Product cards use the site currency toggle (USD / INR). At checkout you pay with Razorpay in USD or INR / UPI.",
       },
     ],
     whatsappPrefill: "Hi UsaRakhi, I want help with Gifts from UK / Send Gifts to UK.",
@@ -143,7 +143,7 @@ export const countryRakhiPages: Record<CountryRakhiPageId, CountryRakhiPage> = {
       {
         heading: "Easy online ordering",
         paragraphs: [
-          "Shopping is straightforward: pick a design from the grid, add it to cart, enter delivery details, and pay with Stripe (USD) or Razorpay (INR / UPI). Product photos, names, and live prices appear on each card so you can compare options before you buy.",
+          "Shopping is straightforward: pick a design from the grid, add it to cart, enter delivery details, and pay with Razorpay (USD or INR / UPI). Product photos, names, and live prices appear on each card so you can compare options before you buy.",
           "Need help choosing Gifts from India to UK? Message us on WhatsApp — we can point you to collections that match your brother’s style and your budget.",
         ],
       },
@@ -168,7 +168,7 @@ export const countryRakhiPages: Record<CountryRakhiPageId, CountryRakhiPage> = {
       "Dedicated Gifts from Canada landing with live catalog products",
       "Send Gifts to Canada ideas — classic threads to premium hampers",
       "Clear Gifts Delivery to Canada shopping experience",
-      "Secure checkout with Stripe (USD) or Razorpay (INR / UPI)",
+      "Secure checkout with Razorpay (USD or INR / UPI)",
       "Most rakhis include roli & chawal for the ceremony",
       "Friendly WhatsApp support for gift selection help",
     ],
@@ -197,7 +197,7 @@ export const countryRakhiPages: Record<CountryRakhiPageId, CountryRakhiPage> = {
       },
       {
         q: "Is currency in CAD?",
-        a: "The storefront shows USD or INR via the site currency toggle. Checkout supports Stripe (USD) and Razorpay (INR).",
+        a: "The storefront shows USD or INR via the site currency toggle. Checkout uses Razorpay for USD and INR.",
       },
     ],
     whatsappPrefill: "Hi UsaRakhi, I want help with Gifts from Canada / Send Gifts to Canada.",
@@ -253,7 +253,7 @@ export const countryRakhiPages: Record<CountryRakhiPageId, CountryRakhiPage> = {
       {
         heading: "Easy online ordering",
         paragraphs: [
-          "Choose a product, add it to cart, enter shipping details, and pay with Stripe (USD) or Razorpay (INR / UPI). Sorting and the currency toggle work the same as elsewhere on UsaRakhi so comparing gifts stays simple.",
+          "Choose a product, add it to cart, enter shipping details, and pay with Razorpay (USD or INR / UPI). Sorting and the currency toggle work the same as elsewhere on UsaRakhi so comparing gifts stays simple.",
           "Unsure what to pick for Send Gifts to Canada? Reach out on WhatsApp — we are happy to help you narrow combos, hampers, or classic single threads.",
         ],
       },

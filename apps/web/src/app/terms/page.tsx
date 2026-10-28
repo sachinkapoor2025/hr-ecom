@@ -14,7 +14,7 @@ export const metadata: Metadata = pageMetadata({
 
 export default function TermsPage() {
   return (
-    <div className="max-w-3xl mx-auto px-4 py-12">
+    <div className="max-w-7xl mx-auto px-4 py-12">
       <h1 className="text-3xl font-bold text-primary mb-6">Terms &amp; Conditions</h1>
       <div className="space-y-6 text-slate-700 leading-relaxed text-sm sm:text-base">
         <p>
@@ -55,7 +55,7 @@ export default function TermsPage() {
         <h2 className="text-xl font-bold text-primary">2. Pricing &amp; Payment</h2>
         <p>Product prices are displayed in the applicable currency, USD or INR, as shown at checkout.</p>
         <p>
-          Payments are processed securely through Stripe for USD transactions or Razorpay for INR transactions. UsaRakhi
+          Payments are processed securely through Razorpay for both USD and INR. UsaRakhi
           does not store customers’ card details on its servers.
         </p>
         <p>

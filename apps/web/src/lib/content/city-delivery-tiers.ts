@@ -82,10 +82,22 @@ function slugVariantIndex(slug: string, modulo: number): number {
 export function secondaryCityIntro(slug: string, city: string, state: string): string {
   const place = `${city}, ${state}`;
   const variants = [
-    `UsaRakhi delivers gifts to ${place} in 5–7 business days — order from India, the UK, Canada, or anywhere in the world.`,
-    `Sending gifts to ${place}? UsaRakhi ships domestically within America in 5–7 business days, no matter where you're ordering from.`,
-    `${place} gifts delivery in 5–7 business days, direct from our USA fulfillment — order from India, the UK, Canada, or elsewhere.`,
-    `Gifts for your brother in ${place} arrive in 5–7 business days. We ship domestically within the USA for sisters ordering worldwide.`,
+    `UsaRakhi delivers Diwali and Bhai Dooj gifts to ${place} in 5–7 business days. Order from India, the UK, Canada, or anywhere else — the parcel ships inside the United States.`,
+    `Sending sweets, dry fruits, or a festive hamper to ${place}? UsaRakhi fulfills the order in America, so it is not an international parcel.`,
+    `${place} deliveries use the standard USA window of 5–7 business days after dispatch. Pay in INR or USD and enter the local address at checkout.`,
+    `Diwali and Bhai Dooj gifts for ${place} are packed as the product page describes and shipped domestically across the United States.`,
+  ];
+  return variants[slugVariantIndex(slug, variants.length)]!;
+}
+
+/** A second, different paragraph so secondary city pages are not copies of each other. */
+export function secondaryCityGiftNote(slug: string, city: string, state: string): string {
+  const place = `${city}, ${state}`;
+  const variants = [
+    `For ${place}, a Bhai Dooj box is the direct gift for a brother. The product name is the contents, such as kaju katli, nuts, chocolate, or kumkum. A Diwali combo is the better fit when the hamper should include a pooja piece or decor with sweets or dry fruits.`,
+    `Shoppers sending to ${place} usually start with the occasion. Bhai Dooj listings are brother gifts. Diwali listings pair a thali, toran, rangoli, or Shubh Labh with food. Sweet, dry fruit, chocolate, and pooja pages regroup the same boxes by what is inside.`,
+    `A gift for ${place} is a fixed hamper, not a custom box. Open the product page for the included list before checkout. Weights and piece counts appear only when that listing states them.`,
+    `Orders for ${place} need a full US address at checkout. Carts of $15 or more qualify for free shipping, Orange County products ship free, and a mixed-vendor cart is calculated separately.`,
   ];
   return variants[slugVariantIndex(slug, variants.length)]!;
 }

@@ -46,7 +46,7 @@ export function CountryGiftLanding({
       />
       <Breadcrumbs items={crumbs} />
       <h1 className="text-3xl font-bold text-primary mb-2 break-words">{page.heading}</h1>
-      <p className="text-slate-600 mb-8 max-w-3xl">{page.intro}</p>
+      <p className="text-slate-600 mb-8">{page.intro}</p>
 
       {products.length > 0 ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">

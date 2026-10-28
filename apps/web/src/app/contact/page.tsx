@@ -24,7 +24,7 @@ export default function ContactPage() {
     <>
       <JsonLd data={contactPageJsonLd()} />
       <ContactForm />
-      <section className="max-w-3xl mx-auto px-4 pb-12 text-slate-700 leading-relaxed">
+      <section className="max-w-7xl mx-auto px-4 pb-12 text-slate-700 leading-relaxed">
         <h2 className="text-xl font-bold text-primary mb-3">What to include in your message</h2>
         <p className="mb-4">
           The form above reaches the {site.name} support team for order questions

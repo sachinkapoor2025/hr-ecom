@@ -1160,18 +1160,29 @@ export async function retryOrderPayment(event: APIGatewayProxyEventV2) {
 export async function listLeads(event: APIGatewayProxyEventV2) {
   if (!requireAdmin(event)) return forbidden();
 
-  const result = await docClient.send(
-    new QueryCommand({
-      TableName: CUSTOMERS_TABLE,
-      IndexName: "GSI1",
-      KeyConditionExpression: "GSI1PK = :pk",
-      ExpressionAttributeValues: { ":pk": customerKeys.gsi1pk() },
-      ScanIndexForward: false,
-      Limit: 200,
-    })
-  );
+  const leads: Record<string, unknown>[] = [];
+  let ExclusiveStartKey: Record<string, unknown> | undefined;
+  let pages = 0;
+  // Newest first, then keep reading so older leads stay in the list with new ones.
+  // Cap the payload well under the Lambda 6MB response limit.
+  do {
+    const result = await docClient.send(
+      new QueryCommand({
+        TableName: CUSTOMERS_TABLE,
+        IndexName: "GSI1",
+        KeyConditionExpression: "GSI1PK = :pk",
+        ExpressionAttributeValues: { ":pk": customerKeys.gsi1pk() },
+        ScanIndexForward: false,
+        ExclusiveStartKey,
+        Limit: 200,
+      })
+    );
+    leads.push(...((result.Items ?? []) as Record<string, unknown>[]));
+    ExclusiveStartKey = result.LastEvaluatedKey as Record<string, unknown> | undefined;
+    pages += 1;
+  } while (ExclusiveStartKey && pages < 15 && leads.length < 3000);
 
-  return ok({ leads: result.Items ?? [] });
+  return ok({ leads });
 }
 
 export async function updateLead(event: APIGatewayProxyEventV2) {

@@ -52,7 +52,7 @@ export const collectionGuides: Record<string, CollectionGuide> = {
     heading: "Rakhi with chocolates brothers in America already know",
     paragraphs: [
       "Chocolate combos are the most common “send something extra” request we see for USA addresses. This page shows rakhi combos and any listing that mentions chocolate, including familiar names such as Ferrero Rocher, Lindt, and Hershey’s when those brands appear on the product itself.",
-      "Treat the product card as the source of truth for which chocolate is packed. A combo is not a custom box you assemble at checkout unless the listing says so. Payment can be completed in USD with Stripe or in INR with Razorpay, including UPI for sisters ordering from India.",
+      "Treat the product card as the source of truth for which chocolate is packed. A combo is not a custom box you assemble at checkout unless the listing says so. Payment can be completed in USD or INR with Razorpay, including UPI for sisters ordering from India.",
     ],
     pointsHeading: "A simple way to compare chocolate rakhis",
     points: [
@@ -222,7 +222,7 @@ export const collectionGuides: Record<string, CollectionGuide> = {
     heading: "Rakhis and gift sets listed at $30 or less",
     paragraphs: [
       "The under-$30 page is the mid-range view of the catalog. It includes products up to $30, which is often enough for a chocolate combo or a small multi-piece set as well as designer singles.",
-      "If a product you expected is missing, its listed price is above $30 — check premium rakhis or the hamper category. Nothing on this page changes payment options: Stripe for USD and Razorpay for INR.",
+      "If a product you expected is missing, its listed price is above $30 — check premium rakhis or the hamper category. Nothing on this page changes payment options: Razorpay for USD and INR.",
     ],
     pointsHeading: "What usually appears in this range",
     points: [

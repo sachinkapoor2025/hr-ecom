@@ -1,25 +1,40 @@
-import { homeSeoContent } from "@/lib/content/home-seo";
+import { categoryHref } from "@/lib/category-urls";
+import Link from "next/link";
+import { homeCityLinks, homeSeoContent } from "@/lib/content/home-seo";
+import { locationPublicPath } from "@/lib/content/seo-data";
+import { applyInlineLinks, createInlineLinkBudget, type InlineLinkBudget } from "@/lib/inline-links";
 
 const BOLD_PHRASE = "Diwali gift combos and sweet combos";
 
-function paragraphWithBold(text: string) {
+const HOME_SEO_LINKS = [
+  { phrase: "Bhai Dooj gift hampers", href: categoryHref("bhai-dooj") },
+  { phrase: "traditional Indian mithai", href: categoryHref("sweet-combos") },
+  { phrase: "chocolate treats", href: categoryHref("chocolate-combos") },
+  { phrase: "dry fruit gift boxes", href: categoryHref("dry-fruit-combos") },
+  { phrase: "Diwali gift hampers", href: categoryHref("diwali") },
+  { phrase: "New York", href: locationPublicPath("new-york") },
+  { phrase: "shipping page", href: "/shipping" },
+] as const;
+
+function RichParagraph({ text, budget }: { text: string; budget: InlineLinkBudget }) {
   const index = text.indexOf(BOLD_PHRASE);
-  if (index < 0) return text;
+  if (index < 0) return <p>{applyInlineLinks(text, HOME_SEO_LINKS, budget)}</p>;
   return (
-    <>
-      {text.slice(0, index)}
+    <p>
+      {applyInlineLinks(text.slice(0, index), HOME_SEO_LINKS, budget)}
       <strong>{BOLD_PHRASE}</strong>
-      {text.slice(index + BOLD_PHRASE.length)}
-    </>
+      {applyInlineLinks(text.slice(index + BOLD_PHRASE.length), HOME_SEO_LINKS, budget)}
+    </p>
   );
 }
 
 export function HomeSeoSection() {
   const { sections, whyChoose } = homeSeoContent;
+  const budget = createInlineLinkBudget(6);
 
   return (
     <section className="bg-slate-50 border-y border-slate-200" aria-labelledby="home-seo-heading">
-      <div className="max-w-4xl mx-auto px-4 py-12 sm:py-16 space-y-8 text-slate-700 leading-relaxed">
+      <div className="max-w-7xl mx-auto px-4 py-12 sm:py-16 space-y-8 text-slate-700 leading-relaxed">
         {sections.map((section, index) => (
           <article key={`${section.heading}-${index}`}>
             <h2
@@ -30,7 +45,7 @@ export function HomeSeoSection() {
             </h2>
             <div className="space-y-3">
               {section.paragraphs.map((para) => (
-                <p key={para.slice(0, 64)}>{paragraphWithBold(para)}</p>
+                <RichParagraph key={para.slice(0, 64)} text={para} budget={budget} />
               ))}
             </div>
           </article>
@@ -38,10 +53,30 @@ export function HomeSeoSection() {
 
         <article>
           <h2 className="text-xl md:text-2xl font-bold text-primary mb-3">{whyChoose.heading}</h2>
+          <p className="mb-3">{applyInlineLinks(whyChoose.lead, HOME_SEO_LINKS, budget)}</p>
           <ul className="space-y-2 list-disc pl-5">
             {whyChoose.bullets.map((item) => (
               <li key={`${item.label}-${item.text.slice(0, 24)}`}>
-                <strong>{item.label}</strong> {item.text}
+                <strong>{item.label}</strong> {applyInlineLinks(item.text, HOME_SEO_LINKS, budget)}
+              </li>
+            ))}
+          </ul>
+        </article>
+
+        <article>
+          <h2 className="text-xl md:text-2xl font-bold text-primary mb-3">
+            Festive gift delivery in major US cities
+          </h2>
+          <p className="mb-3">
+            The same domestic shipping window applies across the United States. These city pages describe delivery
+            for a specific place and link back to the same Diwali and Bhai Dooj hampers.
+          </p>
+          <ul className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
+            {homeCityLinks.map((city) => (
+              <li key={city.slug}>
+                <Link href={city.href} className="text-nav font-semibold hover:underline">
+                  {city.label}
+                </Link>
               </li>
             ))}
           </ul>

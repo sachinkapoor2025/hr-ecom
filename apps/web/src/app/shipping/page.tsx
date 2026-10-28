@@ -65,7 +65,7 @@ function festivalShippingJsonLd() {
         "@type": "HowToStep",
         position: 4,
         name: "Pay securely",
-        text: "Pay with Stripe in USD or Razorpay in INR. Card numbers are not stored on UsaRakhi.",
+        text: "Pay with Razorpay in USD or INR. Card numbers are not stored on UsaRakhi.",
       },
       {
         "@type": "HowToStep",
@@ -80,7 +80,7 @@ function festivalShippingJsonLd() {
 export default function ShippingPage() {
   const budget = createInlineLinkBudget(3);
   return (
-    <div className="max-w-3xl mx-auto px-4 py-12">
+    <div className="max-w-7xl mx-auto px-4 py-12">
       <JsonLd data={festivalShippingJsonLd()} />
       <h1 className="text-3xl font-bold text-primary mb-6">Diwali and Bhai Dooj Shipping</h1>
       <div className="space-y-6 text-slate-700 leading-relaxed">

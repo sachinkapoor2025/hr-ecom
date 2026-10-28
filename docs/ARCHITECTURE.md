@@ -231,14 +231,14 @@ Admin **Product Sales Intelligence** (`/admin/product-sales`) aggregates **paid 
 
 ## Payment Flow
 
-1. Checkout reads `CONFIG#PAYMENTS` → region (`US` → Stripe, `IN` → Razorpay)
+1. Customer checkout offers **Razorpay only** for USD and INR
 2. Create order in DynamoDB (status: `pending_payment`)
-3. Create Stripe PaymentIntent or Razorpay Order
+3. Create a Razorpay Order in the checkout currency (USD or INR)
 4. Client completes payment (Razorpay also calls `POST /payments/razorpay/verify`)
-5. **Webhook is source of truth** (`POST /webhooks/stripe`, `POST /webhooks/razorpay`) → `paid` + inventory
+5. **Webhook is source of truth** (`POST /webhooks/razorpay`, and `POST /webhooks/stripe` for older Stripe orders) → `paid` + inventory
 6. Safety net: hourly cron reconciles Razorpay `pending_payment` orders against Razorpay capture API; admin can **Sync payment from Razorpay** on the order page
 
-**Stripe toggle:** `STRIPE_PAYMENTS_ENABLED` in `packages/shared/src/constants.ts` (currently `true`). Set to `false` to hide Stripe on checkout and block new Stripe PaymentIntents; Razorpay keeps working. Existing Stripe webhooks still work for any in-flight intents.
+**Stripe toggle:** `STRIPE_PAYMENTS_ENABLED` in `packages/shared/src/constants.ts` (currently `false`). While false, checkout and the account payment picker hide Stripe, and new Stripe PaymentIntents are rejected. Razorpay handles both currencies. Existing Stripe webhooks still settle in-flight intents. Set the flag to `true` only to offer Stripe again on USD checkout.
 
 **Checkout shipping:** `shippingOption` — `standard` only (UsaRakhi: Standard USA delivery, 5 business days, free shipping on $15 minimum cart value; Orange County: always free). `three_day` and `two_day` are kept for historical orders and rejected on new checkouts. Logic: `packages/shared/src/lib/expedited-shipping.ts` and `packages/shared/src/lib/free-shipping.ts`.
 

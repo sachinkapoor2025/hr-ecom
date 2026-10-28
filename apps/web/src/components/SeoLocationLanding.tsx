@@ -41,7 +41,7 @@ export function buildLocationContent(location: SeoLocation) {
         location.isCaliforniaWarehouse
           ? `Orders to ${place} benefit from our California-based fulfillment — many shipments dispatch quickly for 2–5 business day delivery across the metro area after processing. We use trusted US carriers with tracking.`
           : `UsaRakhi ships to homes, apartments, offices, and university addresses across ${place}. Standard nationwide delivery is 5–7 business days after dispatch. Order ahead of Diwali (November 8, 2026) and Bhai Dooj (November 10, 2026) so sweets and hampers arrive in time.`,
-        `Pay securely in USD (Stripe) or INR (Razorpay). Enter the recipient's full US address at checkout. You can order from outside America while we ship domestically within the USA.`,
+        `Pay securely in USD or INR with Razorpay. Enter the recipient's full US address at checkout. You can order from outside America while we ship domestically within the USA.`,
       ],
     },
     faqs: [
