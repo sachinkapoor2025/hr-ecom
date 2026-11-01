@@ -11,6 +11,7 @@ import {
   allSeoLocationSlugs,
   getSeoLocation,
   locationPublicPath,
+  locationSeoKeywords,
 } from "@/lib/content/seo-data";
 import { getCityContent } from "@/lib/content/city-pages";
 import {
@@ -110,11 +111,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const path = locationPublicPath(slug);
   const specified = specifiedLocationSeo[slug];
   if (specified) {
+    const location = getSeoLocation(slug);
     return pageMetadata({
       title: specified.title,
       description: specified.description,
       path,
       absoluteTitle: true,
+      ...(location ? { keywords: locationSeoKeywords(location).join(", ") } : {}),
     });
   }
 
@@ -167,7 +170,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: `Send Diwali and Bhai Dooj Gifts to ${place} | ${site.name}`,
     description: `Send Diwali gifts and Bhai Dooj gifts to ${place} with ${site.name}.${warehouseNote} ${regionNote} Secure Razorpay checkout.`,
     path,
-    keywords: location.keywords.slice(0, 12).join(", "),
+    keywords: locationSeoKeywords(location).join(", "),
     absoluteTitle: true,
   });
 }

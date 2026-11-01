@@ -27,6 +27,7 @@ const navItems: NavItem[] = [
       { href: "/admin/analytics?tab=visitor-analytics", label: "Visitor analytics" },
       { href: "/admin/analytics?tab=live", label: "Live visitor" },
       { href: "/admin/analytics?tab=sessions", label: "Visitors" },
+      { href: "/admin/seo", label: "SEO keywords" },
     ],
   },
   {
@@ -171,7 +172,7 @@ function NavButtons({
         if (
           item.type === "group" &&
           item.id === "analytics" &&
-          pathname.startsWith("/admin/product-sales")
+          (pathname.startsWith("/admin/product-sales") || pathname.startsWith("/admin/seo"))
         ) {
           next[item.id] = true;
         }
@@ -223,7 +224,8 @@ function NavButtons({
 
         const groupActive =
           pathActive(pathname, item.href) ||
-          (item.id === "analytics" && pathname.startsWith("/admin/product-sales")) ||
+          (item.id === "analytics" &&
+            (pathname.startsWith("/admin/product-sales") || pathname.startsWith("/admin/seo"))) ||
           (item.id === "expense-settlement" && pathname.startsWith("/admin/gst-invoices"));
         const children =
           item.id === "vendor" && !showSuper

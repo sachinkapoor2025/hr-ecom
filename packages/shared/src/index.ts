@@ -57,6 +57,7 @@ export * from "./lib/client-device";
 export * from "./lib/abandoned-cart";
 export * from "./lib/rakhi-set-size";
 export * from "./lib/rakhi-visibility";
+export * from "./seo/tracked-keywords";
 export * from "./lib/free-shipping";
 export * from "./lib/expedited-shipping";
 export * from "./lib/order-shipments";

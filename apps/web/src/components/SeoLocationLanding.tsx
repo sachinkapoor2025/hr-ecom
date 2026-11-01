@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { SeoLocation } from "@/lib/content/seo-data";
+import { locationSeoKeywords, type SeoLocation } from "@/lib/content/seo-data";
 import { locationEditorialLinks } from "@/lib/contextual-links";
 import { applyInlineLinks, createInlineLinkBudget } from "@/lib/inline-links";
 import { site, whatsappChatUrl } from "@/lib/site";
@@ -108,9 +108,9 @@ export function SeoLocationLanding({ location }: Props) {
           </section>
 
           <section>
-            <h3 className="text-xl font-semibold text-primary mb-3">Popular Diwali gift searches for {place}</h3>
+            <h3 className="text-xl font-semibold text-primary mb-3">Popular Diwali and Bhai Dooj searches for {place}</h3>
             <ul className="flex flex-wrap gap-2 text-sm">
-              {location.keywords.slice(0, 12).map((kw) => (
+              {locationSeoKeywords(location).map((kw) => (
                 <li key={kw} className="bg-white border border-slate-200 rounded-full px-3 py-1 text-slate-600">
                   {kw}
                 </li>

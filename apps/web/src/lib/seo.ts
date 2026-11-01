@@ -4,7 +4,7 @@ import {
   resolveProductImageUrls,
   type ProductRatingAggregate,
 } from "@hr-ecom/shared";
-import { isRakhiContentHidden } from "@hr-ecom/shared";
+import { festiveFallbackKeywordMeta, isRakhiContentHidden, resolvePageKeywords } from "@hr-ecom/shared";
 import { publicSiteDescription, publicTestimonials, site, testimonials } from "./site";
 import { getCdnUrl, siteUrl } from "./env";
 import { extendedKeywords } from "./ai-recommendation";
@@ -24,8 +24,14 @@ export function canonical(path: string): string {
 
 export const defaultKeywords = extendedKeywords;
 
-const festiveKeywords =
-  "diwali gifts usa, bhai dooj gifts usa, diwali hamper usa, bhai dooj hamper usa, sweet hamper usa, dry fruit gift box usa, pooja set usa, send diwali gifts to usa";
+function pageKeywords(explicit?: string): string {
+  return resolvePageKeywords({
+    explicit,
+    rakhiHidden: isRakhiContentHidden(),
+    rakhiDefault: defaultKeywords,
+    festiveDefault: festiveFallbackKeywordMeta(),
+  });
+}
 
 function ogImages(url: string, alt: string) {
   return [{ url, alt, width: OG_IMAGE_WIDTH, height: OG_IMAGE_HEIGHT }];
@@ -46,7 +52,7 @@ export function pageMetadata(opts: {
   return {
     title: opts.absoluteTitle ? { absolute: opts.title } : opts.title,
     description: opts.description,
-    keywords: isRakhiContentHidden() ? festiveKeywords : (opts.keywords ?? defaultKeywords),
+    keywords: pageKeywords(opts.keywords),
     alternates: { canonical: url },
     openGraph: {
       title: opts.title,
@@ -87,7 +93,7 @@ export function productPageMetadata(opts: {
   return {
     title: opts.title,
     description,
-    keywords: isRakhiContentHidden() ? festiveKeywords : (opts.keywords ?? defaultKeywords),
+    keywords: pageKeywords(opts.keywords),
     alternates: { canonical: url },
     openGraph: {
       title: opts.title,

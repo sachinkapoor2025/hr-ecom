@@ -29,6 +29,7 @@ import * as paymentReconciliation from "./handlers/payment-reconciliation";
 import * as vendorManagement from "./handlers/vendor-management";
 import * as reviews from "./handlers/reviews";
 import * as reviewRequestSettings from "./handlers/review-request-settings";
+import * as adminSeo from "./handlers/admin-seo";
 import { stripeWebhook } from "./handlers/payments/stripe";
 import {
   razorpayWebhook,
@@ -278,6 +279,7 @@ const routes: Route[] = [
   },
   { method: "GET", pattern: /^\/admin\/analytics\/products$/, handler: analytics.getTopProducts },
   { method: "GET", pattern: /^\/admin\/analytics\/searches$/, handler: analytics.getTopSearches },
+  { method: "GET", pattern: /^\/admin\/seo\/performance$/, handler: adminSeo.getSeoPerformance },
   { method: "GET", pattern: /^\/admin\/analytics\/insights$/, handler: analytics.getAnalyticsInsights },
   { method: "GET", pattern: /^\/admin\/analytics\/visitors$/, handler: analytics.getVisitorAnalytics },
   { method: "GET", pattern: /^\/admin\/live-visitors$/, handler: analytics.listLiveVisitors },

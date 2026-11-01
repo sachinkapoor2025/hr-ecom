@@ -191,6 +191,7 @@ When admin (or Orange County vendor tracking) changes order status (accepted, pr
 | GET | `/admin/analytics/overview` | Admin: traffic + funnel (`?days=`) |
 | GET | `/admin/analytics/products` | Admin: most-viewed products |
 | GET | `/admin/analytics/searches` | Admin: top + zero-result searches |
+| GET | `/admin/seo/performance` | Admin: Search Console impressions, clicks, CTR, and average position for Rakhi, Bhai Dooj, and Diwali (`?days=7`, `28`, or `90`). UI: `/admin/seo` |
 | GET | `/admin/analytics/visitors` | Admin: visitor analytics (`?days=` or `?from=&to=` YYYY-MM-DD); totals, byDay (unique sessions/day), by-country, session list |
 | GET | `/admin/live-visitors` | Admin: currently active storefront visitors (presence TTL ~3 min; geo map + detail list in Visitor analytics UI) |
 
@@ -260,6 +261,7 @@ Every form blur or debounced keystroke can POST to `/leads`:
 - `/sitemap.xml`, `/robots.txt` dynamic routes
 - JSON-LD Product schema on product pages
 - Canonical URLs, Open Graph tags
+- Admin **SEO keywords** (`/admin/seo`) tracks Rakhi (existing keyword sheet), Bhai Dooj, and Diwali. `GET /admin/seo/performance` fills impressions, clicks, CTR, and average position from Google Search Console when `GOOGLE_SEARCH_CONSOLE_CLIENT_EMAIL` and `GOOGLE_SEARCH_CONSOLE_PRIVATE_KEY` (or `GOOGLE_SEARCH_CONSOLE_CREDENTIALS_JSON`) are set. Optional `GOOGLE_SEARCH_CONSOLE_SITE_URL` (default `sc-domain:usarakhi.com`). The service account needs read access on that property.
 
 ## Multi-Developer + Cursor Workflow
 
