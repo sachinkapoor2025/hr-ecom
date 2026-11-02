@@ -8,9 +8,12 @@ import { RAKSHA_BANDHAN_FESTIVAL_DATE } from "../schemas/shipping";
 import { addBusinessDays, formatDeliveryDate } from "./delivery";
 import { shippingVendorKey } from "./free-shipping";
 
+/** Short customer-facing free-shipping label. */
+export const FREE_SHIPPING_MESSAGE = "Free Shipping";
+
 /** Customer-facing standard delivery line (all vendors). */
 export const USARAKHI_STANDARD_DELIVERY_DETAIL =
-  "Standard USA delivery · 5 business days · Free shipping on $15 minimum cart value";
+  `Standard USA delivery · 5 business days · ${FREE_SHIPPING_MESSAGE}`;
 
 /** Historical 3-day window — kept for old orders only (not offered at checkout). */
 export const USARAKHI_THREE_DAY_ARRIVAL_YMD = "2026-08-30";
@@ -95,7 +98,7 @@ export const ORANGE_COUNTY_SHIPPING_BULLETS = [
 
 export const MIXED_VENDOR_SHIPPING_BULLETS = [
   "Shipping is calculated separately for each vendor",
-  "UsaRakhi: free shipping on $15 minimum — otherwise the remaining amount is added as shipping",
+  "UsaRakhi: Free Shipping",
   "Orange County: free shipping on all products",
 ] as const;
 
@@ -278,7 +281,7 @@ export function expeditedArrivalLabel(
 export const USARAKHI_SHIPPING_BULLETS = [
   "Standard USA delivery",
   "5 business days",
-  "Free shipping on $15 minimum cart value",
+  FREE_SHIPPING_MESSAGE,
 ] as const;
 
 /** Customer-facing shipping options. */
@@ -294,7 +297,7 @@ export const RAKHI_DELIVERY_MESSAGING = {
   standardBullets: [
     "Standard USA delivery",
     "5 business days",
-    "Free shipping on $15 minimum cart value",
+    FREE_SHIPPING_MESSAGE,
   ],
   standardBadge: "Standard USA delivery · 5 business days",
   expeditedTitle: "Standard delivery",

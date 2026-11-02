@@ -150,7 +150,8 @@ When admin (or Orange County vendor tracking) changes order status (accepted, pr
 | POST | `/vendors/orange-county/orders/{orderId}/shipment` | Same AWB update with order id in path |
 | POST | `/vendors/orange-county/tracking` | Vendor posts tracking (`orderNumber`, `currentShipmentStatus`) |
 | POST | `/vendors/orange-county/orders/{orderId}/tracking` | Same tracking update with order id in path |
-| POST | `/webhooks/stripe` | Stripe webhook |
+| POST | `/webhooks/stripe` | Stripe webhook (`payment_intent.succeeded`, `payment_intent.payment_failed`, `payment_intent.canceled`) |
+| POST | `/payments/stripe/confirm` | Confirm a Stripe PaymentIntent after checkout redirect. Server retrieves the intent with the secret key, checks amount, currency, and order id, then marks the same pending order paid. Idempotent with the webhook. |
 
 **Product add-ons (UsaRakhi only):** Fixed dry-fruit / chocolate extras (`packages/shared/src/lib/product-addons.ts`). Shown on PDP when `allowsAddons` is true (non–Orange County). Shoppers pick quantity per add-on (1–10); nested on `CartItem.addons` with `quantity`; line totals include `price × quantity`. Merge key includes quantities. OC products reject addons server-side.
 
@@ -232,16 +233,17 @@ Admin **Product Sales Intelligence** (`/admin/product-sales`) aggregates **paid 
 
 ## Payment Flow
 
-1. Customer checkout offers **Razorpay only** for USD and INR
-2. Create order in DynamoDB (status: `pending_payment`)
-3. Create a Razorpay Order in the checkout currency (USD or INR)
-4. Client completes payment (Razorpay also calls `POST /payments/razorpay/verify`)
-5. **Webhook is source of truth** (`POST /webhooks/razorpay`, and `POST /webhooks/stripe` for older Stripe orders) → `paid` + inventory
-6. Safety net: hourly cron reconciles Razorpay `pending_payment` orders against Razorpay capture API; admin can **Sync payment from Razorpay** on the order page
+1. Customer checkout offers **Razorpay** (USD and INR) and **Stripe** (USD). The shopper picks one method. Razorpay stays the default.
+2. Create one order in DynamoDB (status: `pending_payment`). Switching methods reuses that order.
+3. Razorpay: create a Razorpay Order in the checkout currency. Stripe: create or reuse one PaymentIntent in USD.
+4. Client completes payment (Razorpay calls `POST /payments/razorpay/verify`; Stripe return calls `POST /payments/stripe/confirm`)
+5. **Webhook is source of truth** (`POST /webhooks/razorpay` and `POST /webhooks/stripe`) → `paid` + inventory. Confirm endpoints are idempotent with the webhook, so a payment is not applied twice.
+6. Failed or cancelled Stripe events cancel the order only when that PaymentIntent is still the order’s current Stripe payment. Pending payments stay `pending_payment` until success, failure, or cancel.
+7. Safety net: hourly cron reconciles Razorpay `pending_payment` orders against Razorpay capture API; admin can **Sync payment from Razorpay** on the order page
 
-**Stripe toggle:** `STRIPE_PAYMENTS_ENABLED` in `packages/shared/src/constants.ts` (currently `false`). While false, checkout and the account payment picker hide Stripe, and new Stripe PaymentIntents are rejected. Razorpay handles both currencies. Existing Stripe webhooks still settle in-flight intents. Set the flag to `true` only to offer Stripe again on USD checkout.
+**Stripe toggle:** `STRIPE_PAYMENTS_ENABLED` in `packages/shared/src/constants.ts` (currently `true`). While false, checkout hides Stripe and new Stripe PaymentIntents are rejected. Razorpay still handles both currencies. Existing Stripe webhooks still settle in-flight intents.
 
-**Checkout shipping:** `shippingOption` — `standard` only (UsaRakhi: Standard USA delivery, 5 business days, free shipping on $15 minimum cart value; Orange County: always free). `three_day` and `two_day` are kept for historical orders and rejected on new checkouts. Logic: `packages/shared/src/lib/expedited-shipping.ts` and `packages/shared/src/lib/free-shipping.ts`.
+**Checkout shipping:** `shippingOption` — `standard` only (UsaRakhi: Standard USA delivery, 5 business days. The storefront label is **Free Shipping**. Carts under $15 still pay the remainder as shipping. Orange County: always free). `three_day` and `two_day` are kept for historical orders and rejected on new checkouts. Logic: `packages/shared/src/lib/expedited-shipping.ts` and `packages/shared/src/lib/free-shipping.ts`.
 
 Requires GitHub secret `RAZORPAY_WEBHOOK_SECRET` and Razorpay Dashboard webhook to `{API}/webhooks/razorpay` for events `payment.captured`, `order.paid`, `qr_code.credited`.
 

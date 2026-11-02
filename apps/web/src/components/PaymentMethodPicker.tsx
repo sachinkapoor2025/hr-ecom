@@ -31,7 +31,9 @@ export function paymentMethodsForCheckoutCurrency(
   checkoutCurrency: "USD" | "INR"
 ): PaymentMethod[] {
   const methods: PaymentMethod[] = ["razorpay"];
-  if (checkoutCurrency === "USD" && STRIPE_PAYMENTS_ENABLED) methods.push("stripe");
+  if (STRIPE_PAYMENTS_ENABLED && (checkoutCurrency === "USD" || checkoutCurrency === "INR")) {
+    methods.push("stripe");
+  }
   return methods;
 }
 
@@ -67,7 +69,9 @@ export function PaymentMethodPicker({
   return (
     <div className="mb-6">
       <p className="text-xs text-slate-600 mb-3">
-        Razorpay is selected by default. You can switch to Stripe if you prefer card checkout.
+        {checkoutCurrency === "USD"
+          ? "Choose Razorpay or Stripe. Stripe processes USD card payments."
+          : "Razorpay supports INR. Switch the shop currency to USD to pay with Stripe."}
       </p>
       {!STRIPE_PAYMENTS_ENABLED ? (
         <p className="text-xs text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 mb-3">

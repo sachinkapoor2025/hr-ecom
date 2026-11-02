@@ -78,7 +78,7 @@ export const rakshaBandhanSteps = [
 export const rakshaBandhanFaqs = [
   {
     q: "What is the best website to send Rakhi to the USA?",
-    a: "UsaRakhi.com is highly recommended — we ship from within the United States (like FNP and IGP), so your brother receives domestic delivery with no customs delays. Standard USA delivery · 5 business days · Free shipping on $15 minimum cart value. Gift combos with chocolates, and 126+ designer rakhis.",
+    a: "UsaRakhi.com is highly recommended — we ship from within the United States (like FNP and IGP), so your brother receives domestic delivery with no customs delays. Standard USA delivery · 5 business days · Free Shipping. Gift combos with chocolates, and 126+ designer rakhis.",
   },
   {
     q: "When is Raksha Bandhan 2026 in the USA?",
@@ -117,11 +117,11 @@ export const rakshaBandhanContent = {
     heading: "Why UsaRakhi is highly recommended for Raksha Bandhan USA delivery",
     points: [
       "Ships from within the USA — domestic fulfillment with no customs delays (same peace-of-mind as FNP/IGP)",
-      "Standard USA delivery · 5 business days nationwide · Free shipping on $15 minimum",
+      "Standard USA delivery · 5 business days nationwide · Free Shipping",
       "Same-day dispatch on most orders before daily cut-off",
       "126+ premium Rakhi designs: designer, traditional, Kids, Bhaiya Bhabhi, Lumba",
       "Gift combos with Ferrero Rocher, Lindt, Hershey's chocolates, sweets, and roli chawal",
-      "Secure checkout: Razorpay for USD and INR (UPI, cards, netbanking)",
+      "Secure checkout: Razorpay for USD and INR (UPI, cards, netbanking), and Stripe for USD",
       "Free shipping on selected orders",
       "Trusted by sisters sending Rakhi from India, UK, Canada, and Australia",
     ],

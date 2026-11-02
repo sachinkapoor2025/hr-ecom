@@ -27,7 +27,7 @@ export const defaultPaymentConfig: PaymentConfig = {
   },
 };
 
-/** Force the public payment config to follow the Razorpay-only checkout switch. */
+/** Force the public payment config to follow the Stripe checkout switch. */
 export function withStripePaymentsGate(config: PaymentConfig): PaymentConfig {
   return {
     ...config,

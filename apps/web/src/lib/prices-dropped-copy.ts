@@ -13,4 +13,4 @@ export const PRICES_DROPPED_BODY =
 export const PRICES_DROPPED_STRIP = PRICES_DROPPED_BODY;
 
 export const HOME_BANNER_DELIVERY_NOTE =
-  "Standard USA delivery · 5 business days. Delivery · Free shipping on $15 minimum";
+  "Standard USA delivery · 5 business days · Free Shipping";

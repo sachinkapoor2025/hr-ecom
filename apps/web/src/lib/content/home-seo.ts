@@ -44,7 +44,7 @@ export const homeSeoContent = {
       paragraphs: [
         "Start with the occasion. Bhai Dooj boxes are gifts for a brother and may include kaju katli, nuts, chocolate, kumkum, or a pooja piece. Diwali combos pair a pooja or decor item — a thali, toran, rangoli, or Shubh Labh — with sweets or dry fruits.",
         "If the occasion is already set and you care more about the food, use the sweet, dry fruit, chocolate, or pooja collection. One box can appear in more than one collection because it is grouped by what is inside. The product page is the included list. Weights and piece counts are only what that listing states.",
-        "Enter the recipient’s full United States address, including city, state, and ZIP. Standard delivery is 5 business days. Diwali 2026 is 8 November and Bhai Dooj is 10 November, so order early enough for that window. Shipping rules, including the $15 free-shipping minimum and free shipping on Orange County products, are on the shipping page.",
+        "Enter the recipient’s full United States address, including city, state, and ZIP. Standard delivery is 5 business days. Diwali 2026 is 8 November and Bhai Dooj is 10 November, so order early enough for that window. Shipping rules, including Free Shipping and free shipping on Orange County products, are on the shipping page.",
       ],
     },
     {

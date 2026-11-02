@@ -59,7 +59,7 @@ export function StandardShippingMinimumNote({
       ) : (
         <p className={`mt-1.5 font-semibold text-emerald-700 ${compact ? "text-xs sm:text-sm" : ""}`}>
           {multiVendor
-            ? "UsaRakhi qualifies for the $15 free-shipping minimum. Orange County ships free."
+            ? "UsaRakhi qualifies for free shipping. Orange County ships free."
             : orangeCountyOnly
               ? "Orange County products include free standard shipping."
               : "Your order qualifies for free standard shipping."}

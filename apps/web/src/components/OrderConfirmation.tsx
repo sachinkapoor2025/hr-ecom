@@ -64,9 +64,11 @@ type OrderConfirmationProps = {
   order: Order;
   /** True when payment is settled (paid / shipped / delivered / …), not only status === "paid". */
   paid: boolean;
+  /** Shown when Stripe or Razorpay did not finish (failed, cancelled, or still pending). */
+  notice?: string;
 };
 
-export function OrderConfirmation({ order, paid }: OrderConfirmationProps) {
+export function OrderConfirmation({ order, paid, notice }: OrderConfirmationProps) {
   const addr = order.shippingAddress;
   const orderRef = displayOrderRef(order);
   const awaitingPayment = isOrderAwaitingPayment(order.status) && !paid;
@@ -100,6 +102,9 @@ export function OrderConfirmation({ order, paid }: OrderConfirmationProps) {
           <p className="text-white/85 text-sm sm:text-base max-w-md mx-auto leading-relaxed">
             {orderConfirmationSubcopy(awaitingPayment ? "pending_payment" : order.status)}
           </p>
+          {notice ? (
+            <p className="mt-3 text-sm text-white/90 max-w-md mx-auto leading-relaxed">{notice}</p>
+          ) : null}
 
           {paid && (
             <p className="mt-3 inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 text-xs font-semibold tracking-wide">
@@ -348,7 +353,7 @@ export function OrderConfirmation({ order, paid }: OrderConfirmationProps) {
               <div>
                 <p className="font-semibold text-slate-900 text-sm">USA delivery</p>
                 <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                  Ships domestically within America. Standard USA delivery · 5 business days · Free shipping on $15 minimum.
+                  Ships domestically within America. Standard USA delivery · 5 business days · Free Shipping.
                 </p>
               </div>
             </div>

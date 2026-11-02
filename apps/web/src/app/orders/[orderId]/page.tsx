@@ -17,11 +17,13 @@ function OrderDetailInner({ orderId }: { orderId: string }) {
   const { token } = useAuth();
   const [order, setOrder] = useState<Order | null>(null);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(true);
   const purchaseTracked = useRef(false);
 
   const isDev = searchParams.get("dev") === "1";
   const redirectStatus = searchParams.get("redirect_status");
+  const paymentIntentId = searchParams.get("payment_intent");
 
   useEffect(() => {
     if (!sessionId) return;
@@ -29,7 +31,39 @@ function OrderDetailInner({ orderId }: { orderId: string }) {
     const load = async () => {
       setLoading(true);
       setError("");
+      setNotice("");
       try {
+        if (
+          paymentIntentId &&
+          (redirectStatus === "succeeded" || redirectStatus === "processing" || redirectStatus === "pending")
+        ) {
+          try {
+            const confirmed = await api<{ status: string }>(`/payments/stripe/confirm`, {
+              method: "POST",
+              sessionId,
+              token,
+              body: JSON.stringify({ orderId, paymentIntentId }),
+            });
+            if (confirmed.status === "pending") {
+              setNotice(
+                "Your Stripe payment is still processing. This page will show the order as paid once it completes."
+              );
+            } else if (confirmed.status === "failed" || confirmed.status === "cancelled") {
+              setNotice("Stripe did not complete this payment. You can retry from checkout.");
+            }
+          } catch (err) {
+            setNotice(
+              err instanceof Error
+                ? err.message
+                : "Stripe payment could not be confirmed yet. If you were charged, the order will update shortly."
+            );
+          }
+        } else if (redirectStatus === "failed" || redirectStatus === "requires_payment_method") {
+          setNotice("Your payment was not completed. You can retry payment below.");
+        } else if (redirectStatus === "canceled" || redirectStatus === "cancelled") {
+          setNotice("Payment was cancelled. You can retry payment below.");
+        }
+
         const data = await api<{ order: Order }>(`/orders/${orderId}`, { sessionId, token });
         setOrder(data.order);
       } catch (err) {
@@ -40,13 +74,12 @@ function OrderDetailInner({ orderId }: { orderId: string }) {
     };
 
     void load();
-  }, [orderId, sessionId, token]);
+  }, [orderId, sessionId, token, paymentIntentId, redirectStatus]);
 
   useEffect(() => {
     if (!order || purchaseTracked.current) return;
     // Any post-payment status (paid → shipped → delivered…) counts as a purchase.
-    const settled =
-      isOrderPaymentSettled(order.status) || redirectStatus === "succeeded" || isDev;
+    const settled = isOrderPaymentSettled(order.status) || isDev;
     if (!settled) return;
     purchaseTracked.current = true;
     trackPurchase(order.total, {
@@ -54,7 +87,7 @@ function OrderDetailInner({ orderId }: { orderId: string }) {
       provider: order.paymentProvider ?? "unknown",
       currency: order.currency,
     });
-  }, [order, redirectStatus, isDev]);
+  }, [order, isDev]);
 
   if (loading) {
     return (
@@ -82,10 +115,9 @@ function OrderDetailInner({ orderId }: { orderId: string }) {
   }
 
   // Must include shipped/processing/delivered — not only the literal "paid" status.
-  const paid =
-    isOrderPaymentSettled(order.status) || redirectStatus === "succeeded" || isDev;
+  const paid = isOrderPaymentSettled(order.status) || isDev;
 
-  return <OrderConfirmation order={order} paid={paid} />;
+  return <OrderConfirmation order={order} paid={paid} notice={paid ? undefined : notice || undefined} />;
 }
 
 export default function OrderPage({ params }: { params: Promise<{ orderId: string }> }) {

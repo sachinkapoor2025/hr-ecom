@@ -62,7 +62,7 @@ export function LastMinuteDeliveryTemplate({
         <p className="mt-1.5 text-sm text-slate-600 leading-relaxed">
           {orangeCountyOnly
             ? "Standard USA delivery · 5 business days · Free shipping on all Orange County products."
-            : `Standard USA delivery · 5 business days · Free shipping on $${USARAKHI_MIN_ORDER_USD} minimum cart value.`}
+            : "Standard USA delivery · 5 business days · Free Shipping."}
         </p>
         {multiVendor ? (
           <p className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs sm:text-sm font-semibold text-amber-950 leading-snug">
