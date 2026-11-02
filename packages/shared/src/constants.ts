@@ -134,11 +134,11 @@ export const PAYMENT_PROVIDERS = {
 } as const;
 
 /**
- * Customer checkout offers Razorpay only, for both USD and INR.
- * Stripe stays in the codebase for historical orders and webhooks.
- * Set to `true` only to show Stripe again as a USD checkout option.
+ * Customer checkout offers Razorpay (USD and INR) and Stripe (USD card payments).
+ * Set to `false` to hide Stripe and reject new Stripe PaymentIntents.
+ * Existing Stripe webhooks still settle in-flight intents.
  */
-export const STRIPE_PAYMENTS_ENABLED = false;
+export const STRIPE_PAYMENTS_ENABLED = true;
 
 /** Default stock when creating products or seeding catalog. */
 export const DEFAULT_PRODUCT_INVENTORY = 200;

@@ -39,7 +39,7 @@ export default function AboutPage() {
           </p>
           <p>
             {applyInlineLinks(
-              "Order from India, the UK, Canada, or anywhere else. Pay in INR or USD, enter a US delivery address, and we ship domestically. Standard USA delivery is 5 business days, with free shipping on a $15 minimum cart. Orange County products ship free.",
+              "Order from India, the UK, Canada, or anywhere else. Pay in INR or USD, enter a US delivery address, and we ship domestically. Standard USA delivery is 5 business days, with free shipping. Orange County products ship free.",
               links,
               budget
             )}
@@ -49,19 +49,19 @@ export default function AboutPage() {
             <li>{applyInlineLinks("Diwali gift combos and pooja sets", links, budget)}</li>
             <li>Bhai Dooj gift boxes</li>
             <li>Sweet, dry fruit, and chocolate hampers</li>
-            <li>Secure payments via Razorpay for USD and INR</li>
+            <li>Secure payments via Razorpay (USD and INR) and Stripe (USD)</li>
           </ul>
           <h2 className="text-xl font-bold text-primary pt-4">How an order works</h2>
           <p>
             Choose a finished hamper. The product name and the included list are what gets packed — UsaRakhi does
             not assemble a custom box. At checkout, enter the recipient&apos;s full United States address, including
-            city, state, and ZIP. Pay in INR or USD with Razorpay. Card numbers are not stored on
+            city, state, and ZIP. Pay in INR or USD with Razorpay, or pay in USD with Stripe. Card numbers are not stored on
             this site.
           </p>
           <h2 className="text-xl font-bold text-primary pt-4">Shipping and support</h2>
           <p>
             Gifts ship from within the United States, so they are not held in international customs. Standard delivery
-            is 5 business days. Carts of $15 or more qualify for free shipping, and Orange County products ship free.
+            is 5 business days. Free Shipping applies, and Orange County products ship free.
             Details are on the{" "}
             <Link href="/shipping" className="text-nav font-semibold hover:underline">
               shipping page
@@ -103,7 +103,7 @@ export default function AboutPage() {
         <h2 className="text-xl font-bold text-primary pt-4">Why sisters recommend UsaRakhi</h2>
         <ul className="list-disc list-inside space-y-2">
           <li>Domestic US fulfillment — ships from within the USA (no international customs for recipient)</li>
-          <li>Standard USA delivery · 5 business days · Free shipping on $15 minimum cart value</li>
+          <li>Standard USA delivery · 5 business days · Free Shipping</li>
         </ul>
         <h2 className="text-xl font-bold text-primary pt-4">What we offer</h2>
         <ul className="list-disc list-inside space-y-2">
@@ -111,7 +111,7 @@ export default function AboutPage() {
           <li>Single Rakhi, Rakhi Combos, Kids Rakhi, Bhaiya Bhabhi sets, and Lumba Rakhi</li>
           <li>Complimentary roli and chawal with most rakhis</li>
           <li>Rakhi with chocolates — Ferrero Rocher, Lindt, Hershey&apos;s combos</li>
-          <li>Secure payments via Razorpay for USD and INR</li>
+          <li>Secure payments via Razorpay (USD and INR) and Stripe (USD)</li>
         </ul>
         <h2 className="text-xl font-bold text-primary pt-4">Who we are</h2>
         <p>

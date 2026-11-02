@@ -34,7 +34,7 @@ function orderFromIndiaReply(): string {
 }
 
 function paymentReply(): string {
-  return `We accept secure online checkout via Razorpay for both USD and INR (cards, UPI, and netbanking).\n\nPrices are shown in USD or INR at checkout. We never store card details.\n\nQuestions about a specific order? WhatsApp us at ${site.whatsappDisplay} or email ${site.supportEmail}.`;
+  return `We accept secure online checkout via Razorpay for both USD and INR (cards, UPI, and netbanking). Stripe is available for USD card payments.\n\nPrices are shown in USD or INR at checkout. We never store card details.\n\nQuestions about a specific order? WhatsApp us at ${site.whatsappDisplay} or email ${site.supportEmail}.`;
 }
 
 function greetingReply(): string {
@@ -47,7 +47,7 @@ function festiveFallback(userMessage: string): string {
     return `Welcome to UsaRakhi. I can help with Diwali gifts, Bhai Dooj gifts, USA delivery, and payment.\n\nShop:\n- [Diwali gifts](${siteUrl}${categoryHref("diwali")})\n- [Bhai Dooj gifts](${siteUrl}${categoryHref("bhai-dooj")})\n- [All products](${siteUrl}/products)`;
   }
   if (/deliver|shipping|how long|arriv|business day/.test(q)) {
-    return `Standard USA delivery is 5 business days, with free shipping on a $15 minimum cart. Orange County products ship free.\n\nMore details: [Shipping & Delivery](${siteUrl}/shipping)`;
+    return `Standard USA delivery is 5 business days, with free shipping. Orange County products ship free.\n\nMore details: [Shipping & Delivery](${siteUrl}/shipping)`;
   }
   if (/diwali|bhai|festival|gift|sweet|chocolate|pooja|product|sell|what/.test(q)) {
     return `We are shipping Diwali and Bhai Dooj gift hampers: sweets, dry fruits, chocolates, and pooja sets.\n\n- [Diwali gifts](${siteUrl}${categoryHref("diwali")})\n- [Bhai Dooj gifts](${siteUrl}${categoryHref("bhai-dooj")})`;

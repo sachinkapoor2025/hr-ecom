@@ -440,11 +440,15 @@ export async function checkout(event: APIGatewayProxyEventV2) {
     updatedAt: timestamp,
   };
 
-  const { createStripePaymentIntent } = await import("./payments/stripe");
+  const { prepareStripePayment } = await import("./payments/stripe");
   const { createRazorpayOrder } = await import("./payments/razorpay");
 
   if (parsed.data.paymentMethod === "stripe") {
-    const payment = await createStripePaymentIntent(order);
+    const payment = await prepareStripePayment(order);
+    if (payment.alreadyPaid) {
+      await markOrderPaid(order.orderId, { paymentIntentId: payment.paymentIntentId });
+      return badRequest("This order is already paid");
+    }
     order.paymentProvider = "stripe";
     order.paymentIntentId = payment.paymentIntentId;
     await docClient.send(new PutCommand({ TableName: ORDERS_TABLE, Item: buildOrderItem(order, userKey) }));
@@ -1125,12 +1129,22 @@ export async function retryOrderPayment(event: APIGatewayProxyEventV2) {
     return badRequest("Stripe retry requires USD orders");
   }
 
-  const { createStripePaymentIntent } = await import("./payments/stripe");
-  const { createRazorpayOrder } = await import("./payments/razorpay");
+  const { prepareStripePayment, lookupStripeIntent } = await import("./payments/stripe");
+  const { createRazorpayOrder, syncRazorpayCaptureForOrder } = await import("./payments/razorpay");
   const timestamp = now();
 
   if (paymentMethod === "stripe") {
-    const payment = await createStripePaymentIntent(order);
+    if (order.paymentProvider === "razorpay" && order.razorpayOrderId) {
+      const synced = await syncRazorpayCaptureForOrder(order.orderId);
+      if (synced.synced || synced.alreadyPaid) {
+        return badRequest("This order is already paid");
+      }
+    }
+    const payment = await prepareStripePayment(order);
+    if (payment.alreadyPaid) {
+      await markOrderPaid(order.orderId, { paymentIntentId: payment.paymentIntentId });
+      return badRequest("This order is already paid");
+    }
     const updated: StoredOrder = {
       ...order,
       paymentProvider: "stripe",
@@ -1141,6 +1155,14 @@ export async function retryOrderPayment(event: APIGatewayProxyEventV2) {
     return ok({ order: updated, clientSecret: payment.clientSecret });
   }
 
+  if (order.paymentIntentId) {
+    const existing = await lookupStripeIntent(order);
+    if (existing.state === "succeeded") {
+      await markOrderPaid(order.orderId, { paymentIntentId: existing.paymentIntentId });
+      return badRequest("This order is already paid");
+    }
+  }
+
   const payment = await createRazorpayOrder(order);
   const updated: StoredOrder = {
     ...order,
@@ -1148,6 +1170,7 @@ export async function retryOrderPayment(event: APIGatewayProxyEventV2) {
     razorpayOrderId: payment.razorpayOrderId,
     updatedAt: timestamp,
   };
+  delete updated.paymentIntentId;
   await docClient.send(new PutCommand({ TableName: ORDERS_TABLE, Item: updated }));
   return ok({
     order: updated,

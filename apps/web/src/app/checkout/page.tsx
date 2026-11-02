@@ -113,6 +113,7 @@ function CheckoutPageInner() {
   const [saveForLater, setSaveForLater] = useState(true);
   const [deliveryUnits, setDeliveryUnits] = useState<DeliveryUnit[]>([]);
   const addressPrefilled = useRef(false);
+  const checkoutInFlight = useRef(false);
   const addressRef = useRef(address);
   addressRef.current = address;
 
@@ -580,6 +581,13 @@ function CheckoutPageInner() {
 
   const handleCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (checkoutInFlight.current) return;
+    const stripeCurrency = retryOrder?.currency ?? displayCurrency;
+    if (paymentMethod === "stripe" && stripeCurrency !== "USD") {
+      setError("Stripe is available for USD payments. Switch the currency to USD, or continue with Razorpay.");
+      return;
+    }
+    checkoutInFlight.current = true;
     setLoading(true);
     setError("");
 
@@ -720,6 +728,7 @@ function CheckoutPageInner() {
       // After cancel/fail, reload cart so items stay visible for another attempt.
       void refresh();
     } finally {
+      checkoutInFlight.current = false;
       setLoading(false);
     }
   };
@@ -1002,8 +1011,8 @@ function CheckoutPageInner() {
               {!isRetry ? (
                 <p className="text-[11px] text-slate-500 leading-snug">
                   {cartHasMultipleShippingVendors(checkoutItems)
-                    ? "Standard USA delivery · 5 business days. UsaRakhi: free shipping on $15 minimum. Orange County: free shipping on all products."
-                    : "Standard USA delivery · 5 business days · Free shipping on $15 minimum cart value."}
+                    ? "Standard USA delivery · 5 business days. UsaRakhi: Free Shipping. Orange County: free shipping on all products."
+                    : "Standard USA delivery · 5 business days · Free Shipping."}
                 </p>
               ) : null}
               <div className="flex justify-between gap-4 pt-2 border-t border-slate-200">
@@ -1042,9 +1051,15 @@ function CheckoutPageInner() {
                   setPaymentMethod(method);
                   setStripeCheckout(null);
                   setRazorpayPayment(null);
+                  setError("");
                 }}
                 checkoutCurrency={displayCurrency}
               />
+              {paymentMethod === "stripe" && (retryOrder?.currency ?? displayCurrency) !== "USD" ? (
+                <p className="text-amber-800 text-sm bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mb-3">
+                  Stripe is available for USD payments. Switch the currency to USD, or continue with Razorpay.
+                </p>
+              ) : null}
             </div>
 
             {razorpayPayment?.qrImageUrl && paymentMethod === "razorpay" && (
@@ -1103,7 +1118,11 @@ function CheckoutPageInner() {
                 ) : (
                   <button
                     type="submit"
-                    disabled={loading || (paymentMethod === "razorpay" && !razorpayReady)}
+                    disabled={
+                      loading ||
+                      (paymentMethod === "razorpay" && !razorpayReady) ||
+                      (paymentMethod === "stripe" && (retryOrder?.currency ?? displayCurrency) !== "USD")
+                    }
                     className="w-full rounded-md bg-primary text-white font-bold text-sm uppercase tracking-wide py-3.5 hover:bg-primary/90 transition disabled:opacity-50"
                   >
                     {loading

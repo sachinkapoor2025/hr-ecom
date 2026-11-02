@@ -30,7 +30,7 @@ import * as vendorManagement from "./handlers/vendor-management";
 import * as reviews from "./handlers/reviews";
 import * as reviewRequestSettings from "./handlers/review-request-settings";
 import * as adminSeo from "./handlers/admin-seo";
-import { stripeWebhook } from "./handlers/payments/stripe";
+import { confirmStripePayment, stripeWebhook } from "./handlers/payments/stripe";
 import {
   razorpayWebhook,
   verifyRazorpayPayment,
@@ -324,6 +324,7 @@ const routes: Route[] = [
   { method: "POST", pattern: /^\/products\/([^/]+)\/images$/, handler: uploads.attachImageToProduct, params: ["slug"] },
   { method: "DELETE", pattern: /^\/products\/([^/]+)\/images$/, handler: uploads.deleteImageFromProduct, params: ["slug"] },
   { method: "POST", pattern: /^\/webhooks\/stripe$/, handler: stripeWebhook },
+  { method: "POST", pattern: /^\/payments\/stripe\/confirm$/, handler: confirmStripePayment },
   { method: "POST", pattern: /^\/webhooks\/razorpay$/, handler: razorpayWebhook },
   /** Mailercloud bounce/complaint/unsub → marketing SUPPRESS# (no SMTP credential changes). */
   { method: "POST", pattern: /^\/webhooks\/mailercloud$/, handler: sesEmail.mailercloudWebhook },

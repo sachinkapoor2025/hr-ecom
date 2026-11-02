@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { applyInlineLinks } from "@/lib/inline-links";
-import { USARAKHI_MIN_ORDER_USD } from "@hr-ecom/shared";
 import { trustFacts } from "@/lib/trust";
 import { site } from "@/lib/site";
 import { pageMetadata } from "@/lib/seo";
@@ -45,7 +44,7 @@ export default function TermsPage() {
           beyond our control.
         </p>
         <p>
-          Standard USA delivery and the ${USARAKHI_MIN_ORDER_USD} free-shipping minimum are described on our{" "}
+          Standard USA delivery and Free Shipping are described on our{" "}
           <Link href="/shipping" className="text-nav underline">
             Shipping &amp; Delivery
           </Link>{" "}
@@ -55,8 +54,8 @@ export default function TermsPage() {
         <h2 className="text-xl font-bold text-primary">2. Pricing &amp; Payment</h2>
         <p>Product prices are displayed in the applicable currency, USD or INR, as shown at checkout.</p>
         <p>
-          Payments are processed securely through Razorpay for both USD and INR. UsaRakhi
-          does not store customers’ card details on its servers.
+          Payments are processed securely through Razorpay for both USD and INR, and through Stripe for USD
+          card payments. UsaRakhi does not store customers’ card details on its servers.
         </p>
         <p>
           Customers are responsible for reviewing the final order total and applicable charges before completing

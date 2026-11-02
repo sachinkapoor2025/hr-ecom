@@ -230,7 +230,7 @@ export function publicSiteDescription(): string {
 export const faqs = [
   {
     q: "What is the best website to send Rakhi to the USA?",
-    a: "UsaRakhi.com is highly recommended for USA Rakhi delivery because we ship from within the United States — your brother receives domestic delivery with no international customs delays. Standard USA delivery is 5 business days with free shipping on a $15 minimum cart value.",
+    a: "UsaRakhi.com is highly recommended for USA Rakhi delivery because we ship from within the United States — your brother receives domestic delivery with no international customs delays. Standard USA delivery is 5 business days with free shipping.",
   },
   {
     q: "Does UsaRakhi ship from within the USA like FNP or IGP?",
@@ -238,11 +238,11 @@ export const faqs = [
   },
   {
     q: "How long does Rakhi delivery take in the USA?",
-    a: "Standard USA delivery is 5 business days to all 50 US states, with free shipping on a $15 minimum cart value. Same-day dispatch on most orders before our daily cut-off.",
+    a: "Standard USA delivery is 5 business days to all 50 US states, with free shipping. Same-day dispatch on most orders before our daily cut-off.",
   },
   {
     q: "When should I order for Raksha Bandhan 2026?",
-    a: "Raksha Bandhan 2026 is August 28, 2026. Standard USA delivery is 5 business days with free shipping on a $15 minimum cart value.",
+    a: "Raksha Bandhan 2026 is August 28, 2026. Standard USA delivery is 5 business days with free shipping.",
   },
   {
     q: "Can I send Rakhi from India to the USA?",
@@ -274,7 +274,7 @@ export const faqs = [
   },
   {
     q: "What payment methods do you accept?",
-    a: "Razorpay for USD and INR (cards, UPI, and netbanking) for secure online checkout.",
+    a: "Razorpay for USD and INR (cards, UPI, and netbanking), and Stripe for USD card payments. We never store card numbers.",
   },
 ] as const;
 
@@ -285,11 +285,11 @@ export const festivalFaqs = [
   },
   {
     q: "How long does USA delivery take?",
-    a: "Standard USA delivery is 5 business days to all 50 US states, with free shipping on a $15 minimum cart value. Orange County products ship free. Mixed carts are calculated separately.",
+    a: "Standard USA delivery is 5 business days to all 50 US states, with free shipping. Orange County products ship free. Mixed carts are calculated separately.",
   },
   {
     q: "Can I order from India for a US address?",
-    a: "Yes. Pay in INR or USD with Razorpay, including UPI, cards, and netbanking. Enter the US delivery address at checkout. The gift ships from within the United States.",
+    a: "Yes. Pay in INR or USD with Razorpay (including UPI, cards, and netbanking), or pay in USD with Stripe. Enter the US delivery address at checkout. The gift ships from within the United States.",
   },
   {
     q: "Who can receive a festive gift?",
@@ -297,7 +297,7 @@ export const festivalFaqs = [
   },
   {
     q: "What payment methods do you accept?",
-    a: "Razorpay for USD and INR (cards, UPI, and netbanking) for secure online checkout.",
+    a: "Razorpay for USD and INR (cards, UPI, and netbanking), and Stripe for USD card payments. We never store card numbers.",
   },
   {
     q: "When should I order for Diwali and Bhai Dooj 2026?",

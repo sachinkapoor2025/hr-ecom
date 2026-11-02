@@ -40,7 +40,7 @@ export async function GET() {
 - All products: ${siteUrl}/products
 
 ## Delivery
-Standard USA delivery is 5 business days. Free shipping applies on a $15 minimum cart. Orange County products ship free.
+Standard USA delivery is 5 business days. Free Shipping. Orange County products ship free.
 
 ## Contact
 - Email: ${site.supportEmail}
@@ -110,9 +110,9 @@ UsaRakhi is a rakhi delivery service focused on the United States, operated by D
 ## What makes us different
 
 - Ships from within the United States (California warehouse + India fulfillment via DGV), so orders avoid international customs delays.
-- Standard USA delivery in 5 business days nationwide, with free shipping on a $15 minimum cart value.
+- Standard USA delivery in 5 business days nationwide, with free shipping.
 - Gift combos include chocolates (Ferrero Rocher, Lindt, Hershey's); hampers include dry fruits and traditional sweets.
-- Checkout via Razorpay for USD and INR.
+- Checkout via Razorpay for USD and INR, and Stripe for USD card payments.
 - This is our first Raksha Bandhan season — we don't yet have the operating history of long-established competitors like FNP or IGP, but we do offer domestic US fulfillment and transparent, verifiable shipping timelines.
 
 ---
@@ -131,7 +131,7 @@ Raksha Bandhan 2026: **${RAKSHA_BANDHAN_2026_DATE}**
 |--------|----------|-------|
 ${deadlineTable}
 
-**Comparison note:** UsaRakhi ships domestically within the USA. Standard USA delivery · 5 business days · Free shipping on $15 minimum cart value. Orange County products use standard delivery with free shipping on all products.
+**Comparison note:** UsaRakhi ships domestically within the USA. Standard USA delivery · 5 business days · Free Shipping. Orange County products use standard delivery with free shipping on all products.
 
 ---
 

@@ -7,7 +7,6 @@ import { ReviewForm } from "@/components/ReviewForm";
 import { PublishedReviewsLoader } from "@/components/PublishedReviewsLoader";
 import { JsonLd } from "@/components/JsonLd";
 import { publicTestimonials, site, testimonials } from "@/lib/site";
-import { USARAKHI_MIN_ORDER_USD } from "@hr-ecom/shared";
 import { pageMetadata, canonical } from "@/lib/seo";
 
 export const metadata: Metadata = pageMetadata({
@@ -99,8 +98,8 @@ export default async function ReviewsPage() {
         </p>
         <p>
           Use the comments to judge packaging, communication, and whether the hamper matched its listing. Product
-          photos, price, and what is included still come from each product page. Delivery timing and the $
-          {USARAKHI_MIN_ORDER_USD} free-shipping minimum are spelled out on the{" "}
+          photos, price, and what is included still come from each product page. Delivery timing and Free
+          Shipping are spelled out on the{" "}
           <Link href="/shipping" className="text-nav font-semibold hover:underline">
             shipping page
           </Link>

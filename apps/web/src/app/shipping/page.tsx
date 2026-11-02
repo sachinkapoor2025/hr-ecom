@@ -10,7 +10,7 @@ import { RakhiDeliveryBulletList } from "@/components/RakhiDeliveryBulletList";
 export const metadata: Metadata = pageMetadata({
   title: "Diwali and Bhai Dooj Shipping & Delivery in the USA",
   description:
-    "UsaRakhi ships Diwali and Bhai Dooj gifts inside the USA. Standard delivery is 5 business days, with free shipping on a $15 minimum cart.",
+    "UsaRakhi ships Diwali and Bhai Dooj gifts inside the USA. Standard delivery is 5 business days, with free shipping.",
   path: "/shipping",
 });
 
@@ -109,7 +109,7 @@ export default function ShippingPage() {
         <ul className="list-disc list-inside space-y-2">
           <li>
             <strong>Standard USA delivery</strong> — 5 business days.{" "}
-            <strong>Free shipping on a ${USARAKHI_MIN_ORDER_USD} minimum cart value</strong>. Carts
+            <strong>Free Shipping</strong>. Carts
             below ${USARAKHI_MIN_ORDER_USD} pay the remaining amount as shipping.
           </li>
           <li>

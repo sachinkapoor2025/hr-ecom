@@ -52,7 +52,7 @@ export function AccountPaymentsPanel({
       <div>
         <h3 className="font-semibold text-slate-900 mb-1">Preferred payment method</h3>
         <p className="text-sm text-slate-600 mb-4">
-          Checkout uses Razorpay for USD and INR. Card details are handled securely by Razorpay — we never store card numbers.
+          Checkout offers Razorpay for USD and INR, and Stripe for USD card payments. Card details are handled by the payment provider — we never store card numbers.
         </p>
         <PaymentMethodPicker value={method} onChange={setMethod} />
         {error && <p className="text-red-500 text-sm mb-2">{error}</p>}

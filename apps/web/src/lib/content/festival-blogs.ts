@@ -220,7 +220,7 @@ export const festivalBlogPosts: BlogPost[] = [
       {
         paragraphs: [
           "Ordering from India does not mean the parcel starts in India. On UsaRakhi you browse the Diwali combos, pay in INR through Razorpay if that is the currency you choose, and type the American address where the hamper should arrive. Fulfillment stays inside the US, which is the same model the site uses so brothers and parents are not waiting on customs.",
-          "USD and INR checkout both use Razorpay. You can look at prices in either currency on the site before you pay. The charge is the total shown at checkout, including shipping if the cart is under the $15 free-shipping minimum.",
+          "USD and INR checkout use Razorpay, and USD card payments can also use Stripe. You can look at prices in either currency on the site before you pay. The charge is the total shown at checkout.",
         ],
       },
       {
@@ -245,7 +245,7 @@ export const festivalBlogPosts: BlogPost[] = [
       },
       {
         q: "Is there free shipping?",
-        a: "Free shipping applies on a $15 minimum cart for standard USA delivery. The shipping page also notes that Orange County products ship free, and mixed carts are calculated separately.",
+        a: "Free Shipping applies on standard USA delivery. The shipping page also notes that Orange County products ship free, and mixed carts are calculated separately.",
       },
     ],
   },
