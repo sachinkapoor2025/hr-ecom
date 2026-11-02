@@ -35,6 +35,28 @@ export function getSeoLocation(slug: string): SeoLocation | undefined {
   return locationBySlug.get(slug);
 }
 
+/** City and state pages keep their existing phrases and also name Bhai Dooj and Diwali. */
+export function locationSeoKeywords(location: SeoLocation): string[] {
+  const place = location.name.toLowerCase();
+  const required = [
+    `diwali gifts ${place}`,
+    `bhai dooj gifts ${place}`,
+    `send diwali gifts to ${place}`,
+    `send bhai dooj gifts to ${place}`,
+  ];
+  const seen = new Set<string>();
+  const out: string[] = [];
+  const push = (keyword: string) => {
+    const key = keyword.toLowerCase().replace(/\s+/g, " ").trim();
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    out.push(key);
+  };
+  for (const keyword of required) push(keyword);
+  for (const keyword of location.keywords) push(keyword);
+  return out.slice(0, 14);
+}
+
 export function allSeoLocationSlugs(): string[] {
   return seoLocations.map((l) => l.slug);
 }

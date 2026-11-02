@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Generate SEO data JSON from keyword.xlsx for the Next.js storefront."""
+"""Generate Rakhi SEO data JSON from keyword.xlsx for the Next.js storefront.
+
+Bhai Dooj and Diwali keywords live in packages/shared/src/seo/tracked-keywords.ts.
+This script only rewrites the Rakhi sheet output and must not delete that module.
+"""
 
 from __future__ import annotations
 

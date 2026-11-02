@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { isRakhiContentHidden } from "@hr-ecom/shared";
+import { isRakhiContentHidden, metaKeywordsForTarget } from "@hr-ecom/shared";
 import { CountryGiftLanding } from "@/components/CountryGiftLanding";
 import { CountryRakhiLanding } from "@/components/CountryRakhiLanding";
 import type { ProductSort } from "@/components/ProductSortBar";
@@ -26,7 +26,7 @@ export function generateMetadata(): Metadata {
       description:
         "Explore gift options from Canada to the USA with UsaRakhi. Discover Indian sweets, chocolates and festive hampers for Diwali and Bhai Dooj.",
       path: page.path,
-      keywords: page.keywords,
+      keywords: isRakhiContentHidden() ? metaKeywordsForTarget("/gifts-from-canada") : page.keywords,
       absoluteTitle: true,
     }),
     alternates: {

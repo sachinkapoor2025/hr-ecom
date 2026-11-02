@@ -9,6 +9,7 @@ import { CategoryContentSection } from "@/components/CategoryContentSection";
 import { JsonLd } from "@/components/JsonLd";
 import { getCategoryContent } from "@/lib/content/category-content";
 import { getCategoryPageSeo } from "@/lib/content/category-seo";
+import { categoryMetaKeywords } from "@/lib/content/seo-catalog";
 import { getCategoryRichContent } from "@/lib/content/category-rich-content";
 import { categoryHref } from "@/lib/category-urls";
 import { loadProductsByCategory } from "@/lib/product-loader";
@@ -49,12 +50,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const seo = getCategoryPageSeo(slug);
   const path = categoryHref(slug);
 
+  const keywords = categoryMetaKeywords(slug);
   if (seo) {
     return pageMetadata({
       title: seo.title,
       description: seo.description,
       path,
       absoluteTitle: true,
+      ...(keywords ? { keywords } : {}),
     });
   }
 

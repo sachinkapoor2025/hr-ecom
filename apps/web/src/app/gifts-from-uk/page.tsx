@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { isRakhiContentHidden } from "@hr-ecom/shared";
+import { isRakhiContentHidden, metaKeywordsForTarget } from "@hr-ecom/shared";
 import { CountryGiftLanding } from "@/components/CountryGiftLanding";
 import { CountryRakhiLanding } from "@/components/CountryRakhiLanding";
 import type { ProductSort } from "@/components/ProductSortBar";
@@ -26,7 +26,7 @@ export function generateMetadata(): Metadata {
     description:
       "Looking for gifts from the UK to the USA? Explore festive hampers, Indian sweets, chocolates and Diwali gift options with UsaRakhi.",
     path: page.path,
-    keywords: page.keywords,
+    keywords: isRakhiContentHidden() ? metaKeywordsForTarget("/gifts-from-uk") : page.keywords,
     absoluteTitle: true,
   }),
   alternates: {

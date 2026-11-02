@@ -26,7 +26,7 @@ import {
 import { pickHomeCategoryProducts } from "@/lib/home-category-products";
 import { loadProducts } from "@/lib/product-loader";
 import { faqJsonLd, howToSendRakhiJsonLd, pageMetadata } from "@/lib/seo";
-import { FLASH_COMBO_SALE_SLUG, isFlashComboSaleActive, type Product } from "@hr-ecom/shared";
+import { festiveFallbackKeywordMeta, FLASH_COMBO_SALE_SLUG, isFlashComboSaleActive, type Product } from "@hr-ecom/shared";
 
 export const metadata: Metadata = pageMetadata({
   title: "Diwali & Bhai Dooj Gifts to USA | UsaRakhi",
@@ -34,8 +34,7 @@ export const metadata: Metadata = pageMetadata({
     "Send Diwali and Bhai Dooj gifts to the USA with UsaRakhi. Shop Indian sweets, chocolates, dry fruits, festive hampers and puja gifts online.",
   path: "/",
   absoluteTitle: true,
-  keywords:
-    "diwali gifts usa, bhai dooj gifts usa, diwali hamper usa, bhai dooj hamper, send diwali gifts to usa, pooja set usa, kaju katli gift box usa",
+  keywords: festiveFallbackKeywordMeta(),
 });
 
 /** Same as PDP: always render from live product API so listing prices cannot drift. */

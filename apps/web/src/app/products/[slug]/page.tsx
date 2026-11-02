@@ -10,7 +10,8 @@ import { loadProduct, loadRelatedProducts, getStaticProductSlugs } from "@/lib/p
 import { api } from "@/lib/api";
 import { categoryHref } from "@/lib/category-urls";
 import { getCategoryPageSeo } from "@/lib/content/category-seo";
-import type { Product } from "@hr-ecom/shared";
+import { isFestiveCategorySlug, type Product } from "@hr-ecom/shared";
+import { categoryMetaKeywords } from "@/lib/content/seo-catalog";
 
 function categoryBreadcrumbLabel(categorySlug: string): string {
   const seo = getCategoryPageSeo(categorySlug);
@@ -26,6 +27,18 @@ function categoryBreadcrumbLabel(categorySlug: string): string {
 
 interface Props {
   params: Promise<{ slug: string }>;
+}
+
+function productSearchKeywords(product: Product): string {
+  const festiveSlug = [product.categorySlug, ...(product.additionalCategorySlugs ?? [])].find((slug) =>
+    isFestiveCategorySlug(slug)
+  );
+  const festive = festiveSlug ? categoryMetaKeywords(festiveSlug) : undefined;
+  const parts = [product.name, ...(product.tags ?? [])];
+  if (festive) parts.push(festive);
+  if (!isFestiveCategorySlug(product.categorySlug)) parts.push("send rakhi to USA");
+  parts.push("UsaRakhi");
+  return parts.filter(Boolean).join(", ");
 }
 
 /**
@@ -63,7 +76,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     price: p.price,
     currency: p.currency,
     ogImage: resolveImageUrl(p.images?.[0]),
-    keywords: [p.name, ...(p.tags ?? []), "Diwali gifts USA", "Bhai Dooj gifts", "UsaRakhi"].join(", "),
+    keywords: productSearchKeywords(p),
   });
 }
 

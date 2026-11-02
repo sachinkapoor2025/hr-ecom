@@ -1,4 +1,4 @@
-import { isRakhiContentHidden } from "@hr-ecom/shared";
+import { festiveFallbackKeywordMeta, isRakhiContentHidden } from "@hr-ecom/shared";
 import {
   site,
   navItems,
@@ -46,6 +46,9 @@ Standard USA delivery is 5 business days. Free shipping applies on a $15 minimum
 - Email: ${site.supportEmail}
 - WhatsApp: ${site.whatsappDisplay}
 - Website: ${siteUrl}
+
+## Keywords
+${festiveFallbackKeywordMeta()}
 `;
     return new Response(body, {
       headers: {

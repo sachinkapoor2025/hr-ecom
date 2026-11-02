@@ -154,6 +154,7 @@ export default function AdminDashboard() {
         {[
           { href: "/admin/orders", title: "Orders", desc: "Fulfill & track orders" },
           { href: "/admin/analytics", title: "Analytics", desc: "Top products & searches" },
+          { href: "/admin/seo", title: "SEO keywords", desc: "Rakhi, Bhai Dooj, and Diwali" },
           { href: "/admin/boost-sales", title: "Boost Sales", desc: "Leads, carts & coupons" },
           { href: "/admin/products", title: "Products", desc: "Add, edit, bulk upload" },
           { href: "/admin/categories", title: "Categories", desc: "Organize catalog" },

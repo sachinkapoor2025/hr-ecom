@@ -14,7 +14,7 @@ import { PricesDroppedStrip } from "@/components/PricesDroppedStrip";
 import { ClientDeferredWidgets } from "@/components/ClientDeferredWidgets";
 import { AnalyticsScripts, GoogleAnalytics } from "@/components/AnalyticsScripts";
 import { publicSiteDescription, site } from "@/lib/site";
-import { isRakhiContentHidden } from "@hr-ecom/shared";
+import { festiveFallbackKeywordMeta, isRakhiContentHidden } from "@hr-ecom/shared";
 import { getSiteVerification } from "@/lib/analytics-config";
 import {
   organizationJsonLd,
@@ -40,9 +40,7 @@ export function generateMetadata(): Metadata {
     template: "%s | UsaRakhi",
   },
   description,
-  keywords: hidden
-    ? "diwali gifts usa, bhai dooj gifts usa, diwali hamper usa, sweet hamper usa, dry fruit gift box usa, pooja set usa"
-    : defaultKeywords,
+  keywords: hidden ? festiveFallbackKeywordMeta() : defaultKeywords,
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
