@@ -2,8 +2,11 @@ import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2, Context } from "a
 import { route } from "./router";
 
 function errorMessage(err: unknown): string {
-  if (err instanceof Error && err.message.trim()) return err.message;
-  return "Internal server error";
+  const raw = err instanceof Error && err.message.trim() ? err.message : "Internal server error";
+  if (/sk_(live|test)_|rk_(live|test)_|pk_(live|test)_|whsec_/i.test(raw)) {
+    return "Payment could not be started. Please try again or use another payment method.";
+  }
+  return raw;
 }
 
 export async function handler(

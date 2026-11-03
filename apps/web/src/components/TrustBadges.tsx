@@ -2,13 +2,22 @@ import Link from "next/link";
 
 type Variant = "compact" | "full";
 
-export function TrustBadges({ variant = "full", className = "" }: { variant?: Variant; className?: string }) {
+export function TrustBadges({
+  variant = "full",
+  className = "",
+  omitDelivery = false,
+}: {
+  variant?: Variant;
+  className?: string;
+  /** Product pages already state the delivery window in the shipping section. */
+  omitDelivery?: boolean;
+}) {
   const items = [
     { icon: "🇺🇸", label: "Ships from USA" },
     { icon: "🔒", label: "SSL Secure Checkout" },
     { icon: "🚚", label: "5–7 Day USA Delivery" },
     { icon: "✓", label: "Satisfaction Guarantee", href: "/returns" },
-  ] as const;
+  ].filter((item) => !(omitDelivery && item.label === "5–7 Day USA Delivery"));
 
   if (variant === "compact") {
     return (

@@ -69,6 +69,7 @@ export * from "./lib/diwali-bhai-dooj-email";
 export * from "./lib/home-page-banners";
 export * from "./lib/order-number";
 export * from "./lib/order-status";
+export * from "./lib/checkout-payment-methods";
 export * from "./lib/carrier-tracking";
 export * from "./lib/order-vendors";
 export * from "./lib/product-addons";

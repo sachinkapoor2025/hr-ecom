@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type Stripe from "stripe";
 import type { Order } from "@hr-ecom/shared";
-import { stripeIntentMatchesOrder } from "./stripe";
+import { stripeIntentMatchesOrder, stripeSecretKeyMode } from "./stripe";
 
 function order(partial: Partial<Order> = {}): Order {
   return {
@@ -85,5 +85,19 @@ describe("stripeIntentMatchesOrder", () => {
       ),
       false
     );
+  });
+});
+
+describe("stripeSecretKeyMode", () => {
+  it("reads only the test or live prefix", () => {
+    const previous = process.env.STRIPE_SECRET_KEY;
+    process.env.STRIPE_SECRET_KEY = "sk_test_example";
+    assert.equal(stripeSecretKeyMode(), "test");
+    process.env.STRIPE_SECRET_KEY = "sk_live_example";
+    assert.equal(stripeSecretKeyMode(), "live");
+    process.env.STRIPE_SECRET_KEY = "not-a-stripe-key";
+    assert.equal(stripeSecretKeyMode(), null);
+    if (previous === undefined) delete process.env.STRIPE_SECRET_KEY;
+    else process.env.STRIPE_SECRET_KEY = previous;
   });
 });

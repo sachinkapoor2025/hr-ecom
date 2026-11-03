@@ -5,13 +5,31 @@ import { isOrderPaymentSettled, ORDER_STATUS, STRIPE_PAYMENTS_ENABLED } from "@h
 import type { APIGatewayProxyEventV2 } from "aws-lambda";
 import { ok, badRequest, forbidden, serverError, unauthorized } from "../../lib/response";
 import { getAuth, getSessionId, getUserOrSessionKey } from "../../lib/auth";
-import { getOrderById, markOrderPaid, markOrderPaymentFailed } from "../orders";
+import { getOrderById, markOrderPaid, recordPendingPaymentNote } from "../orders";
 import { isLoadTestMode } from "../../lib/load-test";
 
+function stripeSecretKey(): string {
+  return process.env.STRIPE_SECRET_KEY?.trim() ?? "";
+}
+
+/** test/live from the key prefix only. Never log or return the key itself. */
+export function stripeSecretKeyMode(): "test" | "live" | null {
+  const key = stripeSecretKey();
+  if (key.startsWith("sk_test_") || key.startsWith("rk_test_")) return "test";
+  if (key.startsWith("sk_live_") || key.startsWith("rk_live_")) return "live";
+  return null;
+}
+
 function getStripe(): Stripe | null {
-  const key = process.env.STRIPE_SECRET_KEY?.trim();
+  const key = stripeSecretKey();
   if (!key) return null;
   return new Stripe(key, { apiVersion: "2025-02-24.acacia" });
+}
+
+function stripeFailureCode(err: unknown): string {
+  if (err && typeof err === "object" && "code" in err && err.code) return String(err.code);
+  if (err && typeof err === "object" && "type" in err && err.type) return String(err.type);
+  return "unknown";
 }
 
 function getRawBody(event: APIGatewayProxyEventV2): string {
@@ -79,7 +97,7 @@ export async function lookupStripeIntent(order: Order): Promise<StripeIntentLook
       };
     }
   } catch (err) {
-    console.error("Stripe intent lookup failed:", err);
+    console.error("Stripe intent lookup failed", stripeFailureCode(err));
   }
   return { state: "none" };
 }
@@ -102,21 +120,24 @@ export async function createStripePaymentIntent(order: Order) {
 
   const stripe = getStripe();
   if (!stripe) {
-    return {
-      paymentIntentId: `pi_dev_${order.orderId}`,
-      clientSecret: `pi_dev_${order.orderId}_secret`,
-    };
+    throw new Error("Stripe is not configured. Please pay with Razorpay.");
   }
 
-  const intent = await stripe.paymentIntents.create({
-    amount: stripeChargeAmount(order),
-    currency: order.currency.toLowerCase(),
-    metadata: { orderId: order.orderId },
-    automatic_payment_methods: { enabled: true },
-    ...(order.shippingAddress.email
-      ? { receipt_email: order.shippingAddress.email.trim() }
-      : {}),
-  });
+  let intent: Stripe.PaymentIntent;
+  try {
+    intent = await stripe.paymentIntents.create({
+      amount: stripeChargeAmount(order),
+      currency: order.currency.toLowerCase(),
+      metadata: { orderId: order.orderId },
+      automatic_payment_methods: { enabled: true },
+      ...(order.shippingAddress.email
+        ? { receipt_email: order.shippingAddress.email.trim() }
+        : {}),
+    });
+  } catch (err) {
+    console.error("Stripe PaymentIntent create failed", stripeFailureCode(err));
+    throw new Error("Stripe could not start this payment. Please try again or pay with Razorpay.");
+  }
 
   if (!intent.client_secret) {
     throw new Error("Stripe did not return a client secret.");
@@ -254,9 +275,11 @@ async function settleFailedStripeIntent(intent: Stripe.PaymentIntent, note: stri
   if (!order) return;
   if (order.status !== ORDER_STATUS.PENDING_PAYMENT) return;
   if (order.paymentProvider !== "stripe") return;
-  // A newer checkout choice replaced this intent. Do not cancel that order.
+  // A newer checkout choice replaced this intent. Do not touch that order.
   if (!order.paymentIntentId || order.paymentIntentId !== intent.id) return;
-  await markOrderPaymentFailed(orderId, note);
+  // Keep the order payable so the customer can retry. Cancelling here blocked Stripe checkout
+  // after a decline or a closed card form.
+  await recordPendingPaymentNote(orderId, note);
 }
 
 export async function stripeWebhook(event: APIGatewayProxyEventV2) {
@@ -291,7 +314,7 @@ export async function stripeWebhook(event: APIGatewayProxyEventV2) {
 
     return ok({ received: true });
   } catch (err) {
-    console.error("Stripe webhook error:", err);
-    return serverError(String(err));
+    console.error("Stripe webhook error", stripeFailureCode(err));
+    return serverError("Stripe webhook could not be processed");
   }
 }

@@ -1,7 +1,11 @@
 import type { ReactNode } from "react";
-import { STRIPE_PAYMENTS_ENABLED } from "@hr-ecom/shared";
+import {
+  STRIPE_PAYMENTS_ENABLED,
+  paymentMethodsForCheckoutCurrency,
+} from "@hr-ecom/shared";
 
 export type PaymentMethod = "stripe" | "razorpay";
+export { paymentMethodsForCheckoutCurrency };
 
 function RazorpayIcon() {
   return (
@@ -27,16 +31,6 @@ function StripeIcon() {
   );
 }
 
-export function paymentMethodsForCheckoutCurrency(
-  checkoutCurrency: "USD" | "INR"
-): PaymentMethod[] {
-  const methods: PaymentMethod[] = ["razorpay"];
-  if (STRIPE_PAYMENTS_ENABLED && (checkoutCurrency === "USD" || checkoutCurrency === "INR")) {
-    methods.push("stripe");
-  }
-  return methods;
-}
-
 export function PaymentMethodPicker({
   value,
   onChange,
@@ -60,7 +54,9 @@ export function PaymentMethodPicker({
         {options[0]!.icon}
         <div>
           <p className="font-semibold text-slate-900 text-sm">{options[0]!.label}</p>
-          <p className="text-xs text-slate-600">Secure checkout via Razorpay</p>
+          <p className="text-xs text-slate-600">
+            Secure checkout via {options[0]!.id === "stripe" ? "Stripe" : "Razorpay"}
+          </p>
         </div>
       </div>
     );
