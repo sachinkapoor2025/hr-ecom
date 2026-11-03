@@ -440,7 +440,7 @@ export async function checkout(event: APIGatewayProxyEventV2) {
     updatedAt: timestamp,
   };
 
-  const { prepareStripePayment } = await import("./payments/stripe");
+  const { prepareStripePayment, stripeSecretKeyMode } = await import("./payments/stripe");
   const { createRazorpayOrder } = await import("./payments/razorpay");
 
   if (parsed.data.paymentMethod === "stripe") {
@@ -456,7 +456,11 @@ export async function checkout(event: APIGatewayProxyEventV2) {
     // Keep cart until payment succeeds so cancel/retry still has items.
     const emailResult = await notifyAdminOrderPlaced(order);
     if (!emailResult.ok) console.error("Order placed email failed:", emailResult.error);
-    return created({ order, clientSecret: payment.clientSecret });
+    return created({
+      order,
+      clientSecret: payment.clientSecret,
+      stripeMode: stripeSecretKeyMode(),
+    });
   }
 
   const payment = await createRazorpayOrder(order);
@@ -1092,6 +1096,28 @@ export async function markOrderPaymentFailed(
   if (!emailResult.ok) console.error("Order payment failed email failed:", emailResult.error);
 }
 
+/** Remember a declined or abandoned attempt without closing the order, so checkout can be retried. */
+export async function recordPendingPaymentNote(
+  orderId: string | undefined,
+  note: string
+): Promise<void> {
+  if (!orderId) return;
+  const order = await fetchOrder(orderId);
+  if (!order) return;
+  if (order.status !== ORDER_STATUS.PENDING_PAYMENT) return;
+
+  const timestamp = now();
+  const updated: StoredOrder = {
+    ...order,
+    statusHistory: [
+      ...(order.statusHistory ?? []),
+      { status: ORDER_STATUS.PENDING_PAYMENT, at: timestamp, note },
+    ],
+    updatedAt: timestamp,
+  };
+  await docClient.send(new PutCommand({ TableName: ORDERS_TABLE, Item: updated }));
+}
+
 /** Lookup an order by id (used by Razorpay verify for ownership/amount checks). */
 export async function getOrderById(orderId: string): Promise<StoredOrder | undefined> {
   return fetchOrder(orderId);
@@ -1129,7 +1155,9 @@ export async function retryOrderPayment(event: APIGatewayProxyEventV2) {
     return badRequest("Stripe retry requires USD orders");
   }
 
-  const { prepareStripePayment, lookupStripeIntent } = await import("./payments/stripe");
+  const { prepareStripePayment, lookupStripeIntent, stripeSecretKeyMode } = await import(
+    "./payments/stripe"
+  );
   const { createRazorpayOrder, syncRazorpayCaptureForOrder } = await import("./payments/razorpay");
   const timestamp = now();
 
@@ -1152,7 +1180,11 @@ export async function retryOrderPayment(event: APIGatewayProxyEventV2) {
       updatedAt: timestamp,
     };
     await docClient.send(new PutCommand({ TableName: ORDERS_TABLE, Item: updated }));
-    return ok({ order: updated, clientSecret: payment.clientSecret });
+    return ok({
+      order: updated,
+      clientSecret: payment.clientSecret,
+      stripeMode: stripeSecretKeyMode(),
+    });
   }
 
   if (order.paymentIntentId) {

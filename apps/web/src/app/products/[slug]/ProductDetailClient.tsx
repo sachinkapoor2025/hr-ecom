@@ -37,6 +37,7 @@ import {
   USARAKHI_STOCK_SHORTAGE_NOTE,
   shouldShowUsarakhiStockShortageNote,
   shippingBulletsForCart,
+  cartIsOrangeCountyOnly,
   isFreeStandardShippingProduct,
   quoteAddressShipmentShipping,
 } from "@hr-ecom/shared";
@@ -52,8 +53,7 @@ type Tab = "description" | "reviews" | "faq";
 /** "What's included" checklist under the title — hampers, single, combo, kids, etc. */
 function ProductIncludesPreview({ product }: { product: Product }) {
   const items = getProductIncludes(product);
-  const showChocolateNote = shouldShowUsarakhiStockShortageNote(product);
-  if (items.length === 0 && !showChocolateNote) return null;
+  if (items.length === 0) return null;
   const heading =
     product.categorySlug === "rakhi-hampers" ? "What's included in this hamper" : "What's included";
   return (
@@ -69,13 +69,15 @@ function ProductIncludesPreview({ product }: { product: Product }) {
           ))}
         </ul>
       ) : null}
-      {showChocolateNote ? (
-        <p className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs sm:text-sm text-slate-800 leading-snug">
-          <span className="font-semibold text-primary">Chocolate note: </span>
-          {USARAKHI_STOCK_SHORTAGE_NOTE}
-        </p>
-      ) : null}
     </div>
+  );
+}
+
+/** The checklist above the fold already lists these items. */
+function descriptionWithoutRepeatedIncludes(html: string): string {
+  return html.replace(
+    /<p>\s*(?:<strong>)?\s*What'?s included:?\s*(?:<\/strong>)?\s*<\/p>\s*<ul[\s\S]*?<\/ul>/gi,
+    ""
   );
 }
 
@@ -182,6 +184,9 @@ export function ProductDetailClient({
   const discount = getDiscountPercent(product.price, product.compareAtPrice);
   const summary = shortPlainDescription(product.description);
   const descriptionIsHtml = looksLikeHtml(product.description);
+  const descriptionHtml = descriptionIsHtml
+    ? descriptionWithoutRepeatedIncludes(product.description)
+    : product.description;
   const cartQuantity =
     cart?.items.filter((i) => i.productSlug === product.slug).reduce((s, i) => s + i.quantity, 0) ?? 0;
   const inCart = cartQuantity > 0;
@@ -305,14 +310,10 @@ export function ProductDetailClient({
             standardTopUpAmount={standardTopUpAmount}
             formatMoney={format}
             currency={displayCurrency}
+            orangeCountyOnly={cartIsOrangeCountyOnly([product])}
           />
-          {hasFreeStandardShipping ? (
-            <p className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-900">
-              Free standard shipping on this product.
-            </p>
-          ) : null}
 
-          <TrustBadges variant="compact" className="mb-5" />
+          <TrustBadges variant="compact" omitDelivery className="mb-5" />
 
           {showAddons ? (
             <ProductAddonsPicker
@@ -450,7 +451,7 @@ export function ProductDetailClient({
             {descriptionIsHtml ? (
               <article
                 className="product-html-description max-w-none text-slate-700 leading-relaxed prose prose-slate prose-a:text-nav prose-strong:text-primary prose-ul:my-3 prose-li:my-0.5"
-                dangerouslySetInnerHTML={{ __html: product.description }}
+                dangerouslySetInnerHTML={{ __html: descriptionHtml }}
               />
             ) : (
               <article className="text-slate-700 leading-relaxed space-y-4">
@@ -560,17 +561,19 @@ export function ProductDetailClient({
         </section>
       )}
 
-      <section className="mt-10 pt-8 border-t border-slate-200">
-        <h2 className="text-lg font-bold text-primary mb-4">Common questions</h2>
-        <dl className="space-y-4 max-w-2xl">
-          {productFaqs.map((f) => (
-            <div key={f.q}>
-              <dt className="font-semibold text-slate-800 text-sm">{f.q}</dt>
-              <dd className="text-sm text-slate-600 mt-1 leading-relaxed">{f.a}</dd>
-            </div>
-          ))}
-        </dl>
-      </section>
+      {tab !== "faq" ? (
+        <section className="mt-10 pt-8 border-t border-slate-200">
+          <h2 className="text-lg font-bold text-primary mb-4">Common questions</h2>
+          <dl className="space-y-4 max-w-2xl">
+            {productFaqs.map((f) => (
+              <div key={f.q}>
+                <dt className="font-semibold text-slate-800 text-sm">{f.q}</dt>
+                <dd className="text-sm text-slate-600 mt-1 leading-relaxed">{f.a}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      ) : null}
     </div>
     <StickyAddToCartBar product={product} getContact={getContact} addons={addons} />
     </>

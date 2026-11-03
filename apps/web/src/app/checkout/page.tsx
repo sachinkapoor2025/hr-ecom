@@ -11,7 +11,11 @@ import { useSessionId, useDebouncedLeadCapture, useLeadCapture } from "@/lib/ses
 import { trackCheckoutStart, trackPurchase } from "@/lib/track";
 import { getAttributionSnapshotForCheckout } from "@/lib/attribution-store";
 import Script from "next/script";
-import { PaymentMethodPicker, type PaymentMethod } from "@/components/PaymentMethodPicker";
+import {
+  PaymentMethodPicker,
+  paymentMethodsForCheckoutCurrency,
+  type PaymentMethod,
+} from "@/components/PaymentMethodPicker";
 import { ShippingAddressForm } from "@/components/ShippingAddressForm";
 import { SecureCheckoutBadge } from "@/components/SecureCheckoutBadge";
 import { CheckoutLegalNotice } from "@/components/CheckoutLegalNotice";
@@ -59,6 +63,31 @@ import {
 import { VariantImg } from "@/components/VariantImg";
 
 const EMPTY_CART_ITEMS: Array<{ vendorSlug?: string }> = [];
+
+function publishableKeyMode(key: string): "test" | "live" | null {
+  if (key.startsWith("pk_test_")) return "test";
+  if (key.startsWith("pk_live_")) return "live";
+  return null;
+}
+
+function assertStripeCheckoutReady(
+  publishableKey: string | undefined,
+  clientSecret: string | undefined,
+  stripeMode?: "test" | "live" | null
+) {
+  if (!publishableKey) {
+    throw new Error("Stripe is not configured. Please pay with Razorpay.");
+  }
+  const publishableMode = publishableKeyMode(publishableKey);
+  if (publishableMode && stripeMode && publishableMode !== stripeMode) {
+    throw new Error(
+      "Stripe is unavailable because the checkout is not in a matching test or live mode. Please pay with Razorpay."
+    );
+  }
+  if (!clientSecret || clientSecret.includes("_dev_") || clientSecret.includes("_loadtest_")) {
+    throw new Error("Stripe payment could not be started. Please try again or pay with Razorpay.");
+  }
+}
 
 declare global {
   interface Window {
@@ -211,7 +240,8 @@ function CheckoutPageInner() {
   ]);
 
   useEffect(() => {
-    setPaymentMethod("razorpay");
+    const allowed = paymentMethodsForCheckoutCurrency(displayCurrency);
+    setPaymentMethod((current) => (allowed.includes(current) ? current : "razorpay"));
     setStripeCheckout(null);
     setRazorpayPayment(null);
   }, [displayCurrency]);
@@ -596,6 +626,7 @@ function CheckoutPageInner() {
         const data = await api<{
           order: Order;
           clientSecret?: string;
+          stripeMode?: "test" | "live" | null;
           razorpayOrderId?: string;
           razorpayKeyId?: string;
           razorpayQrImageUrl?: string;
@@ -608,11 +639,8 @@ function CheckoutPageInner() {
 
         if (paymentMethod === "stripe") {
           const stripeKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.trim();
-          if (!stripeKey) throw new Error("Stripe is not configured.");
-          if (!data.clientSecret || data.clientSecret.includes("_dev_")) {
-            throw new Error("Stripe payment could not be started.");
-          }
-          setStripeCheckout({ clientSecret: data.clientSecret, orderId: data.order.orderId });
+          assertStripeCheckoutReady(stripeKey, data.clientSecret, data.stripeMode);
+          setStripeCheckout({ clientSecret: data.clientSecret!, orderId: data.order.orderId });
           setRetryOrder(data.order);
           return;
         }
@@ -670,6 +698,7 @@ function CheckoutPageInner() {
       const data = await api<{
         order: Order;
         clientSecret?: string;
+        stripeMode?: "test" | "live" | null;
         razorpayOrderId?: string;
         razorpayKeyId?: string;
         razorpayQrImageUrl?: string;
@@ -700,15 +729,8 @@ function CheckoutPageInner() {
 
       if (paymentMethod === "stripe") {
         const stripeKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.trim();
-        if (!stripeKey) {
-          throw new Error("Stripe is not configured. Contact support or pay with Razorpay (INR).");
-        }
-        if (!data.clientSecret || data.clientSecret.includes("_dev_")) {
-          throw new Error(
-            "Stripe payment could not be started. Ensure STRIPE_SECRET_KEY is set on the API and redeploy."
-          );
-        }
-        setStripeCheckout({ clientSecret: data.clientSecret, orderId: data.order.orderId });
+        assertStripeCheckoutReady(stripeKey, data.clientSecret, data.stripeMode);
+        setStripeCheckout({ clientSecret: data.clientSecret!, orderId: data.order.orderId });
         return;
       }
 
@@ -1097,6 +1119,32 @@ function CheckoutPageInner() {
                 returnUrl={`${typeof window !== "undefined" ? window.location.origin : ""}/orders/${stripeCheckout.orderId}`}
                 amountLabel={format(orderTotal, displayCurrency)}
                 onError={setError}
+                onComplete={async (paymentIntentId) => {
+                  const confirmed = await api<{ status: string }>("/payments/stripe/confirm", {
+                    method: "POST",
+                    sessionId,
+                    token,
+                    body: JSON.stringify({
+                      orderId: stripeCheckout.orderId,
+                      paymentIntentId,
+                    }),
+                  });
+                  if (confirmed.status === "failed" || confirmed.status === "cancelled") {
+                    throw new Error(
+                      "Stripe did not complete this payment. Please try another card or pay with Razorpay."
+                    );
+                  }
+                  trackPurchase(orderTotal, {
+                    orderId: stripeCheckout.orderId,
+                    provider: "stripe",
+                    currency: retryOrder?.currency ?? displayCurrency,
+                  });
+                  await refresh();
+                  const redirectStatus = confirmed.status === "paid" ? "succeeded" : "processing";
+                  router.push(
+                    `/orders/${stripeCheckout.orderId}?payment_intent=${encodeURIComponent(paymentIntentId)}&redirect_status=${redirectStatus}`
+                  );
+                }}
               />
             )}
 

@@ -65,7 +65,6 @@ export function StandardShippingMinimumNote({
               : "Your order qualifies for free standard shipping."}
         </p>
       )}
-      <p className="mt-1 text-xs text-slate-600">Standard USA delivery · 5 business days.</p>
     </div>
   );
 }

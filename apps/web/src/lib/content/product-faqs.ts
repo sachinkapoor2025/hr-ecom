@@ -2,7 +2,7 @@
 export const productPageFaqs = [
   {
     q: "How long does delivery take in the USA?",
-    a: "UsaRakhi delivers Diwali and Bhai Dooj gifts to all 50 US states in 5–7 business days after dispatch. Orders placed before our daily cut-off ship the same day.",
+    a: "Standard USA delivery is 5 business days after dispatch, to all 50 US states. Orders placed before the daily cut-off ship the same day.",
   },
   {
     q: "Can I order from India, the UK, or Canada?",
@@ -14,7 +14,7 @@ export const productPageFaqs = [
   },
   {
     q: "What payment methods do you accept?",
-    a: "We accept Razorpay for both USD and INR, including cards, UPI, and netbanking. All payments are encrypted, and we never store card details.",
+    a: "Razorpay is available for USD and INR, including cards, UPI, and netbanking. Stripe card payments are available when you pay in USD. We never store card details.",
   },
   {
     q: "What if my gift arrives damaged?",

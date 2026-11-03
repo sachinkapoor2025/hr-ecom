@@ -19,6 +19,8 @@ type Props = {
   currency?: DisplayCurrency;
   /** Show $15 minimum nudge on PDP / cart hints. */
   showStandardMinimumNote?: boolean;
+  /** Orange County products always include free standard shipping. */
+  orangeCountyOnly?: boolean;
 };
 
 /**
@@ -31,6 +33,7 @@ export function RakhiDeliverySummary({
   formatMoney,
   currency,
   showStandardMinimumNote = false,
+  orangeCountyOnly = false,
 }: Props) {
   const msg = RAKHI_DELIVERY_MESSAGING;
   const items = bullets ?? msg.shippingBullets;
@@ -39,6 +42,7 @@ export function RakhiDeliverySummary({
     standardTopUpAmount != null &&
     formatMoney &&
     currency;
+  const deliveryLineShown = Boolean(showMinimum || showStandardMinimumNote);
 
   return (
     <div
@@ -52,13 +56,16 @@ export function RakhiDeliverySummary({
           currency={currency}
           className="mt-2 border-amber-100"
           compact
+          orangeCountyOnly={orangeCountyOnly}
         />
       ) : showStandardMinimumNote ? (
         <p className="mt-2 text-xs sm:text-sm font-semibold text-slate-900 leading-snug">
           {USARAKHI_STANDARD_DELIVERY_DETAIL}
         </p>
       ) : null}
-      <RakhiDeliveryBulletList items={items} highlightFirst className="mt-2" />
+      {deliveryLineShown ? null : (
+        <RakhiDeliveryBulletList items={items} highlightFirst className="mt-2" />
+      )}
     </div>
   );
 }
