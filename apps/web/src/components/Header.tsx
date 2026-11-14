@@ -11,19 +11,55 @@ import { SiteLogoLink } from "@/components/SiteLogo";
 
 function CitiesMenu({ onNavigate }: { onNavigate?: () => void }) {
   const [open, setOpen] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [menuPos, setMenuPos] = useState({ top: 0, right: 8 });
+
+  const placeMenu = () => {
+    const rect = buttonRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    setMenuPos({
+      top: rect.bottom,
+      right: Math.max(8, window.innerWidth - rect.right),
+    });
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    placeMenu();
+    window.addEventListener("resize", placeMenu);
+    window.addEventListener("scroll", placeMenu, true);
+    return () => {
+      window.removeEventListener("resize", placeMenu);
+      window.removeEventListener("scroll", placeMenu, true);
+    };
+  }, [open]);
+
+  const hovered = useRef(false);
 
   return (
     <div
       className="relative shrink-0"
-      onMouseEnter={() => setOpen(true)}
-      onMouseLeave={() => setOpen(false)}
+      onMouseEnter={() => {
+        hovered.current = true;
+        placeMenu();
+        setOpen(true);
+      }}
+      onMouseLeave={() => {
+        hovered.current = false;
+        setOpen(false);
+      }}
     >
       <button
+        ref={buttonRef}
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => {
+          placeMenu();
+          if (hovered.current) return;
+          setOpen((v) => !v);
+        }}
         aria-expanded={open}
         aria-haspopup="true"
-        className={`inline-flex items-center justify-center gap-1 rounded-full px-3.5 py-2 text-sm font-semibold whitespace-nowrap transition ${
+        className={`inline-flex items-center justify-center gap-1 rounded-full px-1.5 py-1.5 text-[13px] font-semibold whitespace-nowrap transition xl:px-2.5 xl:text-sm ${
           open ? "bg-white text-primary" : "text-white hover:bg-white/15"
         }`}
       >
@@ -31,7 +67,7 @@ function CitiesMenu({ onNavigate }: { onNavigate?: () => void }) {
         <span className={`text-xs transition-transform ${open ? "rotate-180" : ""}`}>▼</span>
       </button>
       {open && (
-        <div className="absolute top-full right-0 pt-1.5 z-[100]">
+        <div className="fixed z-[100] pt-1.5" style={{ top: menuPos.top, right: menuPos.right }}>
           <div className="min-w-[220px] max-h-[min(70vh,360px)] overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 shadow-xl">
             {cityLinks.map((c) => (
               <Link
@@ -318,13 +354,13 @@ export function Header() {
         </div>
       </div>
 
-      {/* Desktop nav */}
-      <nav className="hidden md:block bg-primary overflow-visible">
-        <div className="max-w-7xl mx-auto px-3">
-          <div className="flex flex-wrap items-center justify-center gap-1 py-2">
+      {/* Desktop nav — one row. Narrower desktops scroll sideways instead of wrapping. */}
+      <nav className="hidden md:block bg-primary" aria-label="Shop">
+        <div className="overflow-x-auto overscroll-x-contain [scrollbar-width:thin] [scrollbar-color:rgba(255,255,255,0.45)_transparent] [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-white/40">
+          <div className="mx-auto flex w-max min-w-full flex-nowrap items-center justify-center gap-0.5 px-1.5 py-1.5 xl:gap-1 xl:px-3">
             {navItems.map((item) => {
               const active = isActive(item.href, "category" in item ? item.category : undefined);
-              const linkClass = `inline-flex items-center justify-center rounded-full px-3.5 py-2 text-sm font-semibold whitespace-nowrap transition ${
+              const linkClass = `inline-flex shrink-0 items-center justify-center rounded-full px-1.5 py-1.5 text-[13px] font-semibold whitespace-nowrap transition xl:px-2.5 xl:text-sm ${
                 active ? "bg-white text-primary" : "text-white hover:bg-white/15"
               }`;
               if (item.href === "/") {
