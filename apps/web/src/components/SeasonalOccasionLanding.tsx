@@ -19,6 +19,13 @@ const FEATURED_CITY_SLUGS = ["california", "new-york", "texas", "florida", "new-
 
 export type SeasonalFaq = { q: string; a: string };
 
+export type SeasonalStory = {
+  id: string;
+  heading: string;
+  paragraphs: string[];
+  points?: { title: string; text: string }[];
+};
+
 export type SeasonalPageCopy = {
   path: string;
   breadcrumb: string;
@@ -28,12 +35,14 @@ export type SeasonalPageCopy = {
   dateLabel: string;
   dateValue: string;
   dateNote: string;
-  tone: "thanksgiving" | "new-year";
+  tone: "christmas" | "new-year";
   intro: string[];
   introLinks: { phrase: string; href: string }[];
   sections: SeasonalSection[];
   bannerHeading: string;
   bannerText: string;
+  stories?: SeasonalStory[];
+  faqHeading?: string;
   faqs: SeasonalFaq[];
   otherOccasion: { href: string; label: string; text: string };
 };
@@ -50,12 +59,13 @@ function HeroDecor({ tone }: { tone: SeasonalPageCopy["tone"] }) {
     );
   }
   return (
-    <svg className="pointer-events-none absolute -left-4 bottom-0 h-32 w-40 text-amber-200/25" viewBox="0 0 160 100" aria-hidden>
-      <path
-        fill="currentColor"
-        d="M20 80c18-28 28-28 40-8 8-24 28-36 48-28 6 18-4 36-22 44-20 8-46 6-66-8z"
-      />
-      <path fill="currentColor" d="M108 18c10 8 12 20 4 30-12-2-22-12-22-24 6-4 12-6 18-6z" />
+    <svg className="pointer-events-none absolute -right-2 -top-2 h-48 w-36 text-emerald-200/30" viewBox="0 0 120 160" aria-hidden>
+      <path fill="currentColor" d="M60 6l16 28h-8l14 24h-10l16 28H32l16-28H38l14-24h-8z" />
+      <rect x="52" y="86" width="16" height="16" rx="1" fill="currentColor" />
+      <circle cx="18" cy="28" r="2.5" fill="currentColor" />
+      <circle cx="104" cy="48" r="2" fill="currentColor" />
+      <circle cx="108" cy="128" r="2.5" fill="currentColor" />
+      <circle cx="16" cy="110" r="2" fill="currentColor" />
     </svg>
   );
 }
@@ -109,8 +119,8 @@ export function SeasonalOccasionLanding({
     (city): city is (typeof cityLinks)[number] => Boolean(city)
   );
   const imageAltSuffix =
-    copy.tone === "thanksgiving"
-      ? "Thanksgiving gift box for USA delivery"
+    copy.tone === "christmas"
+      ? "Christmas gift box for USA delivery"
       : "New Year gift box for USA delivery";
 
   const jsonLd = [
@@ -141,8 +151,8 @@ export function SeasonalOccasionLanding({
           className="pointer-events-none absolute inset-0"
           style={{
             background:
-              copy.tone === "thanksgiving"
-                ? "radial-gradient(ellipse at 85% 0%, rgba(217,119,6,0.38), transparent 46%), radial-gradient(ellipse at 0% 100%, rgba(225,29,72,0.22), transparent 42%)"
+              copy.tone === "christmas"
+                ? "radial-gradient(ellipse at 85% 0%, rgba(220,38,38,0.42), transparent 48%), radial-gradient(ellipse at 0% 100%, rgba(22,163,74,0.4), transparent 46%)"
                 : "radial-gradient(ellipse at 80% 10%, rgba(251,191,36,0.35), transparent 42%), radial-gradient(ellipse at 10% 90%, rgba(72,118,232,0.45), transparent 46%)",
           }}
           aria-hidden
@@ -266,6 +276,31 @@ export function SeasonalOccasionLanding({
         )}
       </div>
 
+      {copy.stories?.map((story) => (
+        <section key={story.id} id={story.id} className="max-w-7xl mx-auto px-4 py-12">
+          <h2 className="text-2xl md:text-3xl font-bold text-primary mb-4">{story.heading}</h2>
+          {story.paragraphs.length > 0 && (
+            <div className="max-w-3xl space-y-4 text-slate-700 leading-relaxed">
+              {story.paragraphs.map((paragraph) => (
+                <p key={paragraph}>{applyInlineLinks(paragraph, copy.introLinks, budget)}</p>
+              ))}
+            </div>
+          )}
+          {story.points && story.points.length > 0 && (
+            <div className={`${story.paragraphs.length > 0 ? "mt-8" : "mt-2"} grid md:grid-cols-2 gap-4`}>
+              {story.points.map((point) => (
+                <article key={point.title} className="rounded-xl border border-slate-200 bg-white p-5">
+                  <h3 className="text-lg font-bold text-primary mb-2">{point.title}</h3>
+                  <p className="text-slate-600 leading-relaxed">
+                    {applyInlineLinks(point.text, copy.introLinks, budget)}
+                  </p>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+      ))}
+
       <section className="bg-slate-50 border-y border-slate-200 py-12">
         <div className="max-w-7xl mx-auto px-4">
           <h2 className="text-2xl font-bold text-primary mb-6">How to send a gift with {site.name}</h2>
@@ -329,7 +364,9 @@ export function SeasonalOccasionLanding({
       </section>
 
       <section className="max-w-7xl mx-auto px-4 py-12">
-        <h2 className="text-2xl font-bold text-primary mb-4">Frequently asked questions</h2>
+        <h2 className="text-2xl font-bold text-primary mb-4">
+          {copy.faqHeading ?? "Frequently asked questions"}
+        </h2>
         <div className="space-y-3">
           {copy.faqs.map((faq) => (
             <details key={faq.q} className="border border-slate-200 rounded-lg p-5 bg-white group">

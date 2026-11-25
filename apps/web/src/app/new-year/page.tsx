@@ -14,81 +14,187 @@ import {
 const copy: SeasonalPageCopy = {
   path: "/new-year",
   breadcrumb: "New Year",
-  eyebrow: "New Year gifts",
-  h1: "New Year Gift Boxes Delivered Across the USA",
+  eyebrow: "New Year 2027",
+  h1: "New Year Gifts to USA",
   lead:
-    "Start the year with chocolate, dry fruits, or a festive hamper delivered inside the United States. Every product on this page is in stock and already sold on UsaRakhi.",
+    "Send New Year gifts to USA from anywhere and welcome 2027 with chocolates, dry fruits, sweets, and gift hampers. Every product on this page is in stock and ships from within the United States.",
   dateLabel: "New Year’s Day",
   dateValue: "Friday, January 1, 2027",
   dateNote: "Order in December — standard delivery is 5 business days",
   tone: "new-year",
   intro: [
-    "New Year’s Day is Friday, January 1, 2027. A chocolate box or a dry fruit box is a simple way to greet family in the USA when you will not be in the same house at midnight. Delivery is domestic USA shipping.",
-    "These are live catalog gifts: chocolate assortments, nut and sweet boxes, plus Diwali hampers and Bhai Dooj sets that are still in stock. Product names stay as they are in the shop, and each page lists what is packed inside.",
-    "Add to cart and Buy now use the same cart, currency switcher, and checkout as the rest of UsaRakhi. If you still need a box for the November table, the Thanksgiving Day page is the food-gift edit of this catalog.",
+    "Welcome the New Year 2027 by sharing happiness, love, and warm wishes with the people who matter most. Even if your family and friends are miles away, you can make their celebrations special. With UsaRakhi, you can send New Year gifts to USA from anywhere.",
+    "Explore chocolate combos, dry fruit combos, sweet combos, Diwali hampers, and Bhai Dooj sets that are still in stock. Product names stay as they are in the shop, and each page lists what is packed inside.",
+    "New Year’s Day is Friday, January 1, 2027. Add to cart and Buy now use the same cart, currency switcher, and checkout as the rest of UsaRakhi. If you need a box before the year turns, the Christmas page is the food-gift edit of this catalog.",
   ],
   introLinks: [
+    { phrase: "chocolate combos", href: categoryHref("chocolate-combos") },
+    { phrase: "dry fruit combos", href: categoryHref("dry-fruit-combos") },
+    { phrase: "sweet combos", href: categoryHref("sweet-combos") },
     { phrase: "Diwali hampers", href: categoryHref("diwali") },
-    { phrase: "Bhai Dooj sets", href: categoryHref("bhai-dooj") },
-    { phrase: "domestic USA shipping", href: "/shipping" },
-    { phrase: "Thanksgiving Day page", href: "/thanksgiving-day" },
+    { phrase: "Christmas page", href: "/christmas" },
   ],
   sections: [
     {
       id: "chocolates",
-      heading: "Chocolate boxes for New Year",
+      heading: "New Year chocolates",
       intro:
-        "In-stock chocolate gifts, including Ferrero Rocher, M&M’s, and Skittles boxes. They work as a host gift or a parcel for someone you cannot toast in person.",
+        "Chocolates are a timeless way to spread happiness. In-stock boxes include Ferrero Rocher, M&M’s, and Skittles, ready as a host gift or a parcel for someone you cannot toast in person.",
       match: isNewYearChocolateGift,
     },
     {
       id: "dry-fruits",
       heading: "Dry fruits and sweets for a fresh start",
       intro:
-        "Almonds, pistachios, mixed nuts, and sweet boxes from the current catalog. Dry fruit boxes are a familiar way to wish someone a prosperous year.",
+        "Almonds, pistachios, mixed nuts, and sweet boxes from the current catalog. A dry fruit box is a familiar way to wish someone a prosperous 2027.",
       match: isNewYearPantryGift,
     },
     {
       id: "festive-hampers",
-      heading: "Festive hampers and pooja sets",
+      heading: "New Year gift hampers",
       intro:
-        "Diwali hampers and pooja sets that are still available to order. They are labeled with their real product names, including Bhai Dooj and Diwali sets, because that is what we ship.",
+        "Thoughtfully arranged hampers that are still available to order. Diwali hampers and pooja sets stay labeled with their real product names, including Bhai Dooj and Diwali sets, because that is what we ship.",
       match: isNewYearFestiveGift,
     },
   ],
   bannerHeading: "Send a box before the year turns",
   bannerText:
-    "The featured gift is in stock now. Buy now opens the standard checkout, with Razorpay for USD and INR and Stripe for USD cards.",
+    "The featured New Year gift is in stock now. Buy now opens the standard checkout, with Razorpay for USD and INR and Stripe for USD cards.",
+  stories: [
+    {
+      id: "send-online",
+      heading: "Send Beautiful New Year Gifts to USA Online",
+      paragraphs: [
+        "Distance should never stop you from celebrating special moments with your family and friends. With online gifting, you can surprise your loved ones in the United States without travelling.",
+        "Choose chocolates, dry fruits, sweets, or a festive hamper. When you send New Year gifts to USA, the parcel goes to the address you enter at checkout. Standard delivery is 5 business days with free shipping.",
+      ],
+    },
+    {
+      id: "gift-ideas",
+      heading: "Best New Year Gift Ideas for Your Loved Ones in USA",
+      paragraphs: [
+        "Finding the right present is a way to express your feelings. These are the New Year gifts UsaRakhi can ship to a United States address. The product title tells you exactly which set it is.",
+      ],
+      points: [
+        {
+          title: "New Year chocolates",
+          text: "Surprise your loved ones with chocolate boxes and sweet treats. They suit friends, siblings, partners, and family. The chocolate section lists what is in stock today.",
+        },
+        {
+          title: "New Year gift hampers",
+          text: "Make your wishes extra special with a hamper. Festive hampers, sweet boxes, and dry fruit combos put several treats in one carton. We ship the contents named on that product.",
+        },
+        {
+          title: "Dry fruits and sweets",
+          text: "Nuts and mithai are a familiar way to wish someone a prosperous year. Almonds, pistachios, mixed nuts, and sweet boxes are pulled from the live catalog.",
+        },
+      ],
+    },
+    {
+      id: "for-family",
+      heading: "New Year Gifts for Everyone in Your Family",
+      paragraphs: [
+        "Every relationship deserves a special surprise. Choose a chocolate, dry fruit, sweet, hamper, or pooja set according to the person you want to celebrate with.",
+      ],
+      points: [
+        {
+          title: "New Year gifts for parents in USA",
+          text: "Show your appreciation with a festive hamper, a dry fruit box, or a chocolate assortment so your parents can open something from you on January 1.",
+        },
+        {
+          title: "New Year gifts for husband",
+          text: "A chocolate box or a nut hamper is a direct New Year gift for a husband in the United States. The price on the card follows the site currency.",
+        },
+        {
+          title: "New Year gifts for wife",
+          text: "Chocolates, a sweet box, or a festive hamper can start her year when you cannot be there at midnight. Read the included list before you add it to the cart.",
+        },
+        {
+          title: "New Year gifts for boyfriend and girlfriend",
+          text: "Celebrate your relationship with a chocolate box. Buy now opens checkout with that gift, or add a second box if you want the household to share it.",
+        },
+        {
+          title: "New Year gifts for friends",
+          text: "Friendship makes the celebration brighter. Send a chocolate box, a small dry-fruit box, or a hamper to welcome 2027. Shipping stays domestic.",
+        },
+        {
+          title: "New Year gifts for brother and sister",
+          text: "Chocolates, sweets, and festive hampers are a lovely way to celebrate your bond, including Bhai Dooj sets that are still in stock.",
+        },
+      ],
+    },
+    {
+      id: "from-anywhere",
+      heading: "Send New Year Gifts to USA from Anywhere with UsaRakhi",
+      paragraphs: [
+        "Living far away from your loved ones does not mean missing their celebration. Whether you are in India or another part of the world, you can share New Year wishes with family and friends in the United States.",
+        "UsaRakhi checkout is the usual flow: Razorpay for USD and INR, including UPI, and Stripe for USD cards. The hamper ships from within the United States.",
+        "Celebrate the arrival of 2027 with a gift that is in stock now. Order in December so the parcel is not squeezed against Christmas and New Year carrier holidays.",
+      ],
+    },
+    {
+      id: "why-usarakhi",
+      heading: "Why Choose UsaRakhi for New Year Gift Delivery in USA?",
+      paragraphs: [],
+      points: [
+        {
+          title: "Thoughtful gift collection",
+          text: "Chocolates, dry fruits, sweets, festive hampers, and pooja sets that currently have inventory for New Year delivery.",
+        },
+        {
+          title: "Convenient online ordering",
+          text: "Select your preferred gift and place your order online. Add to cart keeps browsing. Buy now opens checkout with that gift.",
+        },
+        {
+          title: "Surprise your loved ones",
+          text: "Send a meaningful present to family and friends living across the United States while you order from anywhere.",
+        },
+        {
+          title: "Gifts for parents, siblings, friends, and partners",
+          text: "The same catalog covers a hamper for parents, chocolates for a partner, and a sweet or nut box for a sibling or friend.",
+        },
+        {
+          title: "Celebrate from anywhere",
+          text: "Share your love and New Year wishes even when you cannot celebrate together. Standard USA delivery is 5 business days with free shipping.",
+        },
+      ],
+    },
+  ],
+  faqHeading: "Frequently Asked Questions About New Year Gifts to USA",
   faqs: [
     {
-      q: "When should I order New Year gifts for USA delivery?",
-      a: "New Year’s Day is Friday, January 1, 2027. Standard USA delivery is 5 business days with free shipping. Order in mid-December so the parcel is not squeezed against Christmas and New Year carrier holidays. We do not guarantee a specific arrival date.",
+      q: "Can I send New Year gifts to USA from anywhere?",
+      a: "Yes. Order on this page from India or abroad, pay in INR with Razorpay (including UPI) or in USD, and enter a United States address. The gift ships from within the United States.",
     },
     {
-      q: "What New Year gifts does UsaRakhi have in stock?",
-      a: "Chocolate gift boxes, dry fruit and nut boxes, sweet boxes, and festive hampers or pooja sets that currently have inventory. This page only shows products that can be purchased. Sold-out items are left off.",
+      q: "What are the best New Year gifts to send to the USA?",
+      a: "Chocolate gift boxes, dry fruit and nut boxes, sweet boxes, and festive hampers or pooja sets that are in stock on this page. Read the included list, then choose the box the recipient will open.",
     },
     {
-      q: "Are the festive hampers New Year themed?",
-      a: "They are the Diwali hampers, Bhai Dooj sets, and pooja sets already in the UsaRakhi catalog. We list them here because a festive food or pooja box is what many families send to mark the new year, and the product title tells you exactly which set it is.",
+      q: "Can I send New Year chocolates to USA online?",
+      a: "Yes. The chocolate section lists in-stock boxes, including Ferrero Rocher, M&M’s, and Skittles. Delivery is domestic USA shipping for the address you enter.",
     },
     {
-      q: "Can I add a New Year gift and check out immediately?",
-      a: "Yes. Buy now adds the selected gift to your cart and opens the same checkout used on every product page. Add to cart keeps the gift in the cart if you want to choose another box first. Prices follow the site currency switcher.",
+      q: "What New Year gift hampers can I order?",
+      a: "Festive hampers, sweet boxes, and dry fruit boxes that currently have inventory. Diwali and Bhai Dooj sets stay labeled with their real names, because that is what we ship. Sold-out items are left off this page.",
     },
     {
-      q: "Which payment methods work on these gifts?",
-      a: "The existing UsaRakhi checkout: Razorpay for USD and INR, including UPI, and Stripe for USD cards. Nothing on this page uses a separate payment flow.",
+      q: "What are some affordable New Year gift ideas?",
+      a: "Smaller chocolate boxes and the smaller dry-fruit boxes on this page. The price on each card is the current price in the currency you have selected.",
     },
     {
-      q: "Do you deliver New Year gifts to every US state?",
-      a: "Yes. Gift boxes ship domestically to US addresses, including California, New York, Texas, Florida, and New Jersey. Shipping from within the United States means the recipient’s package does not clear international customs.",
+      q: "How can I surprise my family in USA on New Year?",
+      a: "Order an in-stock chocolate, dry fruit, sweet box, or hamper and use Buy now to open checkout. New Year’s Day is Friday, January 1, 2027. Order in mid-December so the parcel is not left against Christmas and New Year carrier holidays. We do not guarantee a specific arrival date.",
+    },
+    {
+      q: "Can I send New Year gifts to different cities in the USA?",
+      a: "Yes. Gift boxes ship domestically to US addresses, including California, New York, Texas, Florida, and New Jersey. Use a separate order for each delivery address.",
     },
   ],
   otherOccasion: {
-    href: "/thanksgiving-day",
-    label: "Shop Thanksgiving gifts",
-    text: "Dry fruits, nuts, sweets, and chocolate boxes for Thanksgiving Day on Thursday, November 26, 2026.",
+    href: "/christmas",
+    label: "Shop Christmas gifts",
+    text: "Chocolates, dry fruits, sweets, and gift hampers for Christmas Day on Friday, December 25, 2026.",
   },
 };
 
@@ -99,12 +205,12 @@ export async function generateMetadata(): Promise<Metadata> {
   const products = (await loadSeasonalCatalog()).filter(isNewYearGift);
   const ogImage = products[0]?.images?.[0] ? resolveImageUrl(products[0].images[0]) : undefined;
   return pageMetadata({
-    title: "New Year Gifts to USA",
+    title: "New Year Gifts to USA - Celebrate New Beginnings",
     description:
-      "Order New Year gift boxes for USA delivery. In-stock chocolates, dry fruits, sweets, and festive hampers ship domestically in 5 business days with free shipping.",
+      "Send New Year gifts to USA from anywhere. Explore chocolates, dry fruits, sweets, and gift hampers with UsaRakhi for 2027.",
     path: "/new-year",
     keywords:
-      "New Year gifts USA, New Year gift boxes, send New Year gifts to USA, chocolate gift box New Year, dry fruit hamper USA, UsaRakhi",
+      "New Year gifts to USA, send New Year gifts to USA, New Year gift delivery in USA, New Year gifts online USA, New Year chocolates, New Year gift hampers, New Year gifts for family, New Year gifts for friends, New Year 2027, UsaRakhi",
     ...(ogImage ? { ogImage } : {}),
   });
 }

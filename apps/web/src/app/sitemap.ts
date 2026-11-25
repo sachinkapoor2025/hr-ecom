@@ -27,7 +27,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${siteUrl}/shipping`, lastModified: now, changeFrequency: "monthly", priority: 0.7 },
     { url: `${siteUrl}/faq`, lastModified: now, changeFrequency: "monthly", priority: 0.7 },
     { url: `${siteUrl}/raksha-bandhan`, lastModified: now, changeFrequency: "weekly", priority: 0.9 },
-    { url: `${siteUrl}/thanksgiving-day`, lastModified: now, changeFrequency: "weekly", priority: 0.85 },
+    { url: `${siteUrl}/christmas`, lastModified: now, changeFrequency: "weekly", priority: 0.85 },
     { url: `${siteUrl}/new-year`, lastModified: now, changeFrequency: "weekly", priority: 0.85 },
     {
       url: `${siteUrl}/send-rakhi-from-india`,

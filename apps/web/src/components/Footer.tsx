@@ -169,8 +169,8 @@ export function Footer() {
                   </li>
                 ))}
               <li>
-                <Link href="/thanksgiving-day" className="hover:text-primary hover:underline">
-                  Thanksgiving Gifts
+                <Link href="/christmas" className="hover:text-primary hover:underline">
+                  Christmas Gifts
                 </Link>
               </li>
               <li>

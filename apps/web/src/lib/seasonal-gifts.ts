@@ -43,24 +43,28 @@ function isRitualSet(product: Product): boolean {
   return product.categorySlug === "pooja-sets" || RITUAL.test(haystack(product));
 }
 
-/** Food gifts for a Thanksgiving table: nuts, sweets, and chocolates. Ritual sets stay off this page. */
-export function isThanksgivingPantryGift(product: Product): boolean {
+/** Food gifts: nuts, sweets, and chocolates. Ritual sets stay off food-gift pages. */
+export function isPantryGift(product: Product): boolean {
   if (isKidsExtra(product) || isRitualSet(product)) return false;
   return PANTRY.test(haystack(product));
 }
 
-export function isThanksgivingChocolateGift(product: Product): boolean {
+export function isChocolateGift(product: Product): boolean {
   if (isKidsExtra(product) || isRitualSet(product)) return false;
   const text = haystack(product);
   return CHOCOLATE.test(text) && !PANTRY.test(text);
 }
 
+export function isChristmasGift(product: Product): boolean {
+  return isPantryGift(product) || isChocolateGift(product);
+}
+
 export function isNewYearChocolateGift(product: Product): boolean {
-  return isThanksgivingChocolateGift(product);
+  return isChocolateGift(product);
 }
 
 export function isNewYearPantryGift(product: Product): boolean {
-  return isThanksgivingPantryGift(product);
+  return isPantryGift(product);
 }
 
 /** In-stock Diwali hampers and pooja sets — shown only on the New Year page, under their real names. */

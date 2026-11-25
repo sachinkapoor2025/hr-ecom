@@ -38,7 +38,7 @@ export async function GET() {
 - Diwali gifts: ${siteUrl}/diwali-to-usa
 - Bhai Dooj gifts: ${siteUrl}/bhai-dooj-to-usa
 - All products: ${siteUrl}/products
-- Thanksgiving gifts: ${siteUrl}/thanksgiving-day
+- Christmas gifts: ${siteUrl}/christmas
 - New Year gifts: ${siteUrl}/new-year
 
 ## Delivery
@@ -155,7 +155,7 @@ ${deadlineTable}
 
 - **Home:** ${siteUrl}/
 - **Shop all Rakhis:** ${siteUrl}/products
-- **Thanksgiving gifts:** ${siteUrl}/thanksgiving-day
+- **Christmas gifts:** ${siteUrl}/christmas
 - **New Year gifts:** ${siteUrl}/new-year
 - **Send Rakhi from India (INR/UPI):** ${siteUrl}/send-rakhi-from-india
 - **Raksha Bandhan guide:** ${siteUrl}/raksha-bandhan

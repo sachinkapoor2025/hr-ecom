@@ -45,7 +45,7 @@ export const navItems = [
   { label: "Chocolate Combos", href: categoryHref("chocolate-combos"), category: "chocolate-combos" },
   { label: "Pooja Sets", href: categoryHref("pooja-sets"), category: "pooja-sets" },
   { label: "Shop All", href: "/products" },
-  { label: "Thanksgiving", href: "/thanksgiving-day" },
+  { label: "Christmas", href: "/christmas" },
   { label: "New Year", href: "/new-year" },
 ] as const;
 
