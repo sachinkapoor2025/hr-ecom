@@ -38,6 +38,8 @@ export async function GET() {
 - Diwali gifts: ${siteUrl}/diwali-to-usa
 - Bhai Dooj gifts: ${siteUrl}/bhai-dooj-to-usa
 - All products: ${siteUrl}/products
+- Christmas gifts: ${siteUrl}/christmas
+- New Year gifts: ${siteUrl}/new-year
 
 ## Delivery
 Standard USA delivery is 5 business days. Free Shipping. Orange County products ship free.
@@ -153,6 +155,8 @@ ${deadlineTable}
 
 - **Home:** ${siteUrl}/
 - **Shop all Rakhis:** ${siteUrl}/products
+- **Christmas gifts:** ${siteUrl}/christmas
+- **New Year gifts:** ${siteUrl}/new-year
 - **Send Rakhi from India (INR/UPI):** ${siteUrl}/send-rakhi-from-india
 - **Raksha Bandhan guide:** ${siteUrl}/raksha-bandhan
 - **Shipping & delivery:** ${siteUrl}/shipping
