@@ -23,9 +23,9 @@ const copy: SeasonalPageCopy = {
   dateNote: "Order in December — standard delivery is 5 business days",
   tone: "new-year",
   intro: [
-    "Welcome the New Year 2027 by sharing happiness, love, and warm wishes with the people who matter most. Even if your family and friends are miles away, you can make their celebrations special. With UsaRakhi, you can send New Year gifts to USA from anywhere.",
-    "Explore chocolate combos, dry fruit combos, sweet combos, Diwali hampers, and Bhai Dooj sets that are still in stock. Product names stay as they are in the shop, and each page lists what is packed inside.",
-    "New Year’s Day is Friday, January 1, 2027. Add to cart and Buy now use the same cart, currency switcher, and checkout as the rest of UsaRakhi. If you need a box before the year turns, the Christmas page is the food-gift edit of this catalog.",
+    "Welcome the New Year 2027 by sharing happiness, love and warm wishes with the people who matter most. Even if your family and friends are miles away, you can make their celebrations special with thoughtful surprises. With UsaRakhi, you can send New Year gifts to USA from anywhere and make every New Year celebration more memorable.",
+    "Explore chocolate combos, dry fruit combos, sweet combos, Diwali hampers, and Bhai Dooj sets for your loved ones across the United States. Whether you want to surprise your parents, send warm wishes to your siblings, or make your partner feel special, product names stay as they are in the shop, and each page lists what is packed inside.",
+    "Make the beginning of 2027 unforgettable with gifts delivered to your loved ones in the USA. New Year’s Day is Friday, January 1, 2027. Add to cart and Buy now use the same checkout as the rest of UsaRakhi. If you need a box before the year turns, the Christmas page lists gifts for December 25.",
   ],
   introLinks: [
     { phrase: "chocolate combos", href: categoryHref("chocolate-combos") },
@@ -65,24 +65,25 @@ const copy: SeasonalPageCopy = {
       id: "send-online",
       heading: "Send Beautiful New Year Gifts to USA Online",
       paragraphs: [
-        "Distance should never stop you from celebrating special moments with your family and friends. With online gifting, you can surprise your loved ones in the United States without travelling.",
-        "Choose chocolates, dry fruits, sweets, or a festive hamper. When you send New Year gifts to USA, the parcel goes to the address you enter at checkout. Standard delivery is 5 business days with free shipping.",
+        "Distance should never stop you from celebrating special moments with your family and friends. With convenient online gifting, you can surprise your loved ones in the United States without travelling miles.",
+        "At UsaRakhi, explore chocolates, dry fruits, sweets, and thoughtful gift hampers, and choose something that matches the recipient.",
+        "When you send New Year gifts to USA, you can make your wishes more meaningful with a surprise delivered to their doorstep. Standard delivery is 5 business days with free shipping.",
       ],
     },
     {
       id: "gift-ideas",
       heading: "Best New Year Gift Ideas for Your Loved Ones in USA",
       paragraphs: [
-        "Finding the right present is a way to express your feelings. These are the New Year gifts UsaRakhi can ship to a United States address. The product title tells you exactly which set it is.",
+        "Finding the right present is a wonderful way to express your feelings. Whether you are looking for something cheerful or thoughtful, these are the New Year gifts UsaRakhi can ship to a United States address.",
       ],
       points: [
         {
           title: "New Year chocolates",
-          text: "Surprise your loved ones with chocolate boxes and sweet treats. They suit friends, siblings, partners, and family. The chocolate section lists what is in stock today.",
+          text: "Chocolates are a timeless way to spread happiness. Surprise your loved ones with chocolate boxes and sweet treats that suit friends, siblings, partners, and family. The chocolate section lists what is in stock today.",
         },
         {
           title: "New Year gift hampers",
-          text: "Make your wishes extra special with a hamper. Festive hampers, sweet boxes, and dry fruit combos put several treats in one carton. We ship the contents named on that product.",
+          text: "Make your wishes extra special with thoughtfully arranged gift hampers. From chocolates and sweet treats to dry fruits and other festive surprises, a hamper offers something for everyone. We ship the contents named on that product.",
         },
         {
           title: "Dry fruits and sweets",
@@ -94,32 +95,32 @@ const copy: SeasonalPageCopy = {
       id: "for-family",
       heading: "New Year Gifts for Everyone in Your Family",
       paragraphs: [
-        "Every relationship deserves a special surprise. Choose a chocolate, dry fruit, sweet, hamper, or pooja set according to the person you want to celebrate with.",
+        "Every relationship deserves a special surprise. Choose thoughtful presents according to the people you want to celebrate with.",
       ],
       points: [
         {
           title: "New Year gifts for parents in USA",
-          text: "Show your appreciation with a festive hamper, a dry fruit box, or a chocolate assortment so your parents can open something from you on January 1.",
+          text: "Show your appreciation and love with chocolates, a dry fruit box, or a gift hamper so your parents can open something from you on January 1.",
         },
         {
           title: "New Year gifts for husband",
-          text: "A chocolate box or a nut hamper is a direct New Year gift for a husband in the United States. The price on the card follows the site currency.",
+          text: "Surprise your husband with a meaningful gift. Choose chocolates or a hamper to welcome the New Year together, even when you are apart.",
         },
         {
           title: "New Year gifts for wife",
-          text: "Chocolates, a sweet box, or a festive hamper can start her year when you cannot be there at midnight. Read the included list before you add it to the cart.",
+          text: "Make your wife smile with chocolates, a sweet box, or a festive hamper. Read the included list before you add it to the cart.",
         },
         {
           title: "New Year gifts for boyfriend and girlfriend",
-          text: "Celebrate your relationship with a chocolate box. Buy now opens checkout with that gift, or add a second box if you want the household to share it.",
+          text: "Celebrate your relationship with chocolates or a hamper, and remind your partner how much they mean to you. Buy now opens checkout with that gift.",
         },
         {
           title: "New Year gifts for friends",
-          text: "Friendship makes the celebration brighter. Send a chocolate box, a small dry-fruit box, or a hamper to welcome 2027. Shipping stays domestic.",
+          text: "Friendship makes every celebration more special. Surprise your friends with chocolate boxes or cheerful gift hampers to welcome 2027.",
         },
         {
           title: "New Year gifts for brother and sister",
-          text: "Chocolates, sweets, and festive hampers are a lovely way to celebrate your bond, including Bhai Dooj sets that are still in stock.",
+          text: "Make your siblings feel special with chocolates and festive hampers, including Bhai Dooj sets that are still in stock.",
         },
       ],
     },
@@ -127,9 +128,9 @@ const copy: SeasonalPageCopy = {
       id: "from-anywhere",
       heading: "Send New Year Gifts to USA from Anywhere with UsaRakhi",
       paragraphs: [
-        "Living far away from your loved ones does not mean missing their celebration. Whether you are in India or another part of the world, you can share New Year wishes with family and friends in the United States.",
-        "UsaRakhi checkout is the usual flow: Razorpay for USD and INR, including UPI, and Stripe for USD cards. The hamper ships from within the United States.",
-        "Celebrate the arrival of 2027 with a gift that is in stock now. Order in December so the parcel is not squeezed against Christmas and New Year carrier holidays.",
+        "Living far away from your loved ones does not mean missing out on their celebrations. Whether you are in India or another part of the world, you can share your New Year wishes with family and friends living in the United States.",
+        "UsaRakhi makes it convenient to order chocolates, dry fruits, sweets, and gift hampers. Checkout is Razorpay for USD and INR, including UPI, and Stripe for USD cards. The hamper ships from within the United States.",
+        "Celebrate the arrival of 2027 by sending happiness across the miles. Order in December so the parcel is not squeezed against Christmas and New Year carrier holidays.",
       ],
     },
     {
@@ -139,19 +140,19 @@ const copy: SeasonalPageCopy = {
       points: [
         {
           title: "Thoughtful gift collection",
-          text: "Chocolates, dry fruits, sweets, festive hampers, and pooja sets that currently have inventory for New Year delivery.",
+          text: "Explore chocolates, dry fruits, sweets, festive hampers, and pooja sets that currently have inventory for New Year celebrations.",
         },
         {
           title: "Convenient online ordering",
-          text: "Select your preferred gift and place your order online. Add to cart keeps browsing. Buy now opens checkout with that gift.",
+          text: "Select your preferred gift and place your order online from home. Add to cart keeps browsing. Buy now opens checkout with that gift.",
         },
         {
           title: "Surprise your loved ones",
-          text: "Send a meaningful present to family and friends living across the United States while you order from anywhere.",
+          text: "Send meaningful presents to family and friends living across the United States while you order from anywhere.",
         },
         {
-          title: "Gifts for parents, siblings, friends, and partners",
-          text: "The same catalog covers a hamper for parents, chocolates for a partner, and a sweet or nut box for a sibling or friend.",
+          title: "Multiple gifting choices",
+          text: "Find gifts for parents, siblings, friends, and partners. The same catalog covers a hamper, chocolates, or a sweet or nut box.",
         },
         {
           title: "Celebrate from anywhere",

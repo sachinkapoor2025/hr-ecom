@@ -44,6 +44,8 @@ const nextConfig: NextConfig = {
       { source: "/sitemap.rss", destination: "/sitemap.xml", statusCode: 301 },
       { source: "/thanksgiving-day", destination: "/christmas", statusCode: 301 },
       { source: "/thanksgiving-day/", destination: "/christmas", statusCode: 301 },
+      { source: "/christmas-gifts-to-usa", destination: "/christmas", statusCode: 301 },
+      { source: "/christmas-gifts-to-usa/", destination: "/christmas", statusCode: 301 },
     ];
   },
   async rewrites() {

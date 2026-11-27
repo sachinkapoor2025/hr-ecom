@@ -17,15 +17,15 @@ const copy: SeasonalPageCopy = {
   dateNote: "Order by mid-December — standard delivery is 5 business days",
   tone: "christmas",
   intro: [
-    "Christmas is a wonderful time to celebrate love, togetherness, and happiness with family and friends. Even when your loved ones are miles away, you can make them feel special with a thoughtful surprise. With UsaRakhi, you can send Christmas gifts to USA from India or anywhere in the world.",
-    "Explore chocolates, dry fruit combos, sweet combos, and gift hampers for parents, siblings, partners, and friends across the United States. Every box on this page is in stock and already packed for domestic USA delivery. Names, photos, and prices match the product pages.",
-    "Christmas Day 2026 is Friday, December 25. Use Add to cart if you want more than one box, or Buy now to open the same checkout as the rest of the site. You can pay in USD or INR. Planning ahead for January, the New Year page lists celebration boxes from this same catalog.",
+    "Christmas is a wonderful time to celebrate love, togetherness and happiness with family and friends. Even when your loved ones are miles away, you can make them feel special with thoughtful surprises. With UsaRakhi, you can send Christmas gifts to USA from India or anywhere in the world and make the festive season more memorable.",
+    "Explore chocolate combos, dry fruit combos, sweet combos, and gift hampers for your loved ones across the United States. Whether you want to surprise your parents, send Christmas wishes to your siblings, or make your partner feel special, every box on this page is in stock for domestic USA delivery. Names, photos, and prices match the product pages.",
+    "Celebrate Christmas 2026 by sharing happiness and making your loved ones feel closer, no matter how far away they are. Christmas Day is Friday, December 25. Use Add to cart or Buy now, and pay in USD or INR. The New Year page lists celebration boxes from this same catalog.",
   ],
   introLinks: [
+    { phrase: "chocolate combos", href: categoryHref("chocolate-combos") },
     { phrase: "dry fruit combos", href: categoryHref("dry-fruit-combos") },
     { phrase: "sweet combos", href: categoryHref("sweet-combos") },
     { phrase: "gift hampers", href: categoryHref("diwali") },
-    { phrase: "domestic USA delivery", href: "/shipping" },
     { phrase: "New Year page", href: "/new-year" },
   ],
   sections: [
@@ -52,24 +52,25 @@ const copy: SeasonalPageCopy = {
       id: "send-online",
       heading: "Send Christmas Gifts to USA Online",
       paragraphs: [
-        "Christmas is all about sharing happiness and making beautiful memories. If your family and friends are celebrating Christmas in the United States while you are in another country, you can still be part of their day with a thoughtful gift.",
-        "At UsaRakhi, choose an in-stock chocolate box, dry fruit box, sweet box, or festive hamper. When you send Christmas gifts to USA, the order is packed in the United States and shipped to the address you enter. Standard delivery is 5 business days with free shipping.",
+        "Christmas is all about sharing happiness and making beautiful memories. If your family and friends are celebrating Christmas in the United States while you are in another country, you can still become a part of their celebrations with thoughtful gifts.",
+        "At UsaRakhi, explore chocolates, dry fruits, sweets, and festive gift hampers, and choose something meaningful for everyone on your list.",
+        "When you send Christmas gifts to USA, you can surprise your loved ones and remind them that distance cannot reduce the warmth of your relationship. The order is packed in the United States and shipped to the address you enter. Standard delivery is 5 business days with free shipping.",
       ],
     },
     {
       id: "gift-ideas",
       heading: "Best Christmas Gift Ideas for Your Loved Ones in USA",
       paragraphs: [
-        "Looking for the right Christmas surprise? These are the gifts UsaRakhi can ship to a United States address. Open a product to see the photo and the exact contents.",
+        "Looking for the perfect Christmas surprise? These gift ideas are the boxes UsaRakhi can ship to family and friends in the United States. Open a product to see the photo and the exact contents.",
       ],
       points: [
         {
           title: "Christmas chocolates",
-          text: "Chocolate boxes and assorted treats make wonderful presents for children, friends, siblings, and partners. The chocolate section above lists what is available to order today.",
+          text: "Spread sweetness this Christmas with chocolate gifts. Chocolate boxes and assorted treats make wonderful presents for children, friends, siblings, and partners. The chocolate section above lists what is available to order today.",
         },
         {
           title: "Christmas gift hampers",
-          text: "Gift hampers are perfect when you want to surprise someone with more than one treat. Dry fruit combos, sweet boxes, and festive hampers combine nuts, mithai, or chocolates. The product title is what we pack.",
+          text: "Gift hampers are perfect when you want to surprise someone with more than one present. Explore thoughtful combinations of chocolates, sweet treats, dry fruits, and other festive goodies. The product title is what we pack.",
         },
         {
           title: "Dry fruits and sweets",
@@ -81,32 +82,32 @@ const copy: SeasonalPageCopy = {
       id: "for-family",
       heading: "Christmas Gifts for Everyone in Your Family",
       paragraphs: [
-        "Christmas is a celebration for everyone. Whether you are shopping for parents, a partner, siblings, or friends, choose a chocolate, dry fruit, sweet, or hamper that fits that person.",
+        "Christmas is a celebration for everyone. Whether you are shopping for your parents, partner, siblings, or friends, choose a gift that reflects your relationship and make them smile.",
       ],
       points: [
         {
           title: "Christmas gifts for parents in USA",
-          text: "Make your parents feel loved with a festive hamper, a dry fruit box, or a chocolate assortment. It is a clear way to say thank you when you cannot sit at their table.",
+          text: "Make your parents feel loved and appreciated. Chocolates, dry fruit boxes, and festive gift hampers are lovely choices to express your gratitude.",
         },
         {
           title: "Christmas gifts for husband",
-          text: "Surprise your husband with a chocolate box or a mixed-nut hamper. The card shows the current price in USD or INR.",
+          text: "Surprise your husband with something meaningful this Christmas. Choose chocolates or a festive hamper to make the celebration more special.",
         },
         {
           title: "Christmas gifts for wife",
-          text: "Chocolates, a sweet box, or a dry fruit hamper can mark the day when you are not in the same house. Choose the listing whose included list matches what she likes.",
+          text: "Make your wife smile with chocolates, a sweet box, or a festive hamper, and choose the listing whose included list matches what she likes.",
         },
         {
           title: "Christmas gifts for boyfriend and girlfriend",
-          text: "A chocolate gift is an easy Christmas gesture for a partner. Buy now opens checkout with that one box, or add more than one box to the cart first.",
+          text: "Christmas is a perfect occasion to celebrate your relationship. Send chocolates or a hamper to remind your partner how special they are.",
         },
         {
           title: "Christmas gifts for friends",
-          text: "Send a chocolate box, a small dry-fruit box, or a sweet hamper to a friend in another state. The same catalog ships across the United States.",
+          text: "Celebrate friendship with cheerful Christmas surprises. Send chocolate boxes or festive hampers to your friends and make their holiday season brighter.",
         },
         {
           title: "Christmas gifts for brother and sister",
-          text: "Chocolates, sweets, and festive hampers are a familiar way to celebrate your bond, including Bhai Dooj gift boxes that are still in stock and ready for a US address.",
+          text: "Make your siblings feel special with chocolates, festive hampers, and sweet boxes, including Bhai Dooj gift boxes that are still in stock.",
         },
       ],
     },
@@ -114,9 +115,9 @@ const copy: SeasonalPageCopy = {
       id: "from-anywhere",
       heading: "Send Christmas Gifts to USA from Anywhere with UsaRakhi",
       paragraphs: [
-        "Being away from your loved ones during Christmas can feel difficult, especially when everyone is celebrating together. You can still be part of the day by sending a box across the miles.",
-        "Whether you are in India or another part of the world, checkout accepts Razorpay in USD and INR, including UPI, and Stripe for USD cards. The recipient address is a United States address, and the package ships from within the United States.",
-        "Celebrate Christmas 2026 by sharing a gift that is in stock now, with domestic USA delivery.",
+        "Being away from your loved ones during Christmas can feel difficult, especially when everyone is celebrating together. You can still become a part of their celebrations by sending a gift to a United States address.",
+        "Whether you are in India or another part of the world, UsaRakhi makes it convenient to order chocolates, dry fruits, sweets, and gift hampers for family and friends living in the United States. Checkout accepts Razorpay in USD and INR, including UPI, and Stripe for USD cards.",
+        "Celebrate Christmas 2026 by spreading love, happiness, and festive cheer across the miles. Standard delivery is 5 business days with free shipping.",
       ],
     },
     {
@@ -126,18 +127,18 @@ const copy: SeasonalPageCopy = {
       points: [
         {
           title: "Thoughtful gift collection",
-          text: "Chocolates, dry fruits, sweets, and festive hampers that are in stock for Christmas delivery inside the United States.",
+          text: "Explore chocolates, dry fruits, sweets, and festive hampers that are in stock for Christmas delivery inside the United States.",
         },
         {
           title: "Convenient online ordering",
-          text: "Select your preferred gift on this page and place the order online. Add to cart keeps browsing. Buy now opens checkout.",
+          text: "Select your preferred gift and place your order online. Add to cart keeps browsing. Buy now opens checkout.",
         },
         {
           title: "Surprise your loved ones",
-          text: "Send a meaningful present to family and friends living across the United States while you order from India or abroad.",
+          text: "Send meaningful presents to family and friends living across the United States while you order from India or abroad.",
         },
         {
-          title: "Gifts for the people you miss",
+          title: "Multiple gifting choices",
           text: "Find Christmas gifts for parents, siblings, friends, and partners from this same catalog.",
         },
         {
